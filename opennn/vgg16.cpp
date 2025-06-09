@@ -10,33 +10,38 @@
 
 namespace opennn
 {
-    VGG16::VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions)
+    VGG16::VGG16(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
         : NeuralNetwork()
+    {
+        set(new_input_dimensions, new_target_dimensions);
+    }
+
+    void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     {
         set_model_type(NeuralNetwork::ModelType::ImageClassification);
 
         // Scaling 4D
-        add_layer(make_unique<Scaling4d>(input_dimensions));
+        add_layer(make_unique<Scaling4d>(new_input_dimensions));
 
         // --- Conv 3×3, 64 kernels, ReLU x2 -> Pooling 2×2 stride 2 ---
         {
             add_layer(make_unique<Convolutional>(
-                get_output_dimensions(), 
-                dimensions{ 3, 3, input_dimensions[2], 64 },
+                get_output_dimensions(),
+                dimensions{ 3, 3, new_input_dimensions[2], 64 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_1"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 64, 64 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_2"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
-                dimensions{ 2, 2 }, 
+                dimensions{ 2, 2 },
                 dimensions{ 2, 2 },
                 dimensions{ 0, 0 },
                 Pooling::PoolingMethod::MaxPooling,
@@ -50,14 +55,14 @@ namespace opennn
                 dimensions{ 3, 3, 64, 128 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_3"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 128, 128 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_4"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
@@ -74,27 +79,27 @@ namespace opennn
                 get_output_dimensions(),
                 dimensions{ 3, 3, 128, 256 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_5"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_6"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_7"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
-                dimensions{ 2, 2 }, 
-                dimensions{ 2, 2 }, 
+                dimensions{ 2, 2 },
+                dimensions{ 2, 2 },
                 dimensions{ 0, 0 },
                 Pooling::PoolingMethod::MaxPooling, "pool3"));
         }
@@ -106,26 +111,26 @@ namespace opennn
                 dimensions{ 3, 3, 256, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_8"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_9"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_10"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
-                dimensions{ 2, 2 }, 
-                dimensions{ 2, 2 }, 
+                dimensions{ 2, 2 },
+                dimensions{ 2, 2 },
                 dimensions{ 0, 0 },
                 Pooling::PoolingMethod::MaxPooling, "pool4"));
         }
@@ -137,25 +142,25 @@ namespace opennn
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid, 
+                Convolutional::Convolution::Same,
                 "conv_11"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid, 
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_12"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
-                dimensions{ 1, 1 }, 
-                Convolutional::Convolution::Valid,
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Same,
                 "conv_13"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
-                dimensions{ 2, 2 }, 
+                dimensions{ 2, 2 },
                 dimensions{ 2, 2 },
                 dimensions{ 0, 0 },
                 Pooling::PoolingMethod::MaxPooling, "pool5"));
@@ -166,22 +171,28 @@ namespace opennn
 
         // --- Dense layers (FC) ---
         {
-            // FC1: 4096 neurons, ReLU
-            add_layer(make_unique<Dense2d>(
+            // FC1: 4096 neurons, ReLU, Dropout 50%
+            auto fc1 = make_unique<Dense2d>(
                 get_output_dimensions(),
                 dimensions{ 4096 },
                 Dense2d::Activation::RectifiedLinear,
-                "fc1"));
-            // FC2: 4096 neurons, ReLU
-            add_layer(make_unique<Dense2d>(
+                "fc1");
+            fc1->set_dropout_rate(0.5f);
+            add_layer(move(fc1));
+
+            // FC2: 4096 neurons, ReLU, Dropout 50%
+            auto fc2 = make_unique<Dense2d>(
                 get_output_dimensions(),
                 dimensions{ 4096 },
                 Dense2d::Activation::RectifiedLinear,
-                "fc2"));
+                "fc2");
+            fc2->set_dropout_rate(0.5f);
+            add_layer(move(fc2));
+
             // FC3 : Softmax
             add_layer(make_unique<Dense2d>(
                 get_output_dimensions(),
-                target_dimensions,
+                new_target_dimensions,
                 Dense2d::Activation::Softmax,
                 "softmax_output"));
         }

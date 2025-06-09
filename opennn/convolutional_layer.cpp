@@ -40,13 +40,10 @@ bool Convolutional::get_batch_normalization() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == Convolution::Same
-        ? row_stride != 1 || column_stride != 1
-            ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides())
-            : preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
-        : row_stride != 1 || column_stride != 1
-            ? preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides())
-            : preprocessed_inputs.device(*thread_pool_device) = inputs;
+    if (convolution_type == Convolution::Same)
+        preprocessed_inputs = inputs.pad(get_paddings());
+    else
+        preprocessed_inputs.device(*thread_pool_device) = inputs;
 }
 
 
@@ -185,11 +182,11 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
     Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
     Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
-    
+
     preprocess_inputs(inputs, preprocessed_inputs);
 
     calculate_convolutions(preprocessed_inputs, outputs);
-    
+
     if(batch_normalization)
     {
         normalize(layer_forward_propagation, is_training);
@@ -364,7 +361,7 @@ Index Convolutional::get_output_height() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_height - kernel_height + padding.first)/strides) + 1;
+    return floor((input_height - kernel_height + padding.first*2)/strides) + 1;
 }
 
 
@@ -376,7 +373,7 @@ Index Convolutional::get_output_width() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_width - kernel_width + padding.second)/strides) + 1;
+    return floor((input_width - kernel_width + padding.second*2)/strides) + 1;
 }
 
 
@@ -448,28 +445,31 @@ Index Convolutional::get_kernels_number() const
 
 Index Convolutional::get_padding_height() const
 {
-    switch (convolution_type)
-    {
-    case Convolution::Valid:
+    if (convolution_type == Convolution::Valid)
         return 0;
+    else if (convolution_type == Convolution::Same)
+    {
+        const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
 
-    case Convolution::Same:
-        return row_stride * (input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
+        const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
+
+        return total_padding / 2;
     }
 
     throw runtime_error("Unknown convolution type");
 }
 
-
 Index Convolutional::get_padding_width() const
 {
-    switch(convolution_type)
-    {
-    case Convolution::Valid:
+    if (convolution_type == Convolution::Valid)
         return 0;
+    else if (convolution_type == Convolution::Same)
+    {
+        const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
 
-    case Convolution::Same:
-        return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
+        const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
+
+        return total_padding / 2;
     }
 
     throw runtime_error("Unknown convolution type");
@@ -518,6 +518,9 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
+
+    if (new_convolution_type == Convolution::Same && (new_kernel_dimensions[0] % 2 == 0 || new_kernel_dimensions[1] % 2 == 0))
+        throw runtime_error("Kernel dimensions (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
     
     input_dimensions = new_input_dimensions;
 
@@ -665,21 +668,7 @@ void Convolutional::set_parameters(const Tensor<type, 1>& new_parameters, Index&
 
 pair<Index, Index> Convolutional::get_padding() const
 {
-    if (convolution_type == Convolution::Valid)
-        return { 0, 0 };
-
-    if (convolution_type == Convolution::Same)
-    {
-        const Index pad_rows = max<Index>(0, 
-            ((get_input_height() + get_row_stride() - 1) / get_row_stride() - 1) * get_row_stride() + get_kernel_height() - get_input_height());
-
-        const Index pad_cols = max<Index>(0, 
-            ((get_input_width() + get_column_stride() - 1) / get_column_stride() - 1) * get_column_stride() + get_kernel_width() - get_input_width());
-
-        return { (pad_rows + 1) / 2, (pad_cols + 1) / 2 };
-    }
-
-    throw runtime_error("Unknown convolution type.");
+    return { get_padding_height(), get_padding_width() };
 }
 
 
@@ -831,8 +820,8 @@ void ConvolutionalForwardPropagation::set(const Index& new_batch_size, Layer* ne
     const Index padding_width = convolutional_layer->get_padding_width();
     
     preprocessed_inputs.resize(batch_size,
-                               input_height + padding_height,
-                               input_width + padding_width,
+                               input_height + (padding_height*2),
+                               input_width + (padding_width*2),
                                input_channels);
 
     outputs.resize(batch_size,

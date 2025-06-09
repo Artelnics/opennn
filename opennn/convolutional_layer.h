@@ -66,8 +66,8 @@ public:
     Index get_kernel_channels() const;
     Index get_kernels_number() const;
 
-    Index get_padding_width() const;
     Index get_padding_height() const;
+    Index get_padding_width() const;
 
     Index get_input_channels() const;
     Index get_input_height() const;

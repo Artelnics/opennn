@@ -74,7 +74,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
-            { 1 },
+            { 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
         
         //VGG16 neural_network(input_dimensions, target_dimensions);

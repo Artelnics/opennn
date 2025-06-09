@@ -413,13 +413,13 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
-        const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
+        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Same;
         
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                              kernel_dimensions,
-                                             Convolutional::Activation::RectifiedLinear,
+                                             Convolutional::Activation::Linear,
                                              stride_dimensions,
                                              convolution_type,
                                              "convolutional_layer_" + to_string(i+1)));

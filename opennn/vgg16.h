@@ -25,6 +25,8 @@ namespace opennn
 
         VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
+        void set(const dimensions& input_dimensions, const dimensions& target_dimensions);
+
     };
 
 } // namespace opennn
