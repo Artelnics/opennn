@@ -123,7 +123,7 @@ void ModelExpression::auto_association_c(const NeuralNetwork& neural_network)
 
 string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 {
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
+//    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     string aux;
     ostringstream buffer;
@@ -1619,7 +1619,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
         tokens.push_back(token);
     }
 
-    for(Index i = 0; i < tokens.size(); i++)
+    for(size_t i = 0; i < tokens.size(); i++)
     {
         string s = tokens[i];
         string word;

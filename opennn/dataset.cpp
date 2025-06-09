@@ -1087,19 +1087,6 @@ void Dataset::set_raw_variable_indices(const vector<Index>& input_raw_variables,
 }
 
 
-// void Dataset::set_raw_variable_indices(const vector<string>& input_raw_variables,
-//                                                     const vector<string>& target_raw_variables)
-// {
-//     set_raw_variables(VariableUse::None);
-
-//     for(size_t i = 0; i < input_raw_variables.size(); i++)
-//         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
-
-//     for(size_t i = 0; i < target_raw_variables.size(); i++)
-//         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-// }
-
-
 void Dataset::set_input_raw_variables_unused()
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -3914,10 +3901,6 @@ void Dataset::read_csv()
 
     const string separator_string = get_separator_string();
 
-    const vector<string> positive_words = { "yes", "positive", "+", "true" };
-
-    const vector<string> negative_words = { "no", "negative", "-", "false" };
-
     string line;
 
     vector<string> tokens;
@@ -4112,6 +4095,7 @@ void Dataset::read_csv()
                 }
             }
         }
+
         sample_index++;
     }
 

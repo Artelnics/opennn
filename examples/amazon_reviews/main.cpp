@@ -28,6 +28,10 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
+        language_dataset.print();
+
+        language_dataset.print_input_vocabulary();
+/*
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index sequence_length = language_dataset.get_input_length();
         const Index embedding_dimension = 32;
@@ -54,7 +58,7 @@ int main()
         CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
 
         cout << cross_entropy_error_3d.calculate_error_xxx() << endl;
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

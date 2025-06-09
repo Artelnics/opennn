@@ -584,7 +584,11 @@ protected:
 
     // Display
 
-    bool display = true;     
+    bool display = true;
+
+    const vector<string> positive_words = { "yes", "positive", "+", "true" };
+    const vector<string> negative_words = { "no", "negative", "-", "false" };
+
 };
 
 

@@ -64,18 +64,18 @@ void Transformer::set(const Index& new_decoder_length,
     // Embedding Layers
 
     add_layer(make_unique<Embedding>(new_decoder_dimensions,
-                                          new_decoder_length,
-                                          new_embedding_dimension,
-                                          "decoder_embedding"));
+                                     new_decoder_length,
+                                     new_embedding_dimension,
+                                     "decoder_embedding"));
 
     set_layer_inputs_indices("decoder_embedding", "decoder");
 
     //decoder_embedding_layer->set_dropout_rate(dropout_rate);
 
     add_layer(make_unique<Embedding>(new_input_dimension,
-                                          new_input_length,
-                                          new_embedding_dimension,
-                                          "input_embedding"));
+                                     new_input_length,
+                                     new_embedding_dimension,
+                                     "input_embedding"));
 
     set_layer_inputs_indices("input_embedding", "input");
     //input_embedding_layer->set_dropout_rate(dropout_rate);
@@ -249,13 +249,13 @@ void Transformer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void Transformer::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
+void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_output_vocabulary)
+void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabulary)
 {
     output_vocabulary = new_output_vocabulary;
 }
@@ -375,8 +375,10 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
     return tensor_map_3(output_pair);
 }
 
+
 void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
+/*
     bool line_ended = false;
 
     for(Index j = 0; j < input_length - 1; j++)
@@ -402,18 +404,20 @@ void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tens
             }
         }
     }
+*/
 }
 
 
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
+/*
     // unordered_map<string, type> context_vocabulary_map;
 
     // for(Index i = 0; i < input_vocabulary.size(); i++)
     //     context_vocabulary_map[input_vocabulary[i]] = type(i);
 
     Index token_counter = 0;
-    bool line_ended = false;
+    //bool line_ended = false;
 
     string word;
     string wordpiece;
@@ -483,10 +487,12 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
             // }
         }
     }
+*/
 }
 
 void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
+/*
     for(Index i = 1; i < decoder_length; i++)
     {
         if(predictions(i) == 2) break;
@@ -500,11 +506,13 @@ void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstr
             }
         }
     }
+*/
 }
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
 {
+/*
     for (const auto& pair : output_vocabulary) {
         if (pair.second == Index(predictions(1))) {
             buffer << pair.first;
@@ -530,6 +538,7 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
             ? buffer << current_prediction.substr(2)
             : buffer << " " << current_prediction;
     }
+*/
 }
 
 };

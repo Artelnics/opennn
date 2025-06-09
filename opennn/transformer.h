@@ -37,8 +37,8 @@ public:
              const Index& layers_number = 0);
 
     void set_dropout_rate(const type&);
-    void set_input_vocabulary(const unordered_map<string, Index>&);
-    void set_output_vocabulary(const unordered_map<string, Index>&);
+    void set_input_vocabulary(const vector<string>&);
+    void set_output_vocabulary(const vector<string>&);
     void set_input_length(const Index&);
     void set_decoder_length(const Index&);
 
@@ -111,8 +111,8 @@ private:
 
     type dropout_rate = type(0.1);
 
-    unordered_map<string, Index> input_vocabulary;
-    unordered_map<string, Index> output_vocabulary;
+    vector<string> input_vocabulary;
+    vector<string> output_vocabulary;
 };
 
 };

@@ -343,8 +343,8 @@ void OptimizationAlgorithm::set_vocabularies()
 
     LanguageDataset* language_dataset = static_cast<LanguageDataset*>(Dataset);
 
-    const unordered_map<string, Index>& input_vocabulary = language_dataset->get_input_vocabulary();
-    const unordered_map<string, Index>& target_vocabulary = language_dataset->get_target_vocabulary();
+    const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
+    const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
 

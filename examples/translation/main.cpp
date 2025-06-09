@@ -77,7 +77,7 @@ int main()
 
         // Prediction test
         cout << "Vocabulary:" << endl;
-        language_dataset.print_vocabulary(language_dataset.get_input_vocabulary());
+        language_dataset.print_input_vocabulary();
 
         Tensor<type,2> testing_data(3,10);
         testing_data(0,0) = 2;
