@@ -491,11 +491,12 @@ void TrainingResults::print(const string &message)
     const Index epochs_number = training_error_history.size();
 
     cout << message << endl
-         << "Training results" << endl
-         << "Epochs number: " << epochs_number-1 << endl
-         << "Training error: " << training_error_history(epochs_number-1) << endl
-         << "Selection error: " << selection_error_history(epochs_number-1) << endl
-         << "Stopping condition: " << write_stopping_condition() << endl;
+        << "Training results" << endl
+        << "Epochs number: " << epochs_number - 1 << endl
+        << "Training error: " << training_error_history(epochs_number - 1) << endl;
+    if (selection_error_history.size() > 0)
+        cout << "Selection error: " << selection_error_history(epochs_number - 1) << endl;
+    cout << "Stopping condition: " << write_stopping_condition() << endl;
 }
 
 
