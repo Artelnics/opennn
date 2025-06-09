@@ -38,14 +38,12 @@ int main()
                                      {},
                                      {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
 
-//        neural_network.print();
+        neural_network.print();
 
-//        Tensor<type, 2> inputs(1, 6);
-//        inputs.setRandom();
+        Tensor<type, 2> inputs(1, 6);
+        inputs.setRandom();
 
-//        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-
-        //neural_network.print();
+        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
         MeanSquaredError mean_squared_error(&neural_network, &time_series_dataset);
 

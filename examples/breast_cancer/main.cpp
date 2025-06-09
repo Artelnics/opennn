@@ -38,11 +38,11 @@ int main()
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
 
         training_strategy.perform_training();
 
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-
         testing_analysis.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;

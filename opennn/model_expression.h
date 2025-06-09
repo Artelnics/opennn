@@ -29,9 +29,6 @@ public:
     string write_relu_c();
     string write_exponential_linear_c();
     string write_selu_c();
-    string write_hard_sigmoid_c();
-    string write_soft_plus_c();
-    string write_soft_sign_c();
     void auto_association_c(const NeuralNetwork& );
     string get_expression_c(const NeuralNetwork& );
 
@@ -48,9 +45,6 @@ public:
     string relu_api();
     string exponential_linear_api();
     string scaled_exponential_linear_api();
-    string hard_sigmoid();
-    string soft_plus();
-    string soft_sign();
     string get_expression_api(const NeuralNetwork& );
 
     // javascript
@@ -59,9 +53,6 @@ public:
     string relu_javascript();
     string exponential_linear_javascript();
     string selu_javascript();
-    string hard_sigmoid_javascript();
-    string soft_plus_javascript();
-    string softsign_javascript();
     string header_javascript();
     string subheader_javascript();
     string get_expression_javascript(const NeuralNetwork&, const vector<Dataset::RawVariable>& );

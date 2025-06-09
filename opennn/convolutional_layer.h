@@ -27,11 +27,7 @@ public:
                           HyperbolicTangent,
                           Linear,
                           RectifiedLinear,
-                          ExponentialLinear,
-                          ScaledExponentialLinear,
-                          SoftPlus,
-                          SoftSign,
-                          HardSigmoid};
+                          ExponentialLinear};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}

@@ -2,7 +2,7 @@
 
 #include "../opennn/tensors.h"
 #include "../opennn/neural_network.h"
-#include "../opennn/data_set.h"
+#include "../opennn/dataset.h"
 #include "../opennn/minkowski_error.h"
 #include "../opennn/forward_propagation.h"
 #include "../opennn/back_propagation.h"
@@ -19,7 +19,7 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    DataSet data_set;
+    Dataset data_set;
 
     MinkowskiError minkowski_error(&neural_network, &data_set);
 
@@ -35,15 +35,15 @@ TEST(MinkowskiErrorTest, BackPropagate)
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    DataSet data_set(samples_number, { inputs_number }, { targets_number });
+    Dataset data_set(samples_number, { inputs_number }, { targets_number });
     data_set.set_data_random();
-    data_set.set(DataSet::SampleUse::Training);
+    data_set.set(Dataset::SampleUse::Training);
 
     Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-               data_set.get_variable_indices(DataSet::VariableUse::Input),
-               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
-               data_set.get_variable_indices(DataSet::VariableUse::Target));
+    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
+               data_set.get_variable_indices(Dataset::VariableUse::Input),
+               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
+               data_set.get_variable_indices(Dataset::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });

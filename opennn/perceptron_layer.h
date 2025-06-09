@@ -26,12 +26,7 @@ public:
         Linear,
         RectifiedLinear,
         ExponentialLinear,
-        ScaledExponentialLinear,
-        SoftPlus,
-        SoftSign,
-        HardSigmoid,
-        Softmax
-    };
+        Softmax};
 
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},

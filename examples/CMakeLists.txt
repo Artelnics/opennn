@@ -20,7 +20,7 @@ add_subdirectory(iris_plant)
 # add_subdirectory(logical_operations)
 add_subdirectory(mnist)
 # add_subdirectory(outlier_detection)
-add_subdirectory(rosenbrock)
+# add_subdirectory(rosenbrock)
 # add_subdirectory(simple_approximation)
 # add_subdirectory(simple_classification)
 

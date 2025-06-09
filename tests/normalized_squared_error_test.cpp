@@ -1,8 +1,6 @@
 #include "pch.h"
 
 #include "../opennn/normalized_squared_error.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
 #include "../opennn/tensors.h"
 
 TEST(NormalizedSquaredErrorTest, DefaultConstructor)
@@ -17,7 +15,7 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    DataSet data_set;
+    Dataset data_set;
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
@@ -33,15 +31,15 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    DataSet data_set(samples_number, { inputs_number }, { targets_number });
+    Dataset data_set(samples_number, { inputs_number }, { targets_number });
     data_set.set_data_random();
-    data_set.set(DataSet::SampleUse::Training);
+    data_set.set(Dataset::SampleUse::Training);
 
     Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-               data_set.get_variable_indices(DataSet::VariableUse::Input),
-               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
-               data_set.get_variable_indices(DataSet::VariableUse::Target));
+    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
+               data_set.get_variable_indices(Dataset::VariableUse::Input),
+               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
+               data_set.get_variable_indices(Dataset::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
@@ -79,16 +77,16 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
 
     // Data set
 
-    DataSet data_set;
+    Dataset data_set;
     data_set.set(samples_number, {inputs_number}, {outputs_number});
     data_set.set_data_random();
-    data_set.set(DataSet::SampleUse::Training);
+    data_set.set(Dataset::SampleUse::Training);
 
     Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-               data_set.get_variable_indices(DataSet::VariableUse::Input),
-               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
-               data_set.get_variable_indices(DataSet::VariableUse::Target));
+    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
+               data_set.get_variable_indices(Dataset::VariableUse::Input),
+               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
+               data_set.get_variable_indices(Dataset::VariableUse::Target));
 
     // Neural network
 
@@ -137,7 +135,7 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
 
     // Test
 
-    DataSet data_set(samples_number, { inputs_number }, { outputs_number });
+    Dataset data_set(samples_number, { inputs_number }, { outputs_number });
     data_set.set_data_random();
 
     uses.resize(8);
