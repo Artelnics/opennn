@@ -17,6 +17,8 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/embedding_layer.h"
+#include "../../opennn/flatten_layer_3d.h"
 
 using namespace opennn;
 
@@ -26,50 +28,37 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+//        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        language_dataset.print();
+        const Index batch_size = 1;
 
-        language_dataset.print_input_vocabulary();
-/*
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index sequence_length = language_dataset.get_input_length();
-        const Index embedding_dimension = 32;
+        const Index vocabulary_size = 4;
+        const Index sequence_length = 3;
+        const Index embedding_dimension = 2;
 
-        const Index neurons_number = 64;
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
 
-        const Index targets_number = language_dataset.get_target_length();
 
-        dimensions input_dimensions      = {input_vocabulary_size, sequence_length, embedding_dimension};
-        dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions     = {targets_number};
 
-        NeuralNetwork neural_network(
-            NeuralNetwork::ModelType::TextClassification,
-            input_dimensions,
-            complexity_dimensions,
-            output_dimensions);
+        //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
 
-        Tensor<type, 2> inputs(1,1);
-        inputs.setRandom();
+        Tensor<type, 2> inputs(batch_size, sequence_length);
+        inputs.setConstant(1);
 
-        Tensor<type, 3> outputs = neural_network.calculate_outputs_2_3(inputs);
+        cout << neural_network.calculate_outputs(inputs) << endl;
 
-        CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
-
-        cout << cross_entropy_error_3d.calculate_error_xxx() << endl;
-*/
         cout << "Good bye!" << endl;
 
         return 0;
     }
-        catch(const exception& e)
-        {
-            cout << e.what() << endl;
+    catch(const exception& e)
+    {
+        cout << e.what() << endl;
 
-            return 1;
-        }
+        return 1;
     }
+}
 
 
 // OpenNN: Open Neural Networks Library.

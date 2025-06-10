@@ -187,7 +187,7 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     combinations = inputs.contract(input_weights, axes(1,0))
                    + previous_hidden_states.contract(recurrent_weights, axes(1,0))
                    + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
-                         .broadcast(Eigen::array<Index,2>{samples_number, 1});
+                         .broadcast(array<Index,2>{samples_number, 1});
 }
 
 

@@ -881,6 +881,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if (layers_number == 0)
         return Tensor<type, 2>();
+
     const Index batch_size = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
@@ -945,7 +946,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
 Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inputs)
 {
-
     const Index layers_number = get_layers_number();
 
     if (layers_number == 0)
@@ -958,13 +958,11 @@ Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inpu
     const pair<type*, dimensions> input_pair((type*)inputs.data(), { {batch_size, inputs.dimension(1)}});
 
     forward_propagate({input_pair}, forward_propagation);
-/*
+
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
     return tensor_map_3(outputs_pair);
-*/
-    return Tensor<type, 3>();
 }
 
 
