@@ -28,9 +28,15 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-//        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
         const Index batch_size = 1;
+        language_dataset.print_data();
+
+/*
+        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
 
         const Index vocabulary_size = 4;
         const Index sequence_length = 3;
@@ -38,8 +44,28 @@ int main()
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
+        const Index targets_number = language_dataset.get_target_length();
 
+        dimensions input_dimensions      = {input_vocabulary_size, sequence_length, embedding_dimension};
+        dimensions complexity_dimensions = {neurons_number};
+        dimensions output_dimensions     = {targets_number};
 
+        NeuralNetwork neural_network(
+            NeuralNetwork::ModelType::TextClassification,
+            input_dimensions,
+            complexity_dimensions,
+            output_dimensions);
+
+        neural_network.print();
+
+        // Training strategy
+>>>>>>> 57ef74e1e (temporal commit)
+
+        TrainingStrategy training_strategy(&neural_network, &language_dataset);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
+        training_strategy.set_maximum_epochs_number(1000);
+
+<<<<<<< HEAD
 
         //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
 
@@ -48,6 +74,14 @@ int main()
 
         cout << neural_network.calculate_outputs(inputs) << endl;
 
+        training_strategy.print();
+
+        training_strategy.perform_training();
+
+        TestingAnalysis testing_analysis(&neural_network, &language_dataset);
+
+        testing_analysis.print_binary_classification_tests();
+*/
         cout << "Good bye!" << endl;
 
         return 0;
