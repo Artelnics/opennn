@@ -75,8 +75,6 @@ void CrossEntropyError3d::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
-    cout << "calculate_output_delta ---------------------" << endl;
-
     // Probabilistic3d does not have deltas. 
     // Error combinations derivatives are calculated directly.
 }

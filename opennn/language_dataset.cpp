@@ -205,8 +205,12 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
 {
     unordered_map<string, Index> input_vocabulary_map;
+<<<<<<< HEAD
 
     for (Index i = 0; i < input_vocabulary.size(); ++i)
+=======
+    for (size_t i = 0; i < input_vocabulary.size(); ++i)
+>>>>>>> 6256d37335b57d7210ba7e2a5bb48ca3ec4116d4
         input_vocabulary_map[input_vocabulary[i]] = i;
 
     const Index samples_number = get_samples_number();
@@ -215,7 +219,7 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
     for (Index sample = 0; sample < samples_number; sample++)
     {
-        data(sample, 0) = 2; // start;
+        data(sample, 0) = 2; // start
 
         const vector<string>& input_tokens = input_document_tokens[sample];
 
@@ -226,7 +230,7 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
             data(sample, 1+variable) = (it != input_vocabulary.end()) ? it - input_vocabulary.begin() : 1;
         }
 
-        data(sample, input_tokens.size() + 1) = 3;
+        data(sample, input_tokens.size() + 1) = 3; // end
     }
 }
 

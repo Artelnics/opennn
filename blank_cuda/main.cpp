@@ -38,7 +38,7 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
-        #ifdef OPENNN_CUDA
+        // #ifdef OPENNN_CUDA
 
         // Data set
         /*
@@ -57,7 +57,7 @@ int main()
         data_set.set(Dataset::SampleUse::Training);
 
         data_set.print_data();
-        */
+
 <<<<<<< HEAD
 =======
         
@@ -87,7 +87,7 @@ int main()
             { 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
 <<<<<<< HEAD
-        */
+
 
         NeuralNetwork neural_network;
 
@@ -215,7 +215,8 @@ int main()
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
-        #endif  
+        #endif
+*/
         cout << "Bye!" << endl;
         
         return 0;

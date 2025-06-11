@@ -146,6 +146,9 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     {
         input_dimensions = prepend(samples_number, data_set_input_dimensions);
         input_tensor.resize(get_size(input_dimensions));
+
+        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+        input_tensor.resize(input_size);
     }
 
     // @todo
