@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
@@ -409,16 +410,16 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     add_layer(make_unique<Scaling4d>(input_dimensions));
     
     const Index complexity_size = complexity_dimensions.size();
-    /*
+    
     for (Index i = 0; i < complexity_size; i++)
     {
-        const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
+        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Same;
         
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                              kernel_dimensions,
-                                             Convolutional::Activation::RectifiedLinear,
+                                             Convolutional::Activation::Linear,
                                              stride_dimensions,
                                              convolution_type,
                                              "convolutional_layer_" + to_string(i+1)));
@@ -435,7 +436,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
     }
-    */
+    
     add_layer(make_unique<Flatten>(get_output_dimensions()));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
@@ -880,6 +881,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if (layers_number == 0)
         return Tensor<type, 2>();
+
     const Index batch_size = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
@@ -944,7 +946,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
 Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inputs)
 {
-
     const Index layers_number = get_layers_number();
 
     if (layers_number == 0)
@@ -957,13 +958,11 @@ Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inpu
     const pair<type*, dimensions> input_pair((type*)inputs.data(), { {batch_size, inputs.dimension(1)}});
 
     forward_propagate({input_pair}, forward_propagation);
-/*
+
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
     return tensor_map_3(outputs_pair);
-*/
-    return Tensor<type, 3>();
 }
 
 
@@ -1417,10 +1416,7 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl
-         << "Model type:" << endl
-         << get_model_type_string() << endl;
-
-    // print_vector(get_input_names());
+         << "Model type:" << get_model_type_string() << endl;
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -1442,8 +1438,7 @@ void NeuralNetwork::print() const
     cout << "Outputs:" << endl;
     print_vector(get_output_names());
 
-    cout << "Parameters number:" << endl
-         << get_parameters_number() << endl;
+    cout << "Parameters number: " << get_parameters_number() << endl;
 }
 
 

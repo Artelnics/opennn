@@ -818,7 +818,6 @@ void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
     key_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
     value_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
 
-    sample_deltas.resize(query_sequence_length, embedding_dimension);
     aux_rows.resize(source_sequence_length);
 }
 

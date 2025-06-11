@@ -18,6 +18,12 @@
 // OpenNN includes
 
 #include "../../opennn/training_strategy.h"
+#include "../../opennn/language_dataset.h"
+#include "embedding_layer.h"
+#include "flatten_layer_3d.h"
+#include "multihead_attention_layer.h"
+#include "normalization_layer_3d.h"
+#include "perceptron_layer.h"
 
 using namespace std;
 using namespace opennn;
@@ -29,35 +35,21 @@ int main()
         cout << "OpenNN. Translation Example." << endl;
 
         // Data set
-/*
-        LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
-
 
         LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
 
-        // LanguageDataset language_dataset("/Users/artelnics/Desktop/sentiment_analysis.csv");
-
-        // language_dataset.print_raw_variables();
-        // language_dataset.print_data();
-
-        const Index input_length = language_dataset.get_input_length();
-        const Index decoder_length = language_dataset.get_target_length();
-
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
-
         // Sentiment analysis case
 
-        const Index maximum_sequence_length = 10;
+        const Index sequence_length = 10;
         const Index vocabulary_size = 50;
         const Index embedding_dimension = 32;
         const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension, "Embedding"));
+        neural_network.add_layer(make_unique<Normalization3d>(sequence_length, embedding_dimension, "Normalization"));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(sequence_length, sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
@@ -75,7 +67,7 @@ int main()
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
         language_dataset.set(Dataset::SampleUse::Training);
-        // adaptive_moment_estimation->set_loss_goal(0.3);
+        adaptive_moment_estimation->set_loss_goal(0.3);
         adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(12);
@@ -85,7 +77,7 @@ int main()
 
         // Prediction test
         cout << "Vocabulary:" << endl;
-        language_dataset.print_vocabulary(language_dataset.get_input_vocabulary());
+        language_dataset.print_input_vocabulary();
 
         Tensor<type,2> testing_data(3,10);
         testing_data(0,0) = 2;
@@ -121,298 +113,6 @@ int main()
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
 
-      // Translation case
-        const Index embedding_dimension = 64;
-        const Index perceptron_depth = 128;
-        const Index heads_number = 4;
-        const Index layers_number = 1;
-      // Neural network
-        
-        Transformer transformer(decoder_length,
-                                input_length,
-                                target_vocabulary_size,
-                                input_vocabulary_size,
-                                embedding_dimension,
-                                perceptron_depth,
-                                heads_number,
-                                layers_number);
-
-        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
-        transformer.set_dropout_rate(0);
-
-        language_dataset.split_samples_sequential(0.9,0.1,0);
-        // Training strategy
-
-        TrainingStrategy training_strategy(&transformer, &language_dataset);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
-
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
-
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension);
-        adaptive_moment_estimation->set_loss_goal(0.99);
-        adaptive_moment_estimation->set_maximum_epochs_number(1000);
-        adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(512);
-        adaptive_moment_estimation->set_display_period(10);
-        // adaptive_moment_estimation->set_display(false);
-
-        TrainingResults training_results = training_strategy.perform_training();
-
-        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-
-        // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
-        // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
-
-        // transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
-
-        // transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
-        // transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
-        // transformer.set_input_length(input_length);
-        // transformer.set_decoder_length(decoder_length);
-
-
-        // language_dataset.print_vocabulary(language_dataset.get_input_vocabulary());
-        //Testing
-
-        // const TestingAnalysis testing_analysis(&transformer, &language_dataset);
-        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
-
-        // cout << "TESTING ANALYSIS:" << endl;
-        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
-
-        string prediction = transformer.calculate_outputs({"The USA dropped an atomic bomb on Hiroshima in 1945."});
-
-        cout << "Target: Los Estados Unidos lanzaron una bomba atómica sobre Hiroshima en 1945." << endl << "Prediction: " << prediction << endl<<endl;
-
-        string prediction_2 = transformer.calculate_outputs({"Tom has two girlfriends."});
-
-        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction_2 << endl<<endl;
-
-        string prediction_3 = transformer.calculate_outputs({"Please pass me the salt."});
-
-        cout << "Target: Por favor, pasame la sal." << endl << "Prediction: " << prediction_3 << endl<<endl;
-
-        string prediction_4 = transformer.calculate_outputs({"I have to go now."});
-
-        cout << "Target: Ahora me tengo que ir." << endl << "Prediction: " << prediction_4 << endl<<endl;
-
-        string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"So there is no way for me to plug it in here in the US unless I go by a converter."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Great for the jawbone."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Tied to charger for conversations lasting more than 45 minutes.MAJOR PROBLEMS!!"},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"The mic is great."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"I have to jiggle the plug to get it to line up right to get decent volume."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"If you have several dozen or several hundred contacts, then imagine the fun of sending each of them one by one."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"If you are Razr owner...you must have this!"},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Needless to say, I wasted my money."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        // Data Set
-
-        LanguageDataset language_dataset({0},{0});
-
-        language_dataset.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_dataset.xml");
-
-
-        const vector<string>& completion_vocabulary = language_dataset.get_completion_vocabulary();
-        const vector<string>& context_vocabulary = language_dataset.get_context_vocabulary();
-
-        const Index embedding_dimension = 64;
-        const Index perceptron_depth = 128;
-        const Index heads_number = 4;
-        const Index number_of_layers = 1;
-
-        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
-
-        const dimensions target_dimensions = {language_dataset.get_completion_length(), language_dataset.get_completion_vocabulary_size()};
-
-        const dimensions input_dimensions = {language_dataset.get_context_length(), language_dataset.get_context_vocabulary_size()};
-
-        Transformer transformer(target_dimensions, input_dimensions, complexity);
-        transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-        transformer.set_model_type_string("TextClassification");
-
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
-
-        const TestingAnalysis testing_analysis(&transformer, &language_dataset);
-
-        string prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        // cout << "Calculating confusion...." << endl;
-        // const Tensor<Index, 2> confusion = testing_analysis.calculate_transformer_confusion();
-        // cout << "\nConfusion matrix:\n" << confusion << endl;
-
-        prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Buyer Beware, you could flush money right down the toilet."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Best I've found so far .... I've tried 2 other bluetooths and this one has the best quality (for both me and the listener) as well as ease of using."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Arrived quickly and much less expensive than others being sold."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"I can't use this case because the smell is disgusting."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Excellent sound, battery life and inconspicuous to boot!."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"I do not like the product. Very bad quality."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
-
-        prediction = testing_analysis.test_transformer({"Incredible product. The sound is just excellent."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
-        cout<<endl;
-
-        // //only good reviews:
-
-        // string prediction = testing_analysis.test_transformer({"I have to use the smallest earpieces provided, but it stays on pretty well."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I have always used corded headsets and the freedom from the wireless is very helpful."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"This BlueAnt Supertooth hands-free phone speaker is AWESOME."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I bought this battery with a coupon from Amazon and I'm very happy with my purchase."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"you can even take self portraits with the outside (exterior) display, very cool."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Also its slim enough to fit into my alarm clock docking station without removing the case."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Best of all is the rotating feature, very helpful."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I would highly recommend this."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I had absolutely no problem with this headset linking to my 8530 Blackberry Curve!"},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"The keyboard is a nice compromise between a full QWERTY and the basic cell phone number keypad."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // string translation = testing_analysis.test_transformer({"I like dogs."},true);
-        // cout<<translation<<endl;
-
-        // //only bad reviews:
-        // string prediction = testing_analysis.test_transformer({"Tied to charger for conversations lasting more than 45 minutes.MAJOR PROBLEMS!!"},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I have to jiggle the plug to get it to line up right to get decent volume."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Not a good bargain."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"The construction of the headsets is poor."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Could not get strong enough signal."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"it did not work in my cell phone plug i am very up set with the charger!."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Basically the service was very bad."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"The majority of the Logitech earbud headsets failed."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"very disappointed."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"This is essentially a communications tool that does not communicate."},false);
-        // cout<<prediction<<endl;
-        // cout<<endl;
-*/
         cout << "Bye!" << endl;
 
         return 0;

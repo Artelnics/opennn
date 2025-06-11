@@ -23,7 +23,6 @@ public:
 
     ImageDataset(const filesystem::path&);
 
-
     Index get_channels_number() const;
     Index get_image_width() const;
     Index get_image_height() const;

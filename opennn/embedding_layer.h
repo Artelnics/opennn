@@ -48,6 +48,9 @@ public:
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
 
+    bool scale_embedding = false;
+    bool positional_encoding_xxx = false;
+
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
@@ -103,13 +106,13 @@ private:
 
 private:
 
-    Index sequence_length;
+    Index sequence_length = 0;
 
     Tensor<type, 2> weights;
 
     Tensor<type, 2> positional_encoding;
 
-    type dropout_rate;
+    type dropout_rate = type(0);
 };
 
 
@@ -137,7 +140,6 @@ struct EmbeddingBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 2> sample_deltas;
     Tensor<type, 2> weight_derivatives;
 };
 
@@ -161,7 +163,6 @@ struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void print() const override;
 
-    type* sample_deltas_device = nullptr;
     type* weight_derivatives_device = nullptr;
 };
 

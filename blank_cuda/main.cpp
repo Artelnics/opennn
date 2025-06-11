@@ -16,6 +16,7 @@
 #include "../opennn/pch.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/vgg16.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/image_dataset.h"
@@ -57,23 +58,35 @@ int main()
 
         data_set.print_data();
         */
+<<<<<<< HEAD
+=======
+        
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         ImageDataset data_set;
 
-        data_set.set_data_path("C:/cifar10_bmp");
+        data_set.set_data_path("../examples/mnist/data");
 
         data_set.read_bmp();
 
         data_set.split_samples_random(0.8, 0.0, 0.2);
-        
+
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
+<<<<<<< HEAD
         const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
         /*
+=======
+        const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
+        
+        // Neural network
+
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
-            { 1 },
+            { 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
+<<<<<<< HEAD
         */
 
         NeuralNetwork neural_network;
@@ -175,6 +188,11 @@ int main()
             "probabilistic")
         );
         
+=======
+        
+        //VGG16 neural_network(input_dimensions, target_dimensions);
+
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -183,7 +201,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(128);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(25);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
         //training_strategy.perform_training();

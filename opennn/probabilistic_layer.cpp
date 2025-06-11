@@ -623,7 +623,6 @@ void ProbabilisticLayerBackPropagationLM::print() const
         << squared_errors_Jacobian << endl;
 }
 
-
 #ifdef OPENNN_CUDA
 
 void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,

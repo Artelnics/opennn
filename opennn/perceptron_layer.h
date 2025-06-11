@@ -26,12 +26,7 @@ public:
         Linear,
         RectifiedLinear,
         ExponentialLinear,
-        ScaledExponentialLinear,
-        SoftPlus,
-        SoftSign,
-        HardSigmoid,
-        Softmax
-    };
+        Softmax};
 
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},
@@ -247,7 +242,13 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
 
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
+    void* dropout_states = nullptr;
+    size_t dropout_states_size = 0;
+    unsigned long long dropout_seed = 1337ULL; // @todo random
+
+    void* dropout_reserve_space = nullptr;
+    size_t dropout_reserve_space_size = 0;  
 };
 
 

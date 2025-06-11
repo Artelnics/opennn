@@ -166,8 +166,6 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> attention_output_deltas;
     Tensor<type, 3> concatenated_attention_output_deltas;
 
-    Tensor<type, 2> sample_deltas;
-
     Tensor<type, 4> query_deltas;
     Tensor<type, 4> key_deltas;
     Tensor<type, 4> value_deltas;

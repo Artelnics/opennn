@@ -23,8 +23,8 @@ public:
 
     LanguageDataset(const filesystem::path&);
 
-    const unordered_map<string, Index>& get_input_vocabulary() const;
-    const unordered_map<string, Index>& get_target_vocabulary() const;
+    const vector<string>& get_input_vocabulary() const;
+    const vector<string>& get_target_vocabulary() const;
 
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
@@ -32,47 +32,43 @@ public:
     Index get_input_length() const;
     Index get_target_length() const;
 
-    void set_input_vocabulary(const unordered_map<string, Index>&);
-    void set_target_vocabulary(const unordered_map<string, Index>&);
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
 
     void read_csv() override;
 
     Index count_non_empty_lines() const;
 
-    void from_XML(const XMLDocument&) override;
-    void to_XML(XMLPrinter&) const override;
+    void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
 
-    vector<string> tokenize(const string& document);
-
-    unordered_map<string, Index> create_vocabulary(const vector<vector<string>>& document_tokens);
+    void encode_input_data(const vector<vector<string>>&);
+    void encode_target_data(const vector<vector<string>>&);
 
     void print() const override;
 
-    void print_vocabulary(const unordered_map<string, Index>& vocabulary);
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
+
+    void print_input_vocabulary() const;
+    void print_target_vocabulary() const;
 
     inline static const string PAD_TOKEN = "[PAD]";     // 0
     inline static const string UNK_TOKEN = "[UNK]";     // 1
     inline static const string START_TOKEN = "[START]"; // 2
     inline static const string END_TOKEN = "[END]";     // 3
 
-    inline static const vector<string> RESERVED_TOKENS = {
-        PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN
-    };
+    inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 
 private:
 
-    vector<vector<string>> input_tokens;
-    vector<vector<string>> target_tokens;
-
-    unordered_map<string, Index> input_vocabulary;
-    unordered_map<string, Index> target_vocabulary;
+    vector<string> input_vocabulary;
+    vector<string> target_vocabulary;
 
     Index maximum_input_length = 0;
     Index maximum_target_length = 0;
 
-    Index target_vocabulary_size = 0;
-    Index input_vocabulary_size = 0;
-
+    Index minimum_word_frequency = 2;
+    Index maximum_vocabulary_size = 1000;
 };
 
 }

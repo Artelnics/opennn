@@ -343,8 +343,8 @@ void OptimizationAlgorithm::set_vocabularies()
 
     LanguageDataset* language_dataset = static_cast<LanguageDataset*>(Dataset);
 
-    const unordered_map<string, Index>& input_vocabulary = language_dataset->get_input_vocabulary();
-    const unordered_map<string, Index>& target_vocabulary = language_dataset->get_target_vocabulary();
+    const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
+    const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
 
@@ -491,13 +491,11 @@ void TrainingResults::print(const string &message)
     const Index epochs_number = training_error_history.size();
 
     cout << message << endl
-         << "Training results" << endl
-         << "Epochs number: " << epochs_number-1 << endl
-         << "Training error: " << training_error_history(epochs_number-1) << endl;
-
-    if(abs(training_error_history(epochs_number-1) + type(1)) < NUMERIC_LIMITS_MIN)
-        cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
-
+        << "Training results" << endl
+        << "Epochs number: " << epochs_number - 1 << endl
+        << "Training error: " << training_error_history(epochs_number - 1) << endl;
+    if (selection_error_history.size() > 0)
+        cout << "Selection error: " << selection_error_history(epochs_number - 1) << endl;
     cout << "Stopping condition: " << write_stopping_condition() << endl;
 }
 
