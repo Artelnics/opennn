@@ -6,20 +6,22 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef IMAGEDATASET_H
-#define IMAGEDATASET_H
+#ifndef IMAGEDataset_H
+#define IMAGEDataset_H
 
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {
 
-class ImageDataSet : public DataSet
+class ImageDataset : public Dataset
 {
 
 public:
 
-    ImageDataSet(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
+    ImageDataset(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
+
+    ImageDataset(const filesystem::path&);
 
     Index get_channels_number() const;
     Index get_image_width() const;

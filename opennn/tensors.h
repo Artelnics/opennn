@@ -144,10 +144,11 @@ type l2_distance(const type&, const type&);
 type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
-void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
-void fill_tensor_3D(const Tensor<type, 2>&,const vector<Index>&,const vector<Index>&,type*);
+
+void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
+void fill_tensor_3d(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
 template <typename Type, int Rank>
 bool contains(const Tensor<Type, Rank>& vector, const Type& value)
@@ -189,6 +190,11 @@ string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
 Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
+
+dimensions prepend(const Index& x, const dimensions& d);
+
+
+Index get_size(const dimensions& d);
 
 template <typename T>
 string vector_to_string(const vector<T>& x, const string& separator = " ")
@@ -248,6 +254,7 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 {
     size_t maximum_size = 0;
 
+    #pragma omp parallel for reduction(max : maximum_size)
     for (size_t i = 0; i < v.size(); i++)
         if (v[i].size() > maximum_size)
             maximum_size = v[i].size();

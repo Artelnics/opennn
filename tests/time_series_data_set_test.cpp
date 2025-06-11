@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/time_series_data_set.h"
+#include "../opennn/time_series_dataset.h"
 #include "../opennn/tensors.h"
 
 TEST(TimeSeriesDataSet, DefaultConstructor)

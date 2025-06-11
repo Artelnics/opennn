@@ -623,7 +623,6 @@ void ProbabilisticLayerBackPropagationLM::print() const
         << squared_errors_Jacobian << endl;
 }
 
-
 #ifdef OPENNN_CUDA
 
 void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
@@ -652,7 +651,7 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation_cuda->activation_descriptor;
 
     const cudnnTensorDescriptor_t& outputs_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_tensor_descriptor;
-    const cudnnTensorDescriptor_t& outputs_softmax_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_softmax_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
@@ -711,10 +710,10 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
             &alpha,
-            outputs_softmax_tensor_descriptor,
+            output_softmax_tensor_descriptor,
             combinations,
             &beta,
-            outputs_softmax_tensor_descriptor,
+            output_softmax_tensor_descriptor,
             outputs);
 
         break;
@@ -976,9 +975,9 @@ void ProbabilisticForwardPropagationCuda::set(const Index& new_batch_samples_num
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&outputs_softmax_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(outputs_softmax_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(output_softmax_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         1,
@@ -1033,7 +1032,7 @@ void ProbabilisticForwardPropagationCuda::free()
     cudaFree(outputs);
 
     cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
-    cudnnDestroyTensorDescriptor(outputs_softmax_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
     cudnnDestroyActivationDescriptor(activation_descriptor);

@@ -1,14 +1,15 @@
+
 #include "pch.h"
 
 
 #include "../opennn/correlations.h"
 #include "../opennn/tensors.h"
 #include "../opennn/statistics.h"
-#include "../opennn/data_set.h"
+#include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/scaling_layer_2d.h"
-#include "../opennn/probabilistic_layer.h"
+#include "../opennn/perceptron_layer.h"
 #include "../opennn/strings_utilities.h"
 
 using namespace opennn;
@@ -29,7 +30,6 @@ protected:
     void TearDown() override {
     }
 };
-
 
 TEST_F(CorrelationsTest, SpearmanCorrelation)
 {
@@ -82,7 +82,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     Correlation correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    //correlation.print(); /*system("pause");*/
+    //correlation.print(); system("pause");
 
     EXPECT_LE(abs(correlation.r), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);

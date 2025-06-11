@@ -34,6 +34,44 @@ Index count_tokens(const string& text, const string& separator)
 }
 
 
+vector<string> tokenize(const string& document)
+{
+    vector<string> tokens;
+    string current_token;
+
+    for (char c : document)
+    {
+        if (isalnum(c))
+        {
+            current_token += tolower(c);
+        }
+        else
+        {
+            if (!current_token.empty())
+            {
+                tokens.emplace_back(std::move(current_token));
+                current_token.clear();
+            }
+
+            if (ispunct(c))
+                tokens.emplace_back(1, c);
+        }
+    }
+
+    if (!current_token.empty())
+        tokens.emplace_back(std::move(current_token));
+
+    // @todo -> this is only for encoder-decoder
+    // if (!tokens.empty())
+    // {
+    //     tokens.insert(tokens.begin(), START_TOKEN);
+    //     tokens.emplace_back(END_TOKEN);
+    // }
+
+    return tokens;
+}
+
+
 vector<string> get_tokens(const string& text, const string& separator)
 {
     const Index tokens_number = count_tokens(text, separator);

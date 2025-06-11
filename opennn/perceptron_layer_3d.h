@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Perceptron3d : public Layer
+class Dense3d : public Layer
 {
 
 public:
@@ -25,11 +25,11 @@ public:
                           RectifiedLinear,
                           Softmax};
 
-   Perceptron3d(const Index& = 0,
-                const Index& = 0,
-                const Index& = 0,
-                const Activation& = Perceptron3d::Activation::HyperbolicTangent,
-                const string& = "perceptron_layer_3d");
+   Dense3d(const Index& = 0,
+           const Index& = 0,
+           const Index& = 0,
+           const Activation& = Dense3d::Activation::HyperbolicTangent,
+           const string& = "dense3d_layer");
 
    Index get_sequence_length() const;
    Index get_input_dimension() const;
@@ -47,15 +47,15 @@ public:
    type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const override;
 
-   const Perceptron3d::Activation& get_activation_function() const;
+   const Dense3d::Activation& get_activation_function() const;
 
    string get_activation_function_string() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const Perceptron3d::Activation& = Perceptron3d::Activation::HyperbolicTangent,
-            const string & = "perceptron_layer_3d");
+            const Dense3d::Activation& = Dense3d::Activation::HyperbolicTangent,
+            const string & = "dense3d_layer");
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
@@ -107,9 +107,9 @@ private:
 };
 
 
-struct Perceptron3dForwardPropagation : LayerForwardPropagation
+struct Dense3dForwardPropagation : LayerForwardPropagation
 {
-    Perceptron3dForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Dense3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -123,9 +123,9 @@ struct Perceptron3dForwardPropagation : LayerForwardPropagation
 };
 
 
-struct Perceptron3dBackPropagation : LayerBackPropagation
+struct Dense3dBackPropagation : LayerBackPropagation
 {
-    Perceptron3dBackPropagation(const Index& = 0, Layer* = 0);
+    Dense3dBackPropagation(const Index& = 0, Layer* = 0);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

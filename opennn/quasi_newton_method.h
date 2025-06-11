@@ -106,6 +106,8 @@ private:
    Index maximum_epochs_number;
 
    type maximum_time = type(360000);
+
+   const type epsilon = numeric_limits<type>::epsilon();
 };
 
 
@@ -146,6 +148,8 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 
     type learning_rate = type(0);
     type old_learning_rate = type(0);
+
+
 };
 
 }

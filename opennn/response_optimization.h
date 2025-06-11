@@ -10,7 +10,7 @@
 #define RESPONSEOPTIMIZATION_H
 
 #include "neural_network.h"
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {
@@ -24,7 +24,7 @@ public:
 
     enum class Condition { None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum };
 
-    ResponseOptimization(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    // Get
 
@@ -39,7 +39,7 @@ public:
 
    // Set
 
-   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    void set_evaluations_number(const Index&);
 
@@ -62,7 +62,7 @@ private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     Tensor<Condition, 1> input_conditions;
     Tensor<Condition, 1> output_conditions;
@@ -82,7 +82,7 @@ struct ResponseOptimizationResults
 {
     ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

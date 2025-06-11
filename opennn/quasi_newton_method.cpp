@@ -341,8 +341,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     }
     else
     {
-        constexpr type epsilon = std::numeric_limits<type>::epsilon();
-
         const Index parameters_number = parameters.size();
 
         #pragma omp parallel for
@@ -392,24 +390,24 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Data set
 
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* Dataset = loss_index->get_data_set();
 
-    if (!data_set)
+    if (!Dataset)
         throw runtime_error("Data set is null.");
 
-    const bool has_selection = data_set->has_selection();
+    const bool has_selection = Dataset->has_selection();
 
     const string error_type = loss_index->get_loss_method();
 
-    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index training_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
 
-    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> training_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
 
     // Neural network
 
@@ -424,10 +422,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Batch
 
-    Batch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, Dataset);
     training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
 
-    Batch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, Dataset);
     selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index
@@ -565,9 +563,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
     set_unscaling();
 
     if(display) results.print();
-
-    training_batch.shutdown_threads();
-    selection_batch.shutdown_threads();
 
     return results;
 }

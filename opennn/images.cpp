@@ -80,9 +80,9 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     if (bfType != 0x4D42)
         throw runtime_error("Not a BMP file (invalid signature 'BM'): " + image_path_str);
 
-//    uint32_t bfSize = read_u32_le(file, image_path_str);    // unused
-//    uint16_t bfReserved1 = read_u16_le(file, image_path_str); // unused
-//    uint16_t bfReserved2 = read_u16_le(file, image_path_str); // unused
+    uint32_t bfSize = read_u32_le(file, image_path_str);
+    uint16_t bfReserved1 = read_u16_le(file, image_path_str);
+    uint16_t bfReserved2 = read_u16_le(file, image_path_str);
     const uint32_t bfOffBits = read_u32_le(file, image_path_str);
 
     const uint32_t biSize = read_u32_le(file, image_path_str);
@@ -95,11 +95,11 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     const uint16_t biPlanes = read_u16_le(file, image_path_str);
     const uint16_t biBitCount = read_u16_le(file, image_path_str);
     const uint32_t biCompression = read_u32_le(file, image_path_str);
-//    uint32_t biSizeImage = read_u32_le(file, image_path_str); // unused
-//    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str); // unused
-//    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str); // unused
+//    uint32_t biSizeImage = read_u32_le(file, image_path_str);
+//    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str);
+//    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str);
     const uint32_t biClrUsed = read_u32_le(file, image_path_str);
-//    uint32_t biClrImportant = read_u32_le(file, image_path_str); // unused
+//    uint32_t biClrImportant = read_u32_le(file, image_path_str);
 
     if (biWidth <= 0)
         throw runtime_error("BMP width must be positive. Got: " + to_string(biWidth) + " in file: " + image_path_str);
@@ -110,19 +110,13 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     if (biCompression != 0)
         throw runtime_error("Unsupported BMP compression type: " + to_string(biCompression) + ". Only uncompressed (0 = BI_RGB) is supported. File: " + image_path_str);
 
-    switch (biBitCount) 
-    {
-    case 8:
-    case 24:
-    case 32:
-        break;
-    default:
-        throw runtime_error("Unsupported BMP bit count: " + to_string(biBitCount) + " in file: " + image_path_str + ". Supported: 8, 24, 32.");
-    }
+    if (biBitCount != 8 && biBitCount != 24 && biBitCount != 32)
+        throw std::runtime_error("Unsupported BMP bit count: " + to_string(biBitCount) + " in file: " + image_path_str + ". Supported: 8, 24, 32.");
 
-    Index tensor_height = (biHeight_signed < 0) ? -biHeight_signed : biHeight_signed;
-    Index tensor_width = biWidth;
-    bool top_down = (biHeight_signed < 0);
+    const Index tensor_height = (biHeight_signed < 0) ? -biHeight_signed : biHeight_signed;
+
+    const Index tensor_width = biWidth;
+    const bool top_down = (biHeight_signed < 0);
 
     const Index tensor_channels = 3;
     Tensor<float, 3> image_tensor(tensor_height, tensor_width, tensor_channels);
@@ -151,24 +145,23 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     }
 
     file.seekg(bfOffBits, ios::beg);
+
     if (!file)
         throw runtime_error("Failed to seek to pixel data offset (" + to_string(bfOffBits) + ") in BMP: " + image_path_str);
 
-    int bytes_per_pixel_in_file;
+    const int bytes_per_pixel_in_file =
+        (biBitCount == 32) ? 4 :
+        (biBitCount == 24) ? 3 :
+        (biBitCount == 8)  ? 1 :
+        throw std::logic_error("Internal error: Unhandled biBitCount in pixel reading stage.");
 
-    if (biBitCount == 32) bytes_per_pixel_in_file = 4;
-    else if (biBitCount == 24) bytes_per_pixel_in_file = 3;
-    else if (biBitCount == 8) bytes_per_pixel_in_file = 1;
-    else
-        throw logic_error("Internal error: Unhandled biBitCount in pixel reading stage.");
-
-    long long row_data_bytes = tensor_width * bytes_per_pixel_in_file;
-    long long row_stride_in_file = ((row_data_bytes + 3) / 4) * 4;
+    const long long row_data_bytes = tensor_width * bytes_per_pixel_in_file;
+    const long long row_stride_in_file = ((row_data_bytes + 3) / 4) * 4;
     vector<unsigned char> row_buffer(row_stride_in_file);
 
     for (Index y_row = 0; y_row < tensor_height; ++y_row) 
     {
-        Index tensor_y_coord = top_down ? y_row : (tensor_height - 1 - y_row);
+        const Index tensor_y_coord = top_down ? y_row : (tensor_height - 1 - y_row);
 
         file.read(reinterpret_cast<char*>(row_buffer.data()), row_stride_in_file);
 
@@ -192,9 +185,9 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
 
             if (biBitCount == 32) 
             {
-                unsigned char b = row_buffer[x_col * 4 + 0];
-                unsigned char g = row_buffer[x_col * 4 + 1];
-                unsigned char r = row_buffer[x_col * 4 + 2];
+                const unsigned char b = row_buffer[x_col * 4 + 0];
+                const unsigned char g = row_buffer[x_col * 4 + 1];
+                const unsigned char r = row_buffer[x_col * 4 + 2];
 
                 r_val = static_cast<float>(r);
                 g_val = static_cast<float>(g);
@@ -202,21 +195,23 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
             }
             else if (biBitCount == 24) 
             {
-                unsigned char b = row_buffer[x_col * 3 + 0];
-                unsigned char g = row_buffer[x_col * 3 + 1];
-                unsigned char r = row_buffer[x_col * 3 + 2];
+                const unsigned char b = row_buffer[x_col * 3 + 0];
+                const unsigned char g = row_buffer[x_col * 3 + 1];
+                const unsigned char r = row_buffer[x_col * 3 + 2];
+
                 r_val = static_cast<float>(r);
                 g_val = static_cast<float>(g);
                 b_val = static_cast<float>(b);
             }
             else if (biBitCount == 8) 
             {
-                unsigned char index = row_buffer[x_col];
+                const unsigned char index = row_buffer[x_col];
 
                 if (index >= palette.size())
                     throw runtime_error("Palette index " + to_string(index) + " out of bounds (palette size " + to_string(palette.size()) + ") in BMP: " + image_path_str);
 
                 const RGBQuad& color = palette[index];
+
                 r_val = static_cast<float>(color.red);
                 g_val = static_cast<float>(color.green);
                 b_val = static_cast<float>(color.blue);
@@ -325,19 +320,17 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
             transformed_coordinates = rotation_matrix.contract(coordinates, axes(1,0));
 
-            if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width
-            && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
-            {
+            if(transformed_coordinates[0] >= 0
+            && transformed_coordinates[0] < width
+            && transformed_coordinates[1] >= 0
+            && transformed_coordinates[1] < height)
                 for(Index channel = 0; channel < channels; channel++)
                     output(x, y, channel) = input(int(transformed_coordinates[0]),
                                                   int(transformed_coordinates[1]),
                                                   channel);
-            }
             else
-            {
                 for(Index channel = 0; channel < channels; channel++)
                     output(x, y, channel) = type(0);
-            }
         }
     }
 }

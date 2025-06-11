@@ -41,15 +41,9 @@ void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
     if (convolution_type == Convolution::Same)
-        if (row_stride != 1 || column_stride != 1)
-            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides());
-        else
-            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
+        preprocessed_inputs = inputs.pad(get_paddings());
     else
-        if (row_stride != 1 || column_stride != 1)
-            preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides());
-        else
-            preprocessed_inputs.device(*thread_pool_device) = inputs;
+        preprocessed_inputs.device(*thread_pool_device) = inputs;
 }
 
 
@@ -80,6 +74,8 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
+    const Index kernels_number = get_kernels_number();
+
     if (is_training)
     {
         Tensor<type, 1>& means = this_forward_propagation->means;
@@ -88,11 +84,19 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
         means.device(*thread_pool_device) = outputs.mean(array<Index, 3>({0, 1, 2}));
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
+        outputs.device(*thread_pool_device) =
+            (outputs - means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
+            (standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
     }
-
-    const Index kernels_number = get_kernels_number();
+    else
+    {
+        outputs.device(*thread_pool_device) =
+            (outputs - moving_means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
+            (moving_standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+    }
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -160,10 +164,6 @@ void Convolutional::calculate_activations(Tensor<type, 4>& activations, Tensor<t
     case Activation::Logistic: logistic(activations, activation_derivatives); return;
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-    case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
-    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
     case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
     default: return;
     }
@@ -182,11 +182,11 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
     Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
     Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
-    
+
     preprocess_inputs(inputs, preprocessed_inputs);
 
     calculate_convolutions(preprocessed_inputs, outputs);
-    
+
     if(batch_normalization)
     {
         normalize(layer_forward_propagation, is_training);
@@ -276,7 +276,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     {
         const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map_(deltas, kernel_index);
 
-        TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
+        TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data + kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);
 
         kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, array<Index, 3>({0, 1, 2}));
@@ -346,10 +346,6 @@ string Convolutional::get_activation_function_string() const
     case Activation::HyperbolicTangent: return "HyperbolicTangent";
     case Activation::Linear: return "Linear";
     case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
-    case Activation::SoftPlus: return "SoftPlus";
-    case Activation::SoftSign: return "SoftSign";
-    case Activation::HardSigmoid: return "HardSigmoid";
     case Activation::ExponentialLinear: return "ExponentialLinear";
     }
 
@@ -365,7 +361,7 @@ Index Convolutional::get_output_height() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_height - kernel_height + padding.first)/strides) + 1;
+    return floor((input_height - kernel_height + padding.first*2)/strides) + 1;
 }
 
 
@@ -377,7 +373,7 @@ Index Convolutional::get_output_width() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_width - kernel_width + padding.second)/strides) + 1;
+    return floor((input_width - kernel_width + padding.second*2)/strides) + 1;
 }
 
 
@@ -449,28 +445,31 @@ Index Convolutional::get_kernels_number() const
 
 Index Convolutional::get_padding_height() const
 {
-    switch (convolution_type)
-    {
-    case Convolution::Valid:
+    if (convolution_type == Convolution::Valid)
         return 0;
+    else if (convolution_type == Convolution::Same)
+    {
+        const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
 
-    case Convolution::Same:
-        return row_stride * (input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
+        const Index total_padding = (output_height - 1) * get_row_stride() + get_kernel_height() - get_input_height();
+
+        return total_padding / 2;
     }
 
     throw runtime_error("Unknown convolution type");
 }
 
-
 Index Convolutional::get_padding_width() const
 {
-    switch(convolution_type)
-    {
-    case Convolution::Valid:
+    if (convolution_type == Convolution::Valid)
         return 0;
+    else if (convolution_type == Convolution::Same)
+    {
+        const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
 
-    case Convolution::Same:
-        return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
+        const Index total_padding = (output_width - 1) * get_column_stride() + get_kernel_width() - get_input_width();
+
+        return total_padding / 2;
     }
 
     throw runtime_error("Unknown convolution type");
@@ -519,6 +518,9 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
+
+    if (new_convolution_type == Convolution::Same && (new_kernel_dimensions[0] % 2 == 0 || new_kernel_dimensions[1] % 2 == 0))
+        throw runtime_error("Kernel dimensions (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
     
     input_dimensions = new_input_dimensions;
 
@@ -600,14 +602,6 @@ void Convolutional::set_activation_function(const string& new_activation_functio
         activation_function = Activation::Linear;
     else if(new_activation_function_name == "RectifiedLinear")
         activation_function = Activation::RectifiedLinear;
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-        activation_function = Activation::ScaledExponentialLinear;
-    else if(new_activation_function_name == "SoftPlus")
-        activation_function = Activation::SoftPlus;
-    else if(new_activation_function_name == "SoftSign")
-        activation_function = Activation::SoftSign;
-    else if(new_activation_function_name == "HardSigmoid")
-        activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = Activation::ExponentialLinear;
     else
@@ -674,21 +668,7 @@ void Convolutional::set_parameters(const Tensor<type, 1>& new_parameters, Index&
 
 pair<Index, Index> Convolutional::get_padding() const
 {
-    if (convolution_type == Convolution::Valid)
-        return { 0, 0 };
-
-    if (convolution_type == Convolution::Same)
-    {
-        const Index pad_rows = max<Index>(0, 
-            ((get_input_height() + get_row_stride() - 1) / get_row_stride() - 1) * get_row_stride() + get_kernel_height() - get_input_height());
-
-        const Index pad_cols = max<Index>(0, 
-            ((get_input_width() + get_column_stride() - 1) / get_column_stride() - 1) * get_column_stride() + get_kernel_width() - get_input_width());
-
-        return { (pad_rows + 1) / 2, (pad_cols + 1) / 2 };
-    }
-
-    throw runtime_error("Unknown convolution type.");
+    return { get_padding_height(), get_padding_width() };
 }
 
 
@@ -739,10 +719,10 @@ void Convolutional::print() const
     cout << "Output dimensions: " << endl;
     print_vector(get_output_dimensions());
     cout << "Biases dimensions: " << biases.dimensions() << endl;
-    cout << "Synaptic weights dimensions: " << weights.dimensions() << endl;
+    cout << "Weights dimensions: " << weights.dimensions() << endl;
     cout << "biases:" << endl;
     cout << biases << endl;
-    cout << "Synaptic weights:" << endl;
+    cout << "Weights:" << endl;
     cout << weights << endl;
 }
 
@@ -840,8 +820,8 @@ void ConvolutionalForwardPropagation::set(const Index& new_batch_size, Layer* ne
     const Index padding_width = convolutional_layer->get_padding_width();
     
     preprocessed_inputs.resize(batch_size,
-                               input_height + padding_height,
-                               input_width + padding_width,
+                               input_height + (padding_height*2),
+                               input_width + (padding_width*2),
                                input_channels);
 
     outputs.resize(batch_size,
@@ -1441,7 +1421,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Error combinations derivatives
 
-    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)))
+    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
 

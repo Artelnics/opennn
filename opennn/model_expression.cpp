@@ -9,7 +9,7 @@
 #include "model_expression.h"
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn {
 
@@ -99,39 +99,6 @@ string ModelExpression::write_selu_c()
 }
 
 
-string ModelExpression::write_hard_sigmoid_c()
-{
-    return
-        "float HardSigmoid(float x) {\n"
-        "float z = 1/(1+exp(-x));\n"
-        "return z;\n"
-        "}\n"
-        "\n";
-}
-
-
-string ModelExpression::write_soft_plus_c()
-{
-    return
-        "float SoftPlus(float x) {\n"
-        "float z = log(1+exp(x));\n"
-        "return z;\n"
-        "}\n"
-        "\n";
-}
-
-
-string ModelExpression::write_soft_sign_c()
-{
-    return
-        "float SoftSign(float x) {\n"
-        "float z = x/(1+abs(x));\n"
-        "return z;\n"
-        "}\n"
-        "\n";
-}
-
-
 void ModelExpression::auto_association_c(const NeuralNetwork& neural_network)
 {
     /*
@@ -156,7 +123,7 @@ void ModelExpression::auto_association_c(const NeuralNetwork& neural_network)
 
 string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 {
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
+//    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     string aux;
     ostringstream buffer;
@@ -178,9 +145,6 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
     bool ReLU = false;
     bool ExpLinear = false;
     bool SExpLinear = false;
-    bool HSigmoid = false;
-    bool SoftPlus = false;
-    bool SoftSign = false;
 
     buffer << write_comments_c();
 
@@ -218,10 +182,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
         {{"Logistic", &logistic},
          {"ReLU", &ReLU},
          {"ExponentialLinear", &ExpLinear},
-         {"SELU", &SExpLinear},
-         {"HardSigmoid", &HSigmoid},
-         {"SoftPlus", &SoftPlus},
-         {"SoftSign", &SoftSign}};
+         {"SELU", &SExpLinear}};
 
     const Index lines_number = lines.size();
 
@@ -242,9 +203,6 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
     if(ReLU) buffer << write_relu_c();
     if(ExpLinear) buffer << write_exponential_linear_c();
     if (SExpLinear) buffer << write_exponential_linear_c();
-    if(HSigmoid) buffer << write_hard_sigmoid_c();
-    if(SoftPlus) buffer << write_soft_plus_c();
-    if(SoftSign) buffer << write_soft_sign_c();
 
     buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
            << "{" << endl;
@@ -441,41 +399,6 @@ string ModelExpression::scaled_exponential_linear_api()
         "\n";
 }
 
-string ModelExpression::hard_sigmoid()
-{
-    return
-        "<?php"
-        "function HardSigmoid(int $x) {"
-        "$z=1/(1+exp(-$x));"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-string ModelExpression::soft_plus()
-{
-    return
-        "<?php"
-        "function SoftPlus(int $x) {"
-        "$z=log(1+exp($x));"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-string ModelExpression::soft_sign()
-{
-    return
-        "<?php"
-        "function SoftSign(int $x) {"
-        "$z=$x/(1+abs($x));"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
 
 string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 {
@@ -493,9 +416,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     bool ReLU         = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
-    bool HSigmoid     = false;
-    bool SoftPlus     = false;
-    bool SoftSign     = false;
 
     buffer << write_header_api();
 
@@ -573,19 +493,11 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     string target_string1("ReLU");
     string target_string4("ExponentialLinear");
     string target_string5("SELU");
-    string target_string6("HardSigmoid");
-    string target_string7("SoftPlus");
-    string target_string8("SoftSign");
 
     size_t substring_length0;
     size_t substring_length1;
-    size_t substring_length2;
-    size_t substring_length3;
     size_t substring_length4;
     size_t substring_length5;
-    size_t substring_length6;
-    size_t substring_length7;
-    size_t substring_length8;
 
     string new_word;
 
@@ -600,17 +512,11 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
         substring_length1 = t.find(target_string1);
         substring_length4 = t.find(target_string4);
         substring_length5 = t.find(target_string5);
-        substring_length6 = t.find(target_string6);
-        substring_length7 = t.find(target_string7);
-        substring_length8 = t.find(target_string8);
 
         if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
         if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
-        if(substring_length6 < t.size() && substring_length6!=0){ HSigmoid     = true; }
-        if(substring_length7 < t.size() && substring_length7!=0){ SoftPlus     = true; }
-        if(substring_length8 < t.size() && substring_length8!=0){ SoftSign     = true; }
 
         for(int i = 0; i < found_tokens_and_input_names.size(); i++)
         {
@@ -681,30 +587,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
                << "}else{" << endl
                << "$z=$lambda*$alpha*(exp($x)-1);" << endl
                << "}" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>\n" << endl;
-
-    if(HSigmoid)
-        buffer << "<?php" << endl
-               << "function HardSigmoid(int $x) {" << endl
-               << "$z=1/(1+exp(-$x));" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>\n" << endl;
-
-    if(SoftPlus)
-        buffer << "<?php" << endl
-               << "function SoftPlus(int $x) {" << endl
-               << "$z=log(1+exp($x));" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>\n" << endl;
-
-    if(SoftSign)
-        buffer << "<?php" << endl
-               << "function SoftSign(int $x) {" << endl
-               << "$z=$x/(1+abs($x));" << endl
                << "return $z;" << endl
                << "}" << endl
                << "?>\n" << endl;
@@ -790,36 +672,6 @@ string ModelExpression::selu_javascript()
         "\t\tvar z = lambda*alpha*(Math.exp(x)-1);\n"
         "\t}\n"
         "return z;\n"
-        "}\n";
-}
-
-
-string ModelExpression::hard_sigmoid_javascript()
-{
-    return
-        "function HardSigmoid(x) {\n"
-        "\tvar z=1/(1+Math.exp(-x));\n"
-        "\treturn z;\n"
-        "}\n";
-}
-
-
-string ModelExpression::soft_plus_javascript()
-{
-    return
-        "function SoftPlus(int x) {\n"
-        "\tvar z=log(1+Math.exp(x));\n"
-        "\treturn z;\n"
-        "}\n";
-}
-
-
-string ModelExpression::softsign_javascript()
-{
-    return
-        "function SoftSign(x) {\n"
-        "\tvar z=x/(1+Math.abs(x));\n"
-        "   \treturn z;\n"
         "}\n";
 }
 
@@ -933,7 +785,7 @@ string ModelExpression::subheader_javascript()
 }
 
 
-string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network, const vector<DataSet::RawVariable>& raw_variables)
+string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network, const vector<Dataset::RawVariable>& raw_variables)
 {
     vector<string> lines;
     vector<string> found_tokens;
@@ -943,9 +795,9 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     vector<string> output_names;
 
     for (const auto& raw_variable : raw_variables)
-        if(raw_variable.use == DataSet::VariableUse::Input)
+        if(raw_variable.use == Dataset::VariableUse::Input)
             input_names.push_back(raw_variable.name);
-        else if(raw_variable.use == DataSet::VariableUse::Target)
+        else if(raw_variable.use == Dataset::VariableUse::Target)
             output_names.push_back(raw_variable.name);
 
 
@@ -966,9 +818,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     bool ReLU         = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
-    bool HSigmoid     = false;
-    bool SoftPlus     = false;
-    bool SoftSign     = false;
 
     ostringstream buffer;
 
@@ -993,7 +842,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
             const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-            if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+            if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
             {
                 min_value = inputs_descriptives[i].minimum;
                 max_value = inputs_descriptives[i].maximum;
@@ -1020,7 +869,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
+            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
                      ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0")))// INPUT & BINARY (1,0)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
@@ -1043,7 +892,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
+            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1065,7 +914,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+            else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1187,7 +1036,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
         const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-        if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+        if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
         {
             buffer << "\t" << "var " << fixes_input_names[k] << " =" << " document.getElementById(\"" << fixes_input_names[k] << "\").value; " << endl;
             buffer << "\t" << "inputs.push(" << fixes_input_names[k] << ");" << endl;
@@ -1195,7 +1044,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             variables_input_fixed.push_back(fixes_input_names[k]);
             variables_input.push_back(input_names[k]);
         }
-        else if (raw_variables[k].type == DataSet::RawVariableType::Binary)// INPUT BINARY
+        else if (raw_variables[k].type == Dataset::RawVariableType::Binary)// INPUT BINARY
         {
             string aux_buffer = "";
 
@@ -1225,7 +1074,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             variables_input_fixed.push_back(fixes_input_names[k]);
             variables_input.push_back(input_names[k]);
         }
-        else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+        else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
         {
             string aux_buffer = "";
 
@@ -1310,9 +1159,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     string target_string_1("ReLU");
     string target_string_4("ExponentialLinear");
     string target_string_5("SELU");
-    string target_string_6("HardSigmoid");
-    string target_string_7("SoftPlus");
-    string target_string_8("SoftSign");
 
     string sufix = "Math.";
 
@@ -1329,15 +1175,9 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         const size_t substring_length_1 = line.find(target_string_1);
         const size_t substring_length_4 = line.find(target_string_4);
         const size_t substring_length_5 = line.find(target_string_5);
-        const size_t substring_length_6 = line.find(target_string_6);
-        const size_t substring_length_7 = line.find(target_string_7);
-        const size_t substring_length_8 = line.find(target_string_8);
 
         if(substring_length_1 < line.size() && substring_length_1!=0) ReLU = true;
         if(substring_length_0 < line.size() && substring_length_0!=0) logistic = true;
-        if(substring_length_6 < line.size() && substring_length_6!=0) HSigmoid = true;
-        if(substring_length_7 < line.size() && substring_length_7!=0) SoftPlus = true;
-        if(substring_length_8 < line.size() && substring_length_8!=0) SoftSign = true;
         if(substring_length_4 < line.size() && substring_length_4!=0) ExpLinear = true;
         if(substring_length_5 < line.size() && substring_length_5!=0) SExpLinear = true;
 
@@ -1409,9 +1249,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     if (ReLU) buffer << relu_javascript();
     if (ExpLinear) buffer << exponential_linear_javascript();
     if (SExpLinear) buffer << "scaled_exponential_linear()";
-    if(HSigmoid) buffer << hard_sigmoid_javascript();
-    if(SoftPlus) buffer << soft_plus_javascript();
-    if (SoftSign) buffer << "soft_sign_javascript()";
 
     buffer << "function updateTextInput1(val, id)" << endl
            << "{" << endl
@@ -1474,9 +1311,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     bool ReLU         = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
-    bool HSigmoid     = false;
-    bool SoftPlus     = false;
-    bool SoftSign     = false;
 
     buffer << write_header_python();
 
@@ -1507,9 +1341,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     const string target_string1("ReLU");
     const string target_string4("ExponentialLinear");
     const string target_string5("SELU");
-    const string target_string6("HardSigmoid");
-    const string target_string7("SoftPlus");
-    const string target_string8("SoftSign");
 
     for(int i = 0; i < lines.size(); i++)
     {
@@ -1520,9 +1351,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
         const size_t substring_length1 = line.find(target_string1);
         const size_t substring_length4 = line.find(target_string4);
         const size_t substring_length5 = line.find(target_string5);
-        const size_t substring_length6 = line.find(target_string6);
-        const size_t substring_length7 = line.find(target_string7);
-        const size_t substring_length8 = line.find(target_string8);
 
         if(substring_length0 < line.size() && substring_length0 != 0)
             logistic = true;
@@ -1530,14 +1358,8 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
             ReLU = true;
         if(substring_length4 < line.size() && substring_length4 != 0)
             ExpLinear = true;
-        if(substring_length5 < line.size() && substring_length5!=0)
+        if(substring_length5 < line.size() && substring_length5 != 0)
             SExpLinear = true;
-        if(substring_length6 < line.size() && substring_length6!=0)
-            HSigmoid = true;
-        if(substring_length7 < line.size() && substring_length7!=0)
-            SoftPlus = true;
-        if(substring_length8 < line.size() && substring_length8!=0)
-            SoftSign = true;
 
         word = get_first_word(line);
 
@@ -1618,21 +1440,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
                << "\t\t\t" << "z = lambda*alpha*(np.exp(x)-1)" << endl
                << "\t\t"   << "return z\n" << endl;
 
-    if(HSigmoid)
-        buffer << "\tdef HardSigmoid (x):" << endl
-               << "\t\t"   <<  "z = 1/(1+np.exp(-x))" << endl
-               << "\t\t"   <<  "return z\n" << endl;
-
-    if(SoftPlus)
-        buffer << "\tdef SoftPlus (x):" << endl
-               << "\t\t"   << "z = log(1+np.exp(x))" << endl
-               << "\t\t"   << "return z\n" << endl;
-
-    if(SoftSign)
-        buffer << "\tdef SoftSign (x):" << endl
-               << "\t\t"   << "z = x/(1+abs(x))" << endl
-               << "\t\t"   << "return z\n" << endl;
-
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
     for(int i = 0; i < inputs_number; i++)
@@ -1649,9 +1456,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     found_mathematical_expressions.push_back("ReLU");
     found_mathematical_expressions.push_back("ExponentialLinear");
     found_mathematical_expressions.push_back("SELU");
-    found_mathematical_expressions.push_back("HardSigmoid");
-    found_mathematical_expressions.push_back("SoftPlus");
-    found_mathematical_expressions.push_back("SoftSign");
 
     string sufix;
     string new_word;
@@ -1928,7 +1732,7 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 void ModelExpression::save_expression(const string& file_name,
                                       const ProgrammingLanguage& programming_language,
                                       const NeuralNetwork* neural_network,
-                                      const vector<DataSet::RawVariable>& raw_variables)
+                                      const vector<Dataset::RawVariable>& raw_variables)
 {
     ofstream file(file_name);
 

@@ -733,8 +733,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     {
         quartiles(0) = (sorted_vector[0] + sorted_vector[1]) / type(4);
         quartiles(1) = (sorted_vector[0] + sorted_vector[1]) / type(2);
-        quartiles(2) = (sorted_vector[0] + sorted_vector[1]) / type(3/4.0);
- 
+        quartiles(2) = (sorted_vector[0] + sorted_vector[1]) / type(3.0/4.0);
     }
     else if (new_size == 3)
     {
@@ -1048,7 +1047,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
 
         Tensor<type, 1> tensor_unique(unique_values.size());
-        for (size_t i = 0; i < unique_values.size(); ++i)
+        for (Index i = 0; i < unique_values.size(); ++i)
             tensor_unique(i) = unique_values[i];
 
         centers = tensor_unique;
@@ -1312,7 +1311,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
     {
         column = matrix.chip(i, 1);
 
-        if (i >= 0 && i < (Index)descriptives.size())
+        if (i >= 0 && i < descriptives.size())
             descriptives[i] = vector_descriptives(column);   
         else
             cerr << "Index out of range: " << i << std::endl;

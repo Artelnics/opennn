@@ -1,26 +1,26 @@
 #include "pch.h"
 
-#include "../opennn/image_data_set.h"
+#include "../opennn/image_dataset.h"
 
 
-TEST(ImageDataSet, DefaultConstructor)
+TEST(ImageDataset, DefaultConstructor)
 {
-    ImageDataSet image_data_set;
+    ImageDataset image_data_set;
 
     EXPECT_EQ(image_data_set.get_variables_number(), 0);
     EXPECT_EQ(image_data_set.get_samples_number(), 0);
 }
 
 
-TEST(ImageDataSet, GeneralConstructor)
+TEST(ImageDataset, GeneralConstructor)
 {
-    ImageDataSet image_data_set(5, { 4, 3, 2 }, { 1 });
+    ImageDataset image_data_set(5, { 4, 3, 2 }, { 1 });
 
     EXPECT_EQ(image_data_set.get_samples_number(), 5);
     EXPECT_EQ(image_data_set.get_image_height(), 4);
     EXPECT_EQ(image_data_set.get_image_width(), 3);
     EXPECT_EQ(image_data_set.get_channels_number(), 2);
-    EXPECT_EQ(image_data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
+    EXPECT_EQ(image_data_set.get_raw_variables_number(Dataset::VariableUse::Target), 1);
 
 }
 

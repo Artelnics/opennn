@@ -9,7 +9,7 @@
 TEST(CrossEntropyErrorTest, DefaultConstructor)
 {
 
-    CrossEntropyError cross_entropy_error;
+    CrossEntropyError2d cross_entropy_error;
 
     EXPECT_TRUE(!cross_entropy_error.has_data_set());
     EXPECT_TRUE(!cross_entropy_error.has_neural_network());
@@ -46,7 +46,7 @@ TEST(CrossEntropyErrorTest, BackPropagate)
 
     // Loss index
     
-    CrossEntropyError cross_entropy_error(&neural_network, &data_set);
+    CrossEntropyError2d cross_entropy_error(&neural_network, &data_set);
 
     BackPropagation back_propagation(samples_number, &cross_entropy_error);
     

@@ -13,19 +13,24 @@
 namespace opennn
 {
 
-WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
     set_default();
 }
 
 
-void WeightedSquaredError::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
 
-    if(thread_pool != nullptr)
-        shutdown_threads();
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -65,7 +70,7 @@ void WeightedSquaredError::set_default()
     if(!has_data_set())
         return;
 
-    if(data_set->get_samples_number() == 0)
+    if(dataset->get_samples_number() == 0)
         return;
 
     set_weights();
@@ -95,19 +100,19 @@ void WeightedSquaredError::set_weights(const type& new_positives_weight, const t
 
 void WeightedSquaredError::set_weights()
 {
-    if (!data_set) return;
+    if (!dataset) return;
 
-    const vector<DataSet::RawVariable>& target_raw_variables 
-        = data_set->get_raw_variables(DataSet::VariableUse::Target);
+    const vector<Dataset::RawVariable>& target_raw_variables 
+        = dataset->get_raw_variables(Dataset::VariableUse::Target);
 
     if(target_raw_variables.empty())
     {
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
+        const Tensor<Index, 1> target_distribution = dataset->calculate_target_distribution();
 
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
@@ -128,18 +133,18 @@ void WeightedSquaredError::set_weights()
 
 void WeightedSquaredError::set_normalization_coefficient()
 {
-    if (!data_set) return;
+    if (!dataset) return;
 
-    const vector<DataSet::RawVariable>& target_raw_variables
-        = data_set->get_raw_variables(DataSet::VariableUse::Target);
+    const vector<Dataset::RawVariable>& target_raw_variables
+        = dataset->get_raw_variables(Dataset::VariableUse::Target);
 
     if(target_raw_variables.empty())
         normalization_coefficient = type(1);
-    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+        const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-        const Index negatives = data_set->calculate_used_negatives(target_variable_indices[0]);
+        const Index negatives = dataset->calculate_used_negatives(target_variable_indices[0]);
 
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
@@ -148,9 +153,9 @@ void WeightedSquaredError::set_normalization_coefficient()
 }
 
 
-void WeightedSquaredError::set_data_set(DataSet* new_data_set)
+void WeightedSquaredError::set_data_set(Dataset* new_data_set)
 {
-    data_set = new_data_set;
+    dataset = new_data_set;
 
     set_weights();
 
@@ -164,7 +169,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 {
     // Data set
 
-    const Index total_samples_number = data_set->get_samples_number();
+    const Index total_samples_number = dataset->get_samples_number();
 
     // Batch
 
@@ -177,15 +182,12 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
-
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
-
     Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = (outputs - targets);
@@ -208,7 +210,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 {    
     // Data set
 
-    const Index total_samples_number = data_set->get_samples_number();
+    const Index total_samples_number = dataset->get_samples_number();
 
     // Batch
 

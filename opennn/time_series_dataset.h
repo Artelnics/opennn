@@ -6,24 +6,24 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef TIMESERIESDATASET_H
-#define TIMESERIESDATASET_H
+#ifndef TIMESERIESDataset_H
+#define TIMESERIESDataset_H
 
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {
 
-class TimeSeriesDataSet : public DataSet
+class TimeSeriesDataset : public Dataset
 {
 
 public:
 
-    TimeSeriesDataSet(const Index& = 0,
+    TimeSeriesDataset(const Index& = 0,
                       const dimensions& = {},
                       const dimensions& = {});
 
-    TimeSeriesDataSet(const filesystem::path&,
+    TimeSeriesDataset(const filesystem::path&,
                       const string&,
                       const bool& = true,
                       const bool& = false,
@@ -33,18 +33,12 @@ public:
 
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
-    const string& get_time_raw_variable() const;
 
     const Index& get_time_raw_variable_index() const;
-
-    const Index& get_group_raw_variable_index() const;
 
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
     void set_time_raw_variable_index(const Index&);
-
-    void set_time_raw_variable(const string&);
-    void set_group_by_raw_variable(const string&);
 
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
@@ -63,10 +57,6 @@ private:
     Index steps_ahead = 1;
 
     Index time_raw_variable_index = 0;
-
-    Index group_raw_variable_index = 0;
-
-    string time_raw_variable = " ";
 };
 
 }

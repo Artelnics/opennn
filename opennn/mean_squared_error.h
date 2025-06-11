@@ -19,7 +19,7 @@ class MeanSquaredError : public LossIndex
 
 public:
    
-   MeanSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   MeanSquaredError(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,

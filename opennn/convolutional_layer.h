@@ -27,11 +27,7 @@ public:
                           HyperbolicTangent,
                           Linear,
                           RectifiedLinear,
-                          ExponentialLinear,
-                          ScaledExponentialLinear,
-                          SoftPlus,
-                          SoftSign,
-                          HardSigmoid};
+                          ExponentialLinear};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
@@ -70,8 +66,8 @@ public:
     Index get_kernel_channels() const;
     Index get_kernels_number() const;
 
-    Index get_padding_width() const;
     Index get_padding_height() const;
+    Index get_padding_width() const;
 
     Index get_input_channels() const;
     Index get_input_height() const;
@@ -207,7 +203,8 @@ private:
    Tensor<type, 1> moving_standard_deviations;
 
    type momentum = type(0.9);
-   const type epsilon = type(1.0e-5);
+
+   const type epsilon = numeric_limits<type>::epsilon();
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;

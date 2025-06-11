@@ -17,7 +17,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/time_series_data_set.h"
+#include "../../opennn/time_series_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 
@@ -31,10 +31,23 @@ int main()
 
         // Data set
 
-        TimeSeriesDataSet time_series_data_set("../data/load.csv", ",", true, false);
+        TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
 
-        time_series_data_set.print();
-        time_series_data_set.print_data();
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting,
+                                     {time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
+                                     {},
+                                     {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
+
+        neural_network.print();
+
+        Tensor<type, 2> inputs(1, 6);
+        inputs.setRandom();
+
+        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+        MeanSquaredError mean_squared_error(&neural_network, &time_series_dataset);
+
+        cout << mean_squared_error.calculate_error_xxx() << endl;
 
         cout << "Good bye!" << endl;
 

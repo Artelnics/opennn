@@ -8,9 +8,8 @@
 
 #include <iostream>
 #include <string>
-#include <time.h>
 
-#include "../../opennn/data_set.h"
+#include "../../opennn/dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -25,36 +24,34 @@ int main()
 
         // Data set
 
-        DataSet data_set("data/iris_plant_original.csv", ";", true, false);
+        Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
 
-        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+        const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
+        const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
+
+        cout << "targets_number: " << targets_number << endl;
 
         // Neural network
 
-        const Index hidden_neurons_number = 6;
+        const Index neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                     {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
+                                     {inputs_number}, {neurons_number}, {targets_number});
+
+        neural_network.print();
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
+        TrainingStrategy training_strategy(&neural_network, &dataset);
 
         training_strategy.perform_training();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &dataset);
 
-        //testing_analysis.print_goodness_of_fit_analysis();
-
-        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        cout << "Confusion matrix:\n"
+             << testing_analysis.calculate_confusion() << endl;
 
         cout << "Good bye!" << endl;
 

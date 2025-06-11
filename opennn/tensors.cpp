@@ -465,7 +465,6 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
 {
     const type norm = l2_norm(thread_pool_device, vector);
-
     if(norm < NUMERIC_LIMITS_MIN)
     {
         gradient.setZero();
@@ -638,7 +637,7 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 }
 
 
-void fill_tensor_3D(const Tensor<type, 2>& matrix,
+void fill_tensor_3d(const Tensor<type, 2>& matrix,
                     const vector<Index>& rows_indices,
                     const vector<Index>& columns_indices,
                     type* tensor_data)
@@ -646,7 +645,7 @@ void fill_tensor_3D(const Tensor<type, 2>& matrix,
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
-    const Index batch_size=rows_indices.size();
+    const Index batch_size = rows_indices.size();
     const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
@@ -657,12 +656,10 @@ void fill_tensor_3D(const Tensor<type, 2>& matrix,
     {
         for (Index j = 0; j < sequence_length; j++)
         {
-            Index actual_row = i + j * batch_size;
+            const Index actual_row = i + j * batch_size;
 
             for (Index k = 0; k < input_size; k++)
-            {
                 batch(i, j, k) = matrix(actual_row, columns_indices[k]);
-            }
         }
     }
 }
@@ -986,6 +983,20 @@ void print_pairs(const vector<pair<string, Index>>& pairs)
 {
     for (size_t i = 0; i < pairs.size(); i++)
         cout << pairs[i].first << ": " << pairs[i].second << endl;
+}
+
+
+Index get_size(const dimensions &d)
+{
+    return accumulate(d.begin(), d.end(), 1, multiplies<Index>());
+}
+
+
+dimensions prepend(const Index &x, const dimensions &d)
+{
+    dimensions result = {x};
+    result.insert(result.end(), d.begin(), d.end());
+    return result;
 }
 
 }

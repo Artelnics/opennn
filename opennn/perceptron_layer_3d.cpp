@@ -13,59 +13,59 @@
 namespace opennn
 {
 
-Perceptron3d::Perceptron3d(const Index& new_sequence_length,
-                           const Index& new_input_dimension,
-                           const Index& new_output_dimension,
-                           const Perceptron3d::Activation& new_activation_function,
-                           const string& new_name) : Layer()
+Dense3d::Dense3d(const Index& new_sequence_length,
+                 const Index& new_input_dimension,
+                 const Index& new_output_dimension,
+                 const Dense3d::Activation& new_activation_function,
+                 const string& new_name) : Layer()
 {
     set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
 }
 
 
-Index Perceptron3d::get_sequence_length() const
+Index Dense3d::get_sequence_length() const
 {
     return sequence_length;
 }
 
 
-Index Perceptron3d::get_input_dimension() const
+Index Dense3d::get_input_dimension() const
 {
     return weights.dimension(0);
 }
 
 
-void Perceptron3d::set_dropout_rate(const type& new_dropout_rate)
+void Dense3d::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
 
-Index Perceptron3d::get_output_dimension() const
+Index Dense3d::get_output_dimension() const
 {
     return biases.size();
 }
 
 
-dimensions Perceptron3d::get_output_dimensions() const
+dimensions Dense3d::get_output_dimensions() const
 {
     return { sequence_length, get_output_dimension() };
 }
 
 
-Index Perceptron3d::get_parameters_number() const
+Index Dense3d::get_parameters_number() const
 {
     return biases.size() + weights.size();
 }
 
 
-type Perceptron3d::get_dropout_rate() const
+type Dense3d::get_dropout_rate() const
 {
     return dropout_rate;
 }
 
 
-Tensor<type, 1> Perceptron3d::get_parameters() const
+Tensor<type, 1> Dense3d::get_parameters() const
 {
     Tensor<type, 1> parameters(weights.size() + biases.size());
 
@@ -78,35 +78,30 @@ Tensor<type, 1> Perceptron3d::get_parameters() const
 }
 
 
-const Perceptron3d::Activation& Perceptron3d::get_activation_function() const
+const Dense3d::Activation& Dense3d::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string Perceptron3d::get_activation_function_string() const
+string Dense3d::get_activation_function_string() const
 {
-    switch(activation_function)
+    switch (activation_function)
     {
-    case Activation::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case Activation::Linear:
-        return "Linear";
-
-    case Activation::RectifiedLinear:
-        return "RectifiedLinear";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::Linear: return "Linear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
+    case Activation::Softmax: return "Softmax";
+    default: return {};
     }
-
-    return string();
 }
 
 
-void Perceptron3d::set(const Index& new_sequence_length,
-                       const Index& new_input_dimension, 
-                       const Index& new_output_dimension,
-                       const Perceptron3d::Activation& new_activation_function,
-                       const string& new_name)
+void Dense3d::set(const Index& new_sequence_length,
+                  const Index& new_input_dimension,
+                  const Index& new_output_dimension,
+                  const Dense3d::Activation& new_activation_function,
+                  const string& new_name)
 {
     sequence_length = new_sequence_length;
 
@@ -120,26 +115,26 @@ void Perceptron3d::set(const Index& new_sequence_length,
 
     name = new_name;
 
-    layer_type = Type::Perceptron3d;
+    layer_type = Type::Dense3d;
 
     dropout_rate = 0;
 }
 
 
-void Perceptron3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
+void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
     copy_from_vector(weights, new_parameters, index);
     copy_from_vector(biases, new_parameters, index);
 }
 
 
-void Perceptron3d::set_activation_function(const Perceptron3d::Activation& new_activation_function)
+void Dense3d::set_activation_function(const Dense3d::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void Perceptron3d::set_activation_function(const string& new_activation_function_name)
+void Dense3d::set_activation_function(const string& new_activation_function_name)
 {
     if (new_activation_function_name == "HyperbolicTangent")
         activation_function = Activation::HyperbolicTangent;
@@ -147,26 +142,28 @@ void Perceptron3d::set_activation_function(const string& new_activation_function
         activation_function = Activation::Linear;
     else if (new_activation_function_name == "RectifiedLinear")
         activation_function = Activation::RectifiedLinear;
+    else if (new_activation_function_name == "Softmax")
+        activation_function = Activation::Softmax;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
 
 
-void Perceptron3d::set_parameters_constant(const type& value)
+void Dense3d::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
     weights.setConstant(value);
 }
 
 
-void Perceptron3d::set_parameters_random()
+void Dense3d::set_parameters_random()
 {
     set_random(biases);
     set_random(weights);
 }
 
 
-void Perceptron3d::set_parameters_glorot()
+void Dense3d::set_parameters_glorot()
 {
     biases.setZero();
 
@@ -176,16 +173,18 @@ void Perceptron3d::set_parameters_glorot()
 }
 
 
-void Perceptron3d::calculate_combinations(const Tensor<type, 3>& inputs,
-                                          Tensor<type, 3>& combinations) const
+void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
+                                     Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
+        + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
+         .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
 
-    sum_matrices(thread_pool_device.get(), biases, combinations);
+    //sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 
-void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
+void Dense3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
 {
     switch(activation_function)
     {
@@ -193,19 +192,20 @@ void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<ty
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
     case Activation::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::Softmax: softmax(activations); return;
     default: return;
     }
 }
 
 
-void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                     const bool& is_training)
+void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                const bool& is_training)
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    Perceptron3dForwardPropagation* this_forward_propagation =
-        static_cast<Perceptron3dForwardPropagation*>(layer_forward_propagation.get());
+    Dense3dForwardPropagation* this_forward_propagation =
+        static_cast<Dense3dForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -221,34 +221,34 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 }
 
 
-void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                  const vector<pair<type*, dimensions>>& delta_pairs,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  unique_ptr<LayerBackPropagation>& back_propagation) const
+void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                             const vector<pair<type*, dimensions>>& delta_pairs,
+                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+                             unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    if(delta_pairs.size() > 1)     
+    if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
     TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Forward propagation
 
-    const Perceptron3dForwardPropagation* perceptron_layer_3d_forward_propagation =
-            static_cast<Perceptron3dForwardPropagation*>(forward_propagation.get());
+    const Dense3dForwardPropagation* dense3d_layer_forward_propagation =
+        static_cast<Dense3dForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
+    const Tensor<type, 3>& activation_derivatives = dense3d_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    Perceptron3dBackPropagation* perceptron_3d_back_propagation =
-            static_cast<Perceptron3dBackPropagation*>(back_propagation.get());
+    Dense3dBackPropagation* dense3d_back_propagation =
+        static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 1>& bias_derivatives = perceptron_3d_back_propagation->bias_derivatives;
-    Tensor<type, 2>& weight_derivatives = perceptron_3d_back_propagation->weight_derivatives;
+    Tensor<type, 1>& bias_derivatives = dense3d_back_propagation->bias_derivatives;
+    Tensor<type, 2>& weight_derivatives = dense3d_back_propagation->weight_derivatives;
 
-    Tensor<type, 3>& input_derivatives = perceptron_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_derivatives = dense3d_back_propagation->input_derivatives;
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
@@ -260,43 +260,43 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void Perceptron3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                   Index& index,
-                                   Tensor<type, 1>& gradient) const
+void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+                              Index& index,
+                              Tensor<type, 1>& gradient) const
 {
-    Perceptron3dBackPropagation* perceptron_back_propagation =
-        static_cast<Perceptron3dBackPropagation*>(back_propagation.get());
+    Dense3dBackPropagation* dense3d_back_propagation =
+        static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, perceptron_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, perceptron_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, dense3d_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, dense3d_back_propagation->bias_derivatives, index);
 }
 
 
-void Perceptron3d::from_XML(const XMLDocument& document)
+void Dense3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3d");
+    const XMLElement* dense2d_layer_element = document.FirstChildElement("Dense3d");
 
-    if(!perceptron_layer_element)
-        throw runtime_error("Perceptron3d element is nullptr.\n");
+    if(!dense2d_layer_element)
+        throw runtime_error("Dense3d element is nullptr.\n");
 
-    const Index new_sequence_length = read_xml_index(perceptron_layer_element, "InputsNumber");
-    const Index new_input_dimension = read_xml_index(perceptron_layer_element, "InputsDepth");
-    const Index new_output_dimension = read_xml_index(perceptron_layer_element, "NeuronsNumber");
+    const Index new_sequence_length = read_xml_index(dense2d_layer_element, "InputsNumber");
+    const Index new_input_dimension = read_xml_index(dense2d_layer_element, "InputsDepth");
+    const Index new_output_dimension = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
+    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     Index index = 0;
 
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
+    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 
-void Perceptron3d::to_XML(XMLPrinter& printer) const
+void Dense3d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Perceptron3d");
+    printer.OpenElement("Dense3d");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
@@ -309,7 +309,7 @@ void Perceptron3d::to_XML(XMLPrinter& printer) const
 }
 
 
-void Perceptron3dForwardPropagation::print() const
+void Dense3dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl
@@ -318,16 +318,16 @@ void Perceptron3dForwardPropagation::print() const
 }
 
 
-Perceptron3dForwardPropagation::Perceptron3dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Dense3dForwardPropagation::Dense3dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> Perceptron3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Dense3dForwardPropagation::get_outputs_pair() const
 {
-    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
+    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
 
     const Index sequence_length = perceptron_layer_3d->get_sequence_length();
     const Index output_dimension = perceptron_layer_3d->get_output_dimension();
@@ -336,11 +336,11 @@ pair<type*, dimensions> Perceptron3dForwardPropagation::get_outputs_pair() const
 }
 
 
-void Perceptron3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
-    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
+    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
 
     batch_size = new_batch_size;
 
@@ -354,11 +354,11 @@ void Perceptron3dForwardPropagation::set(const Index& new_batch_size, Layer* new
 }
 
 
-void Perceptron3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
-    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
+    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
 
     batch_size = new_batch_size;
 
@@ -372,7 +372,7 @@ void Perceptron3dBackPropagation::set(const Index& new_batch_size, Layer* new_la
 }
 
 
-void Perceptron3dBackPropagation::print() const
+void Dense3dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
          << bias_derivatives << endl
@@ -381,22 +381,22 @@ void Perceptron3dBackPropagation::print() const
 }
 
 
-Perceptron3dBackPropagation::Perceptron3dBackPropagation(const Index& new_batch_size, Layer* new_layer)
+Dense3dBackPropagation::Dense3dBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> Perceptron3dBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pairs() const
 {
-    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
+    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
 
     const Index sequence_length = perceptron_layer_3d->get_sequence_length();
     const Index inputs_depth = perceptron_layer_3d->get_input_dimension();
 
     return {{(type*)(input_derivatives.data()),
-            {batch_size, sequence_length, inputs_depth}}};
+             {batch_size, sequence_length, inputs_depth}}};
 }
 
 }

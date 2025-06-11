@@ -5,14 +5,14 @@
 #include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/perceptron_layer_3d.h"
-#include "../opennn/language_data_set.h"
+#include "../opennn/language_dataset.h"
 #include "../opennn/transformer.h"
 #include "../opennn/forward_propagation.h"
 #include "../opennn/back_propagation.h"
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
-    CrossEntropyError3D cross_entropy_error_3d;
+    CrossEntropyError3d cross_entropy_error_3d;
 
     EXPECT_EQ(cross_entropy_error_3d.has_neural_network(), false);
     EXPECT_EQ(cross_entropy_error_3d.has_data_set(), false);
@@ -52,7 +52,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     // Loss index
 
-    CrossEntropyError3D cross_entropy_error_3d(&neural_network, &data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &data_set);
 
     BackPropagation back_propagation(samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);

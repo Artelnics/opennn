@@ -41,6 +41,52 @@ else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
+# --- CUDA 12.5 ---
+MY_CUDA_VER_MAJOR = 12
+MY_CUDA_VER_MINOR = 5
+
+MY_CUDA_FULL_VERSION_STR = $$sprintf("v%1.%2", $$MY_CUDA_VER_MAJOR, $$MY_CUDA_VER_MINOR)
+MY_CUDA_SHORT_VERSION_STR = $$sprintf("%1.%2", $$MY_CUDA_VER_MAJOR, $$MY_CUDA_VER_MINOR)
+
+win32 {
+    CUDA_PATH_ATTEMPT1 = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/$$MY_CUDA_FULL_VERSION_STR"
+    CUDA_PATH_ATTEMPT2 = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/$$MY_CUDA_SHORT_VERSION_STR"
+
+    CUDA_PATH = $$CUDA_PATH_ATTEMPT1
+    !exists($$CUDA_PATH) {
+        CUDA_PATH = $$CUDA_PATH_ATTEMPT2
+    }
+
+    CUDA_LIB_DIR = $$CUDA_PATH/lib/x64
+    CUDA_BIN_DIR = $$CUDA_PATH/bin
+} else:unix {
+    CUDA_PATH_ATTEMPT1_UNIX = /usr/local/cuda-$$MY_CUDA_SHORT_VERSION_STR
+    CUDA_PATH_ATTEMPT2_UNIX = /usr/local/cuda-$$MY_CUDA_FULL_VERSION_STR
+    CUDA_PATH_ATTEMPT3_UNIX = /usr/local/cuda
+
+    CUDA_PATH = $$CUDA_PATH_ATTEMPT1_UNIX
+    !exists($$CUDA_PATH) {
+        CUDA_PATH = $$CUDA_PATH_ATTEMPT2_UNIX
+        !exists($$CUDA_PATH) {
+            CUDA_PATH = $$CUDA_PATH_ATTEMPT3_UNIX
+        }
+    }
+    CUDA_LIB_DIR = $$CUDA_PATH/lib
+    CUDA_BIN_DIR = $$CUDA_PATH/bin
+}
+
+!exists($$CUDA_PATH) {
+    warning("CUDA path not found: $$CUDA_PATH. Please check your CUDA installation and CUDA_PATH in the .pro file.")
+    warning("Attempted versions based on MY_VARS: $$MY_CUDA_FULL_VERSION_STR and $$MY_CUDA_SHORT_VERSION_STR")
+} else {
+    message("Using CUDA from: $$CUDA_PATH")
+}
+
+INCLUDEPATH += $$CUDA_PATH/include
+DEPENDPATH += $$CUDA_PATH/include
+
+LIBS += -L$$CUDA_LIB_DIR -lcudart_static
+
 #win32:!win32-g++{
 ##QMAKE_CXXFLAGS+= -arch:AVX
 ##QMAKE_CFLAGS+= -arch:AVX
@@ -68,18 +114,18 @@ HEADERS += \
     scaling.h \
     correlations.h \
     tinyxml2.h \
-    data_set.h \
+    dataset.h \
     batch.h \
-    time_series_data_set.h \
-    image_data_set.h \
-    language_data_set.h \
+    time_seriesdataset.h \
+    image_dataset.h \
+    language_dataset.h \
     layer.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
     transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
-    perceptron_layer_3d.h \
+    perceptron_layer_3d.cpp \
     probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \
@@ -92,8 +138,9 @@ HEADERS += \
     normalized_squared_error.h\
     minkowski_error.h \
     mean_squared_error.h \
+    vgg16.h \
     weighted_squared_error.h\
-    cross_entropy_error.h \
+    cross_entropy_error_2d.h \
     training_strategy.h \
     learning_rate_algorithm.h \
     quasi_newton_method.h \
@@ -133,11 +180,11 @@ SOURCES += \
     scaling.cpp \
     correlations.cpp \
     tinyxml2.cpp \
-    data_set.cpp \
+    dataset.cpp \
     batch.cpp \
-    time_series_data_set.cpp \
-    image_data_set.cpp \
-    language_data_set.cpp \
+    time_series_dataset.cpp \
+    image_dataset.cpp \
+    language_dataset.cpp \
     layer.cpp \
     scaling_layer_2d.cpp \
     scaling_layer_4d.cpp \
@@ -158,6 +205,7 @@ SOURCES += \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
+    vgg16.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \

@@ -190,12 +190,12 @@ void NeuronsSelection::check() const
 
     // Data set
 
-    const DataSet* data_set = loss_index->get_data_set();
+    const Dataset* Dataset = loss_index->get_data_set();
 
-    if(!data_set)
+    if(!Dataset)
         throw runtime_error("Pointer to data set is nullptr.\n");
 
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");

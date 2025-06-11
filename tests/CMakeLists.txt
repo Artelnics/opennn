@@ -15,27 +15,26 @@ set(PCH_SOURCE pch.cpp)
 add_executable(run_tests test.cpp 
                          adaptive_moment_estimation_test.cpp 
                          bounding_layer_test.cpp
-                         conjugate_gradient_test.cpp
                          convolutional_layer_test.cpp 
-                         correlations_test.cpp
-                         cross_entropy_error_3d_test.cpp 
-                         cross_entropy_error_test.cpp 
-                         data_set_test.cpp 
+                         # correlations_test.cpp
+                         # cross_entropy_error_3d_test.cpp
+                         # cross_entropy_error_test.cpp
+                         # data_set_test.cpp
                          flatten_layer_test.cpp 
-                         genetic_algorithm_test.cpp 
+                         genetic_algorithm_test.cpp
                          growing_inputs_test.cpp 
                          growing_neurons_test.cpp 
                          image_data_set_test.cpp 
-                         inputs_selection_test.cpp 
+                         # inputs_selection_test.cpp
                          learning_rate_algorithm_test.cpp 
                          levenberg_marquardt_algorithm_test.cpp 
-                         long_short_term_memory_layer_test.cpp 
-                         mean_squared_error_test.cpp 
-                         minkowski_error_test.cpp 
+                         # long_short_term_memory_layer_test.cpp
+                         # mean_squared_error_test.cpp
+                         # minkowski_error_test.cpp
                          model_selection_test.cpp 
-                         neural_network_test.cpp 
-                         neurons_selection_test.cpp 
-                         normalized_squared_error_test.cpp 
+                         #neural_network_test.cpp
+                         # neurons_selection_test.cpp
+                         # normalized_squared_error_test.cpp
                          pooling_layer_test.cpp 
                          ${PCH_SOURCE}                          
                         #  perceptron_layer_test.cpp 

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "image_data_set.h"
+#include "image_dataset.h"
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-ImageDataSet::ImageDataSet(const Index& new_samples_number,
+ImageDataset::ImageDataset(const Index& new_samples_number,
                            const dimensions& new_input_dimensions,
                            const dimensions& new_target_dimensions)
 {
@@ -30,91 +30,99 @@ ImageDataSet::ImageDataSet(const Index& new_samples_number,
 }
 
 
-Index ImageDataSet::get_channels_number() const
+ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
+{
+    data_path = new_data_path;
+
+    read_bmp();
+}
+
+
+Index ImageDataset::get_channels_number() const
 {
     return input_dimensions[2];
 }
 
 
-Index ImageDataSet::get_image_width() const
+Index ImageDataset::get_image_width() const
 {
     return input_dimensions[1];
 }
 
 
-Index ImageDataSet::get_image_height() const
+Index ImageDataset::get_image_height() const
 {
     return input_dimensions[0];
 }
 
 
-Index ImageDataSet::get_image_size() const
+Index ImageDataset::get_image_size() const
 {
     return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
-Index ImageDataSet::get_image_padding() const
+Index ImageDataset::get_image_padding() const
 {
     return padding;
 }
 
 
-bool ImageDataSet::get_augmentation() const
+bool ImageDataset::get_augmentation() const
 {
     return augmentation;
 }
 
 
-bool ImageDataSet::get_random_reflection_axis_x() const
+bool ImageDataset::get_random_reflection_axis_x() const
 {
     return random_reflection_axis_x;
 }
 
 
-bool ImageDataSet::get_random_reflection_axis_y() const
+bool ImageDataset::get_random_reflection_axis_y() const
 {
     return random_reflection_axis_y;
 }
 
 
-type ImageDataSet::get_random_rotation_minimum() const
+type ImageDataset::get_random_rotation_minimum() const
 {
     return random_rotation_minimum;
 }
 
 
-type ImageDataSet::get_random_rotation_maximum() const
+type ImageDataset::get_random_rotation_maximum() const
 {
     return random_rotation_maximum;
 }
 
 
-type ImageDataSet::get_random_horizontal_translation_minimum() const
+type ImageDataset::get_random_horizontal_translation_minimum() const
 {
     return random_horizontal_translation_minimum;
 }
 
 
-type ImageDataSet::get_random_horizontal_translation_maximum() const
+type ImageDataset::get_random_horizontal_translation_maximum() const
 {
     return random_horizontal_translation_maximum;
 }
 
 
-type ImageDataSet::get_random_vertical_translation_maximum() const
+type ImageDataset::get_random_vertical_translation_maximum() const
 {
     return random_vertical_translation_maximum;
 }
 
 
-type ImageDataSet::get_random_vertical_translation_minimum() const
+type ImageDataset::get_random_vertical_translation_minimum() const
 {
     return random_vertical_translation_minimum;
 }
 
 
-void ImageDataSet::set_data_random()
+void ImageDataset::set_data_random()
 {
     const Index height = input_dimensions[0];
     const Index width = input_dimensions[1];
@@ -172,87 +180,87 @@ void ImageDataSet::set_data_random()
 }
 
 
-void ImageDataSet::set_channels_number(const int& new_channels)
+void ImageDataset::set_channels_number(const int& new_channels)
 {
     input_dimensions[2] = new_channels;
 }
 
 
-void ImageDataSet::set_image_width(const int& new_width)
+void ImageDataset::set_image_width(const int& new_width)
 {
     input_dimensions[1] = new_width;
 }
 
 
-void ImageDataSet::set_image_height(const int& new_height)
+void ImageDataset::set_image_height(const int& new_height)
 {
     input_dimensions[0] = new_height;
 }
 
 
-void ImageDataSet::set_image_padding(const int& new_padding)
+void ImageDataset::set_image_padding(const int& new_padding)
 {
     padding = new_padding;
 }
 
 
-void ImageDataSet::set_augmentation(const bool& new_augmentation)
+void ImageDataset::set_augmentation(const bool& new_augmentation)
 {
     augmentation = new_augmentation;
 }
 
 
-void ImageDataSet::set_random_reflection_axis_x(const bool& new_random_reflection_axis_x)
+void ImageDataset::set_random_reflection_axis_x(const bool& new_random_reflection_axis_x)
 {
     random_reflection_axis_x = new_random_reflection_axis_x;
 }
 
 
-void ImageDataSet::set_random_reflection_axis_y(const bool& new_random_reflection_axis_y)
+void ImageDataset::set_random_reflection_axis_y(const bool& new_random_reflection_axis_y)
 {
     random_reflection_axis_y = new_random_reflection_axis_y;
 }
 
 
-void ImageDataSet::set_random_rotation_minimum(const type& new_random_rotation_minimum)
+void ImageDataset::set_random_rotation_minimum(const type& new_random_rotation_minimum)
 {
     random_rotation_minimum = new_random_rotation_minimum;
 }
 
 
-void ImageDataSet::set_random_rotation_maximum(const type& new_random_rotation_maximum)
+void ImageDataset::set_random_rotation_maximum(const type& new_random_rotation_maximum)
 {
     random_rotation_maximum = new_random_rotation_maximum;
 }
 
 
-void ImageDataSet::set_random_horizontal_translation_maximum(const type& new_random_horizontal_translation_maximum)
+void ImageDataset::set_random_horizontal_translation_maximum(const type& new_random_horizontal_translation_maximum)
 {
     random_horizontal_translation_maximum = new_random_horizontal_translation_maximum;
 }
 
 
-void ImageDataSet::set_random_horizontal_translation_minimum(const type& new_random_horizontal_translation_minimum)
+void ImageDataset::set_random_horizontal_translation_minimum(const type& new_random_horizontal_translation_minimum)
 {
     random_horizontal_translation_minimum = new_random_horizontal_translation_minimum;
 }
 
 
-void ImageDataSet::set_random_vertical_translation_minimum(const type& new_random_vertical_translation_minimum)
+void ImageDataset::set_random_vertical_translation_minimum(const type& new_random_vertical_translation_minimum)
 {
     random_vertical_translation_minimum = new_random_vertical_translation_minimum;
 }
 
 
-void ImageDataSet::set_random_vertical_translation_maximum(const type& new_random_vertical_translation_maximum)
+void ImageDataset::set_random_vertical_translation_maximum(const type& new_random_vertical_translation_maximum)
 {
     random_vertical_translation_maximum = new_random_vertical_translation_maximum;
 }
 
 
-void ImageDataSet::to_XML(XMLPrinter& printer) const
+void ImageDataset::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("ImageDataSet");
+    printer.OpenElement("ImageDataset");
 
     printer.OpenElement("DataSource");
 
@@ -307,16 +315,16 @@ void ImageDataSet::to_XML(XMLPrinter& printer) const
 }
 
 
-void ImageDataSet::from_XML(const XMLDocument& data_set_document)
+void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
+    const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");
 
-    if (!image_data_set_element)
-        throw runtime_error("ImageDataSet element is nullptr.\n");
+    if (!image_dataset_element)
+        throw runtime_error("ImageDataset element is nullptr.\n");
 
     // Data Source
 
-    const XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = image_dataset_element->FirstChildElement("DataSource");
 
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
@@ -324,7 +332,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    set_dimensions(ImageDataSet::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
+    set_dimensions(ImageDataset::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
                                                        read_xml_index(data_source_element, "Width"),
                                                        read_xml_index(data_source_element, "Channels") });
 
@@ -343,7 +351,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Raw Variables
 
-    const XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = image_dataset_element->FirstChildElement("RawVariables");
 
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
@@ -380,9 +388,9 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     // Samples
 
     if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
+        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
 
-    const XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
@@ -395,7 +403,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
-vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
+vector<Descriptives> ImageDataset::scale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -408,7 +416,7 @@ vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
     return vector<Descriptives>();
 }
 
-void ImageDataSet::unscale_variables(const VariableUse&)
+void ImageDataset::unscale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -419,7 +427,7 @@ void ImageDataSet::unscale_variables(const VariableUse&)
 }
 
 
-void ImageDataSet::read_bmp()
+void ImageDataset::read_bmp()
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
     
@@ -537,7 +545,7 @@ void ImageDataSet::read_bmp()
     }
 
 
-    // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
+    // cerr << "Included scale_variables function in the image_Dataset::read_bmp" << endl;
     // scale_variables(VariableUse::Input);
 }
 

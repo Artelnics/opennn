@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
@@ -163,7 +164,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) cons
 
 Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
-    if(layer_name == "dataset" || layer_name == "decoder")
+    if(layer_name == "Dataset" || layer_name == "decoder")
         return -1;
 
     if(layer_name == "input")
@@ -255,6 +256,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     if(input_names.empty())
     {
         input_names.resize(inputs_number);
+
         for(Index i = 0; i < inputs_number; i++)
             input_names[i] = "input_" + to_string(i+1);
     }
@@ -315,7 +317,7 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        dimensions{ complexity_dimensions[i] },
                                        Dense2d::Activation::RectifiedLinear,
-                                       "perceptron_layer_" + to_string(i + 1)));
+                                       "dense2d_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                    output_dimensions,
@@ -338,9 +340,9 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
 
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                               dimensions{complexity_dimensions[i]},
-                                               Dense2d::Activation::HyperbolicTangent,
-                                               "perceptron_layer_" + to_string(i + 1)));
+                                       dimensions{complexity_dimensions[i]},
+                                       Dense2d::Activation::HyperbolicTangent,
+                                       "dense2d_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                    output_dimensions,
@@ -353,15 +355,11 @@ void NeuralNetwork::set_forecasting(const dimensions& input_dimensions,
                                     const dimensions& complexity_dimensions, 
                                     const dimensions& output_dimensions)
 {
+
     add_layer(make_unique<Scaling2d>(input_dimensions));
 
     add_layer(make_unique<Recurrent>(get_output_dimensions(),
-        dimensions{ complexity_dimensions[0] }));
-
-    add_layer(make_unique<Dense2d>(get_output_dimensions(),
-        output_dimensions,
-        Dense2d::Activation::HyperbolicTangent,
-        "recurrent_layer"));
+                                     output_dimensions));
 
     add_layer(make_unique<Unscaling>(output_dimensions));
 
@@ -415,13 +413,13 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
-        const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
+        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Same;
         
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                              kernel_dimensions,
-                                             Convolutional::Activation::RectifiedLinear,
+                                             Convolutional::Activation::Linear,
                                              stride_dimensions,
                                              convolution_type,
                                              "convolutional_layer_" + to_string(i+1)));
@@ -452,159 +450,73 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
                                             const dimensions& complexity_dimensions,
                                             const dimensions& output_dimensions)
 {
+    layers.clear();
 
-    layers.resize(0);
+    const Index vocabulary_size = input_dimensions[0];
+    const Index sequence_length = input_dimensions[1];
+    const Index embedding_dimension = input_dimensions[2];
 
-    // input_names.resize(input_length + decoder_length);
-
-    const Index complexity_size = complexity_dimensions.size();
-
-    // Embedding Layers
-
-    const Index embedding_dimension = 32;
-    const Index perceptron_depth = 32;
-    const Index heads_number = 2;
-    const type dropout_rate = 0;
+    add_layer(make_unique<Embedding>(
+        vocabulary_size,
+        sequence_length,
+        embedding_dimension,
+        "embedding_layer"
+        ));
 /*
-    unique_ptr<Embedding> embedding_layer
-        = make_unique<Embedding>(input_dimensions[0],
-                                      input_dimensions[1],
-                                      embedding_dimension,
-                                      true);
-
-    embedding_layer->set_dropout_rate(dropout_rate);
-    embedding_layer->set_name("embedding");
-    //name = embedding_layer->get_name();
-    add_layer(std::move(embedding_layer));
-    set_layer_inputs_indices("embedding", "input");
-
-    // Encoder
-
-    for(Index i = 0; i < complexity_size; i++)
-    {
-        // Multi head attention
-
-        unique_ptr<MultiHeadAttention> self_attention_layer =
-            make_unique<MultiHeadAttention>(input_dimensions[1],
-                                                 input_dimensions[1],
-                                                 embedding_dimension,
-                                                 heads_number);
-
-        self_attention_layer->set_dropout_rate(dropout_rate);
-        self_attention_layer->set_name("self_attention_" + to_string(i+1));
-        //name = input_self_attention_layer->get_name();
-
-        add_layer(std::move(self_attention_layer));
-
-        if(i == 0)
-            set_layer_inputs_indices("self_attention_1", {"embedding", "embedding"});
-        else
-            set_layer_inputs_indices("self_attention_" + to_string(i+1), { "perceptron_normalization_" + to_string(i), "perceptron_normalization_" + to_string(i) });
-
-        // Addition
-
-        unique_ptr<Addition3d> self_attention_addition_layer
-            = make_unique<Addition3d>(input_dimensions[1], embedding_dimension);
-
-        self_attention_addition_layer->set_name("self_attention_addition_" + to_string(i+1));
-        //name = self_attention_addition_layer->get_name();
-
-        add_layer(std::move(self_attention_addition_layer));
-
-        if(i == 0)
-            set_layer_inputs_indices("self_attention_addition_" + to_string(i+1), { "embedding", "self_attention_" + to_string(i+1) });
-        else
-            set_layer_inputs_indices("self_attention_addition_" + to_string(i+1), { "perceptron_normalization_" + to_string(i), "self_attention_" + to_string(i+1) });
-
-        // Normalization
-
-        unique_ptr<Normalization3d> self_attention_normalization_layer
-            = make_unique<Normalization3d>(input_dimensions[1], embedding_dimension);
-
-        self_attention_normalization_layer->set_name("self_attention_normalization_" + to_string(i+1));
-        //name = self_attention_normalization_layer->get_name();
-
-        add_layer(std::move(self_attention_normalization_layer));
-
-        set_layer_inputs_indices("self_attention_normalization_" + to_string(i+1), "self_attention_addition_" + to_string(i+1));
-
-        // Dense2d
-
-        unique_ptr<Perceptron3d> encoder_internal_perceptron_layer
-            = make_unique<Perceptron3d>(input_dimensions[1], embedding_dimension, perceptron_depth, Perceptron3d::Activation::RectifiedLinear);
-
-        encoder_internal_perceptron_layer->set_name("encoder_internal_perceptron_" + to_string(i+1));
-        //name = encoder_internal_perceptron_layer->get_name();
-
-        add_layer(std::move(encoder_internal_perceptron_layer));
-
-        set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "self_attention_normalization_" + to_string(i+1));
-
-        // Dense2d
-
-        unique_ptr<Perceptron3d> encoder_external_perceptron_layer =
-            make_unique<Perceptron3d>(input_dimensions[1], perceptron_depth, embedding_dimension, Perceptron3d::Activation::RectifiedLinear);
-
-        encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
-        encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
-        //name = encoder_external_perceptron_layer->get_name();
-
-        add_layer(std::move(encoder_external_perceptron_layer));
-
-        set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i+1), "encoder_internal_perceptron_" + to_string(i+1));
-
-        // Addition
-
-        unique_ptr<Addition3d> encoder_perceptron_addition_layer
-            = make_unique<Addition3d>(input_dimensions[1], embedding_dimension);
-
-        encoder_perceptron_addition_layer->set_name("encoder_perceptron_addition_" + to_string(i+1));
-        //name = encoder_perceptron_addition_layer->get_name();
-
-        add_layer(std::move(encoder_perceptron_addition_layer));
-
-        set_layer_inputs_indices("encoder_perceptron_addition_" + to_string(i+1), { "self_attention_normalization_" + to_string(i+1), "encoder_external_perceptron_" + to_string(i+1) });
-
-        // Normalization
-
-        unique_ptr<Normalization3d> encoder_perceptron_normalization_layer
-            = make_unique<Normalization3d>(input_dimensions[1], embedding_dimension);
-
-        encoder_perceptron_normalization_layer->set_name("encoder_perceptron_normalization_" + to_string(i+1));
-        //name = encoder_perceptron_normalization_layer->get_name();
-
-        add_layer(std::move(encoder_perceptron_normalization_layer));
-
-        set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i+1), "encoder_perceptron_addition_" + to_string(i+1));
-
-    }
-
-        // Global Average Pooling
-
-        const dimensions pool_dimensions = { 1, input_dimensions[1] };
-        const dimensions pooling_stride_dimensions = { 1, input_dimensions[1] };
-        const dimensions padding_dimensions = { 0, 0 };
-        const Pooling::PoolingMethod pooling_method = Pooling::PoolingMethod::AveragePooling;
-
-        add_layer(make_unique<Pooling>(get_output_dimensions(),
-                                            pool_dimensions,
-                                            pooling_stride_dimensions,
-                                            padding_dimensions,
-                                            pooling_method,
-                                            "pooling_layer"));
-
-        set_layer_inputs_indices("global_average_pooling", "encoder_perceptron_normalization_" + to_string(complexity_size));
-
-        add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                               output_dimensions,
-                                               Dense2d::Activation::Logistic,
-                                               "perceptron_layer_" + to_string(complexity_size + 1)));
-
-        set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
-    }
+    add_layer(make_unique<Dense3d>(
+        sequence_length,
+        embedding_dimension,
+        output_dimensions[0],
+        Dense3d::Activation::HyperbolicTangent,
+        "classification_layer"
+        ));
 */
+    add_layer(make_unique<Flatten3d>(
+        get_output_dimensions()
+        ));
+
+    add_layer(make_unique<Dense2d>(
+        get_output_dimensions(),
+        output_dimensions,
+        Dense2d::Activation::Logistic,
+        "classification_layer"
+        ));
 }
 
+// void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
+//                                             const dimensions& complexity_dimensions,
+//                                             const dimensions& output_dimensions)
+// {
+//     layers.clear();
+
+//     const Index vocabulary_size = input_dimensions[0];
+//     const Index sequence_length = input_dimensions[1];
+//     const Index embedding_dimension = input_dimensions[2];
+
+//     unique_ptr<Embedding> embedding_layer = make_unique<Embedding>(
+//         vocabulary_size,
+//         sequence_length,
+//         embedding_dimension,
+//         "embedding_layer"
+//         );
+
+//     add_layer(std::move(embedding_layer));
+
+//     unique_ptr<Flatten3d> flatten3d_layer = make_unique<Flatten3d>(
+//         get_output_dimensions()
+//         );
+
+//     add_layer(std::move(flatten3d_layer));
+
+//     unique_ptr<Dense2d> classification_layer = make_unique<Dense2d>(
+//         get_output_dimensions(),
+//         output_dimensions,
+//         Dense2d::Activation::Logistic,
+//         "classification_layer"
+//         );
+
+//     add_layer(std::move(classification_layer));
+// }
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -664,9 +576,9 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 
     // if (has(Layer::Type::Dense2d))
     // {
-    //     Dense2d* perceptron_layer = static_cast<Dense2d*>(get_first(Layer::Type::Dense2d));
+    //     Dense2d* dense2d_layer = static_cast<Dense2d*>(get_first(Layer::Type::Dense2d));
 
-    //     perceptron_layer->set_input_dimensions(new_input_dimensions);
+    //     dense2d_layer->set_input_dimensions(new_input_dimensions);
     // }
 }
 
@@ -683,13 +595,6 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
     for (const unique_ptr<Layer>& layer : layers)
         layer->set_threads_number(new_threads_number);
-}
-
-
-void NeuralNetwork::shutdown_threads()
-{
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->shutdown_threads();
 }
 
 
@@ -926,14 +831,22 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
+    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+        = forward_propagation.get_layer_input_pairs(input_pair, is_training);
+
+    const auto& [data_ptr, dims] = input_pair[0];
+
+    Index batch_size = dims[0];
+    Index sequence_length = dims[1];
+    Index input_dim = dims[2];
+
+    TensorMap<Tensor<type, 3>> input_tensor(data_ptr, batch_size, sequence_length, input_dim);
+
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
-    {
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
                                      is_training);
-    }
 }
 
 
@@ -1017,6 +930,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if (layers_number == 0)
         return Tensor<type, 2>();
+
     const Index batch_size = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
@@ -1032,27 +946,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
-// CREATED JUST TO TEST THE BERT PROBLEM
-Tensor<type, 3> NeuralNetwork::calculate_output(const Tensor<type, 2>& inputs)
-{
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0)
-        return Tensor<type, 3>();
-    const Index batch_size = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
-
-    forward_propagate({input_pair}, forward_propagation, false);
-
-    const pair<type*, dimensions> outputs_pair
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    return tensor_map_3(outputs_pair);
-}
 
 Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
 {
@@ -1065,14 +958,14 @@ Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    const vector<pair<type*, dimensions>> input_pairs = {{(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}, {(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}};
+    const vector<pair<type*, dimensions>> input_pairs =
+        {{(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}},
+         {(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}};
+
     forward_propagate({input_pairs}, forward_propagation, false);
 
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    cout << "Outputs dimensions:" << endl;
-    print_vector(outputs_pair.second);
 
     return tensor_map_3(outputs_pair);
 }
@@ -1097,6 +990,28 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
     return tensor_map_2(outputs_pair);
+}
+
+
+Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inputs)
+{
+    const Index layers_number = get_layers_number();
+
+    if (layers_number == 0)
+        return Tensor<type, 3>();
+
+    const Index batch_size = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
+
+    ForwardPropagation forward_propagation(batch_size, this);
+
+    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+    forward_propagate({input_pair}, forward_propagation);
+
+    const pair<type*, dimensions> outputs_pair
+        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
+    return tensor_map_3(outputs_pair);
 }
 
 
@@ -1265,15 +1180,15 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     return predicted_index;
 }
 
-Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
+Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index perceptron_layers_number = get_layers_number(Layer::Type::Dense2d);
+    const Index dense2d_layers_number = get_layers_number(Layer::Type::Dense2d);
 
-    Tensor<string, 2> information(perceptron_layers_number, 3);
+    Tensor<string, 2> information(dense2d_layers_number, 3);
 
-    Index perceptron_layer_index = 0;
+    Index dense2d_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -1282,14 +1197,14 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
         if (layer_type != Layer::Type::Dense2d)
             continue;
 
-        information(perceptron_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
-        information(perceptron_layer_index, 1) = to_string(layers[i]->get_output_dimensions()[0]);
+        information(dense2d_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(dense2d_layer_index, 1) = to_string(layers[i]->get_output_dimensions()[0]);
 
-        const Dense2d* perceptron_layer = static_cast<Dense2d*>(layers[i].get());
+        const Dense2d* dense2d_layer = static_cast<Dense2d*>(layers[i].get());
 
-        information(perceptron_layer_index, 2) = perceptron_layer->get_activation_function_string();
+        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function_string();
 
-        perceptron_layer_index++;
+        dense2d_layer_index++;
     }
 
     return information;
@@ -1450,7 +1365,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"Scaling4d", []() -> unique_ptr<Layer> { return make_unique<Scaling4d>(); }},
      {"Convolutional", []() -> unique_ptr<Layer> { return make_unique<Convolutional>(); }},
      {"Dense2d", []() -> unique_ptr<Layer> { return make_unique<Dense2d>(); }},
-     {"Perceptron3d", []() -> unique_ptr<Layer> { return make_unique<Perceptron3d>(); }},
+     {"Dense3d", []() -> unique_ptr<Layer> { return make_unique<Dense3d>(); }},
      {"Pooling", []() -> unique_ptr<Layer> { return make_unique<Pooling>(); }},
      {"Flatten", []() -> unique_ptr<Layer> { return make_unique<Flatten>(); }},
      {"Dense2d", []() -> unique_ptr<Layer> { return make_unique<Dense2d>(); }},
@@ -1549,16 +1464,19 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl
-         << "Model type:" << endl
-         << get_model_type_string() << endl;
-
-    // print_vector(get_input_names());
+         << "Model type:" << get_model_type_string() << endl;
 
     if(model_type != ModelType::ImageClassification)
+         cout << "Model type:" << endl
+         << get_model_type_string() << endl;
+
+    if(model_type != ModelType::ImageClassification
+    && model_type != ModelType::TextClassification)
     {
         cout << "Inputs:" << endl;
         print_vector(get_input_names());
     }
+
     const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;
@@ -1573,8 +1491,7 @@ void NeuralNetwork::print() const
     cout << "Outputs:" << endl;
     print_vector(get_output_names());
 
-    cout << "Parameters number:" << endl
-         << get_parameters_number() << endl;
+    cout << "Parameters number: " << get_parameters_number() << endl;
 }
 
 
@@ -1731,11 +1648,11 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:
-            layers[i] = make_unique<PerceptronBackPropagation>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique<Dense2dBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
-        case Layer::Type::Perceptron3d:
-            layers[i] = make_unique <Perceptron3dBackPropagation>(batch_size, neural_network_layers[i].get());
+        case Layer::Type::Dense3d:
+            layers[i] = make_unique <Dense3dBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3d:
@@ -1839,11 +1756,11 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:
-            layers[i] = make_unique<PerceptronForwardPropagation>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<Dense2dForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
         
-        case Layer::Type::Perceptron3d:
-            layers[i] = make_unique<Perceptron3dForwardPropagation>(samples_number, neural_network_layers[i].get());
+        case Layer::Type::Dense3d:
+            layers[i] = make_unique<Dense3dForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3d:
@@ -1922,7 +1839,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 {
     const Index layers_number = neural_network->get_layers_number();
 
-    if (layers_number == 0) 
+    if (layers_number == 0)
         return vector<vector<pair<type*, dimensions>>>();
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
@@ -1933,54 +1850,26 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
 
-    for (Index i = first_trainable_layer_index; i < layers_number; i++)
+    for (Index layer_index = first_trainable_layer_index; layer_index < layers_number; layer_index++)
     {
-        const vector<Index>& this_layer_input_indices = layer_input_indices[i];
-
-        layer_input_pairs[i].resize(1);
-
-        if(neural_network->get_model_type_string() == "TextClassification")
+        if ((layer_index == first_trainable_layer_index && is_training) || layer_index == 0)
         {
-
-            if (i == first_trainable_layer_index)
-            {   vector<pair<type*, dimensions>> batch_input_pairs1;
-                batch_input_pairs1.push_back(batch_input_pairs[0]);
-                layer_input_pairs[i] = batch_input_pairs1;
-                continue;
-            }
-
-            if (i == first_trainable_layer_index+1)
-            {
-                vector<pair<type*, dimensions>> batch_input_pairs2;
-                batch_input_pairs2.push_back(batch_input_pairs[1]);
-                layer_input_pairs[i] = batch_input_pairs2;
-                continue;
-            }
-        }
-        else
-        {
-            if ((i == first_trainable_layer_index && is_training) || i == 0)
-            {
-                layer_input_pairs[i] = batch_input_pairs;
-                continue;
-            }
+            layer_input_pairs[layer_index] = batch_input_pairs;
+            continue;
         }
 
-        const Index this_layer_inputs_number = this_layer_input_indices.size();
+        const vector<Index>& input_layer_indices = layer_input_indices[layer_index];
+        layer_input_pairs[layer_index].resize(input_layer_indices.size());
 
-        layer_input_pairs[i].resize(this_layer_inputs_number);
-
-        for (Index j = 0; j < this_layer_inputs_number; j++)
+        for (Index input_index = 0; input_index < static_cast<Index>(input_layer_indices.size()); input_index++)
         {
-            const Index this_layer_input_index = this_layer_input_indices[j];
-
-            layer_input_pairs[i][j] = layers[this_layer_input_index]->get_outputs_pair();
+            Index input_layer_index = input_layer_indices[input_index];
+            layer_input_pairs[layer_index][input_index] = layers[input_layer_index]->get_outputs_pair();
         }
     }
 
     return layer_input_pairs;
 }
-
 
 void ForwardPropagation::print() const
 {
@@ -2017,7 +1906,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_size,
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:
-            layers[i] = make_unique<PerceptronLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique<Dense2dLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
             break;
 
         default:
@@ -2170,7 +2059,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             layers[i] = make_unique<Dense2dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::Perceptron3d:
+        case Layer::Type::Dense3d:
             //layers[i] = make_unique<Perceptron3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
@@ -2363,7 +2252,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
             layers[i] = make_unique<Dense2dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::Perceptron3d:
+        case Layer::Type::Dense3d:
             //layers[i] = make_unique <Perceptron3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 

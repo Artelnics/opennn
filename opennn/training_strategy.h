@@ -30,7 +30,7 @@ class TrainingStrategy
 
 public:
 
-    TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     enum class LossMethod
     {
@@ -38,7 +38,7 @@ public:
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
         WEIGHTED_SQUARED_ERROR,
-        CROSS_ENTROPY_ERROR,
+        CROSS_ENTROPY_ERROR_2D,
         CROSS_ENTROPY_ERROR_3D
     };
 
@@ -50,7 +50,7 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    DataSet* get_data_set();
+    Dataset* get_data_set();
 
     NeuralNetwork* get_neural_network() const;
 
@@ -63,7 +63,7 @@ public:
     MeanSquaredError* get_mean_squared_error();
     NormalizedSquaredError* get_normalized_squared_error();
     MinkowskiError* get_Minkowski_error();
-    CrossEntropyError* get_cross_entropy_error();
+    CrossEntropyError2d* get_cross_entropy_error();
     WeightedSquaredError* get_weighted_squared_error();
 
     QuasiNewtonMethod* get_quasi_Newton_method();
@@ -84,13 +84,12 @@ public:
 
     // Set
 
-    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
     void set_threads_number(const int&);
-    void shutdown_threads();
 
-    void set_data_set(DataSet*);
+    void set_data_set(Dataset*);
     void set_neural_network(NeuralNetwork*);
 
     void set_loss_index(LossIndex*);
@@ -133,7 +132,7 @@ public:
 
 private:
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 
@@ -145,9 +144,9 @@ private:
 
     MinkowskiError Minkowski_error;
 
-    CrossEntropyError cross_entropy_error;
+    CrossEntropyError2d cross_entropy_error_2d;
 
-    CrossEntropyError3D cross_entropy_error_3d;
+    CrossEntropyError3d cross_entropy_error_3d;
 
     WeightedSquaredError weighted_squared_error;
 

@@ -1,52 +1,40 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A M A Z O N   R E V I E W S
+//   V G G 1 6   N E U R A L   N E T W O R K   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstring>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <time.h>
+#ifndef VGG16_H
+#define VGG16_H
 
-#include "../opennn/language_dataset.h"
-#include "../opennn/embedding_layer.h"
-#include "../opennn/perceptron_layer_3d.h"
-#include "../opennn/multihead_attention_layer.h"
-#include "../opennn/probabilistic_layer_3d.h"
-#include "../opennn/flatten_layer_3d.h"
-#include "../opennn/training_strategy.h"
-#include "../opennn/flatten_layer.h"
-#include "../opennn/perceptron_layer.h"
+#include "neural_network.h"
+#include "scaling_layer_4d.h"
+#include "convolutional_layer.h"
+#include "pooling_layer.h"
+#include "flatten_layer.h"
+#include "perceptron_layer.h"
 
-using namespace opennn;
-
-int main()
+namespace opennn
 {
-    try
+
+    class VGG16 : public NeuralNetwork
     {
+    public:
 
-        cout << "OpenNN." << endl;
+        VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
-        cout << "Good bye!" << endl;
+        void set(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
-        return 0;
-    }
-    catch(const exception& e)
-    {
-        cout << e.what() << endl;
+    };
 
-        return 1;
-    }
-}
+} // namespace opennn
 
+#endif // VGG16_H
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) Artificial Intelligence Techniques SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -57,6 +45,8 @@ int main()
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
+
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
+
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

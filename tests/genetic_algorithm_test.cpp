@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/genetic_algorithm.h"
+#include "../opennn/dataset.h"
 
 using namespace opennn;
 
@@ -31,7 +32,7 @@ TEST(GeneticAlgorithmTest, InitializePopulation)
     Index neurons_number = 1;
     Index samples_number = 10;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    Dataset data_set(samples_number, {inputs_number}, {targets_number});
     data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
@@ -66,7 +67,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     Index neurons_number = 2;
     Index individuals_number = 4;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    Dataset data_set(samples_number, {inputs_number}, {targets_number});
     data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
@@ -92,7 +93,7 @@ TEST(GeneticAlgorithmTest, Selection)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    Dataset data_set(samples_number, {inputs_number}, {targets_number});
     data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
@@ -145,7 +146,7 @@ TEST(GeneticAlgorithmTest, Crossover)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    Dataset data_set(samples_number, {inputs_number}, {targets_number});
     data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
@@ -189,7 +190,7 @@ TEST(GeneticAlgorithmTest, Mutation)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    Dataset data_set(samples_number, {inputs_number}, {targets_number});
     data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});

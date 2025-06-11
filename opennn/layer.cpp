@@ -13,9 +13,6 @@ namespace opennn
 
 Layer::Layer()
 {
-    if(thread_pool != nullptr)
-        shutdown_threads();
-
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -36,8 +33,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Dense2d:
         return "Dense2d";
 
-    case Type::Perceptron3d:
-        return "Perceptron3d";
+    case Type::Dense3d:
+        return "Dense3d";
 
     case Type::Bounding:
         return "Bounding";
@@ -95,8 +92,8 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Dense2d")
         return Type::Dense2d;
 
-    if(this_layer_type == "Perceptron3d")
-        return Type::Perceptron3d;
+    if(this_layer_type == "Dense3d")
+        return Type::Dense3d;
 
     if(this_layer_type == "Bounding")
         return Type::Bounding;
@@ -164,7 +161,7 @@ string Layer::get_type_string() const
     switch(layer_type)
     {
     case Type::Dense2d: return "Dense2d";
-    case Type::Perceptron3d: return "Perceptron3d";
+    case Type::Dense3d: return "Dense3d";
     case Type::Bounding: return "Bounding";
     case Type::Pooling: return "Pooling";
     case Type::Probabilistic3d: return "Probabilistic3d";
@@ -199,23 +196,16 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
-
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void Layer::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
         thread_pool.release();
         thread_pool.reset();
     }
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 

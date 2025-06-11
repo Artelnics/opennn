@@ -12,7 +12,13 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-#include "addition_layer_3d.h"
+
+#include "../../opennn/language_dataset.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
+#include "../../opennn/testing_analysis.h"
+#include "../../opennn/embedding_layer.h"
+#include "../../opennn/flatten_layer_3d.h"
 
 using namespace opennn;
 
@@ -21,102 +27,72 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
+
+        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+
+        const Index batch_size = 1;
+        language_dataset.print_data();
+
 /*
-        // Data set
+        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
 
-        // LanguageDataSet language_dataset("../../../datasets/masked.txt");
-
-        // language_dataset.set_data_path("../data/amazon_cells_reduced.txt");
-        // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
-        // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
-        LanguageDataSet language_dataset("/home/alvaro/Desktop/mh/cleaned_tweets.txt");
-        // language_dataset.set_data_path("/Users/artelnics/Desktop/sample_200k_balanced.txt");
-
-
-//        language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
-//        language_dataset.read_csv();
-
-        // const vector<string> input_words = language_dataset.get_raw_variable_names(DataSet::VariableUse::Input);
-        // const vector<string> targets_names = language_dataset.get_variable_names(DataSet::VariableUse::Target);
-
-        // const Index words_number = language_dataset.get_variables_number(DataSet::VariableUse::Input);
-        // const Index target_variables_number = language_dataset.get_variables_number(DataSet::VariableUse::Target);
-
-        // cout<<words_number<<endl;
-        // cout<<target_variables_number<<endl;
-
-        // Neural Network
-
-        const Index maximum_sequence_length = language_dataset.get_input_size();
-        const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index embedding_dimension = 64;
-        const Index heads_number = 4;
-        const dimensions outputs_number = { 1 };
-
-        cout << "Maximum seq: " << maximum_sequence_length << endl;
-        cout << "Vocab size: " << vocabulary_size << endl;
+        const Index vocabulary_size = 4;
+        const Index sequence_length = 3;
+        const Index embedding_dimension = 2;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
-        // neural_network.add_layer(make_unique<Addition3d>(maximum_sequence_length, embedding_dimension, "Addition"));
-        // neural_network.set_layer_inputs_indices("Addition", {"Embedding", "Multihead_attention"});
-        // neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
-        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
+        const Index targets_number = language_dataset.get_target_length();
 
-        // Training Strategy
+        dimensions input_dimensions      = {input_vocabulary_size, sequence_length, embedding_dimension};
+        dimensions complexity_dimensions = {neurons_number};
+        dimensions output_dimensions     = {targets_number};
+
+        NeuralNetwork neural_network(
+            NeuralNetwork::ModelType::TextClassification,
+            input_dimensions,
+            complexity_dimensions,
+            output_dimensions);
+
+        neural_network.print();
+
+        // Training strategy
+>>>>>>> 57ef74e1e (temporal commit)
 
         TrainingStrategy training_strategy(&neural_network, &language_dataset);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
+        training_strategy.set_maximum_epochs_number(1000);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+<<<<<<< HEAD
 
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        Tensor<type, 2> inputs(batch_size, sequence_length);
+        inputs.setConstant(1);
 
-        // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
+        cout << neural_network.calculate_outputs(inputs) << endl;
 
-        language_dataset.split_samples_sequential(0.8,0,0.2);
-        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        training_strategy.print();
 
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+        training_strategy.perform_training();
 
-        TrainingResults training_results = training_strategy.perform_training();
+        TestingAnalysis testing_analysis(&neural_network, &language_dataset);
 
-        // language_dataset.set(DataSet::SampleUse::Testing);
-
-        const TestingAnalysis testing_analysis(&neural_network, &language_dataset);
-
-        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
-
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
-
-        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
-
-        // cout << "TESTING ANALYSIS:" << endl;
-        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
-
-        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+        testing_analysis.print_binary_classification_tests();
 */
         cout << "Good bye!" << endl;
 
         return 0;
     }
-        catch(const exception& e)
-        {
-            cout << e.what() << endl;
+    catch(const exception& e)
+    {
+        cout << e.what() << endl;
 
-            return 1;
-        }
+        return 1;
     }
+}
 
 
 // OpenNN: Open Neural Networks Library.
@@ -132,5 +108,5 @@ int main()
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
+// License along with this library; if not, write to the Free Software Foundation.
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

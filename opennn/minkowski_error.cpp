@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
     set_default();
@@ -50,7 +50,6 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
-    const type epsilon = 1e-6F;
 
     // Batch
 

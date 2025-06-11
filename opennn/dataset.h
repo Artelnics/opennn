@@ -20,22 +20,30 @@ using namespace tinyxml2;
 namespace opennn
 {
 
-class DataSet
+class Dataset
 {
 
 public:
 
     enum class Codification { UTF8, SHIFT_JIS };
 
-    DataSet(const Index& = 0,
+    Dataset(const Index& = 0,
             const dimensions& = {0},
             const dimensions& = {0});
 
-    DataSet(const filesystem::path&,
+    Dataset(const filesystem::path&,
             const string&,
             const bool& = true,
             const bool& = false,
             const Codification& = Codification::UTF8);
+
+    ~Dataset()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     // Enumerations
 
@@ -56,22 +64,22 @@ public:
     struct RawVariable
     {
         RawVariable(const string& = string(),
-                    const DataSet::VariableUse& = DataSet::VariableUse::None,
-                    const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
+                    const Dataset::VariableUse& = Dataset::VariableUse::None,
+                    const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const vector<string>& = vector<string>());
 
         void set(const string& = string(),
-                 const DataSet::VariableUse& = DataSet::VariableUse::None,
-                 const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
+                 const Dataset::VariableUse& = Dataset::VariableUse::None,
+                 const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
                  const Scaler& = Scaler::MeanStandardDeviation,
                  const vector<string>& = vector<string>());
 
         string name;
 
-        DataSet::VariableUse use = DataSet::VariableUse::None;
+        Dataset::VariableUse use = Dataset::VariableUse::None;
 
-        DataSet::RawVariableType type = DataSet::RawVariableType::None;
+        Dataset::RawVariableType type = Dataset::RawVariableType::None;
 
         vector<string> categories;
 
@@ -89,7 +97,7 @@ public:
         void set_scaler(const Scaler&);
         void set_scaler(const string&);
 
-        void set_use(const DataSet::VariableUse&);
+        void set_use(const Dataset::VariableUse&);
         void set_use(const string&);
 
         void set_type(const string&);
@@ -230,7 +238,7 @@ public:
              const string&, 
              const bool& = true, 
              const bool& = false, 
-             const DataSet::Codification& = Codification::UTF8);
+             const Dataset::Codification& = Codification::UTF8);
 
     void set(const filesystem::path&);
 
@@ -240,7 +248,6 @@ public:
     void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
-    void shutdown_threads();
 
     // Samples set
 
@@ -436,8 +443,6 @@ public:
 
     virtual void set_data_random();
     void set_data_rosenbrock();
-    void set_data_sum();
-    void set_data_classification();
 
     // Serialization
 
@@ -515,14 +520,14 @@ public:
 
     //AutoAssociation Models
 
-    virtual void transform_associative_dataset();
+    virtual void transform_associative_Dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
 
     // convert
 
 protected:
 
-    DataSet::ModelType model_type;
+    Dataset::ModelType model_type;
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
@@ -569,7 +574,7 @@ protected:
 
     // Missing Values
 
-    MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
+    MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
 
     Index missing_values_number = 0;
 
@@ -579,21 +584,32 @@ protected:
 
     // Display
 
-    bool display = true;     
+    bool display = true;
+
+    const vector<string> positive_words = { "yes", "positive", "+", "true" };
+    const vector<string> negative_words = { "no", "negative", "-", "false" };
+
 };
 
 
 struct Batch
 {
-    Batch(const Index& = 0, DataSet* = nullptr);
+    Batch(const Index& = 0, Dataset* = nullptr);
+
+    ~Batch()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;
 
     Index get_samples_number() const;
 
-    void set(const Index& = 0, DataSet* = nullptr);
-    void shutdown_threads();
+    void set(const Index& = 0, Dataset* = nullptr);
 
     void fill(const vector<Index>&,
               const vector<Index>&,
@@ -608,7 +624,7 @@ struct Batch
 
     Index samples_number = 0;
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     dimensions input_dimensions;
     Tensor<type, 1> input_tensor;
@@ -627,7 +643,7 @@ struct Batch
 
 struct BatchCuda
 {
-    BatchCuda(const Index& = 0, DataSet* = nullptr);
+    BatchCuda(const Index& = 0, Dataset* = nullptr);
 
     vector<float*> get_input_device() const;
     pair<type*, dimensions> get_target_pair_device() const;
@@ -638,7 +654,7 @@ struct BatchCuda
     Tensor<type, 2> get_decoder_device() const;
     Tensor<type, 2> get_targets_device() const;
 
-    void set(const Index&, DataSet*);
+    void set(const Index&, Dataset*);
 
     void copy_device();
 
@@ -655,7 +671,7 @@ struct BatchCuda
 
     Index samples_number = 0;
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     dimensions input_dimensions;
     dimensions decoder_dimensions;
