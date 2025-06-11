@@ -19,9 +19,7 @@ class LanguageDataset : public Dataset
 
 public:
 
-    LanguageDataset(const dimensions& input_dims = dimensions(0), const dimensions& target_dims = dimensions(0));
-
-    LanguageDataset(const filesystem::path&);
+    LanguageDataset(const filesystem::path& = "");
 
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;

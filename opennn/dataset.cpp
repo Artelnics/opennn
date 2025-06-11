@@ -4084,12 +4084,14 @@ void Dataset::read_csv()
                 {
                     const vector<string> categories = raw_variables[raw_variable_index].categories;
 
+                    type& value = data(sample_index, variable_indices[0]);
+
                     if (token.empty() || token == missing_values_label)
-                        data(sample_index, variable_indices[0]) = type(NAN);
+                        value = type(NAN);
                     else if (token == categories[0])
-                        data(sample_index, variable_indices[0]) = 1;
+                        value = 1;
                     else if (token == categories[1])
-                        data(sample_index, variable_indices[0]) = 0;
+                        value = 0;
                     else
                         throw runtime_error("Unknown token " + token);
                 }

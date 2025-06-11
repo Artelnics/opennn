@@ -30,6 +30,9 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
+<<<<<<< HEAD
+        language_dataset.print_data();
+=======
         const Index batch_size = 1;
         language_dataset.print_data();
 
@@ -37,10 +40,12 @@ int main()
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index sequence_length = language_dataset.get_input_length();
         const Index embedding_dimension = 32;
+>>>>>>> 6256d37335b57d7210ba7e2a5bb48ca3ec4116d4
 
-        const Index vocabulary_size = 4;
-        const Index sequence_length = 3;
-        const Index embedding_dimension = 2;
+/*
+        const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
@@ -50,6 +55,9 @@ int main()
         dimensions complexity_dimensions = {neurons_number};
         dimensions output_dimensions     = {targets_number};
 
+<<<<<<< HEAD
+        const Index batch_size = 8;
+=======
         NeuralNetwork neural_network(
             NeuralNetwork::ModelType::TextClassification,
             input_dimensions,
@@ -68,11 +76,15 @@ int main()
 <<<<<<< HEAD
 
         //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
+>>>>>>> 6256d37335b57d7210ba7e2a5bb48ca3ec4116d4
 
         Tensor<type, 2> inputs(batch_size, sequence_length);
         inputs.setConstant(1);
 
-        cout << neural_network.calculate_outputs(inputs) << endl;
+        cout << neural_network.calculate_outputs_2_3(inputs) << endl;
+
+        //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
+*/
 
         training_strategy.print();
 

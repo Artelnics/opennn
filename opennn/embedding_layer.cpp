@@ -94,6 +94,7 @@ void Embedding::set(const Index& new_vocabulary_size,
     const type half_depth = type(new_embedding_dimension)/2;
 
     #pragma omp parallel for collapse(2)
+
     for (Index i = 0; i < sequence_length; i++)
         for (Index j = 0; j < new_embedding_dimension; j++)
             positional_encoding(i, j) = (j < Index(half_depth))
