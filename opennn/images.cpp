@@ -95,11 +95,11 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     const uint16_t biPlanes = read_u16_le(file, image_path_str);
     const uint16_t biBitCount = read_u16_le(file, image_path_str);
     const uint32_t biCompression = read_u32_le(file, image_path_str);
-//    uint32_t biSizeImage = read_u32_le(file, image_path_str);
-//    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str);
-//    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str);
+    uint32_t biSizeImage = read_u32_le(file, image_path_str);
+    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str);
+    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str);
     const uint32_t biClrUsed = read_u32_le(file, image_path_str);
-//    uint32_t biClrImportant = read_u32_le(file, image_path_str);
+    uint32_t biClrImportant = read_u32_le(file, image_path_str);
 
     if (biWidth <= 0)
         throw runtime_error("BMP width must be positive. Got: " + to_string(biWidth) + " in file: " + image_path_str);
@@ -109,9 +109,8 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
         throw runtime_error("BMP planes must be 1. Got: " + to_string(biPlanes) + " in file: " + image_path_str);
     if (biCompression != 0)
         throw runtime_error("Unsupported BMP compression type: " + to_string(biCompression) + ". Only uncompressed (0 = BI_RGB) is supported. File: " + image_path_str);
-
     if (biBitCount != 8 && biBitCount != 24 && biBitCount != 32)
-        throw std::runtime_error("Unsupported BMP bit count: " + to_string(biBitCount) + " in file: " + image_path_str + ". Supported: 8, 24, 32.");
+        throw runtime_error("Unsupported BMP bit count: " + to_string(biBitCount) + " in file: " + image_path_str + ". Supported: 8, 24, 32.");
 
     const Index tensor_height = (biHeight_signed < 0) ? -biHeight_signed : biHeight_signed;
 

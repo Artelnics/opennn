@@ -28,25 +28,28 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-//        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        const Index batch_size = 1;
+        language_dataset.print_data();
 
-        const Index vocabulary_size = 4;
-        const Index sequence_length = 3;
-        const Index embedding_dimension = 2;
+/*
+        const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
 
 
-
-        //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
+        const Index batch_size = 8;
 
         Tensor<type, 2> inputs(batch_size, sequence_length);
         inputs.setConstant(1);
 
-        cout << neural_network.calculate_outputs(inputs) << endl;
+        cout << neural_network.calculate_outputs_2_3(inputs) << endl;
+
+        //neural_network.add_layer(make_unique<Flatten3d>(dimensions({sequence_length, embedding_dimension})));
+*/
 
         cout << "Good bye!" << endl;
 
