@@ -32,22 +32,32 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index sequence_length = language_dataset.get_input_length();
         const Index embedding_dimension = 16;
-
-        const Index batch_size = 3;
 
         const Index heads_number = 2;
 
+        cout << "Dataset" << endl;
+
+        print_vector(language_dataset.get_input_dimensions());
+        print_vector(language_dataset.get_target_dimensions());
+
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, sequence_length, embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(sequence_length, sequence_length, embedding_dimension, heads_number));
-        //neural_network.add_layer(make_unique<Flatten3d>(dimensions{sequence_length, embedding_dimension}));
-        //neural_network.add_layer(make_unique<Dense2d>(dimensions({sequence_length*embedding_dimension}), dimensions({1}), Dense2d::Activation::Logistic));
+        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+
+        cout << "Embedding" << endl;
+
+        print_vector(neural_network.get_input_dimensions());
+        print_vector(neural_network.get_output_dimensions());
+
+        //neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number));
+        //neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+        //neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
+
+        const Index batch_size = 3;
+        const Index sequence_length = language_dataset.get_input_sequence_length();
 
         Tensor<type, 2> inputs(batch_size, sequence_length);
-        inputs.setRandom();
+        inputs.setZero();
 
         neural_network.calculate_outputs<2,3>(inputs);
 /*

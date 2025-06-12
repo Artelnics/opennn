@@ -13,12 +13,11 @@
 namespace opennn
 {
 
-Embedding::Embedding(const Index& new_vocabulary_size,
-                     const Index& new_sequence_length,
+Embedding::Embedding(const dimensions& new_input_dimensions,
                      const Index& new_embedding_dimension,
                      const string& new_name) : Layer()
 {
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
+    set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_name);
 
     layer_type = Type::Embedding;
 

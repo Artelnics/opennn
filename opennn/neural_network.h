@@ -154,6 +154,8 @@ public:
 
    Index get_inputs_number() const;
    Index get_outputs_number() const;
+
+   dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
 
    // Parameters

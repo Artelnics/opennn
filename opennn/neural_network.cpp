@@ -456,9 +456,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     const Index sequence_length = input_dimensions[1];
     const Index embedding_dimension = input_dimensions[2];
 
-    add_layer(make_unique<Embedding>(
-        vocabulary_size,
-        sequence_length,
+    add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
         embedding_dimension,
         "embedding_layer"
         ));
@@ -674,6 +672,15 @@ Index NeuralNetwork::get_outputs_number() const
     const dimensions output_dimensions = last_layer->get_output_dimensions();
 
     return accumulate(output_dimensions.begin(), output_dimensions.end(), Index(1), multiplies<Index>());
+}
+
+
+dimensions NeuralNetwork::get_input_dimensions() const
+{
+    if(layers.empty())
+        return {};
+
+    return layers[0]->get_input_dimensions();
 }
 
 

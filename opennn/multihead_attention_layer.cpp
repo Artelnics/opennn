@@ -13,6 +13,41 @@
 namespace opennn
 {
 
+MultiHeadAttention::MultiHeadAttention(const dimensions& new_input_dimensions,
+                                       const Index& new_heads_number,
+                                       const string& new_name) : Layer()
+{
+
+    set(new_input_dimensions[0],
+        new_input_dimensions[0],
+        new_input_dimensions[1],
+        new_heads_number,
+        false,
+        new_name);
+
+    layer_type = Type::MultiheadAttention;
+
+}
+
+/*
+MultiHeadAttention::MultiHeadAttention(const dimensions& new_query_dimensions,
+                                       const dimensions& new_source_dimensions,
+                                       const Index& new_heads_number,
+                                       const string& new_name) : Layer()
+{
+
+    set(new_query_sequence_length,
+        new_source_sequence_length,
+        new_embedding_dimension,
+        new_heads_number,
+        new_use_causal_mask,
+        new_name);
+
+    layer_type = Type::MultiheadAttention;
+
+}
+*/
+/*
 MultiHeadAttention::MultiHeadAttention(const Index& new_query_sequence_length,
                                        const Index& new_source_sequence_length,
                                        const Index& new_embedding_dimension,
@@ -29,7 +64,7 @@ MultiHeadAttention::MultiHeadAttention(const Index& new_query_sequence_length,
 
     layer_type = Type::MultiheadAttention;
 }
-
+*/
 
 Index MultiHeadAttention::get_query_sequence_length() const
 {

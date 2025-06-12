@@ -19,13 +19,22 @@ class MultiHeadAttention : public Layer
 
 public:
 
+    MultiHeadAttention(const dimensions& = dimensions({0,0}),
+                       const Index& = 0,
+                       const string& = string());
+/*
+    MultiHeadAttention(const dimensions& = dimensions({0,0}),
+                       const dimensions& = dimensions({0,0}),
+                       const Index& = 0,
+                       const string& = string());
+/*
     MultiHeadAttention(const Index& = 0,
                        const Index& = 0,
                        const Index& = 0,
                        const Index& = 0,
                        const bool& = false,
                        const string& = "multihead_attention_layer");
-
+*/
     Index get_query_sequence_length() const;
     Index get_source_sequence_length() const;
     Index get_embedding_dimension() const;

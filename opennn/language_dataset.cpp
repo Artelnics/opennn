@@ -40,7 +40,7 @@ Index LanguageDataset::get_input_vocabulary_size() const
 }
 
 
-Index LanguageDataset::get_input_length() const
+Index LanguageDataset::get_input_sequence_length() const
 {
     return maximum_input_length;
 }
@@ -309,7 +309,7 @@ void LanguageDataset::print() const
     cout << "Language data set" << endl;
     cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
     cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_length() << endl;
+    cout << "Input length: " << get_input_sequence_length() << endl;
     cout << "Target length: " << get_target_length() << endl;
 
     cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
@@ -689,7 +689,7 @@ void LanguageDataset::read_csv()
 
     target_dimensions = {get_target_length()};
     decoder_dimensions = {get_target_length()};
-    input_dimensions = {get_input_length()};
+    input_dimensions = {get_input_sequence_length()};
 
     set_raw_variable_scalers(Scaler::None);
     set_default_raw_variable_names();

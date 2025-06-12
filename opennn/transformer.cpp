@@ -63,8 +63,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     // Embedding Layers
 
-    add_layer(make_unique<Embedding>(new_decoder_dimensions,
-                                     new_decoder_length,
+    add_layer(make_unique<Embedding>(dimensions({new_decoder_dimensions, new_decoder_length}),
                                      new_embedding_dimension,
                                      "decoder_embedding"));
 
@@ -72,8 +71,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     //decoder_embedding_layer->set_dropout_rate(dropout_rate);
 
-    add_layer(make_unique<Embedding>(new_input_dimension,
-                                     new_input_length,
+    add_layer(make_unique<Embedding>(dimensions({new_input_dimension, new_input_length}),
                                      new_embedding_dimension,
                                      "input_embedding"));
 
@@ -84,13 +82,14 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
+/*
         add_layer(make_unique<MultiHeadAttention>(new_input_length,
-                                                       new_input_length,
-                                                       new_embedding_dimension,
-                                                       new_heads_number,
-                                                       false,
-                                                       "input_self_attention_" + to_string(i+1)));
-
+                                                  new_input_length,
+                                                  new_embedding_dimension,
+                                                  new_heads_number,
+                                                  false,
+                                                  "input_self_attention_" + to_string(i+1)));
+*/
         i == 0
             ? set_layer_inputs_indices("input_self_attention_1",
                                       {"input_embedding", "input_embedding"})
@@ -156,13 +155,14 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
+/*
         add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
-                                                       new_decoder_length,
-                                                       new_embedding_dimension,
-                                                       new_heads_number,
-                                                       true, // chatgpt says that here uses causal mask???
-                                                       "decoder_self_attention_" + to_string(i+1)));
-
+                                                  new_decoder_length,
+                                                  new_embedding_dimension,
+                                                  new_heads_number,
+                                                  true, // chatgpt says that here uses causal mask???
+                                                  "decoder_self_attention_" + to_string(i+1)));
+*/
         i == 0
             ? set_layer_inputs_indices("decoder_self_attention_1", {"decoder_embedding", "decoder_embedding"})
             : set_layer_inputs_indices("decoder_self_attention_" + to_string(i+1), {"decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_normalization_" + to_string(i)});
@@ -181,14 +181,14 @@ void Transformer::set(const Index& new_decoder_length,
                                                     "decoder_self_attention_normalization_" + to_string(i+1)));
 
         set_layer_inputs_indices("decoder_self_attention_normalization_" + to_string(i+1), "decoder_self_attention_addition_" + to_string(i+1));
-
+/*
         add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
                                                        new_input_length,        //previously called context length
                                                        new_embedding_dimension,
                                                        new_heads_number,
                                                        false, 
                                                        "cross_attention_" + to_string(i+1)));
-
+*/
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"decoder_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(new_blocks_number)});
 
         //cross_attention_layer->set_dropout_rate(dropout_rate);
@@ -273,7 +273,7 @@ void Transformer::set_decoder_length(const Index& new_decoder_length)
 }
 
 
-Index Transformer::get_input_length() const
+Index Transformer::get_input_sequence_length() const
 {
     return input_length;
 }
