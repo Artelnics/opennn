@@ -670,6 +670,46 @@ type LossIndex::calculate_error_xxx()
 }
 
 
+Tensor<type, 1> LossIndex::calculate_gradient()
+{
+    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+
+    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+
+    Batch batch(samples_number, dataset);
+
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+    {
+        const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+        batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    }
+    else
+        batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+    BackPropagation back_propagation(samples_number, this);
+
+    const Tensor<type, 1> parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+
+    Tensor<type, 1> numerical_gradient(parameters_number);
+    numerical_gradient.setConstant(type(0));
+
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      parameters,
+                                      forward_propagation);
+
+    back_propagate(batch, forward_propagation, back_propagation);
+
+    return back_propagation.gradient;
+}
+
+
+
 Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 {
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);

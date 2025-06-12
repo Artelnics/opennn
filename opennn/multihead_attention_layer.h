@@ -82,6 +82,8 @@ public:
                          Index&,
                          Tensor<type, 1>&) const override;
 
+    void print() const override;
+
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 

@@ -110,9 +110,9 @@ int main()
         testing_data(2,7) = 3;
         testing_data(2,8) = 0;
         testing_data(2,9) = 0;
-
+/*
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

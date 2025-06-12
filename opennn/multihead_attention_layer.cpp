@@ -416,7 +416,7 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 {
     const TensorMap<Tensor<type, 3>> query_input = tensor_map_3(input_pairs[0]);
     const TensorMap<Tensor<type, 3>> source_input = tensor_map_3(input_pairs[1]);
-
+/*
     MultiheadAttentionForwardPropagation* this_forward_propagation =
         static_cast<MultiheadAttentionForwardPropagation*>(layer_forward_propagation.get());
 
@@ -452,6 +452,7 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     calculate_output_projection(concatenated_attention_outputs,
                                 outputs);
+*/
 }
 
 
@@ -697,6 +698,20 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
     Index index = 0;
 
     set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "), index);
+}
+
+
+void MultiHeadAttention::print() const
+{
+    cout << "Embedding Layer" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Type: Embedding" << endl;
+
+    cout << "Input dimensions: ";
+    print_vector(get_input_dimensions());
+
+    cout << "Output dimensions: ";
+    print_vector(get_output_dimensions());
 }
 
 

@@ -564,7 +564,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
 
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
     const array<Index, 1> vector{{x_filtered.size()}};
@@ -656,7 +656,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
 
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
 
@@ -767,7 +767,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
 
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     const array<Index, 1> vector{{targets.size()}};
 
@@ -888,7 +888,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
 
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     const array<Index, 1> vector{{targets.size()}};
 

@@ -205,12 +205,8 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
 {
     unordered_map<string, Index> input_vocabulary_map;
-<<<<<<< HEAD
 
-    for (Index i = 0; i < input_vocabulary.size(); ++i)
-=======
     for (size_t i = 0; i < input_vocabulary.size(); ++i)
->>>>>>> 6256d37335b57d7210ba7e2a5bb48ca3ec4116d4
         input_vocabulary_map[input_vocabulary[i]] = i;
 
     const Index samples_number = get_samples_number();
@@ -699,6 +695,8 @@ void LanguageDataset::read_csv()
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();
+
+    cout << "Finished" << endl;
 }
 
 }

@@ -49,7 +49,7 @@ public:
     void add_positional_encodings(Tensor<type, 3>&) const;
 
     bool scale_embedding = false;
-    bool positional_encoding_xxx = true;
+    bool positional_encoding_xxx = false;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,

@@ -268,7 +268,7 @@ void Embedding::print() const
     cout << "Weights dimensions: " << weights.dimensions() << endl;
 
     //cout << "Weights:\n " << weights << endl;
-    cout << "Positional encoding:\n" << positional_encoding << endl;
+    //cout << "Positional encoding:\n" << positional_encoding << endl;
 }
 
 
