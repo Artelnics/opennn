@@ -970,7 +970,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
             layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
 
             const pair<type*, dimensions> outputs_pair = forward_propagation.layers[0]->get_outputs_pair();
-            scaled_outputs = tensor_map_2(outputs_pair);
+            scaled_outputs = tensor_map<2>(outputs_pair);
         }
         else
         {
@@ -997,7 +997,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
 
-                scaled_outputs = tensor_map_2(forward_propagation.layers[i]->get_outputs_pair());
+                scaled_outputs = tensor_map<2>(forward_propagation.layers[i]->get_outputs_pair());
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);

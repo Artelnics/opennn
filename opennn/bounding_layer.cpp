@@ -151,7 +151,7 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
                                       const bool&)
 {
 
-    const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_pairs[0]);
 
     BoundingForwardPropagation* bounding_layer_forward_propagation =
         static_cast<BoundingForwardPropagation*>(forward_propagation.get());

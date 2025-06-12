@@ -270,7 +270,7 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
@@ -294,8 +294,8 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
 
     // Forward propagation
 
@@ -334,8 +334,8 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagationLM>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
     
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();

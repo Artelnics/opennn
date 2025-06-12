@@ -449,8 +449,8 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> query_input = tensor_map_3(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> source_input = tensor_map_3(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> source_input = tensor_map<3>(input_pairs[1]);
 /*
     MultiheadAttentionForwardPropagation* this_forward_propagation =
         static_cast<MultiheadAttentionForwardPropagation*>(layer_forward_propagation.get());
@@ -496,9 +496,9 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> context = tensor_map_3(input_pairs[1]);
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> input = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> context = tensor_map<3>(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     const Index batch_size = input_pairs[0].second[0];
     const Index hidden_depth = get_hidden_depth();

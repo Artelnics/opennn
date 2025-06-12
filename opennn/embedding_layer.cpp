@@ -174,7 +174,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -201,12 +201,12 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     const Index batch_size = input_pairs[0].second[0];
     const Index sequence_length = input_pairs[0].second[1];
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     if (delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     // Back propagation
 

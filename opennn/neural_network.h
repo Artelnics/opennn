@@ -204,11 +204,11 @@ public:
            = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
        if constexpr (output_rank == 2)
-           return tensor_map_2(outputs_pair);
+           return tensor_map<2>(outputs_pair);
        else if constexpr (output_rank == 3)
-           return tensor_map_3(outputs_pair);
+           return tensor_map<3>(outputs_pair);
        else if constexpr (output_rank == 4)
-           return tensor_map_4(outputs_pair);
+           return tensor_map<4>(outputs_pair);
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
    }

@@ -513,18 +513,6 @@ public:
 
     void check_separators(const string&) const;
 
-    //Virtual functions
-
-    //Image Models
-    virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
-
-    //AutoAssociation Models
-
-    virtual void transform_associative_Dataset();
-    virtual void save_auto_associative_data_binary(const string&) const;
-
-    // convert
-
 protected:
 
     Dataset::ModelType model_type;

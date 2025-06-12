@@ -372,7 +372,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
     const pair<type*, dimensions> output_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    return tensor_map_3(output_pair);
+    return tensor_map<3>(output_pair);
 }
 
 

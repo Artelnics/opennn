@@ -177,12 +177,12 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
 
     // Back propagation
 
@@ -224,7 +224,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs);
 
     const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 

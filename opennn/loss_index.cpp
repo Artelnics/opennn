@@ -137,11 +137,11 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
@@ -881,7 +881,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 
     const vector<pair<type*, dimensions>>& input_pairs = batch.get_input_pairs();
 
-    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map_4(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map<4>(input_pairs[0]);
 
     for (Index i = 0; i < values_number; i++)
     {
