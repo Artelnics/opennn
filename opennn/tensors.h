@@ -272,7 +272,7 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 {
     size_t maximum_size = 0;
 
-    #pragma omp parallel for reduction(max : maximum_size)
+    //#pragma omp parallel for reduction(max : maximum_size)
     for (size_t i = 0; i < v.size(); i++)
         if (v[i].size() > maximum_size)
             maximum_size = v[i].size();

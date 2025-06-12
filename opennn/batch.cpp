@@ -441,7 +441,6 @@ void BatchCuda::free()
 
 #endif
 
-
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.
