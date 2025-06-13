@@ -14,7 +14,9 @@
 namespace opennn
 {
 
-struct ForwardPropagation;
+class NeuralNetwork;
+
+//struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
@@ -22,6 +24,28 @@ struct NeuralNetworkBackPropagationLM;
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
+
+
+
+struct ForwardPropagation
+{
+    ForwardPropagation(const Index& = 0, NeuralNetwork* = nullptr);
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
+
+    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const vector<pair<type*, dimensions>>&, const bool&) const;
+
+    void print() const;
+
+    Index samples_number = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerForwardPropagation>> layers;
+};
+
 
 class NeuralNetwork
 {
@@ -130,6 +154,8 @@ public:
 
    Index get_inputs_number() const;
    Index get_outputs_number() const;
+
+   dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
 
    // Parameters
@@ -149,13 +175,43 @@ public:
 
    // Output
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-   Tensor<type, 3> calculate_outputs(const Tensor<type, 3>&);
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
+   template <Index input_rank, Index output_rank>
+   Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
+   {
+       const Index layers_number = get_layers_number();
 
-   Tensor<type, 3> calculate_outputs_2_3(const Tensor<type, 2>&);
+       if (layers_number == 0)
+           return Tensor<type, output_rank>();
 
+       const Index batch_size = inputs.dimension(0);
 
+       ForwardPropagation forward_propagation(batch_size, this);
+
+       dimensions input_dimensions;
+       input_dimensions.reserve(input_rank);
+       input_dimensions.push_back(batch_size);
+
+       if constexpr (input_rank >= 2) input_dimensions.push_back(inputs.dimension(1));
+       if constexpr (input_rank >= 3) input_dimensions.push_back(inputs.dimension(2));
+       if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
+       static_assert(input_rank >= 2 && input_rank <= 4, "Unsupported input rank");
+
+       const pair<type*, dimensions> input_pair;//(inputs.data(), input_dimensions);
+
+       forward_propagate({input_pair}, forward_propagation, false);
+
+       const pair<type*, dimensions> outputs_pair
+           = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
+       if constexpr (output_rank == 2)
+           return tensor_map<2>(outputs_pair);
+       else if constexpr (output_rank == 3)
+           return tensor_map<3>(outputs_pair);
+       else if constexpr (output_rank == 4)
+           return tensor_map<4>(outputs_pair);
+       else
+           static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
+   }
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
 
@@ -324,26 +380,6 @@ struct NeuralNetworkBackPropagationLM
     NeuralNetwork* neural_network = nullptr;
 
     vector<unique_ptr<LayerBackPropagationLM>> layers;
-};
-
-
-struct ForwardPropagation
-{
-    ForwardPropagation(const Index& = 0, NeuralNetwork* = nullptr);
-
-    void set(const Index& = 0, NeuralNetwork* = nullptr);
-
-    pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
-
-    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const vector<pair<type*, dimensions>>&, const bool&) const;
-
-    void print() const;
-
-    Index samples_number = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    vector<unique_ptr<LayerForwardPropagation>> layers;
 };
 
 

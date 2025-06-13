@@ -51,10 +51,10 @@ public:
 
     ~Layer()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     string get_name() const;
@@ -136,8 +136,8 @@ public:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     string name = "layer";
 
@@ -252,10 +252,10 @@ protected:
 
     void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
     {
-        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+        TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
         for (Index i = 1; i < Index(delta_pairs.size()); i++)
-            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
+            deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
     }
 
 

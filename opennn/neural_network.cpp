@@ -456,9 +456,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     const Index sequence_length = input_dimensions[1];
     const Index embedding_dimension = input_dimensions[2];
 
-    add_layer(make_unique<Embedding>(
-        vocabulary_size,
-        sequence_length,
+    add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
         embedding_dimension,
         "embedding_layer"
         ));
@@ -677,6 +675,15 @@ Index NeuralNetwork::get_outputs_number() const
 }
 
 
+dimensions NeuralNetwork::get_input_dimensions() const
+{
+    if(layers.empty())
+        return {};
+
+    return layers[0]->get_input_dimensions();
+}
+
+
 dimensions NeuralNetwork::get_output_dimensions() const
 {
     if(layers.empty()) 
@@ -842,7 +849,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     TensorMap<Tensor<type, 3>> input_tensor(data_ptr, batch_size, sequence_length, input_dim);
 
-
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
@@ -924,97 +930,6 @@ string NeuralNetwork::get_expression() const
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
-{
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0)
-        return Tensor<type, 2>();
-
-    const Index batch_size = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
-
-    forward_propagate({input_pair}, forward_propagation, false);
-
-    const pair<type*, dimensions> outputs_pair
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    return tensor_map_2(outputs_pair);
-}
-
-
-Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
-{
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0)
-        return Tensor<type, 3>();
-
-    const Index batch_size = inputs.dimension(0);
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    const vector<pair<type*, dimensions>> input_pairs =
-        {{(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}},
-         {(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}};
-
-    forward_propagate({input_pairs}, forward_propagation, false);
-
-    const pair<type*, dimensions> outputs_pair
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    return tensor_map_3(outputs_pair);
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
-{
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0) 
-        return Tensor<type, 2>();
-
-    const Index batch_size = inputs.dimension(0);
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), { {batch_size, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
-
-    forward_propagate({input_pair}, forward_propagation);
-
-    const pair<type*, dimensions> outputs_pair 
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    return tensor_map_2(outputs_pair);
-}
-
-
-Tensor<type, 3> NeuralNetwork::calculate_outputs_2_3(const Tensor<type, 2>& inputs)
-{
-    const Index layers_number = get_layers_number();
-
-    if (layers_number == 0)
-        return Tensor<type, 3>();
-
-    const Index batch_size = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
-
-    ForwardPropagation forward_propagation(batch_size, this);
-
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
-    forward_propagate({input_pair}, forward_propagation);
-
-    const pair<type*, dimensions> outputs_pair
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-    return tensor_map_3(outputs_pair);
-}
-
-
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
     const Index inputs_dimensions_number = inputs_dimensions.size();
@@ -1055,7 +970,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
             layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
 
             const pair<type*, dimensions> outputs_pair = forward_propagation.layers[0]->get_outputs_pair();
-            scaled_outputs = tensor_map_2(outputs_pair);
+            scaled_outputs = tensor_map<2>(outputs_pair);
         }
         else
         {
@@ -1082,7 +997,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
 
-                scaled_outputs = tensor_map_2(forward_propagation.layers[i]->get_outputs_pair());
+                scaled_outputs = tensor_map<2>(forward_propagation.layers[i]->get_outputs_pair());
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
@@ -1157,7 +1072,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     for (Index j = 0; j < pixels_number; j++)
         input_data(j) = image(j);
 
-    const Tensor<type, 2> outputs = calculate_outputs(input_data);
+    const Tensor<type, 2> outputs = calculate_outputs<4,2>(input_data);
 
     Index predicted_index = -1;
 
@@ -1555,9 +1470,10 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     set_parameters(new_parameters);
 }
 
+
 void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path& file_name)
 {
-    const Tensor<type, 2> outputs = calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = calculate_outputs<2,2>(inputs);
 
     ofstream file(file_name);
 

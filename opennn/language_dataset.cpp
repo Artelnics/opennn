@@ -40,7 +40,7 @@ Index LanguageDataset::get_input_vocabulary_size() const
 }
 
 
-Index LanguageDataset::get_input_length() const
+Index LanguageDataset::get_input_sequence_length() const
 {
     return maximum_input_length;
 }
@@ -205,6 +205,7 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
 {
     unordered_map<string, Index> input_vocabulary_map;
+
     for (size_t i = 0; i < input_vocabulary.size(); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
 
@@ -263,7 +264,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
     else
     {
         unordered_map<string, Index> target_vocabulary_map;
-        for (size_t i = 0; i < target_vocabulary.size(); ++i)
+        for (Index i = 0; i < target_vocabulary.size(); ++i)
             target_vocabulary_map[target_vocabulary[i]] = i;
 
         const Index samples_number = get_samples_number();
@@ -308,7 +309,7 @@ void LanguageDataset::print() const
     cout << "Language data set" << endl;
     cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
     cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_length() << endl;
+    cout << "Input length: " << get_input_sequence_length() << endl;
     cout << "Target length: " << get_target_length() << endl;
 
     cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
@@ -688,12 +689,14 @@ void LanguageDataset::read_csv()
 
     target_dimensions = {get_target_length()};
     decoder_dimensions = {get_target_length()};
-    input_dimensions = {get_input_length()};
+    input_dimensions = {get_input_sequence_length()};
 
     set_raw_variable_scalers(Scaler::None);
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();
+
+    cout << "Finished" << endl;
 }
 
 }

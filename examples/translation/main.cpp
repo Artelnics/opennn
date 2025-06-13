@@ -33,7 +33,7 @@ int main()
     try
     {
         cout << "OpenNN. Translation Example." << endl;
-
+/*
         // Data set
 
         LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
@@ -112,7 +112,7 @@ int main()
         testing_data(2,9) = 0;
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

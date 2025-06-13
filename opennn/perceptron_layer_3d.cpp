@@ -202,7 +202,7 @@ void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
     Dense3dForwardPropagation* this_forward_propagation =
         static_cast<Dense3dForwardPropagation*>(layer_forward_propagation.get());
@@ -226,12 +226,12 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
     if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     // Forward propagation
 

@@ -237,7 +237,7 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         const bool&)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
     Probabilistic3DForwardPropagation* this_forward_propagation =
         static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.get());
@@ -255,7 +255,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                           unique_ptr<LayerForwardPropagation>& forward_propagation,
                                           unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
     const Index samples_number = inputs.dimension(0);
 
     // Forward propagation
