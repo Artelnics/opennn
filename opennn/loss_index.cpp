@@ -636,7 +636,6 @@ void BackPropagation::print() const
 
 type LossIndex::calculate_error_xxx()
 {
-
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 
     const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
@@ -652,14 +651,11 @@ type LossIndex::calculate_error_xxx()
     neural_network->forward_propagate(batch.get_input_pairs(),
                                       forward_propagation);
 
-/*
     BackPropagation back_propagation(samples_number, this);
 
     calculate_error(batch, forward_propagation, back_propagation);
 
     return back_propagation.error();
-*/
-    return 0;
 }
 
 

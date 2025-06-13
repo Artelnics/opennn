@@ -242,7 +242,7 @@ template <Index rank>
 TensorMap<Tensor<type, rank>> tensor_map(const pair<type*, dimensions>& x_pair)
 {
     if (x_pair.second.size() != rank)
-        throw runtime_error("Dimensions is " + to_string(x_pair.second.size()) + "and must be " + to_string(rank));
+        throw runtime_error("Dimensions is " + to_string(x_pair.second.size()) + " and must be " + to_string(rank));
 
     if constexpr (rank == 1)
         return TensorMap<Tensor<type, 1>>(x_pair.first,

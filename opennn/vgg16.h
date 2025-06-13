@@ -10,11 +10,6 @@
 #define VGG16_H
 
 #include "neural_network.h"
-#include "scaling_layer_4d.h"
-#include "convolutional_layer.h"
-#include "pooling_layer.h"
-#include "flatten_layer.h"
-#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -24,6 +19,8 @@ namespace opennn
     public:
 
         VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions);
+
+        VGG16(const filesystem::path&);
 
         void set(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
