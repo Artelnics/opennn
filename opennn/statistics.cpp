@@ -1311,7 +1311,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
     {
         column = matrix.chip(i, 1);
 
-        if (i >= 0 && i < descriptives.size())
+        if (i >= 0 && i < static_cast<Index>(descriptives.size()))
             descriptives[i] = vector_descriptives(column);   
         else
             cerr << "Index out of range: " << i << std::endl;

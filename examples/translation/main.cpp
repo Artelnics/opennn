@@ -19,11 +19,11 @@
 
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/language_dataset.h"
-#include "embedding_layer.h"
-#include "flatten_layer_3d.h"
-#include "multihead_attention_layer.h"
-#include "normalization_layer_3d.h"
-#include "perceptron_layer.h"
+#include "../../opennn/embedding_layer.h"
+#include "../../opennn/flatten_layer_3d.h"
+#include "../../opennn/multihead_attention_layer.h"
+#include "../../opennn/normalization_layer_3d.h"
+#include "../../opennn/perceptron_layer.h"
 
 using namespace std;
 using namespace opennn;
@@ -67,7 +67,7 @@ int main()
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
         language_dataset.set(Dataset::SampleUse::Training);
-        adaptive_moment_estimation->set_loss_goal(0.3);
+        adaptive_moment_estimation->set_loss_goal(0.3F);
         adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(12);
