@@ -460,15 +460,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
         embedding_dimension,
         "embedding_layer"
         ));
-/*
-    add_layer(make_unique<Dense3d>(
-        sequence_length,
-        embedding_dimension,
-        output_dimensions[0],
-        Dense3d::Activation::HyperbolicTangent,
-        "classification_layer"
-        ));
-*/
+
     add_layer(make_unique<Flatten3d>(
         get_output_dimensions()
         ));
@@ -481,40 +473,6 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
         ));
 }
 
-// void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
-//                                             const dimensions& complexity_dimensions,
-//                                             const dimensions& output_dimensions)
-// {
-//     layers.clear();
-
-//     const Index vocabulary_size = input_dimensions[0];
-//     const Index sequence_length = input_dimensions[1];
-//     const Index embedding_dimension = input_dimensions[2];
-
-//     unique_ptr<Embedding> embedding_layer = make_unique<Embedding>(
-//         vocabulary_size,
-//         sequence_length,
-//         embedding_dimension,
-//         "embedding_layer"
-//         );
-
-//     add_layer(std::move(embedding_layer));
-
-//     unique_ptr<Flatten3d> flatten3d_layer = make_unique<Flatten3d>(
-//         get_output_dimensions()
-//         );
-
-//     add_layer(std::move(flatten3d_layer));
-
-//     unique_ptr<Dense2d> classification_layer = make_unique<Dense2d>(
-//         get_output_dimensions(),
-//         output_dimensions,
-//         Dense2d::Activation::Logistic,
-//         "classification_layer"
-//         );
-
-//     add_layer(std::move(classification_layer));
-// }
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
