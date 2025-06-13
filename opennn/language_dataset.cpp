@@ -12,17 +12,13 @@
 namespace opennn
 {
 
-LanguageDataset::LanguageDataset(const dimensions& new_input_dimensionms,
-                                 const dimensions& new_target_dimensionms)
-{
-}
-
-
 LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
     separator = Dataset::Separator::Tab;
-    read_csv();
+
+    if(!data_path.empty())
+        read_csv();
 }
 
 
@@ -44,7 +40,7 @@ Index LanguageDataset::get_input_vocabulary_size() const
 }
 
 
-Index LanguageDataset::get_input_length() const
+Index LanguageDataset::get_input_sequence_length() const
 {
     return maximum_input_length;
 }
@@ -209,7 +205,8 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
 {
     unordered_map<string, Index> input_vocabulary_map;
-    for (Index i = 0; i < input_vocabulary.size(); ++i)
+
+    for (size_t i = 0; i < input_vocabulary.size(); ++i)
         input_vocabulary_map[input_vocabulary[i]] = i;
 
     const Index samples_number = get_samples_number();
@@ -218,7 +215,7 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
     for (Index sample = 0; sample < samples_number; sample++)
     {
-        data(sample, 0) = 2; // start;
+        data(sample, 0) = 2; // start
 
         const vector<string>& input_tokens = input_document_tokens[sample];
 
@@ -229,39 +226,66 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
             data(sample, 1+variable) = (it != input_vocabulary.end()) ? it - input_vocabulary.begin() : 1;
         }
 
-        data(sample, input_tokens.size() + 1) = 3;
+        data(sample, input_tokens.size() + 1) = 3; // end
     }
 }
 
 
 void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
 {
-
-
-
-
-    unordered_map<string, Index> target_vocabulary_map;
-    for (Index i = 0; i < target_vocabulary.size(); ++i)
-        target_vocabulary_map[target_vocabulary[i]] = i;
-
-    const Index samples_number = get_samples_number();
-
-    #pragma omp parallel for
-
-    for (Index sample = 0; sample < samples_number; sample++)
+    if(maximum_target_length == 1 && target_vocabulary.size() < 6)
     {
-        data(sample, 0) = 2; // start;
+        throw logic_error("Encode target data: Invalid case");
+    }
+    else if(maximum_target_length == 1 && target_vocabulary.size() == 6) // Binary classification
+    {
+        // Binary classification
 
-        const vector<string>& target_tokens = target_document_tokens[sample];
-
-        for (Index variable = maximum_input_length; variable < maximum_input_length + Index(target_tokens.size()); variable++)
+        for(size_t sample_index = 0; sample_index < target_document_tokens.size(); sample_index++)
         {
-            auto it = find(target_vocabulary.begin(), target_vocabulary.end(), target_tokens[variable]);
+            const string& token = target_document_tokens[sample_index][0];
 
-            data(sample, variable) = (it != target_vocabulary.end()) ? it - target_vocabulary.begin() : 1;
+            if (contains(positive_words, token) || contains(negative_words, token))
+            {
+                data(sample_index, maximum_input_length) = contains(positive_words, token)
+                ? 1
+                : 0;
+            }
+            else
+            {
+                // @todo
+            }
         }
+    }
+    else if(maximum_target_length == 1 && target_vocabulary.size() > 6) // Multiple classification
+    {
+        // @todo
+    }
+    else
+    {
+        unordered_map<string, Index> target_vocabulary_map;
+        for (Index i = 0; i < target_vocabulary.size(); ++i)
+            target_vocabulary_map[target_vocabulary[i]] = i;
 
-        data(sample, target_tokens.size() + 1) = 3;
+        const Index samples_number = get_samples_number();
+
+        #pragma omp parallel for
+
+        for (Index sample = 0; sample < samples_number; sample++)
+        {
+            data(sample, maximum_input_length) = 2; // start;
+
+            const vector<string>& target_tokens = target_document_tokens[sample];
+
+            for (Index variable = maximum_input_length; variable < maximum_input_length + Index(target_tokens.size()); variable++)
+            {
+                auto it = find(target_vocabulary.begin(), target_vocabulary.end(), target_tokens[variable]);
+
+                data(sample, variable) = (it != target_vocabulary.end()) ? it - target_vocabulary.begin() : 1;
+            }
+
+            data(sample, maximum_input_length + target_tokens.size() + 1) = 3;
+        }
     }
 }
 
@@ -285,7 +309,7 @@ void LanguageDataset::print() const
     cout << "Language data set" << endl;
     cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
     cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_length() << endl;
+    cout << "Input length: " << get_input_sequence_length() << endl;
     cout << "Target length: " << get_target_length() << endl;
 
     cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
@@ -650,13 +674,11 @@ void LanguageDataset::read_csv()
 
     raw_variables.resize(variables_number);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < maximum_input_length; i++)
-        set_raw_variable_use(i, VariableUse::Input);
+    for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_length,
+             [](auto& var) {var.use = VariableUse::Input;});
 
-    #pragma omp parallel for
-    for (Index i = maximum_input_length; i < variables_number; i++)
-        set_raw_variable_use(i, VariableUse::Target);
+    for_each(raw_variables.begin() + maximum_input_length, raw_variables.begin() + maximum_input_length + maximum_target_length,
+             [](auto& var) { var.use = VariableUse::Target; });
 
     // set data
 
@@ -667,12 +689,14 @@ void LanguageDataset::read_csv()
 
     target_dimensions = {get_target_length()};
     decoder_dimensions = {get_target_length()};
-    input_dimensions = {get_input_length()};
+    input_dimensions = {get_input_sequence_length()};
 
     set_raw_variable_scalers(Scaler::None);
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();
+
+    cout << "Finished" << endl;
 }
 
 }

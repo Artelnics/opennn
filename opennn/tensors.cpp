@@ -933,52 +933,6 @@ TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index
 }
 
 
-TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair)
-{
-    if(x_pair.second.size() != 1)
-        throw runtime_error("Dimensions must be 1");
-
-    return TensorMap<Tensor<type, 1>>(x_pair.first,
-                                      x_pair.second[0]);
-}
-
-
-TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
-{
-    if(x_pair.second.size() != 2)
-        throw runtime_error("Dimensions must be 2");
-
-    return TensorMap<Tensor<type, 2>>(x_pair.first,
-                                      x_pair.second[0],
-                                      x_pair.second[1]);
-}
-
-
-TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
-{
-    if(x_pair.second.size() != 3)
-        throw runtime_error("Dimensions must be 3");
-
-    return TensorMap<Tensor<type, 3>>(x_pair.first,
-                                      x_pair.second[0],
-                                      x_pair.second[1],
-                                      x_pair.second[2]);
-}
-
-
-TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
-{
-    if(x_pair.second.size() != 4)
-        throw runtime_error("Dimensions must be 4");
-
-    return TensorMap<Tensor<type, 4>>(x_pair.first,
-                                      x_pair.second[0],
-                                      x_pair.second[1],
-                                      x_pair.second[2],
-                                      x_pair.second[3]);
-}
-
-
 void print_pairs(const vector<pair<string, Index>>& pairs)
 {
     for (size_t i = 0; i < pairs.size(); i++)

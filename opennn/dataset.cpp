@@ -1765,13 +1765,10 @@ void Dataset::set_display(const bool& new_display)
 
 void Dataset::set_default()
 {
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -1926,14 +1923,10 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
 
 void Dataset::set_threads_number(const int& new_threads_number)
 {
-
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
@@ -4084,12 +4077,14 @@ void Dataset::read_csv()
                 {
                     const vector<string> categories = raw_variables[raw_variable_index].categories;
 
+                    type& value = data(sample_index, variable_indices[0]);
+
                     if (token.empty() || token == missing_values_label)
-                        data(sample_index, variable_indices[0]) = type(NAN);
+                        value = type(NAN);
                     else if (token == categories[0])
-                        data(sample_index, variable_indices[0]) = 1;
+                        value = 1;
                     else if (token == categories[1])
-                        data(sample_index, variable_indices[0]) = 0;
+                        value = 0;
                     else
                         throw runtime_error("Unknown token " + token);
                 }
@@ -4474,16 +4469,6 @@ void Dataset::decode(string&) const
         break;
     }
 }
-
-
-// Virtual functions
-
-// Image Models
-void Dataset::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
-
-// AutoAssociation Models
-void Dataset::transform_associative_Dataset() {}
-void Dataset::save_auto_associative_data_binary(const string&) const {};
 
 
 } // namespace opennn

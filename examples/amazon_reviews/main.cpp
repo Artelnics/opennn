@@ -17,6 +17,10 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/embedding_layer.h"
+#include "../../opennn/flatten_layer_3d.h"
+#include "../../opennn/perceptron_layer.h"
+#include "../../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 
@@ -28,48 +32,54 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        language_dataset.print();
+        const Index embedding_dimension = 16;
 
-        language_dataset.print_input_vocabulary();
+        const Index heads_number = 2;
+
+        cout << "Dataset" << endl;
+
+        print_vector(language_dataset.get_input_dimensions());
+        print_vector(language_dataset.get_target_dimensions());
+
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+
+        cout << "Embedding" << endl;
+
+        print_vector(neural_network.get_input_dimensions());
+        print_vector(neural_network.get_output_dimensions());
+
+        //neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number));
+        //neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+        //neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
+
+        const Index batch_size = 3;
+        const Index sequence_length = language_dataset.get_input_sequence_length();
+
+        Tensor<type, 2> inputs(batch_size, sequence_length);
+        inputs.setZero();
+
+        neural_network.calculate_outputs<2,3>(inputs);
 /*
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index sequence_length = language_dataset.get_input_length();
-        const Index embedding_dimension = 32;
+        TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
-        const Index neurons_number = 64;
+        training_strategy.perform_training();
 
-        const Index targets_number = language_dataset.get_target_length();
+        TestingAnalysis testing_analysis(&neural_network, &language_dataset);
 
-        dimensions input_dimensions      = {input_vocabulary_size, sequence_length, embedding_dimension};
-        dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions     = {targets_number};
-
-        NeuralNetwork neural_network(
-            NeuralNetwork::ModelType::TextClassification,
-            input_dimensions,
-            complexity_dimensions,
-            output_dimensions);
-
-        Tensor<type, 2> inputs(1,1);
-        inputs.setRandom();
-
-        Tensor<type, 3> outputs = neural_network.calculate_outputs_2_3(inputs);
-
-        CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
-
-        cout << cross_entropy_error_3d.calculate_error_xxx() << endl;
+        testing_analysis.print_binary_classification_tests();
 */
         cout << "Good bye!" << endl;
 
         return 0;
     }
-        catch(const exception& e)
-        {
-            cout << e.what() << endl;
+    catch(const exception& e)
+    {
+        cout << e.what() << endl;
 
-            return 1;
-        }
+        return 1;
     }
+}
 
 
 // OpenNN: Open Neural Networks Library.

@@ -19,9 +19,7 @@ class LanguageDataset : public Dataset
 
 public:
 
-    LanguageDataset(const dimensions& input_dims = dimensions(0), const dimensions& target_dims = dimensions(0));
-
-    LanguageDataset(const filesystem::path&);
+    LanguageDataset(const filesystem::path& = "");
 
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;
@@ -29,7 +27,7 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
-    Index get_input_length() const;
+    Index get_input_sequence_length() const;
     Index get_target_length() const;
 
     void set_input_vocabulary(const vector<string>&);
@@ -58,6 +56,20 @@ public:
     inline static const string END_TOKEN = "[END]";     // 3
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
+
+    dimensions get_input_dimensions() const
+    {
+        return dimensions({get_input_vocabulary_size(), get_input_sequence_length()});
+    }
+
+
+    dimensions get_target_dimensions() const
+    {
+        // @todo
+        //get_variables_number()
+
+        return dimensions({1});
+    }
 
 private:
 

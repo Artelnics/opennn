@@ -77,7 +77,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                                       input_height,
                                       input_width,
                                       channels);
-   
+
     const bool random_reflection_axis_x = image_Dataset->get_random_reflection_axis_x();
     const bool random_reflection_axis_y = image_Dataset->get_random_reflection_axis_y();
     const type random_rotation_minimum = image_Dataset->get_random_rotation_minimum();
@@ -116,7 +116,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                               image,
                               image,
                               get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
-    } 
+    }
 
     return Tensor<type, 2>();
 }
@@ -146,6 +146,9 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     {
         input_dimensions = prepend(samples_number, data_set_input_dimensions);
         input_tensor.resize(get_size(input_dimensions));
+
+        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+        input_tensor.resize(input_size);
     }
 
     // @todo
@@ -161,7 +164,7 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     // }
 
     if (!data_set_target_dimensions.empty())
-    {        
+    {
         target_dimensions = prepend(samples_number, data_set_target_dimensions);
         target_tensor.resize(get_size(target_dimensions));
     }
@@ -181,7 +184,7 @@ void Batch::print() const
          << "Input dimensions:" << endl;
 
     print_vector(input_dimensions);
-    
+
     input_dimensions.size() == 4
         ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
                                              input_dimensions[0],
@@ -437,7 +440,6 @@ void BatchCuda::free()
 }
 
 #endif
-
 
 } // namespace opennn
 

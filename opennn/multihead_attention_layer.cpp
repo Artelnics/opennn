@@ -13,6 +13,41 @@
 namespace opennn
 {
 
+MultiHeadAttention::MultiHeadAttention(const dimensions& new_input_dimensions,
+                                       const Index& new_heads_number,
+                                       const string& new_name) : Layer()
+{
+
+    set(new_input_dimensions[0],
+        new_input_dimensions[0],
+        new_input_dimensions[1],
+        new_heads_number,
+        false,
+        new_name);
+
+    layer_type = Type::MultiheadAttention;
+
+}
+
+/*
+MultiHeadAttention::MultiHeadAttention(const dimensions& new_query_dimensions,
+                                       const dimensions& new_source_dimensions,
+                                       const Index& new_heads_number,
+                                       const string& new_name) : Layer()
+{
+
+    set(new_query_sequence_length,
+        new_source_sequence_length,
+        new_embedding_dimension,
+        new_heads_number,
+        new_use_causal_mask,
+        new_name);
+
+    layer_type = Type::MultiheadAttention;
+
+}
+*/
+/*
 MultiHeadAttention::MultiHeadAttention(const Index& new_query_sequence_length,
                                        const Index& new_source_sequence_length,
                                        const Index& new_embedding_dimension,
@@ -29,7 +64,7 @@ MultiHeadAttention::MultiHeadAttention(const Index& new_query_sequence_length,
 
     layer_type = Type::MultiheadAttention;
 }
-
+*/
 
 Index MultiHeadAttention::get_query_sequence_length() const
 {
@@ -414,9 +449,9 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> query_input = tensor_map_3(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> source_input = tensor_map_3(input_pairs[1]);
-
+    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> source_input = tensor_map<3>(input_pairs[1]);
+/*
     MultiheadAttentionForwardPropagation* this_forward_propagation =
         static_cast<MultiheadAttentionForwardPropagation*>(layer_forward_propagation.get());
 
@@ -452,6 +487,7 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     calculate_output_projection(concatenated_attention_outputs,
                                 outputs);
+*/
 }
 
 
@@ -460,9 +496,9 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> context = tensor_map_3(input_pairs[1]);
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> input = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> context = tensor_map<3>(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     const Index batch_size = input_pairs[0].second[0];
     const Index hidden_depth = get_hidden_depth();
@@ -700,6 +736,20 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 }
 
 
+void MultiHeadAttention::print() const
+{
+    cout << "Embedding Layer" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Type: Embedding" << endl;
+
+    cout << "Input dimensions: ";
+    print_vector(get_input_dimensions());
+
+    cout << "Output dimensions: ";
+    print_vector(get_output_dimensions());
+}
+
+
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiheadAttention");
@@ -818,7 +868,6 @@ void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
     key_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
     value_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
 
-    sample_deltas.resize(query_sequence_length, embedding_dimension);
     aux_rows.resize(source_sequence_length);
 }
 

@@ -38,7 +38,7 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
-        #ifdef OPENNN_CUDA
+        // #ifdef OPENNN_CUDA
 
         // Data set
         /*
@@ -57,8 +57,11 @@ int main()
         data_set.set(Dataset::SampleUse::Training);
 
         data_set.print_data();
-        */
+
+<<<<<<< HEAD
+=======
         
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         ImageDataset data_set;
 
         data_set.set_data_path("../examples/mnist/data");
@@ -68,17 +71,128 @@ int main()
         data_set.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
+<<<<<<< HEAD
+        const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
+        
+        // Neural network
+        /*
+=======
         const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
             { 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
+<<<<<<< HEAD
+
+
+        NeuralNetwork neural_network;
+
+        // Scaling 4D
+        neural_network.add_layer(make_unique<Scaling4d>(input_dimensions));
+
+        // --- conv1 -> pool1(dropout 0.25) ---
+        {
+            // Conv 3×3, 32 kernel, ReLU
+            neural_network.add_layer( make_unique<Convolutional>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 3, 3, input_dimensions[2], 32},
+                Convolutional::Activation::Linear,
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Valid,
+                "convolution_1")
+            );
+            // Pooling 2×2 stride 2 + dropout 25%
+            auto pool1 = make_unique<Pooling>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 2, 2 },
+                dimensions{ 2, 2 },
+                dimensions{ 0, 0 },
+                Pooling::PoolingMethod::MaxPooling,
+                "pool1"
+            );
+            neural_network.add_layer(move(pool1));
+        }
+
+        // --- conv2 -> pool2(dropout 0.25) ---
+        {
+            // Conv 3×3, 64 kernels, ReLU
+            neural_network.add_layer(make_unique<Convolutional>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 3, 3, 32, 64 },
+                Convolutional::Activation::Linear,
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Valid,
+                "convolution_2")
+            );
+            // Pooling 2×2 stride 2 + dropout 25%
+            auto pool2 = make_unique<Pooling>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 2, 2 },
+                dimensions{ 2, 2 },
+                dimensions{ 0, 0 },
+                Pooling::PoolingMethod::MaxPooling,
+                "pool2"
+            );
+            neural_network.add_layer(move(pool2));
+        }
+
+        // --- conv3 -> pool3(dropout 0.25) ---
+        {
+            // Conv 3×3, 128 kernels, ReLU
+            neural_network.add_layer(make_unique<Convolutional>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 3, 3, 64, 128 },
+                Convolutional::Activation::Linear,
+                dimensions{ 1, 1 },
+                Convolutional::Convolution::Valid,
+                "convolution_3")
+            );
+            // Pooling 2×2 stride 2 + dropout 25%
+            auto pool3 = make_unique<Pooling>(
+                neural_network.get_output_dimensions(),
+                dimensions{ 2, 2 },
+                dimensions{ 2, 2 },
+                dimensions{ 0, 0 },
+                Pooling::PoolingMethod::MaxPooling,
+                "pool3"
+            );
+            neural_network.add_layer(move(pool3));
+        }
+        
+        // Flatten
+        neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_dimensions()));
+        
+        // Perceptron layers
+        neural_network.add_layer(make_unique<Dense2d>(
+            neural_network.get_output_dimensions(),
+            dimensions{ 512 },
+            Dense2d::Activation::Linear,
+            "perceptron1")
+        );
+        neural_network.add_layer(make_unique<Dense2d>(
+            neural_network.get_output_dimensions(),
+            dimensions{ 128 },
+            Dense2d::Activation::Linear,
+            "perceptron2")
+        );
+        
+        // Probabilistic softmax
+        neural_network.add_layer(make_unique<Dense2d>(
+            neural_network.get_output_dimensions(),
+            output_dimensions,
+            Dense2d::Activation::Softmax,
+            "probabilistic")
+        );
+        
+=======
         
         //VGG16 neural_network(input_dimensions, target_dimensions);
 
+>>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -101,7 +215,8 @@ int main()
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
-        #endif  
+        #endif
+*/
         cout << "Bye!" << endl;
         
         return 0;

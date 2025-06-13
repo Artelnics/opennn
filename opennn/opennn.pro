@@ -14,32 +14,29 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-CONFIG += c++17
-
-CONFIG(debug, debug|release) {
-    DEFINES += OPENNN_DEBUG
-}
 
 DEFINES += __Cpp17__
 
-win32:{
-#QMAKE_CXXFLAGS += -bigobj
-}
-
 # OpenMP library
 
-win32:{
-#QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
-#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-#LIBS += -fopenmp -pthread #-lgomp
+win32-msvc* {
+    QMAKE_CXXFLAGS += /std:c++17 /openmp /EHsc
+    QMAKE_CXXFLAGS += /bigobj
+    DEFINES += "EIGEN_THREAD_LOCAL=thread_local"
 }
-else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
-QMAKE_LFLAGS += -fopenmp -lgomp
-LIBS += -fopenmp -pthread -lgomp
+else:macx {
+    QMAKE_CXXFLAGS += -std=c++17
+    INCLUDEPATH += /usr/local/opt/libomp/include
+    LIBS += -L/usr/local/opt/libomp/lib -lomp
+    TEMPLATE_IS_APP = $$find(TEMPLATE, "app")
+    !isEmpty(TEMPLATE_IS_APP): LIBS += -lpthread
 }
-else: macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
+else {
+    QMAKE_CXXFLAGS += -std=c++17 -fopenmp
+    QMAKE_LFLAGS   += -fopenmp
+    TEMPLATE_IS_APP = $$find(TEMPLATE, "app")
+    !isEmpty(TEMPLATE_IS_APP): LIBS += -lpthread -lgomp
+}
 
 # --- CUDA 12.5 ---
 MY_CUDA_VER_MAJOR = 12

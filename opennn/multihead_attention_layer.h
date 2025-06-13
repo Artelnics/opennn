@@ -19,13 +19,22 @@ class MultiHeadAttention : public Layer
 
 public:
 
+    MultiHeadAttention(const dimensions& = dimensions({0,0}),
+                       const Index& = 0,
+                       const string& = string());
+/*
+    MultiHeadAttention(const dimensions& = dimensions({0,0}),
+                       const dimensions& = dimensions({0,0}),
+                       const Index& = 0,
+                       const string& = string());
+/*
     MultiHeadAttention(const Index& = 0,
                        const Index& = 0,
                        const Index& = 0,
                        const Index& = 0,
                        const bool& = false,
                        const string& = "multihead_attention_layer");
-
+*/
     Index get_query_sequence_length() const;
     Index get_source_sequence_length() const;
     Index get_embedding_dimension() const;
@@ -81,6 +90,8 @@ public:
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          Index&,
                          Tensor<type, 1>&) const override;
+
+    void print() const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -165,8 +176,6 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> attention_weight_deltas_xxx;
     Tensor<type, 4> attention_output_deltas;
     Tensor<type, 3> concatenated_attention_output_deltas;
-
-    Tensor<type, 2> sample_deltas;
 
     Tensor<type, 4> query_deltas;
     Tensor<type, 4> key_deltas;

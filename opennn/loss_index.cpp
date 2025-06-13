@@ -55,16 +55,12 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
     dataset = new_data_set;
 
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
+    if(thread_pool != nullptr)
+        thread_pool.reset();
+    if(thread_pool_device != nullptr)
         thread_pool_device.reset();
 
-        thread_pool.release();
-        thread_pool.reset();
-    }
-
+    const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -74,13 +70,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
@@ -137,11 +130,11 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
@@ -670,6 +663,46 @@ type LossIndex::calculate_error_xxx()
 }
 
 
+Tensor<type, 1> LossIndex::calculate_gradient()
+{
+    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+
+    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+
+    Batch batch(samples_number, dataset);
+
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+    {
+        const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+        batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    }
+    else
+        batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+    BackPropagation back_propagation(samples_number, this);
+
+    const Tensor<type, 1> parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+
+    Tensor<type, 1> numerical_gradient(parameters_number);
+    numerical_gradient.setConstant(type(0));
+
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      parameters,
+                                      forward_propagation);
+
+    back_propagate(batch, forward_propagation, back_propagation);
+
+    return back_propagation.gradient;
+}
+
+
+
 Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 {
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
@@ -841,7 +874,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 
     const vector<pair<type*, dimensions>>& input_pairs = batch.get_input_pairs();
 
-    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map_4(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map<4>(input_pairs[0]);
 
     for (Index i = 0; i < values_number; i++)
     {
