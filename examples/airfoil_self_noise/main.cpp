@@ -34,7 +34,6 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {inputs_number}, {neurons_number}, {targets_number});
 
-        neural_network.print();
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
