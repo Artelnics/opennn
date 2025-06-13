@@ -1765,13 +1765,10 @@ void Dataset::set_display(const bool& new_display)
 
 void Dataset::set_default()
 {
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -1926,14 +1923,10 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
 
 void Dataset::set_threads_number(const int& new_threads_number)
 {
-
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);

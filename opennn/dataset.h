@@ -39,10 +39,10 @@ public:
 
     ~Dataset()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     // Enumerations
@@ -517,8 +517,8 @@ protected:
 
     Dataset::ModelType model_type;
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     // DATA
 
@@ -586,10 +586,10 @@ struct Batch
 
     ~Batch()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
@@ -623,8 +623,8 @@ struct Batch
     dimensions target_dimensions;
     Tensor<type, 1> target_tensor;
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 };
 
 #ifdef OPENNN_CUDA

@@ -24,13 +24,10 @@ void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_d
 {
     const unsigned int threads_number = thread::hardware_concurrency();
 
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);

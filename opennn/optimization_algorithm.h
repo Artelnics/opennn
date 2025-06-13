@@ -25,10 +25,10 @@ public:
 
     ~OptimizationAlgorithm()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     enum class StoppingCondition{None,
@@ -99,8 +99,8 @@ public:
 
 protected:
 
-   unique_ptr<ThreadPool> thread_pool;
-   unique_ptr<ThreadPoolDevice> thread_pool_device;
+   unique_ptr<ThreadPool> thread_pool = nullptr;
+   unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
    LossIndex* loss_index = nullptr;
 

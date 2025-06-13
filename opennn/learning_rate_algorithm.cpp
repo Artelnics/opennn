@@ -14,11 +14,6 @@ namespace opennn
 LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
     : loss_index(new_loss_index)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     set_default();
 }
 
@@ -80,13 +75,10 @@ void LearningRateAlgorithm::set_default()
 {
     const unsigned int threads_number = thread::hardware_concurrency();
 
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -106,13 +98,10 @@ void LearningRateAlgorithm::set_loss_index(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);

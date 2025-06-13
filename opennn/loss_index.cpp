@@ -55,16 +55,12 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
     dataset = new_data_set;
 
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
+    if(thread_pool != nullptr)
+        thread_pool.reset();
+    if(thread_pool_device != nullptr)
         thread_pool_device.reset();
 
-        thread_pool.release();
-        thread_pool.reset();
-    }
-
+    const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -74,13 +70,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr || thread_pool_device != nullptr)
-    {
-        thread_pool_device.reset();
-
-        thread_pool.release();
+    if(thread_pool != nullptr)
         thread_pool.reset();
-    }
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
