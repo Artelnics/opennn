@@ -184,6 +184,7 @@ public:
            return Tensor<type, output_rank>();
 
        const Index batch_size = inputs.dimension(0);
+       const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
 
@@ -196,7 +197,7 @@ public:
        if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
        static_assert(input_rank >= 2 && input_rank <= 4, "Unsupported input rank");
 
-       const pair<type*, dimensions> input_pair;//(inputs.data(), input_dimensions);
+       const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
 
        forward_propagate({input_pair}, forward_propagation, false);
 
