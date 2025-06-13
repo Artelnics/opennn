@@ -659,7 +659,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             // Optimization algorithm
 
             update_parameters_cuda(training_back_propagation_cuda, optimization_data_cuda);
-
         }
 
         // Loss

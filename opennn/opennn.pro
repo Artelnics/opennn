@@ -112,7 +112,6 @@ HEADERS += \
     correlations.h \
     tinyxml2.h \
     dataset.h \
-    batch.h \
     time_seriesdataset.h \
     image_dataset.h \
     language_dataset.h \
@@ -178,7 +177,6 @@ SOURCES += \
     correlations.cpp \
     tinyxml2.cpp \
     dataset.cpp \
-    batch.cpp \
     time_series_dataset.cpp \
     image_dataset.cpp \
     language_dataset.cpp \

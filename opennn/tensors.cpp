@@ -637,7 +637,7 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 }
 
 
-void fill_tensor_3d(const Tensor<type, 2>& matrix,
+void fill_tensor_sequence(const Tensor<type, 2>& matrix,
                     const vector<Index>& rows_indices,
                     const vector<Index>& columns_indices,
                     type* tensor_data)

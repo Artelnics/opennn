@@ -11,7 +11,6 @@
 
 #include "dataset.h"
 #include "neural_network.h"
-#include "batch.h"
 
 namespace opennn
 {
