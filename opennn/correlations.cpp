@@ -556,7 +556,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_maximum_epochs_number(1000);
+    training_strategy.set_maximum_epochs_number(10000);
 
     training_strategy.perform_training();
 
@@ -586,8 +586,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.a = coefficients(1);
     correlation.b = coefficients(0);
 
-    // if(correlation.a < type(0))
-    //     correlation.r *= type(-1);
+    if(correlation.b < type(0))
+        correlation.r *= type(-1);
 
     return correlation;
 }
@@ -624,16 +624,6 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     Dataset.set(Dataset::SampleUse::Training);
 
     Dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
-
-    // NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
-
-    // Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
-
-    // scaling_layer_2d->set_display(false);
-
-    // Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
-
-    // dense_2d_layer->set_activation_function(Dense2d::Activation::Logistic);
 
     NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
@@ -676,10 +666,10 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
-    correlation.a = coefficients(0);
-    correlation.b = coefficients(1);
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
 
-    //if(correlation.b < type(0)) correlation.r *= type(-1);
+    if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }
@@ -726,7 +716,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Dataset Dataset(x_filtered.size(), {1}, {y_filtered.dimension(1)});
 
     Dataset.set_data(data);
-    // Dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
+    Dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
     Dataset.set_binary_raw_variables();
     Dataset.set_default_raw_variables_scalers();
 

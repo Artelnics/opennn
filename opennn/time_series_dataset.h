@@ -50,6 +50,22 @@ public:
 
     void impute_missing_values_mean();
 
+
+    void fill_input_tensor(const vector<Index>& sample_indices,
+                           const vector<Index>& input_indices,
+                           Tensor<type, 1>& input_tensor) const override
+    {
+        fill_tensor_sequence(data, sample_indices, input_indices, input_tensor.data());
+    }
+
+    void fill_target_tensor(const vector<Index>& sample_indices,
+                            const vector<Index>& target_indices,
+                            Tensor<type, 1>& target_tensor) const override
+    {
+        fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    }
+
+
 private:
 
     Index lags_number = 2;

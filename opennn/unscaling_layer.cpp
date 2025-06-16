@@ -287,12 +287,12 @@ void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 {
     const Index outputs_number = get_outputs_number();
 
-    UnscalingForwardPropagation* unscaling_layer_forward_propagation =
+    UnscalingForwardPropagation* this_forward_propagation =
             static_cast<UnscalingForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_pairs[0]);
 
-    Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
+    Tensor<type, 2>& outputs = this_forward_propagation->outputs;
 
     outputs = inputs;
 
