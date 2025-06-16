@@ -221,11 +221,9 @@ void GeneticAlgorithm::initialize_population_random()
         shuffle(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), gen);
 
         if(is_equal(individual_raw_variables, false))
-        {
             for(Index j = 0; j < original_input_raw_variables_number; j++)
                 if(original_input_raw_variables[j])
                     individual_raw_variables(j) = true;
-        }
 
         if(is_equal(individual_raw_variables, false))
             individual_raw_variables.setConstant(true);
@@ -497,7 +495,6 @@ void GeneticAlgorithm::perform_crossover()
 
     const vector<Index> parent_2_indices = get_selected_individuals_indices();
 
-
     Index descendent_index = 0;
 
     for(size_t i = 0; i < parent_1_indices.size(); i++)
@@ -530,13 +527,7 @@ void GeneticAlgorithm::perform_crossover()
         }
     }
 
-    //cout << "Previous population:\n" << population << endl;
-
     population = new_population;
-
-    //cout << "population:\n" << population << endl;
-
-    // throw runtime_error("Checking the population.");
 }
 
 
@@ -554,12 +545,9 @@ void GeneticAlgorithm::perform_mutation()
             individual_raw_variables(j) ^= (get_random_type(0, 1) < mutation_rate);
 
         if(is_equal(individual_raw_variables, false))
-        {
-
             for(Index j = 0; j < raw_variables_number; j++)
                 if(original_input_raw_variables[j])
                     individual_raw_variables[j] = true;
-        }
 
         if(is_equal(individual_raw_variables, false))
             individual_raw_variables.setConstant(true);

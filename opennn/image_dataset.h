@@ -67,80 +67,10 @@ public:
 
     void fill_input_tensor(const vector<Index>& sample_indices,
                            const vector<Index>& input_indices,
-                           Tensor<type, 1>& input_tensor) const override
-    {
-        const Tensor<type, 2>& data = get_data();
-
-        if (get_augmentation())
-        {
-            // Optional: apply augmentation here
-            // Tensor<type, 2> augmented_data = perform_augmentation(data);
-            // fill_tensor_data(augmented_data, sample_indices, input_indices, destination.data());
-        }
-        else
-        {
-            fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
-        }
-    }
+                           Tensor<type, 1>& input_tensor) const override;
 
 
-    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>& data)
-    {
-/*
-        const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
-
-        const Index input_height = input_dimensions[0];
-        const Index input_width = input_dimensions[1];
-        const Index channels = input_dimensions[2];
-
-        TensorMap<Tensor<type, 4>> inputs(input_tensor.data(),
-                                          samples_number,
-                                          input_height,
-                                          input_width,
-                                          channels);
-
-        const bool random_reflection_axis_x = image_Dataset->get_random_reflection_axis_x();
-        const bool random_reflection_axis_y = image_Dataset->get_random_reflection_axis_y();
-        const type random_rotation_minimum = image_Dataset->get_random_rotation_minimum();
-        const type random_rotation_maximum = image_Dataset->get_random_rotation_maximum();
-        const type random_horizontal_translation_minimum = image_Dataset->get_random_horizontal_translation_minimum();
-        const type random_horizontal_translation_maximum = image_Dataset->get_random_horizontal_translation_maximum();
-        const type random_vertical_translation_minimum = image_Dataset->get_random_vertical_translation_minimum();
-        const type random_vertical_translation_maximum = image_Dataset->get_random_vertical_translation_maximum();
-
-        for(Index batch_index = 0; batch_index < samples_number; batch_index++)
-        {
-            Tensor<type, 3> image = inputs.chip(batch_index, 0);
-
-            if(random_reflection_axis_x)
-                reflect_image_x(thread_pool_device.get(),
-                                image);
-
-            if(random_reflection_axis_y)
-                reflect_image_y(thread_pool_device.get(),
-                                image);
-
-            if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-                rotate_image(thread_pool_device.get(),
-                             image,
-                             image,
-                             get_random_type(random_rotation_minimum, random_rotation_maximum));
-
-            if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-                translate_image_x(thread_pool_device.get(),
-                                  image,
-                                  image,
-                                  get_random_type(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
-
-            if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-                translate_image_y(thread_pool_device.get(),
-                                  image,
-                                  image,
-                                  get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
-        }
-*/
-        return Tensor<type, 2>();
-    }
+    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>& data);
 
 
 private:

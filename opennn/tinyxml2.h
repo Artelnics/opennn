@@ -43,9 +43,9 @@
 
 #include "pch.h"
 
-#include "tensors.h"
+//#include "tensors.h"
 
-using namespace opennn;
+//using namespace opennn;
 
 //    TODO: intern strings instead of allocation.
 
@@ -2252,7 +2252,6 @@ private:
 
 void add_xml_element(XMLPrinter& printer, const string& name, const string& value);
 void add_xml_element_attribute(XMLPrinter& printer, const string&, const string&, const string&, const string&);
-
 
 type read_xml_type(const XMLElement* root, const string& element_name);
 Index read_xml_index(const XMLElement* root, const string& element_name);

@@ -249,14 +249,7 @@ protected:
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
-    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-    {
-        TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
-
-        for (Index i = 1; i < Index(delta_pairs.size()); i++)
-            deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
-    }
-
+    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const;
 
     template <int Rank>
     void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const

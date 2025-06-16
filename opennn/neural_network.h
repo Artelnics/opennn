@@ -10,6 +10,7 @@
 #define NEURALNETWORK_H
 
 #include "layer.h"
+#include "tensors.h"
 
 namespace opennn
 {

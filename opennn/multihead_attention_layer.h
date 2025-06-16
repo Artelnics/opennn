@@ -59,10 +59,6 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    void calculate_query(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-    void calculate_key(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-    void calculate_value(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-
     void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -187,8 +183,8 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> aux_rows;
 
-    Tensor<type, 3> input_query_derivatives;
-    Tensor<type, 3> input_source_derivatives;
+    Tensor<type, 3> input_query_deltas;
+    Tensor<type, 3> input_source_deltas;
 };
 
 #ifdef OPENNN_CUDA

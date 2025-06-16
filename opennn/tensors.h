@@ -22,7 +22,7 @@ array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a
     const array<IndexPair<Index>, 2> indices
         = { IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2) };
 
-    return indices;//array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1)}, {IndexPair<Index>(a2, b2)});
+    return indices;
 }
 
 
@@ -69,7 +69,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
