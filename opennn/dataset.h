@@ -513,6 +513,29 @@ public:
 
     void check_separators(const string&) const;
 
+    virtual void fill_input_tensor(const vector<Index>& sample_indices,
+                                   const vector<Index>& input_indices,
+                                   Tensor<type, 1>& input_tensor) const
+    {
+        fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+
+    }
+
+    virtual void fill_target_tensor(const vector<Index>& sample_indices,
+                                    const vector<Index>& target_indices,
+                                    Tensor<type, 1>& target_tensor) const
+    {
+        fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    }
+
+    virtual void fill_decoder_tensor(const vector<Index>& sample_indices,
+                                     const vector<Index>& decoder_indices,
+                                     Tensor<type, 2>& decoder_tensor) const
+    {
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    }
+
+
 protected:
 
     Dataset::ModelType model_type;

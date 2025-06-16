@@ -61,12 +61,12 @@ void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool&)
 {
-    Scaling4dForwardPropagation* scaling_layer_forward_propagation =
+    Scaling4dForwardPropagation* this_forward_propagation =
         static_cast<Scaling4dForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
 
-    Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = inputs/type(255); 
 }

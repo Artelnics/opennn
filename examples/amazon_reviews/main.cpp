@@ -30,37 +30,34 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
-
-        const Index embedding_dimension = 16;
-
         const Index heads_number = 2;
-
-        cout << "Dataset" << endl;
-
-        print_vector(language_dataset.get_input_dimensions());
-        print_vector(language_dataset.get_target_dimensions());
+        const Index batch_size = 3;
+        const Index sequence_length = 3;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(dimensions({3,3}), heads_number));
 
-        cout << "Embedding" << endl;
-
-        print_vector(neural_network.get_input_dimensions());
-        print_vector(neural_network.get_output_dimensions());
-
-        //neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number));
-        //neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        //neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
-
-        const Index batch_size = 3;
-        const Index sequence_length = language_dataset.get_input_sequence_length();
 
         Tensor<type, 2> inputs(batch_size, sequence_length);
         inputs.setZero();
 
-        neural_network.calculate_outputs<2,3>(inputs);
+        cout << neural_network.calculate_outputs<2,3>(inputs) << endl;
+
+
 /*
+        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+
+        const Index embedding_dimension = 16;
+
+
+        cout << "Dataset" << endl;
+
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number));
+        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
+
         TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
         training_strategy.perform_training();

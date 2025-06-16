@@ -37,11 +37,11 @@ int main()
     try
     {
         cout << "OpenNN. Blank Cuda." << endl;
-
+/*
         // #ifdef OPENNN_CUDA
 
         // Data set
-        /*
+
         const Index samples_number = 2;
 
         const Index image_height = 3;
@@ -57,11 +57,7 @@ int main()
         data_set.set(Dataset::SampleUse::Training);
 
         data_set.print_data();
-
-<<<<<<< HEAD
-=======
         
->>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         ImageDataset data_set;
 
         data_set.set_data_path("../examples/mnist/data");
@@ -71,23 +67,19 @@ int main()
         data_set.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
-<<<<<<< HEAD
+
         const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
-        /*
-=======
+
         const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
->>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
             { 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
-<<<<<<< HEAD
-
 
         NeuralNetwork neural_network;
 
@@ -187,12 +179,9 @@ int main()
             Dense2d::Activation::Softmax,
             "probabilistic")
         );
-        
-=======
-        
+                
         //VGG16 neural_network(input_dimensions, target_dimensions);
 
->>>>>>> ef9a121884806c8b849e9ea5f7c5ff8d4863909d
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);

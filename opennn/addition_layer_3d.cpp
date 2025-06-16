@@ -66,10 +66,10 @@ void Addition3d::forward_propagate(const vector<pair<type*, dimensions>>& input_
 
     const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map<3>(input_pairs[1]);
 
-    Addition3dForwardPropagation* addition_3d_forward_propagation =
+    Addition3dForwardPropagation* this_forward_propagation =
         static_cast<Addition3dForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 3>& outputs = addition_3d_forward_propagation->outputs;
+    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = positional_encodings + input_embeddings;
 }

@@ -147,7 +147,6 @@ protected:
     Tensor<type, 3> empty_3;
     Tensor<type, 4> empty_4;
 
-
     bool display = true;
 
     template <int Rank>

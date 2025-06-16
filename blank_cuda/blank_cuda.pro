@@ -26,7 +26,6 @@ DESTDIR = "$$PWD/bin"
 SOURCES += \
     ../opennn/adaptive_moment_estimation.cpp \
     ../opennn/addition_layer_3d.cpp \
-    ../opennn/batch.cpp \
     ../opennn/bounding_layer.cpp \
     ../opennn/convolutional_layer.cpp \
     ../opennn/correlations.cpp \
@@ -88,7 +87,6 @@ CUDA_SOURCES += \
 HEADERS += \
     ../opennn/adaptive_moment_estimation.h \
     ../opennn/addition_layer_3d.h \
-    ../opennn/batch.h \
     ../opennn/bounding_layer.h \
     ../opennn/convolutional_layer.h \
     ../opennn/correlations.h \
