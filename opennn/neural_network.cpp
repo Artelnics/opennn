@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "dataset.h"
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
@@ -458,19 +457,16 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
 
     add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
         embedding_dimension,
-        "embedding_layer"
-        ));
+        "embedding_layer"));
 
     add_layer(make_unique<Flatten3d>(
-        get_output_dimensions()
-        ));
+        get_output_dimensions()));
 
     add_layer(make_unique<Dense2d>(
         get_output_dimensions(),
         output_dimensions,
         Dense2d::Activation::Logistic,
-        "classification_layer"
-        ));
+        "classification_layer"));
 }
 
 

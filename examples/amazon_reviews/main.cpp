@@ -30,42 +30,30 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        const Index heads_number = 2;
-        const Index batch_size = 3;
-        const Index sequence_length = 3;
-
-        NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<MultiHeadAttention>(dimensions({3,3}), heads_number));
-
-
-        Tensor<type, 2> inputs(batch_size, sequence_length);
-        inputs.setZero();
-
-        cout << neural_network.calculate_outputs<2,3>(inputs) << endl;
-
-
-/*
-        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
-
+        //const Index sequence_length = 3;
         const Index embedding_dimension = 16;
+        const Index heads_number = 3;
+        //const Index batch_size = 3;
 
-
-        cout << "Dataset" << endl;
+        LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
 
         TrainingStrategy training_strategy(&neural_network, &language_dataset);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(200);
 
         training_strategy.perform_training();
 
         TestingAnalysis testing_analysis(&neural_network, &language_dataset);
 
         testing_analysis.print_binary_classification_tests();
-*/
+
+        //Tensor<type, 3> inputs()
+
         cout << "Good bye!" << endl;
 
         return 0;

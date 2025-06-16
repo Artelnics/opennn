@@ -49,9 +49,9 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
                        Tensor<type, 3>& tensor,
                        const Tensor<type, 1>& vector)
 {
-    const Index channels = tensor.dimension(2);
+    const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         TensorMap<Tensor<type, 2>> matrix = tensor_map(tensor, i);
 
@@ -62,9 +62,9 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
 
 void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 {
-    const Index channels = tensor.dimension(2);
+    const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
 
@@ -92,9 +92,9 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
     const Index C_rows = (contraction_axes[0].first == 0) ? A_columns : A_rows;
     const Index C_columns = (contraction_axes[0].second == 1) ? B_rows : B_columns;
 
-    const Index channels = A.dimension(2);
+    const Index depth = A.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         const TensorMap<Tensor<type, 2>> A_matrix(A.data() + A_rows * A_columns * i, A_rows, A_columns);
         const TensorMap<Tensor<type, 2>> B_matrix(B.data() + B_rows * B_columns * i, B_rows, B_columns);
@@ -123,9 +123,9 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
     const Index C_rows = (contraction_axes[0].first == 0) ? A_columns : A_rows;
     const Index C_columns = (contraction_axes[0].second == 1) ? B_rows : B_columns;
 
-    const Index channels = A.dimension(2);
+    const Index depth = A.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         const TensorMap<Tensor<type, 2>> A_matrix(A.data() + A_rows * A_columns * i, A_rows, A_columns);
         const TensorMap<Tensor<type, 2>> B_matrix(B.data() + B_rows * B_columns * i, B_rows, B_columns);
@@ -210,9 +210,9 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
 
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
-    const Index channels = tensor.dimension(2);
+    const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
 
@@ -223,9 +223,9 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
 
 void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
 {
-    const Index channels = tensor.dimension(2);
+    const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < channels; i++)
+    for(Index i = 0; i < depth; i++)
     {
         TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
 
