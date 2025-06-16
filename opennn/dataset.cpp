@@ -4233,6 +4233,25 @@ void Dataset::check_separators(const string& line) const
 }
 
 
+void Dataset::fill_decoder_tensor(const vector<Index> &sample_indices, const vector<Index> &decoder_indices, Tensor<type, 2> &decoder_tensor) const
+{
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+}
+
+
+void Dataset::fill_target_tensor(const vector<Index> &sample_indices, const vector<Index> &target_indices, Tensor<type, 1> &target_tensor) const
+{
+    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+}
+
+
+void Dataset::fill_input_tensor(const vector<Index> &sample_indices, const vector<Index> &input_indices, Tensor<type, 1> &input_tensor) const
+{
+    fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+
+}
+
+
 bool Dataset::has_binary_raw_variables() const
 {
     return any_of(raw_variables.begin(), raw_variables.end(),

@@ -9,7 +9,15 @@
 #ifndef OPENNN_IMAGES_H
 #define OPENNN_IMAGES_H
 
-#include "pch.h"
+#include <cstdint>
+#include <string>
+#include <filesystem>
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+
+using type = float;
+
+using namespace std;
+using namespace Eigen;
 
 namespace opennn
 {

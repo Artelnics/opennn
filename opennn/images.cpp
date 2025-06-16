@@ -151,8 +151,8 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     const int bytes_per_pixel_in_file =
         (biBitCount == 32) ? 4 :
         (biBitCount == 24) ? 3 :
-        (biBitCount == 8)  ? 1 :
-        throw std::logic_error("Internal error: Unhandled biBitCount in pixel reading stage.");
+        (biBitCount ==  8) ? 1 :
+        throw logic_error("Internal error: Unhandled biBitCount in pixel reading stage.");
 
     const long long row_data_bytes = tensor_width * bytes_per_pixel_in_file;
     const long long row_stride_in_file = ((row_data_bytes + 3) / 4) * 4;

@@ -9,7 +9,17 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
+#include <string>
+#include <vector>
+
 #include "pch.h"
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+
+using namespace std;
+using namespace Eigen;
+
+//#include "pch.h"
 
 namespace opennn
 {

@@ -6,7 +6,9 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+
 #include "strings_utilities.h"
+
 
 namespace opennn
 {

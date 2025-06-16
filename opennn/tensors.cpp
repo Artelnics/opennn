@@ -132,7 +132,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
         TensorMap<Tensor<type, 2>> C_matrix(C.data() + C_rows * C_columns * i, C_rows, C_columns);
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
-    }
+    }    
 }
 
 

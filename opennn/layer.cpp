@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -235,6 +236,15 @@ vector<string> Layer::get_default_output_names() const
         output_names[i] = "output_" + to_string(i);
 
     return output_names;
+}
+
+
+void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) const
+{
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+
+    for (Index i = 1; i < Index(delta_pairs.size()); i++)
+        deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
 }
 
 

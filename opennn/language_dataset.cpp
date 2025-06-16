@@ -8,6 +8,8 @@
 
 #include "language_dataset.h"
 #include "strings_utilities.h"
+#include "tensors.h"
+#include "tinyxml2.h"
 
 namespace opennn
 {
@@ -696,7 +698,7 @@ void LanguageDataset::read_csv()
     split_samples_random();
     set_binary_raw_variables();
 
-    cout << "Finished" << endl;
+    cout << "Reading finished" << endl;
 }
 
 }

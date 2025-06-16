@@ -211,7 +211,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors;
-       divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 

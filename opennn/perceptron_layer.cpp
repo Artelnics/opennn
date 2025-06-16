@@ -646,6 +646,25 @@ void Dense2dLayerBackPropagationLM::print() const
 }
 
 
+void Dense2d::normalization(Tensor<type, 1> &means, Tensor<type, 1> &standard_deviations, const Tensor<type, 2> &inputs, Tensor<type, 2> &outputs) const
+{
+
+    const array<Index, 2> rows({outputs.dimension(0), 1});
+
+    const array<int, 1> axis_x({0});
+
+    means.device(*thread_pool_device) = outputs.mean(axis_x);
+
+    standard_deviations.device(*thread_pool_device)
+        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+
+    outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
+        //shifts.broadcast(rows);
+        //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
+}
+
+
+
 #ifdef OPENNN_CUDA
 
 void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,

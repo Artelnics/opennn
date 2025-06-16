@@ -14,7 +14,9 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
+CONFIG += precompile_header
 
+PRECOMPILED_HEADER = pch.h
 DEFINES += __Cpp17__
 
 # OpenMP library
@@ -164,7 +166,6 @@ HEADERS += \
 SOURCES += \
     flatten_layer_3d.cpp \
     model_expression.cpp \
-    pch.cpp \
     cross_entropy_error_3d.cpp \
     embedding_layer.cpp \
     multihead_attention_layer.cpp \
