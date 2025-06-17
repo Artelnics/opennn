@@ -10,13 +10,13 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
-SUBDIRS += airfoil_self_noise
-SUBDIRS += forecasting
+#SUBDIRS += airfoil_self_noise
+#SUBDIRS += forecasting
 SUBDIRS += amazon_reviews
-SUBDIRS += breast_cancer
-SUBDIRS += iris_plant
-SUBDIRS += mnist
-SUBDIRS += translation
+#SUBDIRS += breast_cancer
+#SUBDIRS += iris_plant
+#SUBDIRS += mnist
+#SUBDIRS += translation
 
 win32:{
 #QMAKE_CXXFLAGS+= -arch:AVX

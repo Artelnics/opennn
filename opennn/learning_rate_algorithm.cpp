@@ -6,6 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
+#include "neural_network.h"
+#include "loss_index.h"
+#include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
 namespace opennn

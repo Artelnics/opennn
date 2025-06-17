@@ -148,8 +148,6 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 
     type learning_rate = type(0);
     type old_learning_rate = type(0);
-
-
 };
 
 }

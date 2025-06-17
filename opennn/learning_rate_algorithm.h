@@ -9,12 +9,20 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-#include "loss_index.h"
-#include "optimization_algorithm.h"
-#include "statistics.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
+
+class LossIndex;
+class OptimizationAlgorithm;
+
+struct Batch;
+struct ForwardPropagation;
+struct BackPropagation;
+struct OptimizationAlgorithmData;
 
 class LearningRateAlgorithm
 {

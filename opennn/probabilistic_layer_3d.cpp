@@ -86,16 +86,14 @@ Index Probabilistic3d::get_parameters_number() const
 }
 
 
-Tensor<type, 1> Probabilistic3d::get_parameters() const
+void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
 {
-    Tensor<type, 1> parameters(weights.size() + biases.size());
+    parameters.resize(weights.size() + biases.size());
 
     Index index = 0;
 
     copy_to_vector(parameters, weights, index);
     copy_to_vector(parameters, biases, index);
-
-    return parameters;
 }
 
 
@@ -278,8 +276,8 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     Tensor<type, 3>& combination_deltas = probabilistic_3d_back_propagation->combination_deltas;
 
-    Tensor<type, 1>& bias_derivatives = probabilistic_3d_back_propagation->bias_derivatives;
-    Tensor<type, 2>& weight_derivatives = probabilistic_3d_back_propagation->weight_derivatives;
+    Tensor<type, 1>& bias_deltas = probabilistic_3d_back_propagation->bias_deltas;
+    Tensor<type, 2>& weight_deltas = probabilistic_3d_back_propagation->weight_deltas;
     Tensor<type, 3>& input_derivatives = probabilistic_3d_back_propagation->input_derivatives;
 
     // if(!built_mask)
@@ -295,10 +293,10 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
-    bias_derivatives.device(*thread_pool_device)
+    bias_deltas.device(*thread_pool_device)
         = combination_deltas.sum(array<Index, 2>({0,1}));
 
-    weight_derivatives.device(*thread_pool_device)
+    weight_deltas.device(*thread_pool_device)
         = inputs.contract(combination_deltas, axes(0,0,1,1));
 
     input_derivatives.device(*thread_pool_device)
@@ -333,8 +331,8 @@ void Probabilistic3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_pro
     const Probabilistic3dBackPropagation* probabilistic_3d_back_propagation =
         static_cast<Probabilistic3dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, probabilistic_3d_back_propagation->weight_deltas, index);
+    copy_to_vector(gradient, probabilistic_3d_back_propagation->bias_deltas, index);
 }
 
 
@@ -369,7 +367,11 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "Activation", get_activation_function_string());
-    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
+
+    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -430,9 +432,9 @@ void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new
     targets.resize(batch_size, inputs_number);
     mask.resize(batch_size, inputs_number);
 
-    bias_derivatives.resize(neurons_number);
+    bias_deltas.resize(neurons_number);
 
-    weight_derivatives.resize(inputs_depth, neurons_number);
+    weight_deltas.resize(inputs_depth, neurons_number);
 
     input_derivatives.resize(batch_size, inputs_number, inputs_depth);
 }
@@ -441,9 +443,9 @@ void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new
 void Probabilistic3dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
-         << bias_derivatives << endl
+         << bias_deltas << endl
          << "Synaptic weights derivatives:" << endl
-         << weight_derivatives << endl;
+         << weight_deltas << endl;
 }
 
 

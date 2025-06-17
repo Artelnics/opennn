@@ -28,7 +28,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
-    Tensor<type, 1> get_parameters() const override;
+    void get_parameters(Tensor<type, 1>&) const override;
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 

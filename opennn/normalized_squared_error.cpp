@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensors.h"
+#include "dataset.h"
 #include "normalized_squared_error.h"
 
 namespace opennn

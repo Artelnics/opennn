@@ -1,8 +1,6 @@
 #ifndef TENSORS_H
 #define TENSORS_H
 
-#include "pch.h"
-
 namespace opennn
 {
 
@@ -43,6 +41,7 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
     for (Index i = 0; i < tensor.size(); ++i)
         tensor(i) = distribution(gen);
 }
+
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
