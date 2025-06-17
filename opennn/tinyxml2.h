@@ -43,10 +43,6 @@
 
 #include "pch.h"
 
-//#include "tensors.h"
-
-//using namespace opennn;
-
 //    TODO: intern strings instead of allocation.
 
 

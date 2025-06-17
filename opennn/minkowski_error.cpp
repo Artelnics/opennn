@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "tensors.h"
+#include "dataset.h"
+#include "neural_network.h"
 #include "minkowski_error.h"
 
 namespace opennn

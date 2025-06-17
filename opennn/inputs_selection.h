@@ -9,11 +9,14 @@
 #ifndef INPUTSSELECTIONALGORITHM_H
 #define INPUTSSELECTIONALGORITHM_H
 
-#include "training_strategy.h"
+#include "dataset.h"
 
 namespace opennn
 {
 
+class TrainingStrategy;
+
+struct TrainingResults;
 struct InputsSelectionResults;
 
 class InputsSelection

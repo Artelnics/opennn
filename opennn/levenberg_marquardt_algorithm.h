@@ -14,6 +14,8 @@
 namespace opennn
 {
 
+struct ForwardPropagation;
+struct BackPropagationLM;
 struct LevenbergMarquardtAlgorithmData;
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm

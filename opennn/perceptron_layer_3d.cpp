@@ -65,16 +65,14 @@ type Dense3d::get_dropout_rate() const
 }
 
 
-Tensor<type, 1> Dense3d::get_parameters() const
+void Dense3d::get_parameters(Tensor<type, 1>& parameters) const
 {
-    Tensor<type, 1> parameters(weights.size() + biases.size());
+    parameters.resize(weights.size() + biases.size());
 
     Index index = 0;
 
     copy_to_vector(parameters, weights, index);
     copy_to_vector(parameters, biases, index);
-
-    return parameters;
 }
 
 
@@ -245,18 +243,18 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     Dense3dBackPropagation* dense3d_back_propagation =
         static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 1>& bias_derivatives = dense3d_back_propagation->bias_derivatives;
-    Tensor<type, 2>& weight_derivatives = dense3d_back_propagation->weight_derivatives;
+    Tensor<type, 1>& bias_deltas = dense3d_back_propagation->bias_deltas;
+    Tensor<type, 2>& weight_deltas = dense3d_back_propagation->weight_deltas;
 
-    Tensor<type, 3>& input_derivatives = dense3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_deltas = dense3d_back_propagation->input_deltas;
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
+    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
 
-    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
+    input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
 }
 
 
@@ -267,8 +265,8 @@ void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation
     Dense3dBackPropagation* dense3d_back_propagation =
         static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, dense3d_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, dense3d_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, dense3d_back_propagation->weight_deltas, index);
+    copy_to_vector(gradient, dense3d_back_propagation->bias_deltas, index);
 }
 
 
@@ -303,7 +301,11 @@ void Dense3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_input_dimension()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimension()));
     add_xml_element(printer, "Activation", get_activation_function_string());
-    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
+
+    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -366,18 +368,18 @@ void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
     const Index sequence_length = perceptron_layer_3d->get_sequence_length();
     const Index input_dimension = perceptron_layer_3d->get_input_dimension();
 
-    bias_derivatives.resize(output_dimension);
-    weight_derivatives.resize(input_dimension, output_dimension);
-    input_derivatives.resize(batch_size, sequence_length, input_dimension);
+    bias_deltas.resize(output_dimension);
+    weight_deltas.resize(input_dimension, output_dimension);
+    input_deltas.resize(batch_size, sequence_length, input_dimension);
 }
 
 
 void Dense3dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
-         << bias_derivatives << endl
+         << bias_deltas << endl
          << "Synaptic weights derivatives:" << endl
-         << weight_derivatives << endl;
+         << weight_deltas << endl;
 }
 
 
@@ -395,7 +397,7 @@ vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pai
     const Index sequence_length = perceptron_layer_3d->get_sequence_length();
     const Index inputs_depth = perceptron_layer_3d->get_input_dimension();
 
-    return {{(type*)(input_derivatives.data()),
+    return {{(type*)(input_deltas.data()),
              {batch_size, sequence_length, inputs_depth}}};
 }
 

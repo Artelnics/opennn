@@ -4626,9 +4626,9 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 
     if (is_instance_of<ImageDataset>(dataset))
     {
-        ImageDataset* image_Dataset = dynamic_cast<ImageDataset*>(dataset);
+        ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
 
-        if (image_Dataset->get_augmentation())
+        if (image_dataset->get_augmentation())
         {
             // @todo
 

@@ -79,7 +79,7 @@ public:
     virtual void set_parameters_random();
 
     virtual Index get_parameters_number() const;
-    virtual Tensor<type, 1> get_parameters() const;
+    virtual void get_parameters(Tensor<type, 1>&) const;
 
     virtual dimensions get_input_dimensions() const = 0;
     virtual dimensions get_output_dimensions() const = 0;

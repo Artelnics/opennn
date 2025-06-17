@@ -269,9 +269,8 @@ Index Layer::get_parameters_number() const
 }
 
 
-Tensor<type, 1> Layer::get_parameters() const
+void Layer::get_parameters(Tensor<type, 1>&) const
 {
-    return Tensor<type, 1>();
 }
 
 

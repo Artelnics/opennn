@@ -9,6 +9,7 @@
 #include "neural_network.h"
 #include "tensors.h"
 #include "weighted_squared_error.h"
+#include "dataset.h"
 
 namespace opennn
 {

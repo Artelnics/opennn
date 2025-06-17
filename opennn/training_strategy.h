@@ -9,14 +9,13 @@
 #ifndef TRAININGSTRATEGY_H
 #define TRAININGSTRATEGY_H
 
-#include "loss_index.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
 #include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
-#include "optimization_algorithm.h"
+
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
@@ -24,6 +23,12 @@
 
 namespace opennn
 {
+
+//class NeuralNetwork;
+class LossIndex;
+class OptimizationAlgorithm;
+
+struct TrainingResults;
 
 class TrainingStrategy
 {

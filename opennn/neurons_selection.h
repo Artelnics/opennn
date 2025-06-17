@@ -9,11 +9,11 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-#include "training_strategy.h"
-
 namespace opennn
 {
 
+class TrainingStrategy;
+struct TrainingResults;
 struct NeuronsSelectionResults;
 
 class NeuronsSelection
@@ -125,11 +125,9 @@ struct NeuronsSelectionResults
    string elapsed_time;
 };
 
-
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

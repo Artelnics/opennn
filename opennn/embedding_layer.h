@@ -31,7 +31,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
-    Tensor<type, 1> get_parameters() const override;
+    void get_parameters(Tensor<type, 1>&) const override;
 
     void set(const Index& = 0, 
              const Index& = 0, 
@@ -139,7 +139,7 @@ struct EmbeddingBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 2> weight_derivatives;
+    Tensor<type, 2> weight_deltas;
 };
 
 #ifdef OPENNN_CUDA
@@ -162,7 +162,7 @@ struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void print() const override;
 
-    type* weight_derivatives_device = nullptr;
+    type* weight_deltas_device = nullptr;
 };
 
 #endif

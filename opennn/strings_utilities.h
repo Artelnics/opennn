@@ -12,14 +12,10 @@
 #include <string>
 #include <vector>
 
-#include "pch.h"
-
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
-
-//#include "pch.h"
 
 namespace opennn
 {

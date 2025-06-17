@@ -9,11 +9,11 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-#include "neural_network.h"
-#include "dataset.h"
-
 namespace opennn
 {
+
+class Dataset;
+class NeuralNetwork;
 
 struct ResponseOptimizationResults;
 

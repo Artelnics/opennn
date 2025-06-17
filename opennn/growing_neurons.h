@@ -10,6 +10,9 @@
 #define GROWINGNEURONS_H
 
 #include "neurons_selection.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {

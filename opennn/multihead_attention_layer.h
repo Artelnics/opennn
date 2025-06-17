@@ -41,7 +41,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
-    Tensor<type, 1> get_parameters() const override;
+    void get_parameters(Tensor<type, 1>&) const override;
 
     void set(const Index& = 0,
              const Index& = 0,
@@ -170,16 +170,16 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> key_deltas;
     Tensor<type, 4> value_deltas;
 
-    Tensor<type, 3> query_weight_derivatives;
-    Tensor<type, 3> key_weight_derivatives;
-    Tensor<type, 3> value_weight_derivatives;
+    Tensor<type, 3> query_weight_deltas;
+    Tensor<type, 3> key_weight_deltas;
+    Tensor<type, 3> value_weight_deltas;
 
-    Tensor<type, 2> projection_weight_derivatives;
+    Tensor<type, 2> projection_weight_deltas;
 
-    Tensor<type, 2> query_bias_derivatives;
-    Tensor<type, 2> key_bias_derivatives;
-    Tensor<type, 2> value_bias_derivatives;
-    Tensor<type, 1> projection_bias_derivatives;
+    Tensor<type, 2> query_bias_deltas;
+    Tensor<type, 2> key_bias_deltas;
+    Tensor<type, 2> value_bias_deltas;
+    Tensor<type, 1> projection_bias_deltas;
 
     Tensor<type, 1> aux_rows;
 

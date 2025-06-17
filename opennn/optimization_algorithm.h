@@ -9,10 +9,15 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-#include "loss_index.h"
+#include "tinyxml2.h"
+#include "statistics.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
+
+class LossIndex;
 
 struct TrainingResults;
 

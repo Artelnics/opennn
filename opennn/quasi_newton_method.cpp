@@ -6,8 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "quasi_newton_method.h"
 #include "tensors.h"
+#include "dataset.h"
+#include "loss_index.h"
+#include "quasi_newton_method.h"
 
 namespace opennn
 {
@@ -390,24 +392,24 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Data set
 
-    Dataset* Dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    if (!Dataset)
+    if (!dataset)
         throw runtime_error("Data set is null.");
 
-    const bool has_selection = Dataset->has_selection();
+    const bool has_selection = dataset->has_selection();
 
     const string error_type = loss_index->get_loss_method();
 
-    const Index training_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
 
-    const vector<Index> training_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
     // Neural network
 
@@ -422,10 +424,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Batch
 
-    Batch training_batch(training_samples_number, Dataset);
+    Batch training_batch(training_samples_number, dataset);
     training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
 
-    Batch selection_batch(selection_samples_number, Dataset);
+    Batch selection_batch(selection_samples_number, dataset);
     selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index

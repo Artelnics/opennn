@@ -15,9 +15,12 @@ TEMPLATE = lib
 
 CONFIG += staticlib
 CONFIG += precompile_header
+CONFIG += jumbo_build
 
 PRECOMPILED_HEADER = pch.h
 DEFINES += __Cpp17__
+
+QMAKE_CXXFLAGS += /MP
 
 # OpenMP library
 
@@ -123,7 +126,7 @@ HEADERS += \
     transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
-    perceptron_layer_3d.cpp \
+    perceptron_layer_3d.h \
     probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \

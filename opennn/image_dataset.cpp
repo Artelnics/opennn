@@ -329,14 +329,14 @@ Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &data)
                                           input_width,
                                           channels);
 
-        const bool random_reflection_axis_x = image_Dataset->get_random_reflection_axis_x();
-        const bool random_reflection_axis_y = image_Dataset->get_random_reflection_axis_y();
-        const type random_rotation_minimum = image_Dataset->get_random_rotation_minimum();
-        const type random_rotation_maximum = image_Dataset->get_random_rotation_maximum();
-        const type random_horizontal_translation_minimum = image_Dataset->get_random_horizontal_translation_minimum();
-        const type random_horizontal_translation_maximum = image_Dataset->get_random_horizontal_translation_maximum();
-        const type random_vertical_translation_minimum = image_Dataset->get_random_vertical_translation_minimum();
-        const type random_vertical_translation_maximum = image_Dataset->get_random_vertical_translation_maximum();
+        const bool random_reflection_axis_x = image_dataset->get_random_reflection_axis_x();
+        const bool random_reflection_axis_y = image_dataset->get_random_reflection_axis_y();
+        const type random_rotation_minimum = image_dataset->get_random_rotation_minimum();
+        const type random_rotation_maximum = image_dataset->get_random_rotation_maximum();
+        const type random_horizontal_translation_minimum = image_dataset->get_random_horizontal_translation_minimum();
+        const type random_horizontal_translation_maximum = image_dataset->get_random_horizontal_translation_maximum();
+        const type random_vertical_translation_minimum = image_dataset->get_random_vertical_translation_minimum();
+        const type random_vertical_translation_maximum = image_dataset->get_random_vertical_translation_maximum();
 
         for(Index batch_index = 0; batch_index < samples_number; batch_index++)
         {
@@ -620,7 +620,7 @@ void ImageDataset::read_bmp()
     }
 
 
-    // cerr << "Included scale_variables function in the image_Dataset::read_bmp" << endl;
+    // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
     // scale_variables(VariableUse::Input);
 }
 

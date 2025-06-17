@@ -55,16 +55,14 @@ Index Normalization3d::get_parameters_number() const
 }
 
 
-Tensor<type, 1> Normalization3d::get_parameters() const
+void Normalization3d::get_parameters(Tensor<type, 1>& parameters) const
 {
-    Tensor<type, 1> parameters(gammas.size() + betas.size());
+    parameters.resize(gammas.size() + betas.size());
 
     Index index = 0;
 
     copy_to_vector(parameters, gammas, index);
     copy_to_vector(parameters, betas, index);
-
-    return parameters;
 }
 
 
@@ -251,7 +249,11 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
+
+    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

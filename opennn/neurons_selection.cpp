@@ -6,6 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
+#include "neural_network.h"
+#include "training_strategy.h"
 #include "neurons_selection.h"
 
 namespace opennn
@@ -190,12 +193,12 @@ void NeuronsSelection::check() const
 
     // Data set
 
-    const Dataset* Dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_data_set();
 
-    if(!Dataset)
+    if(!dataset)
         throw runtime_error("Pointer to data set is nullptr.\n");
 
-    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");

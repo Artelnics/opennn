@@ -10,6 +10,7 @@
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "dataset.h"
+#include "neural_network.h"
 
 namespace opennn {
 

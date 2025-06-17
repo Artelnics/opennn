@@ -13,6 +13,7 @@
 #include "unscaling_layer.h"
 #include "language_dataset.h"
 #include "transformer.h"
+#include "loss_index.h"
 
 namespace opennn
 {
@@ -243,10 +244,10 @@ type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
 
 void OptimizationAlgorithm::set_names()
 {
-    Dataset* Dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    const vector<string> input_names = Dataset->get_variable_names(Dataset::VariableUse::Input);
-    const vector<string> target_names = Dataset->get_variable_names(Dataset::VariableUse::Target);
+    const vector<string> input_names = dataset->get_variable_names(Dataset::VariableUse::Input);
+    const vector<string> target_names = dataset->get_variable_names(Dataset::VariableUse::Target);
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -257,13 +258,13 @@ void OptimizationAlgorithm::set_names()
 
 void OptimizationAlgorithm::set_scaling()
 {
-    Dataset* Dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has(Layer::Type::Scaling2d))
     {
-        const vector<Scaler> input_variable_scalers = Dataset->get_variable_scalers(Dataset::VariableUse::Input);
-        const vector<Descriptives> input_variable_descriptives = Dataset->scale_variables(Dataset::VariableUse::Input);
+        const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Input);
+        const vector<Descriptives> input_variable_descriptives = dataset->scale_variables(Dataset::VariableUse::Input);
 
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
@@ -272,8 +273,8 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        const vector<Scaler> target_variable_scalers = Dataset->get_variable_scalers(Dataset::VariableUse::Target);
-        const vector<Descriptives> target_variable_descriptives = Dataset->scale_variables(Dataset::VariableUse::Target);
+        const vector<Scaler> target_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Target);
+        const vector<Descriptives> target_variable_descriptives = dataset->scale_variables(Dataset::VariableUse::Target);
 
         Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
         unscaling_layer->set_descriptives(target_variable_descriptives);
@@ -282,15 +283,15 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Scaling4d))
     {
-        ImageDataset* image_Dataset = static_cast<ImageDataset*>(Dataset);
-        image_Dataset->scale_variables(Dataset::VariableUse::Input);
+        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
+        image_dataset->scale_variables(Dataset::VariableUse::Input);
     }
 }
 
 
 void OptimizationAlgorithm::set_unscaling()
 {
-    Dataset* Dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has(Layer::Type::Scaling2d))
@@ -299,7 +300,7 @@ void OptimizationAlgorithm::set_unscaling()
 
         const vector<Descriptives> input_variable_descriptives = scaling_layer_2d->get_descriptives();
 
-        Dataset->unscale_variables(Dataset::VariableUse::Input, input_variable_descriptives);
+        dataset->unscale_variables(Dataset::VariableUse::Input, input_variable_descriptives);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
@@ -308,13 +309,13 @@ void OptimizationAlgorithm::set_unscaling()
 
         const vector<Descriptives> target_variable_descriptives = unscaling_layer->get_descriptives();
 
-        Dataset->unscale_variables(Dataset::VariableUse::Target, target_variable_descriptives);
+        dataset->unscale_variables(Dataset::VariableUse::Target, target_variable_descriptives);
     }
 
     if(neural_network->has(Layer::Type::Scaling4d))
     {
-        ImageDataset* image_Dataset = static_cast<ImageDataset*>(Dataset);
-        image_Dataset->unscale_variables(Dataset::VariableUse::Input);
+        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
+        image_dataset->unscale_variables(Dataset::VariableUse::Input);
     }
 
     // if(!is_instance_of<LanguageDataset>(Dataset))
@@ -322,15 +323,14 @@ void OptimizationAlgorithm::set_unscaling()
 
     // if(neural_network->has(Layer::Type::Unscaling))
     //     Dataset->unscale_variables(Dataset::VariableUse::Target, target_variable_descriptives);
-
 }
 
 
 void OptimizationAlgorithm::set_vocabularies()
 {
-    Dataset* Dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    if(!is_instance_of<LanguageDataset>(Dataset))
+    if(!is_instance_of<LanguageDataset>(dataset))
         return;
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -338,7 +338,7 @@ void OptimizationAlgorithm::set_vocabularies()
     if(!is_instance_of<Transformer>(neural_network))
         return;
 
-    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(Dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
     const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
     const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
