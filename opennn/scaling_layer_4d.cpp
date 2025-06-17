@@ -137,6 +137,76 @@ void Scaling4dForwardPropagation::print() const
          << outputs.dimensions() << endl;
 }
 
+
+#ifdef  OPENNN_CUDA
+
+void Scaling4d::forward_propagate_cuda(const vector<float*>& inputs_device,
+                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                       const bool&)
+{
+    Scaling4dForwardPropagationCuda* scaling_layer_forward_propagation =
+        static_cast<Scaling4dForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    const size_t size = get_inputs_number() * scaling_layer_forward_propagation->batch_size;
+
+    type* outputs_device = scaling_layer_forward_propagation->outputs;
+    type* scalar_device = scaling_layer_forward_propagation->scalar_device;
+ 
+    division(size, inputs_device[0], scalar_device, outputs_device);
+}
+
+
+// CUDA structs
+
+Scaling4dForwardPropagationCuda::Scaling4dForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void Scaling4dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (new_batch_size == 0) return;
+
+    layer = new_layer;
+
+    batch_size = new_batch_size;
+
+    const Scaling4d* flatten_layer = static_cast<Scaling4d*>(layer);
+
+    const Index outputs_number = flatten_layer->get_outputs_number();
+
+    const size_t size = batch_size * outputs_number;
+
+    Tensor<float, 1> scalar_host(size);
+    scalar_host.setConstant(255);
+
+    CHECK_CUDA(cudaMalloc(&scalar_device, size * sizeof(float)));
+
+    CHECK_CUDA(cudaMemcpy(scalar_device, scalar_host.data(), size * sizeof(float), cudaMemcpyHostToDevice));
+
+    CHECK_CUDA(cudaMalloc(&outputs, size * sizeof(float)));
+}
+
+
+void Scaling4dForwardPropagationCuda::print() const
+{
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    cout << "Scaling4d Outputs:" << endl
+        << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
+}
+
+
+void Scaling4dForwardPropagationCuda::free()
+{
+    cudaFree(scalar_device);
+    cudaFree(outputs);
+}
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

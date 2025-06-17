@@ -61,9 +61,13 @@ int main()
         
         ImageDataset data_set;
 
-        data_set.set_data_path("../examples/mnist/data");
+        data_set.set_data_path("C:/melanoma_dataset_bmp_medium");
+        //data_set.set_data_path("../examples/mnist/data_bin");
 
-        data_set.read_bmp();
+        dimensions data_dimensions = { 224,224,3 };
+
+        data_set.read_bmp(data_dimensions);
+        //data_set.read_bmp();
 
         data_set.split_samples_random(0.8, 0.0, 0.2);
 
@@ -74,9 +78,9 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
-            { 32 },
+            { 64, 64, 128, 128, 32 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
-        
+     
         //VGG16 neural_network(input_dimensions, target_dimensions);
 
         // Training strategy
@@ -86,7 +90,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(128);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(8);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
@@ -95,13 +99,15 @@ int main()
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        testing_analysis.set_batch_size(8);
 
         cout << "Calculating confusion...." << endl;
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        cout << "\nConfusion matrix:\n" << confusion << endl;
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
 
         #endif  
+
         cout << "Bye!" << endl;
         
         return 0;

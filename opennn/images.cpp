@@ -229,7 +229,7 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
 }
 
 
-Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
+Tensor<type, 3> resize_image(const Tensor<float, 3>& input_image,
                              const Index& output_height,
                              const Index& output_width)
 {
@@ -237,31 +237,32 @@ Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
     const Index input_width = input_image.dimension(1);
     const Index channels = input_image.dimension(2);
 
-    Tensor<type, 3> output_image(output_height, output_width, channels);
+    Tensor<float, 3> output_image(output_height, output_width, channels);
 
-    const type scale_y = static_cast<float>(input_height) / output_height;
-    const type scale_x = static_cast<float>(input_width) / output_width;
+    const float scale_y = static_cast<float>(input_height) / output_height;
+    const float scale_x = static_cast<float>(input_width) / output_width;
 
     #pragma omp parallel for collapse(2)
+    for (Index y = 0; y < output_height; ++y) {
+        const float in_y = y * scale_y;
+        const Index y0 = static_cast<Index>(std::floor(in_y));
+        const float y_weight = in_y - y0;
+        const Index y1 = std::min<Index>(y0 + 1, input_height - 1);
 
-    for (Index c = 0; c < channels; ++c)
-    {
-        for (Index y = 0; y < output_height; ++y)
-        {
-            const type in_y = y * scale_y;
-            const Index y0 = static_cast<Index>(in_y);
-            const type y_weight = in_y - y0;
-            const Index y1 = min(y0 + 1, input_height - 1);
+        for (Index x = 0; x < output_width; ++x) {
+            const float in_x = x * scale_x;
+            const Index x0 = static_cast<Index>(std::floor(in_x));
+            const float x_weight = in_x - x0;
+            const Index x1 = std::min<Index>(x0 + 1, input_width - 1);
 
-            for (Index x = 0; x < output_width; ++x)
-            {
-                const type in_x = x * scale_x;
-                const Index x0 = static_cast<Index>(in_x);
-                const type x_weight = in_x - x0;
-                const Index x1 = min(x0 + 1, input_width - 1);
+            for (Index c = 0; c < channels; ++c) {
+                const float top = (1 - x_weight) * input_image(y0, x0, c)
+                    + x_weight * input_image(y0, x1, c);
 
-                output_image(y, x, c) = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
-                    y_weight * ((1 - x_weight) * input_image(y1, x0, c) + x_weight * input_image(y1, x1, c));
+                const float bottom = (1 - x_weight) * input_image(y1, x0, c)
+                    + x_weight * input_image(y1, x1, c);
+
+                output_image(y, x, c) = (1 - y_weight) * top + y_weight * bottom;
             }
         }
     }

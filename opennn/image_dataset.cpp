@@ -427,7 +427,7 @@ void ImageDataset::unscale_variables(const VariableUse&)
 }
 
 
-void ImageDataset::read_bmp()
+void ImageDataset::read_bmp(const dimensions& new_input_dimensions)
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
     
@@ -461,6 +461,9 @@ void ImageDataset::read_bmp()
         images_number[i+1] = samples_number;
     }
 
+    if (samples_number == 0)
+        throw runtime_error("No images in folder \n");
+
     Index height, width, image_channels;
 
     const Tensor<type, 3> image_data = read_bmp_image(image_path[0]);
@@ -468,6 +471,15 @@ void ImageDataset::read_bmp()
     height = image_data.dimension(0);
     width = image_data.dimension(1);
     image_channels = image_data.dimension(2);
+
+    if (new_input_dimensions[2] != image_channels && new_input_dimensions[2] != 0)
+        throw runtime_error("Different number of channels in new_input_dimensions \n");
+
+    if (new_input_dimensions[0] != 0 && new_input_dimensions[1] != 0)
+    {
+        height = new_input_dimensions[0];
+        width = new_input_dimensions[1];
+    }
 
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;

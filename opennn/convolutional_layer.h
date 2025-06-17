@@ -33,7 +33,7 @@ public:
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                   const Activation& = Activation::Linear,
                   const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
-                  const Convolution& = Convolution::Valid,  // Convolution type (Valid || Same)
+                  const Convolution& = Convolution::Valid,          // Convolution type (Valid || Same)
                   const string = "convolutional_layer");
 
     bool get_batch_normalization() const;
@@ -115,9 +115,7 @@ public:
     void calculate_convolutions(const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const;
 
-    void normalize(unique_ptr<LayerForwardPropagation>&, const bool&);
-
-    void shift(unique_ptr<LayerForwardPropagation>&);
+    void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
 
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -296,10 +294,10 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    type* combination_deltas_device = nullptr;
+    float* combination_deltas_device = nullptr;
 
-    type* bias_derivatives_device = nullptr;
-    type* weight_derivatives_device = nullptr;
+    float* bias_derivatives_device = nullptr;
+    float* weight_derivatives_device = nullptr;
 
     void* backward_data_workspace = nullptr;
     void* backward_filter_workspace = nullptr;

@@ -509,10 +509,9 @@ void Dataset::set_sample_uses(const vector<Index>& indices, const SampleUse& sam
 
 
 void Dataset::split_samples_random(const type& training_samples_ratio,
-    const type& selection_samples_ratio,
-    const type& testing_samples_ratio)
+                                   const type& selection_samples_ratio,
+                                   const type& testing_samples_ratio)
 {
-
     random_device rng;
     mt19937 urng(rng());
 
@@ -564,8 +563,8 @@ void Dataset::split_samples_random(const type& training_samples_ratio,
 
 
 void Dataset::split_samples_sequential(const type& training_samples_ratio,
-    const type& selection_samples_ratio,
-    const type& testing_samples_ratio)
+                                       const type& selection_samples_ratio,
+                                       const type& testing_samples_ratio)
 {
     const Index used_samples_number = get_used_samples_number();
 

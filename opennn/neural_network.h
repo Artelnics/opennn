@@ -216,6 +216,8 @@ public:
 
     void set_parameters_cuda(const float*);
 
+    float* calculate_outputs_cuda(float*, const Index&);
+
 protected:
 
     cublasHandle_t cublas_handle;

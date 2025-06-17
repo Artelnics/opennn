@@ -2461,6 +2461,83 @@ void TestingAnalysis::RocAnalysis::print() const
     cout << "Optimal Threshold: " << optimal_threshold << endl;
 }
 
+
+#ifdef OPENNN_CUDA
+
+void TestingAnalysis::set_batch_size(const Index& new_batch_size)
+{
+    batch_size = new_batch_size;
+}
+
+Index TestingAnalysis::get_batch_size()
+{
+    return batch_size;
+}
+
+
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_threshold) const
+{
+    check();
+
+    const vector<Index> testing_indices = dataset->get_sample_indices(Dataset::SampleUse::Testing);
+    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, batch_size, false);
+
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    const Index confusion_matrix_size = (outputs_number == 1) ? 3 : (outputs_number + 1);
+
+    Tensor<Index, 2> total_confusion_matrix(confusion_matrix_size, confusion_matrix_size);
+
+    total_confusion_matrix.setZero();
+
+    BatchCuda testing_batch_cuda(batch_size, dataset);
+    ForwardPropagationCuda testing_forward_propagation_cuda(batch_size, neural_network);
+
+    for (const auto& current_batch_indices : testing_batches)
+    {
+        const Index current_batch_size = current_batch_indices.size();
+        if (current_batch_size == 0) continue;
+
+        if (current_batch_size != batch_size) {
+            testing_batch_cuda.free();
+            testing_forward_propagation_cuda.free();
+            testing_batch_cuda.set(current_batch_size, dataset);
+            testing_forward_propagation_cuda.set(current_batch_size, neural_network);
+        }
+
+        testing_batch_cuda.fill(current_batch_indices,
+                                input_variable_indices,
+                                decoder_variable_indices,
+                                target_variable_indices);
+
+        neural_network->forward_propagate_cuda(testing_batch_cuda.get_input_device(),
+                                               testing_forward_propagation_cuda,
+                                               false);
+
+        const float* outputs_device = testing_forward_propagation_cuda.get_last_trainable_layer_outputs_device();
+
+        Tensor<type, 2> batch_outputs(current_batch_size, outputs_number);
+        cudaMemcpy(batch_outputs.data(), outputs_device, current_batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToHost);
+
+        const Tensor<type, 2> batch_targets = dataset->get_data_from_indices(current_batch_indices, target_variable_indices);
+        Tensor<Index, 2> batch_confusion = calculate_confusion(batch_outputs, batch_targets, decision_threshold);
+        total_confusion_matrix += batch_confusion;
+    }
+
+    testing_batch_cuda.free();
+    testing_forward_propagation_cuda.free();
+
+    total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
+
+    return total_confusion_matrix;
+}
+
+#endif
+
 }
 
 

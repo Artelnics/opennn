@@ -41,7 +41,6 @@ public:
 
     void set_data_random() override;
 
-    void set_input_dimensions(const dimensions&);
     void set_channels_number(const int&);
     void set_image_width(const int&);
     void set_image_height(const int&);
@@ -60,7 +59,7 @@ public:
     vector<Descriptives> scale_variables(const VariableUse&) override;
     void unscale_variables(const VariableUse&);
 
-    void read_bmp();
+    void read_bmp(const dimensions& new_input_dimensions = { 0, 0, 0 });
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
