@@ -213,8 +213,11 @@ void Probabilistic3d::set_parameters_glorot()
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                              Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
-    sum_matrices(thread_pool_device.get(), biases, combinations);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
+     + biases.reshape(array<Index, 3>{1, 1, biases.dimension(0)})
+             .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
+
+    //sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 

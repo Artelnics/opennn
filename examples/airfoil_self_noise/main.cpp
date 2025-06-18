@@ -10,6 +10,8 @@
 #include <string>
 #include <time.h>
 
+#include "../../opennn/dataset.h"
+#include "../../opennn/neural_network.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"

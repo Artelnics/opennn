@@ -30,36 +30,25 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
+        //const Index sequence_length = 3;More actions
+        const Index embedding_dimension = 4;
+        const Index heads_number = 2;
+        //const Index batch_size = 3;
+
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        const Index batch_size = 1;
-        const Index embedding_dimension = 32;
-        const Index neurons_number = 1;
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
+        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
 
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
+        //MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
 
-        const Index input_sequence_length = language_dataset.get_input_sequence_length();
-        const Index targets_number = language_dataset.get_target_sequence_length();
-
-        dimensions input_dimensions      = {input_vocabulary_size, input_sequence_length, embedding_dimension};
-        dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions     = {targets_number};
-
-        NeuralNetwork neural_network(
-            NeuralNetwork::ModelType::TextClassification,
-            input_dimensions,
-            complexity_dimensions,
-            output_dimensions);
+        //cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
         TrainingStrategy training_strategy(&neural_network, &language_dataset);
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(8);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-
         training_strategy.perform_training();
-
-        TestingAnalysis testing_analysis(&neural_network, &language_dataset);
 
         cout << "Good bye!" << endl;
 
