@@ -44,6 +44,7 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
         tensor(i) = distribution(gen);
 }
 
+
 type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);

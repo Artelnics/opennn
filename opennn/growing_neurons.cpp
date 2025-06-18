@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "neural_network.h"
+#include "training_strategy.h"
 #include "growing_neurons.h"
 
 namespace opennn
@@ -134,7 +136,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             if(minimum_selection_error < neuron_selection_results.optimum_selection_error)
             {
                 neuron_selection_results.optimal_neurons_number = neurons_number;
-                neuron_selection_results.optimal_parameters = neural_network->get_parameters();
+                neural_network->get_parameters(neuron_selection_results.optimal_parameters);
                 neuron_selection_results.optimum_training_error = minimum_training_error;
                 neuron_selection_results.optimum_selection_error = minimum_selection_error;                                
             }

@@ -63,15 +63,13 @@ Index Embedding::get_parameters_number() const
 }
 
 
-Tensor<type, 1> Embedding::get_parameters() const
+void Embedding::get_parameters(Tensor<type, 1>& parameters) const
 {
-    Tensor<type, 1> parameters(get_parameters_number());
+    parameters.resize(get_parameters_number());
 
     Index index = 0;
 
     copy_to_vector(parameters, weights, index);
-
-    return parameters;
 }
 
 
@@ -213,9 +211,9 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     EmbeddingBackPropagation* embedding_back_propagation =
         static_cast<EmbeddingBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 2>& weight_derivatives = embedding_back_propagation->weight_derivatives;
+    Tensor<type, 2>& weight_deltas = embedding_back_propagation->weight_deltas;
 
-    weight_derivatives.setZero();
+    weight_deltas.setZero();
 
     if(scale_embedding)
         deltas.device(*thread_pool_device) = deltas*sqrt(type(embedding_dimension));
@@ -228,7 +226,7 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
         for(Index word_index = 0; word_index < sequence_length; word_index++)
         {
-            weight_derivatives.chip(Index(inputs(sample_index, word_index)), 0)
+            weight_deltas.chip(Index(inputs(sample_index, word_index)), 0)
             += sample_deltas.chip(word_index, 0);
         }
     }
@@ -242,7 +240,7 @@ void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
     const EmbeddingBackPropagation* embedding_back_propagation =
         static_cast<EmbeddingBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, embedding_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, embedding_back_propagation->weight_deltas, index);
 }
 
 
@@ -299,7 +297,11 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
+
+    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
 }
@@ -375,7 +377,7 @@ void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();
 
-    weight_derivatives.resize(vocabulary_size, embedding_dimension);
+    weight_deltas.resize(vocabulary_size, embedding_dimension);
 }
 
 
@@ -409,7 +411,7 @@ void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_
     EmbeddingLayerBackPropagationCuda* embedding_layer_back_propagation =
         static_cast<EmbeddingLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_deltas_device, weights.size(), index);
 }
 
 

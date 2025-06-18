@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
 #include "neural_network.h"
 #include "cross_entropy_error.h"
 #include "tensors.h"

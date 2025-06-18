@@ -33,7 +33,7 @@ public:
    Index get_timesteps() const;
 
    Index get_parameters_number() const override;
-   Tensor<type, 1> get_parameters() const override;
+   void get_parameters(Tensor<type, 1>&) const override;
 
    const Recurrent::Activation& get_activation_function() const;
 
@@ -142,15 +142,15 @@ struct RecurrentBackPropagation : LayerBackPropagation
     Tensor<type, 2> combination_deltas;
     Tensor<type, 2> current_combinations_derivatives;
 
-    Tensor<type, 2> combinations_bias_derivatives;
-    Tensor<type, 3> combinations_input_weight_derivatives;
-    Tensor<type, 3> combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> combinations_bias_deltas;
+    Tensor<type, 3> combinations_input_weight_deltas;
+    Tensor<type, 3> combinations_recurrent_weight_deltas;
 
-    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 1> bias_deltas;
 
-    Tensor<type, 2> input_weight_derivatives;
+    Tensor<type, 2> input_weight_deltas;
 
-    Tensor<type, 2> recurrent_weight_derivatives;
+    Tensor<type, 2> recurrent_weight_deltas;
 
     Tensor<type, 3> input_derivatives;
 

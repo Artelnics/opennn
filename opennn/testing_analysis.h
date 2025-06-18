@@ -10,10 +10,12 @@
 #define TESTINGANALYSIS_H
 
 #include "dataset.h"
-#include "neural_network.h"
 
 namespace opennn
 {
+
+class NeuralNetwork;
+
 
 class TestingAnalysis
 {

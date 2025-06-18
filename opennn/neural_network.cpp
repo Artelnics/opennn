@@ -658,17 +658,19 @@ Index NeuralNetwork::get_parameters_number() const
 }
 
 
-Tensor<type, 1> NeuralNetwork::get_parameters() const
+void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
 {
     const Index parameters_number = get_parameters_number();
 
-    Tensor<type, 1> parameters(parameters_number);
+    parameters.resize(parameters_number);
 
     Index position = 0;
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        const Tensor<type, 1> layer_parameters = layer->get_parameters();
+        Tensor<type, 1> layer_parameters;
+
+        layer->get_parameters(layer_parameters);
 
         memcpy(parameters.data() + position,
                layer_parameters.data(),
@@ -676,8 +678,6 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
         position += layer_parameters.size();
     }
-
-    return parameters;
 }
 
 
@@ -814,7 +814,8 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation) const
 {
-    const Tensor<type, 1> original_parameters = get_parameters();
+    Tensor<type, 1> original_parameters;
+    get_parameters(original_parameters);
 
     set_parameters(new_parameters);
 
@@ -1384,7 +1385,8 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    const Tensor<type, 1> parameters = get_parameters();
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
 
     file << parameters << endl;
 

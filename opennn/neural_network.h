@@ -26,8 +26,6 @@ struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
 
-
-
 struct ForwardPropagation
 {
     ForwardPropagation(const Index& = 0, NeuralNetwork* = nullptr);
@@ -162,7 +160,7 @@ public:
    // Parameters
 
    Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   void get_parameters(Tensor<type, 1>&) const;
 
    vector<Index> get_layer_parameter_numbers() const;
 

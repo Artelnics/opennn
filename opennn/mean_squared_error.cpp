@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "tensors.h"
+#include "dataset.h"
+#include "neural_network.h"
 #include "mean_squared_error.h"
 
 namespace opennn

@@ -9,11 +9,12 @@
 #ifndef MODELEXPRESSION_H
 #define MODELEXPRESSION_H
 
-#include "neural_network.h"
 #include "dataset.h"
 
 namespace opennn
 {
+
+class NeuralNetwork;
 
 class ModelExpression
 {

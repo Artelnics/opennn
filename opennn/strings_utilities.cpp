@@ -167,11 +167,11 @@ bool is_numeric_string(const string& text)
     try
     {
         size_t index;
-        [[maybe_unused]] double value = std::stod(text, &index);
+        [[maybe_unused]] double value = stod(text, &index);
 
         return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
-    catch (const std::exception&)
+    catch (const exception&)
     {
         return false;
     }

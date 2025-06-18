@@ -12,7 +12,6 @@
 namespace opennn
 {
 
-
 struct Correlation
 {
     enum class Method{Pearson, Spearman};

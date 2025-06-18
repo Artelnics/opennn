@@ -14,6 +14,7 @@
 namespace opennn
 {
 
+struct BackPropagation;
 struct StochasticGradientDescentData;
 
 #ifdef OPENNN_CUDA

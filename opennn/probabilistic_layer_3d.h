@@ -60,7 +60,7 @@ public:
    // Parameters
 
    Index get_parameters_number() const override;
-   Tensor<type, 1> get_parameters() const override;
+   void get_parameters(Tensor<type, 1>&) const override;
 
    // Parameters initialization
 
@@ -149,8 +149,8 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     Tensor<type, 3> combination_deltas;
     Tensor<type, 3> input_derivatives;
 
-    Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> weight_derivatives;
+    Tensor<type, 1> bias_deltas;
+    Tensor<type, 2> weight_deltas;
 };
 
 #ifdef OPENNN_CUDA

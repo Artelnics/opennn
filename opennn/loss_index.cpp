@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensors.h"
+#include "dataset.h"
 #include "loss_index.h"
 #include "cross_entropy_error_3d.h"
 
@@ -548,7 +549,7 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     errors.resize(samples_number, outputs_number);
 
-    parameters = neural_network_ptr->get_parameters();
+    neural_network_ptr->get_parameters(parameters);
 
     gradient.resize(parameters_number);
 
@@ -680,7 +681,8 @@ Tensor<type, 1> LossIndex::calculate_gradient()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
 
-    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    Tensor<type, 1> parameters;
+    neural_network->get_parameters(parameters);
 
     const Index parameters_number = parameters.size();
 
@@ -720,7 +722,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
 
-    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    Tensor<type, 1> parameters;
+    neural_network->get_parameters(parameters);
 
     const Index parameters_number = parameters.size();
 
@@ -783,7 +786,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    Tensor<type, 1> parameters;
+    neural_network->get_parameters(parameters);
 
     const Index parameters_number = parameters.size();
 
@@ -916,7 +920,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
     BackPropagation back_propagation(samples_number, this);
 
-    Tensor<type, 1> parameters = neural_network->get_parameters();
+    Tensor<type, 1> parameters;
+    neural_network->get_parameters(parameters);
 
     const Index parameters_number = parameters.size();
     
@@ -992,7 +997,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    const Tensor<type, 1> parameters = neural_network->get_parameters();
+    Tensor<type, 1> parameters;
+    neural_network->get_parameters(parameters);
 
     const Index parameters_number = parameters.size();
 
@@ -1333,7 +1339,7 @@ void BackPropagationLM::set(const Index&new_samples_number,
         
     neural_network.set(samples_number, neural_network_ptr);
     
-    parameters = neural_network_ptr->get_parameters();
+    neural_network_ptr->get_parameters(parameters);
         
     loss = type(0);
     
@@ -1699,7 +1705,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    parameters_host = neural_network_ptr->get_parameters();
+     neural_network_ptr->get_parameters(parameters_host);
 
     CHECK_CUDA(cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
 

@@ -9,13 +9,14 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-#include "training_strategy.h"
 #include "growing_neurons.h"
 #include "growing_inputs.h"
 #include "genetic_algorithm.h"
 
 namespace opennn
 {
+
+class TrainingStrategy;
 
 class ModelSelection
 {

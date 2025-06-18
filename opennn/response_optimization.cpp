@@ -11,6 +11,8 @@
 #include "statistics.h"
 #include "scaling_layer_2d.h"
 #include "bounding_layer.h"
+#include "dataset.h"
+#include "neural_network.h"
 
 namespace opennn
 {

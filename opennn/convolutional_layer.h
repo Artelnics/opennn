@@ -9,8 +9,6 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-#define EIGEN_USE_THREADS
-
 #include "layer.h"
 
 namespace opennn
@@ -73,7 +71,7 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    Tensor<type, 1> get_parameters() const override;
+    void get_parameters(Tensor<type, 1>&) const override;
     Index get_parameters_number() const override;
 
     // Set
@@ -241,8 +239,8 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
    void print() const override;
 
-   Tensor<type, 1> bias_derivatives;
-   Tensor<type, 4> weight_derivatives;
+   Tensor<type, 1> bias_deltas;
+   Tensor<type, 4> weight_deltas;
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 4> rotated_weights;
@@ -296,8 +294,8 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     float* combination_deltas_device = nullptr;
 
-    float* bias_derivatives_device = nullptr;
-    float* weight_derivatives_device = nullptr;
+    type* bias_deltas_device = nullptr;
+    type* weight_deltas_device = nullptr;
 
     void* backward_data_workspace = nullptr;
     void* backward_filter_workspace = nullptr;
@@ -308,7 +306,7 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnFilterDescriptor_t weight_derivatives_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t weight_deltas_tensor_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 };
 

@@ -36,7 +36,7 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    Tensor<type, 1> get_parameters() const override;
+    void get_parameters(Tensor<type, 1>&) const override;
 
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
@@ -183,8 +183,8 @@ struct Dense2dBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> input_derivatives;
 
-    Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> weight_derivatives;
+    Tensor<type, 1> bias_deltas;
+    Tensor<type, 2> weight_deltas;
 
     Tensor<type, 1> scale_derivatives;
     Tensor<type, 1> shift_derivatives;
@@ -247,8 +247,8 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
     
     float* combination_deltas_device = nullptr;
 
-    float* bias_derivatives_device = nullptr;
-    float* weight_derivatives_device = nullptr;
+    float* bias_deltas_device = nullptr;
+    float* weight_deltas_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;

@@ -54,18 +54,16 @@ type Dense2d::get_dropout_rate() const
 }
 
 
-Tensor<type, 1> Dense2d::get_parameters() const
+void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
 {
     const Index parameters_number = get_parameters_number();
 
-    Tensor<type, 1> parameters(parameters_number);
+    parameters.resize(parameters_number);
 
     Index index = 0;
 
     copy_to_vector(parameters, weights, index);
     copy_to_vector(parameters, biases, index);
-
-    return parameters;
 }
 
 
@@ -309,9 +307,9 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     Dense2dBackPropagation* dense2d_back_propagation =
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
     
-    Tensor<type, 2>& weight_derivatives = dense2d_back_propagation->weight_derivatives;
+    Tensor<type, 2>& weight_deltas = dense2d_back_propagation->weight_deltas;
 
-    Tensor<type, 1>& bias_derivatives = dense2d_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_deltas = dense2d_back_propagation->bias_deltas;
 
     const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
 
@@ -320,9 +318,9 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     if(activation_function != Activation::Softmax)
         deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
+    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
         input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
@@ -400,8 +398,8 @@ void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation
     Dense2dBackPropagation* dense2d_back_propagation =
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, dense2d_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, dense2d_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, dense2d_back_propagation->weight_deltas, index);
+    copy_to_vector(gradient, dense2d_back_propagation->bias_deltas, index);
 }
 
 
@@ -499,7 +497,11 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", get_activation_function_string());
-    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
+
+    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
 }
@@ -579,11 +581,11 @@ void Dense2dBackPropagation::set(const Index&new_batch_size,
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    bias_derivatives.resize(outputs_number);
-    bias_derivatives.setZero();
+    bias_deltas.resize(outputs_number);
+    bias_deltas.setZero();
 
-    weight_derivatives.resize(inputs_number, outputs_number);
-    weight_derivatives.setZero();
+    weight_deltas.resize(inputs_number, outputs_number);
+    weight_deltas.setZero();
 
     input_derivatives.resize(batch_size, inputs_number);
 }
@@ -600,9 +602,9 @@ vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pai
 void Dense2dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
-         << bias_derivatives << endl
+         << bias_deltas << endl
          << "Synaptic weights derivatives:" << endl
-         << weight_derivatives << endl;
+         << weight_deltas << endl;
 }
 
 
@@ -800,8 +802,8 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
     float* ones = dense2d_layer_back_propagation->ones;
     float* error_combinations_derivatives = dense2d_layer_back_propagation->combination_deltas_device;
 
-    float* bias_derivatives = dense2d_layer_back_propagation->bias_derivatives_device;
-    float* weight_derivatives = dense2d_layer_back_propagation->weight_derivatives_device;
+    float* bias_deltas = dense2d_layer_back_propagation->bias_deltas_device;
+    float* weight_deltas = dense2d_layer_back_propagation->weight_deltas_device;
     float* input_derivatives = dense2d_layer_back_propagation->input_derivatives;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = dense2d_layer_back_propagation->deltas_tensor_descriptor;
@@ -855,7 +857,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         ones,
         batch_size,
         &beta,
-        bias_derivatives,
+        bias_deltas,
         outputs_number);
 
     // Weight derivatives
@@ -870,7 +872,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         error_combinations_derivatives,
         batch_size,
         &beta,
-        weight_derivatives,
+        weight_deltas,
         inputs_number);
 
     // Input derivatives
@@ -898,8 +900,8 @@ void Dense2d::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_pr
     Dense2dBackPropagationCuda* dense2d_layer_back_propagation =
         static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->weight_derivatives_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->bias_derivatives_device, biases.size(), index);
+    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->weight_deltas_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->bias_deltas_device, biases.size(), index);
 }
 
 
@@ -1075,8 +1077,8 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     for (Index i = 0; i < batch_size; i++)
         CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
 
-    CHECK_CUDA(cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)));
 
     // Deltas
@@ -1115,8 +1117,8 @@ void Dense2dBackPropagationCuda::print() const
 
 void Dense2dBackPropagationCuda::free()
 {
-    cudaFree(bias_derivatives_device);
-    cudaFree(weight_derivatives_device);
+    cudaFree(bias_deltas_device);
+    cudaFree(weight_deltas_device);
     cudaFree(combination_deltas_device);
     cudaFree(input_derivatives);
     cudaFree(ones);
