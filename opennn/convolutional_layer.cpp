@@ -64,95 +64,42 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
-void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                              const bool& is_training)
+void Convolutional::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& layer_forward_propagation, const bool& is_training)
 {
-    // @todo This method does not work
-
     ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
-
     const Index kernels_number = get_kernels_number();
+
+    const array<Index, 4> reshape_dims = { 1, 1, 1, kernels_number };
+    const array<Index, 4> broadcast_dims = { outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), 1 };
 
     if (is_training)
     {
         Tensor<type, 1>& means = this_forward_propagation->means;
         Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
-        means.device(*thread_pool_device) = outputs.mean(array<Index, 3>({0, 1, 2}));
-        standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
+        const array<Index, 3> reduction_axes = { 0, 1, 2 };
+        means.device(*thread_pool_device) = outputs.mean(reduction_axes);
 
-        outputs.device(*thread_pool_device) =
-            (outputs - means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
-            (standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+        Tensor<type, 4> centered_outputs = outputs - means.reshape(reshape_dims).broadcast(broadcast_dims);
+        Tensor<type, 1> variances = centered_outputs.square().mean(reduction_axes);
+        standard_deviations.device(*thread_pool_device) = variances.sqrt();
 
-        outputs.device(*thread_pool_device)
-            = (outputs - means) / (standard_deviations + epsilon);
+        outputs.device(*thread_pool_device) = centered_outputs / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
+
+        moving_means.device(*thread_pool_device) = moving_means * momentum + means * (type(1) - momentum);
+        moving_standard_deviations.device(*thread_pool_device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
     }
     else
     {
-        outputs.device(*thread_pool_device) =
-            (outputs - moving_means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
-            (moving_standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+        outputs.device(*thread_pool_device) = (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+            (moving_standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
     }
 
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {
-        TensorMap<Tensor<type, 3>> kernel_output = tensor_map(outputs, kernel_index);
-
-        if(is_training)
-        {
-            //TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
-
-            //TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
-
-            //mean.device(*thread_pool_device) = kernel_output.mean();
-
-            //standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
-
-            //kernel_output.device(*thread_pool_device)
-            //    = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
-        }
-        else
-        {
-            kernel_output.device(*thread_pool_device) 
-                = (kernel_output - moving_means(kernel_index)) / (moving_standard_deviations(kernel_index) + epsilon);
-        }
-    }
-
-    if(is_training)
-    {
-        //moving_means.device(*thread_pool_device)
-        //    = momentum * moving_means + (type(1) - momentum) * means;
-
-        //moving_standard_deviations.device(*thread_pool_device)
-        //    = momentum * moving_standard_deviations + (type(1) - momentum) * standard_deviations;
-    }
-    else
-    {
-        outputs.device(*thread_pool_device)
-            = (outputs - moving_means)/(moving_standard_deviations + epsilon);
-    }
-}
-
-
-void Convolutional::shift(unique_ptr<LayerForwardPropagation>& layer_forward_propagation)
-{
-    ConvolutionalForwardPropagation* this_forward_propagation =
-        static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
-
-    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
-
-    const Index kernels_number = get_kernels_number();
-
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {
-        TensorMap<Tensor<type, 3>> kernel_output = tensor_map(outputs, kernel_index);
-
-        kernel_output.device(*thread_pool_device) = kernel_output * scales(kernel_index) + offsets(kernel_index);
-    }
+    outputs.device(*thread_pool_device) = outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
+        offsets.reshape(reshape_dims).broadcast(broadcast_dims);
 }
 
 
@@ -188,11 +135,7 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
-    {
-        normalize(layer_forward_propagation, is_training);
-
-        shift(layer_forward_propagation);
-    }
+        apply_batch_normalization(layer_forward_propagation, is_training);
 
     is_training
         ? calculate_activations(outputs, activation_derivatives)

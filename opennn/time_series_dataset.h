@@ -50,15 +50,13 @@ public:
 
     void impute_missing_values_mean();
 
+    void fill_input_tensor(const vector<Index>&,
+                           const vector<Index>&,
+                           type*) const override;
 
-    void fill_input_tensor(const vector<Index>& sample_indices,
-                           const vector<Index>& input_indices,
-                           Tensor<type, 1>& input_tensor) const override;
-
-    void fill_target_tensor(const vector<Index>& sample_indices,
-                            const vector<Index>& target_indices,
-                            Tensor<type, 1>& target_tensor) const override;
-
+    void fill_target_tensor(const vector<Index>&,
+                            const vector<Index>&,
+                            type*) const override;
 
 private:
 

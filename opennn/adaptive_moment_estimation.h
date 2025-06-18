@@ -164,10 +164,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
         float* square_gradient_exponential_decay = nullptr;
 
-        float* last_gradient_exponential_decay = nullptr;
-
-        float* last_square_gradient_exponential_decay = nullptr;
-
         float* numerator = nullptr;
 
         float* denominator = nullptr;

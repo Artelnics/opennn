@@ -1,6 +1,8 @@
 #ifndef TENSORS_H
 #define TENSORS_H
 
+#include "pch.h"
+
 namespace opennn
 {
 

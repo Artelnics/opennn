@@ -179,6 +179,7 @@ public:
    {
        const Index layers_number = get_layers_number();
 
+
        if (layers_number == 0)
            return Tensor<type, output_rank>();
 
@@ -186,6 +187,7 @@ public:
        const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
+       cout << "llega" << endl;
 
        dimensions input_dimensions;
        input_dimensions.reserve(input_rank);
@@ -203,6 +205,8 @@ public:
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
+
+
        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_pair);
        else if constexpr (output_rank == 3)
@@ -211,6 +215,8 @@ public:
            return tensor_map<4>(outputs_pair);
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
+
+       cout << "no sale" << endl;
    }
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
@@ -271,6 +277,8 @@ public:
                                 const bool& = false) const;
 
     void set_parameters_cuda(const float*);
+
+    float* calculate_outputs_cuda(float*, const Index&);
 
 protected:
 

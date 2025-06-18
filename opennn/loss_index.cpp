@@ -1705,7 +1705,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    parameters_host = neural_network_ptr->get_parameters();
+     neural_network_ptr->get_parameters(parameters_host);
 
     CHECK_CUDA(cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
 

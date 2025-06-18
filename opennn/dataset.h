@@ -511,17 +511,21 @@ public:
 
     void check_separators(const string&) const;
 
-    virtual void fill_input_tensor(const vector<Index>& sample_indices,
-                                   const vector<Index>& input_indices,
-                                   Tensor<type, 1>& input_tensor) const;
+    virtual void fill_input_tensor(const vector<Index>&,
+                                   const vector<Index>&,
+                                   type*) const;
 
-    virtual void fill_target_tensor(const vector<Index>& sample_indices,
-                                    const vector<Index>& target_indices,
-                                    Tensor<type, 1>& target_tensor) const;
+    void fill_input_tensor_row_major(const vector<Index>&, 
+                                     const vector<Index>&, 
+                                     type*) const;
 
-    virtual void fill_decoder_tensor(const vector<Index>& sample_indices,
-                                     const vector<Index>& decoder_indices,
-                                     Tensor<type, 2>& decoder_tensor) const;
+    virtual void fill_target_tensor(const vector<Index>&,
+                                    const vector<Index>&,
+                                    type*) const;
+
+    virtual void fill_decoder_tensor(const vector<Index>&,
+                                     const vector<Index>&,
+                                     type*) const;
 
 
 protected:

@@ -147,10 +147,9 @@ void Bounding::set_upper_bound(const Index& index, const type& new_upper_bound)
 
 
 void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                      const bool&)
+                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                 const bool&)
 {
-
     const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_pairs[0]);
 
     BoundingForwardPropagation* this_forward_propagation =

@@ -13,6 +13,7 @@
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "addition_layer_3d.h"
@@ -418,7 +419,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                              kernel_dimensions,
-                                             Convolutional::Activation::Linear,
+                                             Convolutional::Activation::RectifiedLinear,
                                              stride_dimensions,
                                              convolution_type,
                                              "convolutional_layer_" + to_string(i+1)));
@@ -441,7 +442,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                    output_dimensions,
                                    Dense2d::Activation::Softmax,
-                                   "dense_2d_layer"));
+                                   "dense_2d_layer_softmax"));
 }
 
 
@@ -457,10 +458,16 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
 
     add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
         embedding_dimension,
-        "embedding_layer"));
+        "embedding_layer"
+        ));
 
-    add_layer(make_unique<Flatten3d>(
-        get_output_dimensions()));
+    add_layer(make_unique<Pooling3d>(
+        get_output_dimensions()
+        ));
+
+    // add_layer(make_unique<Flatten3d>(
+    //     get_output_dimensions()
+    //     ));
 
     add_layer(make_unique<Dense2d>(
         get_output_dimensions(),
@@ -1543,6 +1550,10 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
             layers[i] = make_unique <PoolingBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
+        case Layer::Type::Pooling3d:
+            layers[i] = make_unique <Pooling3dBackPropagation>(batch_size, neural_network_layers[i].get());
+            break;
+
         case Layer::Type::Flatten:
             layers[i] = make_unique <FlattenBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
@@ -1650,6 +1661,10 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         case Layer::Type::Pooling:
             layers[i] = make_unique<PoolingForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
+
+        case Layer::Type::Pooling3d:
+            layers[i] = make_unique<Pooling3dForwardPropagation>(samples_number, neural_network_layers[i].get());
+            break;
 
         case Layer::Type::Flatten:
             layers[i] = make_unique<FlattenForwardPropagation>(samples_number, neural_network_layers[i].get());
@@ -1871,8 +1886,8 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate_cuda(layer_input_device[i],
-                                          forward_propagation_cuda.layers[i],
-                                          is_training);
+            forward_propagation_cuda.layers[i],
+            is_training);
 }
 
 
@@ -1882,6 +1897,19 @@ void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
 
     for (const unique_ptr<Layer>& layer : layers)
         layer->set_parameters_cuda(new_parameters, index);
+}
+
+
+float* NeuralNetwork::calculate_outputs_cuda(float* input_device, const Index& batch_size)
+{
+    if (layers.empty())
+        return nullptr;
+
+    ForwardPropagationCuda forward_propagation_cuda(batch_size, this);
+
+    forward_propagate_cuda({ input_device }, forward_propagation_cuda, false);
+
+    return forward_propagation_cuda.get_last_trainable_layer_outputs_device();
 }
 
 
@@ -1960,7 +1988,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             break;
 
         case Layer::Type::Scaling4d:
-            layers[i] = nullptr;
+            layers[i] = make_unique<Scaling4dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Unscaling:
@@ -2019,11 +2047,14 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
+    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
+    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
+
     vector<vector<float*>> layer_input_device(layers_number);
 
     layer_input_device[0] = batch_input_device;
 
-    for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         const vector<Index>& this_layer_input_indices = layer_input_indices[i];
 

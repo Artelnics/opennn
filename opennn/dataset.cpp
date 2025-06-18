@@ -509,10 +509,9 @@ void Dataset::set_sample_uses(const vector<Index>& indices, const SampleUse& sam
 
 
 void Dataset::split_samples_random(const type& training_samples_ratio,
-    const type& selection_samples_ratio,
-    const type& testing_samples_ratio)
+                                   const type& selection_samples_ratio,
+                                   const type& testing_samples_ratio)
 {
-
     random_device rng;
     mt19937 urng(rng());
 
@@ -564,8 +563,8 @@ void Dataset::split_samples_random(const type& training_samples_ratio,
 
 
 void Dataset::split_samples_sequential(const type& training_samples_ratio,
-    const type& selection_samples_ratio,
-    const type& testing_samples_ratio)
+                                       const type& selection_samples_ratio,
+                                       const type& testing_samples_ratio)
 {
     const Index used_samples_number = get_used_samples_number();
 
@@ -4233,22 +4232,27 @@ void Dataset::check_separators(const string& line) const
 }
 
 
-void Dataset::fill_decoder_tensor(const vector<Index> &sample_indices, const vector<Index> &decoder_indices, Tensor<type, 2> &decoder_tensor) const
+void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_tensor_data) const
 {
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    fill_tensor_data(data, sample_indices, input_indices, input_tensor_data);
 }
 
 
-void Dataset::fill_target_tensor(const vector<Index> &sample_indices, const vector<Index> &target_indices, Tensor<type, 1> &target_tensor) const
+void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_tensor_data) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    fill_tensor_data_row_major(data, sample_indices, input_indices, input_tensor_data);
 }
 
 
-void Dataset::fill_input_tensor(const vector<Index> &sample_indices, const vector<Index> &input_indices, Tensor<type, 1> &input_tensor) const
+void Dataset::fill_decoder_tensor(const vector<Index>& sample_indices, const vector<Index>& decoder_indices, type* decoder_tensor_data) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor_data);
+}
 
+
+void Dataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_tensor_data) const
+{
+    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
 }
 
 
@@ -4494,9 +4498,12 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, input_tensor);
-    dataset->fill_target_tensor(sample_indices, target_indices, target_tensor);
-    //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor);
+    dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
+
+    if (dataset->get_model_type() == Dataset::ModelType::TextClassification)
+        dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
+
+    dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 }
 
 
@@ -4518,28 +4525,20 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     dataset = new_data_set;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions(Dataset::VariableUse::Decoder);
     const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {
         input_dimensions = prepend(samples_number, data_set_input_dimensions);
         input_tensor.resize(get_size(input_dimensions));
-
-        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
-        input_tensor.resize(input_size);
     }
 
-    // @todo
-    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(Dataset::VariableUse::Decoder);
-
-    // if (!data_set_decoder_dimensions.empty())
-    // {
-    //     decoder_dimensions = { samples_number };
-    //     decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
-
-    //     const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
-    //     decoder_tensor.resize(decoder_size);
-    // }
+    if (!data_set_decoder_dimensions.empty())
+    {
+        decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
+        decoder_tensor.resize(get_size(decoder_dimensions));
+    }
 
     if (!data_set_target_dimensions.empty())
     {
@@ -4619,36 +4618,14 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    // @todo Do as in CPU. This has been refactored
+    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
 
-    /*
-    const Tensor<type, 2>& data = dataset->get_data();
+    if (dataset->get_model_type() == Dataset::ModelType::TextClassification)
+        dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
-    if (is_instance_of<ImageDataset>(dataset))
-    {
-        ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
-
-        if (image_dataset->get_augmentation())
-        {
-            // @todo
-
-            //Tensor<type, 2> augmented_data = perform_augmentation(data);
-
-            //fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
-        }
-        else
-            fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
-    }
-    else
-        fill_tensor_data(data, sample_indices, input_indices, inputs_host);
-
-    if (is_instance_of<LanguageDataset>(dataset))
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_host);
-
-    fill_tensor_data(data, sample_indices, target_indices, targets_host);
+    dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
 
     copy_device();
-*/
 }
 
 

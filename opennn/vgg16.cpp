@@ -22,6 +22,7 @@ namespace opennn
         set(new_input_dimensions, new_target_dimensions);
     }
 
+
     void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     {
         set_model_type(NeuralNetwork::ModelType::ImageClassification);
@@ -183,7 +184,7 @@ namespace opennn
                 dimensions{ 4096 },
                 Dense2d::Activation::RectifiedLinear,
                 "fc1");
-            fc1->set_dropout_rate(0.5f);
+            //fc1->set_dropout_rate(0.5f);
             add_layer(move(fc1));
 
             // FC2: 4096 neurons, ReLU, Dropout 50%
@@ -192,7 +193,7 @@ namespace opennn
                 dimensions{ 4096 },
                 Dense2d::Activation::RectifiedLinear,
                 "fc2");
-            fc2->set_dropout_rate(0.5f);
+            //fc2->set_dropout_rate(0.5f);
             add_layer(move(fc2));
 
             // FC3 : Softmax

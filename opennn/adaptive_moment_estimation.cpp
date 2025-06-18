@@ -138,7 +138,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Dataset* dataset = loss_index->get_data_set();
 
+<<<<<<< HEAD
     if(!dataset)
+=======
+
+    if(!Dataset)
+>>>>>>> cfa35eafe (pooling3d)
         throw runtime_error("Data set is null.");
 
     const bool has_selection = dataset->has_selection();
@@ -936,15 +941,14 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     CHECK_CUDA(cudaMalloc(&square_gradient, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&numerator, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&denominator, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&ones, parameters_number * sizeof(float)));
 
     vector<float> host_ones(parameters_number, 1.0f);
-    if (cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "aux ones cudaMemcpy error" << endl;
+
+    CHECK_CUDA(cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
+
 }
 
 
@@ -953,8 +957,6 @@ void ADAMOptimizationDataCuda::free()
     cudaFree(square_gradient);
     cudaFree(gradient_exponential_decay);
     cudaFree(square_gradient_exponential_decay);
-    cudaFree(last_gradient_exponential_decay);
-    cudaFree(last_square_gradient_exponential_decay);
     cudaFree(numerator);
     cudaFree(denominator);
     cudaFree(ones);

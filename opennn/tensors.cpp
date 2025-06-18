@@ -638,9 +638,9 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 
 
 void fill_tensor_sequence(const Tensor<type, 2>& matrix,
-                    const vector<Index>& rows_indices,
-                    const vector<Index>& columns_indices,
-                    type* tensor_data)
+                          const vector<Index>& rows_indices,
+                          const vector<Index>& columns_indices,
+                          type* tensor_data)
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
