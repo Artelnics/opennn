@@ -845,7 +845,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
+Tensor<type, 1> LossIndex::calculate_numerical_input_deltas()
 {
 
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);

@@ -2100,7 +2100,6 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
-
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
     // for(Index i = 0; i < testing_context.dimension(1); i++)
@@ -2148,7 +2147,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
 
 string TestingAnalysis::test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const
-{   cout<<endl;
+{
     cout<<"Testing transformer..."<<endl;
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);

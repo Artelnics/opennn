@@ -138,12 +138,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Dataset* dataset = loss_index->get_data_set();
 
-<<<<<<< HEAD
     if(!dataset)
-=======
-
-    if(!Dataset)
->>>>>>> cfa35eafe (pooling3d)
         throw runtime_error("Data set is null.");
 
     const bool has_selection = dataset->has_selection();
