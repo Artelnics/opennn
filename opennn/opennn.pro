@@ -117,6 +117,7 @@ HEADERS += \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
+    pooling_layer_3d.h \
     strings_utilities.h \
     images.h \
     statistics.h \
@@ -180,6 +181,7 @@ SOURCES += \
     embedding_layer.cpp \
     multihead_attention_layer.cpp \
     kmeans.cpp \
+    pooling_layer_3d.cpp \
     strings_utilities.cpp \
     images.cpp \
     tensors.cpp \

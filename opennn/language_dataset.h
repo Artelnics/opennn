@@ -28,7 +28,7 @@ public:
     Index get_target_vocabulary_size() const;
 
     Index get_input_sequence_length() const;
-    Index get_target_length() const;
+    Index get_target_sequence_length() const;
 
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
