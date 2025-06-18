@@ -62,14 +62,14 @@ void Addition3d::forward_propagate(const vector<pair<type*, dimensions>>& input_
                                    unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                    const bool&)
 {
-    const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map<3>(input_pairs[0]);
 
-    const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map_3(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map<3>(input_pairs[1]);
 
-    Addition3dForwardPropagation* addition_3d_forward_propagation =
+    Addition3dForwardPropagation* this_forward_propagation =
         static_cast<Addition3dForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 3>& outputs = addition_3d_forward_propagation->outputs;
+    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = positional_encodings + input_embeddings;
 }
@@ -80,7 +80,7 @@ void Addition3d::back_propagate(const vector<pair<type*, dimensions>>&,
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     // Back propagation
 

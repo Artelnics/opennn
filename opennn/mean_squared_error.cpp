@@ -29,13 +29,13 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
     // Forward propagation
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
 
     // Back propagation
     
@@ -85,7 +85,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * samples_number);
 }
@@ -100,7 +100,7 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = errors;
     divide_columns(thread_pool_device.get(), output_deltas, squared_errors);

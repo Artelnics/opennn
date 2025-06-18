@@ -24,6 +24,7 @@
 #include "multihead_attention_layer.h"
 #include "normalization_layer_3d.h"
 #include "perceptron_layer.h"
+#include "transformer.h"
 
 using namespace std;
 using namespace opennn;
@@ -40,78 +41,17 @@ int main()
 
         // Sentiment analysis case
 
-        const Index maximum_sequence_length = 10;
+        const Index sequence_length = 10;
         const Index vocabulary_size = 50;
         const Index embedding_dimension = 32;
         const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
 
-        NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
-        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
+        Transformer transformer;
 
-        cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
-
-        TrainingStrategy training_strategy(&neural_network, &language_dataset);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
-
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
-
-        language_dataset.set(Dataset::SampleUse::Training);
-        adaptive_moment_estimation->set_loss_goal(0.3);
-        adaptive_moment_estimation->set_maximum_epochs_number(100);
-        adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(12);
-        adaptive_moment_estimation->set_display_period(1);
+        TrainingStrategy training_strategy(&transformer, &language_dataset);
 
         training_strategy.perform_training();
-
-        // Prediction test
-        cout << "Vocabulary:" << endl;
-        language_dataset.print_input_vocabulary();
-
-        Tensor<type,2> testing_data(3,10);
-        testing_data(0,0) = 2;
-        testing_data(0,1) = 4;
-        testing_data(0,2) = 29;
-        testing_data(0,3) = 12;
-        testing_data(0,4) = 13;
-        testing_data(0,5) = 17;
-        testing_data(0,6) = 3;
-        testing_data(0,7) = 0;
-        testing_data(0,8) = 0;
-        testing_data(0,9) = 0;
-        testing_data(1,0) = 2;
-        testing_data(1,1) = 4;
-        testing_data(1,2) = 5;
-        testing_data(1,3) = 6;
-        testing_data(1,4) = 7;
-        testing_data(1,5) = 8;
-        testing_data(1,6) = 3;
-        testing_data(1,7) = 0;
-        testing_data(1,8) = 0;
-        testing_data(1,9) = 0;
-        testing_data(2,0) = 2;
-        testing_data(2,1) = 4;
-        testing_data(2,2) = 29;
-        testing_data(2,3) = 12;
-        testing_data(2,4) = 30;
-        testing_data(2,5) = 31;
-        testing_data(2,6) = 17;
-        testing_data(2,7) = 3;
-        testing_data(2,8) = 0;
-        testing_data(2,9) = 0;
-
-        cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
 
         cout << "Bye!" << endl;
 

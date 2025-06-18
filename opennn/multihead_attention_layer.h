@@ -19,12 +19,14 @@ class MultiHeadAttention : public Layer
 
 public:
 
-    MultiHeadAttention(const Index& = 0,
+    MultiHeadAttention(const dimensions& = dimensions({0,0}),
                        const Index& = 0,
+                       const string& = string());
+
+    MultiHeadAttention(const dimensions&,
+                       const dimensions&,
                        const Index& = 0,
-                       const Index& = 0,
-                       const bool& = false,
-                       const string& = "multihead_attention_layer");
+                       const string& = string());
 
     Index get_query_sequence_length() const;
     Index get_source_sequence_length() const;
@@ -57,10 +59,6 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    void calculate_query(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-    void calculate_key(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-    void calculate_value(const Tensor<type, 3>&, Tensor<type, 4>&) const;
-
     void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -81,6 +79,8 @@ public:
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          Index&,
                          Tensor<type, 1>&) const override;
+
+    void print() const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -166,8 +166,6 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> attention_output_deltas;
     Tensor<type, 3> concatenated_attention_output_deltas;
 
-    Tensor<type, 2> sample_deltas;
-
     Tensor<type, 4> query_deltas;
     Tensor<type, 4> key_deltas;
     Tensor<type, 4> value_deltas;
@@ -185,8 +183,8 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> aux_rows;
 
-    Tensor<type, 3> input_query_derivatives;
-    Tensor<type, 3> input_source_derivatives;
+    Tensor<type, 3> input_query_deltas;
+    Tensor<type, 3> input_source_deltas;
 };
 
 #ifdef OPENNN_CUDA

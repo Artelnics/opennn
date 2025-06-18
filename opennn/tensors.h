@@ -22,7 +22,7 @@ array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a
     const array<IndexPair<Index>, 2> indices
         = { IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2) };
 
-    return indices;//array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1)}, {IndexPair<Index>(a2, b2)});
+    return indices;
 }
 
 
@@ -69,7 +69,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
@@ -146,9 +146,8 @@ Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, cons
 
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
-
 void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
-void fill_tensor_3d(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
+void fill_tensor_sequence(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
 template <typename Type, int Rank>
 bool contains(const Tensor<Type, Rank>& vector, const Type& value)
@@ -190,9 +189,7 @@ string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
 Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
-
 dimensions prepend(const Index& x, const dimensions& d);
-
 
 Index get_size(const dimensions& d);
 
@@ -230,24 +227,45 @@ string tensor_to_string(const Tensor<T, 1>& x, const string& separator = " ")
 
 
 type round_to_precision(type, const int&);
-//Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
-//Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
+
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>&, const Index&);
 TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>&, const Index&);
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>&, const Index&, const Index&);
 
 TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>&, const Index&);
-
-
 TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>&, const Index&);
 
 
-TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);
-TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
-TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
-TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
+template <Index rank>
+TensorMap<Tensor<type, rank>> tensor_map(const pair<type*, dimensions>& x_pair)
+{
+    if (x_pair.second.size() != rank)
+        throw runtime_error("Dimensions is " + to_string(x_pair.second.size()) + " and must be " + to_string(rank));
+
+    if constexpr (rank == 1)
+        return TensorMap<Tensor<type, 1>>(x_pair.first,
+                                          x_pair.second[0]);
+    else if constexpr (rank == 2)
+        return TensorMap<Tensor<type, 2>>(x_pair.first,
+                                          x_pair.second[0],
+                                          x_pair.second[1]);
+    else if constexpr (rank == 3)
+        return TensorMap<Tensor<type, 3>>(x_pair.first,
+                                          x_pair.second[0],
+                                          x_pair.second[1],
+                                          x_pair.second[2]);
+    else if constexpr (rank == 4)
+        return TensorMap<Tensor<type, 4>>(x_pair.first,
+                                          x_pair.second[0],
+                                          x_pair.second[1],
+                                          x_pair.second[2],
+                                          x_pair.second[3]);
+    else
+        static_assert(rank >= 1 && rank <= 4, "Unsupported tensor rank");
+}
+
 
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& v)

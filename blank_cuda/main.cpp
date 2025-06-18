@@ -58,7 +58,6 @@ int main()
 
         data_set.print_data();
         */
-        
         ImageDataset data_set;
 
         data_set.set_data_path("C:/melanoma_dataset_bmp_medium");
@@ -72,15 +71,16 @@ int main()
         data_set.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
-        const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
+
+        const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            data_set.get_dimensions(Dataset::VariableUse::Input),
+            input_dimensions,
             { 64, 64, 128, 128, 32 },
-            data_set.get_dimensions(Dataset::VariableUse::Target));
-     
+            output_dimensions);
+
         //VGG16 neural_network(input_dimensions, target_dimensions);
 
         // Training strategy
@@ -106,7 +106,7 @@ int main()
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
 
-        #endif  
+        #endif
 
         cout << "Bye!" << endl;
         

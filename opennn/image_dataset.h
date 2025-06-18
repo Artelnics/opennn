@@ -64,6 +64,12 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
+    void fill_input_tensor(const vector<Index>&,
+                           const vector<Index>&,
+                           type*) const override;
+
+    Tensor<type, 2> perform_augmentation(const Tensor<type, 2>& data);
+
 private:
 
     Index padding = 0;

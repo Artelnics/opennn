@@ -98,7 +98,6 @@
   <ItemGroup>
     <ClCompile Include="..\opennn\adaptive_moment_estimation.cpp" />
     <ClCompile Include="..\opennn\addition_layer_3d.cpp" />
-    <ClCompile Include="..\opennn\batch.cpp" />
     <ClCompile Include="..\opennn\bounding_layer.cpp" />
     <ClCompile Include="..\opennn\convolutional_layer.cpp" />
     <ClCompile Include="..\opennn\correlations.cpp" />
@@ -164,7 +163,6 @@
     <ClInclude Include="..\opennn\adaptive_moment_estimation.h" />
     <ClInclude Include="..\opennn\addition_layer_3d.h" />
     <ClInclude Include="..\opennn\back_propagation.h" />
-    <ClInclude Include="..\opennn\batch.h" />
     <ClInclude Include="..\opennn\bounding_layer.h" />
     <ClInclude Include="..\opennn\box_plot.h" />
     <ClInclude Include="..\opennn\config.h" />

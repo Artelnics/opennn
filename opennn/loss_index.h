@@ -11,7 +11,6 @@
 
 #include "dataset.h"
 #include "neural_network.h"
-#include "batch.h"
 
 namespace opennn
 {
@@ -33,10 +32,10 @@ public:
 
     ~LossIndex()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
@@ -159,6 +158,7 @@ public:
 
    type calculate_error_xxx();
 
+   Tensor<type, 1> calculate_gradient();
 
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 1> calculate_numerical_gradient_lm();
@@ -229,8 +229,8 @@ protected:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

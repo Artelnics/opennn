@@ -84,5 +84,4 @@ inline bool is_instance_of(const T* ptr)
     return dynamic_cast<const Base*>(ptr);
 }
 
-
 #endif // PCH_H

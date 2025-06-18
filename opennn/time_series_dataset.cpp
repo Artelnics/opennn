@@ -529,6 +529,18 @@ void TimeSeriesDataset::impute_missing_values_mean()
 }
 
 
+void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_tensor_data) const
+{
+    fill_tensor_sequence(data, sample_indices, input_indices, input_tensor_data);
+}
+
+
+void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_tensor_data) const
+{
+    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
+}
+
+
 // @todo Complete method following the structure.
 
 void TimeSeriesDataset::fill_gaps()

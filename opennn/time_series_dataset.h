@@ -50,6 +50,14 @@ public:
 
     void impute_missing_values_mean();
 
+    void fill_input_tensor(const vector<Index>&,
+                           const vector<Index>&,
+                           type*) const override;
+
+    void fill_target_tensor(const vector<Index>&,
+                            const vector<Index>&,
+                            type*) const override;
+
 private:
 
     Index lags_number = 2;

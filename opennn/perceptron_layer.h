@@ -64,25 +64,8 @@ public:
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
-    void normalization(Tensor<type, 1>& means, 
-        Tensor<type, 1>& standard_deviations, 
-        const Tensor<type, 2>& inputs, 
-        Tensor<type, 2>& outputs) const
-    {
 
-        const array<Index, 2> rows({outputs.dimension(0), 1});
-
-        const array<int, 1> axis_x({0});
-
-        means.device(*thread_pool_device) = outputs.mean(axis_x);
-
-        standard_deviations.device(*thread_pool_device)
-            = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
-               
-        outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
-            //shifts.broadcast(rows);
-                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);        
-    }
+    void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;

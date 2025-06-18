@@ -43,7 +43,7 @@ int main()
         Tensor<type, 2> inputs(1, 6);
         inputs.setRandom();
 
-        Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+        Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
         MeanSquaredError mean_squared_error(&neural_network, &time_series_dataset);
 

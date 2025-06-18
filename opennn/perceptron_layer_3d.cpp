@@ -88,20 +88,11 @@ string Dense3d::get_activation_function_string() const
 {
     switch (activation_function)
     {
-    case Activation::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case Activation::Linear:
-        return "Linear";
-
-    case Activation::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case Activation::Softmax:
-        return "Softmax";
-
-    default:
-        return {};
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::Linear: return "Linear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
+    case Activation::Softmax: return "Softmax";
+    default: return {};
     }
 }
 
@@ -183,11 +174,13 @@ void Dense3d::set_parameters_glorot()
 
 
 void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
-                                          Tensor<type, 3>& combinations) const
+                                     Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
+        + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
+         .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
 
-    sum_matrices(thread_pool_device.get(), biases, combinations);
+    //sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 
@@ -206,10 +199,10 @@ void Dense3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3
 
 
 void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                     const bool& is_training)
+                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
     Dense3dForwardPropagation* this_forward_propagation =
         static_cast<Dense3dForwardPropagation*>(layer_forward_propagation.get());
@@ -229,28 +222,28 @@ void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 
 
 void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                  const vector<pair<type*, dimensions>>& delta_pairs,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  unique_ptr<LayerBackPropagation>& back_propagation) const
+                             const vector<pair<type*, dimensions>>& delta_pairs,
+                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+                             unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
-    if(delta_pairs.size() > 1)     
+    if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     // Forward propagation
 
     const Dense3dForwardPropagation* dense3d_layer_forward_propagation =
-            static_cast<Dense3dForwardPropagation*>(forward_propagation.get());
+        static_cast<Dense3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& activation_derivatives = dense3d_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
     Dense3dBackPropagation* dense3d_back_propagation =
-            static_cast<Dense3dBackPropagation*>(back_propagation.get());
+        static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
     Tensor<type, 1>& bias_derivatives = dense3d_back_propagation->bias_derivatives;
     Tensor<type, 2>& weight_derivatives = dense3d_back_propagation->weight_derivatives;
@@ -268,8 +261,8 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
 
 void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                   Index& index,
-                                   Tensor<type, 1>& gradient) const
+                              Index& index,
+                              Tensor<type, 1>& gradient) const
 {
     Dense3dBackPropagation* dense3d_back_propagation =
         static_cast<Dense3dBackPropagation*>(back_propagation.get());
@@ -403,7 +396,7 @@ vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pai
     const Index inputs_depth = perceptron_layer_3d->get_input_dimension();
 
     return {{(type*)(input_derivatives.data()),
-            {batch_size, sequence_length, inputs_depth}}};
+             {batch_size, sequence_length, inputs_depth}}};
 }
 
 }

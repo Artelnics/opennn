@@ -255,7 +255,7 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Scaling2dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;

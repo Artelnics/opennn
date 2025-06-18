@@ -222,6 +222,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
 
     optimization_data.iteration = 1;
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
@@ -242,7 +243,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 target_variable_indices);
 
             // Neural network
-            
+
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -658,7 +659,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             // Optimization algorithm
 
             update_parameters_cuda(training_back_propagation_cuda, optimization_data_cuda);
-
         }
 
         // Loss

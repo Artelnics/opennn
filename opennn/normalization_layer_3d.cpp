@@ -159,7 +159,7 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
     // Forward propagation
 

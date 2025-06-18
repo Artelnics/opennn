@@ -270,7 +270,7 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
@@ -294,8 +294,8 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
 
     // Forward propagation
 
@@ -334,8 +334,8 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagationLM>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
     
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
@@ -644,6 +644,25 @@ void Dense2dLayerBackPropagationLM::print() const
     cout << "Input derivatives: " << endl
         << input_derivatives << endl;
 }
+
+
+void Dense2d::normalization(Tensor<type, 1> &means, Tensor<type, 1> &standard_deviations, const Tensor<type, 2> &inputs, Tensor<type, 2> &outputs) const
+{
+
+    const array<Index, 2> rows({outputs.dimension(0), 1});
+
+    const array<int, 1> axis_x({0});
+
+    means.device(*thread_pool_device) = outputs.mean(axis_x);
+
+    standard_deviations.device(*thread_pool_device)
+        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+
+    outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
+        //shifts.broadcast(rows);
+        //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
+}
+
 
 
 #ifdef OPENNN_CUDA

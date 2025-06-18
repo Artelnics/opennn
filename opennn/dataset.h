@@ -9,8 +9,6 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#include "pch.h"
-
 #include "tinyxml2.h"
 #include "correlations.h"
 #include "scaling.h"
@@ -39,10 +37,10 @@ public:
 
     ~Dataset()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     // Enumerations
@@ -513,24 +511,29 @@ public:
 
     void check_separators(const string&) const;
 
-    //Virtual functions
+    virtual void fill_input_tensor(const vector<Index>&,
+                                   const vector<Index>&,
+                                   type*) const;
 
-    //Image Models
-    virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
+    void fill_input_tensor_row_major(const vector<Index>&, 
+                                     const vector<Index>&, 
+                                     type*) const;
 
-    //AutoAssociation Models
+    virtual void fill_target_tensor(const vector<Index>&,
+                                    const vector<Index>&,
+                                    type*) const;
 
-    virtual void transform_associative_Dataset();
-    virtual void save_auto_associative_data_binary(const string&) const;
+    virtual void fill_decoder_tensor(const vector<Index>&,
+                                     const vector<Index>&,
+                                     type*) const;
 
-    // convert
 
 protected:
 
     Dataset::ModelType model_type;
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     // DATA
 
@@ -586,8 +589,8 @@ protected:
 
     bool display = true;
 
-    const vector<string> positive_words = { "yes", "positive", "+", "true" };
-    const vector<string> negative_words = { "no", "negative", "-", "false" };
+    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good"};
+    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad" };
 
 };
 
@@ -598,10 +601,10 @@ struct Batch
 
     ~Batch()
     {
-        thread_pool_device.reset();
-
-        thread_pool.release();
-        thread_pool.reset();
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
     }
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
@@ -635,8 +638,8 @@ struct Batch
     dimensions target_dimensions;
     Tensor<type, 1> target_tensor;
 
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 };
 
 #ifdef OPENNN_CUDA

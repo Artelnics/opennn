@@ -275,7 +275,7 @@ void Pooling::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
 
     switch(pooling_method)
     {
@@ -298,11 +298,11 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
                                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                      const bool& is_training) const
 {
-    PoolingForwardPropagation* pooling_layer_forward_propagation =
+    PoolingForwardPropagation* this_forward_propagation =
         static_cast<PoolingForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
-    Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
+    Tensor<type, 5>& image_patches = this_forward_propagation->image_patches;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,     
@@ -376,8 +376,8 @@ void Pooling::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
+    const TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
 
     switch(pooling_method)
     {

@@ -36,6 +36,7 @@ public:
    Index get_output_dimension() const;
 
    // @todo
+
    dimensions get_input_dimensions() const override
    {
        throw runtime_error("XXX");

@@ -121,7 +121,7 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
                                       unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
 
     ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
@@ -161,8 +161,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index kernel_channels = get_kernel_channels();
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
 
     // Forward propagation
 

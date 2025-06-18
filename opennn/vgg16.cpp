@@ -6,6 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "scaling_layer_4d.h"
+#include "convolutional_layer.h"
+#include "pooling_layer.h"
+#include "perceptron_layer.h"
+#include "flatten_layer.h"
+
 #include "vgg16.h"
 
 namespace opennn
@@ -199,13 +205,13 @@ namespace opennn
         }
     }
 
-    /*
+
     VGG16::VGG16(const filesystem::path& file_name)
         : NeuralNetwork(file_name)
     {
 
     }
-    */
+
 
 } // namespace opennn
 
