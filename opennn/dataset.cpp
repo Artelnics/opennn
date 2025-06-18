@@ -1657,7 +1657,8 @@ void Dataset::set(const filesystem::path& new_data_path,
     set_default_raw_variables_uses();
 
     missing_values_method = MissingValuesMethod::Mean;
-    scrub_missing_values();
+    if(has_nan())
+        scrub_missing_values();
 
     input_dimensions = { get_variables_number(Dataset::VariableUse::Input) };
     target_dimensions = { get_variables_number(Dataset::VariableUse::Target) };

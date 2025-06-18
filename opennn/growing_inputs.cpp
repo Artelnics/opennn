@@ -91,7 +91,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     Dataset* dataset = loss_index->get_data_set();
 
-    dataset->scrub_missing_values();
+    if(dataset->has_nan())
+        dataset->scrub_missing_values();
 
     const vector<Index> target_raw_variable_indices = dataset->get_raw_variable_indices(Dataset::VariableUse::Target);
 
