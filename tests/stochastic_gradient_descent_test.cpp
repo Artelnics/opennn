@@ -1,7 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/stochastic_gradient_descent.h"
 #include "../opennn/mean_squared_error.h"
+#include "../opennn/stochastic_gradient_descent.h"
+
+using namespace opennn;
 
 TEST(StochasticGradientDescentTest, DefaultConstructor)
 {
@@ -33,8 +35,8 @@ TEST(StochasticGradientDescentTest, Train)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
-    data_set.set_data_constant(type(1));
+    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_constant(type(1));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
@@ -49,7 +51,7 @@ TEST(StochasticGradientDescentTest, Train)
 
     // Test
 
-    data_set.set_data_random();
+    dataset.set_data_random();
 
     neural_network.set_parameters_constant(type(-1));
 
@@ -123,7 +125,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     heads_number = 4;
     layers_number = 1;
 
-    data_set.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
+    dataset.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
     transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                         depth, perceptron_depth, heads_number, layers_number });

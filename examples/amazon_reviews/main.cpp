@@ -43,12 +43,14 @@ int main()
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
 
-        //MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
+        MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
+
+        cout << mean_squared_error.calculate_error_xxx() << endl;
 
         //cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
-        TrainingStrategy training_strategy(&neural_network, &language_dataset);
-        training_strategy.perform_training();
+        //TrainingStrategy training_strategy(&neural_network, &language_dataset);
+        //training_strategy.perform_training();
 
         cout << "Good bye!" << endl;
 

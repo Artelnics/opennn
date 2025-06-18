@@ -2,6 +2,8 @@
 
 #include "../opennn/transformer.h"
 
+using namespace opennn;
+
 TEST(Transformer, DefaultConstructor)
 {
     Transformer transformer;
@@ -275,32 +277,32 @@ TEST(Transformer, ForwardPropagate)
             data(i, j + context_length) = type(rand() % input_dimensions);
     }
         
-    data_set.set(data);
+    dataset.set(data);
 
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set(Dataset::SampleUse::Training);
 
     for(Index i = 0; i < context_length; i++)
-        data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
+        dataset.set_raw_variable_use(i, Dataset::VariableUse::Context);
 
     for(Index i = 0; i < input_length; i++)
-        data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+        dataset.set_raw_variable_use(i + context_length, Dataset::VariableUse::Input);
 
     for(Index i = 0; i < input_length; i++)
-        data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
+        dataset.set_raw_variable_use(i + context_length + input_length, Dataset::VariableUse::Target);
 
-    training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-    decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
-    input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-    target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+    training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
+    decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Context);
+    input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
+    target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
 
-    batch.set(batch_size, &data_set);
+    batch.set(batch_size, &dataset);
 
     batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
     transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                         embedding_depth, perceptron_depth, heads_number, layers_number });
 
-    ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
+    ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
 
     transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
@@ -344,32 +346,32 @@ TEST(Transformer, ForwardPropagate)
                 data(i, j + context_length) = type(rand() % input_dimensions);
         }
 
-        data_set.set(data);
+        dataset.set(data);
 
-        data_set.set(DataSet::SampleUse::Training);
+        dataset.set(Dataset::SampleUse::Training);
 
         for(Index i = 0; i < context_length; i++)
-            data_set.set_raw_variable_use(i, DataSet::VariableUse::Context);
+            dataset.set_raw_variable_use(i, Dataset::VariableUse::Context);
 
         for(Index i = 0; i < input_length; i++)
-            data_set.set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+            dataset.set_raw_variable_use(i + context_length, Dataset::VariableUse::Input);
 
         for(Index i = 0; i < input_length; i++)
-            data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
+            dataset.set_raw_variable_use(i + context_length + input_length, Dataset::VariableUse::Target);
 
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+        training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
+        decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Context);
+        input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
+        target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
 
-        batch.set(batch_size, &data_set);
+        batch.set(batch_size, &dataset);
 
         batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
 
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
+        ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 

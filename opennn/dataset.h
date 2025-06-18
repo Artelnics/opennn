@@ -226,6 +226,9 @@ public:
         return data.size() == 0;
     }
 
+    virtual dimensions get_input_dimensions() const;
+    virtual dimensions get_target_dimensions() const;
+
     //bool get_augmentation() const;
 
     // Set

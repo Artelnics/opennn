@@ -3,6 +3,8 @@
 #include "../opennn/normalized_squared_error.h"
 #include "../opennn/tensors.h"
 
+using namespace opennn;
+
 TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 {
     NormalizedSquaredError normalized_squared_error;
@@ -15,9 +17,9 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset data_set;
+    Dataset dataset;
 
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
 
     EXPECT_EQ(normalized_squared_error.has_neural_network(), true);
     EXPECT_EQ(normalized_squared_error.has_data_set(), true);
@@ -31,15 +33,15 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    Dataset data_set(samples_number, { inputs_number }, { targets_number });
-    data_set.set_data_random();
-    data_set.set(Dataset::SampleUse::Training);
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
-               data_set.get_variable_indices(Dataset::VariableUse::Input),
-               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
-               data_set.get_variable_indices(Dataset::VariableUse::Target));
+    Batch batch(samples_number, &dataset);
+    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
+               dataset.get_variable_indices(Dataset::VariableUse::Input),
+               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
+               dataset.get_variable_indices(Dataset::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
@@ -52,7 +54,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
 
     // Loss index
 
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();
     BackPropagation back_propagation(samples_number, &normalized_squared_error);
     normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -77,16 +79,16 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
 
     // Data set
 
-    Dataset data_set;
-    data_set.set(samples_number, {inputs_number}, {outputs_number});
-    data_set.set_data_random();
-    data_set.set(Dataset::SampleUse::Training);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
-               data_set.get_variable_indices(Dataset::VariableUse::Input),
-               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
-               data_set.get_variable_indices(Dataset::VariableUse::Target));
+    Batch batch(samples_number, &dataset);
+    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
+               dataset.get_variable_indices(Dataset::VariableUse::Input),
+               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
+               dataset.get_variable_indices(Dataset::VariableUse::Target));
 
     // Neural network
 
@@ -94,7 +96,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_random();
 
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
@@ -135,13 +137,13 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
 
     // Test
 
-    Dataset data_set(samples_number, { inputs_number }, { outputs_number });
-    data_set.set_data_random();
+    Dataset dataset(samples_number, { inputs_number }, { outputs_number });
+    dataset.set_data_random();
 
     uses.resize(8);
     uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
 
-    target_data = data_set.get_data(DataSet::VariableUse::Target);
+    target_data = dataset.get_data(Dataset::VariableUse::Target);
 
     Eigen::array<int, 1> dimensions({0});
     targets_mean = target_data.mean(dimensions);
@@ -150,7 +152,7 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
                                  { inputs_number }, { 2 }, { outputs_number });
     neural_network.set_parameters_random();
 
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
 
     type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
 

@@ -1,8 +1,7 @@
 #include "pch.h"
 
-#include "../opennn/descriptives.h"
 #include "../opennn/tensors.h"
-#include "../opennn/data_set.h"
+#include "../opennn/dataset.h"
 
 using namespace opennn;
 
@@ -13,14 +12,14 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
     Tensor<type, 2> data(samples_number, 1);
     data.setRandom();
 
-    DataSet data_set(samples_number, { 1 }, { 0 });
+    Dataset dataset(samples_number, { 1 }, { 0 });
 
-    data_set.set_data(data);
-    data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
+    dataset.set_data(data);
+    dataset.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
 
-    data_set.scale_data();
+    dataset.scale_data();
    
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     EXPECT_NEAR(matrix_descriptives[0].mean, type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), NUMERIC_LIMITS_MIN);
@@ -36,14 +35,14 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
 
     Tensor<type, 2> scaled_matrix;
 
-    DataSet data_set(samples_number, { 1 }, { 0 });
+    Dataset dataset(samples_number, { 1 }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
-    data_set.scale_data();
+    dataset.scale_data();
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     EXPECT_NEAR(abs(matrix_descriptives[0].minimum), type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(matrix_descriptives[0].maximum), type(1), NUMERIC_LIMITS_MIN);
@@ -59,14 +58,14 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
     
     Tensor<type, 2> scaled_matrix;
 
-    DataSet data_set(samples_number, { samples_number }, { 0 });
+    Dataset dataset(samples_number, { samples_number }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::None);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::None);
 
-    data_set.scale_data();
+    dataset.scale_data();
 
-    scaled_matrix = data_set.get_data();
+    scaled_matrix = dataset.get_data();
     
     EXPECT_EQ(are_equal(matrix, scaled_matrix, NUMERIC_LIMITS_MIN),true);
 }
@@ -79,13 +78,13 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
     Tensor<type, 2> matrix(samples_number, 1);
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { 1 }, { 0 });
+    Dataset dataset(samples_number, { 1 }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::StandardDeviation);
-    data_set.scale_data();
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::StandardDeviation);
+    dataset.scale_data();
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     EXPECT_NEAR(abs(matrix_descriptives[0].standard_deviation), type(1), NUMERIC_LIMITS_MIN);
 }
@@ -101,13 +100,13 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { 1 }, { 0 });
+    Dataset dataset(samples_number, { 1 }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::Logarithm);
-    data_set.scale_data();
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::Logarithm);
+    dataset.scale_data();
 
-    scaled_matrix = data_set.get_data();
+    scaled_matrix = dataset.get_data();
 
     solution_matrix.resize(matrix.dimension(0),1);
 
@@ -126,18 +125,18 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { samples_number }, { 0 });
+    Dataset dataset(samples_number, { samples_number }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
-    data_set.scale_data();
+    dataset.scale_data();
 
-    data_set.unscale_variables(DataSet::VariableUse::Input,matrix_descriptives);
+    dataset.unscale_variables(Dataset::VariableUse::Input,matrix_descriptives);
 
-    unscaled_matrix = data_set.get_data();
+    unscaled_matrix = dataset.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 }
@@ -152,17 +151,17 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     matrix.setRandom();
     
-    DataSet data_set(samples_number, { samples_number }, { 0 });
+    Dataset dataset(samples_number, { samples_number }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
-    data_set.scale_data();
-    data_set.unscale_variables(DataSet::VariableUse::Input, matrix_descriptives);
+    dataset.scale_data();
+    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
 
-    unscaled_matrix = data_set.get_data();
+    unscaled_matrix = dataset.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 }
@@ -177,17 +176,17 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { samples_number }, { 0 });
+    Dataset dataset(samples_number, { samples_number }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::None);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::None);
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
-    data_set.scale_data();
-    data_set.unscale_variables(DataSet::VariableUse::Input, matrix_descriptives);
+    dataset.scale_data();
+    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
 
-    unscaled_matrix = data_set.get_data();
+    unscaled_matrix = dataset.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 }
@@ -202,16 +201,16 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { samples_number }, { 0 });
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::StandardDeviation);
+    Dataset dataset(samples_number, { samples_number }, { 0 });
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::StandardDeviation);
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
-    data_set.scale_data();
-    data_set.unscale_variables(DataSet::VariableUse::Input, matrix_descriptives);
+    dataset.scale_data();
+    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
 
-    unscaled_matrix = data_set.get_data();
+    unscaled_matrix = dataset.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 }
@@ -226,17 +225,17 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 
     matrix.setRandom();
 
-    DataSet data_set(samples_number, { samples_number }, { 0 });
+    Dataset dataset(samples_number, { samples_number }, { 0 });
 
-    data_set.set_data(matrix);
-    data_set.set_raw_variable_scalers(Scaler::Logarithm);
+    dataset.set_data(matrix);
+    dataset.set_raw_variable_scalers(Scaler::Logarithm);
 
-    vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
+    vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
-    data_set.scale_data();
-    data_set.unscale_variables(DataSet::VariableUse::Input, matrix_descriptives);
+    dataset.scale_data();
+    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
 
-    unscaled_matrix = data_set.get_data();
+    unscaled_matrix = dataset.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 }

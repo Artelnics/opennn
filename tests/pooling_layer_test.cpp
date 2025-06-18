@@ -3,6 +3,8 @@
 #include "../opennn/pooling_layer.h"
 #include "../opennn/tensors.h"
 
+using namespace opennn;
+
 Tensor<type, 4> generate_input_tensor_pooling(const Tensor<type, 2>& data,
                                               const vector<Index>& row_indices,
                                               const vector<Index>& column_indices,

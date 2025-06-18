@@ -2,6 +2,8 @@
 
 #include "../opennn/probabilistic_layer_3d.h"
 
+using namespace opennn;
+
 TEST(Probabilistic3DTest, DefaultConstructor)
 {
 

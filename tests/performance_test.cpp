@@ -1,8 +1,7 @@
 #include "pch.h"
 
-#include "../opennn/opennn.h"
 
-using namespace opennn;
+//using namespace opennn;
 
 TEST(PerformanceTest, Rosenbrock)
 {
@@ -12,16 +11,16 @@ TEST(PerformanceTest, Rosenbrock)
     const Index outputs_number = 1;
     const Index hidden_neurons_number = 10;
 
-    DataSet data_set(samples_number, { inputs_number }, {outputs_number});
+    Dataset dataset(samples_number, { inputs_number }, {outputs_number});
 
-    data_set.set_data_rosenbrock();
+    dataset.set_data_rosenbrock();
 
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set(Dataset::SampleUse::Training);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { hidden_neurons_number }, { outputs_number });
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
     
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -51,7 +50,7 @@ TEST(PerformanceTest, ImageClassification)
     
     //image_data_set.set_data_random();
     /*
-    image_data_set.set(DataSet::SampleUse::Training);
+    image_data_set.set(Dataset::SampleUse::Training);
 
     const dimensions complexity_dimensions = { 8 };
 
