@@ -13,6 +13,7 @@
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "addition_layer_3d.h"
@@ -457,10 +458,16 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
 
     add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
         embedding_dimension,
-        "embedding_layer"));
+        "embedding_layer"
+        ));
 
-    add_layer(make_unique<Flatten3d>(
-        get_output_dimensions()));
+    add_layer(make_unique<Pooling3d>(
+        get_output_dimensions()
+        ));
+
+    // add_layer(make_unique<Flatten3d>(
+    //     get_output_dimensions()
+    //     ));
 
     add_layer(make_unique<Dense2d>(
         get_output_dimensions(),
@@ -1543,6 +1550,10 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
             layers[i] = make_unique <PoolingBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
+        case Layer::Type::Pooling3d:
+            layers[i] = make_unique <Pooling3dBackPropagation>(batch_size, neural_network_layers[i].get());
+            break;
+
         case Layer::Type::Flatten:
             layers[i] = make_unique <FlattenBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
@@ -1650,6 +1661,10 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         case Layer::Type::Pooling:
             layers[i] = make_unique<PoolingForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
+
+        case Layer::Type::Pooling3d:
+            layers[i] = make_unique<Pooling3dForwardPropagation>(samples_number, neural_network_layers[i].get());
+            break;
 
         case Layer::Type::Flatten:
             layers[i] = make_unique<FlattenForwardPropagation>(samples_number, neural_network_layers[i].get());

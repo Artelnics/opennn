@@ -37,6 +37,7 @@ public:
                     Dense2d,
                     Dense3d,
                     Pooling,
+                    Pooling3d,
                     Probabilistic3d,
                     Recurrent,
                     Unscaling,
