@@ -715,19 +715,23 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     for(Index i = 0; i < y_filtered.dimension(1); i++)
         target_columns_indices[i] = i + 1;
  
-    Dataset Dataset(x_filtered.size(), {1}, {y_filtered.dimension(1)});
+    Dataset dataset(x_filtered.size(), {1}, {y_filtered.dimension(1)});
 
-    Dataset.set_data(data);
-    Dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
-    Dataset.set_binary_raw_variables();
-    Dataset.set_default_raw_variables_scalers();
+    dataset.set_data(data);
+    dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
+    dataset.set_binary_raw_variables();
+    dataset.set_default_raw_variables_scalers();
 
     // Dataset.print();
 
-    Dataset.set(Dataset::SampleUse::Training);
+    dataset.set(Dataset::SampleUse::Training);
+    dataset.set_dimensions(Dataset::VariableUse::Input,
+                           {dataset.get_variables_number(Dataset::VariableUse::Input)});
+    dataset.set_dimensions(Dataset::VariableUse::Target,
+                           {dataset.get_variables_number(Dataset::VariableUse::Target)});
 
-    const Index input_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Input);
-    const Index target_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Target);
+    const Index input_variables_number = dataset.get_variables_number(Dataset::VariableUse::Input);
+    const Index target_variables_number = dataset.get_variables_number(Dataset::VariableUse::Target);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { input_variables_number }, {1}, {target_variables_number});
@@ -739,7 +743,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
     scaling_layer_2d->set_display(false);
 
-    TrainingStrategy training_strategy(&neural_network, &Dataset);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
@@ -755,9 +759,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    const Tensor<type, 2> inputs = Dataset.get_data(Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
 
-    const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 

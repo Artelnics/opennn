@@ -1032,11 +1032,16 @@ vector<Index> Dataset::get_used_variable_indices() const
 
         if (raw_variable.use == VariableUse::None)
         {
-            variable_index += categories_number;
+            variable_index += (raw_variable.type == RawVariableType::Categorical)
+                                  ? raw_variable.get_categories_number()
+                                  : 1;
             continue;
         }
 
-        for (Index j = 0; j < categories_number; j++)
+        if(raw_variable.type == RawVariableType::Categorical)
+            for (Index j = 0; j < categories_number; j++)
+                used_variable_indices[used_variable_index++] = variable_index++;
+        else
             used_variable_indices[used_variable_index++] = variable_index++;
     }
 
@@ -2751,7 +2756,7 @@ vector<Descriptives> Dataset::scale_variables(const VariableUse& variable_use)
     const Index input_variables_number = get_variables_number(variable_use);
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(Dataset::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
 
     const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
