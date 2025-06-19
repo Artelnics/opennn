@@ -1,7 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/genetic_algorithm.h"
 #include "../opennn/dataset.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/genetic_algorithm.h"
 
 using namespace opennn;
 
@@ -32,12 +33,12 @@ TEST(GeneticAlgorithmTest, InitializePopulation)
     Index neurons_number = 1;
     Index samples_number = 10;
 
-    Dataset data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_display(false);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -67,12 +68,12 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     Index neurons_number = 2;
     Index individuals_number = 4;
 
-    Dataset data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_display(false);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
     genetic_algorithm.set_individuals_number(individuals_number);
@@ -93,12 +94,12 @@ TEST(GeneticAlgorithmTest, Selection)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    Dataset data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_display(false);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -146,12 +147,12 @@ TEST(GeneticAlgorithmTest, Crossover)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    Dataset data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_display(false);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -190,12 +191,12 @@ TEST(GeneticAlgorithmTest, Mutation)
     Index neurons_number = 1;
     Index individuals_number = 4;
 
-    Dataset data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_display(false);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -277,7 +278,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
         data(i,3) = type(i);
     }
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2}, {6}, {1});
 
@@ -312,8 +313,8 @@ TEST(GeneticAlgorithmTest, InputSelection)
         data(i,2) = type(0);
     }
 
-    data_set.set_data(data);
-    data_set.set_default_raw_variables_uses();
+    dataset.set_data(data);
+    dataset.set_default_raw_variables_uses();
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(4);
@@ -339,8 +340,8 @@ TEST(GeneticAlgorithmTest, InputSelection)
         data(i,5) = data(i,0) + data(i,1) + data(i,2) + data(i,3);
     }
 
-    data_set.set_data(data);
-    data_set.set_default_raw_variables_uses();
+    dataset.set_data(data);
+    dataset.set_default_raw_variables_uses();
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 

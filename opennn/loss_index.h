@@ -171,7 +171,7 @@ public:
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();
-   Tensor<type, 1> calculate_numerical_input_derivatives();
+   Tensor<type, 1> calculate_numerical_input_deltas();
    Tensor<type, 2> calculate_numerical_hessian();
    Tensor<type, 2> calculate_inverse_hessian();
 

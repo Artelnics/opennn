@@ -2,6 +2,8 @@
 #include "../opennn/mean_squared_error.h"
 #include "../opennn/quasi_newton_method.h"
 
+using namespace opennn;
+
 TEST(QuasiNewtonMethodTest, DefaultConstructor)
 {
     QuasiNewtonMethod quasi_newton_method;
@@ -26,13 +28,13 @@ TEST(QuasiNewtonMethodTest, DFP)
     const Index inputs_number = 1;
     const Index outputs_number = 1;
 
-    DataSet data_set(samples_number, { inputs_number }, { outputs_number });
-    data_set.set_data_random();
+    Dataset dataset(samples_number, { inputs_number }, { outputs_number });
+    dataset.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(type(1));
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 
@@ -54,10 +56,10 @@ TEST(QuasiNewtonMethodTest, BGFS)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(1);
 
-    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
-    data_set.set_data_random();
+    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_random();
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
     mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
@@ -79,8 +81,8 @@ TEST(QuasiNewtonMethodTest, Train)
 
     //Test
 
-    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
-    data_set.set_data_constant(1);
+    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_constant(1);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(1);
@@ -98,7 +100,7 @@ TEST(QuasiNewtonMethodTest, Train)
     type old_error = numeric_limits<float>::max();
     type error;
 
-    data_set.set_data_random();
+    dataset.set_data_random();
 
     neural_network.set_parameters_constant(-1);
 

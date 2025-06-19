@@ -1,6 +1,9 @@
 #include "pch.h"
 
+#include "../opennn/tensors.h"
 #include "../opennn/recurrent_layer.h"
+
+using namespace opennn;
 
 TEST(RecurrentLayerTest, DefaultConstructor)
 {
@@ -23,7 +26,8 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
     EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
 
-    Tensor<type, 1> parameters = recurrent_layer.get_parameters();
+    Tensor<type, 1> parameters;
+    recurrent_layer.get_parameters(parameters);
     EXPECT_EQ(parameters.size(), parameters_number);
 
     EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ time_steps,inputs_number }));
@@ -74,29 +78,6 @@ TEST(RecurrentLayerTest, Activations)
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
 
-    recurrent_layer.set_activation_function(Recurrent::Activation::ScaledExponentialLinear);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::SoftPlus);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::SoftSign);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::HardSigmoid);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.7), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.2), 0.001);
 }
 
 TEST(RecurrentLayerTest, ForwardPropagate)

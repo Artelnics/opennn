@@ -1,6 +1,9 @@
 #include "pch.h"
 
+#include "../opennn/tensors.h"
 #include "../opennn/bounding_layer.h"
+
+using namespace opennn;
 
 
 TEST(BoundingTest, Constructor) 
@@ -28,15 +31,13 @@ TEST(BoundingTest, ForwardPropagate)
 
     const pair<type*, dimensions> input_pairs = { inputs.data(), {{1, 1}} };
 
-
-
     bounding_layer.forward_propagate({ input_pairs },
                                           forward_propagation,
                                           true);
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_NEAR(outputs(0), type(-1.0), NUMERIC_LIMITS_MIN);
     EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{ 1 });

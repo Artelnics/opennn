@@ -8,6 +8,7 @@
 #include "../opennn/language_dataset.h"
 #include "../opennn/cross_entropy_error_3d.h"
 
+using namespace opennn;
 
 TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
@@ -38,13 +39,13 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-    Dataset data_set(1, {1}, {1});
-    data_set.set_data_constant(type(1));
+    Dataset dataset(1, {1}, {1});
+    dataset.set_data_constant(type(1));
     
     //NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     //neural_network.set_parameters_constant(type(1));
 
-    //TrainingStrategy training_strategy(&neural_network, &data_set);
+    //TrainingStrategy training_strategy(&neural_network, &dataset);
   
     //AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
@@ -79,7 +80,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
         input_dimensions,
         context_dimension);
 
-    language_data_set.set(DataSet::SampleUse::Training);
+    language_data_set.set(Dataset::SampleUse::Training);
 
     Transformer transformer({ input_length,
                              decoder_length,
@@ -115,8 +116,8 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     // Test
     {
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
+        dataset.set(samples_number, inputs_number, outputs_number);
+        dataset.set_data_random();
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_constant(-1);
@@ -149,9 +150,9 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         inputs_number = 1;
         outputs_number = 1;
 
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-        //data_set.set(DataSet::SampleUse::Testing);
+        dataset.set(samples_number, inputs_number, outputs_number);
+        dataset.set_data_random();
+        //dataset.set(Dataset::SampleUse::Testing);
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
         neural_network.set_parameters_random();
@@ -165,7 +166,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         //for(Index i = 0; i < 100; i++)
         //{
-            //data_set.set_data_random();
+            //dataset.set_data_random();
             //neural_network.set_parameters_random();
 
         training_results = adaptive_moment_estimation.perform_training();

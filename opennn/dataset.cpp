@@ -39,6 +39,18 @@ const bool& Dataset::get_display() const
 }
 
 
+dimensions Dataset::get_input_dimensions() const
+{
+    return dimensions({get_variables_number(Dataset::VariableUse::Input)});
+}
+
+
+dimensions Dataset::get_target_dimensions() const
+{
+    return dimensions({get_variables_number(Dataset::VariableUse::Target)});
+}
+
+
 Dataset::RawVariable::RawVariable(const string& new_name,
                                   const VariableUse& new_raw_variable_use,
                                   const RawVariableType& new_type,
@@ -3594,8 +3606,7 @@ Tensor<Index, 1> Dataset::filter_data(const Tensor<type, 1>& minimums,
                     set_sample_use(sample_index, SampleUse::None);
                 }
             }
-            else if (value < minimums(i)
-                || value > maximums(i))
+            else if (value < minimums(i) || value > maximums(i))
             {
                 filtered_indices(sample_index) = type(1);
                 set_sample_use(sample_index, SampleUse::None);

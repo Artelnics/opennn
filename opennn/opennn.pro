@@ -20,14 +20,7 @@ CONFIG += jumbo_build
 PRECOMPILED_HEADER = pch.h
 DEFINES += __Cpp17__
 
-win32-msvc*: {
-    QMAKE_CXXFLAGS += /MP
-}
-else {
-    QMAKE_CXXFLAGS -= /MP
-    QMAKE_CFLAGS   -= /MP
-    QMAKE_LFLAGS   -= /MP
-}
+#QMAKE_CXXFLAGS += /MP
 
 # OpenMP library
 

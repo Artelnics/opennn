@@ -1,6 +1,9 @@
 #include "pch.h"
 
+#include "../opennn/training_strategy.h"
 #include "../opennn/model_selection.h"
+
+using namespace opennn;
 
 
 TEST(ModelSelectionTest, DefaultConstructor)
@@ -24,7 +27,7 @@ TEST(ModelSelectionTest, GeneralConstructor)
 TEST(ModelSelectionTest, NeuronsSelection)
 {
     /*
-//    data_set.generate_sum_data(20, 2);
+//    dataset.generate_sum_data(20, 2);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
 

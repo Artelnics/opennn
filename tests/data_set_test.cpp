@@ -2,6 +2,7 @@
 
 #include "../opennn/dataset.h"
 
+using namespace opennn;
 
 void create_temp_csv_file(const string& file_path, const string& content) 
 {
@@ -14,35 +15,35 @@ void create_temp_csv_file(const string& file_path, const string& content)
 }
 
 
-TEST(DataSet, DefaultConstructor)
+TEST(Dataset, DefaultConstructor)
 {
-    Dataset data_set;
+    Dataset dataset;
 
-    EXPECT_EQ(data_set.get_variables_number(), 0);
-    EXPECT_EQ(data_set.get_samples_number(), 0);
+    EXPECT_EQ(dataset.get_variables_number(), 0);
+    EXPECT_EQ(dataset.get_samples_number(), 0);
 }
 
 
-TEST(DataSet, DimensionsConstructor)
+TEST(Dataset, DimensionsConstructor)
 {
 
-    Dataset data_set(1, { 1 }, { 1 });
+    Dataset dataset(1, { 1 }, { 1 });
 
-    EXPECT_EQ(data_set.get_samples_number(), 1);
-    EXPECT_EQ(data_set.get_variables_number(), 2);
-    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Input), 1);
-    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_samples_number(), 1);
+    EXPECT_EQ(dataset.get_variables_number(), 2);
+    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Input), 1);
+    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Target), 1);
 
 }
 
 
-TEST(DataSet, VariableDescriptivesZero)
+TEST(Dataset, VariableDescriptivesZero)
 {
 
-    DataSet data_set(1, { 1 }, { 1 });
-    data_set.set_data_constant(type(0));
+    Dataset dataset(1, { 1 }, { 1 });
+    dataset.set_data_constant(type(0));
 
-    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
+    const vector<Descriptives> variable_descriptives = dataset.calculate_variable_descriptives();
 
     EXPECT_EQ(variable_descriptives.size(), 2);
 
@@ -54,14 +55,14 @@ TEST(DataSet, VariableDescriptivesZero)
 }
 
 
-TEST(DataSet, VariableDescriptives)
+TEST(Dataset, VariableDescriptives)
 {
 
     const Index samples_number = 3;
     const Index inputs_number = 2;
     const Index targets_number = 1;
 
-    DataSet data_set(samples_number, { inputs_number }, { targets_number });
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
 
     Tensor<type, 2> data(samples_number, inputs_number + targets_number);
 
@@ -69,9 +70,9 @@ TEST(DataSet, VariableDescriptives)
                     {type(1)    ,type(4),type(2)},
                     {type(1)    ,type(4),type(0)} });
 
-    data_set.set_data(data);
+    dataset.set_data(data);
    
-    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
+    const vector<Descriptives> variable_descriptives = dataset.calculate_variable_descriptives();
 
     EXPECT_EQ(variable_descriptives.size(), 3);
     EXPECT_NEAR(variable_descriptives[0].minimum, type(-1000), NUMERIC_LIMITS_MIN);
@@ -83,10 +84,10 @@ TEST(DataSet, VariableDescriptives)
 }
 
 
-TEST(DataSet, RawVariableDistributions)
+TEST(Dataset, RawVariableDistributions)
 {
 
-    DataSet data_set(3, { 2 }, { 1 });
+    Dataset dataset(3, { 2 }, { 1 });
 
     Tensor<type, 2> data(3, 3);
 
@@ -94,9 +95,9 @@ TEST(DataSet, RawVariableDistributions)
                     {type(1),type(1),type(1)},
                     {type(1),type(2),type(2)} });
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
-    const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
+    const vector<Histogram> histograms = dataset.calculate_raw_variable_distributions(2);
 
     EXPECT_EQ(histograms.size(), 3);
 
@@ -110,11 +111,11 @@ TEST(DataSet, RawVariableDistributions)
 }
 
 
-TEST(DataSet, FilterData_MixedFiltering) {
+TEST(Dataset, FilterData_MixedFiltering) {
     // Test
     {
-        DataSet data_set(2, { 1 }, { 1 });
-        data_set.set_data_constant(type(1));
+        Dataset dataset(2, { 1 }, { 1 });
+        dataset.set_data_constant(type(1));
 
         Tensor<type, 1> minimums(2);
         minimums.setValues({ type(2), type(0) });
@@ -122,19 +123,19 @@ TEST(DataSet, FilterData_MixedFiltering) {
         Tensor<type, 1> maximums(2);
         maximums.setValues({ type(2), type(0.5) });
 
-        Tensor<Index, 1> filtered_data = data_set.filter_data(minimums, maximums);
+        Tensor<Index, 1> filtered_data = dataset.filter_data(minimums, maximums);
 
         EXPECT_EQ(filtered_data.size(), 2);
-        EXPECT_EQ(data_set.get_sample_use(0), DataSet::SampleUse::None);
-        EXPECT_EQ(data_set.get_sample_use(1), DataSet::SampleUse::None);
+        EXPECT_EQ(dataset.get_sample_use(0), Dataset::SampleUse::None);
+        EXPECT_EQ(dataset.get_sample_use(1), Dataset::SampleUse::None);
     }
 
     // Test
     {
-        DataSet data_set(2, { 1 }, { 1 });
+        Dataset dataset(2, { 1 }, { 1 });
         Eigen::Tensor<type, 2> data(2, 2);
         data.setValues({ { type(1), type(2) }, { type(3), type(4) } });
-        data_set.set_data(data);
+        dataset.set_data(data);
 
         Tensor<type, 1> minimums(2);
         minimums.setValues({ type(0), type(0) });
@@ -142,28 +143,28 @@ TEST(DataSet, FilterData_MixedFiltering) {
         Tensor<type, 1> maximums(2);
         maximums.setValues({ type(2), type(3) });
 
-        Tensor<Index, 1> filtered_data = data_set.filter_data(minimums, maximums);
+        Tensor<Index, 1> filtered_data = dataset.filter_data(minimums, maximums);
 
         EXPECT_EQ(filtered_data.size(), 1);
-        EXPECT_EQ(data_set.get_sample_use(0), DataSet::SampleUse::Training);
-        EXPECT_EQ(data_set.get_sample_use(1), DataSet::SampleUse::None);
+        EXPECT_EQ(dataset.get_sample_use(0), Dataset::SampleUse::Training);
+        EXPECT_EQ(dataset.get_sample_use(1), Dataset::SampleUse::None);
     }
 }
 
 
-TEST(DataSet, ScaleData)
+TEST(Dataset, ScaleData)
 {
-    DataSet data_set(2, { 1 }, { 1 });
+    Dataset dataset(2, { 1 }, { 1 });
 
     Tensor<type, 2> original_data(2, 2);
     original_data.setValues({ {type(10), type(200)},
                               {type(30), type(400)} });
 
-    data_set.set_data(original_data);
+    dataset.set_data(original_data);
 
-    data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
-    vector<Descriptives> data_descriptives_minmax = data_set.scale_data();
-    Tensor<type, 2> scaled_data_minmax = data_set.get_data();
+    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    vector<Descriptives> data_descriptives_minmax = dataset.scale_data();
+    Tensor<type, 2> scaled_data_minmax = dataset.get_data();
 
     // Expected scaled values for column 0 (original: 10, 30):
     // 10 (min) -> 0.0
@@ -179,10 +180,10 @@ TEST(DataSet, ScaleData)
 }
 
 
-TEST(DataSet, UnuseConstantRawVariables)
+TEST(Dataset, UnuseConstantRawVariables)
 {
 
-    DataSet data_set(3, { 2 }, { 1 });
+    Dataset dataset(3, { 2 }, { 1 });
 
     Tensor<type, 2> data(3, 3);
 
@@ -190,20 +191,20 @@ TEST(DataSet, UnuseConstantRawVariables)
                     {type(1),type(2),type(1)},
                     {type(1),type(2),type(2)} });
 
-    data_set.set_data(data);
-    data_set.unuse_constant_raw_variables();
+    dataset.set_data(data);
+    dataset.unuse_constant_raw_variables();
 
-    data_set.unuse_constant_raw_variables();
+    dataset.unuse_constant_raw_variables();
 
-    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Input), 0);
-    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_raw_variables_number(Dataset::VariableUse::Input), 0);
+    EXPECT_EQ(dataset.get_raw_variables_number(Dataset::VariableUse::Target), 1);
 
 }
 
 
-TEST(DataSet, CalculateTargetDistribution)
+TEST(Dataset, CalculateTargetDistribution)
 {
-    DataSet data_set(5, { 3 }, { 2 });
+    Dataset dataset(5, { 3 }, { 2 });
     Tensor<type, 2> data(5, 4);
 
     data.setValues({ {type(2),type(5),type(6),type(0)},
@@ -213,7 +214,7 @@ TEST(DataSet, CalculateTargetDistribution)
                     {type(0),type(1),type(0),type(1)} });
 
 
-    data_set.set_data(data);
+    dataset.set_data(data);
     std::vector<Index> input_variables_indices;
     std::vector<Index> target_variables_indices;
 
@@ -223,9 +224,9 @@ TEST(DataSet, CalculateTargetDistribution)
 
     target_variables_indices.push_back(0);
 
-    data_set.set_raw_variable_indices(input_variables_indices, target_variables_indices);
+    dataset.set_raw_variable_indices(input_variables_indices, target_variables_indices);
 
-    Tensor<Index, 1> target_distribution = data_set.calculate_target_distribution();
+    Tensor<Index, 1> target_distribution = dataset.calculate_target_distribution();
 
     Tensor<Index, 1> solution(2);
     solution(0) = 1;
@@ -245,9 +246,9 @@ TEST(DataSet, CalculateTargetDistribution)
                     {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
                     {type(0),type(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0)} });
 
-    data_set.set(5, { 8 }, { 1 });
+    dataset.set(5, { 8 }, { 1 });
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     target_variables_indices.resize(3);
     target_variables_indices.push_back(6);
@@ -258,9 +259,9 @@ TEST(DataSet, CalculateTargetDistribution)
     input_variables_indices.push_back(0);
     input_variables_indices.push_back(1);
 
-    data_set.set_raw_variable_indices(input_variables_indices, target_variables_indices);
+    dataset.set_raw_variable_indices(input_variables_indices, target_variables_indices);
 
-    target_distribution = data_set.calculate_target_distribution();
+    target_distribution = dataset.calculate_target_distribution();
 
     EXPECT_EQ(target_distribution[0], 4);
     EXPECT_EQ(target_distribution[1], 1);
@@ -269,7 +270,7 @@ TEST(DataSet, CalculateTargetDistribution)
 }
 
 
-TEST(DataSet, ReadCSV_Basic)
+TEST(Dataset, ReadCSV_Basic)
 {
     const string temp_csv_file_path = "temp_data_readcsv_test_basic.csv";
 
@@ -280,50 +281,50 @@ TEST(DataSet, ReadCSV_Basic)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    DataSet data_set;
+    Dataset dataset;
 
-    data_set.set_data_path(temp_csv_file_path);
-    data_set.set_separator(DataSet::Separator::Comma);
-    data_set.set_has_header(true);
-    data_set.set_has_ids(false);
-    data_set.set_missing_values_label("NA");
-    data_set.set_codification(DataSet::Codification::UTF8);
-    data_set.set_display(false);
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(false);
+    dataset.set_missing_values_label("NA");
+    dataset.set_codification(Dataset::Codification::UTF8);
+    dataset.set_display(false);
 
-    ASSERT_NO_THROW(data_set.read_csv());
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    data_set.set_default_raw_variables_uses();
+    dataset.set_default_raw_variables_uses();
 
-    data_set.set_dimensions(DataSet::VariableUse::Input, { data_set.get_variables_number(opennn::DataSet::VariableUse::Input) });
-    data_set.set_dimensions(DataSet::VariableUse::Target, { data_set.get_variables_number(opennn::DataSet::VariableUse::Target) });
+    dataset.set_dimensions(Dataset::VariableUse::Input, { dataset.get_variables_number(opennn::Dataset::VariableUse::Input) });
+    dataset.set_dimensions(Dataset::VariableUse::Target, { dataset.get_variables_number(opennn::Dataset::VariableUse::Target) });
 
-    EXPECT_EQ(data_set.get_samples_number(), 2);
-    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
-    EXPECT_EQ(data_set.get_variables_number(), 3);
+    EXPECT_EQ(dataset.get_samples_number(), 2);
+    EXPECT_EQ(dataset.get_raw_variables_number(), 3);
+    EXPECT_EQ(dataset.get_variables_number(), 3);
 
     // Raw Variables
-    const auto& raw_vars = data_set.get_raw_variables();
+    const auto& raw_vars = dataset.get_raw_variables();
     ASSERT_EQ(raw_vars.size(), 3);
     EXPECT_EQ(raw_vars[0].name, "variable_1");
     EXPECT_EQ(raw_vars[1].name, "variable_2");
     EXPECT_EQ(raw_vars[2].name, "target_1");
 
-    EXPECT_EQ(raw_vars[0].type, DataSet::RawVariableType::Numeric);
-    EXPECT_EQ(raw_vars[1].type, DataSet::RawVariableType::Numeric);
-    EXPECT_EQ(raw_vars[2].type, DataSet::RawVariableType::Binary);
+    EXPECT_EQ(raw_vars[0].type, Dataset::RawVariableType::Numeric);
+    EXPECT_EQ(raw_vars[1].type, Dataset::RawVariableType::Numeric);
+    EXPECT_EQ(raw_vars[2].type, Dataset::RawVariableType::Binary);
 
-    EXPECT_EQ(raw_vars[0].use, DataSet::VariableUse::Input);
-    EXPECT_EQ(raw_vars[1].use, DataSet::VariableUse::Input);
-    EXPECT_EQ(raw_vars[2].use, DataSet::VariableUse::Target);
+    EXPECT_EQ(raw_vars[0].use, Dataset::VariableUse::Input);
+    EXPECT_EQ(raw_vars[1].use, Dataset::VariableUse::Input);
+    EXPECT_EQ(raw_vars[2].use, Dataset::VariableUse::Target);
 
     // Data Tensor Content
-    const Tensor<type, 2>& data = data_set.get_data();
+    const Tensor<type, 2>& data = dataset.get_data();
     ASSERT_EQ(data.dimension(0), 2);
     ASSERT_EQ(data.dimension(1), 3);
 
-    vector<Index> var1_indices = data_set.get_variable_indices(0);
-    vector<Index> var2_indices = data_set.get_variable_indices(1);
-    vector<Index> target1_indices = data_set.get_variable_indices(2);
+    vector<Index> var1_indices = dataset.get_variable_indices(0);
+    vector<Index> var2_indices = dataset.get_variable_indices(1);
+    vector<Index> target1_indices = dataset.get_variable_indices(2);
 
     ASSERT_EQ(var1_indices.size(), 1);
     ASSERT_EQ(var2_indices.size(), 1);
@@ -350,8 +351,8 @@ TEST(DataSet, ReadCSV_Basic)
     EXPECT_NEAR(data(1, v2_idx), 20.0, 1e-9);
     EXPECT_NEAR(data(1, t1_idx), 1.0, 1e-9);
 
-    dimensions input_dims = data_set.get_dimensions(DataSet::VariableUse::Input);
-    dimensions target_dims = data_set.get_dimensions(DataSet::VariableUse::Target);
+    dimensions input_dims = dataset.get_dimensions(Dataset::VariableUse::Input);
+    dimensions target_dims = dataset.get_dimensions(Dataset::VariableUse::Target);
 
     ASSERT_EQ(input_dims.size(), 1);
     EXPECT_EQ(input_dims[0], 2);
@@ -360,15 +361,15 @@ TEST(DataSet, ReadCSV_Basic)
     EXPECT_EQ(target_dims[0], 1);
 
     // Missing Values Info
-    EXPECT_EQ(data_set.get_missing_values_number(), 0);
-    EXPECT_FALSE(data_set.has_nan());
-    EXPECT_EQ(data_set.count_rows_with_nan(), 0);
-    Tensor<Index, 1> nans_per_raw_var = data_set.count_nans_per_raw_variable();
+    EXPECT_EQ(dataset.get_missing_values_number(), 0);
+    EXPECT_FALSE(dataset.has_nan());
+    EXPECT_EQ(dataset.count_rows_with_nan(), 0);
+    Tensor<Index, 1> nans_per_raw_var = dataset.count_nans_per_raw_variable();
     ASSERT_EQ(nans_per_raw_var.size(), 3);
     for (Index i = 0; i < 3; ++i) EXPECT_EQ(nans_per_raw_var(i), 0);
 
     // Data File Preview
-    const auto& preview = data_set.get_data_file_preview();
+    const auto& preview = dataset.get_data_file_preview();
     ASSERT_EQ(preview.size(), 4) << "Preview size should be 4 for a 3-line file with header.";
     if (preview.size() >= 1) 
     {
@@ -398,31 +399,31 @@ TEST(DataSet, ReadCSV_Basic)
 }
 
 
-TEST(DataSet, ReadCSV_OnlyHeader)
+TEST(Dataset, ReadCSV_OnlyHeader)
 {
     const string temp_csv_file_path = "temp_onlyheader_readcsv_test.csv";
     const string csv_content = "col1,col2,col3\n";
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    DataSet data_set;
-    data_set.set_data_path(temp_csv_file_path);
-    data_set.set_separator(DataSet::Separator::Comma);
-    data_set.set_has_header(true);
-    data_set.set_display(false);
+    Dataset dataset;
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_display(false);
 
-    ASSERT_NO_THROW(data_set.read_csv());
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    EXPECT_EQ(data_set.get_samples_number(), 0);
-    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
-    const auto& raw_vars = data_set.get_raw_variables();
+    EXPECT_EQ(dataset.get_samples_number(), 0);
+    EXPECT_EQ(dataset.get_raw_variables_number(), 3);
+    const auto& raw_vars = dataset.get_raw_variables();
     ASSERT_EQ(raw_vars.size(), 3);
     EXPECT_EQ(raw_vars[0].name, "col1");
     EXPECT_EQ(raw_vars[1].name, "col2");
     EXPECT_EQ(raw_vars[2].name, "col3");
 
-    EXPECT_EQ(data_set.get_variables_number(), 3);
+    EXPECT_EQ(dataset.get_variables_number(), 3);
 
-    const auto& preview = data_set.get_data_file_preview();
+    const auto& preview = dataset.get_data_file_preview();
     ASSERT_EQ(preview.size(), 4);
     ASSERT_EQ(preview[0].size(), 3);
     EXPECT_EQ(preview[0][0], "col1");
@@ -434,7 +435,7 @@ TEST(DataSet, ReadCSV_OnlyHeader)
 }
 
 
-TEST(DataSet, ReadCSV_SpaceSeparator)
+TEST(Dataset, ReadCSV_SpaceSeparator)
 {
     const string temp_csv_file_path = "temp_data_space_sep.csv";
     const string csv_content =
@@ -444,27 +445,27 @@ TEST(DataSet, ReadCSV_SpaceSeparator)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    DataSet data_set;
-    data_set.set_data_path(temp_csv_file_path);
-    data_set.set_separator(DataSet::Separator::Space);
-    data_set.set_has_header(true);
-    data_set.set_display(false);
+    Dataset dataset;
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Space);
+    dataset.set_has_header(true);
+    dataset.set_display(false);
 
-    ASSERT_NO_THROW(data_set.read_csv());
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    EXPECT_EQ(data_set.get_samples_number(), 2);
-    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
+    EXPECT_EQ(dataset.get_samples_number(), 2);
+    EXPECT_EQ(dataset.get_raw_variables_number(), 3);
 
-    const auto& raw_vars = data_set.get_raw_variables();
+    const auto& raw_vars = dataset.get_raw_variables();
     EXPECT_EQ(raw_vars[0].name, "var1");
     EXPECT_EQ(raw_vars[1].name, "var2");
     EXPECT_EQ(raw_vars[2].name, "target");
-    EXPECT_EQ(raw_vars[2].type, DataSet::RawVariableType::Binary);
+    EXPECT_EQ(raw_vars[2].type, Dataset::RawVariableType::Binary);
 
-    const Tensor<type, 2>& data = data_set.get_data();
-    Index v1_idx = data_set.get_variable_indices(0)[0];
-    Index v2_idx = data_set.get_variable_indices(1)[0];
-    Index t_idx = data_set.get_variable_indices(2)[0];
+    const Tensor<type, 2>& data = dataset.get_data();
+    Index v1_idx = dataset.get_variable_indices(0)[0];
+    Index v2_idx = dataset.get_variable_indices(1)[0];
+    Index t_idx = dataset.get_variable_indices(2)[0];
 
     EXPECT_NEAR(data(0, v1_idx), 100.0, 1e-9);
     EXPECT_NEAR(data(0, v2_idx), 200.0, 1e-9);
@@ -477,7 +478,7 @@ TEST(DataSet, ReadCSV_SpaceSeparator)
 }
 
 
-TEST(DataSet, ReadCSV_WithSampleIDs)
+TEST(Dataset, ReadCSV_WithSampleIDs)
 {
     const string temp_csv_file_path = "temp_data_sample_ids.csv";
     const string csv_content =
@@ -487,31 +488,31 @@ TEST(DataSet, ReadCSV_WithSampleIDs)
 
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    DataSet data_set;
-    data_set.set_data_path(temp_csv_file_path);
-    data_set.set_separator(DataSet::Separator::Comma);
-    data_set.set_has_header(true);
-    data_set.set_has_ids(true);
-    data_set.set_display(false);
+    Dataset dataset;
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(true);
+    dataset.set_display(false);
 
-    ASSERT_NO_THROW(data_set.read_csv());
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    EXPECT_EQ(data_set.get_samples_number(), 2);
-    EXPECT_EQ(data_set.get_raw_variables_number(), 2);
+    EXPECT_EQ(dataset.get_samples_number(), 2);
+    EXPECT_EQ(dataset.get_raw_variables_number(), 2);
 
-    const auto& raw_vars = data_set.get_raw_variables();
+    const auto& raw_vars = dataset.get_raw_variables();
     ASSERT_EQ(raw_vars.size(), 2);
     EXPECT_EQ(raw_vars[0].name, "feature1");
     EXPECT_EQ(raw_vars[1].name, "feature2");
 
-    const vector<string>& sample_ids = data_set.get_sample_ids();
+    const vector<string>& sample_ids = dataset.get_sample_ids();
     ASSERT_EQ(sample_ids.size(), 2);
     EXPECT_EQ(sample_ids[0], "sampleA");
     EXPECT_EQ(sample_ids[1], "sampleB");
 
-    const Tensor<type, 2>& data = data_set.get_data();
-    Index f1_idx = data_set.get_variable_indices(0)[0];
-    Index f2_idx = data_set.get_variable_indices(1)[0];
+    const Tensor<type, 2>& data = dataset.get_data();
+    Index f1_idx = dataset.get_variable_indices(0)[0];
+    Index f2_idx = dataset.get_variable_indices(1)[0];
 
     EXPECT_NEAR(data(0, f1_idx), 10.0, 1e-9);
     EXPECT_NEAR(data(0, f2_idx), 20.0, 1e-9);
@@ -522,7 +523,7 @@ TEST(DataSet, ReadCSV_WithSampleIDs)
 }
 
 
-TEST(DataSet, ReadCSV_EmptyLinesAndWhitespaceSkipped) 
+TEST(Dataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
 {
     const string temp_csv_file_path = "temp_data_emptylines.csv";
     const string csv_content =
@@ -534,18 +535,18 @@ TEST(DataSet, ReadCSV_EmptyLinesAndWhitespaceSkipped)
         "2,20\n";
     create_temp_csv_file(temp_csv_file_path, csv_content);
 
-    DataSet data_set;
-    data_set.set_data_path(temp_csv_file_path);
-    data_set.set_separator(opennn::DataSet::Separator::Comma);
-    data_set.set_has_header(true);
-    data_set.set_display(false);
+    Dataset dataset;
+    dataset.set_data_path(temp_csv_file_path);
+    dataset.set_separator(opennn::Dataset::Separator::Comma);
+    dataset.set_has_header(true);
+    dataset.set_display(false);
 
-    ASSERT_NO_THROW(data_set.read_csv());
+    ASSERT_NO_THROW(dataset.read_csv());
 
-    EXPECT_EQ(data_set.get_samples_number(), 2);
-    const Tensor<type, 2>& data = data_set.get_data();
-    Index h1_idx = data_set.get_variable_indices(0)[0];
-    Index h2_idx = data_set.get_variable_indices(1)[0];
+    EXPECT_EQ(dataset.get_samples_number(), 2);
+    const Tensor<type, 2>& data = dataset.get_data();
+    Index h1_idx = dataset.get_variable_indices(0)[0];
+    Index h2_idx = dataset.get_variable_indices(1)[0];
     EXPECT_NEAR(data(0, h1_idx), 1.0, 1e-9);
     EXPECT_NEAR(data(0, h2_idx), 10.0, 1e-9);
     EXPECT_NEAR(data(1, h1_idx), 2.0, 1e-9);
@@ -556,7 +557,7 @@ TEST(DataSet, ReadCSV_EmptyLinesAndWhitespaceSkipped)
 
 
 /*
-void DataSet::test_calculate_input_target_raw_variable_correlations()
+void Dataset::test_calculate_input_target_raw_variable_correlations()
 {
     // Test 1 (numeric and numeric trivial case)
 
@@ -566,7 +567,7 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
                     {type(2), type(2), type(-2), type(2)},
                     {type(3), type(3), type(-3), type(3)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     Tensor<Index, 1> input_raw_variable_indices(3);
     input_raw_variable_indices.setValues({0, 1, 2});
@@ -574,9 +575,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     Tensor<Index, 1> target_raw_variable_indices(1);
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    Tensor<Correlation, 2> input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).r == 1);
     EXPECT_EQ(input_target_raw_variable_correlations(1,0).r == 1);
@@ -589,16 +590,16 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
                     {type(2), type(3), type(9), type(2)},
                     {type(3), type(1), type(10), type(2)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.setValues({0, 1});
 
     target_raw_variable_indices.resize(2);
     target_raw_variable_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).r < 1 && input_target_raw_variable_correlations(0,0).r > -1 );
     EXPECT_EQ(input_target_raw_variable_correlations(1,0).r < 1 && input_target_raw_variable_correlations(1,0).r > -1);
@@ -610,16 +611,16 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
                     {type(1), type(0), type(0), type(1)},
                     {type(1), type(0), type(0), type(1)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 1, 2});
 
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).r == 1);
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).form == Correlation::Form::Linear);
@@ -636,16 +637,16 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
                     {type(1), type(1), type(1), type(1)},
                     {type(1), type(1), type(1), type(1)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 1, 2});
 
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     for(Index i = 0; i < input_target_raw_variable_correlations.size(); i++)
     {
@@ -655,9 +656,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
 
     // Test 5 (categorical and categorical)
 
-    data_set = DataSet();
+    dataset = Dataset();
 
-    data_set.set("../../datasets/correlation_tests.csv", ",", false);
+    dataset.set("../../datasets/correlation_tests.csv", ",", false);
 
     input_raw_variable_indices.resize(2);
     input_raw_variable_indices.setValues({0, 3});
@@ -665,9 +666,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_raw_variable_indices.resize(1);
     target_raw_variable_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(input_target_correlations(1,0).r < 1);
     EXPECT_EQ(input_target_correlations(1,0).form == Correlation::Form::Logistic);
@@ -680,9 +681,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -701,9 +702,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -716,9 +717,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -733,7 +734,7 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
 
     // Test 9 (categorical and categorical)
 
-    data_set.set("../../../opennn/datasets/correlation_tests_with_nan.csv",',', false);
+    dataset.set("../../../opennn/datasets/correlation_tests_with_nan.csv",',', false);
 
     input_raw_variable_indices.resize(2);
     input_raw_variable_indices.setValues({0, 3});
@@ -741,9 +742,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_raw_variable_indices.resize(1);
     target_raw_variable_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -759,9 +760,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -780,9 +781,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -795,9 +796,9 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({0});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
+    input_target_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
 
     EXPECT_EQ(-1 < input_target_correlations(0,0).r && input_target_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_correlations(0,0).form == Form::Logistic);
@@ -811,7 +812,7 @@ void DataSet::test_calculate_input_target_raw_variable_correlations()
 }
 
 
-void DataSet::test_calculate_input_raw_variable_correlations()
+void Dataset::test_calculate_input_raw_variable_correlations()
 {
     // Test 1 (numeric and numeric trivial case)
 
@@ -821,7 +822,7 @@ void DataSet::test_calculate_input_raw_variable_correlations()
                     {type(2), type(2), type(-2), type(2)},
                     {type(3), type(3), type(-3), type(3)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     Tensor<Index, 1> input_raw_variable_indices(3);
     input_raw_variable_indices.setValues({0, 1, 2});
@@ -829,9 +830,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     Tensor<Index, 1> target_raw_variable_indices(1);
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
+    Tensor<Correlation, 2> inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,1).r == 1);
@@ -852,17 +853,17 @@ void DataSet::test_calculate_input_raw_variable_correlations()
                     {type(2), type(3), type(9), type(2)},
                     {type(3), type(1), type(10), type(2)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.setValues({0, 1});
 
     target_raw_variable_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
+    inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
-    for(Index i = 0; i <  data_set.get_raw_variables_number(DataSet::VariableUse::Input) ; i++)
+    for(Index i = 0; i <  dataset.get_raw_variables_number(Dataset::VariableUse::Input) ; i++)
     {
         EXPECT_EQ(inputs_correlations(i,i).r == 1);
 
@@ -877,16 +878,16 @@ void DataSet::test_calculate_input_raw_variable_correlations()
                     {type(1), type(0), type(0), type(2)},
                     {type(1), type(0), type(0), type(2)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 1, 2});
 
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
+    inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Linear);
@@ -913,16 +914,16 @@ void DataSet::test_calculate_input_raw_variable_correlations()
                     {type(2), type(1), type(1), type(2)},
                     {type(3), type(1), type(0), type(2)}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 1, 2});
 
     target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
     /*
-    inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
+    inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Linear);
@@ -953,7 +954,7 @@ void DataSet::test_calculate_input_raw_variable_correlations()
 
     // Test 5 (categorical and categorical)
 
-    data_set.set("../../datasets/correlation_tests.csv",',', false);
+    dataset.set("../../datasets/correlation_tests.csv",',', false);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 3, 4});
@@ -961,9 +962,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_raw_variable_indices.resize(1);
     target_raw_variable_indices.setValues({5});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Logistic);
@@ -991,9 +992,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
 
@@ -1020,9 +1021,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
 
@@ -1048,9 +1049,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Logistic);
@@ -1074,8 +1075,8 @@ void DataSet::test_calculate_input_raw_variable_correlations()
 
     // Test 9 (categorical and categorical)
 
-    data_set.set_missing_values_label("NA");
-    data_set.set("../../datasets/correlation_tests_with_nan.csv",',', false);
+    dataset.set_missing_values_label("NA");
+    dataset.set("../../datasets/correlation_tests_with_nan.csv",',', false);
 
     input_raw_variable_indices.resize(3);
     input_raw_variable_indices.setValues({0, 3, 4});
@@ -1083,9 +1084,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_raw_variable_indices.resize(1);
     target_raw_variable_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Logistic);
@@ -1113,9 +1114,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
 
@@ -1142,9 +1143,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
 
@@ -1170,9 +1171,9 @@ void DataSet::test_calculate_input_raw_variable_correlations()
     target_variables_indices.resize(1);
     target_variables_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
+    inputs_correlations = dataset.calculate_input_raw_variable_correlations()(0);
 
     EXPECT_EQ(inputs_correlations(0,0).r == 1);
     EXPECT_EQ(inputs_correlations(0,0).form == Correlation::Form::Logistic);
@@ -1195,11 +1196,11 @@ void DataSet::test_calculate_input_raw_variable_correlations()
 }
 
 
-void DataSet::test_unuse_repeated_samples()
+void Dataset::test_unuse_repeated_samples()
 {
     Tensor<Index, 1> indices;
 
-    data_set.set();
+    dataset.set();
 
     // Test
 
@@ -1209,12 +1210,12 @@ void DataSet::test_unuse_repeated_samples()
                     {type(1),type(2),type(2)},
                     {type(1),type(6),type(6)}});
 
-    data_set = opennn::DataSet();
+    dataset = opennn::Dataset();
 
-    data_set.set_data(data);
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set_data(data);
+    dataset.set(Dataset::SampleUse::Training);
 
-    indices = data_set.unuse_repeated_samples();
+    indices = dataset.unuse_repeated_samples();
 
     EXPECT_EQ(indices.size() == 1);
     EXPECT_EQ(indices(0) == 1);
@@ -1228,12 +1229,12 @@ void DataSet::test_unuse_repeated_samples()
                    {type(1),type(2),type(4)},
                    {type(1),type(2),type(4)}});
 
-    data_set = opennn::DataSet();
+    dataset = opennn::Dataset();
 
-    data_set.set_data(data);
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set_data(data);
+    dataset.set(Dataset::SampleUse::Training);
 
-    indices = data_set.unuse_repeated_samples();
+    indices = dataset.unuse_repeated_samples();
 
     EXPECT_EQ(indices.size() == 2);
     EXPECT_EQ(contains(indices, 1));
@@ -1248,12 +1249,12 @@ void DataSet::test_unuse_repeated_samples()
                    {type(1),type(2),type(4)},
                    {type(1),type(2),type(4)}});
 
-    data_set.set();
+    dataset.set();
 
-    data_set.set_data(data);
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set_data(data);
+    dataset.set(Dataset::SampleUse::Training);
 
-    indices = data_set.unuse_repeated_samples();
+    indices = dataset.unuse_repeated_samples();
 
     EXPECT_EQ(indices.size() == 3);
     EXPECT_EQ(contains(indices, 1));
@@ -1262,7 +1263,7 @@ void DataSet::test_unuse_repeated_samples()
 }
 
 
-void DataSet::test_unuse_uncorrelated_raw_variables()
+void Dataset::test_unuse_uncorrelated_raw_variables()
 {
     data.resize(3, 3);
     data.setValues({{type(1),type(0),type(0)},
@@ -1271,7 +1272,7 @@ void DataSet::test_unuse_uncorrelated_raw_variables()
 }
 
 
-void DataSet::test_calculate_training_negatives()
+void Dataset::test_calculate_training_negatives()
 {
     Index training_negatives;
     Index target_index;
@@ -1284,7 +1285,7 @@ void DataSet::test_calculate_training_negatives()
                     {-1,-1, 0},
                     { 0, 1, 1}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     training_indices.resize(2);
     training_indices.setValues({0,1});
@@ -1297,17 +1298,17 @@ void DataSet::test_calculate_training_negatives()
 
     target_index = 2;
 
-    data_set.set(DataSet::SampleUse::Testing);
-    data_set.set_training(training_indices);
+    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set_training(training_indices);
 
-    //training_negatives = data_set.calculate_training_negatives(target_index);
-    training_negatives = data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
+    //training_negatives = dataset.calculate_training_negatives(target_index);
+    training_negatives = dataset.calculate_negatives(Dataset::SampleUse::Training,target_index);
 
     EXPECT_EQ(training_negatives == 1);
 }
 
 
-void DataSet::test_calculate_selection_negatives()
+void Dataset::test_calculate_selection_negatives()
 {
     vector<Index> selection_indices;
     Tensor<Index, 1> input_variables_indices;
@@ -1319,7 +1320,7 @@ void DataSet::test_calculate_selection_negatives()
 
     data.setValues({{1, 1, 1},{0, 0, 1},{0, 1, 1}});
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     selection_indices.resize(2);
     selection_indices.setValues({0,1});
@@ -1332,38 +1333,38 @@ void DataSet::test_calculate_selection_negatives()
 
     Index target_index = 2;
 
-    data_set.set(DataSet::SampleUse::Testing);
+    dataset.set(Dataset::SampleUse::Testing);
 
-    data_set.set_selection(selection_indices);
+    dataset.set_selection(selection_indices);
 
-    data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
+    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
-    //Index selection_negatives = data_set.calculate_selection_negatives(target_index);
-    Index selection_negatives = data_set.calculate_negatives(DataSet::SampleUse::Selection,target_index);
-    data_set.calculate_negatives(DataSet::SampleUse::Training,target_index);
-    data = data_set.get_data();
+    //Index selection_negatives = dataset.calculate_selection_negatives(target_index);
+    Index selection_negatives = dataset.calculate_negatives(Dataset::SampleUse::Selection,target_index);
+    dataset.calculate_negatives(Dataset::SampleUse::Training,target_index);
+    data = dataset.get_data();
 
     EXPECT_EQ(selection_negatives == 0);
 
 }
 
 
-void DataSet::test_fill()
+void Dataset::test_fill()
 {
     data.resize(3, 3);
     data.setValues({{1,4,7},{2,5,8},{3,6,9}});
-    data_set.set_data(data);
+    dataset.set_data(data);
 
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set(Dataset::SampleUse::Training);
 
-    const Index training_samples_number = data_set.get_samples_number(DataSet::SampleUse::Training);
+    const Index training_samples_number = dataset.get_samples_number(Dataset::SampleUse::Training);
 
-    const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+    const Tensor<Index, 1> training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
 
-    const Tensor<Index, 1> input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+    const Tensor<Index, 1> input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
+    const Tensor<Index, 1> target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
 
-    batch.set(training_samples_number, &data_set);
+    batch.set(training_samples_number, &dataset);
     /*
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
@@ -1375,11 +1376,11 @@ void DataSet::test_fill()
 
     const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
     EXPECT_EQ(are_equal(inputs, input_data));
     EXPECT_EQ(are_equal(targets, target_data));

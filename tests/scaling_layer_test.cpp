@@ -1,11 +1,10 @@
 #include "pch.h"
 
 #include "../opennn/neural_network.h"
-#include "../opennn/forward_propagation.h"
 #include "../opennn/scaling_layer_2d.h"
-#include "../opennn/descriptives.h"
 #include "../opennn/statistics.h"
 
+using namespace opennn;
 
 TEST(Scaling2dTest, DefaultConstructor)
 {
@@ -57,7 +56,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -90,7 +89,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -129,7 +128,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -169,7 +168,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -204,7 +203,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -244,7 +243,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);

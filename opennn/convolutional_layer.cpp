@@ -628,12 +628,6 @@ array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 }
 
 
-array<Index, 4> Convolutional::get_strides() const
-{   
-    return array<Index, 4>({1, row_stride, column_stride, 1});
-}
-
-
 Index Convolutional::get_input_height() const
 {
     return input_dimensions[0];

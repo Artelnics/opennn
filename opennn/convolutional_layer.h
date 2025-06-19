@@ -47,8 +47,6 @@ public:
 
     Eigen::array<pair<Index, Index>, 4> get_paddings() const;
 
-    Eigen::array<Index, 4> get_strides() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 

@@ -9,6 +9,12 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+
+using type = float;
+using namespace std;
+using namespace Eigen;
+
 namespace opennn
 {
 
