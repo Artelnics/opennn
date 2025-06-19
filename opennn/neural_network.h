@@ -187,7 +187,6 @@ public:
        const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
-       cout << "llega" << endl;
 
        dimensions input_dimensions;
        input_dimensions.reserve(input_rank);

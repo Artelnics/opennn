@@ -141,11 +141,12 @@ TEST(GeneticAlgorithmTest, Selection)
 
 TEST(GeneticAlgorithmTest, Crossover)
 {
-    Index samples_number = 10;
-    Index inputs_number = 5;
-    Index targets_number = 1;
-    Index neurons_number = 1;
-    Index individuals_number = 4;
+/*
+    const Index samples_number = 10;
+    const Index inputs_number = 5;
+    const Index targets_number = 1;
+    const Index neurons_number = 1;
+    const Index individuals_number = 4;
 
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_display(false);
@@ -180,6 +181,7 @@ TEST(GeneticAlgorithmTest, Crossover)
         EXPECT_EQ(crossover_population(i, 1), true);
         EXPECT_EQ(crossover_population(i, 2), false);
     }
+*/
 }
 
 

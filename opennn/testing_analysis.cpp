@@ -211,7 +211,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
-    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
+    vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
@@ -269,7 +269,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
-    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
+    vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
