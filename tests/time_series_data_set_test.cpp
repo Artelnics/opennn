@@ -3,22 +3,24 @@
 #include "../opennn/time_series_dataset.h"
 #include "../opennn/tensors.h"
 
-TEST(TimeSeriesDataSet, DefaultConstructor)
+using namespace opennn;
+
+TEST(TimeSeriesDataset, DefaultConstructor)
 {
 
-    TimeSeriesDataSet time_series_data_set;
+    TimeSeriesDataset time_series_data_set;
 
     EXPECT_EQ(time_series_data_set.get_variables_number(), 0);
     EXPECT_EQ(time_series_data_set.get_samples_number(), 0);
 }
 
 
-TEST(TimeSeriesDataSet, GeneralConstructor)
+TEST(TimeSeriesDataset, GeneralConstructor)
 {
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 1 }; 
 
-    TimeSeriesDataSet time_series_data_set_3(1, input_dimensions, target_dimensions);
+    TimeSeriesDataset time_series_data_set_3(1, input_dimensions, target_dimensions);
 
     EXPECT_EQ(time_series_data_set_3.get_variables_number(), 2);
     EXPECT_EQ(time_series_data_set_3.get_samples_number(), 1);
@@ -28,9 +30,9 @@ TEST(TimeSeriesDataSet, GeneralConstructor)
 }
 
 
-TEST(TimeSeriesDataSet, Autocorrelations)
+TEST(TimeSeriesDataset, Autocorrelations)
 {
-    TimeSeriesDataSet data_set;
+    TimeSeriesDataset dataset;
 
     Tensor<type, 2> autocorrelations;
 
@@ -41,14 +43,14 @@ TEST(TimeSeriesDataSet, Autocorrelations)
     Index lags_number = 1;
     Index steps_ahead_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    dataset.set(samples_number, inputs_number, targets_number);
 
-    data_set.set_lags_number(lags_number);
-    data_set.set_steps_ahead_number(steps_ahead_number);
+    dataset.set_lags_number(lags_number);
+    dataset.set_steps_ahead_number(steps_ahead_number);
 
-    //data_set.transform_time_series();
+    //dataset.transform_time_series();
 
-    //autocorrelations = data_set.calculate_autocorrelations(lags_number);
+    //autocorrelations = dataset.calculate_autocorrelations(lags_number);
 
     //EXPECT_EQ(autocorrelations.dimension(0), 2);
     //EXPECT_EQ(autocorrelations.dimension(1), 1);
@@ -56,12 +58,12 @@ TEST(TimeSeriesDataSet, Autocorrelations)
 }
 
 
-TEST(TimeSeriesDataSet, CrossCorrelations)
+TEST(TimeSeriesDataset, CrossCorrelations)
 {
     dimensions input_dimensions = { 2 };
     dimensions target_dimensions = { 2 };
 
-    TimeSeriesDataSet data_set(6, input_dimensions, target_dimensions);
+    TimeSeriesDataset dataset(6, input_dimensions, target_dimensions);
     
     Index lags_number;
 
@@ -82,24 +84,24 @@ TEST(TimeSeriesDataSet, CrossCorrelations)
                     {type(5),type(8),type(6)},
                     {type(6),type(3),type(4)} });
 
-    data_set.set_data(data);
-    data_set.set_lags_number(lags_number);
-    data_set.set_steps_ahead_number(1);
+    dataset.set_data(data);
+    dataset.set_lags_number(lags_number);
+    dataset.set_steps_ahead_number(1);
 
-    //data_set.transform_time_series();
+    //dataset.transform_time_series();
 
-    //cross_correlations = data_set.calculate_cross_correlations(lags_number);
+    //cross_correlations = dataset.calculate_cross_correlations(lags_number);
 
     //EXPECT_EQ(cross_correlations.dimension(0), 3);
 
 }
 
-TEST(TimeSeriesDataSet, test_transform_time_series) {
+TEST(TimeSeriesDataset, test_transform_time_series) {
 
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
-    TimeSeriesDataSet data_set(9, input_dimensions, target_dimensions);
+    TimeSeriesDataset dataset(9, input_dimensions, target_dimensions);
 
     Tensor<type, 2> data;
 
@@ -115,40 +117,40 @@ TEST(TimeSeriesDataSet, test_transform_time_series) {
                     {8, 80},
                     {9, 90} });
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     std::vector<string> variable_names = { "x", "y" };
 
-    data_set.set_variable_names(variable_names);
+    dataset.set_variable_names(variable_names);
 
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(1);
+    dataset.set_lags_number(2);
+    dataset.set_steps_ahead_number(1);
 
-    //data_set.transform_time_series();
+    //dataset.transform_time_series();
 
-    EXPECT_EQ(data_set.get_raw_variables_number(), 2);
-    EXPECT_EQ(data_set.get_variables_number(), 2);
-    EXPECT_EQ(data_set.get_samples_number(), 9);
+    EXPECT_EQ(dataset.get_raw_variables_number(), 2);
+    EXPECT_EQ(dataset.get_variables_number(), 2);
+    EXPECT_EQ(dataset.get_samples_number(), 9);
 
-    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Input), 1);
-    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Target), 1);
-    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
-    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::None), 0);
+    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Input), 1);
+    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_raw_variables_number(Dataset::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::None), 0);
 
-    std::vector<string> input_variable_names = data_set.get_variable_names(DataSet::VariableUse::Input);
-    std::vector<string> target_variable_names = data_set.get_variable_names(DataSet::VariableUse::Target);
+    std::vector<string> input_variable_names = dataset.get_variable_names(Dataset::VariableUse::Input);
+    std::vector<string> target_variable_names = dataset.get_variable_names(Dataset::VariableUse::Target);
 
     EXPECT_EQ(input_variable_names[0], "x");
     EXPECT_EQ(target_variable_names[0], "y");
     
 }
 
-TEST(TimeSeriesDataSet, test_set_steps_ahead_number)
+TEST(TimeSeriesDataset, test_set_steps_ahead_number)
 {
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
-    TimeSeriesDataSet data_set(4, input_dimensions, target_dimensions);
+    TimeSeriesDataset dataset(4, input_dimensions, target_dimensions);
 
     Tensor<type, 2> data;
     
@@ -158,19 +160,19 @@ TEST(TimeSeriesDataSet, test_set_steps_ahead_number)
                     {type(2),type(20)},
                     {type(3),type(30)} });
 
-    data_set.set_data(data);
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    //data_set.transform_time_series();
+    dataset.set_data(data);
+    dataset.set_lags_number(2);
+    dataset.set_steps_ahead_number(2);
+    //dataset.transform_time_series();
 
-    EXPECT_EQ(data_set.get_lags_number(), 2);
+    EXPECT_EQ(dataset.get_lags_number(), 2);
 }
 
-TEST(TimeSeriesDataSet, test_set_lags_number) {
+TEST(TimeSeriesDataset, test_set_lags_number) {
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
-    TimeSeriesDataSet data_set(4, input_dimensions, target_dimensions);
+    TimeSeriesDataset dataset(4, input_dimensions, target_dimensions);
 
     Tensor<type, 2> data;
     // Test
@@ -181,12 +183,12 @@ TEST(TimeSeriesDataSet, test_set_lags_number) {
                     {type(2),type(20)},
                     {type(3),type(30)} });
 
-    data_set.set_data(data);
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    //data_set.transform_time_series();
+    dataset.set_data(data);
+    dataset.set_lags_number(2);
+    dataset.set_steps_ahead_number(2);
+    //dataset.transform_time_series();
 
-    EXPECT_EQ(data_set.get_steps_ahead(), 2);
+    EXPECT_EQ(dataset.get_steps_ahead(), 2);
 }
 
 

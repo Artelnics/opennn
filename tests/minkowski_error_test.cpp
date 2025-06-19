@@ -4,8 +4,8 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/dataset.h"
 #include "../opennn/minkowski_error.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
+
+using namespace opennn;
 
 TEST(MinkowskiErrorTest, DefaultConstructor)
 {
@@ -19,9 +19,9 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset data_set;
+    Dataset dataset;
 
-    MinkowskiError minkowski_error(&neural_network, &data_set);
+    MinkowskiError minkowski_error(&neural_network, &dataset);
 
     EXPECT_EQ(minkowski_error.has_neural_network(), true);
     EXPECT_EQ(minkowski_error.has_data_set(), true);
@@ -35,15 +35,15 @@ TEST(MinkowskiErrorTest, BackPropagate)
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    Dataset data_set(samples_number, { inputs_number }, { targets_number });
-    data_set.set_data_random();
-    data_set.set(Dataset::SampleUse::Training);
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
-               data_set.get_variable_indices(Dataset::VariableUse::Input),
-               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
-               data_set.get_variable_indices(Dataset::VariableUse::Target));
+    Batch batch(samples_number, &dataset);
+    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
+               dataset.get_variable_indices(Dataset::VariableUse::Input),
+               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
+               dataset.get_variable_indices(Dataset::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
@@ -56,7 +56,7 @@ TEST(MinkowskiErrorTest, BackPropagate)
 
     // Loss index
 
-    MinkowskiError minkowski_error(&neural_network, &data_set);
+    MinkowskiError minkowski_error(&neural_network, &dataset);
 
     BackPropagation back_propagation(samples_number, &minkowski_error);
     minkowski_error.back_propagate(batch, forward_propagation, back_propagation);

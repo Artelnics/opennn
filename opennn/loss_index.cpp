@@ -1837,7 +1837,7 @@ vector<vector<float*>> BackPropagationCuda::get_layer_deltas_device() const
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
     const vector<unique_ptr<LayerBackPropagationCuda>>& layer_back_propagations = neural_network.get_layers();
 
-    vector<float*> input_derivatives;
+    vector<float*> input_deltas;
 
     vector<vector<float*>> layer_deltas(layers_number);
 
@@ -1858,9 +1858,9 @@ vector<vector<float*>> BackPropagationCuda::get_layer_deltas_device() const
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
-            input_derivatives = layer_back_propagations[output_index]->get_input_derivatives_device();
+            input_deltas = layer_back_propagations[output_index]->get_input_derivatives_device();
 
-            layer_deltas[i].push_back(input_derivatives[input_index]);
+            layer_deltas[i].push_back(input_deltas[input_index]);
         }
     }
     return layer_deltas;

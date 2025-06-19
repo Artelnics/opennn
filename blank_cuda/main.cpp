@@ -49,30 +49,30 @@ int main()
         const Index channels = 3;
         const Index targets = 2;
 
-        ImageDataset data_set(samples_number, {image_height, image_width, channels}, {targets});
+        ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
 
-        data_set.set_data_random();
-        data_set.set_data_ascending();
+        dataset.set_data_random();
+        dataset.set_data_ascending();
 
-        data_set.set(Dataset::SampleUse::Training);
+        dataset.set(Dataset::SampleUse::Training);
 
-        data_set.print_data();
+        dataset.print_data();
         */
-        ImageDataset data_set;
+        ImageDataset dataset;
 
-        data_set.set_data_path("C:/melanoma_dataset_bmp_medium");
-        //data_set.set_data_path("../examples/mnist/data_bin");
+        dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
+        //dataset.set_data_path("../examples/mnist/data_bin");
 
         dimensions data_dimensions = { 224,224,3 };
 
-        data_set.read_bmp(data_dimensions);
-        //data_set.read_bmp();
+        dataset.read_bmp(data_dimensions);
+        //dataset.read_bmp();
 
-        data_set.split_samples_random(0.8, 0.0, 0.2);
+        dataset.split_samples_random(0.8, 0.0, 0.2);
 
-        const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
+        const dimensions input_dimensions = dataset.get_dimensions(Dataset::VariableUse::Input);
 
-        const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
+        const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
@@ -85,7 +85,7 @@ int main()
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &dataset);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -99,7 +99,7 @@ int main()
 
         // Testing analysis
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &dataset);
         testing_analysis.set_batch_size(8);
 
         cout << "Calculating confusion...." << endl;

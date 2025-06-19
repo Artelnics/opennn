@@ -30,10 +30,10 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     const Index inputs_number = get_random_index(1, 10);
     const Index outputs_number = get_random_index(1, 10);
 
-    DataSet data_set(1, { 1 }, { 1 });
-    //data_set.set_data_constant(type(1));
-    data_set.set_data_random();
-    data_set.set(DataSet::SampleUse::Training);
+    Dataset dataset(1, { 1 }, { 1 });
+    //dataset.set_data_constant(type(1));
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
     //NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     //neural_network.set_parameters_random();
@@ -45,7 +45,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
         dimensions{ 1 },
         Dense2d::Activation::Linear));
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
     
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
@@ -59,8 +59,8 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     // Test
 
-    data_set.set(1,1,1);
-    data_set.set_data_random();
+    dataset.set(1,1,1);
+    dataset.set_data_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);

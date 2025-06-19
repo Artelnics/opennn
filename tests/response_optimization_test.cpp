@@ -1,6 +1,10 @@
 #include "pch.h"
 
+#include "../opennn/dataset.h"
+#include "../opennn/neural_network.h"
 #include "../opennn/response_optimization.h"
+
+using namespace opennn;
 
 TEST(ResponseOptimization, DefaultConstructor)
 {
@@ -26,9 +30,9 @@ TEST(ResponseOptimization, GeneralConstructor)
 TEST(ResponseOptimization, Inputs)
 {
     NeuralNetwork neural_network;
-    DataSet data_set;
+    Dataset dataset;
 
-    ResponseOptimization response_optimization(&neural_network, &data_set);
+    ResponseOptimization response_optimization(&neural_network, &dataset);
 
     Tensor<type, 2> inputs = response_optimization.calculate_inputs();
 /*
@@ -46,7 +50,7 @@ TEST(ResponseOptimization, Inputs)
 TEST(ResponseOptimization, Optimize)
 {
 /*
-    ResponseOptimization response_optimization(&neural_network,&data_set);
+    ResponseOptimization response_optimization(&neural_network,&dataset);
 
     // Empty results
 

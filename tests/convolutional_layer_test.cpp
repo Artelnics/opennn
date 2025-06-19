@@ -3,6 +3,7 @@
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/tensors.h"
 
+using namespace opennn;
 
 Tensor<type, 4> generate_input_tensor_convolution(const Tensor<type, 2>& data,
     const vector<Index>& row_indices,
@@ -212,19 +213,19 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     }
 */
     // Validate bias derivatives
-    const Tensor<type, 1>& bias_derivatives = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->bias_derivatives;
-    EXPECT_EQ(bias_derivatives.size(), convolutional_layer.get_kernels_number());
+    const Tensor<type, 1>& bias_deltas = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->bias_deltas;
+    EXPECT_EQ(bias_deltas.size(), convolutional_layer.get_kernels_number());
     //for (Index k = 0; k < convolutional_layer.get_kernels_number(); ++k)
     //{
-    //    EXPECT_NEAR(bias_derivatives(k), 1.0 * batch_size * parameters.expected_output.dimension(1) * parameters.expected_output.dimension(2), 1e-5)
+    //    EXPECT_NEAR(bias_deltas(k), 1.0 * batch_size * parameters.expected_output.dimension(1) * parameters.expected_output.dimension(2), 1e-5)
     //        << "Mismatch in bias derivative for kernel=" << k;
     //}
 
     // Validate synaptic weight derivatives
-    const Tensor<type, 4>& weight_derivatives = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->weight_derivatives;
-    EXPECT_EQ(weight_derivatives.dimension(0), parameters.kernel_dimensions[3]);
-    EXPECT_EQ(weight_derivatives.dimension(1), parameters.kernel_dimensions[0]);
-    EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);
-    EXPECT_EQ(weight_derivatives.dimension(3), parameters.kernel_dimensions[2]);
+    const Tensor<type, 4>& weight_deltas = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->weight_deltas;
+    EXPECT_EQ(weight_deltas.dimension(0), parameters.kernel_dimensions[3]);
+    EXPECT_EQ(weight_deltas.dimension(1), parameters.kernel_dimensions[0]);
+    EXPECT_EQ(weight_deltas.dimension(2), parameters.kernel_dimensions[1]);
+    EXPECT_EQ(weight_deltas.dimension(3), parameters.kernel_dimensions[2]);
 
 }

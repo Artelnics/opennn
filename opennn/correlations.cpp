@@ -926,6 +926,45 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
     return power_correlation;
 }
 
+
+void Correlation::set_perfect()
+{
+    r = type(1);
+    a = type(0);
+    b = type(1);
+
+    upper_confidence = type(1);
+    lower_confidence = type(1);
+    form = Correlation::Form::Linear;
+}
+
+
+string Correlation::write_type() const
+{
+    switch(form)
+    {
+    case Form::Linear: return "linear";
+    case Form::Logistic: return "logistic";
+    case Form::Logarithmic: return "logarithmic";
+    case Form::Exponential: return "exponential";
+    case Form::Power: return "power";
+    default:
+        return string();
+    }
+}
+
+
+void Correlation::print() const
+{
+    cout << "Correlation" << endl
+         << "Type: " << write_type() << endl
+         << "a: " << a << endl
+         << "b: " << b << endl
+         << "r: " << r << endl
+         << "Lower confidence: " << lower_confidence << endl
+         << "Upper confidence: " << upper_confidence << endl;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

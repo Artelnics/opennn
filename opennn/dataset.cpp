@@ -39,6 +39,18 @@ const bool& Dataset::get_display() const
 }
 
 
+dimensions Dataset::get_input_dimensions() const
+{
+    return dimensions({get_variables_number(Dataset::VariableUse::Input)});
+}
+
+
+dimensions Dataset::get_target_dimensions() const
+{
+    return dimensions({get_variables_number(Dataset::VariableUse::Target)});
+}
+
+
 Dataset::RawVariable::RawVariable(const string& new_name,
                                   const VariableUse& new_raw_variable_use,
                                   const RawVariableType& new_type,

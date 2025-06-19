@@ -3,6 +3,7 @@
 #include "../opennn/learning_rate_algorithm.h"
 #include "../opennn/mean_squared_error.h"
 
+using namespace opennn;
 
 TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
@@ -24,16 +25,16 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {    
     /*
-    DataSet data_set(1, {1}, {1});
-    data_set.set_data_random();
+    Dataset dataset(1, {1}, {1});
+    dataset.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
 
-    Batch batch(1, &data_set);
+    Batch batch(1, &dataset);
 
     ForwardPropagation forward_propagation(1, &neural_network);
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     BackPropagation back_propagation(1, &mean_squared_error);
 
@@ -94,8 +95,8 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-    data_set.set(1, 1, 1);
-    data_set.set_data_random();
+    dataset.set(1, 1, 1);
+    dataset.set_data_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -111,8 +112,8 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     // Test
 
-    data_set.set(3, 1, 1);
-    data_set.set_data_random();
+    dataset.set(3, 1, 1);
+    dataset.set_data_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -136,9 +137,9 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     Index neurons_number;
 
-    data_set.set(1, 1, 1);
+    dataset.set(1, 1, 1);
 
-    Tensor<Index, 1> indices(1, 1, data_set.get_samples_number()-1);
+    Tensor<Index, 1> indices(1, 1, dataset.get_samples_number()-1);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
@@ -169,7 +170,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     Index neurons_number = 5;
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    dataset.set(samples_number, inputs_number, targets_number);
 
     Tensor<Index, 1> indices(3);
 
