@@ -85,7 +85,7 @@ void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     FlattenBackPropagation* flatten_layer_back_propagation =
         static_cast<FlattenBackPropagation*>(back_propagation.get());
 
-    flatten_layer_back_propagation->input_derivatives = TensorMap<Tensor<type, 4>>(delta_pairs[0].first,
+    flatten_layer_back_propagation->input_deltas = TensorMap<Tensor<type, 4>>(delta_pairs[0].first,
         batch_size, height, width, channels);
 }
 
@@ -173,7 +173,7 @@ void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
-    input_derivatives.resize(batch_size,
+    input_deltas.resize(batch_size,
                              input_dimensions[0],
                              input_dimensions[1],
                              input_dimensions[2]);
@@ -183,7 +183,7 @@ void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 void FlattenBackPropagation::print() const
 {
     cout << "Flatten Input derivatives:" << endl
-         << input_derivatives.dimensions() << endl;
+         << input_deltas.dimensions() << endl;
 }
 
 
@@ -200,7 +200,7 @@ vector<pair<type*, dimensions>> FlattenBackPropagation::get_input_derivative_pai
 
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
-    return {{(type*)(input_derivatives.data()),
+    return {{(type*)(input_deltas.data()),
             {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
 }
 
@@ -251,9 +251,9 @@ void Flatten::back_propagate_cuda(const vector<float*>& inputs_device,
 
     const Index batch_size = flatten_layer_back_propagation_cuda->batch_size;
 
-    type* input_derivatives = flatten_layer_back_propagation_cuda->input_derivatives;
+    type* input_deltas = flatten_layer_back_propagation_cuda->input_deltas;
 
-    reorganize_deltas_cuda(deltas_device[0], input_derivatives, batch_size, outputs_number);
+    reorganize_deltas_cuda(deltas_device[0], input_deltas, batch_size, outputs_number);
 }
 
 
@@ -321,7 +321,7 @@ void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
 }
 
 
@@ -330,13 +330,13 @@ void FlattenBackPropagationCuda::print() const
     const dimensions input_dimensions = layer->get_input_dimensions();
 
     cout << "Flatten Input derivatives:" << endl
-        << matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]) << endl;
+        << matrix_4d_from_device(input_deltas, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]) << endl;
 }
 
 
 void FlattenBackPropagationCuda::free()
 {
-    cudaFree(input_derivatives);
+    cudaFree(input_deltas);
 }
 
 #endif

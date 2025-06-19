@@ -147,7 +147,7 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     bool built_mask = false;
 
     Tensor<type, 3> combination_deltas;
-    Tensor<type, 3> input_derivatives;
+    Tensor<type, 3> input_deltas;
 
     Tensor<type, 1> bias_deltas;
     Tensor<type, 2> weight_deltas;

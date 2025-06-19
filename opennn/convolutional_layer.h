@@ -241,7 +241,7 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
    Tensor<type, 1> bias_deltas;
    Tensor<type, 4> weight_deltas;
-   Tensor<type, 4> input_derivatives;
+   Tensor<type, 4> input_deltas;
 
    Tensor<type, 4> rotated_weights;
 

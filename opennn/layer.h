@@ -403,7 +403,7 @@ struct LayerBackPropagationCuda
 
     virtual void free() {}
 
-    virtual vector<float*> get_input_derivatives_device() { return { input_derivatives }; }
+    virtual vector<float*> get_input_derivatives_device() { return { input_deltas }; }
 
     Index batch_size = 0;
 
@@ -411,7 +411,7 @@ struct LayerBackPropagationCuda
 
     bool is_first_layer = false;
 
-    float* input_derivatives = nullptr;
+    float* input_deltas = nullptr;
 
     cudnnTensorDescriptor_t input_derivatives_tensor_descriptor = nullptr;
 };

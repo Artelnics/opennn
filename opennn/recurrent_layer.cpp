@@ -266,7 +266,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
-    Tensor<type, 3>& input_derivatives = recurrent_backward->input_derivatives;
+    Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
     Tensor<type, 1>& bias_deltas = recurrent_backward->bias_deltas;
@@ -300,7 +300,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
         bias_deltas.device(*thread_pool_device) += combination_deltas.sum(array<Index, 1>({ 0 }));
 
-        input_derivatives.chip(t,1).device(*thread_pool_device) =
+        input_deltas.chip(t,1).device(*thread_pool_device) =
             combination_deltas.contract(
                 input_weights.shuffle(array<Index,2>{{1,0}}),
             axes(1,0));
@@ -467,12 +467,12 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     bias_deltas.resize(outputs_number);
     input_weight_deltas.resize(inputs_number, outputs_number);
     recurrent_weight_deltas.resize(outputs_number, outputs_number);
-    input_derivatives.resize(batch_size, time_steps, inputs_number);
+    input_deltas.resize(batch_size, time_steps, inputs_number);
 
     input_weight_deltas.setZero();
     recurrent_weight_deltas.setZero();
     bias_deltas.setZero();
-    input_derivatives.setZero();
+    input_deltas.setZero();
     current_combinations_derivatives.setZero();
     current_deltas.setZero();
     combination_deltas.setZero();
@@ -496,7 +496,7 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {batch_size, inputs_number}}};
+    return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
 
 }

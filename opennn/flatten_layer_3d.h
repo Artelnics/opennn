@@ -74,7 +74,7 @@ struct Flatten3dBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 3> input_derivatives;
+    Tensor<type, 3> input_deltas;
 };
 
 
