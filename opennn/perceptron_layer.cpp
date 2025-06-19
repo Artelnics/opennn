@@ -313,7 +313,7 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
 
-    Tensor<type, 2>& input_derivatives = dense2d_back_propagation->input_derivatives;
+    Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
     if(activation_function != Activation::Softmax)
         deltas.device(*thread_pool_device) = deltas * activation_derivatives;
@@ -323,7 +323,7 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 
@@ -357,7 +357,7 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     const bool& is_first_layer = dense2d_layer_back_propagation_lm->is_first_layer;
 
-    Tensor<type, 2>& input_derivatives = dense2d_layer_back_propagation_lm->input_derivatives;
+    Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
@@ -387,7 +387,7 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     }
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 
@@ -587,7 +587,7 @@ void Dense2dBackPropagation::set(const Index&new_batch_size,
     weight_deltas.resize(inputs_number, outputs_number);
     weight_deltas.setZero();
 
-    input_derivatives.resize(batch_size, inputs_number);
+    input_deltas.resize(batch_size, inputs_number);
 }
 
 
@@ -595,7 +595,7 @@ vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pai
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return { {(type*)(input_derivatives.data()), {batch_size, inputs_number}} };
+    return { {(type*)(input_deltas.data()), {batch_size, inputs_number}} };
 }
 
 
@@ -627,7 +627,7 @@ void Dense2dLayerBackPropagationLM::set(const Index&new_samples_number, Layer *n
 
     squared_errors_Jacobian.resize(batch_size, parameters_number);
 
-    input_derivatives.resize(batch_size, inputs_number);
+    input_deltas.resize(batch_size, inputs_number);
 }
 
 
@@ -635,7 +635,7 @@ vector<pair<type*, dimensions>> Dense2dLayerBackPropagationLM::get_input_derivat
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {batch_size, inputs_number}}};
+    return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
 
 
@@ -644,7 +644,7 @@ void Dense2dLayerBackPropagationLM::print() const
     cout << "Squared errors Jacobian: " << endl
         << squared_errors_Jacobian << endl;
     cout << "Input derivatives: " << endl
-        << input_derivatives << endl;
+        << input_deltas << endl;
 }
 
 
@@ -804,7 +804,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     float* bias_deltas = dense2d_layer_back_propagation->bias_deltas_device;
     float* weight_deltas = dense2d_layer_back_propagation->weight_deltas_device;
-    float* input_derivatives = dense2d_layer_back_propagation->input_derivatives;
+    float* input_deltas = dense2d_layer_back_propagation->input_deltas;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = dense2d_layer_back_propagation->deltas_tensor_descriptor;
     const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = dense2d_layer_back_propagation->combination_deltas_tensor_descriptor;
@@ -888,7 +888,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         weights_device,
         inputs_number,
         &beta,
-        input_derivatives,
+        input_deltas,
         batch_size);
 }
 
@@ -1016,7 +1016,7 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
         cudnnDropoutGetStatesSize(dense2d_layer->get_cudnn_handle(), &dropout_states_size);
 
-        cudaMalloc(&dropout_states, dropout_states_size);
+        CHECK_CUDA(cudaMalloc(&dropout_states, dropout_states_size));
 
         cudnnSetDropoutDescriptor(dropout_descriptor,
             dense2d_layer->get_cudnn_handle(),
@@ -1026,7 +1026,7 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
             dropout_seed);
 
         cudnnDropoutGetReserveSpaceSize(output_tensor_descriptor, &dropout_reserve_space_size);
-        cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size);
+        CHECK_CUDA(cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size));
     }
 }
 
@@ -1079,7 +1079,7 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
 
     // Deltas
 
@@ -1120,7 +1120,7 @@ void Dense2dBackPropagationCuda::free()
     cudaFree(bias_deltas_device);
     cudaFree(weight_deltas_device);
     cudaFree(combination_deltas_device);
-    cudaFree(input_derivatives);
+    cudaFree(input_deltas);
     cudaFree(ones);
 
     cudnnDestroyTensorDescriptor(combination_deltas_tensor_descriptor);

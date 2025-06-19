@@ -179,7 +179,7 @@ struct PoolingBackPropagation : LayerBackPropagation
 
     Tensor<type, 4> deltas_by_pool_size;
 
-    Tensor<type, 4> input_derivatives;
+    Tensor<type, 4> input_deltas;
 };
 
 

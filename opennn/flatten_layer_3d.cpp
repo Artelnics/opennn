@@ -80,9 +80,9 @@ void Flatten3d::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Flatten3dBackPropagation* flatten_layer_3d_back_propagation =
         static_cast<Flatten3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 3>& input_derivatives = flatten_layer_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_deltas = flatten_layer_3d_back_propagation->input_deltas;
 
-    memcpy(input_derivatives.data(),
+    memcpy(input_deltas.data(),
            delta_pairs[0].first,
            (batch_size * outputs_number * sizeof(type)));
 }
@@ -169,7 +169,7 @@ void Flatten3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     const dimensions input_dimensions = flatten_layer_3d->get_input_dimensions();
 
-    input_derivatives.resize(batch_size,
+    input_deltas.resize(batch_size,
                              input_dimensions[0],
                              input_dimensions[1]);
 }
@@ -193,7 +193,7 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
 
     const dimensions input_dimensions = flatten_layer_3d->get_input_dimensions();
 
-    return {{(type*)(input_derivatives.data()),
+    return {{(type*)(input_deltas.data()),
              {batch_size, input_dimensions[0], input_dimensions[1]}}};
 }
 

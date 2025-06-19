@@ -421,11 +421,11 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     PoolingBackPropagation* pooling_layer_back_propagation =
         static_cast<PoolingBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+    Tensor<type, 4>& input_deltas = pooling_layer_back_propagation->input_deltas;
 
     // Input derivatives
     
-    input_derivatives.setZero();
+    input_deltas.setZero();
 
     #pragma omp parallel for collapse (2)
     for (Index channel_index = 0; channel_index < channels; channel_index++)
@@ -438,7 +438,7 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                     const Index input_row = output_height_index * row_stride + maximal_index % pool_height;
                     const Index input_column = output_width_index * column_stride + maximal_index / pool_width;
 
-                    input_derivatives(batch_index, input_row, input_column, channel_index)
+                    input_deltas(batch_index, input_row, input_column, channel_index)
                         += deltas(batch_index, output_height_index, output_width_index, channel_index);
                 }
 }
@@ -466,7 +466,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
     PoolingBackPropagation* pooling_layer_back_propagation =
         static_cast<PoolingBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
+    Tensor<type, 4>& input_deltas = pooling_layer_back_propagation->input_deltas;
 
     Tensor<type, 4>& deltas_by_pool_size = pooling_layer_back_propagation->deltas_by_pool_size;
 
@@ -490,7 +490,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                 const array<Index, 4> offsets = {0, height_start, width_start, channel_index };
                 const array<Index, 4> extents = {batch_size, height_end - height_start, width_end - width_start, 1};
 
-                input_derivatives.slice(offsets, extents) += deltas_by_pool_size
+                input_deltas.slice(offsets, extents) += deltas_by_pool_size
                     .slice(grad_offsets, grad_extents)
                     .broadcast(array<Index, 4>({1, height_end - height_start, width_end - width_start, 1}));
             }
@@ -622,7 +622,7 @@ void PoolingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 
     deltas_by_pool_size.resize(batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
 
-    input_derivatives.resize(batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
+    input_deltas.resize(batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 }
 
 
@@ -632,7 +632,7 @@ vector<pair<type*, dimensions>> PoolingBackPropagation::get_input_derivative_pai
 
     const dimensions& input_dimensions = pooling_layer->get_input_dimensions();
 
-    return {{(type*)(input_derivatives.data()),
+    return {{(type*)(input_deltas.data()),
             {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
 }
 
@@ -641,7 +641,7 @@ void PoolingBackPropagation::print() const
 {
     cout << "Pooling layer back propagation" << endl;
     cout << "Input derivatives:" << endl
-         << input_derivatives << endl;
+         << input_deltas << endl;
 }
 
 
@@ -701,7 +701,7 @@ void Pooling::back_propagate_cuda(const vector<float*>& inputs_device,
     PoolingBackPropagationCuda* pooling_layer_back_propagation_cuda
         = static_cast<PoolingBackPropagationCuda*>(back_propagation_cuda.get());
 
-    type* input_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
+    type* input_deltas = pooling_layer_back_propagation_cuda->input_deltas;
 
     // Pooling
 
@@ -716,7 +716,7 @@ void Pooling::back_propagate_cuda(const vector<float*>& inputs_device,
         inputs_device[0],
         &beta,
         input_tensor_descriptor,
-        input_derivatives);
+        input_deltas);
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnPoolingBackward failed: " << cudnnGetErrorString(status) << endl;
@@ -835,7 +835,7 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * input_height * input_width * channels * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_height * input_width * channels * sizeof(float)));
 }
 
 
@@ -849,13 +849,13 @@ void PoolingBackPropagationCuda::print() const
 
     cout << "Pooling layer back propagation CUDA" << endl;
     cout << "Input derivatives:" << endl
-        << matrix_4d_from_device(input_derivatives, batch_size, input_height, input_width, channels) << endl;
+        << matrix_4d_from_device(input_deltas, batch_size, input_height, input_width, channels) << endl;
 }
 
 
 void PoolingBackPropagationCuda::free()
 {
-    cudaFree(input_derivatives);
+    cudaFree(input_deltas);
 }
 
 #endif

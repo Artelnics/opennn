@@ -281,7 +281,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     Tensor<type, 1>& bias_deltas = probabilistic_3d_back_propagation->bias_deltas;
     Tensor<type, 2>& weight_deltas = probabilistic_3d_back_propagation->weight_deltas;
-    Tensor<type, 3>& input_derivatives = probabilistic_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_deltas = probabilistic_3d_back_propagation->input_deltas;
 
     // if(!built_mask)
     // {
@@ -302,7 +302,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     weight_deltas.device(*thread_pool_device)
         = inputs.contract(combination_deltas, axes(0,0,1,1));
 
-    input_derivatives.device(*thread_pool_device)
+    input_deltas.device(*thread_pool_device)
         = combination_deltas.contract(weights, axes(2,1));
 }
 
@@ -439,7 +439,7 @@ void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new
 
     weight_deltas.resize(inputs_depth, neurons_number);
 
-    input_derivatives.resize(batch_size, inputs_number, inputs_depth);
+    input_deltas.resize(batch_size, inputs_number, inputs_depth);
 }
 
 
@@ -466,7 +466,7 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
-    return {{(type*)(input_derivatives.data()), {batch_size, inputs_number, inputs_depth}} };
+    return {{(type*)(input_deltas.data()), {batch_size, inputs_number, inputs_depth}} };
 }
 
 }

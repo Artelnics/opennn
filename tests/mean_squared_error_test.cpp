@@ -61,7 +61,7 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
 
 }
 

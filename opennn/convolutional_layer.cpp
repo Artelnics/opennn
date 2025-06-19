@@ -187,8 +187,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     vector<vector<Tensor<type, 2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type, 2>>(input_channels));
     precomputed_rotated_slices.resize(kernels_number);
 
-    Tensor<type, 4>& input_derivatives = convolutional_back_propagation->input_derivatives;
-    input_derivatives.setZero();
+    Tensor<type, 4>& input_deltas = convolutional_back_propagation->input_deltas;
+    input_deltas.setZero();
     
     const Index pad_height = (input_height + kernel_height - 1) - get_output_height();
     const Index pad_width = (input_width + kernel_width - 1) - get_output_width();
@@ -256,7 +256,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 
                 for (Index h = 0; h < input_height; ++h) 
                     for (Index w = 0; w < input_width; ++w) 
-                        input_derivatives(image_index, h, w, channel_index) += convolution_result(h, w);
+                        input_deltas(image_index, h, w, channel_index) += convolution_result(h, w);
             }
         }
     }
@@ -825,7 +825,7 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
                            kernel_channels,
                            kernels_number);
 
-    input_derivatives.resize(batch_size,
+    input_deltas.resize(batch_size,
                              input_height,
                              input_width,
                              channels);
@@ -842,7 +842,7 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagation::get_input_derivati
 
     convolutional_layer->get_input_dimensions();
 
-    return {{(type*)input_derivatives.data(), {batch_size, input_height, input_width, channels}}};
+    return {{(type*)input_deltas.data(), {batch_size, input_height, input_width, channels}}};
 }
 
 
@@ -984,7 +984,7 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
     type* combination_deltas_device = convolutional_layer_back_propagation_cuda->combination_deltas_device;
     type* weight_deltas_device = convolutional_layer_back_propagation_cuda->weight_deltas_device;
     type* bias_deltas_device = convolutional_layer_back_propagation_cuda->bias_deltas_device;
-    type* input_derivatives = convolutional_layer_back_propagation_cuda->input_derivatives;
+    type* input_deltas = convolutional_layer_back_propagation_cuda->input_deltas;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = convolutional_layer_back_propagation_cuda->deltas_tensor_descriptor;
     const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = convolutional_layer_back_propagation_cuda->combination_deltas_tensor_descriptor;
@@ -1055,7 +1055,7 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
         CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
         backward_data_workspace, backward_data_workspace_bytes,
         &beta,
-        input_tensor_descriptor, input_derivatives);
+        input_tensor_descriptor, input_deltas);
 }
 
 
@@ -1334,7 +1334,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Inputs
 
-    CHECK_CUDA(cudaMalloc(&input_derivatives, input_size * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&input_deltas, input_size * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&input_tensor_descriptor);
 
@@ -1453,13 +1453,13 @@ void ConvolutionalBackPropagationCuda::print() const
     //matrix_from_device(weight_deltas,);
 
     cout << "inputs derivatives" << endl;
-    matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
+    matrix_4d_from_device(input_deltas, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 }
 
 
 void ConvolutionalBackPropagationCuda::free()
 {
-    cudaFree(input_derivatives);
+    cudaFree(input_deltas);
     cudaFree(combination_deltas_device);
     cudaFree(bias_deltas_device);
     cudaFree(weight_deltas_device);

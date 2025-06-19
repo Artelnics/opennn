@@ -177,7 +177,7 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     Tensor<type, 3>& scaled_deltas = this_back_propagation->scaled_deltas;
     Tensor<type, 3>& standard_deviation_derivatives = this_back_propagation->standard_deviation_derivatives;
 
-    Tensor<type, 3>& input_derivatives = this_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_deltas = this_back_propagation->input_deltas;
 
     Tensor<type, 2>& aux_2d = this_back_propagation->aux_2d;
 
@@ -201,14 +201,14 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
                               .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
 
-    input_derivatives.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
+    input_deltas.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(array<Index, 1>({2}));
-
+    /*
     input_derivatives.device(*thread_pool_device) = input_derivatives
         - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
                 .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
-
+*/
     //substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
 }
 
@@ -320,7 +320,7 @@ void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new
     standard_deviation_derivatives.resize(batch_size, sequence_length, embedding_dimension);
     aux_2d.resize(batch_size, sequence_length);
 
-    input_derivatives.resize(batch_size, sequence_length, embedding_dimension);
+    input_deltas.resize(batch_size, sequence_length, embedding_dimension);
 }
 
 
@@ -347,7 +347,7 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    return { {(type*)(input_derivatives.data()), {batch_size, sequence_length, embedding_dimension}} };
+    return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
 
 }
