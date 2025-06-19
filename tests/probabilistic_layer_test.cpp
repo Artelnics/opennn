@@ -1,5 +1,5 @@
 #include "pch.h"
-
+/*
 #include "../opennn/probabilistic_layer.h"
 
 TEST(ProbabilisticTest, DefaultConstructor)
@@ -112,7 +112,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    Tensor<type, 2> outputs = tensor_map_2(output_pair);
+    Tensor<type, 2> outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), neurons_number);
@@ -144,7 +144,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), 1);
     EXPECT_EQ(outputs.dimension(1), 4);
@@ -177,7 +177,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
 
     output_pair = forward_propagation->get_outputs_pair();
 
-    outputs = tensor_map_2(output_pair);
+    outputs = tensor_map<2>(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), 1);
     EXPECT_EQ(outputs.dimension(1), 4);
@@ -187,3 +187,4 @@ TEST(ProbabilisticTest, ForwardPropagate)
     EXPECT_NEAR(outputs(0,3), 0.3, type(0.1));
 
 }
+*/

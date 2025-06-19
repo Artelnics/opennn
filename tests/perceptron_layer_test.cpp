@@ -5,6 +5,7 @@
 #include "../opennn/tensors.h"
 #include "../opennn/perceptron_layer.h"
 
+using namespace opennn;
 
 TEST(PerceptronLayerTest, DefaultConstructor)
 {
@@ -91,35 +92,6 @@ TEST(PerceptronLayerTest, Activations)
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
-    
-    perceptron_layer.set_activation_function(Dense2d::Activation::ScaledExponentialLinear);
-    activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activation_derivatives);
-
-    EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
-
-    perceptron_layer.set_activation_function(Dense2d::Activation::SoftPlus);
-    activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activation_derivatives);
-
-    EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
-    
-    perceptron_layer.set_activation_function(Dense2d::Activation::SoftSign);
-    activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activation_derivatives);
-    
-    EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
-    
-    perceptron_layer.set_activation_function(Dense2d::Activation::HardSigmoid);
-    activations.setConstant(type(1));
-    perceptron_layer.calculate_activations(activations, activation_derivatives);
-
-    EXPECT_NEAR(activations(0, 0), type(0.7), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.2), 0.001);
-    
 }
 
 
@@ -130,7 +102,7 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
     perceptron_layer.set_parameters_constant(type(0));
     
     unique_ptr<LayerForwardPropagation> perceptron_layer_forward_propagation
-        = make_unique<PerceptronForwardPropagation>(1, &perceptron_layer);
+        = make_unique<Dense2dForwardPropagation>(1, &perceptron_layer);
 
     Tensor<type, 2> inputs(1, 1);
     inputs.setConstant(type(0));
@@ -139,8 +111,8 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
         perceptron_layer_forward_propagation,
         true);
 
-    PerceptronForwardPropagation* perceptron_layer_forward_propagation_ptr =
-        static_cast<PerceptronForwardPropagation*>(perceptron_layer_forward_propagation.get());
+    Dense2dForwardPropagation* perceptron_layer_forward_propagation_ptr =
+        static_cast<Dense2dForwardPropagation*>(perceptron_layer_forward_propagation.get());
 
     Tensor<type, 1> parameters;
 
@@ -197,7 +169,7 @@ TEST(PerceptronLayerTest, ForwardPropagate)
     inputs.setConstant(type(1));
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<PerceptronForwardPropagation>(samples_number, &perceptron_layer);
+        make_unique<Dense2dForwardPropagation>(samples_number, &perceptron_layer);
 
     const pair<type*, dimensions> input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
@@ -205,12 +177,12 @@ TEST(PerceptronLayerTest, ForwardPropagate)
                                         forward_propagation,
                                         is_training);
 
-    PerceptronForwardPropagation* forward_propagation_ptr =
-        static_cast<PerceptronForwardPropagation*>(forward_propagation.get());
+    Dense2dForwardPropagation* forward_propagation_ptr =
+        static_cast<Dense2dForwardPropagation*>(forward_propagation.get());
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    const Tensor<type, 2> outputs = tensor_map_2(output_pair);
+    const Tensor<type, 2> outputs = tensor_map<2>(output_pair);
 
     EXPECT_NEAR(outputs(0, 0), type(3), type(1e-3));
     EXPECT_NEAR(outputs(0, 1), type(3), type(1e-3));

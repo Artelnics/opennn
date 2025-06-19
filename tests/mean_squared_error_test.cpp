@@ -5,6 +5,8 @@
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/tensors.h"
 
+using namespace opennn;
+
 TEST(MeanSquaredErrorTest, DefaultConstructor)
 {
     MeanSquaredError mean_squared_error;
@@ -17,8 +19,8 @@ TEST(MeanSquaredErrorTest, DefaultConstructor)
 TEST(MeanSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    Dataset data_set;
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    Dataset dataset;
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     EXPECT_EQ(mean_squared_error.has_neural_network(), true);
     EXPECT_EQ(mean_squared_error.has_data_set(), true);
@@ -32,27 +34,27 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    Dataset data_set(samples_number, { inputs_number }, { targets_number });
-    data_set.set_data_random();
-    data_set.set(Dataset::SampleUse::Training);
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                  { inputs_number }, { neurons_number }, { targets_number });
 
     neural_network.set_parameters_random();
 
-    Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
-               data_set.get_variable_indices(Dataset::VariableUse::Input),
-               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
-               data_set.get_variable_indices(Dataset::VariableUse::Target));
+    Batch batch(samples_number, &dataset);
+    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
+               dataset.get_variable_indices(Dataset::VariableUse::Input),
+               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
+               dataset.get_variable_indices(Dataset::VariableUse::Target));
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     BackPropagation back_propagation(samples_number, &mean_squared_error);
     mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
@@ -73,15 +75,15 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
 
     // Data set
 
-    Dataset data_set(samples_number, { inputs_number }, { outputs_number });
-    data_set.set_data_random();
-    data_set.set(Dataset::SampleUse::Training);
+    Dataset dataset(samples_number, { inputs_number }, { outputs_number });
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, &data_set);
-    batch.fill(data_set.get_sample_indices(Dataset::SampleUse::Training),
-               data_set.get_variable_indices(Dataset::VariableUse::Input),
-               data_set.get_variable_indices(Dataset::VariableUse::Decoder),
-               data_set.get_variable_indices(Dataset::VariableUse::Target));
+    Batch batch(samples_number, &dataset);
+    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
+               dataset.get_variable_indices(Dataset::VariableUse::Input),
+               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
+               dataset.get_variable_indices(Dataset::VariableUse::Target));
 
     // Neural network
 
@@ -94,7 +96,7 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
 
     // Loss index
 
-    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     BackPropagation back_propagation(samples_number, &mean_squared_error);
     mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);

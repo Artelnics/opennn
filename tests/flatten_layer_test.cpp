@@ -2,6 +2,8 @@
 
 #include "../opennn/flatten_layer.h"
 
+using namespace opennn;
+
 class FlattenLayerTest : public ::testing::Test 
 {
 public:

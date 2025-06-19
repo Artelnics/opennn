@@ -9,6 +9,11 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
+using type = float;
+
+using namespace std;
+using namespace Eigen;
+
 namespace opennn
 {
 

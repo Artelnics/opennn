@@ -2,6 +2,11 @@
 #include "../opennn/testing_analysis.h"
 #include "gtest/gtest.h"
 
+#include "../opennn/dataset.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/testing_analysis.h"
+
+using namespace opennn;
 
 TEST(TestingAnalysis, ErrorData)
 {
@@ -9,14 +14,14 @@ TEST(TestingAnalysis, ErrorData)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set(samples_number, { inputs_number }, { targets_number });
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { targets_number });
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
 
     Tensor<type, 3> error_data = testing_analysis.calculate_error_data();
 
@@ -36,16 +41,16 @@ TEST(TestingAnalysis, PercentageErrorData)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     error_data = testing_analysis.calculate_percentage_error_data();
 
     EXPECT_EQ(error_data.size(), 1);
@@ -60,16 +65,16 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
 
     vector <Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
@@ -93,16 +98,16 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
@@ -121,16 +126,16 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
     EXPECT_EQ(error_data_statistics.size(), 1);
@@ -153,16 +158,16 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
     EXPECT_EQ(error_data_histograms.size(), 1);
@@ -180,16 +185,16 @@ TEST(TestingAnalysis, MaximalErrors)
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set;
-    data_set.set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_constant(type(0));
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset;
+    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_constant(type(0));
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
 
     EXPECT_EQ(maximal_errors.rank(), 1);
@@ -210,14 +215,14 @@ TEST(TestingAnalysis, LinearRegression)
     const Index neurons_number = 1;
     const Index targets_number = 1;
 
-    DataSet data_set(samples_number, {inputs_number}, {targets_number});
-    data_set.set_data_random();
-    data_set.set(DataSet::SampleUse::Testing);
+    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    dataset.set_data_random();
+    dataset.set(Dataset::SampleUse::Testing);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
     linear_correlation = testing_analysis.linear_correlation();
 
     EXPECT_EQ(linear_correlation.size() == 1, true);
@@ -286,13 +291,13 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     const Index inputs_number = 1;
     const Index targets_number= 1;
 
-    DataSet data_set;
+    Dataset dataset;
 
-    data_set.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set(samples_number, {inputs_number}, {targets_number});
 
-    data_set.set_data_constant(type(0));
+    dataset.set_data_constant(type(0));
 
-    data_set.set(DataSet::SampleUse::Testing);
+    dataset.set(Dataset::SampleUse::Testing);
 
     // Neural Network
 
@@ -302,7 +307,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     // Testing Analysis
 
-    TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &dataset);
 
     Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 

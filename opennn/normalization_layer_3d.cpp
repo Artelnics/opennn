@@ -141,7 +141,11 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     multiply_matrices(thread_pool_device.get(), outputs, gammas);
 
-    sum_matrices(thread_pool_device.get(), betas, outputs);
+    outputs.device(*thread_pool_device) = outputs
+        + betas.reshape(array<Index, 3>{1, 1, betas.dimension(0)})
+               .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
+
+    //sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
 
@@ -150,7 +154,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    // @todo simplify                                                                                                  
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
 
@@ -159,15 +162,11 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
-    // Forward propagation
-
     const Normalization3dForwardPropagation* this_forward_propagation 
         = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
     const Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
-
-    // Back propagation
 
     Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
@@ -185,7 +184,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     // Parameters derivatives
 
     gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(array<Index, 2>({0, 1}));
-
     beta_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0, 1}));
     
     // Input derivatives
@@ -206,8 +204,12 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     input_deltas.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(array<Index, 1>({2}));
-
-    substract_matrices(thread_pool_device.get(), aux_2d, input_deltas);
+    /*
+    input_derivatives.device(*thread_pool_device) = input_derivatives
+        - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
+                .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
+*/
+    //substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
 }
 
 
@@ -245,14 +247,12 @@ void Normalization3d::from_XML(const XMLDocument& document)
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3d");
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
     add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();

@@ -1,9 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
 #include "../opennn/weighted_squared_error.h"
 
+using namespace opennn;
 
 TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
@@ -17,9 +16,9 @@ TEST(WeightedSquaredErrorTest, DefaultConstructor)
 TEST(WeightedSquaredErrorTest, GeneralConstructor)
 {
     NeuralNetwork neural_network;
-    DataSet data_set;
+    Dataset dataset;
 
-    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+    WeightedSquaredError weighted_squared_error(&neural_network, &dataset);
 
     EXPECT_EQ(weighted_squared_error.has_neural_network(), true);
     EXPECT_EQ(weighted_squared_error.has_data_set(), true);
@@ -35,14 +34,14 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     const Index samples_number = 1;
     bool is_training = true;
 
-    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
-    data_set.set_data_constant(type(0));
+    Dataset dataset(samples_number, {inputs_number}, {outputs_number});
+    dataset.set_data_constant(type(0));
 
-    const vector<Index> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
 
-    Batch batch(samples_number, &data_set);
+    Batch batch(samples_number, &dataset);
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     //Neural network
@@ -51,7 +50,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
                                  { inputs_number }, {  }, { outputs_number });
     neural_network.set_parameters_constant(type(0));
 
-    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+    WeightedSquaredError weighted_squared_error(&neural_network, &dataset);
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
@@ -79,12 +78,12 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     //Data set
 
-    DataSet data_set_rand(samples_number_rand, {inputs_number_rand}, {outputs_number_rand});
+    Dataset data_set_rand(samples_number_rand, {inputs_number_rand}, {outputs_number_rand});
     data_set_rand.set_data_random();
 
-    const vector<Index> training_samples_indices_rand = data_set_rand.get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> input_variables_indices_rand = data_set_rand.get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variables_indices_rand = data_set_rand.get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> training_samples_indices_rand = data_set_rand.get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variables_indices_rand = data_set_rand.get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variables_indices_rand = data_set_rand.get_variable_indices(Dataset::VariableUse::Target);
 
     Batch batch_rand(samples_number_rand, &data_set_rand);
     batch_rand.fill(training_samples_indices_rand, input_variables_indices_rand, {}, target_variables_indices_rand);

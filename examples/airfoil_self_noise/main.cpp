@@ -10,9 +10,14 @@
 #include <string>
 #include <time.h>
 
+#include "../../opennn/dataset.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
+
+using namespace opennn;
 
 int main()
 {
@@ -20,33 +25,21 @@ int main()
     {
         cout << "Airfoil self noise " << endl;
 
-        // Data set
-        
-        Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
-
-        const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
-        const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
-
-        // Neural network
-
         const Index neurons_number = 12;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {inputs_number}, {neurons_number}, {targets_number});
+        Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        // Training strategy
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+                                     dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
 
         training_strategy.perform_training();
 
-        // Testing analysis
-
         TestingAnalysis testing_analysis(&neural_network, &dataset);
 
         testing_analysis.print_goodness_of_fit_analysis();
 
-        neural_network.print();
         cout << "Good bye!" << endl;
 
         return 0;

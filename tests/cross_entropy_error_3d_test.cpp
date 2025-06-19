@@ -7,8 +7,8 @@
 #include "../opennn/perceptron_layer_3d.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/transformer.h"
-#include "../opennn/forward_propagation.h"
-#include "../opennn/back_propagation.h"
+
+using namespace opennn;
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
@@ -29,10 +29,10 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     // Data set
 
-    DataSet data_set;
-    data_set.set(DataSet::SampleUse::Training);
+    Dataset dataset;
+    dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(1, &data_set);
+    Batch batch(1, &dataset);
     //batch.fill({0}, {0}, {}, {1});
 
     // Neural network
@@ -52,7 +52,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     // Loss index
 
-    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &dataset);
 
     BackPropagation back_propagation(samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
@@ -81,22 +81,22 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
         for (Index j = 0; j < 2 * inputs_number; j++)
             data(i, j) = type(rand() % (input_dimensions + 1));
 
-    data_set.set_data(data);
+    dataset.set_data(data);
 
     for (Index i = 0; i < inputs_number; i++)
-        data_set.set_raw_variable_use(i, DataSet::VariableUse::Input);
+        dataset.set_raw_variable_use(i, Dataset::VariableUse::Input);
 
     for (Index i = 0; i < inputs_number; i++)
-        data_set.set_raw_variable_use(i + inputs_number, DataSet::VariableUse::Target);
+        dataset.set_raw_variable_use(i + inputs_number, Dataset::VariableUse::Target);
 
-    data_set.set(DataSet::SampleUse::Training);
+    dataset.set(Dataset::SampleUse::Training);
 
-    training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
+    training_samples_indices = dataset.get_sample_indices(SampleUse::Training);
 
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
+    input_variables_indices = dataset.get_input_variables_indices();
+    target_variables_indices = dataset.get_target_variables_indices();
 
-    batch.set(batch_size, &data_set);
+    batch.set(batch_size, &dataset);
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     // Neural network
@@ -132,7 +132,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
     Index context_length;
     Index context_dimension;
 
-    LanguageDataSet data_set;
+    LanguageDataSet dataset;
 
     Index perceptron_depth;
     Index heads_number;
@@ -142,7 +142,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
     Transformer transformer;
 
-    cross_entropy_error_3d.set(&transformer, &data_set);
+    cross_entropy_error_3d.set(&transformer, &dataset);
 
     // Test
     {
@@ -160,23 +160,23 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         bool is_training = true;
         
-        data_set.set_data_random_language_model(batch_size, inputs_number, context_length, input_dimensions, context_dimension);
+        dataset.set_data_random_language_model(batch_size, inputs_number, context_length, input_dimensions, context_dimension);
 
-        data_set.set(DataSet::SampleUse::Training);
+        dataset.set(Dataset::SampleUse::Training);
 
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Decoder);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+        training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
+        decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Decoder);
+        input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
+        target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
         
-        batch.set(batch_size, &data_set);
+        batch.set(batch_size, &dataset);
 
         batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
         transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, layers_number });
         
-        ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
+        ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
         
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         

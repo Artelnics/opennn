@@ -4,6 +4,7 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/training_strategy.h"
 
+using namespace opennn;
 
 TEST(TrainingStrategy, DefaultConstructor)
 {
@@ -16,13 +17,13 @@ TEST(TrainingStrategy, DefaultConstructor)
 
 TEST(TrainingStrategy, GeneralConstructor)
 {
-    DataSet data_set;
+    Dataset dataset;
     NeuralNetwork neural_network;
 
-    TrainingStrategy training_strategy_1(&neural_network, &data_set);
+    TrainingStrategy training_strategy_1(&neural_network, &dataset);
 
     EXPECT_EQ(training_strategy_1.get_neural_network(), &neural_network);
-    EXPECT_EQ(training_strategy_1.get_data_set(), &data_set);
+    EXPECT_EQ(training_strategy_1.get_data_set(), &dataset);
 }
 
 

@@ -30,7 +30,7 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        //const Index sequence_length = 3;
+        //const Index sequence_length = 3;More actions
         const Index embedding_dimension = 4;
         const Index heads_number = 2;
         //const Index batch_size = 3;
@@ -45,19 +45,13 @@ int main()
 
         MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
 
-        cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
-/*
-        TrainingStrategy training_strategy(&neural_network, &language_dataset);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(200);
+        cout << mean_squared_error.calculate_error_xxx() << endl;
 
-        training_strategy.perform_training();
+        //cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
-        TestingAnalysis testing_analysis(&neural_network, &language_dataset);
+        //TrainingStrategy training_strategy(&neural_network, &language_dataset);
+        //training_strategy.perform_training();
 
-        testing_analysis.print_binary_classification_tests();
-
-        //Tensor<type, 3> inputs()
-*/
         cout << "Good bye!" << endl;
 
         return 0;

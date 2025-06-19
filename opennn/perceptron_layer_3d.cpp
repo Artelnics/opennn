@@ -178,7 +178,7 @@ void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
         + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
          .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
 
-    //sum_matrices(thread_pool_device.get(), biases, combinations);
+//    sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 

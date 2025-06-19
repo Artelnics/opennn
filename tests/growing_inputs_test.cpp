@@ -2,6 +2,8 @@
 
 #include "../opennn/growing_inputs.h"
 
+using namespace opennn;
+
 
 TEST(GrowingInputsTest, DefaultConstructor)
 {
@@ -45,14 +47,14 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     // Test
 
-    data_set.generate_random_data(30, 3);
+    dataset.generate_random_data(30, 3);
 
     Tensor<string, 1> columns_uses(3);
     columns_uses.setValues({"Input","Input","Target"});
 
-    data_set.set_raw_variable_uses(columns_uses);
+    dataset.set_raw_variable_uses(columns_uses);
 
-    data_set.split_samples_random();
+    dataset.split_samples_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
 
@@ -61,13 +63,13 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     // Test
 
-    data_set.generate_sum_data(20,3);
+    dataset.generate_sum_data(20,3);
 
     neural_network.set();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
 
-    TrainingStrategy training_strategy1(&neural_network, &data_set);
+    TrainingStrategy training_strategy1(&neural_network, &dataset);
 
     //input_selection_results = growing_inputs.perform_input_selection();
 

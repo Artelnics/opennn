@@ -2,6 +2,7 @@
 
 #include "../opennn/image_dataset.h"
 
+using namespace opennn;
 
 TEST(ImageDataset, DefaultConstructor)
 {

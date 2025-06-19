@@ -9,6 +9,13 @@
 #ifndef CORRELATIONS_H
 #define CORRELATIONS_H
 
+#include <string>
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+
+using type = float;
+using namespace std;
+using namespace Eigen;
+
 namespace opennn
 {
 
@@ -20,41 +27,11 @@ struct Correlation
 
     Correlation() {}
 
-    void set_perfect()
-    {
-        r = type(1);
-        a = type(0);
-        b = type(1);
+    void set_perfect();
 
-        upper_confidence = type(1);
-        lower_confidence = type(1);
-        form = Correlation::Form::Linear;
-    }
+    string write_type() const;
 
-    string write_type() const
-    {
-        switch(form)
-        {
-        case Form::Linear: return "linear";
-        case Form::Logistic: return "logistic";
-        case Form::Logarithmic: return "logarithmic";
-        case Form::Exponential: return "exponential";
-        case Form::Power: return "power";
-        default:
-            return string();
-        }
-    }
-
-    void print() const
-    {
-        cout << "Correlation" << endl
-             << "Type: " << write_type() << endl
-             << "a: " << a << endl
-             << "b: " << b << endl
-             << "r: " << r << endl
-             << "Lower confidence: " << lower_confidence << endl
-             << "Upper confidence: " << upper_confidence << endl;
-    }
+    void print() const;
 
     type a = type(NAN);
     type b = type(NAN);

@@ -310,18 +310,6 @@ void Layer::set_output_dimensions(const dimensions&)
 }
 
 
-void Layer::competitive(Tensor<type, 2>& y) const
-{
-    const Tensor<Index, 1> maximum_indices = y.argmax(1);
-
-    y.setZero();
-
-    #pragma omp parallel for
-    for(Index i = 0; i < y.dimension(0); i++)
-        y(i, Index(maximum_indices(i))) = type(1);
-}
-
-
 void Layer::softmax(Tensor<type, 2>& y) const
 {    
     const Index rows_number = y.dimension(0);
@@ -382,57 +370,56 @@ void Layer::softmax(Tensor<type, 4>& y) const
 }
 
 
-void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, 
-                                             const Tensor<type, 3>& tensor, 
-                                             TensorMap<Tensor<type, 3>>& result, 
-                                             Tensor<type, 1>& aux_rows) const
-{   
-    const Index rows_number = softmax.dimension(0);
-    const Index columns_number = softmax.dimension(1);
-    const Index channels = softmax.dimension(2);
+//void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
+//                                             const Tensor<type, 3>& tensor,
+//                                             TensorMap<Tensor<type, 3>>& result,
+//                                             Tensor<type, 1>& aux_rows) const
+//{
+//    const Index rows_number = softmax.dimension(0);
+//    const Index columns_number = softmax.dimension(1);
+//    const Index channels = softmax.dimension(2);
 
-    type* softmax_data = (type*)softmax.data();
-    type* tensor_data = (type*)tensor.data();
-    type* result_data = result.data();
+//    type* softmax_data = (type*)softmax.data();
+//    type* tensor_data = (type*)tensor.data();
+//    type* result_data = result.data();
 
-    type* softmax_vector_data = nullptr;
-    type* tensor_vector_data = nullptr;
-    type* result_vector_data = nullptr;
+//    type* softmax_vector_data = nullptr;
+//    type* tensor_vector_data = nullptr;
+//    type* result_vector_data = nullptr;
 
-    Tensor<type, 0> sum;
+//    Tensor<type, 0> sum;
 
-    for(Index i = 0; i < channels; i++)
-    {        
-        for(Index j = 0; j < columns_number; j++)
-        {
-            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
-            tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);
-            result_vector_data = result_data + rows_number * (i * columns_number + j);
+//    for(Index i = 0; i < channels; i++)
+//    {
+//        for(Index j = 0; j < columns_number; j++)
+//        {
+//            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
+//            tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);
+//            result_vector_data = result_data + rows_number * (i * columns_number + j);
 
-            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
-            const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
+//            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
+//            const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
 
-            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
+//            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
-            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+//            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
             
-            sum.device(*thread_pool_device) = aux_rows.sum();
+//            sum.device(*thread_pool_device) = aux_rows.sum();
 
-            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
-        }
-    }
-}
+//            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
+//        }
+//    }
+//}
 
 
 void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     TensorMap<Tensor<type, 3>>& result,
     Tensor<type, 1>& aux_rows) const
 {
-    const Index rows_number = softmax.dimension(0);
-    const Index columns_number = softmax.dimension(1);
-    // const Index rows_number = softmax.dimension(1);
-    // const Index columns_number = softmax.dimension(0);
-    const Index channels = softmax.dimension(2);
+    const Index rows = softmax.dimension(0);
+    const Index columns = softmax.dimension(1);
+    const Index depth = softmax.dimension(2);
+
 
     type* softmax_data = (type*)softmax.data();
     type* result_data = result.data();
@@ -442,17 +429,17 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 
     Tensor<type, 0> sum;
 
-    for (Index i = 0; i < channels; i++)
+    for (Index i = 0; i < depth; i++)
     {
-        for (Index j = 0; j < columns_number; j++)
+        for (Index j = 0; j < columns; j++)
         {
-            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
-            result_vector_data = result_data + rows_number * (i * columns_number + j);
+            softmax_vector_data = softmax_data + rows * (i * columns + j);
+            result_vector_data = result_data + rows * (i * columns + j);
 
-            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
-            const TensorMap<Tensor<type, 1>> tensor_vector(result_vector_data, rows_number);
+            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows);
+            const TensorMap<Tensor<type, 1>> tensor_vector(result_vector_data, rows);
 
-            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
+            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows);
 
             aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
 
