@@ -204,8 +204,6 @@ public:
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-
-
        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_pair);
        else if constexpr (output_rank == 3)
@@ -215,7 +213,6 @@ public:
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
 
-       cout << "no sale" << endl;
    }
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );

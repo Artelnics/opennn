@@ -237,7 +237,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
-            
+
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 decoder_variable_indices,

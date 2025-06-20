@@ -89,9 +89,9 @@ private:
 
     GeneticAlgorithm genetic_algorithm;
 
-    NeuronsSelectionMethod neurons_selection_method;
+    NeuronsSelectionMethod neurons_selection_method = NeuronsSelectionMethod::GROWING_NEURONS;
 
-    InputsSelectionMethod inputs_selection_method;
+    InputsSelectionMethod inputs_selection_method = InputsSelectionMethod::GROWING_INPUTS;
 
     bool display = true;
 };

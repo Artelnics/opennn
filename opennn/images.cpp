@@ -241,13 +241,14 @@ Tensor<type, 3> resize_image(const Tensor<float, 3>& input_image,
     const float scale_y = static_cast<float>(input_height) / output_height;
     const float scale_x = static_cast<float>(input_width) / output_width;
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for
     for (Index y = 0; y < output_height; ++y) {
         const float in_y = y * scale_y;
         const Index y0 = static_cast<Index>(std::floor(in_y));
         const float y_weight = in_y - y0;
         const Index y1 = std::min<Index>(y0 + 1, input_height - 1);
 
+        #pragma omp parallel for
         for (Index x = 0; x < output_width; ++x) {
             const float in_x = x * scale_x;
             const Index x0 = static_cast<Index>(std::floor(in_x));
