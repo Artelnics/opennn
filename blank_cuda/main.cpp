@@ -60,8 +60,10 @@ int main()
         */
         ImageDataset dataset;
 
-        dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
-        //dataset.set_data_path("../examples/mnist/data_bin");
+        
+	//dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
+	//dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); //wsl
+	dataset.set_data_path("../examples/mnist/data_bin");
 
         dimensions data_dimensions = { 224,224,3 };
 
