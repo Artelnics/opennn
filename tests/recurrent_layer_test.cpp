@@ -20,7 +20,7 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     const Index neurons_number = get_random_index(1, 10);
     const Index time_steps = get_random_index(1, 10);
 
-    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
+    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
     recurrent_layer.set_timesteps(time_steps);
 
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
@@ -42,7 +42,7 @@ TEST(RecurrentLayerTest, Activations)
     Index inputs_number = 3;
     Index time_steps = 1;
 
-    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
+    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
     recurrent_layer.set_parameters_constant(type(1));
 
     Tensor<type, 2> activations(samples_number, neurons_number);
@@ -51,34 +51,35 @@ TEST(RecurrentLayerTest, Activations)
     recurrent_layer.set_activation_function(Recurrent::Activation::Logistic);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.731), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), 0.001);
+    EXPECT_NEAR(activations(0, 0), type(0.731), type(1e-3));
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), type(1e-3));
 
     recurrent_layer.set_activation_function(Recurrent::Activation::HyperbolicTangent);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.761), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), 0.001);
+    EXPECT_NEAR(activations(0, 0), type(0.761), type(1e-3));
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), type(1e-3));
 
     recurrent_layer.set_activation_function(Recurrent::Activation::Linear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
 
     recurrent_layer.set_activation_function(Recurrent::Activation::RectifiedLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
 
     recurrent_layer.set_activation_function(Recurrent::Activation::ExponentialLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
 
 }
+
 
 TEST(RecurrentLayerTest, ForwardPropagate)
 {
@@ -90,8 +91,8 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     Index inputs_number = 3;
     Index time_steps = 5;
     bool is_training = true;
-/*
-    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
+
+    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
 
     recurrent_layer.set_activation_function(Recurrent::Activation::HyperbolicTangent);
     recurrent_layer.set_parameters_constant(type(0.1));
@@ -114,21 +115,21 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), neurons_number);
 
-    EXPECT_NEAR(outputs(0,0),0.511795,0.01);
+    EXPECT_NEAR(outputs(0,0),0.500356,NUMERIC_LIMITS_MIN);
 
-    //Test SoftPlus
+    //Test Logistic
 
     samples_number = 3;
     inputs_number = 3;
     neurons_number = 4;
+    time_steps = 5;
 
-    recurrent_layer.set({inputs_number}, {neurons_number});
+    recurrent_layer.set({inputs_number,time_steps}, {neurons_number});
 
     inputs.resize(samples_number, time_steps, inputs_number);
     inputs.setConstant(type(1));
 
-    recurrent_layer.set_activation_function("SoftPlus");
-    recurrent_layer.set_timesteps(5);
+    recurrent_layer.set_activation_function(Recurrent::Activation::Logistic);
 
     recurrent_layer.set_parameters_constant(type(0.1));
 
@@ -143,6 +144,92 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     EXPECT_EQ(outputs.dimensions()[0], samples_number);
     EXPECT_EQ(outputs.dimensions()[1], neurons_number);
 
-    EXPECT_NEAR(outputs(0,0),1.16445,0.01);
-*/
+    EXPECT_NEAR(outputs(0,0),0.6441,type(1e-3));
+
+    //Test Linear
+
+    samples_number = 3;
+    inputs_number = 3;
+    neurons_number = 4;
+    time_steps = 5;
+
+    recurrent_layer.set({inputs_number,time_steps}, {neurons_number});
+
+    inputs.resize(samples_number, time_steps, inputs_number);
+    inputs.setConstant(type(1));
+
+    recurrent_layer.set_activation_function(Recurrent::Activation::Linear);
+
+    recurrent_layer.set_parameters_constant(type(0.1));
+
+    recurrent_layer_forward_propagation = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+    input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+    recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+
+    recurrent_layer_forward_propagation_ptr = static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+
+    outputs = recurrent_layer_forward_propagation_ptr->outputs;
+
+    EXPECT_EQ(outputs.dimensions()[0], samples_number);
+    EXPECT_EQ(outputs.dimensions()[1], neurons_number);
+
+    EXPECT_NEAR(outputs(0,0),0.5700,type(1e-3));
+
+    //Test RectifiedLinear
+
+    samples_number = 3;
+    inputs_number = 3;
+    neurons_number = 4;
+    time_steps = 5;
+
+    recurrent_layer.set({inputs_number,time_steps}, {neurons_number});
+
+    inputs.resize(samples_number, time_steps, inputs_number);
+    inputs.setConstant(type(1));
+
+    recurrent_layer.set_activation_function(Recurrent::Activation::RectifiedLinear);
+
+    recurrent_layer.set_parameters_constant(type(0.1));
+
+    recurrent_layer_forward_propagation = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+    input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+    recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+
+    recurrent_layer_forward_propagation_ptr = static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+
+    outputs = recurrent_layer_forward_propagation_ptr->outputs;
+
+    EXPECT_EQ(outputs.dimensions()[0], samples_number);
+    EXPECT_EQ(outputs.dimensions()[1], neurons_number);
+
+    EXPECT_NEAR(outputs(0,0),0.5700,type(1e-3));
+
+    //Test ExponentialLinear
+
+    samples_number = 3;
+    inputs_number = 3;
+    neurons_number = 4;
+    time_steps = 5;
+
+    recurrent_layer.set({inputs_number,time_steps}, {neurons_number});
+
+    inputs.resize(samples_number, time_steps, inputs_number);
+    inputs.setConstant(type(1));
+
+    recurrent_layer.set_activation_function(Recurrent::Activation::ExponentialLinear);
+
+    recurrent_layer.set_parameters_constant(type(0.1));
+
+    recurrent_layer_forward_propagation = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+    input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+    recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+
+    recurrent_layer_forward_propagation_ptr = static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+
+    outputs = recurrent_layer_forward_propagation_ptr->outputs;
+
+    EXPECT_EQ(outputs.dimensions()[0], samples_number);
+    EXPECT_EQ(outputs.dimensions()[1], neurons_number);
+
+    EXPECT_NEAR(outputs(0,0),0.5700,type(1e-3));
 }
