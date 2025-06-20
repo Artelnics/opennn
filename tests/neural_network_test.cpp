@@ -201,11 +201,11 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
     NeuralNetwork neural_network;
 
     Tensor<type, 2> inputs;
-/*
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     EXPECT_EQ(outputs.size(), 0);
-*/
+
 }
 
 

@@ -139,7 +139,7 @@ TEST_P(PoolingLayerTest, Constructor)
 
 TEST_P(PoolingLayerTest, ForwardPropagate) 
 {
-    /*
+
     PoolingLayerConfig parameters = GetParam();
 
     Pooling pooling_layer(
@@ -188,12 +188,12 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
             }
         }
     }
-    */
+
 }
 
 
 TEST_P(PoolingLayerTest, BackPropagate) {
-    /*
+
     PoolingLayerConfig parameters = GetParam();
 
     Pooling pooling_layer(
@@ -231,5 +231,5 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
     EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
     EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
-    */
+
 }

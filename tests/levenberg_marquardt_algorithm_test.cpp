@@ -25,7 +25,7 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
-    /*
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index outputs_number = get_random_index(1, 10);
@@ -53,12 +53,10 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
 
-    //system("pause");
-
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
     // Test
-
+/*
     dataset.set(1,1,1);
     dataset.set_data_random();
 

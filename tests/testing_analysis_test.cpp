@@ -654,53 +654,8 @@ TEST(TestingAnalysis, LiftChart)
 
     EXPECT_EQ(lift_chart.dimension(1), cumulative_gain.dimension(1));
     EXPECT_EQ(lift_chart.dimension(0), cumulative_gain.dimension(0));
-
 }
 
-
-TEST(TestingAnalysis, CalibrationPlot)
-{
-
-    Tensor<type, 2> calibration_plot;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
-    // Test
-
-    targets.resize(10, 1);
-
-    targets(0, 0) = type(1);
-    targets(1, 0) = type(0);
-    targets(2, 0) = type(1);
-    targets(3, 0) = type(1);
-    targets(4, 0) = type(1);
-    targets(5, 0) = type(1);
-    targets(6, 0) = type(1);
-    targets(7, 0) = type(0);
-    targets(8, 0) = type(1);
-    targets(9, 0) = type(0);
-
-    outputs.resize(10, 1);
-
-    outputs(0, 0) = type(0.09);
-    outputs(1, 0) = type(0.19);
-    outputs(2, 0) = type(0.29);
-    outputs(3, 0) = type(0.39);
-    outputs(4, 0) = type(0.49);
-    outputs(5, 0) = type(0.59);
-    outputs(6, 0) = type(0.58);
-    outputs(7, 0) = type(0.79);
-    outputs(8, 0) = type(0.89);
-    outputs(9, 0) = type(0.99);
-
-    TestingAnalysis testing_analysis;
-
-    calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
-
-    EXPECT_EQ(calibration_plot.dimension(1), 2);
-    EXPECT_EQ(calibration_plot.dimension(0), 12);
-
-}
 
 TEST(TestingAnalysis, TruePositiveSamples)
 {

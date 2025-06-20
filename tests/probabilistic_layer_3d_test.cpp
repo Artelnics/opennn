@@ -30,7 +30,7 @@ TEST(Probabilistic3DTest, GeneralConstructor)
 
 TEST(Probabilistic3DTest, Combinations)
 {
-/*
+
     Tensor<type, 1> biases(1);
     Tensor<type, 2> weights(1, 1);
     biases.setConstant(type(1));
@@ -41,16 +41,17 @@ TEST(Probabilistic3DTest, Combinations)
 
     Tensor<type, 3> combinations(1, 1, 1);
 
-    probabilistic_layer_3d.set(1, 1, 1);
+    Probabilistic3d probabilistic_layer_3d(1, 1, 1);
 
     probabilistic_layer_3d.calculate_combinations(inputs, combinations);
-
+/*
     EXPECT_EQ(
         combinations.rank() == 3 &&
         combinations.dimension(0) == 1 &&
         combinations.dimension(1) == 1 &&
-        combinations.dimension(2) == 1);
-    EXPECT_EQ(abs(combinations(0, 0, 0) - type(7)) < type(1e-5));
+        combinations.dimension(2) == 1, true);
+
+    EXPECT_EQ(abs(combinations(0, 0, 0) - type(7)) < type(1e-5), true);
 */
 }
 

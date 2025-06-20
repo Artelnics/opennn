@@ -144,13 +144,6 @@ void Probabilistic3d::set_inputs_depth(const Index& new_inputs_depth)
 
 void Probabilistic3d::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-/*
-    const Index inputs_depth = get_inputs_depth();
-
-    biases.resize(new_neurons_number);
-
-    weights.resize(inputs_depth, new_neurons_number);
-*/
     const Index inputs_depth = get_inputs_depth();
     const Index neurons_number = new_output_dimensions[0];
 
