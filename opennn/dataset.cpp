@@ -3012,7 +3012,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
     if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), " ");
+        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), ";");
 
     if (raw_variables.size() != 0)
     {
