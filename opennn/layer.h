@@ -76,7 +76,6 @@ public:
 
     void set_display(const bool&);
 
-    virtual void set_parameters_constant(const type&);
     virtual void set_parameters_random();
 
     virtual Index get_parameters_number() const;

@@ -168,8 +168,6 @@ public:
 
    // Parameters initialization
 
-   void set_parameters_constant(const type&) const;
-
    void set_parameters_random() const;
 
    // Output

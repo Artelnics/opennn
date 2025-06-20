@@ -1,45 +1,45 @@
 #include "pch.h"
 
 #include "../opennn/tensors.h"
-#include "../opennn/bounding_layer.h"
+#include "../opennn/addition_layer_3d.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
 
 
-TEST(BoundingTest, Constructor) 
+TEST(Addition3dTest, DefaultConstructor)
 {
-    Bounding bounding_layer;
+    Addition3d addition_3d_layer;
 
-    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{0});
+    EXPECT_EQ(addition_3d_layer.get_output_dimensions(), dimensions({0, 0}));
 }
 
 
-TEST(BoundingTest, ForwardPropagate)
+TEST(Addition3dTest, GeneralConstructor)
 {
-    Bounding bounding_layer({1});
+    const Index sequence_length = get_random_index(1,10);
+    const Index embedding_dimension = get_random_index(1,10);
 
-    bounding_layer.set_lower_bound(0, type(-1.0));
-    bounding_layer.set_upper_bound(0, type(1));
-    bounding_layer.set_bounding_method("Bounding");
+    Addition3d addition_3d_layer({sequence_length, embedding_dimension});
 
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<BoundingForwardPropagation>(1, &bounding_layer);
+    EXPECT_EQ(addition_3d_layer.get_sequence_length(), sequence_length);
+    EXPECT_EQ(addition_3d_layer.get_embedding_dimension(), embedding_dimension);
+}
 
-    Tensor<type, 2> inputs(1, 1);
-    inputs.setConstant(-2.0);
-    Tensor<type, 2> outputs(1, 1);
 
-    const pair<type*, dimensions> input_pairs = { inputs.data(), {{1, 1}} };
+TEST(Addition3dTest, ForwardPropagate)
+{
+    const Index batch_size = get_random_index(1,10);
+    const Index sequence_length = get_random_index(1,10);
+    const Index embedding_dimension = get_random_index(1,10);
 
-    bounding_layer.forward_propagate({ input_pairs },
-                                          forward_propagation,
-                                          true);
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Addition3d>(dimensions({sequence_length, embedding_dimension})));
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    Tensor<type, 3> inputs_1(batch_size, sequence_length, embedding_dimension);
+    inputs_1.setConstant(-2.0);
 
-    outputs = tensor_map<2>(output_pair);
-
-    EXPECT_NEAR(outputs(0), type(-1.0), NUMERIC_LIMITS_MIN);
-    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{ 1 });
+    Tensor<type, 3> inputs_2(batch_size, sequence_length, embedding_dimension);
+    inputs_2.setConstant(1.0);
 
 }

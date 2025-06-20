@@ -225,7 +225,7 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
     // Test
         
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 3 }, { 4 }, { 2 });
-    neural_network.set_parameters_constant(type(0));
+    neural_network.set_parameters_random();
 
     inputs.resize(2,3);
     inputs.setValues({{type(-5),type(-1),-type(3)},

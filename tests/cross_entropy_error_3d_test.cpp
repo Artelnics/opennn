@@ -45,7 +45,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 //    Probabilistic3d* probabilistic_layer_3d = new Probabilistic3d(inputs_number, depth, input_dimensions + 1);
 //    neural_network.add_layer(probabilistic_layer_3d);
 
-    neural_network.set_parameters_constant(type(0));
+    neural_network.set_parameters_random();
 /*
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);

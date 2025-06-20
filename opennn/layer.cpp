@@ -248,11 +248,6 @@ void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) con
 }
 
 
-void Layer::set_parameters_constant(const type&)
-{
-}
-
-
 void Layer::set_parameters_random()
 {
 }

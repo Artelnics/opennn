@@ -42,7 +42,7 @@ TEST(Embedding, ForwardPropagate)
     neural_network.add_layer(make_unique<Embedding>(dimensions({ vocabulary_size, sequence_length }), embedding_dimension));
 
     Embedding embedding_layer({ vocabulary_size, sequence_length }, embedding_dimension);
-    embedding_layer.set_parameters_constant(type(0));
+    embedding_layer.set_parameters_random();
 
     Tensor<type, 2> inputs(samples_number, sequence_length);
     inputs.setConstant(type(0));

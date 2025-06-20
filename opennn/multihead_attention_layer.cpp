@@ -219,19 +219,6 @@ void MultiHeadAttention::set_parameters_glorot()
 }
 
 
-void MultiHeadAttention::set_parameters_constant(const type& value)
-{
-    query_weights.setConstant(value);
-    query_biases.setConstant(value);
-    key_weights.setConstant(value);
-    key_biases.setConstant(value);
-    value_weights.setConstant(value);
-    value_biases.setConstant(value);
-    projection_weights.setConstant(value);
-    projection_biases.setConstant(value);
-}
-
-
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;

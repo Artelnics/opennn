@@ -200,13 +200,6 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
 }
 
 
-void Dense2d::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-    weights.setConstant(value);
-}
-
-
 void Dense2d::set_parameters_random()
 {
     set_random(biases);

@@ -48,7 +48,7 @@ TEST(WeightedSquaredErrorTest, BackPropagateOne)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { inputs_number }, {  }, { outputs_number });
-    neural_network.set_parameters_constant(type(0));
+    neural_network.set_parameters_random();
 
     WeightedSquaredError weighted_squared_error(&neural_network, &dataset);
 

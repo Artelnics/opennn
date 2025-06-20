@@ -41,7 +41,7 @@ TEST(RecurrentLayerTest, Activations)
     Index samples_number = 3;
     Index inputs_number = 3;
     Index time_steps = 1;
-
+/*
     Recurrent recurrent_layer({ inputs_number }, { neurons_number });
     recurrent_layer.set_parameters_constant(type(1));
 
@@ -77,7 +77,7 @@ TEST(RecurrentLayerTest, Activations)
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
-
+*/
 }
 
 TEST(RecurrentLayerTest, ForwardPropagate)

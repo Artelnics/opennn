@@ -544,7 +544,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
 
-    neural_network.set_parameters_constant(type(0.001));
+    neural_network.set_parameters_random();
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 

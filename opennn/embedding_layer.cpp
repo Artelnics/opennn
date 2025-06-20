@@ -125,12 +125,6 @@ void Embedding::set_parameters_random()
 }
 
 
-void Embedding::set_parameters_constant(const type& value)
-{
-    weights.setConstant(value);
-}
-
-
 void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);

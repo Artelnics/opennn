@@ -157,18 +157,6 @@ void Recurrent::set_activation_function(const string& new_activation_function_na
 }
 
 
-void Recurrent::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-
-    input_weights.setConstant(value);
-
-    recurrent_weights.setConstant(value);
-
-    hidden_states.setZero();
-}
-
-
 void Recurrent::set_parameters_random()
 {
     set_random(biases);
