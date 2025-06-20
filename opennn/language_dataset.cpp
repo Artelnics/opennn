@@ -506,7 +506,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     // Preview data
 
     start_element = preview_size_element;
-
+/*
     if(model_type != ModelType::TextClassification)
     {
         for(Index i = 0; i < new_preview_size; i++)
@@ -547,7 +547,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
                 data_file_preview[i][1] = row_element->GetText();
         }
     }
-
+*/
     // Completion Vocabulary
 
     const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");

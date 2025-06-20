@@ -180,34 +180,6 @@ void Dataset::RawVariable::print() const
 }
 
 
-Dataset::ModelType Dataset::get_model_type() const
-{
-    return model_type;
-}
-
-
-string Dataset::get_model_type_string() const
-{
-    switch (model_type)
-    {
-    case ModelType::Approximation:
-        return "Approximation";
-    case ModelType::Classification:
-        return "Classification";
-    case ModelType::Forecasting:
-        return "Forecasting";
-    case ModelType::AutoAssociation:
-        return "AutoAssociation";
-    case ModelType::TextClassification:
-        return "TextClassification";
-    case ModelType::ImageClassification:
-        return "ImageClassification";
-    default:
-        throw runtime_error("Unknown model type");
-    }
-}
-
-
 string Dataset::RawVariable::get_use_string() const
 {
     switch (use)
@@ -625,10 +597,7 @@ void Dataset::set_raw_variables(const vector<RawVariable>& new_raw_variables)
 
 void Dataset::set_default_raw_variables_uses()
 {
-    const ModelType model_type = get_model_type();
     const Index raw_variables_number = raw_variables.size();
-
-    bool target = false;
 
     if (raw_variables_number == 0)
         return;
@@ -641,7 +610,7 @@ void Dataset::set_default_raw_variables_uses()
 
     set(VariableUse::Input);
 
-    for (Index i = raw_variables.size() - 1; i >= 0; i--)
+    for (Index i = raw_variables_number - 1; i >= 0; i--)
     {
         RawVariable& raw_variable = raw_variables[i];
 
@@ -650,13 +619,12 @@ void Dataset::set_default_raw_variables_uses()
         {
             raw_variable.set_use(VariableUse::None);
         }
-        else if (!target
-        && (model_type != ModelType::Classification ||
-            raw_variable.type == RawVariableType::Binary ||
-            raw_variable.type == RawVariableType::Categorical))
+        //else if (model_type != ModelType::Classification ||
+        //    raw_variable.type == RawVariableType::Binary ||
+        //    raw_variable.type == RawVariableType::Categorical))
         {
             raw_variable.set_use(VariableUse::Target);
-            target = true;
+            break;
         }
     }
 }
@@ -1715,51 +1683,16 @@ void Dataset::set(const Index& new_samples_number,
 
     set_default();
 
-    if (model_type == ModelType::ImageClassification)
+    for (Index i = 0; i < new_variables_number; i++)
     {
-        const Index raw_variables_number = new_inputs_number + 1;
+        RawVariable& raw_variable = raw_variables[i];
 
-        raw_variables.resize(raw_variables_number);
+        raw_variable.type = RawVariableType::Numeric;
+        raw_variable.name = "variable_" + to_string(i + 1);
 
-        for (Index i = 0; i < new_inputs_number; i++)
-            raw_variables[i].set("p_" + to_string(i + 1),
-                VariableUse::Input,
-                RawVariableType::Numeric,
-                Scaler::ImageMinMax);
-
-        if (targets_number == 1)
-            raw_variables[raw_variables_number - 1].set("target",
-                VariableUse::Target,
-                RawVariableType::Binary,
-                Scaler::None);
-        else
-        {
-            raw_variables[raw_variables_number - 1].set("target",
-                VariableUse::Target,
-                RawVariableType::Categorical,
-                Scaler::None);
-
-            vector<string> new_categories;
-
-            for (int i = 1; i <= targets_number; ++i)
-                new_categories.push_back(to_string(i - 1));
-
-            raw_variables[raw_variables_number - 1].set_categories(new_categories);
-        }
-    }
-    else
-    {
-        for (Index i = 0; i < new_variables_number; i++)
-        {
-            RawVariable& raw_variable = raw_variables[i];
-
-            raw_variable.type = RawVariableType::Numeric;
-            raw_variable.name = "variable_" + to_string(i + 1);
-
-            raw_variable.use = (i < new_inputs_number)
-                ? VariableUse::Input
-                : VariableUse::Target;
-        }
+        raw_variable.use = (i < new_inputs_number)
+            ? VariableUse::Input
+            : VariableUse::Target;
     }
 
     sample_uses.resize(new_samples_number);
@@ -1800,31 +1733,6 @@ void Dataset::set_default()
     missing_values_label = "NA";
 
     set_default_raw_variable_names();
-}
-
-
-void Dataset::set_model_type_string(const string& new_model_type)
-{
-    if (new_model_type == "Approximation")
-        set_model_type(ModelType::Approximation);
-    else if (new_model_type == "Classification")
-        set_model_type(ModelType::Classification);
-    else if (new_model_type == "Forecasting")
-        set_model_type(ModelType::Forecasting);
-    else if (new_model_type == "ImageClassification")
-        set_model_type(ModelType::ImageClassification);
-    else if (new_model_type == "TextClassification")
-        set_model_type(ModelType::TextClassification);
-    else if (new_model_type == "AutoAssociation")
-        set_model_type(ModelType::AutoAssociation);
-    else
-        throw runtime_error("Unknown model type: " + new_model_type + "\n");
-}
-
-
-void Dataset::set_model_type(const Dataset::ModelType& new_model_type)
-{
-    model_type = new_model_type;
 }
 
 
@@ -2700,13 +2608,10 @@ void Dataset::print_top_inputs_correlations() const
 
 void Dataset::set_default_raw_variables_scalers()
 {
-    if (model_type == ModelType::ImageClassification)
-        set_raw_variable_scalers(Scaler::ImageMinMax);
-    else
-        for (Dataset::RawVariable& raw_variable : raw_variables)
-            raw_variable.scaler = (raw_variable.type == RawVariableType::Numeric)
-            ? Scaler::MeanStandardDeviation
-            : Scaler::MinimumMaximum;
+    for (Dataset::RawVariable& raw_variable : raw_variables)
+        raw_variable.scaler = (raw_variable.type == RawVariableType::Numeric)
+        ? Scaler::MeanStandardDeviation
+        : Scaler::MinimumMaximum;
 }
 
 
@@ -2870,14 +2775,9 @@ void Dataset::set_data_random()
     set_random(data);
 }
 
+
 void Dataset::to_XML(XMLPrinter& printer) const
 {
-    if (model_type == ModelType::Forecasting)
-        throw runtime_error("Forecasting");
-
-    if (model_type == ModelType::ImageClassification)
-        throw runtime_error("Image classification");
-
     printer.OpenElement("Dataset");
 
     printer.OpenElement("DataSource");
@@ -3567,6 +3467,19 @@ void Dataset::set_data_rosenbrock()
 
         data(i, variables_number - 1) = rosenbrock;
     }
+}
+
+
+void Dataset::set_data_binary_classification()
+{
+    const Index samples_number = get_samples_number();
+    const Index variables_number = get_variables_number();
+
+    set_data_random();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < samples_number; i++)
+        data(i, variables_number - 1) = type(get_random_bool());
 }
 
 
@@ -4510,6 +4423,7 @@ void Dataset::decode(string&) const
     }
 }
 
+
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  const vector<Index>& decoder_indices,
@@ -4517,10 +4431,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
 
-    if (dataset->get_model_type() == Dataset::ModelType::TextClassification)
-        dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
-
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
+
+    dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
 }
 
 
@@ -4637,8 +4550,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 {
     dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
 
-    if (dataset->get_model_type() == Dataset::ModelType::TextClassification)
-        dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
+    dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
     dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
 

@@ -2,6 +2,7 @@
 
 #include "../opennn/tensors.h"
 #include "../opennn/embedding_layer.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
 
@@ -16,41 +17,40 @@ TEST(Embedding, DefaultConstructor)
 
 
 TEST(Embedding, GeneralConstructor)
-{    
-/*
-    Embedding embedding_layer(1,2,3);
+{
+    const Index vocabulary_size = 1;
+    const Index sequence_length = 2;
+    const Index embedding_dimension = 3;
+
+    Embedding embedding_layer({ vocabulary_size, sequence_length }, embedding_dimension);
 
     EXPECT_EQ(embedding_layer.get_vocabulary_size(), 1);
     EXPECT_EQ(embedding_layer.get_sequence_length(), 2);
     EXPECT_EQ(embedding_layer.get_embedding_dimension(), 3);
-*/
 }
 
 
 TEST(Embedding, ForwardPropagate)
 {
-/*
-    const Index samples_number = get_random_index(1, 10);
+
+    const Index samples_number = get_random_index(2, 10);
     const Index vocabulary_size = get_random_index(1, 10);
     const Index sequence_length = get_random_index(1, 10);
     const Index embedding_dimension = get_random_index(1, 10);
 
-    Embedding embedding_layer(vocabulary_size, sequence_length, embedding_dimension);
-    embedding_layer.set_parameters_constant(type(0));
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Embedding>(dimensions({ vocabulary_size, sequence_length }), embedding_dimension));
 
-    unique_ptr<LayerForwardPropagation> embedding_forward_propagation
-        = make_unique<EmbeddingForwardPropagation>(samples_number, &embedding_layer);
+    Embedding embedding_layer({ vocabulary_size, sequence_length }, embedding_dimension);
+    embedding_layer.set_parameters_constant(type(0));
 
     Tensor<type, 2> inputs(samples_number, sequence_length);
     inputs.setConstant(type(0));
 
-    embedding_layer.forward_propagate({ make_pair(inputs.data(), dimensions{samples_number, sequence_length}) },
-        embedding_forward_propagation,
-        true);
+    Tensor<type, 3> outputs = neural_network.calculate_outputs<2,3>(inputs);
 
-    EXPECT_EQ(embedding_forward_propagation->batch_size, samples_number);
-    EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[0], samples_number);
-    EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[1], sequence_length);
-    EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[2], embedding_dimension);
-*/
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), sequence_length);
+    EXPECT_EQ(outputs.dimension(2), embedding_dimension);
+
 }

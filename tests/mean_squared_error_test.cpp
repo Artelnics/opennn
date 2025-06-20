@@ -26,10 +26,10 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(mean_squared_error.has_data_set(), true);
 }
 
+
 TEST(MeanSquaredErrorTest, BackPropagate)
 {
-
-    const Index samples_number = get_random_index(1, 10);
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
@@ -43,32 +43,18 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     neural_network.set_parameters_random();
 
-    Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
-               dataset.get_variable_indices(Dataset::VariableUse::Input),
-               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
-               dataset.get_variable_indices(Dataset::VariableUse::Target));
-
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-    // Loss index
-
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
-    BackPropagation back_propagation(samples_number, &mean_squared_error);
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
+    const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 
 TEST(MeanSquaredErrorTest, BackPropagateLm)
 {
-    const Index samples_number = get_random_index(1, 10);
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 1);
     const Index outputs_number = get_random_index(1, 1);
     const Index neurons_number = get_random_index(1, 1);

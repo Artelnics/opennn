@@ -30,8 +30,8 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagate)
 {
-/*
-    const Index samples_number = get_random_index(1, 10);
+
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
@@ -40,30 +40,16 @@ TEST(MinkowskiErrorTest, BackPropagate)
     dataset.set_data_random();
     dataset.set(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
-               dataset.get_variable_indices(Dataset::VariableUse::Input),
-               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
-               dataset.get_variable_indices(Dataset::VariableUse::Target));
-
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
 
     neural_network.set_parameters_random();
 
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-    // Loss index
-
     MinkowskiError minkowski_error(&neural_network, &dataset);
 
-    BackPropagation back_propagation(samples_number, &minkowski_error);
-    minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
-
+    const Tensor<type, 1> gradient = minkowski_error.calculate_gradient();
     const Tensor<type, 1> numerical_gradient = minkowski_error.calculate_numerical_gradient();
-
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
+/*
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 */
 }
