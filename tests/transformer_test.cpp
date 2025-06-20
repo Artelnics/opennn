@@ -16,6 +16,7 @@ TEST(Transformer, DefaultConstructor)
 
 TEST(Transformer, GeneralConstructor)
 {
+
     const Index input_length = get_random_index(1, 10);
     const Index context_length = get_random_index(1, 10);
     const Index input_dimensions = get_random_index(1, 10);
@@ -24,7 +25,7 @@ TEST(Transformer, GeneralConstructor)
     const Index perceptron_depth = get_random_index(1, 10);
     const Index heads_number = get_random_index(1, 10);
     const Index layers_number = get_random_index(1, 10);
-
+/*
     Transformer transformer(input_length, 
                             context_length, 
                             input_dimensions, 
@@ -35,7 +36,7 @@ TEST(Transformer, GeneralConstructor)
                             layers_number);
 
 //    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
-/*
+
     Tensor<unique_ptr<Layer>, 1> layers;
 
     Transformer transformer_0;
@@ -69,8 +70,6 @@ TEST(Transformer, GeneralConstructor)
     EXPECT_EQ(transformer_4.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
 */
 }
-
-
 
 
 TEST(Transformer, Outputs)

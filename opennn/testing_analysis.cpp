@@ -211,7 +211,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
-    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
+    vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
@@ -269,7 +269,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
-    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
+    vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
@@ -1424,99 +1424,6 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
     }
 
     return maximum_gain;
-}
-
-
-Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
-{
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
-
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
-
-    return calculate_calibration_plot(targets, outputs);
-}
-
-
-Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
-{
-    const Index rows_number = targets.dimension(0);
-
-    const Index points_number = 10;
-
-    Tensor<type, 2> calibration_plot(points_number+2, 2);
-
-    // First point
-
-    calibration_plot(0,0) = type(0);
-    calibration_plot(0,1) = type(0);
-
-    Index positives = 0;
-
-    Index count = 0;
-
-    type probability = type(0);
-
-    long double sum = 0.0;
-
-    for(Index i = 1; i < points_number+1; i++)
-    {
-        count = 0;
-
-        positives = 0;
-        sum = type(0);
-
-        probability += type(0.1);
-
-        for(Index j = 0; j < rows_number; j++)
-        {
-            if(outputs(j, 0) >= (probability - type(0.1)) && outputs(j, 0) < probability)
-            {
-                count++;
-
-                sum += outputs(j, 0);
-
-                if(Index(targets(j, 0)) == 1)
-                    positives++;
-            }
-        }
-
-        if(count == 0)
-        {
-            calibration_plot(i, 0) = type(-1);
-            calibration_plot(i, 1) = type(-1);
-        }
-        else
-        {
-            calibration_plot(i, 0) = type(sum)/type(count);
-            calibration_plot(i, 1) = type(positives)/type(count);
-        }
-    }
-
-    // Last point
-
-    calibration_plot(points_number+1,0) = type(1);
-    calibration_plot(points_number+1,1) = type(1);
-
-    // Subtracts calibration plot rows with value -1
-
-    Index points_number_subtracted = 0;
-/*
-    while(contains(calibration_plot.chip(0,1), type(-1)))
-     {
-         for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
-         {
-             if(abs(calibration_plot(i, 0) + type(1)) < NUMERIC_LIMITS_MIN)
-             {
-                 calibration_plot = delete_row(calibration_plot, i);
-
-                 points_number_subtracted++;
-             }
-         }
-     }
-*/
-    return calibration_plot;
 }
 
 

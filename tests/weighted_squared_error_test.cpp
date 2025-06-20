@@ -112,6 +112,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     EXPECT_EQ(back_propagation_rand.errors.dimension(1), outputs_number_rand);
 
     EXPECT_EQ(are_equal(back_propagation_rand.gradient, numerical_gradient_rand, type(1.0e-2)), true);
+
 }
 
 

@@ -35,25 +35,27 @@ TEST(ResponseOptimization, Inputs)
     ResponseOptimization response_optimization(&neural_network, &dataset);
 
     Tensor<type, 2> inputs = response_optimization.calculate_inputs();
-/*
+
     EXPECT_EQ(inputs.dimension(0), response_optimization.get_evaluations_number());
     EXPECT_EQ(inputs.dimension(1), neural_network.get_inputs_number());
-
-    EXPECT_EQ(inputs(0) <= response_optimization.get_inputs_maximums()(1));
-    EXPECT_EQ(inputs(1) <= response_optimization.get_inputs_maximums()(1));
-    EXPECT_EQ(inputs(0) >= response_optimization.get_inputs_minimums()(1));
-    EXPECT_EQ(inputs(1) >= response_optimization.get_inputs_minimums()(1));
+/*
+    EXPECT_LE(inputs(0), response_optimization.get_input_maximums()(1));
+    EXPECT_LE(inputs(1), response_optimization.get_input_maximums()(1));
+    EXPECT_LE(inputs(0), response_optimization.get_input_minimums()(1));
+    EXPECT_LE(inputs(1), response_optimization.get_input_minimums()(1));
 */
 }
 
 
 TEST(ResponseOptimization, Optimize)
 {
-/*
-    ResponseOptimization response_optimization(&neural_network,&dataset);
+    NeuralNetwork neural_network;
+    Dataset dataset;
+
+    ResponseOptimization response_optimization(&neural_network, &dataset);
 
     // Empty results
-
+/*
     conditions_values.resize(1);
     conditions_values.setValues({100000});
     response_optimization.set_output_condition(0,ResponseOptimization::Condition::GreaterEqualTo,conditions_values);

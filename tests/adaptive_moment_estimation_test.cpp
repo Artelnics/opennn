@@ -71,16 +71,16 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     const Index perceptron_depth = 6;
     const Index heads_number = 4;
     const Index layers_number = 1;
-/*
-    LanguageDataSet language_data_set;
 
-    language_data_set.set_data_random_language_model(batch_size,
+    LanguageDataset language_dataset;
+/*
+    language_dataset.set_data_random_language_model(batch_size,
         input_length,
         decoder_length,
         input_dimensions,
         context_dimension);
 
-    language_data_set.set(Dataset::SampleUse::Training);
+    language_dataset.set(Dataset::SampleUse::Training);
 
     Transformer transformer({ input_length,
                              decoder_length,
@@ -93,7 +93,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 
     type training_loss_goal = type(0.05);
 
-    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_dataset);
 
     AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error_3d);
 

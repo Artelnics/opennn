@@ -132,7 +132,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
     Index context_length;
     Index context_dimension;
 
-    LanguageDataSet dataset;
+    LanguageDataset dataset;
 
     Index perceptron_depth;
     Index heads_number;

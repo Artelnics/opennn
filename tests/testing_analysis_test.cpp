@@ -76,7 +76,7 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
 
-    vector <Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
+    vector<Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
     EXPECT_NEAR(error_data[0].minimum, 1, NUMERIC_LIMITS_MIN);
@@ -90,7 +90,7 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
 TEST(TestingAnalysis, PercentageErrorDescriptives)
 {
 
-    vector <Descriptives> error_data;
+    vector<Descriptives> error_data;
 
     // Test
 
@@ -150,7 +150,7 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
 TEST(TestingAnalysis, ErrorDataHistograms)
 {
 
-    vector <Histogram> error_data_histograms;
+    vector<Histogram> error_data_histograms;
 
     // Test
 
@@ -654,58 +654,13 @@ TEST(TestingAnalysis, LiftChart)
 
     EXPECT_EQ(lift_chart.dimension(1), cumulative_gain.dimension(1));
     EXPECT_EQ(lift_chart.dimension(0), cumulative_gain.dimension(0));
-
 }
 
-
-TEST(TestingAnalysis, CalibrationPlot)
-{
-
-    Tensor<type, 2> calibration_plot;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
-
-    // Test
-
-    targets.resize(10, 1);
-
-    targets(0, 0) = type(1);
-    targets(1, 0) = type(0);
-    targets(2, 0) = type(1);
-    targets(3, 0) = type(1);
-    targets(4, 0) = type(1);
-    targets(5, 0) = type(1);
-    targets(6, 0) = type(1);
-    targets(7, 0) = type(0);
-    targets(8, 0) = type(1);
-    targets(9, 0) = type(0);
-
-    outputs.resize(10, 1);
-
-    outputs(0, 0) = type(0.09);
-    outputs(1, 0) = type(0.19);
-    outputs(2, 0) = type(0.29);
-    outputs(3, 0) = type(0.39);
-    outputs(4, 0) = type(0.49);
-    outputs(5, 0) = type(0.59);
-    outputs(6, 0) = type(0.58);
-    outputs(7, 0) = type(0.79);
-    outputs(8, 0) = type(0.89);
-    outputs(9, 0) = type(0.99);
-
-    TestingAnalysis testing_analysis;
-
-    calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
-
-    EXPECT_EQ(calibration_plot.dimension(1), 2);
-    EXPECT_EQ(calibration_plot.dimension(0), 12);
-
-}
 
 TEST(TestingAnalysis, TruePositiveSamples)
 {
 
-    vector <Index> true_positives_indices;
+    vector<Index> true_positives_indices;
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -725,7 +680,7 @@ TEST(TestingAnalysis, TruePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(0);
 
-    vector <Index> testing_indices = {0, 1, 2, 3};
+    vector<Index> testing_indices = {0, 1, 2, 3};
 
     const type threshold = type(0.5);
 
@@ -786,7 +741,7 @@ TEST(TestingAnalysis, TruePositiveSamples)
 TEST(TestingAnalysis, FalsePositiveSamples)
 {
 
-    vector <Index> false_positives_indices;
+    vector<Index> false_positives_indices;
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -806,7 +761,7 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(0);
 
-    vector <Index> testing_indices = {0, 1, 2, 3};
+    vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
     TestingAnalysis testing_analysis;
@@ -869,7 +824,7 @@ TEST(TestingAnalysis, FalsePositiveSamples)
 TEST(TestingAnalysis, FalseNegativeSamples)
 {
 
-    vector <Index> false_negatives_indices;
+    vector<Index> false_negatives_indices;
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -888,7 +843,7 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(0);
 
-    vector <Index> testing_indices = {0, 1, 2, 3};
+    vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
     TestingAnalysis testing_analysis;
@@ -951,7 +906,7 @@ TEST(TestingAnalysis, FalseNegativeSamples)
 TEST(TestingAnalysis, TrueNegativeSamples)
 {
 
-    vector <Index> true_negatives_indices;
+    vector<Index> true_negatives_indices;
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -971,7 +926,7 @@ TEST(TestingAnalysis, TrueNegativeSamples)
     outputs(2, 0) = type(0);
     outputs(3, 0) = type(0);
 
-    vector <Index> testing_indices = {0, 1, 2, 3};
+    vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
     TestingAnalysis testing_analysis;
@@ -1031,15 +986,14 @@ TEST(TestingAnalysis, TrueNegativeSamples)
 
 TEST(TestingAnalysis, MultipleClassificationRates)
 {
-    /*
-    vector <Index> testing_indices;
-    Tensor<type, 2> targets;
-    Tensor<type, 2> outputs;
+
+    vector<Index> testing_indices;
 
     Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
 
     // Test
 
+    Tensor<type, 2> targets;
     targets.resize(9, 3);
 
     targets(0,0) = type(1); targets(0,1) = type(0); targets(0,2) = type(0);
@@ -1052,6 +1006,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     targets(7,0) = type(0); targets(7,1) = type(1); targets(7,2) = type(0);
     targets(8,0) = type(0); targets(8,1) = type(0); targets(8,2) = type(1);
 
+    Tensor<type, 2> outputs;
     outputs.resize(9, 3);
 
     outputs(0,0) = type(1); outputs(0,1) = type(0); outputs(0,2) = type(0);
@@ -1063,7 +1018,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     outputs(6,0) = type(0); outputs(6,1) = type(0); outputs(6,2) = type(1);
     outputs(7,0) = type(0); outputs(7,0) = type(0); outputs(7,2) = type(1);
     outputs(8,0) = type(1); outputs(8,1) = type(0); outputs(8,2) = type(0);
-
+/*
     testing_indices.resize(9);
     testing_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
@@ -1082,7 +1037,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     EXPECT_EQ(multiple_classification_rates(2,0)(0), 8);
     EXPECT_EQ(multiple_classification_rates(2,1)(0), 5);
     EXPECT_EQ(multiple_classification_rates(2,2)(0), 2);
-    */
+*/
 }
 
 // OpenNN: Open Neural Networks Library.

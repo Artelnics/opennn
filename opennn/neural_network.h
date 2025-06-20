@@ -187,7 +187,6 @@ public:
        const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
-       cout << "llega" << endl;
 
        dimensions input_dimensions;
        input_dimensions.reserve(input_rank);
@@ -205,8 +204,6 @@ public:
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-
-
        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_pair);
        else if constexpr (output_rank == 3)
@@ -216,7 +213,6 @@ public:
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
 
-       cout << "no sale" << endl;
        return Tensor<type, output_rank>();
    }
 
