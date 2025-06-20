@@ -217,6 +217,7 @@ public:
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
 
        cout << "no sale" << endl;
+       return Tensor<type, output_rank>();
    }
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
