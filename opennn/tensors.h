@@ -53,7 +53,7 @@ void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
-//void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
+void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 //void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 

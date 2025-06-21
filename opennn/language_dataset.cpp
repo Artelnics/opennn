@@ -308,14 +308,13 @@ void LanguageDataset::print_target_vocabulary() const
 
 void LanguageDataset::print() const
 {
-    cout << "Language data set" << endl;
-    cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-    cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_sequence_length() << endl;
-    cout << "Target length: " << get_target_sequence_length() << endl;
-
-    cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
-    cout << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
+    cout << "Language data set" << endl
+         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
+         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
+         << "Input length: " << get_input_sequence_length() << endl
+         << "Target length: " << get_target_sequence_length() << endl
+         << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl
+         << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
 }
 
 
