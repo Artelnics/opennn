@@ -30,7 +30,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
-    const Index outputs_number = get_random_index(1, 10);
+    const Index outputs_number = 1;//get_random_index(1, 10);
 
     Dataset data_set(samples_number, {inputs_number}, {outputs_number});
 

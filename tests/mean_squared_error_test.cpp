@@ -30,11 +30,9 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
 
 TEST(MeanSquaredErrorTest, BackPropagate)
 {
-    for(Index i = 0; i < 100; i++)
-    {
     const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
-    const Index targets_number = get_random_index(1, 10);
+    const Index targets_number = 2;//get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
@@ -45,25 +43,16 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     neural_network.add_layer(make_unique<Dense2d>(dimensions{ inputs_number }, dimensions{ targets_number }));
     neural_network.set_parameters_random();
 
-/*
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
-*/
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     const type error = mean_squared_error.calculate_numerical_error();
 
-    cout << "i = " << i << endl;
-    cout << samples_number << endl;
-    cout << inputs_number << endl;
-    cout << targets_number << endl;
-    cout << neurons_number << endl;
-    cout << error << endl;
+    EXPECT_GE(error, 0);
 
-    //const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
-    //const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
+    const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-    //EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
-    }
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 

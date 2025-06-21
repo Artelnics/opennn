@@ -46,10 +46,10 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 0>& error = back_propagation.error;
 
     if(outputs.dimension(0) != targets.dimension(0))
-        throw runtime_error("MeanSquaredError: outputs and target dimensions do not match.");
+        throw runtime_error("MeanSquaredError: outputs and target dimension 0 do not match: " + to_string(outputs.dimension(0)) + " " + to_string(targets.dimension(0)));
 
     if(outputs.dimension(1) != targets.dimension(1))
-        throw runtime_error("MeanSquaredError: outputs and target dimensions do not match.");
+        throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
     errors.device(*thread_pool_device) = outputs - targets;
     

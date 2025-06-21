@@ -1671,11 +1671,11 @@ void Dataset::set(const Index& new_samples_number,
         1,
         multiplies<Index>());
 
-    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+    //const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
 
-    target_dimensions = { targets_number };
+    target_dimensions = { new_targets_number };
 
-    const Index new_variables_number = new_inputs_number + targets_number;
+    const Index new_variables_number = new_inputs_number + new_targets_number;
 
     data.resize(new_samples_number, new_variables_number);
 
