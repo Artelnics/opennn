@@ -52,5 +52,4 @@ TEST(Embedding, ForwardPropagate)
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), sequence_length);
     EXPECT_EQ(outputs.dimension(2), embedding_dimension);
-
 }

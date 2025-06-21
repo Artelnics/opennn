@@ -635,7 +635,7 @@ void BackPropagation::print() const
 }
 
 
-type LossIndex::calculate_error_xxx()
+type LossIndex::calculate_numerical_error()
 {
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 

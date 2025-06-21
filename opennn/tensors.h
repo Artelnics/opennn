@@ -242,12 +242,14 @@ TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>&, const Index&
 template <Index rank>
 TensorMap<Tensor<type, rank>> tensor_map(const pair<type*, dimensions>& x_pair)
 {
+    if (!x_pair.first)
+        throw runtime_error("tensor_map: Null pointer in pair.");
+
     if (x_pair.second.size() != rank)
         throw runtime_error("Dimensions is " + to_string(x_pair.second.size()) + " and must be " + to_string(rank));
 
     if constexpr (rank == 1)
-        return TensorMap<Tensor<type, 1>>(x_pair.first,
-                                          x_pair.second[0]);
+        return TensorMap<Tensor<type, 1>>(x_pair.first, x_pair.second[0]);
     else if constexpr (rank == 2)
         return TensorMap<Tensor<type, 2>>(x_pair.first,
                                           x_pair.second[0],

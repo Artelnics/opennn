@@ -39,31 +39,13 @@ TEST(Dense3dTest, ForwardPropagate)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Dense3d>(sequence_length, input_embedding, output_embedding));
 
+    Tensor<type, 3> inputs(batch_size, sequence_length, input_embedding);
+    inputs.setRandom();
 /*
-    Bounding bounding_layer({1});
+    Tensor<type, 3> outputs = neural_network.calculate_outputs<3,3>(inputs);
 
-    bounding_layer.set_lower_bound(0, type(-1.0));
-    bounding_layer.set_upper_bound(0, type(1));
-    bounding_layer.set_bounding_method("Bounding");
-
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<BoundingForwardPropagation>(1, &bounding_layer);
-
-    Tensor<type, 2> inputs(1, 1);
-    inputs.setConstant(-2.0);
-    Tensor<type, 2> outputs(1, 1);
-
-    const pair<type*, dimensions> input_pairs = { inputs.data(), {{1, 1}} };
-
-    bounding_layer.forward_propagate({ input_pairs },
-                                          forward_propagation,
-                                          true);
-
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
-
-    outputs = tensor_map<2>(output_pair);
-
-    EXPECT_NEAR(outputs(0), type(-1.0), NUMERIC_LIMITS_MIN);
-    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{ 1 });
+    EXPECT_EQ(outputs.dimension(0), batch_size);
+    EXPECT_EQ(outputs.dimension(1), sequence_length);
+    EXPECT_EQ(outputs.dimension(2), output_embedding);
 */
 }

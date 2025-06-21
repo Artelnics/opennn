@@ -25,15 +25,15 @@ public:
                           RectifiedLinear,
                           Softmax};
 
-   Dense3d(const Index& = 0,
-           const Index& = 0,
-           const Index& = 0,
-           const Activation& = Dense3d::Activation::HyperbolicTangent,
-           const string& = "dense3d_layer");
+    Dense3d(const Index& = 0,
+            const Index& = 0,
+            const Index& = 0,
+            const Activation& = Dense3d::Activation::HyperbolicTangent,
+            const string& = "dense3d_layer");
 
-   Index get_sequence_length() const;
-   Index get_input_embedding() const;
-   Index get_output_embedding() const;
+    Index get_sequence_length() const;
+    Index get_input_embedding() const;
+    Index get_output_embedding() const;
 
    // @todo
 

@@ -141,8 +141,6 @@ public:
 
    // Layers
 
-   static bool is_trainable(const Layer::Type&);
-
    Index get_layers_number() const;
    Index get_layers_number(const Layer::Type&) const;
 

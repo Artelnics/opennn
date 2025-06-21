@@ -727,21 +727,12 @@ Index NeuralNetwork::get_layers_number() const
 }
 
 
-bool NeuralNetwork::is_trainable(const Layer::Type& layer_type)
-{
-    return layer_type != Layer::Type::Scaling2d &&
-           layer_type != Layer::Type::Scaling4d &&
-           layer_type != Layer::Type::Unscaling &&
-           layer_type != Layer::Type::Bounding;
-}
-
-
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-        if (is_trainable(layers[i]->get_type())) 
+        if (layers[i]->get_parameters_number() != 0)
             return i;
 
     throw runtime_error("The neural network has no trainable layers.");
@@ -753,7 +744,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     const Index layers_number = get_layers_number();
 
     for(Index i = layers_number-1; i >= 0 ; i--)
-        if (is_trainable(layers[i]->get_type()))
+        if (layers[i]->get_parameters_number() != 0)
             return i;
 
     throw runtime_error("The neural network has no trainable layers.");
