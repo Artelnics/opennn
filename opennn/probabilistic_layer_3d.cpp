@@ -177,14 +177,6 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
 }
 
 
-void Probabilistic3d::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-
-    weights.setConstant(value);
-}
-
-
 void Probabilistic3d::set_parameters_random()
 {
     set_random(biases);

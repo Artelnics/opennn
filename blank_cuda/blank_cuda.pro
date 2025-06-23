@@ -121,7 +121,7 @@ HEADERS += \
     ../opennn/optimization_algorithm.h \
     ../opennn/pch.h \
     ../opennn/perceptron_layer.h \
-    ../opennn/perceptron_layer_3d.h \
+    ../opennn/dense_3d.h \
     ../opennn/pooling_layer.h \
     ../opennn/probabilistic_layer_3d.h \
     ../opennn/quasi_newton_method.h \

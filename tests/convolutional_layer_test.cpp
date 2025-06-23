@@ -57,21 +57,21 @@ INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testi
 TEST_P(ConvolutionalLayerTest, Constructor) {
     ConvolutionalLayerConfig parameters = GetParam();
 
-    Convolutional conv_layer(parameters.input_dimensions,
+    Convolutional convolutional_layer(parameters.input_dimensions,
                                   parameters.kernel_dimensions,
                                   parameters.activation_function,
                                   parameters.stride_dimensions,
                                   parameters.convolution_type,
                                   parameters.test_name);
 
-    EXPECT_EQ(conv_layer.get_input_dimensions(), parameters.input_dimensions);
-    EXPECT_EQ(conv_layer.get_kernel_height(), parameters.kernel_dimensions[0]);
-    EXPECT_EQ(conv_layer.get_kernel_width(), parameters.kernel_dimensions[1]);
-    EXPECT_EQ(conv_layer.get_kernels_number(), parameters.kernel_dimensions[3]);
-    EXPECT_EQ(conv_layer.get_row_stride(), parameters.stride_dimensions[0]);
-    EXPECT_EQ(conv_layer.get_column_stride(), parameters.stride_dimensions[1]);
-    EXPECT_EQ(conv_layer.get_activation_function(), parameters.activation_function);
-    EXPECT_EQ(conv_layer.get_convolution_type(), parameters.convolution_type);
+    EXPECT_EQ(convolutional_layer.get_input_dimensions(), parameters.input_dimensions);
+    EXPECT_EQ(convolutional_layer.get_kernel_height(), parameters.kernel_dimensions[0]);
+    EXPECT_EQ(convolutional_layer.get_kernel_width(), parameters.kernel_dimensions[1]);
+    EXPECT_EQ(convolutional_layer.get_kernels_number(), parameters.kernel_dimensions[3]);
+    EXPECT_EQ(convolutional_layer.get_row_stride(), parameters.stride_dimensions[0]);
+    EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_dimensions[1]);
+    EXPECT_EQ(convolutional_layer.get_activation_function(), parameters.activation_function);
+    EXPECT_EQ(convolutional_layer.get_convolution_type(), parameters.convolution_type);
 }
 
 
@@ -136,11 +136,11 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     ConvolutionalLayerConfig parameters = GetParam();
 
     Convolutional convolutional_layer(parameters.input_dimensions,
-                                           parameters.kernel_dimensions,
-                                           parameters.activation_function,
-                                           parameters.stride_dimensions,
-                                           parameters.convolution_type,
-                                           parameters.test_name);
+                                      parameters.kernel_dimensions,
+                                      parameters.activation_function,
+                                      parameters.stride_dimensions,
+                                      parameters.convolution_type,
+                                      parameters.test_name);
 
     const Index batch_size = parameters.input_data.dimension(0);
 
@@ -198,6 +198,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
                                                parameters.input_data.dimension(1),
                                                parameters.input_data.dimension(2),
                                                parameters.input_data.dimension(3));
+
     expected_input_derivatives.setConstant(1.0);  // Replace with actual expected derivatives logic if known.
 
     for (Index b = 0; b < batch_size; ++b) {

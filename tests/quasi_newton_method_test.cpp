@@ -91,7 +91,7 @@ TEST(QuasiNewtonMethodTest, Train)
     dataset.set_data_constant(1);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_constant(1);
+    neural_network.set_parameters_random();
 
     QuasiNewtonMethod quasi_newton_method;
     quasi_newton_method.set_maximum_epochs_number(1);
@@ -108,7 +108,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     dataset.set_data_random();
 
-    neural_network.set_parameters_constant(-1);
+    neural_network.set_parameters_random();
 
     training_results = quasi_newton_method.perform_training();
     error = training_results.get_training_error();
@@ -128,7 +128,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     //Loss goal
 
-    neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_random();
 
     type training_loss_goal = type(0.1);
 

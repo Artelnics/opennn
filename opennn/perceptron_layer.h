@@ -54,7 +54,7 @@ public:
     void set_output_dimensions(const dimensions&) override;
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
-    void set_parameters_constant(const type&) override;
+    
     void set_parameters_random() override;
 
     void set_activation_function(const Activation&);

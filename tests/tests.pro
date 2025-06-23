@@ -26,12 +26,14 @@ INCLUDEPATH += $$GTEST_DIR
 
 SOURCES += test.cpp \
            adaptive_moment_estimation_test.cpp \
+           addition_layer_3d_test.cpp \
            bounding_layer_test.cpp \
            convolutional_layer_test.cpp \
            correlations_test.cpp \
            cross_entropy_error_3d_test.cpp \
            cross_entropy_error_test.cpp \
            data_set_test.cpp \
+           dense_layer_3d_test.cpp \
            embedding_layer_test.cpp \
            flatten_layer_test.cpp \
            genetic_algorithm_test.cpp \
@@ -45,6 +47,7 @@ SOURCES += test.cpp \
            model_selection_test.cpp \
            multihead_attention_layer_test.cpp \
            neural_network_test.cpp \
+           normalization_layer_3d_test.cpp \
            normalized_squared_error_test.cpp \
            perceptron_layer_test.cpp \
            performance_test.cpp \

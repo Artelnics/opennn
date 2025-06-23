@@ -75,9 +75,9 @@ TEST(RecurrentLayerTest, Activations)
     recurrent_layer.set_activation_function(Recurrent::Activation::ExponentialLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
+
     EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
-
 }
 
 

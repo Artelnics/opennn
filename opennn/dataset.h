@@ -49,8 +49,6 @@ public:
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    enum class ModelType{Approximation, Classification, Forecasting, AutoAssociation, TextClassification, ImageClassification};
-
     enum class SampleUse{Training, Selection, Testing, None};
 
     enum class VariableUse{Id, Input, Target, Time, None, Decoder};
@@ -107,12 +105,6 @@ public:
 
         void print() const;
     };
-
-    // Model type
-
-    ModelType get_model_type() const;
-
-    string get_model_type_string() const;
 
     // Samples get
 
@@ -244,9 +236,6 @@ public:
     void set(const filesystem::path&);
 
     void set_default();
-
-    void set_model_type_string(const string&);
-    void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
 
@@ -444,6 +433,7 @@ public:
 
     virtual void set_data_random();
     void set_data_rosenbrock();
+    void set_data_binary_classification();
 
     // Serialization
 
@@ -532,8 +522,6 @@ public:
 
 
 protected:
-
-    Dataset::ModelType model_type;
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;

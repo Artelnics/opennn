@@ -308,14 +308,13 @@ void LanguageDataset::print_target_vocabulary() const
 
 void LanguageDataset::print() const
 {
-    cout << "Language data set" << endl;
-    cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-    cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_sequence_length() << endl;
-    cout << "Target length: " << get_target_sequence_length() << endl;
-
-    cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
-    cout << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
+    cout << "Language data set" << endl
+         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
+         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
+         << "Input length: " << get_input_sequence_length() << endl
+         << "Target length: " << get_target_sequence_length() << endl
+         << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl
+         << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
 }
 
 
@@ -506,7 +505,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     // Preview data
 
     start_element = preview_size_element;
-
+/*
     if(model_type != ModelType::TextClassification)
     {
         for(Index i = 0; i < new_preview_size; i++)
@@ -547,7 +546,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
                 data_file_preview[i][1] = row_element->GetText();
         }
     }
-
+*/
     // Completion Vocabulary
 
     const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");

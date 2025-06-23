@@ -443,29 +443,20 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
 
 Tensor<type, 2> TestingAnalysis::calculate_errors() const
 {
-    Tensor<type, 2> errors(5, 3);
 
     const Tensor<type, 1> training_errors = calculate_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_errors(Dataset::SampleUse::Selection);
     const Tensor<type, 1> testing_errors = calculate_errors(Dataset::SampleUse::Testing);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
+    Tensor<type, 2> errors(5, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)}
+    });
 
     return errors;
 }
@@ -473,35 +464,21 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    Tensor<type, 2> errors(7, 3);
-
     const Tensor<type, 1> training_errors = calculate_binary_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_binary_classification_errors(Dataset::SampleUse::Selection);
     const Tensor<type, 1> testing_errors = calculate_binary_classification_errors(Dataset::SampleUse::Testing);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
-    errors(5,0) = training_errors(5);
-    errors(6,0) = training_errors(6);
+    Tensor<type, 2> errors(7, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-    errors(5,1) = selection_errors(5);
-    errors(6,1) = selection_errors(6);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
-    errors(5,2) = testing_errors(5);
-    errors(6,2) = testing_errors(6);
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)},
+        {training_errors(5), selection_errors(5), testing_errors(5)},
+        {training_errors(6), selection_errors(6), testing_errors(6)}
+    });
 
     return errors;
 }
@@ -509,33 +486,20 @@ Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    Tensor<type, 2> errors(6,3);
-
     const Tensor<type, 1> training_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
-    errors(5,0) = training_errors(5);
+    Tensor<type, 2> errors(6, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-    errors(5,1) = selection_errors(5);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
-    errors(5,2) = testing_errors(5);
-
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)},
+        {training_errors(5), selection_errors(5), testing_errors(5)}
+    });
     return errors;
 }
 

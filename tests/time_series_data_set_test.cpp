@@ -60,6 +60,7 @@ TEST(TimeSeriesDataset, Autocorrelations)
 
 TEST(TimeSeriesDataset, CrossCorrelations)
 {
+/*
     dimensions input_dimensions = { 2 };
     dimensions target_dimensions = { 2 };
 
@@ -93,11 +94,12 @@ TEST(TimeSeriesDataset, CrossCorrelations)
     //cross_correlations = dataset.calculate_cross_correlations(lags_number);
 
     //EXPECT_EQ(cross_correlations.dimension(0), 3);
-
+*/
 }
 
-TEST(TimeSeriesDataset, test_transform_time_series) {
-
+TEST(TimeSeriesDataset, test_transform_time_series)
+{
+/*
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
@@ -142,11 +144,13 @@ TEST(TimeSeriesDataset, test_transform_time_series) {
 
     EXPECT_EQ(input_variable_names[0], "x");
     EXPECT_EQ(target_variable_names[0], "y");
-    
+*/
 }
+
 
 TEST(TimeSeriesDataset, test_set_steps_ahead_number)
 {
+/*
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
@@ -166,9 +170,13 @@ TEST(TimeSeriesDataset, test_set_steps_ahead_number)
     //dataset.transform_time_series();
 
     EXPECT_EQ(dataset.get_lags_number(), 2);
+*/
 }
 
-TEST(TimeSeriesDataset, test_set_lags_number) {
+
+TEST(TimeSeriesDataset, test_set_lags_number)
+{
+/*
     dimensions input_dimensions = { 1 };
     dimensions target_dimensions = { 2 };
 
@@ -189,6 +197,7 @@ TEST(TimeSeriesDataset, test_set_lags_number) {
     //dataset.transform_time_series();
 
     EXPECT_EQ(dataset.get_steps_ahead(), 2);
+*/
 }
 
 

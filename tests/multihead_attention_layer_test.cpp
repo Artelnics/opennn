@@ -1,82 +1,59 @@
 #include "pch.h"
 
+#include "../opennn/tensors.h"
 #include "../opennn/multihead_attention_layer.h"
+#include "../opennn/neural_network.h"
 
-TEST(MultiHeadAttention, DefaultConstructor) 
+using namespace opennn;
+
+TEST(MultiHeadAttention, DefaultConstructorSelfAttention)
 {
-    /*
+
     MultiHeadAttention multihead_attention_layer;
 
-    EXPECT_EQ(multihead_attention_layer.get_heads_number(), 0);
     EXPECT_EQ(multihead_attention_layer.get_source_sequence_length(), 0);
     EXPECT_EQ(multihead_attention_layer.get_query_sequence_length(), 0);
     EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), 0);
-    EXPECT_EQ(multihead_attention_layer.get_hidden_depth(), 0);
-
-    EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{0});
-    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({multihead_attention_layer.get_source_sequence_length(), multihead_attention_layer.get_embedding_dimension()}));
-    */
+    EXPECT_EQ(multihead_attention_layer.get_heads_number(), 0);
 }
 
 
-TEST(MultiHeadAttention, GeneralConstructor)
+TEST(MultiHeadAttention, GeneralConstructorSelfAttention)
 {
-    /*
-    const Index heads_number = 8;
-    const Index input_size = 64;
-    const Index context_size = 128;
-    const Index depth = 256;
-    const bool use_causal_mask = true;
+    const Index sequence_length = get_random_index(1, 10);
+    const Index embedding_dimension = get_random_index(1, 10);
+    const Index heads_number = get_random_index(1, 10);
 
-    MultiHeadAttention multihead_attention_layer(input_size,context_size,depth,heads_number,use_causal_mask);
+    MultiHeadAttention multihead_attention_layer({sequence_length, embedding_dimension}, heads_number);
 
+    EXPECT_EQ(multihead_attention_layer.get_source_sequence_length(), sequence_length);
+    EXPECT_EQ(multihead_attention_layer.get_query_sequence_length(), sequence_length);
+    EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), embedding_dimension);
     EXPECT_EQ(multihead_attention_layer.get_heads_number(), heads_number);
-    EXPECT_EQ(multihead_attention_layer.get_source_sequence_length(), input_size);
-    EXPECT_EQ(multihead_attention_layer.get_query_sequence_length(), context_size);
-    EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), depth);
-
-    EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{input_size});
-    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({input_size, depth}));
-    */
 }
 
 
-TEST(MultiHeadAttention, ForwardPropagate)
+TEST(MultiHeadAttention, ForwardPropagateSelfAttention)
 {
-    /*
-    const Index batch_size = 2;
-    const Index input_size = 4;
-    const Index context_size = 4;
-    const Index depth = 8;
-    const Index heads_number = 2;
-    const bool is_training = true;
+    const Index batch_size = get_random_index(1, 10);
+    const Index sequence_length = get_random_index(1, 10);
+    const Index embedding_dimension = get_random_index(1, 10);
+    const Index heads_number = get_random_index(1, 10);
 
-    const dimensions input_dimensions = {batch_size, input_size};
-    const dimensions context_dimensions = {batch_size, context_size};
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<MultiHeadAttention>(dimensions({sequence_length, embedding_dimension}), heads_number));
 
-    MultiHeadAttention multihead_attention_layer(input_size, context_size, depth, heads_number);
+    Tensor<type, 3> inputs_1(batch_size, sequence_length, embedding_dimension);
+    inputs_1.setRandom();
 
-    unique_ptr<LayerForwardPropagation> this_forward_propagation
-        = make_unique<MultiheadAttentionForwardPropagation>(batch_size, &multihead_attention_layer);
+    Tensor<type, 3> inputs_2(batch_size, sequence_length, embedding_dimension);
+    inputs_1.setRandom();
 
-    Tensor<type, 3> input(batch_size, input_size, depth);
-    Tensor<type, 3> context(batch_size, context_size, depth);
+    Tensor<type, 3> outputs = neural_network.calculate_outputs(inputs_1, inputs_2);
 
-    input.setRandom();
-    context.setRandom();
+    EXPECT_EQ(outputs.dimension(0), batch_size);
+    EXPECT_EQ(outputs.dimension(1), sequence_length);
+    EXPECT_EQ(outputs.dimension(2), embedding_dimension);
 
-    pair<type*, dimensions> input_pair = {input.data(), {batch_size, input_size, depth}};
-    pair<type*, dimensions> context_pair = {context.data(), {batch_size, context_size, depth}};
-
-    multihead_attention_layer.forward_propagate({input_pair, context_pair},
-                                                this_forward_propagation,
-                                                is_training);
-
-    pair<type*, dimensions> output_pair = this_forward_propagation->get_outputs_pair();
-
-    EXPECT_EQ(output_pair.second[0], batch_size);
-    EXPECT_EQ(output_pair.second[1], input_size);
-    EXPECT_EQ(output_pair.second[2], depth);
-    */
 }
 

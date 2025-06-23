@@ -45,7 +45,7 @@ int main()
 
         MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
 
-        cout << mean_squared_error.calculate_error_xxx() << endl;
+        cout << mean_squared_error.calculate_numerical_error() << endl;
 
         //cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 

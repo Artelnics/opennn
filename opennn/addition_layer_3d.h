@@ -19,7 +19,7 @@ class Addition3d : public Layer
 
 public:
 
-    Addition3d(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
+    Addition3d(const dimensions& = dimensions({0,0}), const string& = "addition_layer_3d");
 
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;

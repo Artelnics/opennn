@@ -14,12 +14,12 @@ namespace opennn
 {
 
 Dense3d::Dense3d(const Index& new_sequence_length,
-                 const Index& new_input_dimension,
-                 const Index& new_output_dimension,
+                 const Index& new_input_embedding,
+                 const Index& new_output_embedding,
                  const Dense3d::Activation& new_activation_function,
                  const string& new_name) : Layer()
 {
-    set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
+    set(new_sequence_length, new_input_embedding, new_output_embedding, new_activation_function, new_name);
 }
 
 
@@ -29,9 +29,15 @@ Index Dense3d::get_sequence_length() const
 }
 
 
-Index Dense3d::get_input_dimension() const
+Index Dense3d::get_input_embedding() const
 {
     return weights.dimension(0);
+}
+
+
+Index Dense3d::get_output_embedding() const
+{
+    return biases.size();
 }
 
 
@@ -41,15 +47,15 @@ void Dense3d::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-Index Dense3d::get_output_dimension() const
+dimensions Dense3d::get_input_dimensions() const
 {
-    return biases.size();
+    return { sequence_length, get_input_embedding() };
 }
 
 
 dimensions Dense3d::get_output_dimensions() const
 {
-    return { sequence_length, get_output_dimension() };
+    return { sequence_length, get_output_embedding() };
 }
 
 
@@ -147,13 +153,6 @@ void Dense3d::set_activation_function(const string& new_activation_function_name
 }
 
 
-void Dense3d::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-    weights.setConstant(value);
-}
-
-
 void Dense3d::set_parameters_random()
 {
     set_random(biases);
@@ -165,7 +164,7 @@ void Dense3d::set_parameters_glorot()
 {
     biases.setZero();
 
-    const type limit = sqrt(6 / type(get_input_dimension() + get_output_dimension()));
+    const type limit = sqrt(6 / type(get_input_embedding() + get_output_embedding()));
 
     set_random(weights, -limit, limit);
 }
@@ -298,8 +297,8 @@ void Dense3d::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
-    add_xml_element(printer, "InputsDepth", to_string(get_input_dimension()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimension()));
+    add_xml_element(printer, "InputsDepth", to_string(get_input_embedding()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
     add_xml_element(printer, "Activation", get_activation_function_string());
 
     Tensor<type, 1> parameters;
@@ -329,12 +328,12 @@ Dense3dForwardPropagation::Dense3dForwardPropagation(const Index& new_batch_size
 
 pair<type*, dimensions> Dense3dForwardPropagation::get_outputs_pair() const
 {
-    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
-    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
-    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
+    const Index sequence_length = dense_3d->get_sequence_length();
+    const Index output_embedding = dense_3d->get_output_embedding();
 
-    return { (type*)outputs.data(), { batch_size, sequence_length, output_dimension } };
+    return { (type*)outputs.data(), { batch_size, sequence_length, output_embedding } };
 }
 
 
@@ -342,17 +341,17 @@ void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_laye
 {
     layer = new_layer;
 
-    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     batch_size = new_batch_size;
 
-    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
+    const Index output_embedding = dense_3d->get_output_embedding();
 
-    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
+    const Index sequence_length = dense_3d->get_sequence_length();
 
-    outputs.resize(batch_size, sequence_length, output_dimension);
+    outputs.resize(batch_size, sequence_length, output_embedding);
 
-    activation_derivatives.resize(batch_size, sequence_length, output_dimension);
+    activation_derivatives.resize(batch_size, sequence_length, output_embedding);
 }
 
 
@@ -360,17 +359,17 @@ void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
-    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     batch_size = new_batch_size;
 
-    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
-    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
-    const Index input_dimension = perceptron_layer_3d->get_input_dimension();
+    const Index output_embedding = dense_3d->get_output_embedding();
+    const Index sequence_length = dense_3d->get_sequence_length();
+    const Index input_embedding = dense_3d->get_input_embedding();
 
-    bias_deltas.resize(output_dimension);
-    weight_deltas.resize(input_dimension, output_dimension);
-    input_deltas.resize(batch_size, sequence_length, input_dimension);
+    bias_deltas.resize(output_embedding);
+    weight_deltas.resize(input_embedding, output_embedding);
+    input_deltas.resize(batch_size, sequence_length, input_embedding);
 }
 
 
@@ -392,13 +391,12 @@ Dense3dBackPropagation::Dense3dBackPropagation(const Index& new_batch_size, Laye
 
 vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pairs() const
 {
-    Dense3d* perceptron_layer_3d = static_cast<Dense3d*>(layer);
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
-    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
-    const Index inputs_depth = perceptron_layer_3d->get_input_dimension();
+    const Index sequence_length = dense_3d->get_sequence_length();
+    const Index input_embedding = dense_3d->get_input_embedding();
 
-    return {{(type*)(input_deltas.data()),
-             {batch_size, sequence_length, inputs_depth}}};
+    return {{(type*)(input_deltas.data()), {batch_size, sequence_length, input_embedding}}};
 }
 
 }

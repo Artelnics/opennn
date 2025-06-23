@@ -513,13 +513,6 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 }
 
 
-void Convolutional::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-    weights.setConstant(value);
-}
-
-
 void Convolutional::set_parameters_random()
 {
     set_random(biases);

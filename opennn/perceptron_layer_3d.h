@@ -25,23 +25,19 @@ public:
                           RectifiedLinear,
                           Softmax};
 
-   Dense3d(const Index& = 0,
-           const Index& = 0,
-           const Index& = 0,
-           const Activation& = Dense3d::Activation::HyperbolicTangent,
-           const string& = "dense3d_layer");
+    Dense3d(const Index& = 0,
+            const Index& = 0,
+            const Index& = 0,
+            const Activation& = Dense3d::Activation::HyperbolicTangent,
+            const string& = "dense3d_layer");
 
-   Index get_sequence_length() const;
-   Index get_input_dimension() const;
-   Index get_output_dimension() const;
+    Index get_sequence_length() const;
+    Index get_input_embedding() const;
+    Index get_output_embedding() const;
 
    // @todo
 
-   dimensions get_input_dimensions() const override
-   {
-       throw runtime_error("XXX");
-   }
-
+   dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
 
    Index get_parameters_number() const override;
@@ -64,7 +60,6 @@ public:
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
-   void set_parameters_constant(const type&) override;
    void set_parameters_random() override;
    void set_parameters_glorot();
 
