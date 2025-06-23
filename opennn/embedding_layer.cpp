@@ -308,7 +308,7 @@ EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> EmbeddingForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> EmbeddingForwardPropagation::get_output_pair() const
 {
     const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 

@@ -290,6 +290,7 @@ struct BackPropagationLM
     Tensor<type, 2> regularization_hessian;
 };
 
+
 struct BackPropagation
 {
     BackPropagation(const Index& = 0, LossIndex* = nullptr);

@@ -258,7 +258,7 @@ Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Normalization3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Normalization3dForwardPropagation::get_output_pair() const
 {
     Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 

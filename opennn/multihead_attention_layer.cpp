@@ -702,7 +702,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     }
 
 
-    pair<type*, dimensions> MultiheadAttentionForwardPropagation::get_outputs_pair() const
+    pair<type*, dimensions> MultiheadAttentionForwardPropagation::get_output_pair() const
     {
         MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 

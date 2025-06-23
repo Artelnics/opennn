@@ -102,7 +102,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 
     convolutional_layer.forward_propagate({input_pair}, forward_propagation, true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
@@ -160,7 +160,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     convolutional_layer.forward_propagate({input_pair}, forward_propagation, true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     // Initialize deltas with ones (mock values for testing backpropagation)
     Tensor<type, 4> deltas(batch_size,

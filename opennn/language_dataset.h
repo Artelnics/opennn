@@ -20,6 +20,7 @@ class LanguageDataset : public Dataset
 public:
 
     LanguageDataset(const filesystem::path& = "");
+    LanguageDataset(const Index&, const Index&, const Index&);
 
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;

@@ -124,7 +124,7 @@ TEST(Dense2dTest, ForwardPropagate)
     Dense2dForwardPropagation* forward_propagation_ptr =
         static_cast<Dense2dForwardPropagation*>(forward_propagation.get());
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     const Tensor<type, 2> outputs = tensor_map<2>(output_pair);
 

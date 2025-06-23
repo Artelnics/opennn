@@ -132,7 +132,7 @@ Flatten3dForwardPropagation::Flatten3dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Flatten3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Flatten3dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

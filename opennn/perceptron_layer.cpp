@@ -532,7 +532,7 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
 }
 
 
-pair<type *, dimensions> Dense2dForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> Dense2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     

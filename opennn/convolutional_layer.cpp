@@ -719,7 +719,7 @@ ConvolutionalForwardPropagation::ConvolutionalForwardPropagation(const Index& ne
 }
 
 
-pair<type*, dimensions> ConvolutionalForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> ConvolutionalForwardPropagation::get_output_pair() const
 {
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 

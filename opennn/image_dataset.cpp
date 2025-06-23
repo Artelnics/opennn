@@ -318,7 +318,6 @@ Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &input_
 /*
     const dimensions input_dimensions = get_dimensions(Dataset::VariableUse::Input);
 
-
     const Index samples_number = input_dimensions[0];
 //    const Index input_height = input_dimensions[0];
 //    const Index input_width = input_dimensions[1];

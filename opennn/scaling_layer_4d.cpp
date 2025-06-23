@@ -39,6 +39,8 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
     layer_type = Type::Scaling4d;
 
     name = "scaling_layer_4d";
+
+    is_trainable = false;
 }
 
 
@@ -109,7 +111,7 @@ Scaling4dForwardPropagation::Scaling4dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Scaling4dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Scaling4dForwardPropagation::get_output_pair() const
 {
     const Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(layer);
 

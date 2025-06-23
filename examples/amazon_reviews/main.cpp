@@ -37,9 +37,11 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
+        language_dataset.print_data();
+/*
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
+        //neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
 
@@ -51,7 +53,7 @@ int main()
 
         //TrainingStrategy training_strategy(&neural_network, &language_dataset);
         //training_strategy.perform_training();
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

@@ -164,7 +164,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, false);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
@@ -221,7 +221,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     pooling_layer.back_propagate({ input_pair }, { output_pair }, forward_propagation, back_propagation);
 

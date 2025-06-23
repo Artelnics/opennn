@@ -107,7 +107,7 @@ struct Dense3dForwardPropagation : LayerForwardPropagation
 {
     Dense3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

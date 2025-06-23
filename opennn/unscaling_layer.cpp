@@ -218,6 +218,8 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_name)
     set_min_max_range(type(-1), type(1));
 
     layer_type = Type::Unscaling;
+
+    is_trainable = false;
 }
 
 
@@ -456,7 +458,7 @@ UnscalingForwardPropagation::UnscalingForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> UnscalingForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> UnscalingForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

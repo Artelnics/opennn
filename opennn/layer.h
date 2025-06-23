@@ -134,6 +134,11 @@ public:
 
     vector<string> get_default_output_names() const;
 
+    bool get_is_trainable() const
+    {
+        return is_trainable;
+    }
+
 protected:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
@@ -142,6 +147,8 @@ protected:
     string name = "layer";
 
     Type layer_type = Type::None;
+
+    bool is_trainable = true;
 
     Tensor<type, 2> empty_2;
     Tensor<type, 3> empty_3;
@@ -329,7 +336,7 @@ struct LayerForwardPropagation
 
     virtual void print() const {}
 
-    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+    virtual pair<type*, dimensions> get_output_pair() const = 0;
 
     Index batch_size = 0;
 

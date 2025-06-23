@@ -372,7 +372,7 @@ Probabilistic3DForwardPropagation::Probabilistic3DForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Probabilistic3DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Probabilistic3DForwardPropagation::get_output_pair() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
