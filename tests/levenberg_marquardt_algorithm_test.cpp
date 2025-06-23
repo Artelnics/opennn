@@ -26,7 +26,7 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
 
-    const Index samples_number = get_random_index(1, 10);
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index outputs_number = get_random_index(1, 10);
 

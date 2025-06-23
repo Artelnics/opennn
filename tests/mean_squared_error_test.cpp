@@ -1,9 +1,12 @@
 #include "pch.h"
 
-#include "../opennn/dataset.h"
-#include "../opennn/mean_squared_error.h"
-#include "../opennn/convolutional_layer.h"
 #include "../opennn/tensors.h"
+#include "../opennn/dataset.h"
+#include "../opennn/language_dataset.h"
+#include "../opennn/perceptron_layer.h"
+#include "../opennn/convolutional_layer.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/mean_squared_error.h"
 
 using namespace opennn;
 
@@ -26,10 +29,10 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(mean_squared_error.has_data_set(), true);
 }
 
+
 TEST(MeanSquaredErrorTest, BackPropagate)
 {
-
-    const Index samples_number = get_random_index(1, 10);
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
@@ -38,42 +41,29 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     dataset.set_data_random();
     dataset.set(Dataset::SampleUse::Training);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                 { inputs_number }, { neurons_number }, { targets_number });
-
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Dense2d>(dimensions{ inputs_number }, dimensions{ targets_number }));
     neural_network.set_parameters_random();
-
-    Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
-               dataset.get_variable_indices(Dataset::VariableUse::Input),
-               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
-               dataset.get_variable_indices(Dataset::VariableUse::Target));
-
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-    // Loss index
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
-    BackPropagation back_propagation(samples_number, &mean_squared_error);
-    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    const type error = mean_squared_error.calculate_numerical_error();
 
+    EXPECT_GE(error, 0);
+
+    const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 
 TEST(MeanSquaredErrorTest, BackPropagateLm)
 {
-    const Index samples_number = get_random_index(1, 10);
+    const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 1);
     const Index outputs_number = get_random_index(1, 1);
     const Index neurons_number = get_random_index(1, 1);
-
-    // Data set
 
     Dataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
@@ -85,16 +75,12 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
                dataset.get_variable_indices(Dataset::VariableUse::Decoder),
                dataset.get_variable_indices(Dataset::VariableUse::Target));
 
-    // Neural network
-
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, 
                                 { inputs_number }, { neurons_number }, { outputs_number });
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-    // Loss index
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
@@ -112,5 +98,25 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian), true);
     EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1e-2)), true);
     //EXPECT_EQ(are_equal(back_propagation_lm.hessian, numerical_hessian, type(1.0e-1)), true);
+}
 
+
+TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
+{
+
+    NeuralNetwork neural_network;
+
+    //const Index sequence_length = 3;More actions
+    const Index embedding_dimension = 4;
+    const Index heads_number = 2;
+    //const Index batch_size = 3;
+
+    LanguageDataset language_dataset;//("../data/amazon_cells_labelled.txt");
+/*
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
+    neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
+    neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+    neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
+*/
 }

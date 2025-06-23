@@ -80,7 +80,7 @@ string Recurrent::get_activation_function_string() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    time_steps = get_timesteps();
+    time_steps = new_input_dimensions[1];
 
     biases.resize(new_output_dimensions[0]);
 
@@ -157,18 +157,6 @@ void Recurrent::set_activation_function(const string& new_activation_function_na
 }
 
 
-void Recurrent::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-
-    input_weights.setConstant(value);
-
-    recurrent_weights.setConstant(value);
-
-    hidden_states.setZero();
-}
-
-
 void Recurrent::set_parameters_random()
 {
     set_random(biases);
@@ -212,6 +200,9 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
 
+    hidden_states.resize(batch_size, time_steps, input_size);
+    hidden_states.setZero();
+
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
     RecurrentLayerForwardPropagation* recurrent_forward =
@@ -220,6 +211,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
     Tensor<type, 2>& current_activations_derivatives = recurrent_forward->current_activations_derivatives;
+
+    outputs.resize(batch_size, input_size);
 
     for(Index t = 0; t < time_steps; t++)
     {
@@ -290,7 +283,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         {
             recurrent_weight_deltas.device(*thread_pool_device) +=
                 hidden_states.chip(t-1,1)
-                            .contract(combination_deltas, axes(0,0));
+                    .contract(combination_deltas, axes(0,0));
 
             current_combinations_derivatives.device(*thread_pool_device) =
                 combination_deltas.contract(recurrent_weights, axes(1,0));
@@ -303,7 +296,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         input_deltas.chip(t,1).device(*thread_pool_device) =
             combination_deltas.contract(
                 input_weights.shuffle(array<Index,2>{{1,0}}),
-            axes(1,0));
+                axes(1,0));
     }
 }
 

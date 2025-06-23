@@ -24,8 +24,6 @@ ImageDataset::ImageDataset(const Index& new_samples_number,
     if (new_target_dimensions.size() != 1)
         throw runtime_error("Target dimensions is not 1");
 
-    model_type = ModelType::ImageClassification;
-
     set(new_samples_number, new_input_dimensions, new_target_dimensions);
 }
 

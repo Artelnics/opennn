@@ -51,7 +51,7 @@ public:
    void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   void set_parameters_constant(const type&) override;
+   
    void set_parameters_random() override;
 
    void calculate_combinations(const Tensor<type, 2>&,

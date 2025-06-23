@@ -99,7 +99,7 @@ public:
 
     // Initialization
 
-    void set_parameters_constant(const type&) override;
+    
 
     void set_parameters_random() override;
 
