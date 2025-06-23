@@ -339,8 +339,8 @@ class TensorExecutor<Expression, ThreadPoolDevice, Vectorizable,
       auto eval_block = [&device, &evaluator, &tiling](IndexType firstBlockIdx, IndexType lastBlockIdx) {
         TensorBlockScratch scratch(device);
 
-        for (IndexType blockernel_index = firstBlockIdx; blockernel_index < lastBlockIdx; ++blockernel_index) {
-          TensorBlockDesc desc = tiling.block_mapper.blockDescriptor(blockernel_index);
+        for (IndexType block_idx = firstBlockIdx; block_idx < lastBlockIdx; ++block_idx) {
+          TensorBlockDesc desc = tiling.block_mapper.blockDescriptor(block_idx);
           evaluator.evalBlock(desc, scratch);
           scratch.reset();
         }
@@ -352,7 +352,7 @@ class TensorExecutor<Expression, ThreadPoolDevice, Vectorizable,
         TensorBlockDesc desc(0, tiling.block_mapper.blockDimensions());
         evaluator.evalBlock(desc, scratch);
       } else {
-        device.parallelFor(tiling.block_mapper.blockCount(), tiling.cost, eval_block);
+        device.parallelFor(tiling.block_mapper.blockCount(), tiling.cost, std::move(eval_block));
       }
     }
     evaluator.cleanup();
@@ -432,8 +432,8 @@ class TensorAsyncExecutor<Expression, ThreadPoolDevice, DoneCallback, Vectorizab
       auto eval_block = [ctx](IndexType firstBlockIdx, IndexType lastBlockIdx) {
         TensorBlockScratch scratch(ctx->device);
 
-        for (IndexType blockernel_index = firstBlockIdx; blockernel_index < lastBlockIdx; ++blockernel_index) {
-          TensorBlockDesc desc = ctx->tiling.block_mapper.blockDescriptor(blockernel_index);
+        for (IndexType block_idx = firstBlockIdx; block_idx < lastBlockIdx; ++block_idx) {
+          TensorBlockDesc desc = ctx->tiling.block_mapper.blockDescriptor(block_idx);
           ctx->evaluator.evalBlock(desc, scratch);
           scratch.reset();
         }

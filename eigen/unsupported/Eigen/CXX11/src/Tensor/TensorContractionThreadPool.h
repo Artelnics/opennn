@@ -932,7 +932,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
         kernel(m, n, k, use_thread_local);
       } else {
         eigen_assert(!use_thread_local);
-        device_.enqueueNoNotification([this, m, n, k, use_thread_local]() { 
+        device_.enqueue([this, m, n, k, use_thread_local]() { 
             kernel(m, n, k, use_thread_local); 
           });
       }
@@ -982,7 +982,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
       } else {
         while (end - start > 1) {
           Index mid = (start + end) / 2;
-          device_.enqueueNoNotification([this, mid, end, k, rhs]() { 
+          device_.enqueue([this, mid, end, k, rhs]() { 
               enqueue_packing_helper(mid, end, k, rhs);
             });
           end = mid;
@@ -1000,7 +1000,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
                           (k > 0 || std::this_thread::get_id() == created_by_thread_id_);
 
         if (pack_async) {
-          device_.enqueueNoNotification([this, start, end, k, rhs]() { 
+          device_.enqueue([this, start, end, k, rhs]() { 
               enqueue_packing_helper(start, end, k, rhs);
             });
         } else {
@@ -1059,8 +1059,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
       }
 
       // Allocate temporary buffers for each block.
-      for (Index blockernel_index = 0; blockernel_index < num_blocks; ++blockernel_index) {
-        Scalar* buf = blockernel_index == 0 ? result : static_cast<Scalar*>(evaluator->m_device.allocate(buffer_size_bytes));
+      for (Index block_idx = 0; block_idx < num_blocks; ++block_idx) {
+        Scalar* buf = block_idx == 0 ? result : static_cast<Scalar*>(evaluator->m_device.allocate(buffer_size_bytes));
         block_buffers.emplace_back(buf);
       }
     }
@@ -1147,15 +1147,15 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     MaxSizeVector<Scalar*> block_buffers;  // [0, num_blocks)
 
     template <int Alignment>
-    void processBlock(Index blockernel_index, Index begin, Index end) {
-      Scalar* buf = block_buffers[blockernel_index];
+    void processBlock(Index block_idx, Index begin, Index end) {
+      Scalar* buf = block_buffers[block_idx];
 
       TENSOR_CONTRACTION_DISPATCH(evaluator->template evalGemmPartialWithoutOutputKernel, Alignment,
                                   (buf, begin, end,
                                    /*num_threads=*/internal::convert_index<int>(num_blocks)));
 
       // Check if it was the last task in l0 range.
-      const Index l0_index = blockernel_index / l0_size;
+      const Index l0_index = block_idx / l0_size;
       const int v = l0_state[l0_index].fetch_sub(1);
       eigen_assert(v >= 1);
 
@@ -1163,20 +1163,20 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
       // partial results into the first block of the range.
       if (v == 1) {
         const Index rng_size = actualRangeSize(l0_ranges, l0_size, l0_index);
-        const Index dst_blockernel_index = l0_index * l0_size;
+        const Index dst_block_idx = l0_index * l0_size;
 
         if (rng_size == l0_size) {
           addAllToBuffer<Alignment>(m * n,
-                                    /*source_buf0=*/block_buffers[dst_blockernel_index + 1],
-                                    /*source_buf1=*/block_buffers[dst_blockernel_index + 2],
-                                    /*source_buf2=*/block_buffers[dst_blockernel_index + 3],
-                                    /*dst_buf= */ block_buffers[dst_blockernel_index]);
+                                    /*src_buf0=*/block_buffers[dst_block_idx + 1],
+                                    /*src_buf1=*/block_buffers[dst_block_idx + 2],
+                                    /*src_buf2=*/block_buffers[dst_block_idx + 3],
+                                    /*dst_buf= */ block_buffers[dst_block_idx]);
         } else {
           // Aggregate blocks of potentially incomplete last range.
           for (int i = 1; i < rng_size; ++i) {
             addToBuffer<Alignment>(m * n,
-                                   /*source_buf=*/block_buffers[dst_blockernel_index + i],
-                                   /*dst_buf=*/block_buffers[dst_blockernel_index]);
+                                   /*src_buf=*/block_buffers[dst_block_idx + i],
+                                   /*dst_buf=*/block_buffers[dst_block_idx]);
           }
         }
       }
@@ -1189,9 +1189,9 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
       for (; l0_index + 2 < l0_ranges; l0_index += 3) {
         addAllToBuffer<Alignment>(m * n,
-                                  /*source_buf0=*/block_buffers[(l0_index + 0) * l0_size],
-                                  /*source_buf1=*/block_buffers[(l0_index + 1) * l0_size],
-                                  /*source_buf2=*/block_buffers[(l0_index + 2) * l0_size],
+                                  /*src_buf0=*/block_buffers[(l0_index + 0) * l0_size],
+                                  /*src_buf1=*/block_buffers[(l0_index + 1) * l0_size],
+                                  /*src_buf2=*/block_buffers[(l0_index + 2) * l0_size],
                                   /*dst_buf= */ block_buffers[0]);
       }
 
@@ -1207,8 +1207,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     }
 
     // Compute block size with accounting for potentially incomplete last block.
-    Index actualBlockSize(Index blockernel_index) const {
-      return blockernel_index + 1 < num_blocks ? block_size : k + block_size - block_size * num_blocks;
+    Index actualBlockSize(Index block_idx) const {
+      return block_idx + 1 < num_blocks ? block_size : k + block_size - block_size * num_blocks;
     };
 
     // Compute range size with accounting for potentially incomplete last range.
@@ -1218,24 +1218,24 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     };
 
     template <int Alignment>
-    EIGEN_STRONG_INLINE static void addToBuffer(size_t n, const Scalar* source_buf, Scalar* tgt_buf) {
+    EIGEN_STRONG_INLINE static void addToBuffer(size_t n, const Scalar* src_buf, Scalar* tgt_buf) {
       const int output_packet_size = internal::unpacket_traits<PacketReturnType>::size;
       size_t i = 0;
       const size_t num_packets = n / output_packet_size;
       for (; i < output_packet_size * num_packets; i += output_packet_size) {
-        const PacketReturnType source_val = internal::pload<PacketReturnType>(source_buf + i);
+        const PacketReturnType src_val = internal::pload<PacketReturnType>(src_buf + i);
         const PacketReturnType tgt_val = internal::ploadt<PacketReturnType, Alignment>(tgt_buf + i);
-        const PacketReturnType sum = internal::padd(source_val, tgt_val);
+        const PacketReturnType sum = internal::padd(src_val, tgt_val);
         internal::pstoret<Scalar, PacketReturnType, Alignment>(tgt_buf + i, sum);
       }
       for (; i < n; ++i) {
-        tgt_buf[i] += source_buf[i];
+        tgt_buf[i] += src_buf[i];
       }
     }
 
     template <int Alignment>
-    EIGEN_STRONG_INLINE static void addAllToBuffer(size_t n, const Scalar* source_buf0, const Scalar* source_buf1,
-                                                   const Scalar* source_buf2, Scalar* dst_buf) {
+    EIGEN_STRONG_INLINE static void addAllToBuffer(size_t n, const Scalar* src_buf0, const Scalar* src_buf1,
+                                                   const Scalar* src_buf2, Scalar* dst_buf) {
       using ::Eigen::internal::padd;
       using ::Eigen::internal::pload;
       using ::Eigen::internal::ploadt;
@@ -1246,55 +1246,55 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
       size_t i = 0;
       const size_t num_packets = n / output_packet_size;
       for (; i < output_packet_size * num_packets; i += output_packet_size) {
-        const auto source_val0 = pload<PacketReturnType>(source_buf0 + i);
-        const auto source_val1 = pload<PacketReturnType>(source_buf1 + i);
-        const auto source_val2 = pload<PacketReturnType>(source_buf2 + i);
+        const auto src_val0 = pload<PacketReturnType>(src_buf0 + i);
+        const auto src_val1 = pload<PacketReturnType>(src_buf1 + i);
+        const auto src_val2 = pload<PacketReturnType>(src_buf2 + i);
 
         const auto dst_val = ploadt<PacketReturnType, Alignment>(dst_buf + i);
-        const auto sum = padd(padd(dst_val, source_val0), padd(source_val1, source_val2));
+        const auto sum = padd(padd(dst_val, src_val0), padd(src_val1, src_val2));
 
         pstoret<Scalar, PacketReturnType, Alignment>(dst_buf + i, sum);
       }
       for (; i < n; ++i) {
-        dst_buf[i] += source_buf0[i] + source_buf1[i] + source_buf2[i];
+        dst_buf[i] += src_buf0[i] + src_buf1[i] + src_buf2[i];
       }
     }
 
     template <int Alignment>
-    void eval(Barrier& barrier, Index start_blockernel_index, Index end_blockernel_index) {
-      while (end_blockernel_index - start_blockernel_index > 1) {
-        Index mid_blockernel_index = (start_blockernel_index + end_blockernel_index) / 2;
-        evaluator->m_device.enqueueNoNotification([this, &barrier, mid_blockernel_index, end_blockernel_index]() {
-          eval<Alignment>(barrier, mid_blockernel_index, end_blockernel_index);
+    void eval(Barrier& barrier, Index start_block_idx, Index end_block_idx) {
+      while (end_block_idx - start_block_idx > 1) {
+        Index mid_block_idx = (start_block_idx + end_block_idx) / 2;
+        evaluator->m_device.enqueue([this, &barrier, mid_block_idx, end_block_idx]() {
+          eval<Alignment>(barrier, mid_block_idx, end_block_idx);
         });
-        end_blockernel_index = mid_blockernel_index;
+        end_block_idx = mid_block_idx;
       }
 
-      Index blockernel_index = start_blockernel_index;
-      Index block_start = blockernel_index * block_size;
-      Index block_end = block_start + actualBlockSize(blockernel_index);
+      Index block_idx = start_block_idx;
+      Index block_start = block_idx * block_size;
+      Index block_end = block_start + actualBlockSize(block_idx);
 
-      processBlock<Alignment>(blockernel_index, block_start, block_end);
+      processBlock<Alignment>(block_idx, block_start, block_end);
       barrier.Notify();
     }
 
     template <int Alignment>
-    void evalAsync(Index start_blockernel_index, Index end_blockernel_index) {
-      while (end_blockernel_index - start_blockernel_index > 1) {
-        Index mid_blockernel_index = (start_blockernel_index + end_blockernel_index) / 2;
-        evaluator->m_device.enqueueNoNotification(
-            [this, mid_blockernel_index, end_blockernel_index]() { 
-              evalAsync<Alignment>(mid_blockernel_index, end_blockernel_index);
+    void evalAsync(Index start_block_idx, Index end_block_idx) {
+      while (end_block_idx - start_block_idx > 1) {
+        Index mid_block_idx = (start_block_idx + end_block_idx) / 2;
+        evaluator->m_device.enqueue(
+            [this, mid_block_idx, end_block_idx]() { 
+              evalAsync<Alignment>(mid_block_idx, end_block_idx);
             });
-        end_blockernel_index = mid_blockernel_index;
+        end_block_idx = mid_block_idx;
       }
 
-      Index blockernel_index = start_blockernel_index;
+      Index block_idx = start_block_idx;
 
-      Index block_start = blockernel_index * block_size;
-      Index block_end = block_start + actualBlockSize(blockernel_index);
+      Index block_start = block_idx * block_size;
+      Index block_end = block_start + actualBlockSize(block_idx);
 
-      processBlock<Alignment>(blockernel_index, block_start, block_end);
+      processBlock<Alignment>(block_idx, block_start, block_end);
 
       int v = num_pending_blocks.fetch_sub(1);
       eigen_assert(v >= 1);

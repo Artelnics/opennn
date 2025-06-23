@@ -558,11 +558,15 @@ struct functor_traits<scalar_sqrt_op<bool>> {
 template <typename Scalar>
 struct scalar_cbrt_op {
   EIGEN_DEVICE_FUNC inline const Scalar operator()(const Scalar& a) const { return numext::cbrt(a); }
+  template <typename Packet>
+  EIGEN_DEVICE_FUNC inline Packet packetOp(const Packet& a) const {
+    return internal::pcbrt(a);
+  }
 };
 
 template <typename Scalar>
 struct functor_traits<scalar_cbrt_op<Scalar>> {
-  enum { Cost = 5 * NumTraits<Scalar>::MulCost, PacketAccess = false };
+  enum { Cost = 20 * NumTraits<Scalar>::MulCost, PacketAccess = packet_traits<Scalar>::HasCbrt };
 };
 
 /** \internal

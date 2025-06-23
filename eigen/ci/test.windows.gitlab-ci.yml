@@ -6,9 +6,11 @@
   after_script:
     - ./ci/scripts/test.windows.after_script.ps1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-  tags: 
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_MERGE_REQUEST_LABELS =~ "/all-tests/"
+
+  tags:
     - eigen-runner
     - windows
     - x86-64
@@ -62,7 +64,7 @@ test:windows:x86-64:msvc-14.29:avx2:unsupported:
 .test:windows:x86-64:msvc-14.29:avx512dq:
   extends: .test:windows
   needs: [ build:windows:x86-64:msvc-14.29:avx512dq ]
-  tags: 
+  tags:
     - eigen-runner
     - windows
     - x86-64
@@ -84,7 +86,7 @@ test:windows:x86-64:msvc-14.29:avx512dq:unsupported:
   allow_failure: true
   variables:
     EIGEN_CI_CTEST_LABEL: gpu
-  tags: 
+  tags:
     - eigen-runner
     - windows
     - x86-64
@@ -95,12 +97,12 @@ test:windows:x86-64:msvc-14.29:avx512dq:unsupported:
 # test:windows:x86-64:cuda-9.2:msvc-14.16:
 #   extends: .test:windows:cuda
 #   needs: [ build:windows:x86-64:cuda-9.2:msvc-14.16 ]
-  
+
 # MSVC 14.29 + CUDA 10.2
 test:windows:x86-64:cuda-10.2:msvc-14.29:
   extends: .test:windows:cuda
   needs: [ build:windows:x86-64:cuda-10.2:msvc-14.29 ]
-  
+
 # MSVC 14.29 + CUDA 11.4
 test:windows:x86-64:cuda-11.4:msvc-14.29:
   extends: .test:windows:cuda

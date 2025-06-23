@@ -258,8 +258,8 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
   /** \brief Moves the matrix into the other one.
    *
    */
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix& operator=(Matrix&& other)
-      EIGEN_NOEXCEPT_IF(std::is_nothrow_move_assignable<Scalar>::value) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix& operator=(Matrix&& other) noexcept(
+      std::is_nothrow_move_assignable<Scalar>::value) {
     Base::operator=(std::move(other));
     return *this;
   }
@@ -393,8 +393,8 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
   template <typename OtherDerived>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Matrix(const EigenBase<OtherDerived>& other) : Base(other.derived()) {}
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index innerStride() const EIGEN_NOEXCEPT { return 1; }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index outerStride() const EIGEN_NOEXCEPT { return this->innerSize(); }
+  EIGEN_DEVICE_FUNC constexpr Index innerStride() const noexcept { return 1; }
+  EIGEN_DEVICE_FUNC constexpr Index outerStride() const noexcept { return this->innerSize(); }
 
   /////////// Geometry module ///////////
 

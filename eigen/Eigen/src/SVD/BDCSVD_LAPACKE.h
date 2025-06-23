@@ -58,7 +58,8 @@ class BDCSVD_LAPACKE : public BDCSVD<MatrixType_, Options> {
   // construct this by moving from a parent object
   BDCSVD_LAPACKE(SVD&& svd) : SVD(std::move(svd)) {}
 
-  void compute_impl_lapacke(const MatrixType& matrix, unsigned int computationOptions) {
+  template <typename Derived>
+  void compute_impl_lapacke(const MatrixBase<Derived>& matrix, unsigned int computationOptions) {
     SVD::allocate(matrix.rows(), matrix.cols(), computationOptions);
 
     SVD::m_nonzeroSingularValues = SVD::m_diagSize;
@@ -120,8 +121,8 @@ class BDCSVD_LAPACKE : public BDCSVD<MatrixType_, Options> {
   }
 };
 
-template <typename MatrixType_, int Options>
-BDCSVD<MatrixType_, Options>& BDCSVD_wrapper(BDCSVD<MatrixType_, Options>& svd, const MatrixType_& matrix,
+template <typename MatrixType_, int Options, typename Derived>
+BDCSVD<MatrixType_, Options>& BDCSVD_wrapper(BDCSVD<MatrixType_, Options>& svd, const MatrixBase<Derived>& matrix,
                                              int computationOptions) {
   // we need to move to the wrapper type and back
   BDCSVD_LAPACKE<MatrixType_, Options> tmpSvd(std::move(svd));
@@ -134,12 +135,13 @@ BDCSVD<MatrixType_, Options>& BDCSVD_wrapper(BDCSVD<MatrixType_, Options>& svd, 
 
 }  // end namespace internal
 
-#define EIGEN_LAPACKE_SDD(EIGTYPE, EIGCOLROW, OPTIONS)                                                                 \
-  template <>                                                                                                          \
-  inline BDCSVD<Matrix<EIGTYPE, Dynamic, Dynamic, EIGCOLROW, Dynamic, Dynamic>, OPTIONS>&                              \
-  BDCSVD<Matrix<EIGTYPE, Dynamic, Dynamic, EIGCOLROW, Dynamic, Dynamic>, OPTIONS>::compute_impl(                       \
-      const Matrix<EIGTYPE, Dynamic, Dynamic, EIGCOLROW, Dynamic, Dynamic>& matrix, unsigned int computationOptions) { \
-    return internal::lapacke_helpers::BDCSVD_wrapper(*this, matrix, computationOptions);                               \
+#define EIGEN_LAPACKE_SDD(EIGTYPE, EIGCOLROW, OPTIONS)                                           \
+  template <>                                                                                    \
+  template <typename Derived>                                                                    \
+  inline BDCSVD<Matrix<EIGTYPE, Dynamic, Dynamic, EIGCOLROW, Dynamic, Dynamic>, OPTIONS>&        \
+  BDCSVD<Matrix<EIGTYPE, Dynamic, Dynamic, EIGCOLROW, Dynamic, Dynamic>, OPTIONS>::compute_impl( \
+      const MatrixBase<Derived>& matrix, unsigned int computationOptions) {                      \
+    return internal::lapacke_helpers::BDCSVD_wrapper(*this, matrix, computationOptions);         \
   }
 
 #define EIGEN_LAPACK_SDD_OPTIONS(OPTIONS)        \

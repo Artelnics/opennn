@@ -10,19 +10,11 @@
 #include "main.h"
 
 template <typename MatrixType>
-void matrixVisitor(const MatrixType& p) {
+void matrixVisitor_impl(MatrixType& m) {
   typedef typename MatrixType::Scalar Scalar;
 
-  Index rows = p.rows();
-  Index cols = p.cols();
-
-  // construct a random matrix where all coefficients are different
-  MatrixType m;
-  m = MatrixType::Random(rows, cols);
-  for (Index i = 0; i < m.size(); i++)
-    for (Index i2 = 0; i2 < i; i2++)
-      while (numext::equal_strict(m(i), m(i2)))  // yes, strict equality
-        m(i) = internal::random<Scalar>();
+  Index rows = m.rows();
+  Index cols = m.cols();
 
   Scalar minc = Scalar(1000), maxc = Scalar(-1000);
   Index minrow = 0, mincol = 0, maxrow = 0, maxcol = 0;
@@ -118,6 +110,22 @@ void matrixVisitor(const MatrixType& p) {
     VERIFY((numext::isnan)(eigen_minc));
     VERIFY((numext::isnan)(eigen_maxc));
   }
+}
+template <typename MatrixType>
+void matrixVisitor(const MatrixType& p) {
+  MatrixType m(p.rows(), p.cols());
+  // construct a random matrix where all coefficients are different
+  m.setRandom();
+  for (Index i = 0; i < m.size(); i++)
+    for (Index i2 = 0; i2 < i; i2++)
+      while (numext::equal_strict(m(i), m(i2)))  // yes, strict equality
+        m(i) = internal::random<typename DenseBase<MatrixType>::Scalar>();
+  MatrixType n = m;
+  matrixVisitor_impl(m);
+  // force outer-inner access pattern
+  using BlockType = Block<MatrixType, Dynamic, Dynamic>;
+  BlockType m_block = n.block(0, 0, n.rows(), n.cols());
+  matrixVisitor_impl(m_block);
 }
 
 template <typename VectorType>

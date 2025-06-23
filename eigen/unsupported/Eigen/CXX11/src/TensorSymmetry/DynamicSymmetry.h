@@ -106,7 +106,7 @@ class DynamicSGroup {
     int one;
     int two;
     int flags;
-    constexpr inline Generator(int one_, int two_, int flags_) : one(one_), two(two_), flags(flags_) {}
+    constexpr Generator(int one_, int two_, int flags_) : one(one_), two(two_), flags(flags_) {}
   };
 
   std::size_t m_numIndices;
