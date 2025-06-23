@@ -330,3 +330,56 @@ void divide_subtract(const size_t& n, type* parameters, const type* numerator, c
 {
     divide_subtract_kernel << <(n + 255) / 256, 256 >> > (n, parameters, numerator, denominator);
 }
+
+
+__global__ void update_parameters_kernel(
+    const int n,
+    float* parameters,
+    float* m,
+    float* v,
+    const float* gradient,
+    const float beta1,
+    const float beta2,
+    const float effective_lr,
+    const float epsilon)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+
+    float gi = gradient[i];
+    float mi = beta1 * m[i] + (1.0f - beta1) * gi;
+    m[i] = mi;
+
+    float vi = beta2 * v[i] + (1.0f - beta2) * gi * gi;
+    v[i] = vi;
+
+    float denom = sqrtf(vi) + epsilon;
+    float delta = effective_lr * mi / denom;
+    parameters[i] -= delta;
+}
+
+void update_parameters_device(
+    const size_t& n,
+    float* parameters,
+    float* m,
+    float* v,
+    const float* gradient,
+    const float beta1,
+    const float beta2,
+    const float effective_lr,
+    const float epsilon)
+{
+    int grid = (static_cast<int>(n) + 255) / 256;
+    update_parameters_kernel<<<grid, 256>>>(
+        static_cast<int>(n),
+        parameters,
+        m,
+        v,
+        gradient,
+        beta1,
+        beta2,
+        effective_lr,
+        epsilon
+    );
+}
+
