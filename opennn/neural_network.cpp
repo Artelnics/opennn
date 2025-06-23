@@ -349,7 +349,6 @@ void NeuralNetwork::set_forecasting(const dimensions& input_dimensions,
                                     const dimensions& complexity_dimensions, 
                                     const dimensions& output_dimensions)
 {
-
     add_layer(make_unique<Scaling2d>(input_dimensions));
 
     add_layer(make_unique<Recurrent>(get_output_dimensions(),

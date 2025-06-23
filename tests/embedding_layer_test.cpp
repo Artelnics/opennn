@@ -21,22 +21,24 @@ TEST(Embedding, DefaultConstructor)
 
 
 TEST(Embedding, GeneralConstructor)
-{
-    const Index vocabulary_size = 1;
-    const Index sequence_length = 2;
-    const Index embedding_dimension = 3;
+{    
+    const dimensions input_dimensions = {1, 2, 3};
 
-    Embedding embedding_layer({ vocabulary_size, sequence_length }, embedding_dimension);
+    const Index vocabulary_size = input_dimensions[0];
+    const Index sequence_length = input_dimensions[1];
+    const Index embedding_dimension = input_dimensions[2];
 
-    EXPECT_EQ(embedding_layer.get_vocabulary_size(), 1);
-    EXPECT_EQ(embedding_layer.get_sequence_length(), 2);
-    EXPECT_EQ(embedding_layer.get_embedding_dimension(), 3);
+    Embedding embedding_layer({vocabulary_size, sequence_length}, embedding_dimension);
+
+    EXPECT_EQ(embedding_layer.get_vocabulary_size(), vocabulary_size);
+    EXPECT_EQ(embedding_layer.get_sequence_length(), sequence_length);
+    EXPECT_EQ(embedding_layer.get_embedding_dimension(), embedding_dimension);
 }
 
 
 TEST(Embedding, ForwardPropagate)
 {
-    const Index samples_number = get_random_index(2, 10);
+    const Index samples_number = get_random_index(1, 10);
     const Index vocabulary_size = get_random_index(1, 10);
     const Index sequence_length = get_random_index(1, 10);
     const Index embedding_dimension = get_random_index(1, 10);
@@ -44,7 +46,7 @@ TEST(Embedding, ForwardPropagate)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Embedding>(dimensions({ vocabulary_size, sequence_length }), embedding_dimension));
 
-    Embedding embedding_layer({ vocabulary_size, sequence_length }, embedding_dimension);
+    Embedding embedding_layer({vocabulary_size, sequence_length}, embedding_dimension);
     embedding_layer.set_parameters_random();
 
     Tensor<type, 2> inputs(samples_number, sequence_length);

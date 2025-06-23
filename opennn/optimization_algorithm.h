@@ -168,7 +168,7 @@ struct TrainingResults
 
     string write_stopping_condition() const;
 
-    type get_training_error();
+    type get_training_error() const;
 
     type get_selection_error() const;
 

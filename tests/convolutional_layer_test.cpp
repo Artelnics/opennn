@@ -30,7 +30,9 @@ struct ConvolutionalLayerConfig {
     Tensor<type, 4> expected_output;
 };
 
+
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
+
 
 INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
@@ -75,6 +77,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
 }
 
 
+// @todo -> crash in forward_propagation
 TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 {
 /*

@@ -52,7 +52,6 @@ TEST(Dense2dTest, Combinations)
 
 TEST(Dense2dTest, Activations)
 {
-/*
     Dense2d perceptron_layer({ 1 }, { 1 });
     perceptron_layer.set_parameters_random();
 
@@ -93,51 +92,49 @@ TEST(Dense2dTest, Activations)
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
-*/
 }
 
 
 TEST(Dense2dTest, ForwardPropagate)
 {
-    const Index batch_size = get_random_index(2, 10);
-    const Index inputs_number = get_random_index(1, 10);
-    const Index neurons_number = get_random_index(1, 10);
+    const Index batch_size = 2;
+    const Index inputs_number = 2;
+    const Index neurons_number = 2;
+    const Index outputs_number = 2;
 
-    Dense2d dense_2d({ inputs_number }, { neurons_number }, Dense2d::Activation::Linear);
-    dense_2d.set_parameters_random();
+    bool is_training = true;
 
     Tensor<type, 2> inputs(batch_size, inputs_number);
-    inputs.setRandom();
+    inputs.setConstant(1);
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<Dense2d>(dimensions{ inputs_number }, dimensions{ neurons_number }, Dense2d::Activation::Linear));
-/*
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<Dense2dForwardPropagation>(samples_number, &perceptron_layer);
+    Dense2d dense2d_layer(
+        {inputs_number},
+        {outputs_number},
+        Dense2d::Activation::Linear);
+    dense2d_layer.set_parameters_random();
 
-    const pair<type*, dimensions> input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+    unique_ptr<LayerForwardPropagation> forward_propagate =
+        make_unique<Dense2dForwardPropagation>(batch_size, &dense2d_layer);
 
-    perceptron_layer.forward_propagate({input_pairs},
-                                        forward_propagation,
-                                        is_training);
+    dense2d_layer.forward_propagate(
+        { { inputs.data(), dimensions{batch_size, inputs_number} } },
+        forward_propagate,
+        is_training);
 
-    Dense2dForwardPropagation* forward_propagation_ptr =
-        static_cast<Dense2dForwardPropagation*>(forward_propagation.get());
+    Dense2dForwardPropagation* forward_ptr =
+        static_cast<Dense2dForwardPropagation*>(forward_propagate.get());
 
+<<<<<<< HEAD
     pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
+=======
+    const Tensor<type, 2>& outputs = forward_ptr->outputs;
+    const Tensor<type, 2>& activation_derivatives = forward_ptr->activation_derivatives;
+>>>>>>> f2ec3fa0d (wip)
 
-    const Tensor<type, 2> outputs = tensor_map<2>(output_pair);
+    EXPECT_EQ(dense2d_layer.get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(dense2d_layer.get_input_dimensions(), dimensions({inputs_number}));
+    EXPECT_EQ(dense2d_layer.get_output_dimensions(), dimensions({outputs_number}));
 
-    EXPECT_NEAR(outputs(0, 0), type(3), type(1e-3));
-    EXPECT_NEAR(outputs(0, 1), type(3), type(1e-3));
-    EXPECT_NEAR(outputs(1, 0), type(3), type(1e-3));
-    EXPECT_NEAR(outputs(1, 1), type(3), type(1e-3));
-
-    Tensor<type, 2> activation_derivatives = forward_propagation_ptr->activation_derivatives;
-
-    EXPECT_NEAR(abs(activation_derivatives(0, 0)), type(1), type(1e-3));
-    EXPECT_NEAR(abs(activation_derivatives(0, 1)), type(1), type(1e-3));
-    EXPECT_NEAR(abs(activation_derivatives(1, 0)), type(1), type(1e-3));
-    EXPECT_NEAR(abs(activation_derivatives(1, 1)), type(1), type(1e-3));
-*/
+    EXPECT_NEAR(abs(activation_derivatives(0,0)), type(1), type(1e-3));
 }
+
