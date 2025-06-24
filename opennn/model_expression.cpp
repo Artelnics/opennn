@@ -136,8 +136,8 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
     fix_input_names(input_names);
     fix_output_names(output_names);
 */
-    const Index inputs_number = neural_network.get_inputs_number();
-    const Index outputs_number = neural_network.get_outputs_number();
+    const size_t inputs_number = neural_network.get_inputs_number();
+    const size_t outputs_number = neural_network.get_outputs_number();
 
     // int cell_states_counter = 0;
     // int hidden_state_counter = 0;
@@ -185,7 +185,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
          {"ExponentialLinear", &ExpLinear},
          {"SELU", &SExpLinear}};
 
-    const Index lines_number = lines.size();
+    const auto lines_number = lines.size();
 
     vector<string> variable_names;
 
@@ -410,8 +410,8 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     vector<string> input_names =  neural_network.get_input_names();
     vector<string> output_names = neural_network.get_output_names();
 
-    const Index inputs_number = neural_network.get_inputs_number();
-    const Index outputs_number = neural_network.get_outputs_number();
+    const size_t inputs_number = neural_network.get_inputs_number();
+    const size_t outputs_number = neural_network.get_outputs_number();
 
     bool logistic     = false;
     bool ReLU         = false;
@@ -445,7 +445,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
         lines.push_back(line);
     }
 
-    const Index lines_number = lines.size();
+    const auto lines_number = lines.size();
 
     string word;
 
@@ -802,8 +802,8 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             output_names.push_back(raw_variable.name);
 
 
-    const Index inputs_number = input_names.size();
-    const Index outputs_number = output_names.size();
+    const auto inputs_number = input_names.size();
+    const auto outputs_number = output_names.size();
 
     vector<string> fixes_input_names = fix_input_names(input_names);
     vector<string> fixes_output_names = fix_output_names(output_names);
@@ -1303,8 +1303,8 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     vector<string> original_inputs = neural_network.get_input_names();
     vector<string> outputs = neural_network.get_output_names();
 
-    const Index inputs_number = inputs.size();
-    const Index outputs_number = outputs.size();
+    const auto inputs_number = inputs.size();
+    const auto outputs_number = outputs.size();
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
@@ -1315,7 +1315,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     buffer << write_header_python();
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\t" << i << ") " << inputs[i] << endl;
 
     buffer << write_subheader_python();
@@ -1462,7 +1462,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     string new_word;
     string key_word ;
 
-    const Index lines_number = lines.size();
+    const auto lines_number = lines.size();
 
     for(size_t i = 0; i < lines_number; i++)
     {
@@ -1519,7 +1519,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
            << "def main():" << endl
            << "\n\tinputs = []\n" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(auto i = 0; i < inputs_number; i++)
         buffer << "\t" << inputs[i] << " = " << "#- ENTER YOUR VALUE HERE -#" << endl
                << "\t" << "inputs.append(" << inputs[i] << ")\n" << endl;
 
@@ -1699,7 +1699,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
 vector<string> ModelExpression::fix_input_names(vector<string>& input_names)
 {
-    const Index inputs_number = input_names.size();
+    const auto inputs_number = input_names.size();
     vector<string> fixes_input_names(inputs_number);
 
     for(size_t i = 0; i < inputs_number; i++)
@@ -1716,7 +1716,7 @@ vector<string> ModelExpression::fix_input_names(vector<string>& input_names)
 vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 {
 
-    const Index outputs_number = output_names.size();
+    const auto outputs_number = output_names.size();
 
     vector<string> fixes_output_names(outputs_number);
 

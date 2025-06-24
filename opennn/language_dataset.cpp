@@ -60,11 +60,11 @@ LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input
     uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
     uniform_int_distribution<int> dist_binary(0, 1);
 
-    for (size_t i = 0; i < data.dimension(0); ++i)
-        for (size_t j = 0; j < data.dimension(1) - 1; ++j)
+    for (Index i = 0; i < data.dimension(0); ++i)
+        for (Index j = 0; j < data.dimension(1) - 1; ++j)
             data(i, j) = static_cast<type>(dist_main(generator));
 
-    for (size_t i = 0; i < data.dimension(0); ++i)
+    for (Index i = 0; i < data.dimension(0); ++i)
         data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
 
     input_vocabulary.resize(input_sequence_length);
