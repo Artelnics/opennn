@@ -2809,8 +2809,10 @@ void Dataset::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
 
+    const string separator_string = get_separator_string();
+
     if (has_sample_ids)
-        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
 
     add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();
@@ -2912,7 +2914,10 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
     if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), ";");
+    {
+        const string separator_string = get_separator_string();
+        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
+    }
 
     if (raw_variables.size() != 0)
     {
