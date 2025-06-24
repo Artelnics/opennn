@@ -208,17 +208,17 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
 }
 
 
-//void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
-//{
-//    const Index depth = tensor.dimension(2);
+void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
+{
+    const Index depth = tensor.dimension(2);
 
-//    for(Index i = 0; i < depth; i++)
-//    {
-//        TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
-//
-//        matrix.device(*thread_pool_device) = matrix + vector(i);
-//    }
-//}
+    for(Index i = 0; i < depth; i++)
+    {
+        TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
+
+        matrix.device(*thread_pool_device) = matrix + vector(i);
+    }
+}
 
 
 //void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)

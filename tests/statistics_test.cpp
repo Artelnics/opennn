@@ -887,7 +887,7 @@ TEST(StatisticsTest, TotalFrequencies)
     histograms(1) = histogram(vector2_1, 7);
     histograms(2) = histogram(vector3_1, 7);
 /*
-    Tensor<Index, 1> total_frequencies = opennn::total_frequencies(histograms);
+    vector<Index> total_frequencies = opennn::total_frequencies(histograms);
 
     //EXPECT_EQ(total_frequencies(0), 2);
     //EXPECT_EQ(total_frequencies(1), 4);
@@ -897,17 +897,15 @@ TEST(StatisticsTest, TotalFrequencies)
 
     Tensor<type, 2> matrix(3,3);
     matrix.setValues({
-                         {type(1),type(1),type(NAN)},
-                         {type(2),type(2),type(1)},
-                         {type(3),type(3),type(2)},
-                     });
+        {type(1),type(1),type(NAN)},
+        {type(2),type(2),type(1)},
+        {type(3),type(3),type(2)}});
 
     histograms = opennn::histograms(matrix, 3);
-
+*/
     //EXPECT_EQ(histograms(0).frequencies(0), 1 );
     //EXPECT_EQ(histograms(1).frequencies(0), 1);
     //EXPECT_EQ(histograms(2).frequencies(0), 1);
-*/
 }
 
 

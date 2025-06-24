@@ -149,7 +149,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 
     buffer << write_comments_c();
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
     buffer << "\n \n \n#include <iostream>\n"
@@ -189,7 +189,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 
     vector<string> variable_names;
 
-    for (int i = 0; i < lines_number; i++)
+    for (size_t i = 0; i < lines_number; i++)
     {
         const string first_word = get_first_word(lines[i]);
 
@@ -208,12 +208,12 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
     buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
            << "{" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\t" << "const float " << input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
-    for(int i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
         lines[i].size() <= 1
             ? outputs_buffer << endl
             : outputs_buffer << "\t" << lines[i] << endl;
@@ -229,13 +229,13 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
 
     if(fixed_outputs.size() > 0)
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "\t" << fixed_outputs[i] << endl;
 
     buffer << "\t" << "vector<float> out(" << outputs_number << ");" << endl;
 
 
-    for(int i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -243,7 +243,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
            << "int main(){ \n" << endl
            << "\tvector<float> inputs(" << to_string(inputs_number) << "); \n" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\t" << "const float " << input_names[i] << " =" << " //enter your value here; " << endl
                << "\t" << "inputs[" << to_string(i) << "] = " << input_names[i] << ";" << endl;
 
@@ -254,7 +254,7 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
            << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
 
-    for(int i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
 
     buffer << "\n\t" << "return 0;" << endl
@@ -420,7 +420,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 
     buffer << write_header_api();
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n\t\t" << i << ")  " << input_names[i];
 
     buffer << write_subheader_api();
@@ -449,7 +449,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 
     string word;
 
-    for(int i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
     {
         string line = lines[i];
         word = get_first_word(line);
@@ -469,13 +469,13 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
            << "$url_components = parse_url($url);" << endl
            << "parse_str($url_components['query'], $params);\n" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
                << "$" << input_names[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         i != inputs_number - 1
             ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
             : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -505,7 +505,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
     found_tokens_and_input_names = sort_string_vector(found_tokens_and_input_names);
 
-    for(int i = 0; i < lines.size(); i++)
+    for(size_t i = 0; i < lines.size(); i++)
     {
         string t = lines[i];
 
@@ -519,7 +519,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
 
-        for(int i = 0; i < found_tokens_and_input_names.size(); i++)
+        for(size_t i = 0; i < found_tokens_and_input_names.size(); i++)
         {
             new_word = "$" + found_tokens_and_input_names[i];
 
@@ -531,13 +531,13 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::PHP);
 
-    for(int i = 0; i < fixed_outputs.size(); i++)
+    for(size_t i = 0; i < fixed_outputs.size(); i++)
         buffer << fixed_outputs[i] << endl;
 
     buffer << "if($status === 200){" << endl
            << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for(int i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << ", '" << output_names[i] << "' => " << "$" << output_names[i] << endl;
 
     buffer << "];" << endl
@@ -824,7 +824,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     buffer << header_javascript();
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n\t " << i + 1 << ")  " << input_names[i];
 
     buffer << subheader_javascript();
@@ -942,7 +942,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         }
     }
     else
-        for(int i = 0; i < inputs_number; i++)
+        for(size_t i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
@@ -960,7 +960,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
@@ -981,7 +981,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "<td>" << endl
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
@@ -995,7 +995,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "</tr>\n" << endl;
     }
     else
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
                    << "<td>" << endl
@@ -1016,7 +1016,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
                    << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
@@ -1120,7 +1120,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-        for(int i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
@@ -1136,19 +1136,19 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     }
 
     vector<string> variable_scaled(variables_input.size());
-    for (int i = 0; i < variables_input.size(); ++i)
+    for (size_t i = 0; i < variables_input.size(); ++i)
         variable_scaled[i] = "scaled_" + variables_input[i];
 
     buffer << "}" << endl
            << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
-    for(int i = 0; i < variables_input_fixed.size(); i++)
+    for(size_t i = 0; i < variables_input_fixed.size(); i++)
         buffer << "\t" << "var " << variables_input_fixed[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
-    for(int i = 0; i < lines.size(); i++)
+    for(size_t i = 0; i < lines.size(); i++)
     {
         const string word = get_first_word(lines[i]);
 
@@ -1168,7 +1168,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     found_mathematical_expressions.push_back("max");
     found_mathematical_expressions.push_back("min");
 
-    for(int i = 0; i < lines.size(); i++)
+    for(size_t i = 0; i < lines.size(); i++)
     {
         string line = lines[i];
 
@@ -1182,7 +1182,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         if(substring_length_4 < line.size() && substring_length_4!=0) ExpLinear = true;
         if(substring_length_5 < line.size() && substring_length_5!=0) SExpLinear = true;
 
-        for (int i = 0; i < variables_input.size(); ++i)
+        for (size_t i = 0; i < variables_input.size(); ++i)
             if(line.find(variables_input[i]) != string::npos)
             {
                 string original_input_name = variables_input[i];
@@ -1195,7 +1195,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 }
             }
 
-        for (int i = 0; i < variable_scaled.size(); ++i)
+        for (size_t i = 0; i < variable_scaled.size(); ++i)
             if(line.find(variable_scaled[i]) != string::npos)
             {
                 string original_input_name = variable_scaled[i];
@@ -1208,7 +1208,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 }
             }
 
-        for (int i = 0; i < output_names.size(); ++i)
+        for (size_t i = 0; i < output_names.size(); ++i)
             if(line.find(output_names[i]) != string::npos)
             {
                 string original_output_name = output_names[i];
@@ -1221,7 +1221,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 }
             }
 
-        for(int i = 0; i < found_mathematical_expressions.size(); i++)
+        for(size_t i = 0; i < found_mathematical_expressions.size(); i++)
         {
             string key_word = found_mathematical_expressions[i];
             string new_word = sufix + key_word;
@@ -1235,12 +1235,12 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
 
-    for(int i = 0; i < fixed_outputs.size(); i++)
+    for(size_t i = 0; i < fixed_outputs.size(); i++)
         buffer << fixed_outputs[i] << endl;
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for(int i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -1343,7 +1343,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     const string target_string4("ExponentialLinear");
     const string target_string5("SELU");
 
-    for(int i = 0; i < lines.size(); i++)
+    for(size_t i = 0; i < lines.size(); i++)
     {
         string word;
         string line = lines[i];
@@ -1398,7 +1398,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     string inputs_list;
 
-    for(int i = 0; i < original_inputs.size();i++)
+    for(size_t i = 0; i < original_inputs.size();i++)
     {
         inputs_list += "'" + original_inputs[i] + "'";
 
@@ -1443,7 +1443,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
 
     buffer << endl;
@@ -1464,7 +1464,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     const Index lines_number = lines.size();
 
-    for(int i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
     {
         string line = lines[i];
 
@@ -1492,12 +1492,12 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, outputs, ProgrammingLanguage::Python);
 
     if(model_type != NeuralNetwork::ModelType::AutoAssociation)
-        for(int i = 0; i < fixed_outputs.size(); i++)
+        for(size_t i = 0; i < fixed_outputs.size(); i++)
             buffer << "\t\t" << fixed_outputs[i] << endl;
 
     buffer << "\t\t" << "out = " << "[None]*" << outputs_number << "\n" << endl;
 
-    for(int i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << "\t\t" << "out[" << to_string(i) << "] = " << outputs[i] << endl;
 
     model_type != NeuralNetwork::ModelType::AutoAssociation
@@ -1702,7 +1702,7 @@ vector<string> ModelExpression::fix_input_names(vector<string>& input_names)
     const Index inputs_number = input_names.size();
     vector<string> fixes_input_names(inputs_number);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
             fixes_input_names[i] = "input_" + to_string(i);
         else
@@ -1720,7 +1720,7 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 
     vector<string> fixes_output_names(outputs_number);
 
-    for (int i = 0; i < outputs_number; i++)
+    for (size_t i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
             fixes_output_names[i] = "output_" + to_string(i);
         else

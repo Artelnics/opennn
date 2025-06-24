@@ -156,9 +156,7 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
     descriptives.resize(new_inputs_number);
     
     for(Index i = 0; i < new_inputs_number; i++)
-    {
         descriptives[i].set(type(-1.0), type(1), type(0), type(1));
-    }
 
     scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 
@@ -170,6 +168,7 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
 
     layer_type = Type::Scaling2d;
 
+    is_trainable = false;
 }
 
 
@@ -569,7 +568,7 @@ Scaling2dForwardPropagation::Scaling2dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Scaling2dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Scaling2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

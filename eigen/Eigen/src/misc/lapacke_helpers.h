@@ -75,7 +75,7 @@ EIGEN_ALWAYS_INLINE lapack_int to_lapack(Index index) { return convert_index<lap
 
 /// translates storage order of the given Eigen object to the corresponding lapack constant
 template <typename Derived>
-EIGEN_ALWAYS_INLINE EIGEN_CONSTEXPR lapack_int lapack_storage_of(const EigenBase<Derived> &) {
+EIGEN_ALWAYS_INLINE constexpr lapack_int lapack_storage_of(const EigenBase<Derived> &) {
   return Derived::IsRowMajor ? LAPACK_ROW_MAJOR : LAPACK_COL_MAJOR;
 }
 

@@ -32,7 +32,7 @@ void NormalizedSquaredError::set_data_set(Dataset* new_data_set)
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    if (!has_data_set() || dataset->get_samples_number() == 0)
+    if (!has_data_set() || dataset->get_samples_number() <= 1)
     {
         normalization_coefficient = type(1);
         return;

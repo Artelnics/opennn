@@ -33,7 +33,7 @@ class TensorContractionBlocking {
     However adding EIGEN_DEVICE_FUNC to `manage_caching_sizes` in `GeneralBlockPanelKernel.h`
     results in NVCC erroring out with the following error
 
-    ../Eigen/source/Core/products/GeneralBlockPanelKernel.h(57): error #2901:
+    ../Eigen/src/Core/products/GeneralBlockPanelKernel.h(57): error #2901:
        dynamic initialization is not supported for function-scope static variables within a __device__/__global__
     function
   */

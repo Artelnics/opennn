@@ -144,13 +144,6 @@ void Probabilistic3d::set_inputs_depth(const Index& new_inputs_depth)
 
 void Probabilistic3d::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-/*
-    const Index inputs_depth = get_inputs_depth();
-
-    biases.resize(new_neurons_number);
-
-    weights.resize(inputs_depth, new_neurons_number);
-*/
     const Index inputs_depth = get_inputs_depth();
     const Index neurons_number = new_output_dimensions[0];
 
@@ -181,14 +174,6 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
         set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-}
-
-
-void Probabilistic3d::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-
-    weights.setConstant(value);
 }
 
 
@@ -387,7 +372,7 @@ Probabilistic3DForwardPropagation::Probabilistic3DForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Probabilistic3DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Probabilistic3DForwardPropagation::get_output_pair() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 

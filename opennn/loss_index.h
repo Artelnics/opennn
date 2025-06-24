@@ -164,7 +164,7 @@ public:
 
    static type calculate_h(const type&);
 
-   type calculate_error_xxx();
+   type calculate_numerical_error();
 
    Tensor<type, 1> calculate_gradient();
 
@@ -289,6 +289,7 @@ struct BackPropagationLM
     Tensor<type, 1> regularization_gradient;
     Tensor<type, 2> regularization_hessian;
 };
+
 
 struct BackPropagation
 {

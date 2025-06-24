@@ -9,14 +9,14 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
-// The algorithm below is a reimplementation of former \source\LU\Inverse_SSE.h using PacketMath.
+// The algorithm below is a reimplementation of former \src\LU\Inverse_SSE.h using PacketMath.
 // inv(M) = M#/|M|, where inv(M), M# and |M| denote the inverse of M,
 // adjugate of M and determinant of M respectively. M# is computed block-wise
 // using specific formulae. For proof, see:
 // https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
-// Variable names are adopted from \source\LU\Inverse_SSE.h.
+// Variable names are adopted from \src\LU\Inverse_SSE.h.
 //
-// The SSE code for the 4x4 float and double matrix inverse in former (deprecated) \source\LU\Inverse_SSE.h
+// The SSE code for the 4x4 float and double matrix inverse in former (deprecated) \src\LU\Inverse_SSE.h
 // comes from the following Intel's library:
 // http://software.intel.com/en-us/articles/optimized-matrix-library-for-use-with-the-intel-pentiumr-4-processors-sse2-instructions/
 //

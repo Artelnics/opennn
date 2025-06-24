@@ -139,7 +139,7 @@ TEST_P(PoolingLayerTest, Constructor)
 
 TEST_P(PoolingLayerTest, ForwardPropagate) 
 {
-    /*
+
     PoolingLayerConfig parameters = GetParam();
 
     Pooling pooling_layer(
@@ -164,7 +164,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, false);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
@@ -188,12 +188,12 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
             }
         }
     }
-    */
+
 }
 
 
 TEST_P(PoolingLayerTest, BackPropagate) {
-    /*
+
     PoolingLayerConfig parameters = GetParam();
 
     Pooling pooling_layer(
@@ -221,7 +221,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     pooling_layer.back_propagate({ input_pair }, { output_pair }, forward_propagation, back_propagation);
 
@@ -231,5 +231,4 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
     EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
     EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
-    */
 }

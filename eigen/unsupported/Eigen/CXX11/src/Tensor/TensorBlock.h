@@ -743,10 +743,10 @@ class TensorMaterializedBlock {
       typedef typename TensorBlockIO::Dst TensorBlockIODst;
       typedef typename TensorBlockIO::Src TensorBlockIOSrc;
 
-      TensorBlockIOSrc source(internal::strides<Layout>(Dimensions(data_dims)), data, desc.offset());
+      TensorBlockIOSrc src(internal::strides<Layout>(Dimensions(data_dims)), data, desc.offset());
       TensorBlockIODst dst(storage.dimensions(), storage.strides(), storage.data());
 
-      TensorBlockIO::Copy(dst, source);
+      TensorBlockIO::Copy(dst, src);
       return storage.AsTensorMaterializedBlock();
     }
   }
@@ -912,10 +912,10 @@ class StridedLinearBufferCopy {
  public:
   // Specifying linear copy kind statically gives ~30% speedup for small sizes.
   enum class Kind {
-    Linear = 0,       // source_stride == 1 && dst_stride == 1
-    Scatter = 1,      // source_stride == 1 && dst_stride != 1
-    FillLinear = 2,   // source_stride == 0 && dst_stride == 1
-    FillScatter = 3,  // source_stride == 0 && dst_stride != 1
+    Linear = 0,       // src_stride == 1 && dst_stride == 1
+    Scatter = 1,      // src_stride == 1 && dst_stride != 1
+    FillLinear = 2,   // src_stride == 0 && dst_stride == 1
+    FillScatter = 3,  // src_stride == 0 && dst_stride != 1
     Gather = 4,       // dst_stride == 1
     Random = 5        // everything else
   };
@@ -937,22 +937,22 @@ class StridedLinearBufferCopy {
   };
 
   template <typename StridedLinearBufferCopy::Kind kind>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Dst& dst, const Src& source, const size_t count) {
-    Run<kind>(count, dst.offset, dst.stride, dst.data, source.offset, source.stride, source.data);
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Dst& dst, const Src& src, const size_t count) {
+    Run<kind>(count, dst.offset, dst.stride, dst.data, src.offset, src.stride, src.data);
   }
 
  private:
   template <typename StridedLinearBufferCopy::Kind kind>
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const IndexType count, const IndexType dst_offset,
                                                         const IndexType dst_stride, Scalar* EIGEN_RESTRICT dst_data,
-                                                        const IndexType source_offset, const IndexType source_stride,
-                                                        const Scalar* EIGEN_RESTRICT source_data) {
-    const Scalar* source = &source_data[source_offset];
+                                                        const IndexType src_offset, const IndexType src_stride,
+                                                        const Scalar* EIGEN_RESTRICT src_data) {
+    const Scalar* src = &src_data[src_offset];
     Scalar* dst = &dst_data[dst_offset];
 
     if (!Vectorizable) {
       for (Index i = 0; i < count; ++i) {
-        dst[i * dst_stride] = source[i * source_stride];
+        dst[i * dst_stride] = src[i * src_stride];
       }
       return;
     }
@@ -962,56 +962,56 @@ class StridedLinearBufferCopy {
 
     if (kind == StridedLinearBufferCopy::Kind::Linear) {
       // ******************************************************************** //
-      // Linear copy from `source` to `dst`.
+      // Linear copy from `src` to `dst`.
       const IndexType unrolled_size = (4 * PacketSize) * (count / (4 * PacketSize));
-      eigen_assert(source_stride == 1 && dst_stride == 1);
+      eigen_assert(src_stride == 1 && dst_stride == 1);
       for (; i < unrolled_size; i += 4 * PacketSize) {
         for (int j = 0; j < 4; ++j) {
-          Packet p = ploadu<Packet>(source + i + j * PacketSize);
+          Packet p = ploadu<Packet>(src + i + j * PacketSize);
           pstoreu<Scalar, Packet>(dst + i + j * PacketSize, p);
         }
       }
       for (; i < vectorized_size; i += PacketSize) {
-        Packet p = ploadu<Packet>(source + i);
+        Packet p = ploadu<Packet>(src + i);
         pstoreu<Scalar, Packet>(dst + i, p);
       }
       if (HasHalfPacket) {
         const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
         if (i < vectorized_half_size) {
-          HalfPacket p = ploadu<HalfPacket>(source + i);
+          HalfPacket p = ploadu<HalfPacket>(src + i);
           pstoreu<Scalar, HalfPacket>(dst + i, p);
           i += HalfPacketSize;
         }
       }
       for (; i < count; ++i) {
-        dst[i] = source[i];
+        dst[i] = src[i];
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::Scatter) {
-      // Scatter from `source` to `dst`.
-      eigen_assert(source_stride == 1 && dst_stride != 1);
+      // Scatter from `src` to `dst`.
+      eigen_assert(src_stride == 1 && dst_stride != 1);
       for (; i < vectorized_size; i += PacketSize) {
-        Packet p = ploadu<Packet>(source + i);
+        Packet p = ploadu<Packet>(src + i);
         pscatter<Scalar, Packet>(dst + i * dst_stride, p, dst_stride);
       }
       if (HasHalfPacket) {
         const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
         if (i < vectorized_half_size) {
-          HalfPacket p = ploadu<HalfPacket>(source + i);
+          HalfPacket p = ploadu<HalfPacket>(src + i);
           pscatter<Scalar, HalfPacket>(dst + i * dst_stride, p, dst_stride);
           i += HalfPacketSize;
         }
       }
       for (; i < count; ++i) {
-        dst[i * dst_stride] = source[i];
+        dst[i * dst_stride] = src[i];
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::FillLinear) {
-      // Fill `dst` with value at `*source`.
-      eigen_assert(source_stride == 0 && dst_stride == 1);
+      // Fill `dst` with value at `*src`.
+      eigen_assert(src_stride == 0 && dst_stride == 1);
 
       const IndexType unrolled_size = (4 * PacketSize) * (count / (4 * PacketSize));
-      Scalar s = *source;
+      Scalar s = *src;
       Packet p = pset1<Packet>(s);
       for (; i < unrolled_size; i += 4 * PacketSize) {
         for (int j = 0; j < 4; ++j) {
@@ -1034,9 +1034,9 @@ class StridedLinearBufferCopy {
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::FillScatter) {
-      // Scatter `*source` into `dst`.
-      eigen_assert(source_stride == 0 && dst_stride != 1);
-      Scalar s = *source;
+      // Scatter `*src` into `dst`.
+      eigen_assert(src_stride == 0 && dst_stride != 1);
+      Scalar s = *src;
       Packet p = pset1<Packet>(s);
       for (; i < vectorized_size; i += PacketSize) {
         pscatter<Scalar, Packet>(dst + i * dst_stride, p, dst_stride);
@@ -1054,28 +1054,28 @@ class StridedLinearBufferCopy {
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::Gather) {
-      // Gather from `source` into `dst`.
+      // Gather from `src` into `dst`.
       eigen_assert(dst_stride == 1);
       for (; i < vectorized_size; i += PacketSize) {
-        Packet p = pgather<Scalar, Packet>(source + i * source_stride, source_stride);
+        Packet p = pgather<Scalar, Packet>(src + i * src_stride, src_stride);
         pstoreu<Scalar, Packet>(dst + i, p);
       }
       if (HasHalfPacket) {
         const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
         if (i < vectorized_half_size) {
-          HalfPacket p = pgather<Scalar, HalfPacket>(source + i * source_stride, source_stride);
+          HalfPacket p = pgather<Scalar, HalfPacket>(src + i * src_stride, src_stride);
           pstoreu<Scalar, HalfPacket>(dst + i, p);
           i += HalfPacketSize;
         }
       }
       for (; i < count; ++i) {
-        dst[i] = source[i * source_stride];
+        dst[i] = src[i * src_stride];
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::Random) {
       // Random.
       for (; i < count; ++i) {
-        dst[i * dst_stride] = source[i * source_stride];
+        dst[i * dst_stride] = src[i * src_stride];
       }
     } else {
       eigen_assert(false);
@@ -1084,10 +1084,10 @@ class StridedLinearBufferCopy {
 };
 
 // -------------------------------------------------------------------------- //
-// TensorBlockIO copies data from `source` tensor block, to the `dst` tensor block.
-// It's possible to specify source->dst dimension mapping for the copy operation.
+// TensorBlockIO copies data from `src` tensor block, to the `dst` tensor block.
+// It's possible to specify src->dst dimension mapping for the copy operation.
 // Dimensions of `dst` specify how many elements have to be copied, for the
-// `source` we need to know only stride to navigate through source memory buffer.
+// `src` we need to know only stride to navigate through source memory buffer.
 
 template <typename Scalar, typename IndexType, int NumDims, int Layout>
 class TensorBlockIO {
@@ -1110,47 +1110,47 @@ class TensorBlockIO {
   };
 
   struct Src {
-    Src(const Dimensions& source_strides, const Scalar* source, IndexType source_offset = 0)
-        : strides(source_strides), data(source), offset(source_offset) {}
+    Src(const Dimensions& src_strides, const Scalar* src, IndexType src_offset = 0)
+        : strides(src_strides), data(src), offset(src_offset) {}
 
     Dimensions strides;
     const Scalar* data;
     IndexType offset;
   };
 
-  // Copies data to `dst` from `source`, using provided dimensions mapping:
+  // Copies data to `dst` from `src`, using provided dimensions mapping:
   //
-  //   source_dimension_index = dst_to_source_dim_map[dst_dimension_index]
+  //   src_dimension_index = dst_to_src_dim_map[dst_dimension_index]
   //
   // Returns the number of copied elements.
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType Copy(const Dst& dst, const Src& source,
-                                                              const DimensionsMap& dst_to_source_dim_map) {
-    // Copy single scalar value from `source` to `dst`.
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType Copy(const Dst& dst, const Src& src,
+                                                              const DimensionsMap& dst_to_src_dim_map) {
+    // Copy single scalar value from `src` to `dst`.
     if (NumDims == 0) {
-      *(dst.data + dst.offset) = *(source.data + source.offset);
+      *(dst.data + dst.offset) = *(src.data + src.offset);
       return 1;
     }
 
-    // Both `dst` and `source` must have contiguous innermost dimension. We also
+    // Both `dst` and `src` must have contiguous innermost dimension. We also
     // accept the special case with stride '0', because it's used as a trick to
     // implement broadcasting.
     {
       int inner_dim = IsColMajor ? 0 : NumDims - 1;
       EIGEN_UNUSED_VARIABLE(inner_dim);
       eigen_assert(dst.strides[inner_dim] == 1 || dst.strides[inner_dim] == 0);
-      eigen_assert(source.strides[inner_dim] == 1 || source.strides[inner_dim] == 0);
+      eigen_assert(src.strides[inner_dim] == 1 || src.strides[inner_dim] == 0);
     }
 
-    // Give a shorter name to `dst_to_source_dim_map`.
-    const DimensionsMap& dim_map = dst_to_source_dim_map;
+    // Give a shorter name to `dst_to_src_dim_map`.
+    const DimensionsMap& dim_map = dst_to_src_dim_map;
 
     // Do not squeeze reordered inner dimensions.
     int num_squeezable_dims = NumSqueezableInnerDims(dim_map);
 
     // NOTE: We find the innermost dimension (contiguous in memory) in the dst
     // block, and we write data linearly into that dimension, reading it from
-    // the source. If dimensions are reordered, we might end up reading data from
-    // the source with `stride != 1`.
+    // the src. If dimensions are reordered, we might end up reading data from
+    // the src with `stride != 1`.
     //
     // NOTE: Random-Read/Linear-Write can be up to ~2X faster than
     // Linear-Read/Random-Write: https://stackoverflow.com/a/54935680
@@ -1164,28 +1164,28 @@ class TensorBlockIO {
       num_size_one_inner_dims++;
     }
 
-    // If all dimensions are of size 1, just copy a scalar from `source` to `dst`.
+    // If all dimensions are of size 1, just copy a scalar from `src` to `dst`.
     if (num_size_one_inner_dims == NumDims) {
-      *(dst.data + dst.offset) = *(source.data + source.offset);
+      *(dst.data + dst.offset) = *(src.data + src.offset);
       return 1;
     }
 
     // Outermost dimension in the dst with `stride == 1` (contiguous in memory).
     const int dst_stride1_dim = IsColMajor ? num_size_one_inner_dims : NumDims - num_size_one_inner_dims - 1;
 
-    // Dimension in the source that corresponds to the dst innermost dimension.
-    const int source_dim_for_dst_stride1_dim = NumDims == 0 ? 1 : dim_map[dst_stride1_dim];
+    // Dimension in the src that corresponds to the dst innermost dimension.
+    const int src_dim_for_dst_stride1_dim = NumDims == 0 ? 1 : dim_map[dst_stride1_dim];
 
     // Size of the innermost dimension (length of contiguous blocks of memory).
     IndexType dst_inner_dim_size = NumDims == 0 ? 1 : dst.dims[dst_stride1_dim];
 
     // Squeeze multiple inner dims into one if they are contiguous in `dst` and
-    // `source` memory, so we can do less linear copy calls.
+    // `src` memory, so we can do less linear copy calls.
     for (int i = num_size_one_inner_dims + 1; i < num_squeezable_dims; ++i) {
       const int dst_dim = IsColMajor ? i : NumDims - i - 1;
       const IndexType dst_stride = dst.strides[dst_dim];
-      const IndexType source_stride = source.strides[dim_map[dst_dim]];
-      if (dst_inner_dim_size == dst_stride && dst_stride == source_stride) {
+      const IndexType src_stride = src.strides[dim_map[dst_dim]];
+      if (dst_inner_dim_size == dst_stride && dst_stride == src_stride) {
         dst_inner_dim_size *= dst.dims[dst_dim];
         ++num_size_one_inner_dims;
       } else {
@@ -1193,10 +1193,10 @@ class TensorBlockIO {
       }
     }
 
-    // Setup strides to read data from `source` and write to `dst`.
-    IndexType input_offset = source.offset;
+    // Setup strides to read data from `src` and write to `dst`.
+    IndexType input_offset = src.offset;
     IndexType output_offset = dst.offset;
-    IndexType input_stride = NumDims == 0 ? 1 : source.strides[source_dim_for_dst_stride1_dim];
+    IndexType input_stride = NumDims == 0 ? 1 : src.strides[src_dim_for_dst_stride1_dim];
     IndexType output_stride = NumDims == 0 ? 1 : dst.strides[dst_stride1_dim];
 
     const int at_least_1_dim = NumDims <= 1 ? 1 : NumDims - 1;
@@ -1209,7 +1209,7 @@ class TensorBlockIO {
       if (dst.dims[dst_dim] == 1) continue;
 
       it[idx].size = dst.dims[dst_dim];
-      it[idx].input_stride = source.strides[dim_map[dst_dim]];
+      it[idx].input_stride = src.strides[dim_map[dst_dim]];
       it[idx].output_stride = dst.strides[dst_dim];
 
       it[idx].input_span = it[idx].input_stride * (it[idx].size - 1);
@@ -1218,14 +1218,14 @@ class TensorBlockIO {
       idx++;
     }
 
-    // Iterate copying data from source to dst.
+    // Iterate copying data from src to dst.
     const IndexType block_total_size = NumDims == 0 ? 1 : dst.dims.TotalSize();
 
 #define COPY_INNER_DIM(KIND)                                                                                      \
   IndexType num_copied = 0;                                                                                       \
   for (num_copied = 0; num_copied < block_total_size; num_copied += dst_inner_dim_size) {                         \
     LinCopy::template Run<KIND>(typename LinCopy::Dst(output_offset, output_stride, dst.data),                    \
-                                typename LinCopy::Src(input_offset, input_stride, source.data), dst_inner_dim_size); \
+                                typename LinCopy::Src(input_offset, input_stride, src.data), dst_inner_dim_size); \
                                                                                                                   \
     for (int j = 0; j < idx; ++j) {                                                                               \
       if (++it[j].count < it[j].size) {                                                                           \
@@ -1257,12 +1257,12 @@ class TensorBlockIO {
 #undef COPY_INNER_DIM
   }
 
-  // Copy from `source` to `dst` with an identity source->dst dimension map. Returns
+  // Copy from `src` to `dst` with an identity src->dst dimension map. Returns
   // the number of copied elements.
-  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexType Copy(const Dst& dst, const Src& source) {
-    DimensionsMap dst_to_source_map;
-    for (int i = 0; i < NumDims; ++i) dst_to_source_map[i] = i;
-    return Copy(dst, source, dst_to_source_map);
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexType Copy(const Dst& dst, const Src& src) {
+    DimensionsMap dst_to_src_map;
+    for (int i = 0; i < NumDims; ++i) dst_to_src_map[i] = i;
+    return Copy(dst, src, dst_to_src_map);
   }
 
  private:
@@ -1299,7 +1299,7 @@ class TensorBlockIO {
 // memory, if dimensions are reordered. If you need to do that, you should
 // materialize a Tensor block expression into a memory buffer, and then use
 // TensorBlockIO to copy data between two memory buffers with a custom
-// `target->source` dimension map (see definition above).
+// `target->src` dimension map (see definition above).
 //
 // Also currently the innermost dimension of `target` must have a stride '1'
 // (contiguous in memory). This restriction could be lifted with a `pscatter`,
@@ -1307,7 +1307,7 @@ class TensorBlockIO {
 // workaround for that.
 //
 // TODO(ezhulenev): TensorBlockAssignment is a special case of TensorBlockIO
-// where `source` is a tensor expression. Explore if it is possible to rewrite IO
+// where `src` is a tensor expression. Explore if it is possible to rewrite IO
 // to use expressions instead of pointers, and after that TensorBlockAssignment
 // will become an alias to IO.
 template <typename Scalar, int NumDims, typename TensorBlockExpr, typename IndexType = Eigen::Index>

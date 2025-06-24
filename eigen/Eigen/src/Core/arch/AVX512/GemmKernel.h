@@ -139,85 +139,85 @@ class gemm_class {
   EIGEN_ALWAYS_INLINE void b_load(vec &b_reg, const Scalar *b_addr) { b_reg = pload1<vec>(b_addr); }
 
   template <int nelems>
-  EIGEN_ALWAYS_INLINE void c_store(Scalar *mem, vec &source) {
+  EIGEN_ALWAYS_INLINE void c_store(Scalar *mem, vec &src) {
     if (is_unit_inc) {
       switch (nelems * sizeof(*mem) * 8) {
         default:
         case 512 * 3:
-          pstoreu(mem, source);
+          pstoreu(mem, src);
           break;
         case 512 * 2:
-          pstoreu(mem, source);
+          pstoreu(mem, src);
           break;
         case 512 * 1:
-          pstoreu(mem, source);
+          pstoreu(mem, src);
           break;
         case 256 * 1:
-          pstoreu(mem, preinterpret<vec_ymm>(source));
+          pstoreu(mem, preinterpret<vec_ymm>(src));
           break;
         case 128 * 1:
-          pstoreu(mem, preinterpret<vec_xmm>(source));
+          pstoreu(mem, preinterpret<vec_xmm>(src));
           break;
         case 64 * 1:
-          pstorel(mem, preinterpret<vec_xmm>(source));
+          pstorel(mem, preinterpret<vec_xmm>(src));
           break;
         case 32 * 1:
-          pstores(mem, preinterpret<vec_xmm>(source));
+          pstores(mem, preinterpret<vec_xmm>(src));
           break;
       }
     } else {
       switch (nelems * sizeof(*mem) * 8) {
         default:
         case 512 * 3:
-          pscatter(mem, source, inc);
+          pscatter(mem, src, inc);
           break;
         case 512 * 2:
-          pscatter(mem, source, inc);
+          pscatter(mem, src, inc);
           break;
         case 512 * 1:
-          pscatter(mem, source, inc);
+          pscatter(mem, src, inc);
           break;
         case 256 * 1:
-          pscatter(mem, source, inc, mask);
+          pscatter(mem, src, inc, mask);
           break;
         case 128 * 1:
-          pscatter(mem, source, inc, mask);
+          pscatter(mem, src, inc, mask);
           break;
         case 64 * 1:
-          pscatter(mem, source, inc, mask);
+          pscatter(mem, src, inc, mask);
           break;
         case 32 * 1:
-          pscatter(mem, source, inc, mask);
+          pscatter(mem, src, inc, mask);
           break;
       }
     }
   }
 
   template <int nelems>
-  EIGEN_ALWAYS_INLINE void vaddm(vec &dst, const Scalar *mem, vec &source, vec &reg) {
+  EIGEN_ALWAYS_INLINE void vaddm(vec &dst, const Scalar *mem, vec &src, vec &reg) {
     if (is_unit_inc) {
       switch (nelems * sizeof(*mem) * 8) {
         default:
         case 512 * 3:
-          dst = padd(source, ploadu<vec>(mem));
+          dst = padd(src, ploadu<vec>(mem));
           break;
         case 512 * 2:
-          dst = padd(source, ploadu<vec>(mem));
+          dst = padd(src, ploadu<vec>(mem));
           break;
         case 512 * 1:
-          dst = padd(source, ploadu<vec>(mem));
+          dst = padd(src, ploadu<vec>(mem));
           break;
         case 256 * 1:
-          dst = preinterpret<vec>(padd(preinterpret<vec_ymm>(source), ploadu<vec_ymm>(mem)));
+          dst = preinterpret<vec>(padd(preinterpret<vec_ymm>(src), ploadu<vec_ymm>(mem)));
           break;
         case 128 * 1:
-          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(source), ploadu<vec_xmm>(mem)));
+          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(src), ploadu<vec_xmm>(mem)));
           break;
         case 64 * 1:
-          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(source), ploadl<vec_xmm>(mem)));
+          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(src), ploadl<vec_xmm>(mem)));
           break;
         case 32 * 1:
-          dst = preinterpret<vec>(padds(preinterpret<vec_xmm>(source), ploads<vec_xmm>(mem)));
+          dst = preinterpret<vec>(padds(preinterpret<vec_xmm>(src), ploads<vec_xmm>(mem)));
           break;
       }
     } else {
@@ -228,77 +228,77 @@ class gemm_class {
         default:
         case 512 * 3:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = padd(source, reg);
+          dst = padd(src, reg);
           break;
         case 512 * 2:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = padd(source, reg);
+          dst = padd(src, reg);
           break;
         case 512 * 1:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = padd(source, reg);
+          dst = padd(src, reg);
           break;
         case 256 * 1:
           reg = preinterpret<vec>(pgather<Scalar, vec_ymm>(mem, inc));
-          dst = preinterpret<vec>(padd(preinterpret<vec_ymm>(source), preinterpret<vec_ymm>(reg)));
+          dst = preinterpret<vec>(padd(preinterpret<vec_ymm>(src), preinterpret<vec_ymm>(reg)));
           break;
         case 128 * 1:
           reg = preinterpret<vec>(pgather<Scalar, vec_xmm>(mem, inc));
-          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(source), preinterpret<vec_xmm>(reg)));
+          dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(src), preinterpret<vec_xmm>(reg)));
           break;
         case 64 * 1:
           if (is_f32) {
             reg = pgather(reg, mem, inc, mask);
-            dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(source), preinterpret<vec_xmm>(reg)));
+            dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(src), preinterpret<vec_xmm>(reg)));
           } else {
-            dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(source), ploadl<vec_xmm>(mem)));
+            dst = preinterpret<vec>(padd(preinterpret<vec_xmm>(src), ploadl<vec_xmm>(mem)));
           }
           break;
         case 32 * 1:
-          dst = preinterpret<vec>(padds(preinterpret<vec_xmm>(source), ploads<vec_xmm>(mem)));
+          dst = preinterpret<vec>(padds(preinterpret<vec_xmm>(src), ploads<vec_xmm>(mem)));
           break;
       }
     }
   }
 
-  EIGEN_STRONG_INLINE void vfmadd(vec &dst, const vec &source1, const vec &source2) {
-    dst = pmadd(source1, source2, dst);
+  EIGEN_STRONG_INLINE void vfmadd(vec &dst, const vec &src1, const vec &src2) {
+    dst = pmadd(src1, src2, dst);
 
 #if (EIGEN_COMP_GNUC != 0) || (EIGEN_COMP_CLANG != 0)
     // Workaround register spills for gcc and clang
-    __asm__("#" : [dst] "+v"(dst) : [source1] "%v"(source1), [source2] "v"(source2));
+    __asm__("#" : [dst] "+v"(dst) : [src1] "%v"(src1), [src2] "v"(src2));
 #endif
   }
 
   template <int nelems>
-  EIGEN_ALWAYS_INLINE void vfmaddm(vec &dst, const Scalar *mem, vec &source, vec &scale, vec &reg) {
+  EIGEN_ALWAYS_INLINE void vfmaddm(vec &dst, const Scalar *mem, vec &src, vec &scale, vec &reg) {
     if (is_unit_inc) {
       switch (nelems * sizeof(*mem) * 8) {
         default:
         case 512 * 3:
-          dst = pmadd(scale, source, ploadu<vec>(mem));
+          dst = pmadd(scale, src, ploadu<vec>(mem));
           break;
         case 512 * 2:
-          dst = pmadd(scale, source, ploadu<vec>(mem));
+          dst = pmadd(scale, src, ploadu<vec>(mem));
           break;
         case 512 * 1:
-          dst = pmadd(scale, source, ploadu<vec>(mem));
+          dst = pmadd(scale, src, ploadu<vec>(mem));
           break;
         case 256 * 1:
           dst =
-              preinterpret<vec>(pmadd(preinterpret<vec_ymm>(scale), preinterpret<vec_ymm>(source), ploadu<vec_ymm>(mem)));
+              preinterpret<vec>(pmadd(preinterpret<vec_ymm>(scale), preinterpret<vec_ymm>(src), ploadu<vec_ymm>(mem)));
           break;
         case 128 * 1:
           dst =
-              preinterpret<vec>(pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), ploadu<vec_xmm>(mem)));
+              preinterpret<vec>(pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), ploadu<vec_xmm>(mem)));
           break;
         case 64 * 1:
           dst =
-              preinterpret<vec>(pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), ploadl<vec_xmm>(mem)));
+              preinterpret<vec>(pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), ploadl<vec_xmm>(mem)));
           break;
         case 32 * 1:
           dst =
-              preinterpret<vec>(pmadds(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), ploads<vec_xmm>(mem)));
+              preinterpret<vec>(pmadds(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), ploads<vec_xmm>(mem)));
           break;
       }
     } else {
@@ -309,39 +309,39 @@ class gemm_class {
         default:
         case 512 * 3:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = pmadd(scale, source, reg);
+          dst = pmadd(scale, src, reg);
           break;
         case 512 * 2:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = pmadd(scale, source, reg);
+          dst = pmadd(scale, src, reg);
           break;
         case 512 * 1:
           reg = pgather<Scalar, vec>(mem, inc);
-          dst = pmadd(scale, source, reg);
+          dst = pmadd(scale, src, reg);
           break;
         case 256 * 1:
           reg = preinterpret<vec>(pgather<Scalar, vec_ymm>(mem, inc));
           dst = preinterpret<vec>(
-              pmadd(preinterpret<vec_ymm>(scale), preinterpret<vec_ymm>(source), preinterpret<vec_ymm>(reg)));
+              pmadd(preinterpret<vec_ymm>(scale), preinterpret<vec_ymm>(src), preinterpret<vec_ymm>(reg)));
           break;
         case 128 * 1:
           reg = preinterpret<vec>(pgather<Scalar, vec_xmm>(mem, inc));
           dst = preinterpret<vec>(
-              pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), preinterpret<vec_xmm>(reg)));
+              pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), preinterpret<vec_xmm>(reg)));
           break;
         case 64 * 1:
           if (is_f32) {
             reg = pgather(reg, mem, inc, mask);
             dst = preinterpret<vec>(
-                pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), preinterpret<vec_xmm>(reg)));
+                pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), preinterpret<vec_xmm>(reg)));
           } else {
             dst = preinterpret<vec>(
-                pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), ploadl<vec_xmm>(mem)));
+                pmadd(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), ploadl<vec_xmm>(mem)));
           }
           break;
         case 32 * 1:
           dst =
-              preinterpret<vec>(pmadds(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(source), ploads<vec_xmm>(mem)));
+              preinterpret<vec>(pmadds(preinterpret<vec_xmm>(scale), preinterpret<vec_xmm>(src), ploads<vec_xmm>(mem)));
           break;
       }
     }

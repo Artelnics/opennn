@@ -129,7 +129,7 @@ class Array : public PlainObjectBase<Array<Scalar_, Rows_, Cols_, Options_, MaxR
 #endif
   /** \brief Move constructor */
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Array(Array&&) = default;
-  EIGEN_DEVICE_FUNC Array& operator=(Array&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_assignable<Scalar>::value) {
+  EIGEN_DEVICE_FUNC Array& operator=(Array&& other) noexcept(std::is_nothrow_move_assignable<Scalar>::value) {
     Base::operator=(std::move(other));
     return *this;
   }
@@ -253,8 +253,8 @@ class Array : public PlainObjectBase<Array<Scalar_, Rows_, Cols_, Options_, MaxR
           PrivateType())
       : Base(other.derived()) {}
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index innerStride() const EIGEN_NOEXCEPT { return 1; }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index outerStride() const EIGEN_NOEXCEPT { return this->innerSize(); }
+  EIGEN_DEVICE_FUNC constexpr Index innerStride() const noexcept { return 1; }
+  EIGEN_DEVICE_FUNC constexpr Index outerStride() const noexcept { return this->innerSize(); }
 
 #ifdef EIGEN_ARRAY_PLUGIN
 #include EIGEN_ARRAY_PLUGIN

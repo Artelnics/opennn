@@ -212,9 +212,9 @@ struct Pair {
   typedef U first_type;
   typedef V second_type;
 
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Pair() : first(), second() {}
+  constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Pair() : first(), second() {}
 
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Pair(const U& f, const V& s) : first(f), second(s) {}
+  constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Pair(const U& f, const V& s) : first(f), second(s) {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void swap(Pair& rhs) {
     using numext::swap;
@@ -224,20 +224,20 @@ struct Pair {
 };
 
 template <typename U, typename V>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool operator==(const Pair<U, V>& x, const Pair<U, V>& y) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool operator==(const Pair<U, V>& x, const Pair<U, V>& y) {
   return (x.first == y.first && x.second == y.second);
 }
 
 template <typename U, typename V>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool operator!=(const Pair<U, V>& x, const Pair<U, V>& y) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool operator!=(const Pair<U, V>& x, const Pair<U, V>& y) {
   return !(x == y);
 }
 
 // Can't use std::pairs on cuda devices
 template <typename Idx>
 struct IndexPair {
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair() : first(0), second(0) {}
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair(Idx f, Idx s) : first(f), second(s) {}
+  constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair() : first(0), second(0) {}
+  constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair(Idx f, Idx s) : first(f), second(s) {}
 
   EIGEN_DEVICE_FUNC void set(IndexPair<Idx> val) {
     first = val.first;
@@ -251,19 +251,18 @@ struct IndexPair {
 namespace internal {
 
 template <typename IndexType, typename Index, Index First, Index... Is>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, 1 + sizeof...(Is)> customIndices2Array(
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, 1 + sizeof...(Is)> customIndices2Array(
     IndexType& idx, numeric_list<Index, First, Is...>) {
   return {static_cast<Index>(idx[First]), static_cast<Index>(idx[Is])...};
 }
 template <typename IndexType, typename Index>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, 0> customIndices2Array(IndexType&,
-                                                                                          numeric_list<Index>) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, 0> customIndices2Array(IndexType&, numeric_list<Index>) {
   return array<Index, 0>();
 }
 
 /** Make an array (for index/dimensions) out of a custom index */
 template <typename Index, std::size_t NumIndices, typename IndexType>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, NumIndices> customIndices2Array(IndexType& idx) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE array<Index, NumIndices> customIndices2Array(IndexType& idx) {
   return customIndices2Array(idx, typename gen_numeric_list<Index, NumIndices>::type{});
 }
 

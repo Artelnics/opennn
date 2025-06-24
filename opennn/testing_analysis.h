@@ -193,12 +193,6 @@ public:
     KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
     Tensor<type, 1> calculate_maximum_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    // Calibration plot
-
-    Tensor<type, 2> perform_calibration_plot_analysis() const;
-
-    Tensor<type, 2> calculate_calibration_plot(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
     // Output histogram
 
     vector<Histogram> calculate_output_histogram(const Tensor<type, 2>&, const Index& = 10) const;

@@ -13,6 +13,7 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_MERGE_REQUEST_LABELS =~ "/all-tests/"
   cache:
     key: "$CI_JOB_NAME_SLUG-$CI_COMMIT_REF_SLUG-BUILD"
     paths:
@@ -110,6 +111,8 @@ build:linux:docs:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_MERGE_REQUEST_LABELS =~ "/all-tests/"
+
 
 # # Sanitizers (Disabled because ASAN hangs and MSAN requires instrumented libc++)
 # build:linux:cross:x86-64:clang-12:default:asan:
@@ -265,6 +268,8 @@ build:linux:cross:arm:clang-12:default:
     EIGEN_CI_TARGET_ARCH: aarch64
     EIGEN_CI_CROSS_TARGET_TRIPLE: aarch64-linux-gnu
     EIGEN_CI_ADDITIONAL_ARGS: -DEIGEN_TEST_CUSTOM_CXX_FLAGS=-march=armv8.2-a+fp16
+  tags:
+    - saas-linux-large-arm64
 
 build:linux:cross:aarch64:gcc-10:default:
   extends: .build:linux:cross:aarch64
@@ -317,10 +322,6 @@ build:linux:cross:ppc64le:clang-12:default:
   variables:
     EIGEN_CI_TARGET_ARCH: loongarch64
     EIGEN_CI_CROSS_TARGET_TRIPLE: loongarch64-linux-gnu
-  tags:
-    - eigen-runner
-    - linux
-    - cross-compiler
 
 # GCC-14 (minimum on Ubuntu 24)
 build:linux:cross:loongarch64:gcc-14:default:

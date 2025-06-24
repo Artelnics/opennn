@@ -72,17 +72,16 @@ void test_conversion() {
   // NaNs and infinities.
   VERIFY(!(numext::isinf)(float(half(65504.0f))));  // Largest finite number.
   VERIFY(!(numext::isnan)(float(half(0.0f))));
+  VERIFY((numext::isfinite)(float(half(65504.0f))));
+  VERIFY((numext::isfinite)(float(half(0.0f))));
   VERIFY((numext::isinf)(float(half(__half_raw(0xfc00)))));
   VERIFY((numext::isnan)(float(half(__half_raw(0xfc01)))));
   VERIFY((numext::isinf)(float(half(__half_raw(0x7c00)))));
   VERIFY((numext::isnan)(float(half(__half_raw(0x7c01)))));
 
-#if !EIGEN_COMP_MSVC
-  // Visual Studio errors out on divisions by 0
-  VERIFY((numext::isnan)(float(half(0.0 / 0.0))));
-  VERIFY((numext::isinf)(float(half(1.0 / 0.0))));
-  VERIFY((numext::isinf)(float(half(-1.0 / 0.0))));
-#endif
+  VERIFY((numext::isnan)(float(NumTraits<half>::quiet_NaN())));
+  VERIFY((numext::isinf)(float(NumTraits<half>::infinity())));
+  VERIFY((numext::isinf)(float(-NumTraits<half>::infinity())));
 
   // Exactly same checks as above, just directly on the half representation.
   VERIFY(!(numext::isinf)(half(__half_raw(0x7bff))));
@@ -92,12 +91,9 @@ void test_conversion() {
   VERIFY((numext::isinf)(half(__half_raw(0x7c00))));
   VERIFY((numext::isnan)(half(__half_raw(0x7c01))));
 
-#if !EIGEN_COMP_MSVC
-  // Visual Studio errors out on divisions by 0
-  VERIFY((numext::isnan)(half(0.0 / 0.0)));
-  VERIFY((numext::isinf)(half(1.0 / 0.0)));
-  VERIFY((numext::isinf)(half(-1.0 / 0.0)));
-#endif
+  VERIFY((numext::isnan)(NumTraits<half>::quiet_NaN()));
+  VERIFY((numext::isinf)(NumTraits<half>::infinity()));
+  VERIFY((numext::isinf)(-NumTraits<half>::infinity()));
 
   // Conversion to bool
   VERIFY(!static_cast<bool>(half(0.0)));
@@ -204,19 +200,25 @@ void test_comparison() {
   VERIFY(half(1.0f) != half(2.0f));
 
   // Comparisons with NaNs and infinities.
-#if !EIGEN_COMP_MSVC
-  // Visual Studio errors out on divisions by 0
-  VERIFY(!(half(0.0 / 0.0) == half(0.0 / 0.0)));
-  VERIFY(half(0.0 / 0.0) != half(0.0 / 0.0));
+  VERIFY(!(NumTraits<half>::quiet_NaN() == NumTraits<half>::quiet_NaN()));
+  VERIFY(NumTraits<half>::quiet_NaN() != NumTraits<half>::quiet_NaN());
 
-  VERIFY(!(half(1.0) == half(0.0 / 0.0)));
-  VERIFY(!(half(1.0) < half(0.0 / 0.0)));
-  VERIFY(!(half(1.0) > half(0.0 / 0.0)));
-  VERIFY(half(1.0) != half(0.0 / 0.0));
+  VERIFY(!(internal::random<half>() == NumTraits<half>::quiet_NaN()));
+  VERIFY(!(internal::random<half>() < NumTraits<half>::quiet_NaN()));
+  VERIFY(!(internal::random<half>() > NumTraits<half>::quiet_NaN()));
+  VERIFY(!(internal::random<half>() <= NumTraits<half>::quiet_NaN()));
+  VERIFY(!(internal::random<half>() >= NumTraits<half>::quiet_NaN()));
+  VERIFY(internal::random<half>() != NumTraits<half>::quiet_NaN());
 
-  VERIFY(half(1.0) < half(1.0 / 0.0));
-  VERIFY(half(1.0) > half(-1.0 / 0.0));
-#endif
+  VERIFY(!(NumTraits<half>::quiet_NaN() == internal::random<half>()));
+  VERIFY(!(NumTraits<half>::quiet_NaN() < internal::random<half>()));
+  VERIFY(!(NumTraits<half>::quiet_NaN() > internal::random<half>()));
+  VERIFY(!(NumTraits<half>::quiet_NaN() <= internal::random<half>()));
+  VERIFY(!(NumTraits<half>::quiet_NaN() >= internal::random<half>()));
+  VERIFY(NumTraits<half>::quiet_NaN() != internal::random<half>());
+
+  VERIFY(internal::random<half>() < NumTraits<half>::infinity());
+  VERIFY(internal::random<half>() > -NumTraits<half>::infinity());
 }
 
 void test_basic_functions() {

@@ -162,8 +162,8 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
   EIGEN_DEVICE_FUNC Base& base() { return *static_cast<Base*>(this); }
   EIGEN_DEVICE_FUNC const Base& base() const { return *static_cast<const Base*>(this); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_storage.rows(); }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_storage.cols(); }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Index rows() const noexcept { return m_storage.rows(); }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Index cols() const noexcept { return m_storage.cols(); }
 
   /** This is an overloaded version of DenseCoeffsBase<Derived,ReadOnlyAccessors>::coeff(Index,Index) const
    * provided to by-pass the creation of an evaluator of the expression, thus saving compilation efforts.
@@ -298,7 +298,7 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
    *
    * \sa resize(Index,Index), resize(NoChange_t, Index), resize(Index, NoChange_t)
    */
-  EIGEN_DEVICE_FUNC inline constexpr void resize(Index size) {
+  EIGEN_DEVICE_FUNC constexpr void resize(Index size) {
     EIGEN_STATIC_ASSERT_VECTOR_ONLY(PlainObjectBase)
     eigen_assert(((SizeAtCompileTime == Dynamic && (MaxSizeAtCompileTime == Dynamic || size <= MaxSizeAtCompileTime)) ||
                   SizeAtCompileTime == size) &&
@@ -323,7 +323,7 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
    *
    * \sa resize(Index,Index)
    */
-  EIGEN_DEVICE_FUNC inline constexpr void resize(NoChange_t, Index cols) { resize(rows(), cols); }
+  EIGEN_DEVICE_FUNC constexpr void resize(NoChange_t, Index cols) { resize(rows(), cols); }
 
   /** Resizes the matrix, changing only the number of rows. For the parameter of type NoChange_t, just pass the special
    * value \c NoChange as in the example below.
@@ -333,7 +333,7 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
    *
    * \sa resize(Index,Index)
    */
-  EIGEN_DEVICE_FUNC inline constexpr void resize(Index rows, NoChange_t) { resize(rows, cols()); }
+  EIGEN_DEVICE_FUNC constexpr void resize(Index rows, NoChange_t) { resize(rows, cols()); }
 
   /** Resizes \c *this to have the same dimensions as \a other.
    * Takes care of doing all the checking that's needed.
@@ -450,7 +450,7 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
   /** \brief Move constructor */
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr PlainObjectBase(PlainObjectBase&&) = default;
   /** \brief Move assignment operator */
-  EIGEN_DEVICE_FUNC constexpr PlainObjectBase& operator=(PlainObjectBase&& other) EIGEN_NOEXCEPT {
+  EIGEN_DEVICE_FUNC constexpr PlainObjectBase& operator=(PlainObjectBase&& other) noexcept {
     m_storage = std::move(other.m_storage);
     return *this;
   }

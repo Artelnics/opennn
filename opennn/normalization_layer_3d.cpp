@@ -13,11 +13,10 @@
 namespace opennn
 {
 
-Normalization3d::Normalization3d(const Index& new_sequence_length,
-                                 const Index& new_embedding_dimension,
+Normalization3d::Normalization3d(const dimensions& new_input_dimensions,
                                  const string& new_name) : Layer()
 {
-    set(new_sequence_length, new_embedding_dimension, new_name);
+    set(new_input_dimensions[0], new_input_dimensions[1], new_name);
 }
 
 
@@ -88,13 +87,6 @@ void Normalization3d::set_parameters(const Tensor<type, 1>& new_parameters, Inde
 {
     copy_from_vector(gammas, new_parameters, index);
     copy_from_vector(betas, new_parameters, index);
-}
-
-
-void Normalization3d::set_parameters_constant(const type& value)
-{
-    gammas.setConstant(value);
-    betas.setConstant(value);
 }
 
 
@@ -266,7 +258,7 @@ Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Normalization3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Normalization3dForwardPropagation::get_output_pair() const
 {
     Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 

@@ -45,19 +45,19 @@ namespace internal {
 template <typename Scalar, typename StorageIndex, StorageIndex NCWindow, StorageIndex CFactor, StorageIndex NCFactor>
 struct TVPanelSize {
   // LocalThreadSizeC: determines total number of thread per workgroup for the contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex LocalThreadSizeC = EIGEN_SYCL_LOCAL_THREAD_DIM0;
+  static constexpr StorageIndex LocalThreadSizeC = EIGEN_SYCL_LOCAL_THREAD_DIM0;
   // LocalThreadSizeNC: determines total number of thread per workgroup for the non-contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex LocalThreadSizeNC = EIGEN_SYCL_LOCAL_THREAD_DIM1;
+  static constxpr StorageIndex LocalThreadSizeNC = EIGEN_SYCL_LOCAL_THREAD_DIM1;
   // TileSizeDimNC: determines the tile size for the non-contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex TileSizeDimNC = NCWindow / NCFactor;
+  static constexpr StorageIndex TileSizeDimNC = NCWindow / NCFactor;
   // TileSizeDimC: determines the tile size for the contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex TileSizeDimC = CFactor * LocalThreadSizeNC * LocalThreadSizeC;
+  static constexpr StorageIndex TileSizeDimC = CFactor * LocalThreadSizeNC * LocalThreadSizeC;
   // WorkLoadPerThreadNC : determines workload per thread for loading the non-contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadNC = TileSizeDimNC / LocalThreadSizeNC;
+  static constexpr StorageIndex WorkLoadPerThreadNC = TileSizeDimNC / LocalThreadSizeNC;
   // WorkLoadPerThreadC: determines workload per thread for loading the non-contracting dimension
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadC = TileSizeDimC / LocalThreadSizeC;
+  static constexpr StorageIndex WorkLoadPerThreadC = TileSizeDimC / LocalThreadSizeC;
   // BC : determines if supporting bank conflict is required
-  static EIGEN_CONSTEXPR bool BC = false;
+  static constexpr bool BC = false;
 };
 #endif
 
@@ -81,40 +81,40 @@ struct TVPanelSize {
 template <typename Scalar, typename StorageIndex, StorageIndex REG_SIZE_M, StorageIndex REG_SIZE_N, StorageIndex TSDK>
 struct TTPanelSize {
   // TileSizeDimK: determines Tile size for dimension K. The packet size is assumed to be considered
-  static EIGEN_CONSTEXPR StorageIndex TileSizeDimK = TSDK;
+  static constexpr StorageIndex TileSizeDimK = TSDK;
   // WorkLoadPerThreadM : determines workload per thread for loading the M dimension This can be varied based on the
   // available register on a chosen device(can be controlled by EIGEN_SYCL_REG_M macro//
 #ifndef EIGEN_SYCL_REG_M
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadM = REG_SIZE_M;
+  static constexpr StorageIndex WorkLoadPerThreadM = REG_SIZE_M;
 #else
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadM = EIGEN_SYCL_REG_M;
+  static constexpr StorageIndex WorkLoadPerThreadM = EIGEN_SYCL_REG_M;
 #endif
 // WorkLoadPerThreadN : determines workload per thread for loading the N dimension This can be varied based on the
 // available register on a chosen device(can be controlled by EIGEN_SYCL_REG_N macro
 #ifndef EIGEN_SYCL_REG_N
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadN = REG_SIZE_N;
+  static constexpr StorageIndex WorkLoadPerThreadN = REG_SIZE_N;
 #else
-  static EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadN = EIGEN_SYCL_REG_N;
+  static constexpr StorageIndex WorkLoadPerThreadN = EIGEN_SYCL_REG_N;
 #endif
   // LocalThreadSizeM: determines total number of thread per workgroup for the m dimension
-  static EIGEN_CONSTEXPR StorageIndex LocalThreadSizeM = EIGEN_SYCL_LOCAL_THREAD_DIM0;
+  static constexpr StorageIndex LocalThreadSizeM = EIGEN_SYCL_LOCAL_THREAD_DIM0;
   // LocalThreadSizeN: determines total number of thread per workgroup for the n dimension
-  static EIGEN_CONSTEXPR StorageIndex LocalThreadSizeN = EIGEN_SYCL_LOCAL_THREAD_DIM1;
+  static constexpr StorageIndex LocalThreadSizeN = EIGEN_SYCL_LOCAL_THREAD_DIM1;
   // TileSizeDimM: determines the tile size for the m dimension
-  static EIGEN_CONSTEXPR StorageIndex TileSizeDimM = LocalThreadSizeM * WorkLoadPerThreadM;
+  static constexpr StorageIndex TileSizeDimM = LocalThreadSizeM * WorkLoadPerThreadM;
   // TileSizeDimN: determines the tile size for the n dimension
-  static EIGEN_CONSTEXPR StorageIndex TileSizeDimN = LocalThreadSizeN * WorkLoadPerThreadN;
+  static constexpr StorageIndex TileSizeDimN = LocalThreadSizeN * WorkLoadPerThreadN;
   // LoadPerThreadLhs: determines workload per thread for loading Lhs Tensor. This must be divisible by packetsize
-  static EIGEN_CONSTEXPR StorageIndex LoadPerThreadLhs =
+  static constexpr StorageIndex LoadPerThreadLhs =
       ((TileSizeDimK * WorkLoadPerThreadM * WorkLoadPerThreadN) / (TileSizeDimN));
   // LoadPerThreadRhs: determines workload per thread for loading Rhs Tensor. This must be divisible by packetsize
-  static EIGEN_CONSTEXPR StorageIndex LoadPerThreadRhs =
+  static constexpr StorageIndex LoadPerThreadRhs =
       ((TileSizeDimK * WorkLoadPerThreadM * WorkLoadPerThreadN) / (TileSizeDimM));
   // BC : determines if supporting bank conflict is required
-  static EIGEN_CONSTEXPR bool BC = true;
+  static constexpr bool BC = true;
   // DoubleBuffer: determines if double buffering technique should be used (This can be disabled by
   // EIGEN_SYCL_DISABLE_DOUBLE_BUFFER macro when the device does not have sufficient local memory)
-  static EIGEN_CONSTEXPR bool DoubleBuffer =
+  static constexpr bool DoubleBuffer =
 #ifdef EIGEN_SYCL_DISABLE_DOUBLE_BUFFER
       false;
 #else
@@ -220,7 +220,7 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<!PacketLoad, Packe
 template <typename StorageIndex, StorageIndex ld, data_source dt, typename PacketType, typename DataScalar>
 static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<dt != data_source::global_mem, void> write(
     PacketType &packet_data, DataScalar ptr) {
-  EIGEN_CONSTEXPR int PacketSize = Eigen::internal::unpacket_traits<PacketType>::size;
+  constexpr int PacketSize = Eigen::internal::unpacket_traits<PacketType>::size;
   EIGEN_UNROLL_LOOP
   for (int i = 0; i < PacketSize; i++) {
     *ptr = PacketWrapper<PacketType, PacketSize>::scalarize(i, packet_data);
@@ -320,14 +320,14 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool check_boundary<false>(bool cond) {
  */
 template <bool is_transposed, bool is_rhs_, bool packet_load_, typename PacketType>
 struct BlockProperties {
-  static EIGEN_CONSTEXPR bool packet_load = packet_load_;
+  static constexpr bool packet_load = packet_load_;
   typedef typename Eigen::internal::unpacket_traits<PacketType>::type OutScalar;
-  static EIGEN_CONSTEXPR bool is_rhs = is_rhs_;
+  static constexpr bool is_rhs = is_rhs_;
   typedef std::conditional_t<packet_load, PacketType, OutScalar> OutType;
-  static EIGEN_CONSTEXPR int elements_per_access = Eigen::internal::unpacket_traits<OutType>::size;
-  static EIGEN_CONSTEXPR bool is_coalesced_layout = !(is_transposed ^ is_rhs);
-  static EIGEN_CONSTEXPR int nc_stride = (is_coalesced_layout ? elements_per_access : 1);
-  static EIGEN_CONSTEXPR int c_stride = (is_coalesced_layout ? 1 : elements_per_access);
+  static constexpr int elements_per_access = Eigen::internal::unpacket_traits<OutType>::size;
+  static constexpr bool is_coalesced_layout = !(is_transposed ^ is_rhs);
+  static constexpr int nc_stride = (is_coalesced_layout ? elements_per_access : 1);
+  static constexpr int c_stride = (is_coalesced_layout ? 1 : elements_per_access);
 };
 
 /*!
@@ -458,11 +458,11 @@ class TensorContractionKernel {
  public:
   typedef typename Eigen::TensorSycl::internal::Vectorise<OutScalar, Eigen::SyclDevice, Vectorizable>::PacketReturnType
       PacketReturnType;
-  static EIGEN_CONSTEXPR int PacketSize =
+  static constexpr int PacketSize =
       Eigen::TensorSycl::internal::Vectorise<OutScalar, Eigen::SyclDevice, Vectorizable>::PacketSize;
-  static EIGEN_CONSTEXPR bool is_lhs_transposed =
+  static constexpr bool is_lhs_transposed =
       !::Eigen::internal::TensorContractionInputMapperTrait<LhsMapper>::inner_dim_contiguous;
-  static EIGEN_CONSTEXPR bool is_rhs_transposed =
+  static constexpr bool is_rhs_transposed =
       !::Eigen::internal::TensorContractionInputMapperTrait<RhsMapper>::inner_dim_contiguous;
 
   typedef BlockProperties<is_lhs_transposed, false, input_mapper_properties::is_lhs_matrix && Vectorizable,
@@ -473,20 +473,20 @@ class TensorContractionKernel {
                           PacketReturnType>
       RHSBlockProperties;
 
-  static EIGEN_CONSTEXPR StorageIndex NStride =
+  static constexpr StorageIndex NStride =
       contraction_tp == contraction_type::local ? Properties::WorkLoadPerThreadN : RHSBlockProperties::nc_stride;
 
   typedef cl::sycl::accessor<OutScalar, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> Scratch;
   typedef cl::sycl::multi_ptr<OutScalar, cl::sycl::access::address_space::local_space> local_ptr;
   typedef OutScalar * /*cl::sycl::multi_ptr<OutScalar, cl::sycl::access::address_space::private_space>*/ private_ptr;
   typedef std::conditional_t<contraction_tp == contraction_type::local, local_ptr, private_ptr> tile_ptr;
-  static EIGEN_CONSTEXPR StorageIndex LSDL = contraction_tp == contraction_type::local
-                                                 ? Properties::TileSizeDimM + Properties::BC
-                                                 : Properties::WorkLoadPerThreadM;
-  static EIGEN_CONSTEXPR StorageIndex LSDR = contraction_tp == contraction_type::local
-                                                 ? Properties::TileSizeDimN + Properties::BC
-                                                 : Properties::WorkLoadPerThreadN;
-  static EIGEN_CONSTEXPR StorageIndex LocalOffset = Properties::LocalThreadSizeM * Properties::LocalThreadSizeN;
+  static constexpr StorageIndex LSDL = contraction_tp == contraction_type::local
+                                           ? Properties::TileSizeDimM + Properties::BC
+                                           : Properties::WorkLoadPerThreadM;
+  static constexpr StorageIndex LSDR = contraction_tp == contraction_type::local
+                                           ? Properties::TileSizeDimN + Properties::BC
+                                           : Properties::WorkLoadPerThreadN;
+  static constexpr StorageIndex LocalOffset = Properties::LocalThreadSizeM * Properties::LocalThreadSizeN;
 
   /**
    * \brief MemHolder this is a place holder struct for creating memory hierarchy in SYCL. Inside SYCL kernel it is not
@@ -638,7 +638,7 @@ class TensorContractionKernel {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void compute_block_per_tile(OutScalar *lhs_block_ptr, OutScalar *rhs_block_ptr,
                                                                     PacketReturnType *privateRes) const {
     StorageIndex idx = 0;
-    EIGEN_CONSTEXPR StorageIndex lhs_stride =
+    constexpr StorageIndex lhs_stride =
         contraction_tp == contraction_type::local ? (PacketSize * Properties::LocalThreadSizeM) : 1;
     EIGEN_UNROLL_LOOP
     for (StorageIndex wLPTN = 0; wLPTN < Properties::WorkLoadPerThreadN; wLPTN++) {
@@ -668,8 +668,7 @@ class TensorContractionKernel {
     // when local memory is not used M and N are both accessed in a coalesced way. However, when local memory is
     // available the k*N is transposed in the local to N*K therefore, each blocks operates on blockId*
     // WorkLoadPerThreadN slice of N
-    EIGEN_CONSTEXPR StorageIndex GlobalNStride =
-        contraction_tp == contraction_type::local ? 1 : Properties::LocalThreadSizeN;
+    constexpr StorageIndex GlobalNStride = contraction_tp == contraction_type::local ? 1 : Properties::LocalThreadSizeN;
     EIGEN_UNROLL_LOOP
     for (StorageIndex wLPTN = 0; wLPTN < Properties::WorkLoadPerThreadN / PrivateNStride; wLPTN++) {
       // output leading dimension
@@ -713,9 +712,9 @@ class TensorContractionKernel {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<contract_tp == contraction_type::no_local> extract_block(
       const Input &inpt, PrivateReg private_ptr, const std::pair<StorageIndex, StorageIndex> &,
       const StorageIndex &ncOffset, const StorageIndex cOffset) const {
-    EIGEN_CONSTEXPR StorageIndex LocalThreadSizeNC =
+    constexpr StorageIndex LocalThreadSizeNC =
         InputBlockProperties::is_rhs ? Properties::LocalThreadSizeN : Properties::LocalThreadSizeM;
-    EIGEN_CONSTEXPR StorageIndex WorkLoadPerThreadNC =
+    constexpr StorageIndex WorkLoadPerThreadNC =
         InputBlockProperties::is_rhs ? Properties::WorkLoadPerThreadN : Properties::WorkLoadPerThreadM;
     const StorageIndex &NC = InputBlockProperties::is_rhs ? triple_dim.N : triple_dim.M;
 
@@ -891,11 +890,11 @@ class TensorContractionKernel {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<contract_tp == contraction_type::local> extract_block(
       const Input &inpt, Local local_ptr, const std::pair<StorageIndex, StorageIndex> &local_index,
       const StorageIndex &ncOffset, const StorageIndex cOffset) const {
-    EIGEN_CONSTEXPR StorageIndex TileSizeDimNC =
+    constexpr StorageIndex TileSizeDimNC =
         InputBlockProperties::is_rhs ? Properties::TileSizeDimN : Properties::TileSizeDimM;
-    EIGEN_CONSTEXPR StorageIndex LoadPerThread =
+    constexpr StorageIndex LoadPerThread =
         InputBlockProperties::is_rhs ? Properties::LoadPerThreadRhs : Properties::LoadPerThreadLhs;
-    EIGEN_CONSTEXPR StorageIndex LSD = InputBlockProperties::is_rhs ? LSDR : LSDL;
+    constexpr StorageIndex LSD = InputBlockProperties::is_rhs ? LSDR : LSDL;
     static_assert(((LocalOffset % (TileSizeDimNC / InputBlockProperties::nc_stride) == 0) &&
                    (LocalOffset % (Properties::TileSizeDimK / InputBlockProperties::c_stride) == 0)),
                   " LocalOffset must be divisible by stride");
@@ -995,11 +994,11 @@ template <typename OutScalar, typename OutAccessor, typename VectorMapper, typen
 struct GeneralVectorTensor {
   typedef typename Eigen::TensorSycl::internal::Vectorise<OutScalar, Eigen::SyclDevice, Vectorizable>::PacketReturnType
       PacketReturnType;
-  static EIGEN_CONSTEXPR int PacketSize =
+  static constexpr int PacketSize =
       Eigen::TensorSycl::internal::Vectorise<OutScalar, Eigen::SyclDevice, Vectorizable>::PacketSize;
   typedef cl::sycl::accessor<OutScalar, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> Scratch;
 
-  static EIGEN_CONSTEXPR StorageIndex OutScratchOffset =
+  static constexpr StorageIndex OutScratchOffset =
       KFactor * Properties::LocalThreadSizeC * Properties::LocalThreadSizeNC;
 
   // Since the access layout for a vector can always be coalesced, when LHS is a vector, we pass false and false to make
@@ -1328,8 +1327,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous, bool rhs_inner_dim_reordered>
   struct input_mapper_propertis {
-    static EIGEN_CONSTEXPR bool is_lhs_matrix = (LDims == 2 && ContractDims == 1) || lhs_inner_dim_contiguous;
-    static EIGEN_CONSTEXPR bool is_rhs_matrix =
+    static constexpr bool is_lhs_matrix = (LDims == 2 && ContractDims == 1) || lhs_inner_dim_contiguous;
+    static constexpr bool is_rhs_matrix =
         (RDims == 2 && ContractDims == 1) || (rhs_inner_dim_contiguous && !rhs_inner_dim_reordered);
   };
 
@@ -1537,9 +1536,9 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
   void EIGEN_ALWAYS_INLINE LaunchVT(EvaluatorPointerType buffer, const VectorMapper &vec, const TensorMapper &mat,
                                     StorageIndex NC, StorageIndex C) const {
     const StorageIndex nonContractDim = NC;
-    EIGEN_CONSTEXPR StorageIndex NCFactor = 1;
-    EIGEN_CONSTEXPR StorageIndex CFactor = 1;
-    EIGEN_CONSTEXPR StorageIndex NCWindow = 16;
+    constexpr StorageIndex NCFactor = 1;
+    constexpr StorageIndex CFactor = 1;
+    constexpr StorageIndex NCWindow = 16;
     typedef Eigen::TensorSycl::internal::TVPanelSize<CoeffReturnType, StorageIndex, NCWindow, CFactor, NCFactor>
         Properties;
     const StorageIndex roundUpC = Eigen::TensorSycl::internal::roundUp(C, Properties::TileSizeDimC);
@@ -1601,7 +1600,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
                           (EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1 - 1)),
                         "The Local thread size must be a power of 2 for the reduction "
                         "operation");
-    EIGEN_CONSTEXPR StorageIndex local_range = EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1;
+    constexpr StorageIndex local_range = EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1;
 
     // Here we force the code not to be more than 2-step reduction: Our empirical research shows that if each thread
     // reduces at least 512 elementss individually, we get better performance.

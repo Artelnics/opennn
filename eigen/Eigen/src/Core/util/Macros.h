@@ -1277,11 +1277,6 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void ignore_unused_variable(cons
 #define EIGEN_CATCH(X) else
 #endif
 
-#define EIGEN_NOEXCEPT noexcept
-#define EIGEN_NOEXCEPT_IF(x) noexcept(x)
-#define EIGEN_NO_THROW noexcept(true)
-#define EIGEN_EXCEPTION_SPEC(X) noexcept(false)
-
 // The all function is used to enable a variadic version of eigen_assert which can take a parameter pack as its input.
 namespace Eigen {
 namespace internal {

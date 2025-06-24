@@ -34,7 +34,7 @@ class TupleImpl<N, T1, Ts...> {
   template <typename U1 = T1,
             typename EnableIf = std::enable_if_t<std::is_default_constructible<U1>::value &&
                                                  reduce_all<std::is_default_constructible<Ts>::value...>::value>>
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC TupleImpl() : head_{}, tail_{} {}
+  constexpr EIGEN_DEVICE_FUNC TupleImpl() : head_{}, tail_{} {}
 
   // Element constructor.
   template <typename U1, typename... Us,
@@ -44,7 +44,7 @@ class TupleImpl<N, T1, Ts...> {
                 sizeof...(Us) == sizeof...(Ts) && (
                                                       // this does not look like a copy/move constructor.
                                                       N > 1 || std::is_convertible<U1, T1>::value)>>
-  EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC TupleImpl(U1&& arg1, Us&&... args)
+  constexpr EIGEN_DEVICE_FUNC TupleImpl(U1&& arg1, Us&&... args)
       : head_(std::forward<U1>(arg1)), tail_(std::forward<Us>(args)...) {}
 
   // The first stored value.
@@ -102,11 +102,11 @@ struct tuple_get_impl {
   using TupleType = TupleImpl<sizeof...(Ts) + 1, T1, Ts...>;
   using ReturnType = typename tuple_get_impl<Idx - 1, Ts...>::ReturnType;
 
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE ReturnType& run(TupleType& tuple) {
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE ReturnType& run(TupleType& tuple) {
     return tuple_get_impl<Idx - 1, Ts...>::run(tuple.tail());
   }
 
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE const ReturnType& run(const TupleType& tuple) {
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE const ReturnType& run(const TupleType& tuple) {
     return tuple_get_impl<Idx - 1, Ts...>::run(tuple.tail());
   }
 };
@@ -117,11 +117,9 @@ struct tuple_get_impl<0, T1, Ts...> {
   using TupleType = TupleImpl<sizeof...(Ts) + 1, T1, Ts...>;
   using ReturnType = T1;
 
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE T1& run(TupleType& tuple) { return tuple.head(); }
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE T1& run(TupleType& tuple) { return tuple.head(); }
 
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE const T1& run(const TupleType& tuple) {
-    return tuple.head();
-  }
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE const T1& run(const TupleType& tuple) { return tuple.head(); }
 };
 
 // Concatenates N Tuples.
@@ -139,11 +137,9 @@ struct tuple_cat_impl<NTuples, TupleImpl<N1, Args1...>, TupleImpl<N2, Args2...>,
   // Uses the index sequences to extract and merge elements from tuple1 and tuple2,
   // then recursively calls again.
   template <typename Tuple1, size_t... I1s, typename Tuple2, size_t... I2s, typename... MoreTuples>
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1,
-                                                                              std::index_sequence<I1s...>,
-                                                                              Tuple2&& tuple2,
-                                                                              std::index_sequence<I2s...>,
-                                                                              MoreTuples&&... tuples) {
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1, std::index_sequence<I1s...>,
+                                                                        Tuple2&& tuple2, std::index_sequence<I2s...>,
+                                                                        MoreTuples&&... tuples) {
     return tuple_cat_impl<NTuples - 1, MergedTupleType, Tuples...>::run(
         MergedTupleType(tuple_get_impl<I1s, Args1...>::run(std::forward<Tuple1>(tuple1))...,
                         tuple_get_impl<I2s, Args2...>::run(std::forward<Tuple2>(tuple2))...),
@@ -152,8 +148,8 @@ struct tuple_cat_impl<NTuples, TupleImpl<N1, Args1...>, TupleImpl<N2, Args2...>,
 
   // Concatenates the first two tuples.
   template <typename Tuple1, typename Tuple2, typename... MoreTuples>
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1, Tuple2&& tuple2,
-                                                                              MoreTuples&&... tuples) {
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1, Tuple2&& tuple2,
+                                                                        MoreTuples&&... tuples) {
     return run(std::forward<Tuple1>(tuple1), std::make_index_sequence<N1>{}, std::forward<Tuple2>(tuple2),
                std::make_index_sequence<N2>{}, std::forward<MoreTuples>(tuples)...);
   }
@@ -165,7 +161,7 @@ struct tuple_cat_impl<1, TupleImpl<N, Args...>> {
   using ReturnType = TupleImpl<N, Args...>;
 
   template <typename Tuple1>
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1) {
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run(Tuple1&& tuple1) {
     return tuple1;
   }
 };
@@ -174,7 +170,7 @@ struct tuple_cat_impl<1, TupleImpl<N, Args...>> {
 template <>
 struct tuple_cat_impl<0> {
   using ReturnType = TupleImpl<0>;
-  static EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run() { return ReturnType{}; }
+  static constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType run() { return ReturnType{}; }
 };
 
 // For use in make_tuple, unwraps a reference_wrapper.
@@ -211,13 +207,13 @@ struct tuple_size<TupleImpl<sizeof...(Types), Types...>> : std::integral_constan
  * \return a reference to the desired element.
  */
 template <size_t Idx, typename... Types>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename tuple_get_impl<Idx, Types...>::ReturnType& get(
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename tuple_get_impl<Idx, Types...>::ReturnType& get(
     const TupleImpl<sizeof...(Types), Types...>& tuple) {
   return tuple_get_impl<Idx, Types...>::run(tuple);
 }
 
 template <size_t Idx, typename... Types>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename tuple_get_impl<Idx, Types...>::ReturnType& get(
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename tuple_get_impl<Idx, Types...>::ReturnType& get(
     TupleImpl<sizeof...(Types), Types...>& tuple) {
   return tuple_get_impl<Idx, Types...>::run(tuple);
 }
@@ -229,7 +225,7 @@ EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename tuple_get_impl<Id
  */
 template <typename... Tuples, typename EnableIf = std::enable_if_t<
                                   internal::reduce_all<is_tuple<typename std::decay<Tuples>::type>::value...>::value>>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     typename tuple_cat_impl<sizeof...(Tuples), typename std::decay<Tuples>::type...>::ReturnType
     tuple_cat(Tuples&&... tuples) {
   return tuple_cat_impl<sizeof...(Tuples), typename std::decay<Tuples>::type...>::run(std::forward<Tuples>(tuples)...);
@@ -239,7 +235,7 @@ EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
  * Tie arguments together into a tuple.
  */
 template <typename... Args, typename ReturnType = TupleImpl<sizeof...(Args), Args&...>>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType tie(Args&... args) EIGEN_NOEXCEPT {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType tie(Args&... args) noexcept {
   return ReturnType{args...};
 }
 
@@ -247,7 +243,7 @@ EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType tie(Args&... ar
  * Create a tuple of l-values with the supplied arguments.
  */
 template <typename... Args, typename ReturnType = TupleImpl<sizeof...(Args), typename unwrap_decay<Args>::type...>>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType make_tuple(Args&&... args) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType make_tuple(Args&&... args) {
   return ReturnType{std::forward<Args>(args)...};
 }
 
@@ -255,8 +251,7 @@ EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ReturnType make_tuple(Args
  * Forward a set of arguments as a tuple.
  */
 template <typename... Args>
-EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TupleImpl<sizeof...(Args), Args...> forward_as_tuple(
-    Args&&... args) {
+constexpr EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TupleImpl<sizeof...(Args), Args...> forward_as_tuple(Args&&... args) {
   return TupleImpl<sizeof...(Args), Args...>(std::forward<Args>(args)...);
 }
 

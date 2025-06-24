@@ -23,14 +23,14 @@ struct DefaultDevice {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void deallocate(void* buffer) const { internal::aligned_free(buffer); }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void* allocate_temp(size_t num_bytes) const { return allocate(num_bytes); }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void deallocate_temp(void* buffer) const { deallocate(buffer); }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* source, size_t n) const {
-    ::memcpy(dst, source, n);
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
+    ::memcpy(dst, src, n);
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* source, size_t n) const {
-    memcpy(dst, source, n);
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
+    memcpy(dst, src, n);
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* source, size_t n) const {
-    memcpy(dst, source, n);
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
+    memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const { ::memset(buffer, c, n); }
   template <typename T>

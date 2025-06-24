@@ -9,6 +9,7 @@
 #include "dataset.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
+#include "training_strategy.h"
 
 namespace opennn
 {
@@ -232,12 +233,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_error = type(0);
 
-        if(is_classification_model) training_accuracy = type(0); 
-        
+        if(is_classification_model) training_accuracy = type(0);
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
-            
+
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 decoder_variable_indices,
@@ -788,128 +789,51 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
 
 void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
-                                                       ADAMOptimizationDataCuda& optimization_data_cuda) const
+                                                      ADAMOptimizationDataCuda& optimization_data_cuda) const
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    Index& iteration = optimization_data_cuda.iteration;
+    int iteration = static_cast<int>(optimization_data_cuda.iteration);
+
+    type& step = optimization_data_cuda.step;
 
     const type bias_correction =
         sqrt(type(1) - pow(beta_2, type(iteration))) /
         (type(1) - pow(beta_1, type(iteration)));
 
+    type effective_learning_rate = static_cast<float>(learning_rate) * bias_correction;
+
+    if(use_custom_learning_rate)
+    {
+        const float warmup_steps = 4000.0f;
+        float scale = fminf(powf(step, -0.5f),
+                            step * powf(warmup_steps, -1.5f));
+        effective_learning_rate *= scale;
+
+        step = step + 1.0f;
+    }
+
     const Index parameters_number = optimization_data_cuda.adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    type* ones = optimization_data_cuda.ones;
+    float* parameters = back_propagation_cuda.parameters;
 
-    type* gradient = back_propagation_cuda.gradient;
+    float* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay;
 
-    type* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay;
+    float* square_gradient_exponential_decay = optimization_data_cuda.square_gradient_exponential_decay;
 
-    type* square_gradient = optimization_data_cuda.square_gradient;
+    const float* gradient = back_propagation_cuda.gradient;
 
-    type* square_gradient_exponential_decay = optimization_data_cuda.square_gradient_exponential_decay;
-
-    type* parameters = back_propagation_cuda.parameters;
-
-    const cudnnTensorDescriptor_t& gradient_tensor_descriptor = back_propagation_cuda.gradient_tensor_descriptor;
-
-    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
-
-    const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
-
-    const cudnnOpTensorDescriptor_t& operator_square_root_descriptor = back_propagation_cuda.operator_square_root_descriptor;
-
-    // Gradients
-
-    float alpha = 1.0f;
-    const float beta = 0.0f;
-
-    cudnnOpTensor(cudnn_handle,
-        operator_multiplication_descriptor,
-        &alpha,
-        gradient_tensor_descriptor,
-        gradient,
-        &alpha,
-        gradient_tensor_descriptor,
-        gradient,
-        &beta,
-        gradient_tensor_descriptor,
-        square_gradient);
-
-    alpha = (type(1) - beta_2);
-
-    cublasSscal(cublas_handle, parameters_number, &alpha, square_gradient, 1);
-
-    alpha = (type(1) - beta_1);
-
-    cublasSscal(cublas_handle, parameters_number, &alpha, gradient, 1);
-
-    alpha = beta_1;
-
-    cublasSscal(cublas_handle, parameters_number, &alpha, gradient_exponential_decay, 1);
-
-    alpha = beta_2;
-
-    cublasSscal(cublas_handle, parameters_number, &alpha, square_gradient_exponential_decay, 1);
-
-    alpha = 1.0f;
-
-    cublasSaxpy(cublas_handle, parameters_number, &alpha, gradient, 1, gradient_exponential_decay, 1);
-
-    cublasSaxpy(cublas_handle, parameters_number, &alpha, square_gradient, 1, square_gradient_exponential_decay, 1);
-
-    // Parameters
-
-    // Numerator -> (learning_rate * bias_correction) * gradient_exponential_decay
-
-    float* numerator = optimization_data_cuda.numerator;
-
-    cudaMemcpy(numerator, gradient_exponential_decay, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice);
-
-    if (!use_custom_learning_rate)
-    {
-        alpha = bias_correction * learning_rate;
-
-        cublasSscal(cublas_handle, parameters_number, &alpha, numerator, 1);
-    }
-    else
-    {
-        const type warmup_steps = 4000;
-        type& step = optimization_data_cuda.step;
-
-        alpha = (learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5))) * bias_correction;
-
-        cublasSscal(cublas_handle, parameters_number, &alpha, numerator, 1);
-
-        step++;
-    }
-
-    // Denominator -> (square_gradient_exponential_decay.sqrt() + epsilon)
-
-    float* denominator = optimization_data_cuda.denominator;
-
-    alpha = 1.0f;
-
-    cudnnOpTensor(cudnn_handle,
-        operator_square_root_descriptor,
-        &alpha,
-        gradient_tensor_descriptor,
+    update_parameters_device(
+        parameters_number,
+        parameters,
+        gradient_exponential_decay,
         square_gradient_exponential_decay,
-        &alpha,
-        gradient_tensor_descriptor,
-        square_gradient_exponential_decay,
-        &beta,
-        gradient_tensor_descriptor,
-        denominator);
-
-    alpha = epsilon;
-    
-    cublasSaxpy(cublas_handle, parameters_number, &alpha, ones, 1, denominator, 1);
-
-    // parameters -= numerator / denominator
-
-    divide_subtract(parameters_number, parameters, numerator, denominator);
+        gradient,
+        beta_1,
+        beta_2,
+        effective_learning_rate,
+        static_cast<float>(epsilon)
+    );
 
     optimization_data_cuda.iteration++;
 
@@ -931,30 +855,18 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
 
     const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    // Gradient
+    CHECK_CUDA(cudaMalloc(&gradient_exponential_decay,parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay,parameters_number * sizeof(float)));
 
-    CHECK_CUDA(cudaMalloc(&square_gradient, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&numerator, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&denominator, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&ones, parameters_number * sizeof(float)));
-
-    vector<float> host_ones(parameters_number, 1.0f);
-
-    CHECK_CUDA(cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
-
+    CHECK_CUDA(cudaMemset(gradient_exponential_decay,           0, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMemset(square_gradient_exponential_decay,    0, parameters_number * sizeof(float)));
 }
 
 
 void ADAMOptimizationDataCuda::free()
 {
-    cudaFree(square_gradient);
     cudaFree(gradient_exponential_decay);
     cudaFree(square_gradient_exponential_decay);
-    cudaFree(numerator);
-    cudaFree(denominator);
-    cudaFree(ones);
 }
 
 
@@ -970,6 +882,8 @@ void ADAMOptimizationDataCuda::print() const
 }
 
 #endif
+
+REGISTER(OptimizationAlgorithm, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");
 
 }
 

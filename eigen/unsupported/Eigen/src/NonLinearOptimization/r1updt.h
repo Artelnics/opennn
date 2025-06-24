@@ -75,7 +75,7 @@ void r1updt(Matrix<Scalar, Dynamic, Dynamic> &s, const Matrix<Scalar, Dynamic, 1
       /* givens rotation. */
       w_givens[j] = givens;
     } else
-      v_givens[j] = IdentityRotation;
+      w_givens[j] = IdentityRotation;
 
     /* test for zero diagonal elements in the output s. */
     if (s(j, j) == 0.) {

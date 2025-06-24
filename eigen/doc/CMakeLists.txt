@@ -115,3 +115,8 @@ add_custom_target(doc ALL
   WORKING_DIRECTORY ${Eigen_BINARY_DIR}/doc)
 
 add_dependencies(doc doc-eigen-prerequisites doc-unsupported-prerequisites)
+
+add_custom_target(install-doc ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${Eigen_BINARY_DIR}/doc ${CMAKE_INSTALL_FULL_DOCDIR}
+)
+add_dependencies(install-doc doc)

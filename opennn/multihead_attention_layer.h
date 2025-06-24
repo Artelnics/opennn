@@ -53,7 +53,7 @@ public:
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_random() override;
     void set_parameters_glorot();
-    void set_parameters_constant(const type&) override;
+    
 
     void set_dropout_rate(const type&);
 
@@ -129,7 +129,7 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
     MultiheadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                          Layer* new_layer = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

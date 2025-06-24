@@ -12,13 +12,11 @@
 namespace opennn
 {
 
-Addition3d::Addition3d(const Index& new_sequence_length, 
-                       const Index& new_embedding_dimension, 
+Addition3d::Addition3d(const dimensions& new_input_dimensions,
                        const string& new_name) : Layer()
 {
-    layer_type = Type::Addition3d;
 
-    set(new_sequence_length, new_embedding_dimension, new_name);
+    set(new_input_dimensions[0], new_input_dimensions[1], new_name);
 }
 
 
@@ -55,6 +53,8 @@ void Addition3d::set(const Index& new_sequence_length,
     embedding_dimension = new_embedding_dimension;
 
     name = new_name;
+
+    layer_type = Type::Addition3d;
 }
 
 
@@ -131,7 +131,7 @@ Addition3dForwardPropagation::Addition3dForwardPropagation(const Index& new_batc
 }
 
 
-pair<type*, dimensions> Addition3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Addition3dForwardPropagation::get_output_pair() const
 {
     Addition3d* addition_3d = static_cast<Addition3d*>(layer);
 

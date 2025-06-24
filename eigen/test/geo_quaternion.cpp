@@ -78,6 +78,19 @@ void quaternion(void) {
   VERIFY(ss.str() == "0i + 0j + 0k + 1");
 #endif
 
+  // Consistent handling of scalar first/last conventions regardless of Eigen's own coefficient layout
+  const Scalar w(a);
+  const Vector3 xyz(v0);
+  q1 = Quaternionx::FromCoeffsScalarFirst(w, xyz.x(), xyz.y(), xyz.z());
+  q2 = Quaternionx::FromCoeffsScalarLast(xyz.x(), xyz.y(), xyz.z(), w);
+  VERIFY_IS_EQUAL(q1, q2);
+
+  VERIFY_IS_EQUAL(q1.coeffsScalarFirst()[0], w);
+  VERIFY_IS_EQUAL(q1.coeffsScalarFirst()(seqN(1, 3)), xyz);
+
+  VERIFY_IS_EQUAL(q1.coeffsScalarLast()[3], w);
+  VERIFY_IS_EQUAL(q1.coeffsScalarLast()(seqN(0, 3)), xyz);
+
   // concatenation
   q1 *= q2;
 

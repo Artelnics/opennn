@@ -186,6 +186,7 @@ struct packet_traits<float> : default_packet_traits {
     HasExp = 1,
 #ifdef EIGEN_VECTORIZE_VSX
     HasSqrt = 1,
+    HasCbrt = 1,
 #if !EIGEN_COMP_CLANG
     HasRsqrt = 1,
 #else
@@ -424,55 +425,6 @@ struct unpacket_traits<Packet8bf> {
     masked_store_available = false
   };
 };
-inline std::ostream& operator<<(std::ostream& s, const Packet16c& v) {
-  union {
-    Packet16c v;
-    signed char n[16];
-  } vt;
-  vt.v = v;
-  for (int i = 0; i < 16; i++) s << vt.n[i] << ", ";
-  return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Packet16uc& v) {
-  union {
-    Packet16uc v;
-    unsigned char n[16];
-  } vt;
-  vt.v = v;
-  for (int i = 0; i < 16; i++) s << vt.n[i] << ", ";
-  return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Packet4f& v) {
-  union {
-    Packet4f v;
-    float n[4];
-  } vt;
-  vt.v = v;
-  s << vt.n[0] << ", " << vt.n[1] << ", " << vt.n[2] << ", " << vt.n[3];
-  return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Packet4i& v) {
-  union {
-    Packet4i v;
-    int n[4];
-  } vt;
-  vt.v = v;
-  s << vt.n[0] << ", " << vt.n[1] << ", " << vt.n[2] << ", " << vt.n[3];
-  return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Packet4ui& v) {
-  union {
-    Packet4ui v;
-    unsigned int n[4];
-  } vt;
-  vt.v = v;
-  s << vt.n[0] << ", " << vt.n[1] << ", " << vt.n[2] << ", " << vt.n[3];
-  return s;
-}
 
 template <typename Packet>
 EIGEN_STRONG_INLINE Packet pload_common(const __UNPACK_TYPE__(Packet) * from) {
@@ -2385,6 +2337,44 @@ EIGEN_STRONG_INLINE Packet8bf pmadd(const Packet8bf& a, const Packet8bf& b, cons
 }
 
 template <>
+EIGEN_STRONG_INLINE Packet8bf pmsub(const Packet8bf& a, const Packet8bf& b, const Packet8bf& c) {
+  Packet4f a_even = Bf16ToF32Even(a);
+  Packet4f a_odd = Bf16ToF32Odd(a);
+  Packet4f b_even = Bf16ToF32Even(b);
+  Packet4f b_odd = Bf16ToF32Odd(b);
+  Packet4f c_even = Bf16ToF32Even(c);
+  Packet4f c_odd = Bf16ToF32Odd(c);
+  Packet4f pmadd_even = pmsub<Packet4f>(a_even, b_even, c_even);
+  Packet4f pmadd_odd = pmsub<Packet4f>(a_odd, b_odd, c_odd);
+  return F32ToBf16(pmadd_even, pmadd_odd);
+}
+template <>
+EIGEN_STRONG_INLINE Packet8bf pnmadd(const Packet8bf& a, const Packet8bf& b, const Packet8bf& c) {
+  Packet4f a_even = Bf16ToF32Even(a);
+  Packet4f a_odd = Bf16ToF32Odd(a);
+  Packet4f b_even = Bf16ToF32Even(b);
+  Packet4f b_odd = Bf16ToF32Odd(b);
+  Packet4f c_even = Bf16ToF32Even(c);
+  Packet4f c_odd = Bf16ToF32Odd(c);
+  Packet4f pmadd_even = pnmadd<Packet4f>(a_even, b_even, c_even);
+  Packet4f pmadd_odd = pnmadd<Packet4f>(a_odd, b_odd, c_odd);
+  return F32ToBf16(pmadd_even, pmadd_odd);
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet8bf pnmsub(const Packet8bf& a, const Packet8bf& b, const Packet8bf& c) {
+  Packet4f a_even = Bf16ToF32Even(a);
+  Packet4f a_odd = Bf16ToF32Odd(a);
+  Packet4f b_even = Bf16ToF32Even(b);
+  Packet4f b_odd = Bf16ToF32Odd(b);
+  Packet4f c_even = Bf16ToF32Even(c);
+  Packet4f c_odd = Bf16ToF32Odd(c);
+  Packet4f pmadd_even = pnmsub<Packet4f>(a_even, b_even, c_even);
+  Packet4f pmadd_odd = pnmsub<Packet4f>(a_odd, b_odd, c_odd);
+  return F32ToBf16(pmadd_even, pmadd_odd);
+}
+
+template <>
 EIGEN_STRONG_INLINE Packet8bf pmin<Packet8bf>(const Packet8bf& a, const Packet8bf& b) {
   BF16_TO_F32_BINARY_OP_WRAPPER(pmin<Packet4f>, a, b);
 }
@@ -3187,6 +3177,7 @@ struct packet_traits<double> : default_packet_traits {
     HasLog = 0,
     HasExp = 1,
     HasSqrt = 1,
+    HasCbrt = 1,
 #if !EIGEN_COMP_CLANG
     HasRsqrt = 1,
 #else

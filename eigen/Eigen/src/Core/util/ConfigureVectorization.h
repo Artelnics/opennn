@@ -285,6 +285,8 @@
 #ifdef __AVX512FP16__
 #ifdef __AVX512VL__
 #define EIGEN_VECTORIZE_AVX512FP16
+// Built-in _Float16.
+#define EIGEN_HAS_BUILTIN_FLOAT16 1
 #else
 #if EIGEN_COMP_GNUC
 #error Please add -mavx512vl to your compiler flags: compiling with -mavx512fp16 alone without AVX512-VL is not supported.

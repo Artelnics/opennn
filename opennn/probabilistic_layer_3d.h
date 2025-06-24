@@ -64,7 +64,7 @@ public:
 
    // Parameters initialization
 
-   void set_parameters_constant(const type&) override;
+   
    void set_parameters_random() override;
    void set_parameters_glorot();
 
@@ -122,7 +122,7 @@ struct Probabilistic3DForwardPropagation : LayerForwardPropagation
 {
     Probabilistic3DForwardPropagation(const Index& = 0, Layer* = nullptr);
     
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

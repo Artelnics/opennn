@@ -24,16 +24,16 @@ void MeanSquaredError::calculate_error(const Batch& batch,
                                        const ForwardPropagation& forward_propagation,
                                        BackPropagation& back_propagation) const
 {
-    const Index outputs_number = neural_network->get_outputs_number();
-    // Batch
+    if (!neural_network)
+        throw runtime_error("MeanSquaredError: Neural network pointer is null.");
 
+    const Index outputs_number = neural_network->get_outputs_number();
     const Index samples_number = batch.get_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
+    if (outputs_number == 0 || samples_number == 0)
+        throw runtime_error("MeanSquaredError: outputs_number or samples_number is zero.");
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
-
-    // Forward propagation
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(batch.get_target_pair());
     
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
@@ -44,6 +44,12 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors = back_propagation.errors;
 
     Tensor<type, 0>& error = back_propagation.error;
+
+    if(outputs.dimension(0) != targets.dimension(0))
+        throw runtime_error("MeanSquaredError: outputs and target dimension 0 do not match: " + to_string(outputs.dimension(0)) + " " + to_string(targets.dimension(0)));
+
+    if(outputs.dimension(1) != targets.dimension(1))
+        throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
     errors.device(*thread_pool_device) = outputs - targets;
     

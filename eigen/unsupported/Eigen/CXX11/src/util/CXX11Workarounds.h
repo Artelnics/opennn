@@ -36,15 +36,15 @@ namespace internal {
  */
 
 template <std::size_t I_, class T>
-constexpr inline T& array_get(std::vector<T>& a) {
+constexpr T& array_get(std::vector<T>& a) {
   return a[I_];
 }
 template <std::size_t I_, class T>
-constexpr inline T&& array_get(std::vector<T>&& a) {
+constexpr T&& array_get(std::vector<T>&& a) {
   return a[I_];
 }
 template <std::size_t I_, class T>
-constexpr inline T const& array_get(std::vector<T> const& a) {
+constexpr T const& array_get(std::vector<T> const& a) {
   return a[I_];
 }
 

@@ -51,7 +51,7 @@ namespace internal {
 template <typename index_t>
 struct ScanParameters {
   // must be power of 2
-  static EIGEN_CONSTEXPR index_t ScanPerThread = 8;
+  static constexpr index_t ScanPerThread = 8;
   const index_t total_size;
   const index_t non_scan_size;
   const index_t scan_size;
@@ -86,7 +86,7 @@ template <typename Evaluator, typename CoeffReturnType, typename OutAccessor, ty
 struct ScanKernelFunctor {
   typedef cl::sycl::accessor<CoeffReturnType, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local>
       LocalAccessor;
-  static EIGEN_CONSTEXPR int PacketSize = ScanParameters<Index>::ScanPerThread / 2;
+  static constexpr int PacketSize = ScanParameters<Index>::ScanPerThread / 2;
 
   LocalAccessor scratch;
   Evaluator dev_eval;
@@ -288,7 +288,7 @@ template <typename CoeffReturnType, typename InAccessor, typename OutAccessor, t
 struct ScanAdjustmentKernelFunctor {
   typedef cl::sycl::accessor<CoeffReturnType, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local>
       LocalAccessor;
-  static EIGEN_CONSTEXPR int PacketSize = ScanParameters<Index>::ScanPerThread / 2;
+  static constexpr int PacketSize = ScanParameters<Index>::ScanPerThread / 2;
   InAccessor in_ptr;
   OutAccessor out_ptr;
   const ScanParameters<Index> scanParameters;

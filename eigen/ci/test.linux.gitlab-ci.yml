@@ -8,6 +8,7 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_MERGE_REQUEST_LABELS =~ "/all-tests/"
 
 ##### x86-64 ###################################################################
 .test:linux:x86-64:
@@ -291,9 +292,7 @@ test:linux:cuda-12.2:clang-12:
     # Enable cross-compiled arm binary to run on aarch64.
     EIGEN_CI_BEFORE_SCRIPT: "ln -s /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ && export LD_LIBRARY_PATH=/usr/arm-linux-gnueabihf/lib/"
   tags:
-    - eigen-runner
-    - linux
-    - aarch64
+    - saas-linux-large-arm64
 
 .test:linux:arm:gcc-10:default:
   extends: .test:linux:arm
@@ -335,9 +334,7 @@ test:linux:arm:clang-12:default:unsupported:
     EIGEN_CI_TARGET_ARCH: aarch64
     EIGEN_CI_CROSS_TARGET_TRIPLE: aarch64-linux-gnu
   tags:
-    - eigen-runner
-    - linux
-    - aarch64
+    - saas-linux-large-arm64
 
 .test:linux:aarch64:gcc-10:default:
   extends: .test:linux:aarch64

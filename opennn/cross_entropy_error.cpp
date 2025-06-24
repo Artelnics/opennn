@@ -6,10 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "tensors.h"
 #include "dataset.h"
 #include "neural_network.h"
+#include "loss_index.h"
 #include "cross_entropy_error.h"
-#include "tensors.h"
+#include "training_strategy.h"
 
 namespace opennn
 {
@@ -541,6 +543,8 @@ void CrossEntropyError2d::calculate_multiple_output_delta_cuda(const BatchCuda& 
 }
 
 #endif
+
+REGISTER(LossIndex, CrossEntropyError2d, "CrossEntropyError2d");
 
 }
 

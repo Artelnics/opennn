@@ -548,7 +548,7 @@ PoolingForwardPropagation::PoolingForwardPropagation(const Index& new_batch_size
 }
 
 
-pair<type*, dimensions> PoolingForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> PoolingForwardPropagation::get_output_pair() const
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 

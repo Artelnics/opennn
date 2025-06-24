@@ -84,10 +84,10 @@ class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar, Up
   }
 
   /** \returns number of rows of the factored matrix */
-  EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_L.rows(); }
+  constexpr Index rows() const noexcept { return m_L.rows(); }
 
   /** \returns number of columns of the factored matrix */
-  EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_L.cols(); }
+  constexpr Index cols() const noexcept { return m_L.cols(); }
 
   /** \brief Reports whether previous computation was successful.
    *

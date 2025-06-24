@@ -108,6 +108,17 @@ static void test_slice() {
   VERIFY_IS_EQUAL(slice.data(), tensor.data());
 }
 
+static void test_ref_of_trace() {
+  Tensor<int, 2> input(6, 6);
+  input.setRandom();
+  int trace = 0;
+  for (int i = 0; i < 6; ++i) {
+    trace += input(i, i);
+  }
+  TensorRef<const Tensor<int, 0>> ref(input.trace());
+  VERIFY_IS_EQUAL(ref.coeff(0), trace);
+}
+
 static void test_ref_of_ref() {
   Tensor<float, 3> input(3, 5, 7);
   input.setRandom();
@@ -224,6 +235,7 @@ EIGEN_DECLARE_TEST(cxx11_tensor_ref) {
   CALL_SUBTEST(test_simple_rvalue_ref());
   CALL_SUBTEST(test_multiple_dims());
   CALL_SUBTEST(test_slice());
+  CALL_SUBTEST(test_ref_of_trace());
   CALL_SUBTEST(test_ref_of_ref());
   CALL_SUBTEST(test_ref_in_expr());
   CALL_SUBTEST(test_coeff_ref());

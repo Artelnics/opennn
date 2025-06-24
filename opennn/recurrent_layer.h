@@ -51,7 +51,7 @@ public:
    void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   void set_parameters_constant(const type&) override;
+   
    void set_parameters_random() override;
 
    void calculate_combinations(const Tensor<type, 2>&,
@@ -111,7 +111,7 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
     RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

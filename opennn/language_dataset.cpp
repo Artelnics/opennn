@@ -24,6 +24,55 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 }
 
 
+LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input_sequence_length, const Index& input_vocabulary_size) : Dataset()
+{
+//    input_dimensions = new_input_dimensions;
+
+//    target_dimensions = { new_targets_number };
+
+    const Index variables_number = input_sequence_length + 1;
+
+    data.resize(samples_number, variables_number);
+
+    raw_variables.resize(variables_number);
+
+    set_default();
+
+    for (Index i = 0; i < variables_number; i++)
+    {
+        RawVariable& raw_variable = raw_variables[i];
+
+        raw_variable.type = RawVariableType::Numeric;
+        raw_variable.name = "variable_" + to_string(i + 1);
+
+        raw_variable.use = (i < input_sequence_length)
+                               ? VariableUse::Input
+                               : VariableUse::Target;
+    }
+
+    sample_uses.resize(samples_number);
+
+    split_samples_random();
+
+    // Initialize data
+
+    default_random_engine generator;
+    uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
+    uniform_int_distribution<int> dist_binary(0, 1);
+
+    for (size_t i = 0; i < data.dimension(0); ++i)
+        for (size_t j = 0; j < data.dimension(1) - 1; ++j)
+            data(i, j) = static_cast<type>(dist_main(generator));
+
+    for (size_t i = 0; i < data.dimension(0); ++i)
+        data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
+
+    input_vocabulary.resize(input_sequence_length);
+    target_vocabulary.resize(1);
+
+}
+
+
 const vector<string>& LanguageDataset::get_input_vocabulary() const
 {
     return input_vocabulary;
@@ -308,14 +357,13 @@ void LanguageDataset::print_target_vocabulary() const
 
 void LanguageDataset::print() const
 {
-    cout << "Language data set" << endl;
-    cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-    cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_sequence_length() << endl;
-    cout << "Target length: " << get_target_sequence_length() << endl;
-
-    cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
-    cout << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
+    cout << "Language data set" << endl
+         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
+         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
+         << "Input length: " << get_input_sequence_length() << endl
+         << "Target length: " << get_target_sequence_length() << endl
+         << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl
+         << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
 }
 
 
@@ -506,7 +554,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     // Preview data
 
     start_element = preview_size_element;
-
+/*
     if(model_type != ModelType::TextClassification)
     {
         for(Index i = 0; i < new_preview_size; i++)
@@ -547,7 +595,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
                 data_file_preview[i][1] = row_element->GetText();
         }
     }
-
+*/
     // Completion Vocabulary
 
     const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");
@@ -618,6 +666,7 @@ Index LanguageDataset::count_non_empty_lines() const
 
 
 // @todo add "decoder variables"
+
 void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << endl;

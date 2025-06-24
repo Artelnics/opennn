@@ -219,19 +219,6 @@ void MultiHeadAttention::set_parameters_glorot()
 }
 
 
-void MultiHeadAttention::set_parameters_constant(const type& value)
-{
-    query_weights.setConstant(value);
-    query_biases.setConstant(value);
-    key_weights.setConstant(value);
-    key_biases.setConstant(value);
-    value_weights.setConstant(value);
-    value_biases.setConstant(value);
-    projection_weights.setConstant(value);
-    projection_biases.setConstant(value);
-}
-
-
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
@@ -349,7 +336,6 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
                                 array<Index,2>{query_sequence_length, hidden_depth}) = head_output;
         }
     }
-
 }
 
 
@@ -365,12 +351,12 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& conc
         outputs.chip(sample_index, 0).device(*thread_pool_device)
             = sample_attention_output.contract(projection_weights, axes(1,0));
     }
-
+/*
     outputs.device(*thread_pool_device) = outputs
         + projection_biases.reshape(array<Index, 3>{1, 1, projection_biases.dimension(0)})
                            .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
-
-    //sum_matrices(thread_pool_device.get(), projection_biases, outputs);
+*/
+    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
 }
 
 
@@ -400,27 +386,21 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
     const Index hidden_depth = get_hidden_depth();
 
     query.device(*thread_pool_device)
-        = query_input
-              .contract(query_weights, axes(2, 0))
-              .shuffle(array<Index, 4>({1, 2, 0, 3}))
-          + query_biases
-                .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+        = query_input.contract(query_weights, axes(2, 0))
+                .shuffle(array<Index, 4>({1, 2, 0, 3}))
+          + query_biases.reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
                 .broadcast(array<Index, 4>({query_sequence_length, 1, batch_size, 1 }));
 
     key.device(*thread_pool_device)
-        = source_input
-              .contract(key_weights, axes(2,0))
+        = source_input.contract(key_weights, axes(2,0))
               .shuffle(array<Index, 4>({1, 2, 0, 3}))
-          + key_biases
-                .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+          + key_biases.reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
                 .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
 
     value.device(*thread_pool_device)
-        = source_input
-              .contract(value_weights, axes(2,0))
+        = source_input.contract(value_weights, axes(2,0))
               .shuffle(array<Index, 4>({1, 2, 0, 3}))
-          + value_biases
-                .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+          + value_biases.reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
                 .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
 
     calculate_attention_weights(query, key, attention_weights);
@@ -433,6 +413,7 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
     concatenate_heads(attention_outputs, concatenated_attention_outputs);
 
     calculate_output_projection(concatenated_attention_outputs, outputs);
+
 }
 
 
@@ -721,7 +702,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     }
 
 
-    pair<type*, dimensions> MultiheadAttentionForwardPropagation::get_outputs_pair() const
+    pair<type*, dimensions> MultiheadAttentionForwardPropagation::get_output_pair() const
     {
         MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 

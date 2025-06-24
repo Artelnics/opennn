@@ -136,6 +136,7 @@ struct copy_using_evaluator_traits {
       : Traversal == SliceVectorizedTraversal ? (MayUnrollInner ? InnerUnrolling : NoUnrolling)
 #endif
                                               : NoUnrolling;
+  static constexpr bool UsePacketSegment = has_packet_segment<PacketType>::value;
 
 #ifdef EIGEN_DEBUG_ASSIGN
   static void debug() {
@@ -199,7 +200,7 @@ struct copy_using_evaluator_DefaultTraversal_CompleteUnrolling {
 
 template <typename Kernel, int Stop>
 struct copy_using_evaluator_DefaultTraversal_CompleteUnrolling<Kernel, Stop, Stop> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel&) {}
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&) {}
 };
 
 template <typename Kernel, int Index_, int Stop>
@@ -253,7 +254,7 @@ struct copy_using_evaluator_innervec_CompleteUnrolling {
 
 template <typename Kernel, int Stop>
 struct copy_using_evaluator_innervec_CompleteUnrolling<Kernel, Stop, Stop> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel&) {}
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&) {}
 };
 
 template <typename Kernel, int Index_, int Stop, int SrcAlignment, int DstAlignment>
@@ -270,6 +271,33 @@ struct copy_using_evaluator_innervec_InnerUnrolling {
 
 template <typename Kernel, int Stop, int SrcAlignment, int DstAlignment>
 struct copy_using_evaluator_innervec_InnerUnrolling<Kernel, Stop, Stop, SrcAlignment, DstAlignment> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&, Index) {}
+};
+
+template <typename Kernel, int Start, int Stop, int SrcAlignment, int DstAlignment, bool UsePacketSegment>
+struct copy_using_evaluator_innervec_segment {
+  using PacketType = typename Kernel::PacketType;
+
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(Kernel& kernel, Index outer) {
+    kernel.template assignPacketSegmentByOuterInner<DstAlignment, SrcAlignment, PacketType>(outer, Start, 0,
+                                                                                            Stop - Start);
+  }
+};
+
+template <typename Kernel, int Start, int Stop, int SrcAlignment, int DstAlignment>
+struct copy_using_evaluator_innervec_segment<Kernel, Start, Stop, SrcAlignment, DstAlignment,
+                                             /*UsePacketSegment*/ false>
+    : copy_using_evaluator_DefaultTraversal_InnerUnrolling<Kernel, Start, Stop> {};
+
+template <typename Kernel, int Stop, int SrcAlignment, int DstAlignment>
+struct copy_using_evaluator_innervec_segment<Kernel, Stop, Stop, SrcAlignment, DstAlignment,
+                                             /*UsePacketSegment*/ true> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&, Index) {}
+};
+
+template <typename Kernel, int Stop, int SrcAlignment, int DstAlignment>
+struct copy_using_evaluator_innervec_segment<Kernel, Stop, Stop, SrcAlignment, DstAlignment,
+                                             /*UsePacketSegment*/ false> {
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&, Index) {}
 };
 
@@ -306,7 +334,7 @@ template <typename Kernel, int Unrolling>
 struct dense_assignment_loop_impl<Kernel, AllAtOnceTraversal, Unrolling> {
   static constexpr int SizeAtCompileTime = Kernel::AssignmentTraits::SizeAtCompileTime;
 
-  EIGEN_DEVICE_FUNC static void EIGEN_STRONG_INLINE EIGEN_CONSTEXPR run(Kernel& /*kernel*/) {
+  EIGEN_DEVICE_FUNC static void EIGEN_STRONG_INLINE constexpr run(Kernel& /*kernel*/) {
     EIGEN_STATIC_ASSERT(SizeAtCompileTime == 0, EIGEN_INTERNAL_ERROR_PLEASE_FILE_A_BUG_REPORT)
   }
 };
@@ -353,27 +381,45 @@ struct dense_assignment_loop_impl<Kernel, DefaultTraversal, InnerUnrolling> {
 // The goal of unaligned_dense_assignment_loop is simply to factorize the handling
 // of the non vectorizable beginning and ending parts
 
-template <bool IsAligned = false>
+template <typename PacketType, int DstAlignment, int SrcAlignment, bool UsePacketSegment, bool Skip>
 struct unaligned_dense_assignment_loop {
-  // if IsAligned = true, then do nothing
+  // if Skip == true, then do nothing
   template <typename Kernel>
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel&, Index, Index) {}
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& /*kernel*/, Index /*start*/, Index /*end*/) {}
+  template <typename Kernel>
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& /*kernel*/, Index /*outer*/,
+                                                                  Index /*innerStart*/, Index /*innerEnd*/) {}
 };
 
-template <>
-struct unaligned_dense_assignment_loop<false> {
-  // MSVC must not inline this functions. If it does, it fails to optimize the
-  // packet access path.
-  // FIXME check which version exhibits this issue
-#if EIGEN_COMP_MSVC
+template <typename PacketType, int DstAlignment, int SrcAlignment>
+struct unaligned_dense_assignment_loop<PacketType, DstAlignment, SrcAlignment, /*UsePacketSegment*/ true,
+                                       /*Skip*/ false> {
   template <typename Kernel>
-  static EIGEN_DONT_INLINE void run(Kernel& kernel, Index start, Index end)
-#else
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel, Index start, Index end) {
+    Index count = end - start;
+    eigen_assert(count <= unpacket_traits<PacketType>::size);
+    if (count > 0) kernel.template assignPacketSegment<DstAlignment, SrcAlignment, PacketType>(start, 0, count);
+  }
   template <typename Kernel>
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel, Index start, Index end)
-#endif
-  {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel, Index outer, Index start, Index end) {
+    Index count = end - start;
+    eigen_assert(count <= unpacket_traits<PacketType>::size);
+    if (count > 0)
+      kernel.template assignPacketSegmentByOuterInner<DstAlignment, SrcAlignment, PacketType>(outer, start, 0, count);
+  }
+};
+
+template <typename PacketType, int DstAlignment, int SrcAlignment>
+struct unaligned_dense_assignment_loop<PacketType, DstAlignment, SrcAlignment, /*UsePacketSegment*/ false,
+                                       /*Skip*/ false> {
+  template <typename Kernel>
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel, Index start, Index end) {
     for (Index index = start; index < end; ++index) kernel.assignCoeff(index);
+  }
+  template <typename Kernel>
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel, Index outer, Index innerStart,
+                                                                  Index innerEnd) {
+    for (Index inner = innerStart; inner < innerEnd; ++inner) kernel.assignCoeffByOuterInner(outer, inner);
   }
 };
 
@@ -392,7 +438,32 @@ struct copy_using_evaluator_linearvec_CompleteUnrolling {
 
 template <typename Kernel, int Stop>
 struct copy_using_evaluator_linearvec_CompleteUnrolling<Kernel, Stop, Stop> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel&) {}
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&) {}
+};
+
+template <typename Kernel, int Index_, int Stop, bool UsePacketSegment>
+struct copy_using_evaluator_linearvec_segment {
+  using PacketType = typename Kernel::PacketType;
+  static constexpr int SrcAlignment = Kernel::AssignmentTraits::SrcAlignment;
+  static constexpr int DstAlignment = Kernel::AssignmentTraits::DstAlignment;
+
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(Kernel& kernel) {
+    kernel.template assignPacketSegment<DstAlignment, SrcAlignment, PacketType>(Index_, 0, Stop - Index_);
+  }
+};
+
+template <typename Kernel, int Index_, int Stop>
+struct copy_using_evaluator_linearvec_segment<Kernel, Index_, Stop, /*UsePacketSegment*/ false>
+    : copy_using_evaluator_LinearTraversal_CompleteUnrolling<Kernel, Index_, Stop> {};
+
+template <typename Kernel, int Stop>
+struct copy_using_evaluator_linearvec_segment<Kernel, Stop, Stop, /*UsePacketSegment*/ true> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&) {}
+};
+
+template <typename Kernel, int Stop>
+struct copy_using_evaluator_linearvec_segment<Kernel, Stop, Stop, /*UsePacketSegment*/ false> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel&) {}
 };
 
 template <typename Kernel>
@@ -400,23 +471,30 @@ struct dense_assignment_loop_impl<Kernel, LinearVectorizedTraversal, NoUnrolling
   using Scalar = typename Kernel::Scalar;
   using PacketType = typename Kernel::PacketType;
   static constexpr int PacketSize = unpacket_traits<PacketType>::size;
-  static constexpr int RequestedAlignment = Kernel::AssignmentTraits::LinearRequiredAlignment;
-  static constexpr bool DstIsAligned = Kernel::AssignmentTraits::DstAlignment >= RequestedAlignment;
   static constexpr int SrcAlignment = Kernel::AssignmentTraits::JointAlignment;
-  static constexpr int DstAlignment =
-      packet_traits<Scalar>::AlignedOnScalar ? RequestedAlignment : Kernel::AssignmentTraits::DstAlignment;
+  static constexpr int DstAlignment = plain_enum_max(Kernel::AssignmentTraits::DstAlignment, alignof(Scalar));
+  static constexpr int RequestedAlignment = unpacket_traits<PacketType>::alignment;
+  static constexpr bool Alignable =
+      (DstAlignment >= RequestedAlignment) || ((RequestedAlignment - DstAlignment) % sizeof(Scalar) == 0);
+  static constexpr int Alignment = Alignable ? RequestedAlignment : DstAlignment;
+  static constexpr bool DstIsAligned = DstAlignment >= Alignment;
+  static constexpr bool UsePacketSegment = Kernel::AssignmentTraits::UsePacketSegment;
 
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  using head_loop =
+      unaligned_dense_assignment_loop<PacketType, DstAlignment, SrcAlignment, UsePacketSegment, DstIsAligned>;
+  using tail_loop = unaligned_dense_assignment_loop<PacketType, Alignment, SrcAlignment, UsePacketSegment, false>;
+
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     const Index size = kernel.size();
-    const Index alignedStart = DstIsAligned ? 0 : first_aligned<RequestedAlignment>(kernel.dstDataPtr(), size);
+    const Index alignedStart = DstIsAligned ? 0 : first_aligned<Alignment>(kernel.dstDataPtr(), size);
     const Index alignedEnd = alignedStart + numext::round_down(size - alignedStart, PacketSize);
 
-    unaligned_dense_assignment_loop<DstIsAligned>::run(kernel, 0, alignedStart);
+    head_loop::run(kernel, 0, alignedStart);
 
     for (Index index = alignedStart; index < alignedEnd; index += PacketSize)
-      kernel.template assignPacket<DstAlignment, SrcAlignment, PacketType>(index);
+      kernel.template assignPacket<Alignment, SrcAlignment, PacketType>(index);
 
-    unaligned_dense_assignment_loop<>::run(kernel, alignedEnd, size);
+    tail_loop::run(kernel, alignedEnd, size);
   }
 };
 
@@ -426,10 +504,11 @@ struct dense_assignment_loop_impl<Kernel, LinearVectorizedTraversal, CompleteUnr
   static constexpr int PacketSize = unpacket_traits<PacketType>::size;
   static constexpr int Size = Kernel::AssignmentTraits::SizeAtCompileTime;
   static constexpr int AlignedSize = numext::round_down(Size, PacketSize);
+  static constexpr bool UsePacketSegment = Kernel::AssignmentTraits::UsePacketSegment;
 
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     copy_using_evaluator_linearvec_CompleteUnrolling<Kernel, 0, AlignedSize>::run(kernel);
-    copy_using_evaluator_LinearTraversal_CompleteUnrolling<Kernel, AlignedSize, Size>::run(kernel);
+    copy_using_evaluator_linearvec_segment<Kernel, AlignedSize, Size, UsePacketSegment>::run(kernel);
   }
 };
 
@@ -444,7 +523,7 @@ struct dense_assignment_loop_impl<Kernel, InnerVectorizedTraversal, NoUnrolling>
   static constexpr int SrcAlignment = Kernel::AssignmentTraits::JointAlignment;
   static constexpr int DstAlignment = Kernel::AssignmentTraits::DstAlignment;
 
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     const Index innerSize = kernel.innerSize();
     const Index outerSize = kernel.outerSize();
     for (Index outer = 0; outer < outerSize; ++outer)
@@ -482,7 +561,7 @@ struct dense_assignment_loop_impl<Kernel, InnerVectorizedTraversal, InnerUnrolli
 
 template <typename Kernel>
 struct dense_assignment_loop_impl<Kernel, LinearTraversal, NoUnrolling> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     const Index size = kernel.size();
     for (Index i = 0; i < size; ++i) kernel.assignCoeff(i);
   }
@@ -490,7 +569,7 @@ struct dense_assignment_loop_impl<Kernel, LinearTraversal, NoUnrolling> {
 
 template <typename Kernel>
 struct dense_assignment_loop_impl<Kernel, LinearTraversal, CompleteUnrolling> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     copy_using_evaluator_LinearTraversal_CompleteUnrolling<Kernel, 0, Kernel::AssignmentTraits::SizeAtCompileTime>::run(
         kernel);
   }
@@ -505,35 +584,35 @@ struct dense_assignment_loop_impl<Kernel, SliceVectorizedTraversal, NoUnrolling>
   using Scalar = typename Kernel::Scalar;
   using PacketType = typename Kernel::PacketType;
   static constexpr int PacketSize = unpacket_traits<PacketType>::size;
-  static constexpr int RequestedAlignment = Kernel::AssignmentTraits::InnerRequiredAlignment;
+  static constexpr int SrcAlignment = Kernel::AssignmentTraits::JointAlignment;
+  static constexpr int DstAlignment = plain_enum_max(Kernel::AssignmentTraits::DstAlignment, alignof(Scalar));
+  static constexpr int RequestedAlignment = unpacket_traits<PacketType>::alignment;
   static constexpr bool Alignable =
-      packet_traits<Scalar>::AlignedOnScalar || Kernel::AssignmentTraits::DstAlignment >= sizeof(Scalar);
-  static constexpr bool DstIsAligned = Kernel::AssignmentTraits::DstAlignment >= RequestedAlignment;
-  static constexpr int DstAlignment = Alignable ? RequestedAlignment : Kernel::AssignmentTraits::DstAlignment;
+      (DstAlignment >= RequestedAlignment) || ((RequestedAlignment - DstAlignment) % sizeof(Scalar) == 0);
+  static constexpr int Alignment = Alignable ? RequestedAlignment : DstAlignment;
+  static constexpr bool DstIsAligned = DstAlignment >= Alignment;
+  static constexpr bool UsePacketSegment = Kernel::AssignmentTraits::UsePacketSegment;
 
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  using head_loop = unaligned_dense_assignment_loop<PacketType, DstAlignment, Unaligned, UsePacketSegment, !Alignable>;
+  using tail_loop = unaligned_dense_assignment_loop<PacketType, Alignment, Unaligned, UsePacketSegment, false>;
+
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     const Scalar* dst_ptr = kernel.dstDataPtr();
-    if ((!DstIsAligned) && (std::uintptr_t(dst_ptr) % sizeof(Scalar)) > 0) {
-      // the pointer is not aligned-on scalar, so alignment is not possible
-      return dense_assignment_loop<Kernel, DefaultTraversal, NoUnrolling>::run(kernel);
-    }
     const Index innerSize = kernel.innerSize();
     const Index outerSize = kernel.outerSize();
     const Index alignedStep = Alignable ? (PacketSize - kernel.outerStride() % PacketSize) % PacketSize : 0;
-    Index alignedStart =
-        ((!Alignable) || DstIsAligned) ? 0 : internal::first_aligned<RequestedAlignment>(dst_ptr, innerSize);
+    Index alignedStart = ((!Alignable) || DstIsAligned) ? 0 : internal::first_aligned<Alignment>(dst_ptr, innerSize);
 
     for (Index outer = 0; outer < outerSize; ++outer) {
       const Index alignedEnd = alignedStart + numext::round_down(innerSize - alignedStart, PacketSize);
-      // do the non-vectorizable part of the assignment
-      for (Index inner = 0; inner < alignedStart; ++inner) kernel.assignCoeffByOuterInner(outer, inner);
+
+      head_loop::run(kernel, outer, 0, alignedStart);
 
       // do the vectorizable part of the assignment
       for (Index inner = alignedStart; inner < alignedEnd; inner += PacketSize)
-        kernel.template assignPacketByOuterInner<DstAlignment, Unaligned, PacketType>(outer, inner);
+        kernel.template assignPacketByOuterInner<Alignment, Unaligned, PacketType>(outer, inner);
 
-      // do the non-vectorizable part of the assignment
-      for (Index inner = alignedEnd; inner < innerSize; ++inner) kernel.assignCoeffByOuterInner(outer, inner);
+      tail_loop::run(kernel, outer, alignedEnd, innerSize);
 
       alignedStart = numext::mini((alignedStart + alignedStep) % PacketSize, innerSize);
     }
@@ -547,11 +626,16 @@ struct dense_assignment_loop_impl<Kernel, SliceVectorizedTraversal, InnerUnrolli
   static constexpr int PacketSize = unpacket_traits<PacketType>::size;
   static constexpr int InnerSize = Kernel::AssignmentTraits::InnerSizeAtCompileTime;
   static constexpr int VectorizableSize = numext::round_down(InnerSize, PacketSize);
+  static constexpr bool UsePacketSegment = Kernel::AssignmentTraits::UsePacketSegment;
 
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void run(Kernel& kernel) {
+  using packet_loop = copy_using_evaluator_innervec_InnerUnrolling<Kernel, 0, VectorizableSize, Unaligned, Unaligned>;
+  using packet_segment_loop = copy_using_evaluator_innervec_segment<Kernel, VectorizableSize, InnerSize, Unaligned,
+                                                                    Unaligned, UsePacketSegment>;
+
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(Kernel& kernel) {
     for (Index outer = 0; outer < kernel.outerSize(); ++outer) {
-      copy_using_evaluator_innervec_InnerUnrolling<Kernel, 0, VectorizableSize, 0, 0>::run(kernel, outer);
-      copy_using_evaluator_DefaultTraversal_InnerUnrolling<Kernel, VectorizableSize, InnerSize>::run(kernel, outer);
+      packet_loop::run(kernel, outer);
+      packet_segment_loop::run(kernel, outer);
     }
   }
 };
@@ -581,33 +665,33 @@ class generic_dense_assignment_kernel {
   typedef typename AssignmentTraits::PacketType PacketType;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr generic_dense_assignment_kernel(DstEvaluatorType& dst,
-                                                                                  const SrcEvaluatorType& source,
+                                                                                  const SrcEvaluatorType& src,
                                                                                   const Functor& func,
                                                                                   DstXprType& dstExpr)
-      : m_dst(dst), m_source(source), m_functor(func), m_dstExpr(dstExpr) {
+      : m_dst(dst), m_src(src), m_functor(func), m_dstExpr(dstExpr) {
 #ifdef EIGEN_DEBUG_ASSIGN
     AssignmentTraits::debug();
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index size() const EIGEN_NOEXCEPT { return m_dstExpr.size(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index innerSize() const EIGEN_NOEXCEPT { return m_dstExpr.innerSize(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index outerSize() const EIGEN_NOEXCEPT { return m_dstExpr.outerSize(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_dstExpr.rows(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_dstExpr.cols(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index outerStride() const EIGEN_NOEXCEPT { return m_dstExpr.outerStride(); }
+  EIGEN_DEVICE_FUNC constexpr Index size() const noexcept { return m_dstExpr.size(); }
+  EIGEN_DEVICE_FUNC constexpr Index innerSize() const noexcept { return m_dstExpr.innerSize(); }
+  EIGEN_DEVICE_FUNC constexpr Index outerSize() const noexcept { return m_dstExpr.outerSize(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const noexcept { return m_dstExpr.rows(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const noexcept { return m_dstExpr.cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index outerStride() const noexcept { return m_dstExpr.outerStride(); }
 
-  EIGEN_DEVICE_FUNC DstEvaluatorType& dstEvaluator() EIGEN_NOEXCEPT { return m_dst; }
-  EIGEN_DEVICE_FUNC const SrcEvaluatorType& sourceEvaluator() const EIGEN_NOEXCEPT { return m_source; }
+  EIGEN_DEVICE_FUNC DstEvaluatorType& dstEvaluator() noexcept { return m_dst; }
+  EIGEN_DEVICE_FUNC const SrcEvaluatorType& srcEvaluator() const noexcept { return m_src; }
 
-  /// Assign source(row,col) to dst(row,col) through the assignment functor.
+  /// Assign src(row,col) to dst(row,col) through the assignment functor.
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void assignCoeff(Index row, Index col) {
-    m_functor.assignCoeff(m_dst.coeffRef(row, col), m_source.coeff(row, col));
+    m_functor.assignCoeff(m_dst.coeffRef(row, col), m_src.coeff(row, col));
   }
 
   /// \sa assignCoeff(Index,Index)
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(Index index) {
-    m_functor.assignCoeff(m_dst.coeffRef(index), m_source.coeff(index));
+    m_functor.assignCoeff(m_dst.coeffRef(index), m_src.coeff(index));
   }
 
   /// \sa assignCoeff(Index,Index)
@@ -620,12 +704,12 @@ class generic_dense_assignment_kernel {
   template <int StoreMode, int LoadMode, typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignPacket(Index row, Index col) {
     m_functor.template assignPacket<StoreMode>(&m_dst.coeffRef(row, col),
-                                               m_source.template packet<LoadMode, Packet>(row, col));
+                                               m_src.template packet<LoadMode, Packet>(row, col));
   }
 
   template <int StoreMode, int LoadMode, typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignPacket(Index index) {
-    m_functor.template assignPacket<StoreMode>(&m_dst.coeffRef(index), m_source.template packet<LoadMode, Packet>(index));
+    m_functor.template assignPacket<StoreMode>(&m_dst.coeffRef(index), m_src.template packet<LoadMode, Packet>(index));
   }
 
   template <int StoreMode, int LoadMode, typename Packet>
@@ -633,6 +717,27 @@ class generic_dense_assignment_kernel {
     Index row = rowIndexByOuterInner(outer, inner);
     Index col = colIndexByOuterInner(outer, inner);
     assignPacket<StoreMode, LoadMode, Packet>(row, col);
+  }
+
+  template <int StoreMode, int LoadMode, typename Packet>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignPacketSegment(Index row, Index col, Index begin, Index count) {
+    m_functor.template assignPacketSegment<StoreMode>(
+        &m_dst.coeffRef(row, col), m_src.template packetSegment<LoadMode, Packet>(row, col, begin, count), begin,
+        count);
+  }
+
+  template <int StoreMode, int LoadMode, typename Packet>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignPacketSegment(Index index, Index begin, Index count) {
+    m_functor.template assignPacketSegment<StoreMode>(
+        &m_dst.coeffRef(index), m_src.template packetSegment<LoadMode, Packet>(index, begin, count), begin, count);
+  }
+
+  template <int StoreMode, int LoadMode, typename Packet>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignPacketSegmentByOuterInner(Index outer, Index inner, Index begin,
+                                                                             Index count) {
+    Index row = rowIndexByOuterInner(outer, inner);
+    Index col = colIndexByOuterInner(outer, inner);
+    assignPacketSegment<StoreMode, LoadMode, Packet>(row, col, begin, count);
   }
 
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr Index rowIndexByOuterInner(Index outer, Index inner) {
@@ -655,7 +760,7 @@ class generic_dense_assignment_kernel {
 
  protected:
   DstEvaluatorType& m_dst;
-  const SrcEvaluatorType& m_source;
+  const SrcEvaluatorType& m_src;
   const Functor& m_functor;
   // TODO find a way to avoid the needs of the original expression
   DstXprType& m_dstExpr;
@@ -677,9 +782,9 @@ class restricted_packet_dense_assignment_kernel
   typedef copy_using_evaluator_traits<DstEvaluatorTypeT, SrcEvaluatorTypeT, Functor, 4> AssignmentTraits;
   typedef typename AssignmentTraits::PacketType PacketType;
 
-  EIGEN_DEVICE_FUNC restricted_packet_dense_assignment_kernel(DstEvaluatorTypeT& dst, const SrcEvaluatorTypeT& source,
+  EIGEN_DEVICE_FUNC restricted_packet_dense_assignment_kernel(DstEvaluatorTypeT& dst, const SrcEvaluatorTypeT& src,
                                                               const Functor& func, DstXprType& dstExpr)
-      : Base(dst, source, func, dstExpr) {}
+      : Base(dst, src, func, dstExpr) {}
 };
 
 /***************************************************************************
@@ -687,46 +792,45 @@ class restricted_packet_dense_assignment_kernel
  ***************************************************************************/
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void resize_if_allowed(DstXprType& dst, const SrcXprType& source,
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void resize_if_allowed(DstXprType& dst, const SrcXprType& src,
                                                                        const Functor& /*func*/) {
   EIGEN_ONLY_USED_FOR_DEBUG(dst);
-  EIGEN_ONLY_USED_FOR_DEBUG(source);
-  eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
+  EIGEN_ONLY_USED_FOR_DEBUG(src);
+  eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
 }
 
 template <typename DstXprType, typename SrcXprType, typename T1, typename T2>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void resize_if_allowed(DstXprType& dst, const SrcXprType& source,
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void resize_if_allowed(DstXprType& dst, const SrcXprType& src,
                                                                        const internal::assign_op<T1, T2>& /*func*/) {
-  Index dstRows = source.rows();
-  Index dstCols = source.cols();
+  Index dstRows = src.rows();
+  Index dstCols = src.cols();
   if (((dst.rows() != dstRows) || (dst.cols() != dstCols))) dst.resize(dstRows, dstCols);
   eigen_assert(dst.rows() == dstRows && dst.cols() == dstCols);
 }
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_dense_assignment_loop(DstXprType& dst,
-                                                                                      const SrcXprType& source,
-                                                                                      const Functor& func) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src,
+                                                                                const Functor& func) {
   typedef evaluator<DstXprType> DstEvaluatorType;
   typedef evaluator<SrcXprType> SrcEvaluatorType;
 
-  SrcEvaluatorType sourceEvaluator(source);
+  SrcEvaluatorType srcEvaluator(src);
 
   // NOTE To properly handle A = (A*A.transpose())/s with A rectangular,
   // we need to resize the destination after the source evaluator has been created.
-  resize_if_allowed(dst, source, func);
+  resize_if_allowed(dst, src, func);
 
   DstEvaluatorType dstEvaluator(dst);
 
   typedef generic_dense_assignment_kernel<DstEvaluatorType, SrcEvaluatorType, Functor> Kernel;
-  Kernel kernel(dstEvaluator, sourceEvaluator, func, dst.const_cast_derived());
+  Kernel kernel(dstEvaluator, srcEvaluator, func, dst.const_cast_derived());
 
   dense_assignment_loop<Kernel>::run(kernel);
 }
 
 template <typename DstXprType, typename SrcXprType>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& source) {
-  call_dense_assignment_loop(dst, source, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src) {
+  call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
 }
 
 /***************************************************************************
@@ -765,39 +869,39 @@ struct Assignment;
 // not has to bother about these annoying details.
 
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment(Dst& dst, const Src& source) {
-  call_assignment(dst, source, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment(Dst& dst, const Src& src) {
+  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
 }
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_assignment(const Dst& dst, const Src& source) {
-  call_assignment(dst, source, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_assignment(const Dst& dst, const Src& src) {
+  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
 }
 
 // Deal with "assume-aliasing"
 template <typename Dst, typename Src, typename Func>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment(
-    Dst& dst, const Src& source, const Func& func, std::enable_if_t<evaluator_assume_aliasing<Src>::value, void*> = 0) {
-  typename plain_matrix_type<Src>::type tmp(source);
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment(
+    Dst& dst, const Src& src, const Func& func, std::enable_if_t<evaluator_assume_aliasing<Src>::value, void*> = 0) {
+  typename plain_matrix_type<Src>::type tmp(src);
   call_assignment_no_alias(dst, tmp, func);
 }
 
 template <typename Dst, typename Src, typename Func>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment(
-    Dst& dst, const Src& source, const Func& func, std::enable_if_t<!evaluator_assume_aliasing<Src>::value, void*> = 0) {
-  call_assignment_no_alias(dst, source, func);
+    Dst& dst, const Src& src, const Func& func, std::enable_if_t<!evaluator_assume_aliasing<Src>::value, void*> = 0) {
+  call_assignment_no_alias(dst, src, func);
 }
 
 // by-pass "assume-aliasing"
 // When there is no aliasing, we require that 'dst' has been properly resized
 template <typename Dst, template <typename> class StorageBase, typename Src, typename Func>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment(NoAlias<Dst, StorageBase>& dst,
-                                                                           const Src& source, const Func& func) {
-  call_assignment_no_alias(dst.expression(), source, func);
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment(NoAlias<Dst, StorageBase>& dst, const Src& src,
+                                                                     const Func& func) {
+  call_assignment_no_alias(dst.expression(), src, func);
 }
 
 template <typename Dst, typename Src, typename Func>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_alias(Dst& dst, const Src& source,
-                                                                                    const Func& func) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment_no_alias(Dst& dst, const Src& src,
+                                                                              const Func& func) {
   enum {
     NeedToTranspose = ((int(Dst::RowsAtCompileTime) == 1 && int(Src::ColsAtCompileTime) == 1) ||
                        (int(Dst::ColsAtCompileTime) == 1 && int(Src::RowsAtCompileTime) == 1)) &&
@@ -813,11 +917,11 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_al
   EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(ActualDstTypeCleaned, Src)
   EIGEN_CHECK_BINARY_COMPATIBILIY(Func, typename ActualDstTypeCleaned::Scalar, typename Src::Scalar);
 
-  Assignment<ActualDstTypeCleaned, Src, Func>::run(actualDst, source, func);
+  Assignment<ActualDstTypeCleaned, Src, Func>::run(actualDst, src, func);
 }
 
 template <typename Dst, typename Src, typename Func>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_restricted_packet_assignment_no_alias(Dst& dst, const Src& source,
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_restricted_packet_assignment_no_alias(Dst& dst, const Src& src,
                                                                                       const Func& func) {
   typedef evaluator<Dst> DstEvaluatorType;
   typedef evaluator<Src> SrcEvaluatorType;
@@ -826,55 +930,53 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_restricted_packet_assignment_no_
   EIGEN_STATIC_ASSERT_LVALUE(Dst)
   EIGEN_CHECK_BINARY_COMPATIBILIY(Func, typename Dst::Scalar, typename Src::Scalar);
 
-  SrcEvaluatorType sourceEvaluator(source);
-  resize_if_allowed(dst, source, func);
+  SrcEvaluatorType srcEvaluator(src);
+  resize_if_allowed(dst, src, func);
 
   DstEvaluatorType dstEvaluator(dst);
-  Kernel kernel(dstEvaluator, sourceEvaluator, func, dst.const_cast_derived());
+  Kernel kernel(dstEvaluator, srcEvaluator, func, dst.const_cast_derived());
 
   dense_assignment_loop<Kernel>::run(kernel);
 }
 
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_alias(Dst& dst, const Src& source) {
-  call_assignment_no_alias(dst, source, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment_no_alias(Dst& dst, const Src& src) {
+  call_assignment_no_alias(dst, src, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
 }
 
 template <typename Dst, typename Src, typename Func>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_alias_no_transpose(Dst& dst,
-                                                                                                 const Src& source,
-                                                                                                 const Func& func) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment_no_alias_no_transpose(Dst& dst, const Src& src,
+                                                                                           const Func& func) {
   // TODO check whether this is the right place to perform these checks:
   EIGEN_STATIC_ASSERT_LVALUE(Dst)
   EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Dst, Src)
   EIGEN_CHECK_BINARY_COMPATIBILIY(Func, typename Dst::Scalar, typename Src::Scalar);
 
-  Assignment<Dst, Src, Func>::run(dst, source, func);
+  Assignment<Dst, Src, Func>::run(dst, src, func);
 }
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_alias_no_transpose(Dst& dst,
-                                                                                                 const Src& source) {
-  call_assignment_no_alias_no_transpose(dst, source, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_assignment_no_alias_no_transpose(Dst& dst, const Src& src) {
+  call_assignment_no_alias_no_transpose(dst, src, internal::assign_op<typename Dst::Scalar, typename Src::Scalar>());
 }
 
 // forward declaration
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC void check_for_aliasing(const Dst& dst, const Src& source);
+EIGEN_DEVICE_FUNC void check_for_aliasing(const Dst& dst, const Src& src);
 
 // Generic Dense to Dense assignment
 // Note that the last template argument "Weak" is needed to make it possible to perform
 // both partial specialization+SFINAE without ambiguous specialization
 template <typename DstXprType, typename SrcXprType, typename Functor, typename Weak>
 struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Weak> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(DstXprType& dst, const SrcXprType& source,
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE constexpr void run(DstXprType& dst, const SrcXprType& src,
                                                                   const Functor& func) {
 #ifndef EIGEN_NO_DEBUG
     if (!internal::is_constant_evaluated()) {
-      internal::check_for_aliasing(dst, source);
+      internal::check_for_aliasing(dst, src);
     }
 #endif
 
-    call_dense_assignment_loop(dst, source, func);
+    call_dense_assignment_loop(dst, src, func);
   }
 };
 
@@ -885,9 +987,9 @@ struct Assignment<DstXprType, CwiseNullaryOp<scalar_constant_op<typename DstXprT
   using NullaryOp = scalar_constant_op<Scalar>;
   using SrcXprType = CwiseNullaryOp<NullaryOp, SrcPlainObject>;
   using Functor = assign_op<Scalar, Scalar>;
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
                                                         const Functor& /*func*/) {
-    eigen_fill_impl<DstXprType>::run(dst, source);
+    eigen_fill_impl<DstXprType>::run(dst, src);
   }
 };
 
@@ -898,9 +1000,9 @@ struct Assignment<DstXprType, CwiseNullaryOp<scalar_zero_op<typename DstXprType:
   using NullaryOp = scalar_zero_op<Scalar>;
   using SrcXprType = CwiseNullaryOp<NullaryOp, SrcPlainObject>;
   using Functor = assign_op<Scalar, Scalar>;
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
                                                         const Functor& /*func*/) {
-    eigen_zero_impl<DstXprType>::run(dst, source);
+    eigen_zero_impl<DstXprType>::run(dst, src);
   }
 };
 
@@ -911,40 +1013,40 @@ struct Assignment<DstXprType, CwiseNullaryOp<scalar_zero_op<typename DstXprType:
 template <typename DstXprType, typename SrcXprType, typename Functor, typename Weak>
 struct Assignment<DstXprType, SrcXprType, Functor, EigenBase2EigenBase, Weak> {
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
-    source.evalTo(dst);
+    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    src.evalTo(dst);
   }
 
   // NOTE The following two functions are templated to avoid their instantiation if not needed
   //      This is needed because some expressions supports evalTo only and/or have 'void' as scalar type.
   template <typename SrcScalarType>
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::add_assign_op<typename DstXprType::Scalar, SrcScalarType>& /*func*/) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
-    source.addTo(dst);
+    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    src.addTo(dst);
   }
 
   template <typename SrcScalarType>
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::sub_assign_op<typename DstXprType::Scalar, SrcScalarType>& /*func*/) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
-    source.subTo(dst);
+    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    src.subTo(dst);
   }
 };
 

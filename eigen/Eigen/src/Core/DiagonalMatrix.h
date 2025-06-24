@@ -76,9 +76,9 @@ class DiagonalBase : public EigenBase<Derived> {
   }
 
   /** \returns the number of rows. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index rows() const { return diagonal().size(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const { return diagonal().size(); }
   /** \returns the number of columns. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index cols() const { return diagonal().size(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const { return diagonal().size(); }
 
   /** \returns the diagonal matrix product of \c *this by the dense matrix, \a matrix */
   template <typename MatrixDerived>
@@ -390,26 +390,26 @@ struct AssignmentKind<DenseShape, DiagonalShape> {
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, Diagonal2Dense> {
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
     dst.setZero();
-    dst.diagonal() = source.diagonal();
+    dst.diagonal() = src.diagonal();
   }
 
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::add_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.diagonal() += source.diagonal();
+    dst.diagonal() += src.diagonal();
   }
 
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::sub_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.diagonal() -= source.diagonal();
+    dst.diagonal() -= src.diagonal();
   }
 };
 

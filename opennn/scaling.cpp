@@ -55,10 +55,11 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
 
     // if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
     //     throw runtime_error("Standard deviation is zero.");
+    const type epsilon = 1e-7;
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
-        matrix(i, column_index) = (matrix(i, column_index) - mean)/standard_deviation;
+        matrix(i, column_index) = (matrix(i, column_index) - mean)/(standard_deviation + epsilon);
 }
 
 

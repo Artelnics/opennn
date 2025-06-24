@@ -1,6 +1,9 @@
 #include "pch.h"
 
+#include "../opennn/language_dataset.h"
+#include "../opennn/transformer.h"
 #include "../opennn/mean_squared_error.h"
+#include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;
@@ -39,7 +42,7 @@ TEST(StochasticGradientDescentTest, Train)
     dataset.set_data_constant(type(1));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_constant(type(1));
+    neural_network.set_parameters_random();
 
     StochasticGradientDescent stochastic_gradient_descent;
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -53,7 +56,7 @@ TEST(StochasticGradientDescentTest, Train)
 
     dataset.set_data_random();
 
-    neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_random();
 
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
@@ -68,7 +71,7 @@ TEST(StochasticGradientDescentTest, Train)
     stochastic_gradient_descent.set_display(true);
     stochastic_gradient_descent.set_display_period(1000);
 
-    neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_random();
 
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
@@ -91,7 +94,7 @@ TEST(StochasticGradientDescentTest, Train)
 
 TEST(StochasticGradientDescentTest, TrainTransformer)
 {
-/*
+
     type old_error = numeric_limits<float>::max();
 
     type error = 0;
@@ -100,7 +103,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     Index context_dimension = 0;
     Index input_dimensions = 0;
 
-    LanguageDataSet language_data_set;
+    LanguageDataset language_dataset;
 
     Index depth;
     Index perceptron_depth;
@@ -109,13 +112,13 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     Transformer transformer;
 
-    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_dataset);
 
-    stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
+    StochasticGradientDescent stochastic_gradient_descent(&cross_entropy_error_3d);
 
-    samples_number = 1;
+    Index samples_number = 1;
 
-    inputs_number = 2;
+    Index inputs_number = 2;
     context_length = 3;
     input_dimensions = 5;
     context_dimension = 6;
@@ -124,8 +127,8 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     perceptron_depth = 6;
     heads_number = 4;
     layers_number = 1;
-
-    dataset.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
+/*
+    language_dataset.set_data_random_language_model(samples_number, inputs_number, context_length, input_dimensions, context_dimension);
 
     transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                         depth, perceptron_depth, heads_number, layers_number });
@@ -139,7 +142,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     training_results = stochastic_gradient_descent.perform_training();
 
-    EXPECT_EQ(training_results.get_epochs_number() <= 1);
+//    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -150,7 +153,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    EXPECT_EQ(error < old_error);
+//    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -165,6 +168,6 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    EXPECT_EQ(error <= old_error);
+//    EXPECT_EQ(error <= old_error);
 */
 }
