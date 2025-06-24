@@ -232,8 +232,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_error = type(0);
 
-        if(is_classification_model) training_accuracy = type(0); 
-        
+        if(is_classification_model) training_accuracy = type(0);
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
