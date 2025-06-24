@@ -24,8 +24,6 @@ ImageDataset::ImageDataset(const Index& new_samples_number,
     if (new_target_dimensions.size() != 1)
         throw runtime_error("Target dimensions is not 1");
 
-    model_type = ModelType::ImageClassification;
-
     set(new_samples_number, new_input_dimensions, new_target_dimensions);
 }
 
@@ -314,60 +312,62 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &data)
+
+Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &input_tensor)
 {
-    /*
-        const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+/*
+    const dimensions input_dimensions = get_dimensions(Dataset::VariableUse::Input);
 
-        const Index input_height = input_dimensions[0];
-        const Index input_width = input_dimensions[1];
-        const Index channels = input_dimensions[2];
+    const Index samples_number = input_dimensions[0];
+//    const Index input_height = input_dimensions[0];
+//    const Index input_width = input_dimensions[1];
+//    const Index channels = input_dimensions[2];
 
-        TensorMap<Tensor<type, 4>> inputs(input_tensor.data(),
-                                          samples_number,
-                                          input_height,
-                                          input_width,
-                                          channels);
+//    TensorMap<Tensor<type, 4>> inputs(input_tensor.data(),
+//                                      samples_number,
+//                                      input_height,
+//                                      input_width,
+//                                      channels);
 
-        const bool random_reflection_axis_x = image_dataset->get_random_reflection_axis_x();
-        const bool random_reflection_axis_y = image_dataset->get_random_reflection_axis_y();
-        const type random_rotation_minimum = image_dataset->get_random_rotation_minimum();
-        const type random_rotation_maximum = image_dataset->get_random_rotation_maximum();
-        const type random_horizontal_translation_minimum = image_dataset->get_random_horizontal_translation_minimum();
-        const type random_horizontal_translation_maximum = image_dataset->get_random_horizontal_translation_maximum();
-        const type random_vertical_translation_minimum = image_dataset->get_random_vertical_translation_minimum();
-        const type random_vertical_translation_maximum = image_dataset->get_random_vertical_translation_maximum();
+//    const bool random_reflection_axis_x = image_dataset->get_random_reflection_axis_x();
+//    const bool random_reflection_axis_y = image_dataset->get_random_reflection_axis_y();
+//    const type random_rotation_minimum = image_dataset->get_random_rotation_minimum();
+//    const type random_rotation_maximum = image_dataset->get_random_rotation_maximum();
+//    const type random_horizontal_translation_minimum = image_dataset->get_random_horizontal_translation_minimum();
+//    const type random_horizontal_translation_maximum = image_dataset->get_random_horizontal_translation_maximum();
+//    const type random_vertical_translation_minimum = image_dataset->get_random_vertical_translation_minimum();
+//    const type random_vertical_translation_maximum = image_dataset->get_random_vertical_translation_maximum();
 
-        for(Index batch_index = 0; batch_index < samples_number; batch_index++)
-        {
-            Tensor<type, 3> image = inputs.chip(batch_index, 0);
+    for(Index batch_index = 0; batch_index < samples_number; batch_index++)
+    {
+        Tensor<type, 3> image = inputs.chip(batch_index, 0);
 
-            if(random_reflection_axis_x)
-                reflect_image_x(thread_pool_device.get(),
-                                image);
+        if(random_reflection_axis_x)
+            reflect_image_x(thread_pool_device.get(),
+                            image);
 
-            if(random_reflection_axis_y)
-                reflect_image_y(thread_pool_device.get(),
-                                image);
+        if(random_reflection_axis_y)
+            reflect_image_y(thread_pool_device.get(),
+                            image);
 
-            if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-                rotate_image(thread_pool_device.get(),
-                             image,
-                             image,
-                             get_random_type(random_rotation_minimum, random_rotation_maximum));
+        if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
+            rotate_image(thread_pool_device.get(),
+                         image,
+                         image,
+                         get_random_type(random_rotation_minimum, random_rotation_maximum));
 
-            if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-                translate_image_x(thread_pool_device.get(),
-                                  image,
-                                  image,
-                                  get_random_type(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
+        if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
+            translate_image_x(thread_pool_device.get(),
+                              image,
+                              image,
+                              get_random_type(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
 
-            if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-                translate_image_y(thread_pool_device.get(),
-                                  image,
-                                  image,
-                                  get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
-        }
+        if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
+            translate_image_y(thread_pool_device.get(),
+                              image,
+                              image,
+                              get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
+    }
 */
     return Tensor<type, 2>();
 }

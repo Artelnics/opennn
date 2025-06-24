@@ -125,12 +125,6 @@ void Embedding::set_parameters_random()
 }
 
 
-void Embedding::set_parameters_constant(const type& value)
-{
-    weights.setConstant(value);
-}
-
-
 void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
@@ -314,7 +308,7 @@ EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> EmbeddingForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> EmbeddingForwardPropagation::get_output_pair() const
 {
     const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 

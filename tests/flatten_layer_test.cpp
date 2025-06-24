@@ -52,7 +52,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 {
     flatten_layer->forward_propagate({ input_pair }, flatten_layer_forward_propagation, true);
 
-    output_pair = flatten_layer_forward_propagation->get_outputs_pair();
+    output_pair = flatten_layer_forward_propagation->get_output_pair();
 
     EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], height * width * channels);
@@ -61,7 +61,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 
 TEST_F(FlattenLayerTest, BackPropagate)
 {
-    output_pair = flatten_layer_forward_propagation->get_outputs_pair();
+    output_pair = flatten_layer_forward_propagation->get_output_pair();
 
     flatten_layer->back_propagate({ input_pair }, { output_pair }, flatten_layer_forward_propagation, flatten_layer_back_propagation);
 

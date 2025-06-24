@@ -184,7 +184,7 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
           // steal one more time, to make sure that this task will be
           // executed. We will not necessarily find it, because it might
           // have been already stolen by some other thread.
-          if (has_no_notify_task && !t->f) *t = q.PopFront();
+          if (has_no_notify_task && !t->f) *t = GlobalSteal();
         }
       }
     }

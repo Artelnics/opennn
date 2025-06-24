@@ -208,7 +208,7 @@ class DenseBase
    * \note For a vector, this returns just 1. For a matrix (non-vector), this is the major dimension
    * with respect to the \ref TopicStorageOrders "storage order", i.e., the number of columns for a
    * column-major matrix, and the number of rows for a row-major matrix. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index outerSize() const {
+  EIGEN_DEVICE_FUNC constexpr Index outerSize() const {
     return IsVectorAtCompileTime ? 1 : int(IsRowMajor) ? this->rows() : this->cols();
   }
 
@@ -217,7 +217,7 @@ class DenseBase
    * \note For a vector, this is just the size. For a matrix (non-vector), this is the minor dimension
    * with respect to the \ref TopicStorageOrders "storage order", i.e., the number of rows for a
    * column-major matrix, and the number of columns for a row-major matrix. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index innerSize() const {
+  EIGEN_DEVICE_FUNC constexpr Index innerSize() const {
     return IsVectorAtCompileTime ? this->size() : int(IsRowMajor) ? this->cols() : this->rows();
   }
 

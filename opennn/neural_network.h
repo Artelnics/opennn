@@ -141,8 +141,6 @@ public:
 
    // Layers
 
-   static bool is_trainable(const Layer::Type&);
-
    Index get_layers_number() const;
    Index get_layers_number(const Layer::Type&) const;
 
@@ -168,8 +166,6 @@ public:
 
    // Parameters initialization
 
-   void set_parameters_constant(const type&) const;
-
    void set_parameters_random() const;
 
    // Output
@@ -179,12 +175,10 @@ public:
    {
        const Index layers_number = get_layers_number();
 
-
        if (layers_number == 0)
            return Tensor<type, output_rank>();
 
        const Index batch_size = inputs.dimension(0);
-       const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
 
@@ -197,12 +191,12 @@ public:
        if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
        static_assert(input_rank >= 2 && input_rank <= 4, "Unsupported input rank");
 
-       const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+       const pair<type*, dimensions> input_pair((type*)inputs.data(), input_dimensions);
 
        forward_propagate({input_pair}, forward_propagation, false);
 
        const pair<type*, dimensions> outputs_pair
-           = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+           = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_pair);
@@ -213,7 +207,32 @@ public:
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
 
+       return Tensor<type, output_rank>();
    }
+
+
+   Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
+   {
+       const Index layers_number = get_layers_number();
+
+       if (layers_number == 0)
+           return Tensor<type, 3>();
+
+       const Index batch_size = inputs_1.dimension(0);
+
+       ForwardPropagation forward_propagation(batch_size, this);
+
+       const pair<type*, dimensions> input_pair_1((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}});
+       const pair<type*, dimensions> input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
+
+       forward_propagate({input_pair_1, input_pair_2}, forward_propagation, false);
+
+       const pair<type*, dimensions> outputs_pair
+           = forward_propagation.layers[layers_number - 1]->get_output_pair();
+
+       return tensor_map<3>(outputs_pair);
+   }
+
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
 

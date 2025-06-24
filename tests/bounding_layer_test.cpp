@@ -35,7 +35,7 @@ TEST(BoundingTest, ForwardPropagate)
                                           forward_propagation,
                                           true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 

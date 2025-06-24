@@ -181,8 +181,7 @@ struct Histogram
  Histogram histogram(const Tensor<bool, 1>&);
  Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
  vector<Histogram> histograms(const Tensor<type, 2>&, const Index& = 10);
- //Tensor<Index, 1> total_frequencies(const vector<Histogram>&);
-
+ Tensor<Index, 1> total_frequencies(const vector<Histogram>&);
 
  // Minimal indices
  Index minimal_index(const Tensor<type, 1>&);

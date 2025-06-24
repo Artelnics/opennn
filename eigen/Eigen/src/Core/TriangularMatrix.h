@@ -58,10 +58,10 @@ class TriangularBase : public EigenBase<Derived> {
     eigen_assert(!((int(Mode) & int(UnitDiag)) && (int(Mode) & int(ZeroDiag))));
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index rows() const EIGEN_NOEXCEPT { return derived().rows(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index cols() const EIGEN_NOEXCEPT { return derived().cols(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index outerStride() const EIGEN_NOEXCEPT { return derived().outerStride(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index innerStride() const EIGEN_NOEXCEPT { return derived().innerStride(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const noexcept { return derived().rows(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const noexcept { return derived().cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index outerStride() const noexcept { return derived().outerStride(); }
+  EIGEN_DEVICE_FUNC constexpr Index innerStride() const noexcept { return derived().innerStride(); }
 
   // dummy resize function
   EIGEN_DEVICE_FUNC void resize(Index rows, Index cols) {
@@ -194,9 +194,9 @@ class TriangularView
   EIGEN_INHERIT_ASSIGNMENT_OPERATORS(TriangularView)
 
   /** \copydoc EigenBase::rows() */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index rows() const EIGEN_NOEXCEPT { return m_matrix.rows(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const noexcept { return m_matrix.rows(); }
   /** \copydoc EigenBase::cols() */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index cols() const EIGEN_NOEXCEPT { return m_matrix.cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const noexcept { return m_matrix.cols(); }
 
   /** \returns a const reference to the nested expression */
   EIGEN_DEVICE_FUNC const NestedExpression& nestedExpression() const { return m_matrix; }
@@ -668,7 +668,7 @@ class triangular_dense_assignment_kernel
   typedef typename Base::SrcXprType SrcXprType;
   using Base::m_dst;
   using Base::m_functor;
-  using Base::m_source;
+  using Base::m_src;
 
  public:
   typedef typename Base::DstEvaluatorType DstEvaluatorType;
@@ -676,9 +676,9 @@ class triangular_dense_assignment_kernel
   typedef typename Base::Scalar Scalar;
   typedef typename Base::AssignmentTraits AssignmentTraits;
 
-  EIGEN_DEVICE_FUNC triangular_dense_assignment_kernel(DstEvaluatorType& dst, const SrcEvaluatorType& source,
+  EIGEN_DEVICE_FUNC triangular_dense_assignment_kernel(DstEvaluatorType& dst, const SrcEvaluatorType& src,
                                                        const Functor& func, DstXprType& dstExpr)
-      : Base(dst, source, func, dstExpr) {}
+      : Base(dst, src, func, dstExpr) {}
 
 #ifdef EIGEN_INTERNAL_DEBUGGING
   EIGEN_DEVICE_FUNC void assignCoeff(Index row, Index col) {
@@ -705,22 +705,22 @@ class triangular_dense_assignment_kernel
 };
 
 template <int Mode, bool SetOpposite, typename DstXprType, typename SrcXprType, typename Functor>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_triangular_assignment_loop(DstXprType& dst, const SrcXprType& source,
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_triangular_assignment_loop(DstXprType& dst, const SrcXprType& src,
                                                                            const Functor& func) {
   typedef evaluator<DstXprType> DstEvaluatorType;
   typedef evaluator<SrcXprType> SrcEvaluatorType;
 
-  SrcEvaluatorType sourceEvaluator(source);
+  SrcEvaluatorType srcEvaluator(src);
 
-  Index dstRows = source.rows();
-  Index dstCols = source.cols();
+  Index dstRows = src.rows();
+  Index dstCols = src.cols();
   if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
   DstEvaluatorType dstEvaluator(dst);
 
   typedef triangular_dense_assignment_kernel<Mode&(Lower | Upper), Mode&(UnitDiag | ZeroDiag | SelfAdjoint),
                                              SetOpposite, DstEvaluatorType, SrcEvaluatorType, Functor>
       Kernel;
-  Kernel kernel(dstEvaluator, sourceEvaluator, func, dst.const_cast_derived());
+  Kernel kernel(dstEvaluator, srcEvaluator, func, dst.const_cast_derived());
 
   enum {
     unroll = DstXprType::SizeAtCompileTime != Dynamic && SrcEvaluatorType::CoeffReadCost < HugeCost &&
@@ -734,9 +734,9 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_triangular_assignment_loop(DstXp
 }
 
 template <int Mode, bool SetOpposite, typename DstXprType, typename SrcXprType>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_triangular_assignment_loop(DstXprType& dst, const SrcXprType& source) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_triangular_assignment_loop(DstXprType& dst, const SrcXprType& src) {
   call_triangular_assignment_loop<Mode, SetOpposite>(
-      dst, source, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
+      dst, src, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
 }
 
 template <>
@@ -754,24 +754,24 @@ struct AssignmentKind<TriangularShape, DenseShape> {
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, Triangular2Triangular> {
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source, const Functor& func) {
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src, const Functor& func) {
     eigen_assert(int(DstXprType::Mode) == int(SrcXprType::Mode));
 
-    call_triangular_assignment_loop<DstXprType::Mode, false>(dst, source, func);
+    call_triangular_assignment_loop<DstXprType::Mode, false>(dst, src, func);
   }
 };
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, Triangular2Dense> {
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source, const Functor& func) {
-    call_triangular_assignment_loop<SrcXprType::Mode, (int(SrcXprType::Mode) & int(SelfAdjoint)) == 0>(dst, source, func);
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src, const Functor& func) {
+    call_triangular_assignment_loop<SrcXprType::Mode, (int(SrcXprType::Mode) & int(SelfAdjoint)) == 0>(dst, src, func);
   }
 };
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, Dense2Triangular> {
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source, const Functor& func) {
-    call_triangular_assignment_loop<DstXprType::Mode, false>(dst, source, func);
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src, const Functor& func) {
+    call_triangular_assignment_loop<DstXprType::Mode, false>(dst, src, func);
   }
 };
 
@@ -859,13 +859,13 @@ template <typename DstXprType, typename Lhs, typename Rhs, typename Scalar>
 struct Assignment<DstXprType, Product<Lhs, Rhs, DefaultProduct>,
                   internal::assign_op<Scalar, typename Product<Lhs, Rhs, DefaultProduct>::Scalar>, Dense2Triangular> {
   typedef Product<Lhs, Rhs, DefaultProduct> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::assign_op<Scalar, typename SrcXprType::Scalar>&) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    dst._assignProduct(source, Scalar(1), false);
+    dst._assignProduct(src, Scalar(1), false);
   }
 };
 
@@ -875,9 +875,9 @@ struct Assignment<DstXprType, Product<Lhs, Rhs, DefaultProduct>,
                   internal::add_assign_op<Scalar, typename Product<Lhs, Rhs, DefaultProduct>::Scalar>,
                   Dense2Triangular> {
   typedef Product<Lhs, Rhs, DefaultProduct> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::add_assign_op<Scalar, typename SrcXprType::Scalar>&) {
-    dst._assignProduct(source, Scalar(1), true);
+    dst._assignProduct(src, Scalar(1), true);
   }
 };
 
@@ -887,9 +887,9 @@ struct Assignment<DstXprType, Product<Lhs, Rhs, DefaultProduct>,
                   internal::sub_assign_op<Scalar, typename Product<Lhs, Rhs, DefaultProduct>::Scalar>,
                   Dense2Triangular> {
   typedef Product<Lhs, Rhs, DefaultProduct> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::sub_assign_op<Scalar, typename SrcXprType::Scalar>&) {
-    dst._assignProduct(source, Scalar(-1), true);
+    dst._assignProduct(src, Scalar(-1), true);
   }
 };
 

@@ -443,29 +443,20 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
 
 Tensor<type, 2> TestingAnalysis::calculate_errors() const
 {
-    Tensor<type, 2> errors(5, 3);
 
     const Tensor<type, 1> training_errors = calculate_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_errors(Dataset::SampleUse::Selection);
     const Tensor<type, 1> testing_errors = calculate_errors(Dataset::SampleUse::Testing);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
+    Tensor<type, 2> errors(5, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)}
+    });
 
     return errors;
 }
@@ -473,35 +464,21 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    Tensor<type, 2> errors(7, 3);
-
     const Tensor<type, 1> training_errors = calculate_binary_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_binary_classification_errors(Dataset::SampleUse::Selection);
     const Tensor<type, 1> testing_errors = calculate_binary_classification_errors(Dataset::SampleUse::Testing);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
-    errors(5,0) = training_errors(5);
-    errors(6,0) = training_errors(6);
+    Tensor<type, 2> errors(7, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-    errors(5,1) = selection_errors(5);
-    errors(6,1) = selection_errors(6);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
-    errors(5,2) = testing_errors(5);
-    errors(6,2) = testing_errors(6);
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)},
+        {training_errors(5), selection_errors(5), testing_errors(5)},
+        {training_errors(6), selection_errors(6), testing_errors(6)}
+    });
 
     return errors;
 }
@@ -509,33 +486,20 @@ Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    Tensor<type, 2> errors(6,3);
-
     const Tensor<type, 1> training_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
     const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
 
-    errors(0,0) = training_errors(0);
-    errors(1,0) = training_errors(1);
-    errors(2,0) = training_errors(2);
-    errors(3,0) = training_errors(3);
-    errors(4,0) = training_errors(4);
-    errors(5,0) = training_errors(5);
+    Tensor<type, 2> errors(6, 3);
 
-    errors(0,1) = selection_errors(0);
-    errors(1,1) = selection_errors(1);
-    errors(2,1) = selection_errors(2);
-    errors(3,1) = selection_errors(3);
-    errors(4,1) = selection_errors(4);
-    errors(5,1) = selection_errors(5);
-
-    errors(0,2) = testing_errors(0);
-    errors(1,2) = testing_errors(1);
-    errors(2,2) = testing_errors(2);
-    errors(3,2) = testing_errors(3);
-    errors(4,2) = testing_errors(4);
-    errors(5,2) = testing_errors(5);
-
+    errors.setValues({
+        {training_errors(0), selection_errors(0), testing_errors(0)},
+        {training_errors(1), selection_errors(1), testing_errors(1)},
+        {training_errors(2), selection_errors(2), testing_errors(2)},
+        {training_errors(3), selection_errors(3), testing_errors(3)},
+        {training_errors(4), selection_errors(4), testing_errors(4)},
+        {training_errors(5), selection_errors(5), testing_errors(5)}
+    });
     return errors;
 }
 
@@ -1424,99 +1388,6 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
     }
 
     return maximum_gain;
-}
-
-
-Tensor<type, 2> TestingAnalysis::perform_calibration_plot_analysis() const
-{
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
-
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
-
-    return calculate_calibration_plot(targets, outputs);
-}
-
-
-Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
-{
-    const Index rows_number = targets.dimension(0);
-
-    const Index points_number = 10;
-
-    Tensor<type, 2> calibration_plot(points_number+2, 2);
-
-    // First point
-
-    calibration_plot(0,0) = type(0);
-    calibration_plot(0,1) = type(0);
-
-    Index positives = 0;
-
-    Index count = 0;
-
-    type probability = type(0);
-
-    long double sum = 0.0;
-
-    for(Index i = 1; i < points_number+1; i++)
-    {
-        count = 0;
-
-        positives = 0;
-        sum = type(0);
-
-        probability += type(0.1);
-
-        for(Index j = 0; j < rows_number; j++)
-        {
-            if(outputs(j, 0) >= (probability - type(0.1)) && outputs(j, 0) < probability)
-            {
-                count++;
-
-                sum += outputs(j, 0);
-
-                if(Index(targets(j, 0)) == 1)
-                    positives++;
-            }
-        }
-
-        if(count == 0)
-        {
-            calibration_plot(i, 0) = type(-1);
-            calibration_plot(i, 1) = type(-1);
-        }
-        else
-        {
-            calibration_plot(i, 0) = type(sum)/type(count);
-            calibration_plot(i, 1) = type(positives)/type(count);
-        }
-    }
-
-    // Last point
-
-    calibration_plot(points_number+1,0) = type(1);
-    calibration_plot(points_number+1,1) = type(1);
-
-    // Subtracts calibration plot rows with value -1
-
-    Index points_number_subtracted = 0;
-/*
-    while(contains(calibration_plot.chip(0,1), type(-1)))
-     {
-         for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
-         {
-             if(abs(calibration_plot(i, 0) + type(1)) < NUMERIC_LIMITS_MIN)
-             {
-                 calibration_plot = delete_row(calibration_plot, i);
-
-                 points_number_subtracted++;
-             }
-         }
-     }
-*/
-    return calibration_plot;
 }
 
 

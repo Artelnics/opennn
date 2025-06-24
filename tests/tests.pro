@@ -66,7 +66,6 @@ SOURCES += test.cpp \
            unscaling_layer_test.cpp \
            weighted_squared_error_test.cpp \
            pch.cpp \
-            # Include more test files if needed by uncommenting
 
 # Precompiled Header
 HEADERS += pch.h

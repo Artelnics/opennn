@@ -10,7 +10,6 @@
 
 #include "packetmath_test_shared.h"
 #include "random_without_cast_overflow.h"
-#include "packet_ostream.h"
 
 template <typename T>
 inline T REF_ADD(const T& a, const T& b) {
@@ -24,21 +23,55 @@ template <typename T>
 inline T REF_MUL(const T& a, const T& b) {
   return a * b;
 }
+
+template <typename Scalar, typename EnableIf = void>
+struct madd_impl {
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar madd(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return a * b + c;
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar msub(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return a * b - c;
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmadd(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return c - a * b;
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmsub(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return Scalar(0) - (a * b + c);
+  }
+};
+
+template <typename Scalar>
+struct madd_impl<Scalar,
+                 std::enable_if_t<Eigen::internal::is_scalar<Scalar>::value && Eigen::NumTraits<Scalar>::IsSigned>> {
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar madd(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return numext::fma(a, b, c);
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar msub(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return numext::fma(a, b, Scalar(-c));
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmadd(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return numext::fma(Scalar(-a), b, c);
+  }
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmsub(const Scalar& a, const Scalar& b, const Scalar& c) {
+    return -Scalar(numext::fma(a, b, c));
+  }
+};
+
 template <typename T>
 inline T REF_MADD(const T& a, const T& b, const T& c) {
-  return a * b + c;
+  return madd_impl<T>::madd(a, b, c);
 }
 template <typename T>
 inline T REF_MSUB(const T& a, const T& b, const T& c) {
-  return a * b - c;
+  return madd_impl<T>::msub(a, b, c);
 }
 template <typename T>
 inline T REF_NMADD(const T& a, const T& b, const T& c) {
-  return c - a * b;
+  return madd_impl<T>::nmadd(a, b, c);
 }
 template <typename T>
 inline T REF_NMSUB(const T& a, const T& b, const T& c) {
-  return test::negate(a * b + c);
+  return madd_impl<T>::nmsub(a, b, c);
 }
 template <typename T>
 inline T REF_DIV(const T& a, const T& b) {
@@ -70,6 +103,14 @@ template <>
 inline bool REF_MADD(const bool& a, const bool& b, const bool& c) {
   return (a && b) || c;
 }
+template <>
+inline bool REF_DIV(const bool& a, const bool& b) {
+  return a && b;
+}
+template <>
+inline bool REF_RECIPROCAL(const bool& a) {
+  return a;
+}
 
 template <typename T>
 inline T REF_FREXP(const T& x, T& exp) {
@@ -90,6 +131,26 @@ template <typename T>
 inline T REF_LDEXP(const T& x, const T& exp) {
   EIGEN_USING_STD(ldexp)
   return static_cast<T>(ldexp(x, static_cast<int>(exp)));
+}
+
+// provides a convenient function to take the absolute value of each component of a complex number to prevent
+// catastrophic cancellation in randomly generated complex numbers
+template <typename T, bool IsComplex = NumTraits<T>::IsComplex>
+struct abs_helper_impl {
+  static T run(T x) { return numext::abs(x); }
+};
+template <typename T>
+struct abs_helper_impl<T, true> {
+  static T run(T x) {
+    T res = x;
+    numext::real_ref(res) = numext::abs(numext::real(res));
+    numext::imag_ref(res) = numext::abs(numext::imag(res));
+    return res;
+  }
+};
+template <typename T>
+T abs_helper(T x) {
+  return abs_helper_impl<T>::run(x);
 }
 
 // Uses pcast to cast from one array to another.
@@ -293,28 +354,28 @@ void packetmath_boolean_mask_ops() {
   for (int i = 0; i < size; ++i) {
     data1[i] = internal::random<Scalar>();
   }
-  CHECK_CWISE1(internal::ptrue, internal::ptrue);
+  CHECK_CWISE1_MASK(internal::ptrue, internal::ptrue);
   CHECK_CWISE2_IF(true, internal::pandnot, internal::pandnot);
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = Scalar(RealScalar(i));
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
 
-  CHECK_CWISE2_IF(true, internal::pcmp_eq, internal::pcmp_eq);
+  CHECK_CWISE2_MASK(internal::pcmp_eq, internal::pcmp_eq);
 
   // Test (-0) == (0) for signed operations
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = Scalar(-0.0);
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
-  CHECK_CWISE2_IF(true, internal::pcmp_eq, internal::pcmp_eq);
+  CHECK_CWISE2_MASK(internal::pcmp_eq, internal::pcmp_eq);
 
   // Test NaN
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = NumTraits<Scalar>::quiet_NaN();
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
-  CHECK_CWISE2_IF(true, internal::pcmp_eq, internal::pcmp_eq);
+  CHECK_CWISE2_MASK(internal::pcmp_eq, internal::pcmp_eq);
 }
 
 template <typename Scalar, typename Packet>
@@ -323,28 +384,27 @@ void packetmath_boolean_mask_ops_real() {
   const int size = 2 * PacketSize;
   EIGEN_ALIGN_MAX Scalar data1[size];
   EIGEN_ALIGN_MAX Scalar data2[size];
-  EIGEN_ALIGN_MAX Scalar ref[size];
 
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = internal::random<Scalar>();
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
 
-  CHECK_CWISE2_IF(true, internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
+  CHECK_CWISE2_MASK(internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
 
   // Test (-0) <=/< (0) for signed operations
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = Scalar(-0.0);
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
-  CHECK_CWISE2_IF(true, internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
+  CHECK_CWISE2_MASK(internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
 
   // Test NaN
   for (int i = 0; i < PacketSize; ++i) {
     data1[i] = NumTraits<Scalar>::quiet_NaN();
     data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
   }
-  CHECK_CWISE2_IF(true, internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
+  CHECK_CWISE2_MASK(internal::pcmp_lt_or_nan, internal::pcmp_lt_or_nan);
 }
 
 template <typename Scalar, typename Packet, typename EnableIf = void>
@@ -361,31 +421,30 @@ struct packetmath_boolean_mask_ops_notcomplex_test<
     const int size = 2 * PacketSize;
     EIGEN_ALIGN_MAX Scalar data1[size];
     EIGEN_ALIGN_MAX Scalar data2[size];
-    EIGEN_ALIGN_MAX Scalar ref[size];
 
     for (int i = 0; i < PacketSize; ++i) {
       data1[i] = internal::random<Scalar>();
       data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
     }
 
-    CHECK_CWISE2_IF(true, internal::pcmp_le, internal::pcmp_le);
-    CHECK_CWISE2_IF(true, internal::pcmp_lt, internal::pcmp_lt);
+    CHECK_CWISE2_MASK(internal::pcmp_le, internal::pcmp_le);
+    CHECK_CWISE2_MASK(internal::pcmp_lt, internal::pcmp_lt);
 
     // Test (-0) <=/< (0) for signed operations
     for (int i = 0; i < PacketSize; ++i) {
       data1[i] = Scalar(-0.0);
       data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
     }
-    CHECK_CWISE2_IF(true, internal::pcmp_le, internal::pcmp_le);
-    CHECK_CWISE2_IF(true, internal::pcmp_lt, internal::pcmp_lt);
+    CHECK_CWISE2_MASK(internal::pcmp_le, internal::pcmp_le);
+    CHECK_CWISE2_MASK(internal::pcmp_lt, internal::pcmp_lt);
 
     // Test NaN
     for (int i = 0; i < PacketSize; ++i) {
       data1[i] = NumTraits<Scalar>::quiet_NaN();
       data1[i + PacketSize] = internal::random<bool>() ? data1[i] : Scalar(0);
     }
-    CHECK_CWISE2_IF(true, internal::pcmp_le, internal::pcmp_le);
-    CHECK_CWISE2_IF(true, internal::pcmp_lt, internal::pcmp_lt);
+    CHECK_CWISE2_MASK(internal::pcmp_le, internal::pcmp_le);
+    CHECK_CWISE2_MASK(internal::pcmp_lt, internal::pcmp_lt);
   }
 };
 
@@ -481,8 +540,8 @@ void packetmath() {
   eigen_optimization_barrier_test<Scalar>::run();
 
   for (int i = 0; i < size; ++i) {
-    data1[i] = internal::random<Scalar>() / RealScalar(PacketSize);
-    data2[i] = internal::random<Scalar>() / RealScalar(PacketSize);
+    data1[i] = internal::random<Scalar>();
+    data2[i] = internal::random<Scalar>();
     refvalue = (std::max)(refvalue, numext::abs(data1[i]));
   }
 
@@ -502,8 +561,8 @@ void packetmath() {
   for (int M = 0; M < PacketSize; ++M) {
     for (int N = 0; N <= PacketSize; ++N) {
       for (int j = 0; j < size; ++j) {
-        data1[j] = internal::random<Scalar>() / RealScalar(PacketSize);
-        data2[j] = internal::random<Scalar>() / RealScalar(PacketSize);
+        data1[j] = internal::random<Scalar>();
+        data2[j] = internal::random<Scalar>();
         refvalue = (std::max)(refvalue, numext::abs(data1[j]));
       }
 
@@ -568,6 +627,7 @@ void packetmath() {
   negate_test<Scalar, Packet>(data1, data2, ref, PacketSize);
   CHECK_CWISE1_IF(PacketTraits::HasReciprocal, REF_RECIPROCAL, internal::preciprocal);
   CHECK_CWISE1(numext::conj, internal::pconj);
+
   CHECK_CWISE1_IF(PacketTraits::HasSign, numext::sign, internal::psign);
 
   for (int offset = 0; offset < 3; ++offset) {
@@ -632,11 +692,18 @@ void packetmath() {
   // Avoid overflows.
   if (NumTraits<Scalar>::IsInteger && NumTraits<Scalar>::IsSigned &&
       Eigen::internal::unpacket_traits<Packet>::size > 1) {
-    Scalar limit =
-        static_cast<Scalar>(std::pow(static_cast<double>(numext::real(NumTraits<Scalar>::highest())),
-                                     1.0 / static_cast<double>(Eigen::internal::unpacket_traits<Packet>::size)));
+    Scalar limit = static_cast<Scalar>(
+        static_cast<RealScalar>(std::pow(static_cast<double>(numext::real(NumTraits<Scalar>::highest())),
+                                         1.0 / static_cast<double>(Eigen::internal::unpacket_traits<Packet>::size))));
     for (int i = 0; i < PacketSize; ++i) {
-      data1[i] = internal::random<Scalar>(-limit, limit);
+      data1[i] = internal::random<Scalar>(Scalar(0) - limit, limit);
+    }
+  } else if (!NumTraits<Scalar>::IsInteger && !NumTraits<Scalar>::IsComplex && !std::is_same<Scalar, bool>::value) {
+    // Prevent very small product results by adjusting range.  Otherwise,
+    // we may end up with multiplying e.g. 32 Eigen::halfs with values < 1.
+    for (int i = 0; i < PacketSize; ++i) {
+      data1[i] = REF_MUL(internal::random<Scalar>(Scalar(0.5), Scalar(1)),
+                         (internal::random<bool>() ? Scalar(-1) : Scalar(1)));
     }
   }
   ref[0] = Scalar(1);
@@ -724,11 +791,6 @@ void packetmath() {
   packetmath_pcast_ops_runner<Scalar, Packet>::run();
   packetmath_minus_zero_add_test<Scalar, Packet>::run();
 
-  for (int i = 0; i < size; ++i) {
-    data1[i] = numext::abs(internal::random<Scalar>());
-  }
-  CHECK_CWISE1_IF(PacketTraits::HasSqrt, numext::sqrt, internal::psqrt);
-  CHECK_CWISE1_IF(PacketTraits::HasRsqrt, numext::rsqrt, internal::prsqrt);
   CHECK_CWISE3_IF(true, REF_MADD, internal::pmadd);
   if (!std::is_same<Scalar, bool>::value && NumTraits<Scalar>::IsSigned) {
     nmsub_test<Scalar, Packet>(data1, data2, ref, PacketSize);
@@ -738,14 +800,18 @@ void packetmath() {
   // which can lead to very flaky tests. Here we ensure the signs are such that
   // they do not cancel.
   for (int i = 0; i < PacketSize; ++i) {
-    data1[i] = numext::abs(internal::random<Scalar>());
-    data1[i + PacketSize] = numext::abs(internal::random<Scalar>());
-    data1[i + 2 * PacketSize] = Scalar(0) - numext::abs(internal::random<Scalar>());
+    data1[i] = abs_helper(internal::random<Scalar>());
+    data1[i + PacketSize] = abs_helper(internal::random<Scalar>());
+    data1[i + 2 * PacketSize] = Scalar(0) - abs_helper(internal::random<Scalar>());
   }
   if (!std::is_same<Scalar, bool>::value && NumTraits<Scalar>::IsSigned) {
     CHECK_CWISE3_IF(true, REF_MSUB, internal::pmsub);
     CHECK_CWISE3_IF(true, REF_NMADD, internal::pnmadd);
   }
+
+  CHECK_CWISE1_IF(PacketTraits::HasSqrt, numext::sqrt, internal::psqrt);
+  CHECK_CWISE1_IF(PacketTraits::HasRsqrt, numext::rsqrt, internal::prsqrt);
+  CHECK_CWISE1_IF(PacketTraits::HasCbrt, numext::cbrt, internal::pcbrt);
 }
 
 // Notice that this definition works for complex types as well.
@@ -767,6 +833,7 @@ Scalar log2(Scalar x) {
 
 CREATE_FUNCTOR(psqrt_functor, internal::psqrt);
 CREATE_FUNCTOR(prsqrt_functor, internal::prsqrt);
+CREATE_FUNCTOR(pcbrt_functor, internal::pcbrt);
 
 // TODO(rmlarsen): Run this test for more functions.
 template <bool Cond, typename Scalar, typename Packet, typename RefFunctorT, typename FunctorT>
@@ -1137,6 +1204,7 @@ void packetmath_real() {
 
     packetmath_test_IEEE_corner_cases<PacketTraits::HasSqrt, Scalar, Packet>(numext::sqrt<Scalar>, psqrt_functor());
     packetmath_test_IEEE_corner_cases<PacketTraits::HasRsqrt, Scalar, Packet>(numext::rsqrt<Scalar>, prsqrt_functor());
+    packetmath_test_IEEE_corner_cases<PacketTraits::HasCbrt, Scalar, Packet>(numext::cbrt<Scalar>, pcbrt_functor());
 
     // TODO(rmlarsen): Re-enable for half and bfloat16.
     if (PacketTraits::HasCos && !internal::is_same<Scalar, half>::value &&
@@ -1665,7 +1733,7 @@ void packetmath_scatter_gather() {
 
   for (Index N = 0; N <= PacketSize; ++N) {
     for (Index i = 0; i < N; ++i) {
-      data1[i] = internal::random<Scalar>() / RealScalar(PacketSize);
+      data1[i] = internal::random<Scalar>();
     }
 
     for (Index i = 0; i < N * 20; ++i) {
@@ -1684,7 +1752,7 @@ void packetmath_scatter_gather() {
     }
 
     for (Index i = 0; i < N * 7; ++i) {
-      buffer[i] = internal::random<Scalar>() / RealScalar(PacketSize);
+      buffer[i] = internal::random<Scalar>();
     }
     packet = internal::pgather_partial<Scalar, Packet>(buffer, 7, N);
     internal::pstore_partial(data1, packet, N);

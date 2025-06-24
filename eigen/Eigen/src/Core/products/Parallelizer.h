@@ -217,7 +217,7 @@ EIGEN_STRONG_INLINE void parallelize_gemm(const Functor& func, Index rows, Index
     // Note that the actual number of threads might be lower than the number of
     // requested ones
     Index actual_threads = omp_get_num_threads();
-    GemmParallelInfo<Index> info(i, static_cast<int>(actual_threads), task_info);
+    GemmParallelInfo<Index> info(static_cast<int>(i), static_cast<int>(actual_threads), task_info);
 
     Index blockCols = (cols / actual_threads) & ~Index(0x3);
     Index blockRows = (rows / actual_threads);

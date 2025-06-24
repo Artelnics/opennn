@@ -82,6 +82,17 @@ class FullPivHouseholderQR : public SolverBase<FullPivHouseholderQR<MatrixType_,
   typedef typename internal::plain_col_type<MatrixType>::type ColVectorType;
   typedef typename MatrixType::PlainObject PlainObject;
 
+  /** \brief Reports whether the QR factorization was successful.
+   *
+   * \note This function always returns \c Success. It is provided for compatibility
+   * with other factorization routines.
+   * \returns \c Success
+   */
+  ComputationInfo info() const {
+    eigen_assert(m_isInitialized && "FullPivHouseholderQR is not initialized.");
+    return Success;
+  }
+
   /** \brief Default Constructor.
    *
    * The default constructor is useful in cases in which the user intends to
@@ -632,9 +643,9 @@ struct Assignment<DstXprType, Inverse<FullPivHouseholderQR<MatrixType, Permutati
                   Dense2Dense> {
   typedef FullPivHouseholderQR<MatrixType, PermutationIndex> QrType;
   typedef Inverse<QrType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::assign_op<typename DstXprType::Scalar, typename QrType::Scalar>&) {
-    dst = source.nestedExpression().solve(MatrixType::Identity(source.rows(), source.cols()));
+    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
   }
 };
 

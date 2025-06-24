@@ -452,10 +452,10 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
       // Use memcpy if it's going to be faster than using the regular evaluation.
       const internal::MemcpyTriggerForSlicing<Index, Device, BlockAccess> trigger(m_device);
       if (trigger(internal::array_prod(dimensions()), contiguous_values)) {
-        EvaluatorPointerType source = (EvaluatorPointerType)m_impl.data();
+        EvaluatorPointerType src = (EvaluatorPointerType)m_impl.data();
         for (Index i = 0; i < internal::array_prod(dimensions()); i += contiguous_values) {
-          Index offset = sourceCoeff(i);
-          m_device.memcpy((void*)(m_device.get(data + i)), m_device.get(source + offset),
+          Index offset = srcCoeff(i);
+          m_device.memcpy((void*)(m_device.get(data + i)), m_device.get(src + offset),
                           contiguous_values * sizeof(Scalar));
         }
         return false;
@@ -477,7 +477,7 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
     if (m_is_identity) {
       return m_impl.coeff(index);
     } else {
-      return m_impl.coeff(sourceCoeff(index));
+      return m_impl.coeff(srcCoeff(index));
     }
   }
 
@@ -546,7 +546,7 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBlock block(TensorBlockDesc& desc, TensorBlockScratch& scratch,
                                                           bool /*root_of_expr_ast*/ = false) const {
-    TensorBlockDesc arg_desc = desc.WithOffset(sourceCoeff(desc.offset()));
+    TensorBlockDesc arg_desc = desc.WithOffset(srcCoeff(desc.offset()));
     TensorBlock block = m_impl.block(arg_desc, scratch);
     if (!arg_desc.HasDestinationBuffer()) desc.DropDestinationBuffer();
     return block;
@@ -589,7 +589,7 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
   }
 
  protected:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index sourceCoeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
     Index inputIndex = 0;
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       EIGEN_UNROLL_LOOP
@@ -658,7 +658,7 @@ struct TensorEvaluator<TensorSlicingOp<StartIndices, Sizes, ArgType>, Device>
     if (this->m_is_identity) {
       return this->m_impl.coeffRef(index);
     } else {
-      return this->m_impl.coeffRef(this->sourceCoeff(index));
+      return this->m_impl.coeffRef(this->srcCoeff(index));
     }
   }
 
@@ -713,7 +713,7 @@ struct TensorEvaluator<TensorSlicingOp<StartIndices, Sizes, ArgType>, Device>
 
   template <typename TensorBlock>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void writeBlock(const TensorBlockDesc& desc, const TensorBlock& block) {
-    TensorBlockDesc arg_desc = desc.WithOffset(this->sourceCoeff(desc.offset()));
+    TensorBlockDesc arg_desc = desc.WithOffset(this->srcCoeff(desc.offset()));
     this->m_impl.writeBlock(arg_desc, block);
   }
 };
@@ -887,7 +887,7 @@ struct TensorEvaluator<const TensorStridingSlicingOp<StartIndices, StopIndices, 
     if (m_is_identity) {
       return m_impl.coeff(index);
     } else {
-      return m_impl.coeff(sourceCoeff(index));
+      return m_impl.coeff(srcCoeff(index));
     }
   }
 
@@ -898,7 +898,7 @@ struct TensorEvaluator<const TensorStridingSlicingOp<StartIndices, StopIndices, 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Storage::Type data() const { return NULL; }
 
  protected:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index sourceCoeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
     Index inputIndex = 0;
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       EIGEN_UNROLL_LOOP
@@ -972,7 +972,7 @@ struct TensorEvaluator<TensorStridingSlicingOp<StartIndices, StopIndices, Stride
     if (this->m_is_identity) {
       return this->m_impl.coeffRef(index);
     } else {
-      return this->m_impl.coeffRef(this->sourceCoeff(index));
+      return this->m_impl.coeffRef(this->srcCoeff(index));
     }
   }
 };

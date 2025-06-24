@@ -127,7 +127,7 @@ HEADERS += \
     transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
-    perceptron_layer_3d.h \
+    dense_3d.h \
     probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \

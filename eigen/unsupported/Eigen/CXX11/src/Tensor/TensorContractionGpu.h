@@ -25,11 +25,11 @@ __device__ EIGEN_STRONG_INLINE void EigenContractionKernelInternal(const LhsMapp
                                                                    const OutputMapper output, Scalar* lhs_shmem,
                                                                    Scalar* rhs_shmem, const Index m_size,
                                                                    const Index n_size, const Index k_size) {
-  const Index m_blockernel_index = blockIdx.x;
-  const Index n_blockernel_index = blockIdx.y;
+  const Index m_block_idx = blockIdx.x;
+  const Index n_block_idx = blockIdx.y;
 
-  const Index base_m = 64 * m_blockernel_index;
-  const Index base_n = 64 * n_blockernel_index;
+  const Index base_m = 64 * m_block_idx;
+  const Index base_n = 64 * n_block_idx;
 
   // declare and initialize 64 registers for output 8x8 block
 
@@ -512,11 +512,11 @@ __launch_bounds__(512)
   __shared__ Scalar lhs_shmem[72 * 64];
   __shared__ Scalar rhs_shmem[72 * 64];
 
-  const Index m_blockernel_index = blockIdx.x;
-  const Index n_blockernel_index = blockIdx.y;
+  const Index m_block_idx = blockIdx.x;
+  const Index n_block_idx = blockIdx.y;
 
-  const Index base_m = 64 * m_blockernel_index;
-  const Index base_n = 64 * n_blockernel_index;
+  const Index base_m = 64 * m_block_idx;
+  const Index base_n = 64 * n_block_idx;
 
   if (base_m + 63 < m_size && base_n + 63 < n_size) {
     EigenContractionKernelInternal<Scalar, Index, LhsMapper, RhsMapper, OutputMapper, false>(
@@ -1130,11 +1130,11 @@ __launch_bounds__(256)
   typedef float2 LHS_MEM[64][32];
   typedef float2 RHS_MEM[128][8];
 
-  const Index m_blockernel_index = blockIdx.x;
-  const Index n_blockernel_index = blockIdx.y;
+  const Index m_block_idx = blockIdx.x;
+  const Index n_block_idx = blockIdx.y;
 
-  const Index base_m = 128 * m_blockernel_index;
-  const Index base_n = 64 * n_blockernel_index;
+  const Index base_m = 128 * m_block_idx;
+  const Index base_n = 64 * n_block_idx;
 
   bool check_rhs = (base_n + 63) >= n_size;
   bool check_lhs128 = (base_m + 127) >= m_size;
@@ -1172,11 +1172,11 @@ __launch_bounds__(256)
   __shared__ float2 lhs_shmem[32][16];
   __shared__ float2 rhs_shmem[64][8];
 
-  const Index m_blockernel_index = blockIdx.x;
-  const Index n_blockernel_index = blockIdx.y;
+  const Index m_block_idx = blockIdx.x;
+  const Index n_block_idx = blockIdx.y;
 
-  const Index base_m = 64 * m_blockernel_index;
-  const Index base_n = 64 * n_blockernel_index;
+  const Index base_m = 64 * m_block_idx;
+  const Index base_n = 64 * n_block_idx;
 
   if (base_m + 63 < m_size) {
     if (base_n + 63 < n_size) {

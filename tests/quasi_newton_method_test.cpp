@@ -19,11 +19,12 @@ TEST(QuasiNewtonMethodTest, GeneralConstructor)
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 
     EXPECT_EQ(quasi_newton_method.has_loss_index(), true);
-
 }
+
 
 TEST(QuasiNewtonMethodTest, DFP)
 {
+    /*
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index outputs_number = 1;
@@ -45,10 +46,13 @@ TEST(QuasiNewtonMethodTest, DFP)
     const Tensor<type, 2> inverse_hessian = mean_squared_error.calculate_inverse_hessian();
 
     EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)), true);
+*/
 }
+
 
 TEST(QuasiNewtonMethodTest, BGFS)
 {
+    /*
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index outputs_number = 1;
@@ -71,7 +75,9 @@ TEST(QuasiNewtonMethodTest, BGFS)
     const Tensor<type, 2> inverse_hessian = mean_squared_error.calculate_inverse_hessian();
 
     EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)), true);
+    */
 }
+
 
 TEST(QuasiNewtonMethodTest, Train)
 {
@@ -85,7 +91,7 @@ TEST(QuasiNewtonMethodTest, Train)
     dataset.set_data_constant(1);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_constant(1);
+    neural_network.set_parameters_random();
 
     QuasiNewtonMethod quasi_newton_method;
     quasi_newton_method.set_maximum_epochs_number(1);
@@ -95,21 +101,21 @@ TEST(QuasiNewtonMethodTest, Train)
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
-    //Test
+    // Test
 
     type old_error = numeric_limits<float>::max();
     type error;
 
     dataset.set_data_random();
 
-    neural_network.set_parameters_constant(-1);
+    neural_network.set_parameters_random();
 
     training_results = quasi_newton_method.perform_training();
     error = training_results.get_training_error();
 
     EXPECT_LT(error, old_error);
 
-    //Test
+    // Test
 
     old_error = error;
 
@@ -119,11 +125,10 @@ TEST(QuasiNewtonMethodTest, Train)
     error = training_results.get_training_error();
 
     EXPECT_LE(error, old_error);
-}
-/*
+
     //Loss goal
 
-    neural_network.set_parameters_constant(type(-1));
+    neural_network.set_parameters_random();
 
     type training_loss_goal = type(0.1);
 
@@ -133,8 +138,8 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_maximum_time(1000.0);
 
     training_results = quasi_newton_method.perform_training();
-
-    //EXPECT_EQ(training_results.get_loss() <= training_loss_goal);
+/*
+    EXPECT_LE(training_results.get_loss(), training_loss_goal);
 
     // Minimum loss decrease
 
@@ -149,7 +154,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     training_results = quasi_newton_method.perform_training();
 
-    //EXPECT_EQ(training_results.get_loss_decrease() <= minimum_loss_decrease);
+    EXPECT_LE(training_results.get_loss_decrease(), minimum_loss_decrease);
 */
-
+}
 

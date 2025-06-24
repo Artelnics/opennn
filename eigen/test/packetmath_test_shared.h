@@ -115,6 +115,30 @@ bool areApprox(const Scalar* a, const Scalar* b, int size, const typename NumTra
     VERIFY(test::areApprox(ref, data2, PacketSize) && #POP);       \
   }
 
+#define CHECK_CWISE1_MASK(REFOP, POP)                                \
+  {                                                                  \
+    bool ref_mask[PacketSize] = {};                                  \
+    bool data_mask[PacketSize] = {};                                 \
+    internal::pstore(data2, POP(internal::pload<Packet>(data1)));    \
+    for (int i = 0; i < PacketSize; ++i) {                           \
+      ref_mask[i] = numext::is_exactly_zero(REFOP(data1[i]));        \
+      data_mask[i] = numext::is_exactly_zero(data2[i]);              \
+    }                                                                \
+    VERIFY(test::areEqual(ref_mask, data_mask, PacketSize) && #POP); \
+  }
+
+#define CHECK_CWISE2_MASK(REFOP, POP)                                                                          \
+  {                                                                                                            \
+    bool ref_mask[PacketSize] = {};                                                                            \
+    bool data_mask[PacketSize] = {};                                                                           \
+    internal::pstore(data2, POP(internal::pload<Packet>(data1), internal::pload<Packet>(data1 + PacketSize))); \
+    for (int i = 0; i < PacketSize; ++i) {                                                                     \
+      ref_mask[i] = numext::is_exactly_zero(REFOP(data1[i], data1[i + PacketSize]));                           \
+      data_mask[i] = numext::is_exactly_zero(data2[i]);                                                        \
+    }                                                                                                          \
+    VERIFY(test::areEqual(ref_mask, data_mask, PacketSize) && #POP);                                           \
+  }
+
 // Checks component-wise for input of size N. All of data1, data2, and ref
 // should have size at least ceil(N/PacketSize)*PacketSize to avoid memory
 // access errors.
@@ -162,7 +186,9 @@ struct packet_helper {
 
   template <typename T>
   inline Packet load(const T* from, unsigned long long umask) const {
-    return internal::ploadu<Packet>(from, umask);
+    using UMaskType = typename numext::get_integer_by_size<internal::plain_enum_max(
+        internal::unpacket_traits<Packet>::size / CHAR_BIT, 1)>::unsigned_type;
+    return internal::ploadu<Packet>(from, static_cast<UMaskType>(umask));
   }
 
   template <typename T>
@@ -172,7 +198,9 @@ struct packet_helper {
 
   template <typename T>
   inline void store(T* to, const Packet& x, unsigned long long umask) const {
-    internal::pstoreu(to, x, umask);
+    using UMaskType = typename numext::get_integer_by_size<internal::plain_enum_max(
+        internal::unpacket_traits<Packet>::size / CHAR_BIT, 1)>::unsigned_type;
+    internal::pstoreu(to, x, static_cast<UMaskType>(umask));
   }
 
   template <typename T>

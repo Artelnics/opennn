@@ -110,7 +110,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
                                           forward_propagation,
                                           is_training);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     Tensor<type, 2> outputs = tensor_map<2>(output_pair);
 
@@ -142,7 +142,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
                                           forward_propagation,
                                           is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -175,7 +175,7 @@ TEST(ProbabilisticTest, ForwardPropagate)
                                           forward_propagation,
                                           is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 

@@ -66,7 +66,7 @@ class SkewSymmetricBase : public EigenBase<Derived> {
   EIGEN_DEVICE_FUNC DenseMatrixType toDenseMatrix() const { return derived(); }
 
   /** Determinant vanishes */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Scalar determinant() const { return 0; }
+  EIGEN_DEVICE_FUNC constexpr Scalar determinant() const { return 0; }
 
   /** A.transpose() = -A */
   EIGEN_DEVICE_FUNC PlainObject transpose() const { return (-vector()).asSkewSymmetric(); }
@@ -91,9 +91,9 @@ class SkewSymmetricBase : public EigenBase<Derived> {
   EIGEN_DEVICE_FUNC inline SkewSymmetricVectorType& vector() { return derived().vector(); }
 
   /** \returns the number of rows. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index rows() const { return 3; }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const { return 3; }
   /** \returns the number of columns. */
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index cols() const { return 3; }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const { return 3; }
 
   /** \returns the matrix product of \c *this by the dense matrix, \a matrix */
   template <typename MatrixDerived>
@@ -348,13 +348,13 @@ struct AssignmentKind<DenseShape, SkewSymmetricShape> {
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, SkewSymmetric2Dense> {
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
     if ((dst.rows() != 3) || (dst.cols() != 3)) {
       dst.resize(3, 3);
     }
     dst.diagonal().setZero();
-    const typename SrcXprType::SkewSymmetricVectorType v = source.vector();
+    const typename SrcXprType::SkewSymmetricVectorType v = src.vector();
     dst(0, 1) = -v(2);
     dst(1, 0) = v(2);
     dst(0, 2) = v(1);
@@ -363,15 +363,15 @@ struct Assignment<DstXprType, SrcXprType, Functor, SkewSymmetric2Dense> {
     dst(2, 1) = v(0);
   }
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::add_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.vector() += source.vector();
+    dst.vector() += src.vector();
   }
 
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& source,
+      DstXprType& dst, const SrcXprType& src,
       const internal::sub_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.vector() -= source.vector();
+    dst.vector() -= src.vector();
   }
 };
 

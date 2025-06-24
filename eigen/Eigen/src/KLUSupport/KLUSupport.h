@@ -100,8 +100,8 @@ class KLU : public SparseSolverBase<KLU<MatrixType_> > {
     if (m_numeric) klu_free_numeric(&m_numeric, &m_common);
   }
 
-  EIGEN_CONSTEXPR inline Index rows() const EIGEN_NOEXCEPT { return mp_matrix.rows(); }
-  EIGEN_CONSTEXPR inline Index cols() const EIGEN_NOEXCEPT { return mp_matrix.cols(); }
+  constexpr Index rows() const noexcept { return mp_matrix.rows(); }
+  constexpr Index cols() const noexcept { return mp_matrix.cols(); }
 
   /** \brief Reports whether previous computation was successful.
    *

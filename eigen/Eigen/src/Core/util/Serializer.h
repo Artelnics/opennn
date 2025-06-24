@@ -55,17 +55,17 @@ class Serializer<T, typename std::enable_if_t<std::is_trivial<T>::value && std::
 
   /**
    * Deserializes a value from a byte buffer.
-   * \param source the source buffer; if this is nullptr, does nothing.
+   * \param src the source buffer; if this is nullptr, does nothing.
    * \param end the end of the source buffer.
    * \param value the value to populate.
    * \return the next unprocessed memory address; nullptr if parsing errors are detected.
    */
-  EIGEN_DEVICE_FUNC const uint8_t* deserialize(const uint8_t* source, const uint8_t* end, T& value) const {
-    if (EIGEN_PREDICT_FALSE(source == nullptr)) return nullptr;
-    if (EIGEN_PREDICT_FALSE(source + sizeof(value) > end)) return nullptr;
+  EIGEN_DEVICE_FUNC const uint8_t* deserialize(const uint8_t* src, const uint8_t* end, T& value) const {
+    if (EIGEN_PREDICT_FALSE(src == nullptr)) return nullptr;
+    if (EIGEN_PREDICT_FALSE(src + sizeof(value) > end)) return nullptr;
     EIGEN_USING_STD(memcpy)
-    memcpy(&value, source, sizeof(value));
-    return source + sizeof(value);
+    memcpy(&value, src, sizeof(value));
+    return src + sizeof(value);
   }
 };
 
@@ -96,19 +96,19 @@ class Serializer<DenseBase<Derived>, void> {
     return dest + data_bytes;
   }
 
-  EIGEN_DEVICE_FUNC const uint8_t* deserialize(const uint8_t* source, const uint8_t* end, Derived& value) const {
-    if (EIGEN_PREDICT_FALSE(source == nullptr)) return nullptr;
-    if (EIGEN_PREDICT_FALSE(source + sizeof(Header) > end)) return nullptr;
+  EIGEN_DEVICE_FUNC const uint8_t* deserialize(const uint8_t* src, const uint8_t* end, Derived& value) const {
+    if (EIGEN_PREDICT_FALSE(src == nullptr)) return nullptr;
+    if (EIGEN_PREDICT_FALSE(src + sizeof(Header) > end)) return nullptr;
     const size_t header_bytes = sizeof(Header);
     Header header;
     EIGEN_USING_STD(memcpy)
-    memcpy(&header, source, header_bytes);
-    source += header_bytes;
+    memcpy(&header, src, header_bytes);
+    src += header_bytes;
     const size_t data_bytes = sizeof(Scalar) * header.rows * header.cols;
-    if (EIGEN_PREDICT_FALSE(source + data_bytes > end)) return nullptr;
+    if (EIGEN_PREDICT_FALSE(src + data_bytes > end)) return nullptr;
     value.resize(header.rows, header.cols);
-    memcpy(value.data(), source, data_bytes);
-    return source + data_bytes;
+    memcpy(value.data(), src, data_bytes);
+    return src + data_bytes;
   }
 };
 
@@ -143,11 +143,11 @@ struct serialize_impl<N, T1, Ts...> {
     return serialize_impl<N - 1, Ts...>::serialize(dest, end, args...);
   }
 
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* source, const uint8_t* end,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* src, const uint8_t* end,
                                                                           T1& value, Ts&... args) {
     Serializer serializer;
-    source = serializer.deserialize(source, end, value);
-    return serialize_impl<N - 1, Ts...>::deserialize(source, end, args...);
+    src = serializer.deserialize(src, end, value);
+    return serialize_impl<N - 1, Ts...>::deserialize(src, end, args...);
   }
 };
 
@@ -158,8 +158,8 @@ struct serialize_impl<0> {
 
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint8_t* serialize(uint8_t* dest, uint8_t* /*end*/) { return dest; }
 
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* source, const uint8_t* /*end*/) {
-    return source;
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* src, const uint8_t* /*end*/) {
+    return src;
   }
 };
 
@@ -192,15 +192,15 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint8_t* serialize(uint8_t* dest, uint8_t*
 /**
  * Deserialize a set of values from the byte buffer.
  *
- * \param source input byte buffer; if this is nullptr, does nothing.
+ * \param src input byte buffer; if this is nullptr, does nothing.
  * \param end the end of input byte buffer.
  * \param args ... arguments to deserialize in sequence.
  * \return the next address after all parsed values; nullptr if parsing errors are detected.
  */
 template <typename... Args>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* source, const uint8_t* end,
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const uint8_t* deserialize(const uint8_t* src, const uint8_t* end,
                                                                  Args&... args) {
-  return internal::serialize_impl<sizeof...(args), Args...>::deserialize(source, end, args...);
+  return internal::serialize_impl<sizeof...(args), Args...>::deserialize(src, end, args...);
 }
 
 }  // namespace Eigen

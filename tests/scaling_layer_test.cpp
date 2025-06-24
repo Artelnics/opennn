@@ -54,7 +54,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     scaling_layer_2d.forward_propagate({ input_pairs }, forward_propagation, is_training);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -87,7 +87,7 @@ TEST(Scaling2dTest, ForwardPropagate)
                                           forward_propagation,
                                           is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -126,7 +126,7 @@ TEST(Scaling2dTest, ForwardPropagate)
                                          forward_propagation,
                                          is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -166,7 +166,7 @@ TEST(Scaling2dTest, ForwardPropagate)
                                          forward_propagation,
                                          is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -201,7 +201,7 @@ TEST(Scaling2dTest, ForwardPropagate)
                                          forward_propagation,
                                          is_training); 
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 
@@ -241,7 +241,7 @@ TEST(Scaling2dTest, ForwardPropagate)
                                        forward_propagation,
                                        is_training);
 
-    output_pair = forward_propagation->get_outputs_pair();
+    output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 

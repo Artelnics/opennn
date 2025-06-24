@@ -19,7 +19,8 @@ class Normalization3d : public Layer
 
 public:
 
-    Normalization3d(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
+    Normalization3d(const dimensions& = dimensions({0,0}),
+                    const string& = "normalization_layer_3d");
 
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
@@ -34,7 +35,7 @@ public:
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-    void set_parameters_constant(const type&) override;
+
     void set_parameters_random() override;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -73,7 +74,7 @@ struct Normalization3dForwardPropagation : LayerForwardPropagation
 {        
     Normalization3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = 0);
 

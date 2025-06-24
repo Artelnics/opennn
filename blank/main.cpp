@@ -15,7 +15,6 @@
 
 #include "../opennn/language_dataset.h"
 #include "../opennn/embedding_layer.h"
-#include "../opennn/perceptron_layer_3d.h"
 #include "../opennn/multihead_attention_layer.h"
 #include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/flatten_layer_3d.h"

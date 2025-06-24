@@ -200,13 +200,6 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
 }
 
 
-void Dense2d::set_parameters_constant(const type& value)
-{
-    biases.setConstant(value);
-    weights.setConstant(value);
-}
-
-
 void Dense2d::set_parameters_random()
 {
     set_random(biases);
@@ -539,7 +532,7 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
 }
 
 
-pair<type *, dimensions> Dense2dForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> Dense2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     

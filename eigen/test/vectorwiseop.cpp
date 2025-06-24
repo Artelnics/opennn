@@ -214,6 +214,17 @@ void vectorwiseop_matrix(const MatrixType& m) {
   VERIFY_IS_EQUAL(m1.real().middleCols(0, fix<0>).colwise().maxCoeff().eval().cols(), 0);
 }
 
+void vectorwiseop_mixedscalar() {
+  Matrix4cd a = Matrix4cd::Random();
+  Vector4cd b = Vector4cd::Random();
+  b.imag().setZero();
+  Vector4d b_real = b.real();
+
+  Matrix4cd c = a.array().rowwise() * b.array().transpose();
+  Matrix4cd d = a.array().rowwise() * b_real.array().transpose();
+  VERIFY_IS_CWISE_EQUAL(c, d);
+}
+
 EIGEN_DECLARE_TEST(vectorwiseop) {
   CALL_SUBTEST_1(vectorwiseop_array(Array22cd()));
   CALL_SUBTEST_2(vectorwiseop_array(Array<double, 3, 2>()));
@@ -226,4 +237,5 @@ EIGEN_DECLARE_TEST(vectorwiseop) {
       MatrixXd(internal::random<int>(1, EIGEN_TEST_MAX_SIZE), internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
   CALL_SUBTEST_7(vectorwiseop_matrix(VectorXd(internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
   CALL_SUBTEST_7(vectorwiseop_matrix(RowVectorXd(internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
+  CALL_SUBTEST_8(vectorwiseop_mixedscalar());
 }

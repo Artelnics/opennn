@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "../../opennn/dataset.h"
+#include "../../opennn/perceptron_layer.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
