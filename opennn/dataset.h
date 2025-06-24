@@ -146,7 +146,7 @@ public:
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-    vector<Index> get_raw_variable_indices(const VariableUse&) const;        
+    vector<Index> get_raw_variable_indices(const VariableUse&) const;
     vector<Index> get_used_raw_variables_indices() const;
 
     vector<string> get_raw_variable_names() const;

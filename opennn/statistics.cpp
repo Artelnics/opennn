@@ -1014,7 +1014,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
     const Index size = vector.dimension(0);
-
     Tensor<type, 1> minimums(bins_number);
     Tensor<type, 1> maximums(bins_number);
 
@@ -1031,17 +1030,17 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     {
         const type value = vector(i);
 
-        if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
-        {
-            unique_values.push_back(value);
+        if (!isnan(value))
+            if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
+            {
+                unique_values.push_back(value);
 
-            if (static_cast<Index>(unique_values.size()) > bins_number)
-                break;
-        }
+                if (static_cast<Index>(unique_values.size()) > bins_number)
+                    break;
+            }
     }
 
     const Index unique_values_number = static_cast<Index>(unique_values.size());
-
     if(unique_values_number <= bins_number)
     {
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());

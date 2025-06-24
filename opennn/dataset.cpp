@@ -2417,7 +2417,7 @@ void Dataset::set_gmt(const Index& new_gmt)
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_correlations() const
 {
-    if (display) cout << "Calculating correlations..." << endl;
+    cout << "Calculating pearson correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2433,6 +2433,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data
@@ -2455,7 +2456,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_correlations() const
 {
-    if (display) cout << "Calculating correlations..." << endl;
+    cout << "Calculating spearman correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2469,6 +2470,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_sample_indices);
@@ -2571,6 +2573,7 @@ void Dataset::print_top_input_target_raw_variables_correlations() const
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlations() const
 {
     // list to return
+    cout << "Calculating pearson inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
@@ -2580,6 +2583,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
+
         const Index current_input_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
@@ -2609,6 +2614,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlations() const
 {
+    cout << "Calculating spearman inputs correlations..." << endl;
+
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
@@ -2617,6 +2624,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
+
         const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
