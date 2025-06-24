@@ -173,6 +173,47 @@ private:
 
 };
 
+template<typename T>
+class Registry
+{
+public:
+    using Creator = function<unique_ptr<T>()>;
+
+    static Registry& instance()
+    {
+        static Registry registry;
+        return registry;
+    }
+
+    void register_component(const string& name, Creator creator)
+    {
+        creators[name] = std::move(creator);
+    }
+
+    unique_ptr<T> create(const string& name) const
+    {
+        auto it = creators.find(name);
+        if(it == creators.end())
+            throw runtime_error("Component not found: " + name);
+        return it->second();
+    }
+
+private:
+    unordered_map<string, Creator> creators;
+};
+
+
+#define REGISTER(BASE, CLASS, NAME) \
+namespace { \
+    const bool CLASS##_registered = []() { \
+              Registry<BASE>::instance().register_component(NAME, [](){ \
+                          return make_unique<CLASS>(); \
+                  }); \
+              return true; \
+      }(); \
+}
+
+
 }
 
 #endif

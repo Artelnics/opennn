@@ -9,6 +9,7 @@
 #include "dataset.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
+#include "training_strategy.h"
 
 namespace opennn
 {
@@ -881,6 +882,8 @@ void ADAMOptimizationDataCuda::print() const
 }
 
 #endif
+
+REGISTER(OptimizationAlgorithm, AdaptiveMomentEstimation, "AdaptiveMomentEstimation");
 
 }
 
