@@ -60,8 +60,8 @@ int main()
         */
         ImageDataset dataset;
 
-        //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
-        dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
+        dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
+        //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
         //dataset.set_data_path("../examples/mnist/data_bin");
 
         dimensions data_dimensions = { 224,224,3 };
@@ -77,12 +77,12 @@ int main()
         
         // Neural network
 
-        /*NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             input_dimensions,
             { 64, 64, 128, 128, 32 },
             output_dimensions);
-        */
-        VGG16 neural_network(input_dimensions, output_dimensions);
+        
+        //VGG16 neural_network_vgg(input_dimensions, output_dimensions);
 
         // Training strategy
 
@@ -91,7 +91,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(4);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(8);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
@@ -101,7 +101,7 @@ int main()
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-        testing_analysis.set_batch_size(4);
+        testing_analysis.set_batch_size(8);
 
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
