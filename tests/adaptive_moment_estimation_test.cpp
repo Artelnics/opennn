@@ -44,7 +44,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
     dataset.set_data_constant(type(1));
     
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-    neural_network.set_parameters_constant(type(1));
+    // neural_network.set_parameters_constant(type(1));
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
   
@@ -122,7 +122,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     dataset.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_constant(-1);
+    // neural_network.set_parameters_constant(-1);
 
     MeanSquaredError loss(&neural_network, &dataset);
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
@@ -133,7 +133,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     const type error1 = training_results.get_training_error();
 
     adaptive_moment_estimation.set_maximum_epochs_number(50);
-    neural_network.set_parameters_constant(-1);
+    // neural_network.set_parameters_constant(-1);
 
     training_results = adaptive_moment_estimation.perform_training();
     const type error2 = training_results.get_training_error();
