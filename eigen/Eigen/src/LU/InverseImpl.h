@@ -236,21 +236,21 @@ template <typename DstXprType, typename XprType>
 struct Assignment<DstXprType, Inverse<XprType>,
                   internal::assign_op<typename DstXprType::Scalar, typename XprType::Scalar>, Dense2Dense> {
   typedef Inverse<XprType> SrcXprType;
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source,
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src,
                                     const internal::assign_op<typename DstXprType::Scalar, typename XprType::Scalar>&) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
     const int Size = plain_enum_min(XprType::ColsAtCompileTime, DstXprType::ColsAtCompileTime);
     EIGEN_ONLY_USED_FOR_DEBUG(Size);
-    eigen_assert(((Size <= 1) || (Size > 4) || (extract_data(source.nestedExpression()) != extract_data(dst))) &&
+    eigen_assert(((Size <= 1) || (Size > 4) || (extract_data(src.nestedExpression()) != extract_data(dst))) &&
                  "Aliasing problem detected in inverse(), you need to do inverse().eval() here.");
 
     typedef typename internal::nested_eval<XprType, XprType::ColsAtCompileTime>::type ActualXprType;
     typedef internal::remove_all_t<ActualXprType> ActualXprTypeCleanded;
 
-    ActualXprType actual_xpr(source.nestedExpression());
+    ActualXprType actual_xpr(src.nestedExpression());
 
     compute_inverse<ActualXprTypeCleanded, DstXprType>::run(actual_xpr, dst);
   }
@@ -268,7 +268,7 @@ struct Assignment<DstXprType, Inverse<XprType>,
  * \note This matrix must be invertible, otherwise the result is undefined. If you need an
  * invertibility check, do the following:
  * \li for fixed sizes up to 4x4, use computeInverseAndDetWithCheck().
- * \li for the general case, use class FullPivLU.
+ * \li for the general case, use class PartialPivLU.
  *
  * Example: \include MatrixBase_inverse.cpp
  * Output: \verbinclude MatrixBase_inverse.out

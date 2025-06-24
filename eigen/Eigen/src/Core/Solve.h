@@ -66,8 +66,8 @@ class Solve : public SolveImpl<Decomposition, RhsType, typename internal::traits
 
   Solve(const Decomposition &dec, const RhsType &rhs) : m_dec(dec), m_rhs(rhs) {}
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_dec.cols(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_rhs.cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const noexcept { return m_dec.cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const noexcept { return m_rhs.cols(); }
 
   EIGEN_DEVICE_FUNC const Decomposition &dec() const { return m_dec; }
   EIGEN_DEVICE_FUNC const RhsType &rhs() const { return m_rhs; }
@@ -125,12 +125,12 @@ struct evaluator<Solve<Decomposition, RhsType> >
 template <typename DstXprType, typename DecType, typename RhsType, typename Scalar>
 struct Assignment<DstXprType, Solve<DecType, RhsType>, internal::assign_op<Scalar, Scalar>, Dense2Dense> {
   typedef Solve<DecType, RhsType> SrcXprType;
-  static void run(DstXprType &dst, const SrcXprType &source, const internal::assign_op<Scalar, Scalar> &) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+  static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<Scalar, Scalar> &) {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    source.dec()._solve_impl(source.rhs(), dst);
+    src.dec()._solve_impl(src.rhs(), dst);
   }
 };
 
@@ -139,12 +139,12 @@ template <typename DstXprType, typename DecType, typename RhsType, typename Scal
 struct Assignment<DstXprType, Solve<Transpose<const DecType>, RhsType>, internal::assign_op<Scalar, Scalar>,
                   Dense2Dense> {
   typedef Solve<Transpose<const DecType>, RhsType> SrcXprType;
-  static void run(DstXprType &dst, const SrcXprType &source, const internal::assign_op<Scalar, Scalar> &) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+  static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<Scalar, Scalar> &) {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    source.dec().nestedExpression().template _solve_impl_transposed<false>(source.rhs(), dst);
+    src.dec().nestedExpression().template _solve_impl_transposed<false>(src.rhs(), dst);
   }
 };
 
@@ -158,12 +158,12 @@ struct Assignment<
   typedef Solve<CwiseUnaryOp<internal::scalar_conjugate_op<typename DecType::Scalar>, const Transpose<const DecType> >,
                 RhsType>
       SrcXprType;
-  static void run(DstXprType &dst, const SrcXprType &source, const internal::assign_op<Scalar, Scalar> &) {
-    Index dstRows = source.rows();
-    Index dstCols = source.cols();
+  static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<Scalar, Scalar> &) {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    source.dec().nestedExpression().nestedExpression().template _solve_impl_transposed<true>(source.rhs(), dst);
+    src.dec().nestedExpression().nestedExpression().template _solve_impl_transposed<true>(src.rhs(), dst);
   }
 };
 

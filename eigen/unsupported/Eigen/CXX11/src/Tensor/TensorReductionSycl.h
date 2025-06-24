@@ -402,9 +402,9 @@ struct SecondStepPartialReduction {
 
 template <typename Index, Index LTP, Index LTR, bool BC_>
 struct ReductionPannel {
-  static EIGEN_CONSTEXPR Index LocalThreadSizeP = LTP;
-  static EIGEN_CONSTEXPR Index LocalThreadSizeR = LTR;
-  static EIGEN_CONSTEXPR bool BC = BC_;
+  static constexpr Index LocalThreadSizeP = LTP;
+  static constexpr Index LocalThreadSizeR = LTR;
+  static constexpr bool BC = BC_;
 };
 
 template <typename Self, typename Op, TensorSycl::internal::reduction_dim rt>
@@ -430,7 +430,7 @@ struct PartialReducerLauncher {
                   "The Local thread size must be a power of 2 for the reduction "
                   "operation");
 
-    EIGEN_CONSTEXPR Index localRange = PannelParameters::LocalThreadSizeP * PannelParameters::LocalThreadSizeR;
+    constexpr Index localRange = PannelParameters::LocalThreadSizeP * PannelParameters::LocalThreadSizeR;
     // In this step, we force the code not to be more than 2-step reduction:
     // Our empirical research shows that if each thread reduces at least 64
     // elements individually, we get better performance. However, this can change
@@ -445,7 +445,7 @@ struct PartialReducerLauncher {
     const Index rNumGroups = num_coeffs_to_reduce > reductionPerThread * localRange ? std::min(rGroups, localRange) : 1;
     const Index globalRange = pNumGroups * rNumGroups * localRange;
 
-    EIGEN_CONSTEXPR Index scratchSize =
+    constexpr Index scratchSize =
         PannelParameters::LocalThreadSizeR * (PannelParameters::LocalThreadSizeP + PannelParameters::BC);
     auto thread_range = cl::sycl::nd_range<1>(cl::sycl::range<1>(globalRange), cl::sycl::range<1>(localRange));
     if (rNumGroups > 1) {
@@ -482,15 +482,15 @@ template <typename Self, typename Op, bool Vectorizable>
 struct FullReducer<Self, Op, Eigen::SyclDevice, Vectorizable> {
   typedef typename Self::CoeffReturnType CoeffReturnType;
   typedef typename Self::EvaluatorPointerType EvaluatorPointerType;
-  static EIGEN_CONSTEXPR bool HasOptimizedImplementation = true;
-  static EIGEN_CONSTEXPR int PacketSize = Self::PacketAccess ? Self::PacketSize : 1;
+  static constexpr bool HasOptimizedImplementation = true;
+  static constexpr int PacketSize = Self::PacketAccess ? Self::PacketSize : 1;
   static void run(const Self &self, Op &reducer, const Eigen::SyclDevice &dev, EvaluatorPointerType data) {
     typedef std::conditional_t<Self::PacketAccess, typename Self::PacketReturnType, CoeffReturnType> OutType;
     static_assert(!((EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1) &
                     (EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1 - 1)),
                   "The Local thread size must be a power of 2 for the reduction "
                   "operation");
-    EIGEN_CONSTEXPR Index local_range = EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1;
+    constexpr Index local_range = EIGEN_SYCL_LOCAL_THREAD_DIM0 * EIGEN_SYCL_LOCAL_THREAD_DIM1;
 
     typename Self::Index inputSize = self.impl().dimensions().TotalSize();
     // In this step we force the code not to be more than 2-step reduction:
@@ -535,7 +535,7 @@ struct FullReducer<Self, Op, Eigen::SyclDevice, Vectorizable> {
 // col reduction
 template <typename Self, typename Op>
 struct OuterReducer<Self, Op, Eigen::SyclDevice> {
-  static EIGEN_CONSTEXPR bool HasOptimizedImplementation = true;
+  static constexpr bool HasOptimizedImplementation = true;
 
   static bool run(const Self &self, const Op &reducer, const Eigen::SyclDevice &dev,
                   typename Self::EvaluatorPointerType output, typename Self::Index num_coeffs_to_reduce,
@@ -549,7 +549,7 @@ struct OuterReducer<Self, Op, Eigen::SyclDevice> {
 // row reduction
 template <typename Self, typename Op>
 struct InnerReducer<Self, Op, Eigen::SyclDevice> {
-  static EIGEN_CONSTEXPR bool HasOptimizedImplementation = true;
+  static constexpr bool HasOptimizedImplementation = true;
 
   static bool run(const Self &self, const Op &reducer, const Eigen::SyclDevice &dev,
                   typename Self::EvaluatorPointerType output, typename Self::Index num_coeffs_to_reduce,
@@ -566,7 +566,7 @@ struct InnerReducer<Self, Op, Eigen::SyclDevice> {
 // generic partial reduction
 template <typename Self, typename Op>
 struct GenericReducer<Self, Op, Eigen::SyclDevice> {
-  static EIGEN_CONSTEXPR bool HasOptimizedImplementation = false;
+  static constexpr bool HasOptimizedImplementation = false;
   static bool run(const Self &self, const Op &reducer, const Eigen::SyclDevice &dev,
                   typename Self::EvaluatorPointerType output, typename Self::Index num_values_to_reduce,
                   typename Self::Index num_coeffs_to_preserve) {

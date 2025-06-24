@@ -408,7 +408,7 @@ RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& 
 }
 
 
-pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> RecurrentLayerForwardPropagation::get_output_pair() const
 {
     const Index outputs_number = layer->get_outputs_number();
 

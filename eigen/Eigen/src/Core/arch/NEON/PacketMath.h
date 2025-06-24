@@ -207,6 +207,7 @@ struct packet_traits<float> : default_packet_traits {
     HasExp = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
+    HasCbrt = 1,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
     HasErfc = EIGEN_FAST_MATH,
@@ -1286,6 +1287,14 @@ template <>
 EIGEN_STRONG_INLINE Packet2f pmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
   return vfma_f32(c, a, b);
 }
+template <>
+EIGEN_STRONG_INLINE Packet4f pnmadd(const Packet4f& a, const Packet4f& b, const Packet4f& c) {
+  return vfmsq_f32(c, a, b);
+}
+template <>
+EIGEN_STRONG_INLINE Packet2f pnmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
+  return vfms_f32(c, a, b);
+}
 #else
 template <>
 EIGEN_STRONG_INLINE Packet4f pmadd(const Packet4f& a, const Packet4f& b, const Packet4f& c) {
@@ -1295,7 +1304,31 @@ template <>
 EIGEN_STRONG_INLINE Packet2f pmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
   return vmla_f32(c, a, b);
 }
+template <>
+EIGEN_STRONG_INLINE Packet4f pnmadd(const Packet4f& a, const Packet4f& b, const Packet4f& c) {
+  return vmlsq_f32(c, a, b);
+}
+template <>
+EIGEN_STRONG_INLINE Packet2f pnmadd(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
+  return vmls_f32(c, a, b);
+}
 #endif
+template <>
+EIGEN_STRONG_INLINE Packet4f pmsub(const Packet4f& a, const Packet4f& b, const Packet4f& c) {
+  return pnegate(pnmadd(a, b, c));
+}
+template <>
+EIGEN_STRONG_INLINE Packet2f pmsub(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
+  return pnegate(pnmadd(a, b, c));
+}
+template <>
+EIGEN_STRONG_INLINE Packet4f pnmsub(const Packet4f& a, const Packet4f& b, const Packet4f& c) {
+  return pnegate(pmadd(a, b, c));
+}
+template <>
+EIGEN_STRONG_INLINE Packet2f pnmsub(const Packet2f& a, const Packet2f& b, const Packet2f& c) {
+  return pnegate(pmadd(a, b, c));
+}
 
 // No FMA instruction for int, so use MLA unconditionally.
 template <>
@@ -4965,6 +4998,26 @@ EIGEN_STRONG_INLINE Packet4bf pmul<Packet4bf>(const Packet4bf& a, const Packet4b
 }
 
 template <>
+EIGEN_STRONG_INLINE Packet4bf pmadd<Packet4bf>(const Packet4bf& a, const Packet4bf& b, const Packet4bf& c) {
+  return F32ToBf16(pmadd<Packet4f>(Bf16ToF32(a), Bf16ToF32(b), Bf16ToF32(c)));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4bf pmsub<Packet4bf>(const Packet4bf& a, const Packet4bf& b, const Packet4bf& c) {
+  return F32ToBf16(pmsub<Packet4f>(Bf16ToF32(a), Bf16ToF32(b), Bf16ToF32(c)));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4bf pnmadd<Packet4bf>(const Packet4bf& a, const Packet4bf& b, const Packet4bf& c) {
+  return F32ToBf16(pnmadd<Packet4f>(Bf16ToF32(a), Bf16ToF32(b), Bf16ToF32(c)));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4bf pnmsub<Packet4bf>(const Packet4bf& a, const Packet4bf& b, const Packet4bf& c) {
+  return F32ToBf16(pnmsub<Packet4f>(Bf16ToF32(a), Bf16ToF32(b), Bf16ToF32(c)));
+}
+
+template <>
 EIGEN_STRONG_INLINE Packet4bf pdiv<Packet4bf>(const Packet4bf& a, const Packet4bf& b) {
   return F32ToBf16(pdiv<Packet4f>(Bf16ToF32(a), Bf16ToF32(b)));
 }
@@ -5140,6 +5193,7 @@ struct packet_traits<double> : default_packet_traits {
     HasCos = EIGEN_FAST_MATH,
     HasSqrt = 1,
     HasRsqrt = 1,
+    HasCbrt = 1,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
     HasErfc = EIGEN_FAST_MATH
@@ -5220,13 +5274,28 @@ template <>
 EIGEN_STRONG_INLINE Packet2d pmadd(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
   return vfmaq_f64(c, a, b);
 }
+template <>
+EIGEN_STRONG_INLINE Packet2d pnmadd(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
+  return vfmsq_f64(c, a, b);
+}
 #else
 template <>
 EIGEN_STRONG_INLINE Packet2d pmadd(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
   return vmlaq_f64(c, a, b);
 }
+template <>
+EIGEN_STRONG_INLINE Packet2d pnmadd(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
+  return vmlsq_f64(c, a, b);
+}
 #endif
-
+template <>
+EIGEN_STRONG_INLINE Packet2d pmsub(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
+  return pnegate(pnmadd(a, b, c));
+}
+template <>
+EIGEN_STRONG_INLINE Packet2d pnmsub(const Packet2d& a, const Packet2d& b, const Packet2d& c) {
+  return pnegate(pmadd(a, b, c));
+}
 template <>
 EIGEN_STRONG_INLINE Packet2d pmin<Packet2d>(const Packet2d& a, const Packet2d& b) {
   return vminq_f64(a, b);
@@ -5632,6 +5701,36 @@ EIGEN_STRONG_INLINE Packet8hf pmadd(const Packet8hf& a, const Packet8hf& b, cons
 template <>
 EIGEN_STRONG_INLINE Packet4hf pmadd(const Packet4hf& a, const Packet4hf& b, const Packet4hf& c) {
   return vfma_f16(c, a, b);
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet8hf pnmadd(const Packet8hf& a, const Packet8hf& b, const Packet8hf& c) {
+  return vfmsq_f16(c, a, b);
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4hf pnmadd(const Packet4hf& a, const Packet4hf& b, const Packet4hf& c) {
+  return vfms_f16(c, a, b);
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet8hf pmsub(const Packet8hf& a, const Packet8hf& b, const Packet8hf& c) {
+  return pnegate(pnmadd(a, b, c));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4hf pmsub(const Packet4hf& a, const Packet4hf& b, const Packet4hf& c) {
+  return pnegate(pnmadd(a, b, c));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet8hf pnmsub(const Packet8hf& a, const Packet8hf& b, const Packet8hf& c) {
+  return pnegate(pmadd(a, b, c));
+}
+
+template <>
+EIGEN_STRONG_INLINE Packet4hf pnmsub(const Packet4hf& a, const Packet4hf& b, const Packet4hf& c) {
+  return pnegate(pmadd(a, b, c));
 }
 
 template <>

@@ -131,7 +131,7 @@ Addition3dForwardPropagation::Addition3dForwardPropagation(const Index& new_batc
 }
 
 
-pair<type*, dimensions> Addition3dForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Addition3dForwardPropagation::get_output_pair() const
 {
     Addition3d* addition_3d = static_cast<Addition3d*>(layer);
 

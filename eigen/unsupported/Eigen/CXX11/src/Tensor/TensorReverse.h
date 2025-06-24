@@ -281,21 +281,21 @@ struct TensorEvaluator<const TensorReverseOp<ReverseDimensions, ArgType>, Device
     while (it[NumDims - 1].count < it[NumDims - 1].size) {
       // Copy inner-most dimension data from reversed location in input.
       Index dst = block_offset;
-      Index source = input_offset;
+      Index src = input_offset;
 
       // NOTE(ezhulenev): Adding vectorized path with internal::preverse showed
       // worse results in benchmarks than a simple coefficient loop.
       if (inner_dim_reversed) {
         for (Index i = 0; i < inner_dim_size; ++i) {
-          block_buffer[dst] = m_impl.coeff(source);
+          block_buffer[dst] = m_impl.coeff(src);
           ++dst;
-          --source;
+          --src;
         }
       } else {
         for (Index i = 0; i < inner_dim_size; ++i) {
-          block_buffer[dst] = m_impl.coeff(source);
+          block_buffer[dst] = m_impl.coeff(src);
           ++dst;
-          ++source;
+          ++src;
         }
       }
 

@@ -24,6 +24,55 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 }
 
 
+LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input_sequence_length, const Index& input_vocabulary_size) : Dataset()
+{
+//    input_dimensions = new_input_dimensions;
+
+//    target_dimensions = { new_targets_number };
+
+    const Index variables_number = input_sequence_length + 1;
+
+    data.resize(samples_number, variables_number);
+
+    raw_variables.resize(variables_number);
+
+    set_default();
+
+    for (Index i = 0; i < variables_number; i++)
+    {
+        RawVariable& raw_variable = raw_variables[i];
+
+        raw_variable.type = RawVariableType::Numeric;
+        raw_variable.name = "variable_" + to_string(i + 1);
+
+        raw_variable.use = (i < input_sequence_length)
+                               ? VariableUse::Input
+                               : VariableUse::Target;
+    }
+
+    sample_uses.resize(samples_number);
+
+    split_samples_random();
+
+    // Initialize data
+
+    default_random_engine generator;
+    uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
+    uniform_int_distribution<int> dist_binary(0, 1);
+
+    for (size_t i = 0; i < data.dimension(0); ++i)
+        for (size_t j = 0; j < data.dimension(1) - 1; ++j)
+            data(i, j) = static_cast<type>(dist_main(generator));
+
+    for (size_t i = 0; i < data.dimension(0); ++i)
+        data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
+
+    input_vocabulary.resize(input_sequence_length);
+    target_vocabulary.resize(1);
+
+}
+
+
 const vector<string>& LanguageDataset::get_input_vocabulary() const
 {
     return input_vocabulary;
@@ -617,6 +666,7 @@ Index LanguageDataset::count_non_empty_lines() const
 
 
 // @todo add "decoder variables"
+
 void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << endl;

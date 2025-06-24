@@ -207,7 +207,7 @@ struct TensorEvaluator<const TensorChippingOp<DimId, ArgType>, Device> {
   EIGEN_STRONG_INLINE void cleanup() { m_impl.cleanup(); }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
-    return m_impl.coeff(sourceCoeff(index));
+    return m_impl.coeff(srcCoeff(index));
   }
 
   template <int LoadMode>
@@ -280,7 +280,7 @@ struct TensorEvaluator<const TensorChippingOp<DimId, ArgType>, Device> {
       input_block_dims[i] = i < chip_dim ? desc.dimension(i) : i > chip_dim ? desc.dimension(i - 1) : 1;
     }
 
-    ArgTensorBlockDesc arg_desc(sourceCoeff(desc.offset()), input_block_dims);
+    ArgTensorBlockDesc arg_desc(srcCoeff(desc.offset()), input_block_dims);
 
     // Try to reuse destination buffer for materializing argument block.
     if (desc.HasDestinationBuffer()) {
@@ -330,7 +330,7 @@ struct TensorEvaluator<const TensorChippingOp<DimId, ArgType>, Device> {
   }
 
  protected:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index sourceCoeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
     Index inputIndex;
     if (isInnerChipping()) {
       // m_stride is equal to 1, so let's avoid the integer division.
@@ -403,7 +403,7 @@ struct TensorEvaluator<TensorChippingOp<DimId, ArgType>, Device>
   EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device) : Base(op, device) {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType& coeffRef(Index index) const {
-    return this->m_impl.coeffRef(this->sourceCoeff(index));
+    return this->m_impl.coeffRef(this->srcCoeff(index));
   }
 
   template <int StoreMode>
@@ -459,7 +459,7 @@ struct TensorEvaluator<TensorChippingOp<DimId, ArgType>, Device>
 
     TensorBlockAssign::Run(
         TensorBlockAssign::target(input_block_dims, internal::strides<Layout>(this->m_impl.dimensions()),
-                                  this->m_impl.data(), this->sourceCoeff(desc.offset())),
+                                  this->m_impl.data(), this->srcCoeff(desc.offset())),
         block.expr().reshape(input_block_dims));
   }
 };

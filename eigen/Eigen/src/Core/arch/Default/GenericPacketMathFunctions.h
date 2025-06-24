@@ -187,7 +187,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Packet pfrexp_generic(const Packet& a, Pac
   static constexpr int TotalBits = sizeof(Scalar) * CHAR_BIT, MantissaBits = numext::numeric_limits<Scalar>::digits - 1,
                        ExponentBits = TotalBits - MantissaBits - 1;
 
-  EIGEN_CONSTEXPR ScalarUI scalar_sign_mantissa_mask =
+  constexpr ScalarUI scalar_sign_mantissa_mask =
       ~(((ScalarUI(1) << ExponentBits) - ScalarUI(1)) << MantissaBits);  // ~0x7f800000
   const Packet sign_mantissa_mask = pset1frombits<Packet>(static_cast<ScalarUI>(scalar_sign_mantissa_mask));
   const Packet half = pset1<Packet>(Scalar(0.5));
@@ -196,7 +196,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Packet pfrexp_generic(const Packet& a, Pac
 
   // To handle denormals, normalize by multiplying by 2^(int(MantissaBits)+1).
   const Packet is_denormal = pcmp_lt(pabs(a), normal_min);
-  EIGEN_CONSTEXPR ScalarUI scalar_normalization_offset = ScalarUI(MantissaBits + 1);  // 24
+  constexpr ScalarUI scalar_normalization_offset = ScalarUI(MantissaBits + 1);  // 24
   // The following cannot be constexpr because bfloat16(uint16_t) is not constexpr.
   const Scalar scalar_normalization_factor = Scalar(ScalarUI(1) << int(scalar_normalization_offset));  // 2^24
   const Packet normalization_factor = pset1<Packet>(scalar_normalization_factor);
@@ -287,6 +287,142 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Packet pldexp_fast(const Packet& a, const 
   const PacketI e = pcast<Packet, PacketI>(pmin(pmax(padd(exponent, bias), pzero(limit)), limit));  // exponent + 127
   // return a * (2^e)
   return pmul(a, preinterpret<Packet>(plogical_shift_left<MantissaBits>(e)));
+}
+
+// This function implements a single step of Halley's iteration for
+// computing x = y^(1/3):
+//   x_{k+1} = x_k - (x_k^3 - y) x_k / (2x_k^3 + y)
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet cbrt_halley_iteration_step(const Packet& x_k,
+                                                                                      const Packet& y) {
+  typedef typename unpacket_traits<Packet>::type Scalar;
+  Packet x_k_cb = pmul(x_k, pmul(x_k, x_k));
+  Packet denom = pmadd(pset1<Packet>(Scalar(2)), x_k_cb, y);
+  Packet num = psub(x_k_cb, y);
+  Packet r = pdiv(num, denom);
+  return pnmadd(x_k, r, x_k);
+}
+
+// Decompose the input such that x^(1/3) = y^(1/3) * 2^e_div3, and y is in the
+// interval [0.125,1].
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet cbrt_decompose(const Packet& x, Packet& e_div3) {
+  typedef typename unpacket_traits<Packet>::type Scalar;
+  // Extract the significant s in the range [0.5,1) and exponent e, such that
+  // x = 2^e * s.
+  Packet e, s;
+  s = pfrexp(x, e);
+
+  // Split the exponent into a part divisible by 3 and the remainder.
+  // e = 3*e_div3 + e_mod3.
+  constexpr Scalar kOneThird = Scalar(1) / 3;
+  e_div3 = pceil(pmul(e, pset1<Packet>(kOneThird)));
+  Packet e_mod3 = pnmadd(pset1<Packet>(Scalar(3)), e_div3, e);
+
+  // Replace s by y = (s * 2^e_mod3).
+  return pldexp_fast(s, e_mod3);
+}
+
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet cbrt_special_cases_and_sign(const Packet& x,
+                                                                                       const Packet& abs_root) {
+  typedef typename unpacket_traits<Packet>::type Scalar;
+
+  // Set sign.
+  const Packet sign_mask = pset1<Packet>(Scalar(-0.0));
+  const Packet x_sign = pand(sign_mask, x);
+  Packet root = por(x_sign, abs_root);
+
+  // Pass non-finite and zero values of x straight through.
+  const Packet is_not_finite = por(pisinf(x), pisnan(x));
+  const Packet is_zero = pcmp_eq(pzero(x), x);
+  const Packet use_x = por(is_not_finite, is_zero);
+  return pselect(use_x, x, root);
+}
+
+// Generic implementation of cbrt(x) for float.
+//
+// The algorithm computes the cubic root of the input by first
+// decomposing it into a exponent and significant
+//   x = s * 2^e.
+//
+// We can then write the cube root as
+//
+//   x^(1/3) = 2^(e/3) * s^(1/3)
+//           = 2^((3*e_div3 + e_mod3)/3) * s^(1/3)
+//           = 2^(e_div3) * 2^(e_mod3/3) * s^(1/3)
+//           = 2^(e_div3) * (s * 2^e_mod3)^(1/3)
+//
+// where e_div3 = ceil(e/3) and e_mod3 = e - 3*e_div3.
+//
+// The cube root of the second term y = (s * 2^e_mod3)^(1/3) is coarsely
+// approximated using a cubic polynomial and subsequently refined using a
+// single step of Halley's iteration, and finally the two terms are combined
+// using pldexp_fast.
+//
+// Note: Many alternatives exist for implementing cbrt. See, for example,
+// the excellent discussion in Kahan's note:
+//   https://csclub.uwaterloo.ca/~pbarfuss/qbrt.pdf
+// This particular implementation was found to be very fast and accurate
+// among several alternatives tried, but is probably not "optimal" on all
+// platforms.
+//
+// This is accurate to 2 ULP.
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcbrt_float(const Packet& x) {
+  typedef typename unpacket_traits<Packet>::type Scalar;
+  static_assert(std::is_same<Scalar, float>::value, "Scalar type must be float");
+
+  // Decompose the input such that x^(1/3) = y^(1/3) * 2^e_div3, and y is in the
+  // interval [0.125,1].
+  Packet e_div3;
+  const Packet y = cbrt_decompose(pabs(x), e_div3);
+
+  // Compute initial approximation accurate to 5.22e-3.
+  // The polynomial was computed using Rminimax.
+  constexpr float alpha[] = {5.9220016002655029296875e-01f, -1.3859539031982421875e+00f, 1.4581282138824462890625e+00f,
+                             3.408401906490325927734375e-01f};
+  Packet r = ppolevl<Packet, 3>::run(y, alpha);
+
+  // Take one step of Halley's iteration.
+  r = cbrt_halley_iteration_step(r, y);
+
+  // Finally multiply by 2^(e_div3)
+  r = pldexp_fast(r, e_div3);
+
+  return cbrt_special_cases_and_sign(x, r);
+}
+
+// Generic implementation of cbrt(x) for double.
+//
+// The algorithm is identical to the one for float except that a different initial
+// approximation is used for y^(1/3) and two Halley iteration steps are peformed.
+//
+// This is accurate to 1 ULP.
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcbrt_double(const Packet& x) {
+  typedef typename unpacket_traits<Packet>::type Scalar;
+  static_assert(std::is_same<Scalar, double>::value, "Scalar type must be double");
+
+  // Decompose the input such that x^(1/3) = y^(1/3) * 2^e_div3, and y is in the
+  // interval [0.125,1].
+  Packet e_div3;
+  const Packet y = cbrt_decompose(pabs(x), e_div3);
+
+  // Compute initial approximation accurate to 0.016.
+  // The polynomial was computed using Rminimax.
+  constexpr double alpha[] = {-4.69470621553356115551736138513660989701747894287109375e-01,
+                              1.072314636518546304699839311069808900356292724609375e+00,
+                              3.81249427609571867048288140722434036433696746826171875e-01};
+  Packet r = ppolevl<Packet, 2>::run(y, alpha);
+
+  // Take two steps of Halley's iteration.
+  r = cbrt_halley_iteration_step(r, y);
+  r = cbrt_halley_iteration_step(r, y);
+
+  // Finally multiply by 2^(e_div3).
+  r = pldexp_fast(r, e_div3);
+  return cbrt_special_cases_and_sign(x, r);
 }
 
 // Natural or base 2 logarithm.
@@ -1123,7 +1259,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_atan(const Pa
 
   constexpr Scalar kPiOverTwo = static_cast<Scalar>(EIGEN_PI / 2);
 
-  const Packet cst_signmask = pset1<Packet>(-Scalar(0));
+  const Packet cst_signmask = pset1<Packet>(Scalar(-0.0));
   const Packet cst_one = pset1<Packet>(Scalar(1));
   const Packet cst_pi_over_two = pset1<Packet>(kPiOverTwo);
 
@@ -1553,7 +1689,8 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet phypot_complex(const 
 }
 
 template <typename Packet>
-struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
+struct psign_impl<Packet, std::enable_if_t<!is_scalar<Packet>::value &&
+                                           !NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
                                            !NumTraits<typename unpacket_traits<Packet>::type>::IsInteger>> {
   static EIGEN_DEVICE_FUNC inline Packet run(const Packet& a) {
     using Scalar = typename unpacket_traits<Packet>::type;
@@ -1569,7 +1706,8 @@ struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<P
 };
 
 template <typename Packet>
-struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
+struct psign_impl<Packet, std::enable_if_t<!is_scalar<Packet>::value &&
+                                           !NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
                                            NumTraits<typename unpacket_traits<Packet>::type>::IsSigned &&
                                            NumTraits<typename unpacket_traits<Packet>::type>::IsInteger>> {
   static EIGEN_DEVICE_FUNC inline Packet run(const Packet& a) {
@@ -1588,7 +1726,8 @@ struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<P
 };
 
 template <typename Packet>
-struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
+struct psign_impl<Packet, std::enable_if_t<!is_scalar<Packet>::value &&
+                                           !NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
                                            !NumTraits<typename unpacket_traits<Packet>::type>::IsSigned &&
                                            NumTraits<typename unpacket_traits<Packet>::type>::IsInteger>> {
   static EIGEN_DEVICE_FUNC inline Packet run(const Packet& a) {
@@ -1603,7 +1742,8 @@ struct psign_impl<Packet, std::enable_if_t<!NumTraits<typename unpacket_traits<P
 
 // \internal \returns the the sign of a complex number z, defined as z / abs(z).
 template <typename Packet>
-struct psign_impl<Packet, std::enable_if_t<NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
+struct psign_impl<Packet, std::enable_if_t<!is_scalar<Packet>::value &&
+                                           NumTraits<typename unpacket_traits<Packet>::type>::IsComplex &&
                                            unpacket_traits<Packet>::vectorizable>> {
   static EIGEN_DEVICE_FUNC inline Packet run(const Packet& a) {
     typedef typename unpacket_traits<Packet>::type Scalar;
@@ -1685,7 +1825,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet twoprod_low(const Packet& x, const 
 template <typename Packet>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void veltkamp_splitting(const Packet& x, Packet& x_hi, Packet& x_lo) {
   typedef typename unpacket_traits<Packet>::type Scalar;
-  EIGEN_CONSTEXPR int shift = (NumTraits<Scalar>::digits() + 1) / 2;
+  constexpr int shift = (NumTraits<Scalar>::digits() + 1) / 2;
   const Scalar shift_scale = Scalar(uint64_t(1) << shift);  // Scalar constructor not necessarily constexpr.
   const Packet gamma = pmul(pset1<Packet>(shift_scale + Scalar(1)), x);
   Packet rho = psub(x, gamma);
@@ -1991,7 +2131,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet generic_pow_impl(const Packet& x, c
   Packet m_x = pfrexp(x, e_x);
 
   // Adjust m_x to lie in [1/sqrt(2):sqrt(2)] to minimize absolute error in log2(m_x).
-  EIGEN_CONSTEXPR Scalar sqrt_half = Scalar(0.70710678118654752440);
+  constexpr Scalar sqrt_half = Scalar(0.70710678118654752440);
   const Packet m_x_scale_mask = pcmp_lt(m_x, pset1<Packet>(sqrt_half));
   m_x = pselect(m_x_scale_mask, pmul(pset1<Packet>(Scalar(2)), m_x), m_x);
   e_x = pselect(m_x_scale_mask, psub(e_x, pset1<Packet>(Scalar(1))), e_x);
@@ -2040,7 +2180,8 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet generic_pow_impl(const Packet& x, c
 
 // Generic implementation of pow(x,y).
 template <typename Packet>
-EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_pow(const Packet& x, const Packet& y) {
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS std::enable_if_t<!is_scalar<Packet>::value, Packet> generic_pow(
+    const Packet& x, const Packet& y) {
   typedef typename unpacket_traits<Packet>::type Scalar;
 
   const Packet cst_inf = pset1<Packet>(NumTraits<Scalar>::infinity());
@@ -2074,7 +2215,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_pow(const Pac
   const Packet y_is_even = pcmp_eq(pround(y_div_2), y_div_2);
   const Packet y_is_odd_int = pandnot(y_is_int, y_is_even);
   // Smallest exponent for which (1 + epsilon) overflows to infinity.
-  EIGEN_CONSTEXPR Scalar huge_exponent =
+  constexpr Scalar huge_exponent =
       (NumTraits<Scalar>::max_exponent() * Scalar(EIGEN_LN2)) / NumTraits<Scalar>::epsilon();
   const Packet y_abs_is_huge = pcmp_le(pset1<Packet>(huge_exponent), y_abs);
 
@@ -2128,6 +2269,12 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_pow(const Pac
   pow = pselect(y_is_one, x, pselect(por(x_is_one, y_is_zero), cst_one, pow));
 
   return pow;
+}
+
+template <typename Scalar>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS std::enable_if_t<is_scalar<Scalar>::value, Scalar> generic_pow(
+    const Scalar& x, const Scalar& y) {
+  return numext::pow(x, y);
 }
 
 namespace unary_pow {
@@ -2211,10 +2358,16 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet int_pow(const Packet& x, const Scal
 }
 
 template <typename Packet>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet gen_pow(const Packet& x,
-                                                     const typename unpacket_traits<Packet>::type& exponent) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<!is_scalar<Packet>::value, Packet> gen_pow(
+    const Packet& x, const typename unpacket_traits<Packet>::type& exponent) {
   const Packet exponent_packet = pset1<Packet>(exponent);
   return generic_pow_impl(x, exponent_packet);
+}
+
+template <typename Scalar>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::enable_if_t<is_scalar<Scalar>::value, Scalar> gen_pow(
+    const Scalar& x, const Scalar& exponent) {
+  return numext::pow(x, exponent);
 }
 
 template <typename Packet, typename ScalarExponent>
@@ -2223,23 +2376,18 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet handle_nonint_nonint_errors(const P
   using Scalar = typename unpacket_traits<Packet>::type;
 
   // non-integer base and exponent case
-
-  const Scalar pos_zero = Scalar(0);
-  const Scalar all_ones = ptrue<Scalar>(Scalar());
-  const Scalar pos_one = Scalar(1);
-  const Scalar pos_inf = NumTraits<Scalar>::infinity();
-
   const Packet cst_pos_zero = pzero(x);
-  const Packet cst_pos_one = pset1<Packet>(pos_one);
-  const Packet cst_pos_inf = pset1<Packet>(pos_inf);
+  const Packet cst_pos_one = pset1<Packet>(Scalar(1));
+  const Packet cst_pos_inf = pset1<Packet>(NumTraits<Scalar>::infinity());
+  const Packet cst_true = ptrue<Packet>(x);
 
   const bool exponent_is_not_fin = !(numext::isfinite)(exponent);
   const bool exponent_is_neg = exponent < ScalarExponent(0);
   const bool exponent_is_pos = exponent > ScalarExponent(0);
 
-  const Packet exp_is_not_fin = pset1<Packet>(exponent_is_not_fin ? all_ones : pos_zero);
-  const Packet exp_is_neg = pset1<Packet>(exponent_is_neg ? all_ones : pos_zero);
-  const Packet exp_is_pos = pset1<Packet>(exponent_is_pos ? all_ones : pos_zero);
+  const Packet exp_is_not_fin = exponent_is_not_fin ? cst_true : cst_pos_zero;
+  const Packet exp_is_neg = exponent_is_neg ? cst_true : cst_pos_zero;
+  const Packet exp_is_pos = exponent_is_pos ? cst_true : cst_pos_zero;
   const Packet exp_is_inf = pand(exp_is_not_fin, por(exp_is_neg, exp_is_pos));
   const Packet exp_is_nan = pandnot(exp_is_not_fin, por(exp_is_neg, exp_is_pos));
 
@@ -2275,22 +2423,15 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet handle_negative_exponent(const Pack
 
   // This routine handles negative exponents.
   // The return value is either 0, 1, or -1.
-
-  const Scalar pos_zero = Scalar(0);
-  const Scalar all_ones = ptrue<Scalar>(Scalar());
-  const Scalar pos_one = Scalar(1);
-
-  const Packet cst_pos_one = pset1<Packet>(pos_one);
-
+  const Packet cst_pos_one = pset1<Packet>(Scalar(1));
   const bool exponent_is_odd = exponent % ScalarExponent(2) != ScalarExponent(0);
-
-  const Packet exp_is_odd = pset1<Packet>(exponent_is_odd ? all_ones : pos_zero);
+  const Packet exp_is_odd = exponent_is_odd ? ptrue<Packet>(x) : pzero<Packet>(x);
 
   const Packet abs_x = pabs(x);
   const Packet abs_x_is_one = pcmp_eq(abs_x, cst_pos_one);
 
   Packet result = pselect(exp_is_odd, x, abs_x);
-  result = pand(abs_x_is_one, result);
+  result = pselect(abs_x_is_one, result, pzero<Packet>(x));
   return result;
 }
 

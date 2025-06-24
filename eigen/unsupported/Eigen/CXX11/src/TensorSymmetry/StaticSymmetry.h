@@ -25,7 +25,7 @@ struct tensor_static_symgroup_permutate<numeric_list<int, nn...>> {
   constexpr static std::size_t N = sizeof...(nn);
 
   template <typename T>
-  constexpr static inline std::array<T, N> run(const std::array<T, N>& indices) {
+  constexpr static std::array<T, N> run(const std::array<T, N>& indices) {
     return {{indices[nn]...}};
   }
 };
@@ -51,7 +51,7 @@ struct tensor_static_symgroup_identity_ctor {
 template <typename iib>
 struct tensor_static_symgroup_multiply_helper {
   template <int... iia>
-  constexpr static inline numeric_list<int, get<iia, iib>::value...> helper(numeric_list<int, iia...>) {
+  constexpr static numeric_list<int, get<iia, iib>::value...> helper(numeric_list<int, iia...>) {
     return numeric_list<int, get<iia, iib>::value...>();
   }
 };
@@ -107,9 +107,9 @@ struct tensor_static_symgroup {
 };
 
 template <typename Index, std::size_t N, int... ii, int... jj>
-constexpr static inline std::array<Index, N> tensor_static_symgroup_index_permute(std::array<Index, N> idx,
-                                                                                  internal::numeric_list<int, ii...>,
-                                                                                  internal::numeric_list<int, jj...>) {
+constexpr static std::array<Index, N> tensor_static_symgroup_index_permute(std::array<Index, N> idx,
+                                                                           internal::numeric_list<int, ii...>,
+                                                                           internal::numeric_list<int, jj...>) {
   return {{idx[ii]..., idx[jj]...}};
 }
 
@@ -179,9 +179,9 @@ class StaticSGroup {
   typedef typename group_elements::type ge;
 
  public:
-  constexpr inline StaticSGroup() {}
-  constexpr inline StaticSGroup(const StaticSGroup<Gen...>&) {}
-  constexpr inline StaticSGroup(StaticSGroup<Gen...>&&) {}
+  constexpr StaticSGroup() {}
+  constexpr StaticSGroup(const StaticSGroup<Gen...>&) {}
+  constexpr StaticSGroup(StaticSGroup<Gen...>&&) {}
 
   template <typename Op, typename RV, typename Index, std::size_t N, typename... Args>
   static inline RV apply(const std::array<Index, N>& idx, RV initial, Args&&... args) {
@@ -196,8 +196,8 @@ class StaticSGroup {
 
   constexpr static std::size_t static_size = ge::count;
 
-  constexpr static inline std::size_t size() { return ge::count; }
-  constexpr static inline int globalFlags() { return group_elements::global_flags; }
+  constexpr static std::size_t size() { return ge::count; }
+  constexpr static int globalFlags() { return group_elements::global_flags; }
 
   template <typename Tensor_, typename... IndexTypes>
   inline internal::tensor_symmetry_value_setter<Tensor_, StaticSGroup<Gen...>> operator()(

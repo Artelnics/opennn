@@ -289,7 +289,7 @@ BoundingForwardPropagation::BoundingForwardPropagation(const Index& new_batch_si
 }
 
 
-pair<type*, dimensions> BoundingForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> BoundingForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

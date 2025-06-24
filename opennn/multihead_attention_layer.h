@@ -129,7 +129,7 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
     MultiheadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                          Layer* new_layer = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

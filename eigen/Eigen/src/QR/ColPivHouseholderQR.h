@@ -640,9 +640,9 @@ struct Assignment<DstXprType, Inverse<ColPivHouseholderQR<MatrixType, Permutatio
                   Dense2Dense> {
   typedef ColPivHouseholderQR<MatrixType, PermutationIndex> QrType;
   typedef Inverse<QrType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::assign_op<typename DstXprType::Scalar, typename QrType::Scalar>&) {
-    dst = source.nestedExpression().solve(MatrixType::Identity(source.rows(), source.cols()));
+    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
   }
 };
 

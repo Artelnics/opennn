@@ -179,7 +179,6 @@ public:
            return Tensor<type, output_rank>();
 
        const Index batch_size = inputs.dimension(0);
-       const Index inputs_number = inputs.dimension(1);
 
        ForwardPropagation forward_propagation(batch_size, this);
 
@@ -192,12 +191,12 @@ public:
        if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
        static_assert(input_rank >= 2 && input_rank <= 4, "Unsupported input rank");
 
-       const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+       const pair<type*, dimensions> input_pair((type*)inputs.data(), input_dimensions);
 
        forward_propagate({input_pair}, forward_propagation, false);
 
        const pair<type*, dimensions> outputs_pair
-           = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+           = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_pair);
@@ -229,7 +228,7 @@ public:
        forward_propagate({input_pair_1, input_pair_2}, forward_propagation, false);
 
        const pair<type*, dimensions> outputs_pair
-           = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+           = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
        return tensor_map<3>(outputs_pair);
    }

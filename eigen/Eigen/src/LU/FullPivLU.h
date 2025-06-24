@@ -78,6 +78,17 @@ class FullPivLU : public SolverBase<FullPivLU<MatrixType_, PermutationIndex_> > 
   typedef PermutationMatrix<RowsAtCompileTime, MaxRowsAtCompileTime, PermutationIndex> PermutationPType;
   typedef typename MatrixType::PlainObject PlainObject;
 
+  /** \brief Reports whether the LU factorization was successful.
+   *
+   * \note This function always returns \c Success. It is provided for compatibility
+   * with other factorization routines.
+   * \returns \c Success
+   */
+  ComputationInfo info() const {
+    eigen_assert(m_isInitialized && "FullPivLU is not initialized.");
+    return Success;
+  }
+
   /**
    * \brief Default Constructor.
    *
@@ -391,8 +402,8 @@ class FullPivLU : public SolverBase<FullPivLU<MatrixType_, PermutationIndex_> > 
 
   MatrixType reconstructedMatrix() const;
 
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index rows() const EIGEN_NOEXCEPT { return m_lu.rows(); }
-  EIGEN_DEVICE_FUNC EIGEN_CONSTEXPR inline Index cols() const EIGEN_NOEXCEPT { return m_lu.cols(); }
+  EIGEN_DEVICE_FUNC constexpr Index rows() const noexcept { return m_lu.rows(); }
+  EIGEN_DEVICE_FUNC constexpr Index cols() const noexcept { return m_lu.cols(); }
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
   template <typename RhsType, typename DstType>
@@ -717,7 +728,7 @@ void FullPivLU<MatrixType_, PermutationIndex_>::_solve_impl(const RhsType& rhs, 
 
   // Step 2
   m_lu.topLeftCorner(smalldim, smalldim).template triangularView<UnitLower>().solveInPlace(c.topRows(smalldim));
-  if (rows > cols) c.bottomRows(rows - cols) -= m_lu.bottomRows(rows - cols) * c.topRows(cols);
+  if (rows > cols) c.bottomRows(rows - cols).noalias() -= m_lu.bottomRows(rows - cols) * c.topRows(cols);
 
   // Step 3
   m_lu.topLeftCorner(nonzero_pivots, nonzero_pivots)
@@ -788,9 +799,9 @@ struct Assignment<
     Dense2Dense> {
   typedef FullPivLU<MatrixType, PermutationIndex> LuType;
   typedef Inverse<LuType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::assign_op<typename DstXprType::Scalar, typename MatrixType::Scalar>&) {
-    dst = source.nestedExpression().solve(MatrixType::Identity(source.rows(), source.cols()));
+    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
   }
 };
 }  // end namespace internal

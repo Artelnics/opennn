@@ -136,7 +136,7 @@ FlattenForwardPropagation::FlattenForwardPropagation(const Index& new_batch_size
 }
 
 
-pair<type*, dimensions> FlattenForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> FlattenForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

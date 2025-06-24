@@ -88,6 +88,25 @@ else()
   ei_add_property(EIGEN_MISSING_BACKENDS "pocketfft, ")
 endif()
 
+if( NOT DUCC_ROOT AND ENV{DUCC_ROOT} )
+  set( DUCC_ROOT $ENV{DUCC_ROOT} )
+endif()
+find_path(DUCCFFT
+  NAMES "src/ducc0/fft/fft.h"
+  PATHS ${DUCC_ROOT})
+message(INFO " ${DUCC_ROOT} ${DUCCFFT}")
+if(DUCCFFT)
+  ei_add_property(EIGEN_TESTED_BACKENDS "duccfft, ")
+  include_directories( "${DUCCFFT}/src" )
+  add_library(ducc_lib "${DUCCFFT}/src/ducc0/infra/string_utils.cc" "${DUCCFFT}/src/ducc0/infra/threading.cc")
+  target_compile_definitions(ducc_lib PUBLIC "DUCC0_NO_THREADING=1")
+  ei_add_test(duccfft "-DEIGEN_DUCCFFT_DEFAULT -DDUCC0_NO_THREADING=1" "ducc_lib" )
+  set_target_properties(ducc_lib duccfft PROPERTIES CXX_STANDARD 17)
+else()
+  ei_add_property(EIGEN_MISSING_BACKENDS "duccfft, ")
+endif()
+
+
 option(EIGEN_TEST_OPENGL "Enable OpenGL support in unit tests" OFF)
 if(EIGEN_TEST_OPENGL)
   find_package(OpenGL)

@@ -90,6 +90,17 @@ class PartialPivLU : public SolverBase<PartialPivLU<MatrixType_, PermutationInde
   typedef Transpositions<RowsAtCompileTime, MaxRowsAtCompileTime, PermutationIndex> TranspositionType;
   typedef typename MatrixType::PlainObject PlainObject;
 
+  /** \brief Reports whether the LU factorization was successful.
+   *
+   * \note This function always returns \c Success. It is provided for compatibility
+   * with other factorization routines.
+   * \returns \c Success
+   */
+  ComputationInfo info() const {
+    eigen_assert(m_isInitialized && "PartialPivLU is not initialized.");
+    return Success;
+  }
+
   /**
    * \brief Default Constructor.
    *
@@ -210,8 +221,8 @@ class PartialPivLU : public SolverBase<PartialPivLU<MatrixType_, PermutationInde
 
   MatrixType reconstructedMatrix() const;
 
-  EIGEN_CONSTEXPR inline Index rows() const EIGEN_NOEXCEPT { return m_lu.rows(); }
-  EIGEN_CONSTEXPR inline Index cols() const EIGEN_NOEXCEPT { return m_lu.cols(); }
+  constexpr Index rows() const noexcept { return m_lu.rows(); }
+  constexpr Index cols() const noexcept { return m_lu.cols(); }
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN
   template <typename RhsType, typename DstType>
@@ -534,9 +545,9 @@ struct Assignment<
     Dense2Dense> {
   typedef PartialPivLU<MatrixType, PermutationIndex> LuType;
   typedef Inverse<LuType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& source,
+  static void run(DstXprType& dst, const SrcXprType& src,
                   const internal::assign_op<typename DstXprType::Scalar, typename LuType::Scalar>&) {
-    dst = source.nestedExpression().solve(MatrixType::Identity(source.rows(), source.cols()));
+    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
   }
 };
 }  // end namespace internal
