@@ -418,6 +418,9 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 
     if (!has_data_set())
         throw runtime_error("Data set is null.");
+            
+    if(!optimization_algorithm->has_loss_index())
+        throw runtime_error("Optimization algorithm is wrong.");
 
     neural_network->create_cuda();
 
@@ -428,19 +431,7 @@ TrainingResults TrainingStrategy::perform_training_cuda()
     if (neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
-    set_display(true);
-
-    switch (optimization_method)
-    {
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-        //return stochastic_gradient_descent.perform_training_cuda();
-
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-        return adaptive_moment_estimation.perform_training_cuda();
-
-    default:
-        return TrainingResults(0);
-    }
+    return optimization_algorithm->perform_training_cuda();
 }
 
 #endif
