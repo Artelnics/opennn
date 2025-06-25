@@ -48,7 +48,10 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
         input_maximums = scaling_layer_2d->get_maximums();
     }
 
-    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification || neural_network->get_model_type() == NeuralNetwork::ModelType::Default)
+    const NeuralNetwork::ModelType model_type = neural_network->get_model_type();
+
+    if(model_type == NeuralNetwork::ModelType::Classification
+    || model_type == NeuralNetwork::ModelType::Default)
     {
         output_minimums.resize(outputs_number);
         output_minimums.setZero();
@@ -114,6 +117,7 @@ Tensor<type, 1> ResponseOptimization::get_outputs_maximums() const
     return output_maximums;
 }
 
+
 void ResponseOptimization::set_input_condition(const string& name,
                                                const ResponseOptimization::Condition& condition,
                                                const Tensor<type, 1>& values)
@@ -143,13 +147,9 @@ void ResponseOptimization::set_input_condition(const Index& index,
     switch(condition)
     {
     case Condition::Minimum:
-        if(values.size() != 0)
-            throw runtime_error("For Minimum condition, size of values must be 0.\n");
-        return;
-
     case Condition::Maximum:
         if(values.size() != 0)
-            throw runtime_error("For Maximum condition, size of values must be 0.\n");
+            throw runtime_error("For Minimum/Maximum condition, size of values must be 0.\n");
         return;
 
     case Condition::EqualTo:
@@ -201,14 +201,9 @@ void ResponseOptimization::set_output_condition(const Index& index,
     switch(condition)
     {
     case Condition::Minimum:
-        if(values.size() != 0)
-            throw runtime_error("For Minimum condition, size of values must be 0.\n");
-
-        return;
-
     case Condition::Maximum:
         if(values.size() != 0)
-            throw runtime_error("For Maximum condition, size of values must be 0.\n");
+            throw runtime_error("For Minimum/Maximum condition, size of values must be 0.\n");
 
         return;
 
@@ -242,8 +237,6 @@ void ResponseOptimization::set_output_condition(const Index& index,
         return;
 
     case Condition::None:
-        return;
-
     default:
         return;
     }
@@ -351,19 +344,16 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
-
+    const Index input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
     vector<Index> used_raw_variables_indices = dataset->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
-        Index used_raw_variable_index = 0;
-
         Index index = 0;
 
         for(Index j = 0; j < input_raw_variables_number; j++)
         {
-            used_raw_variable_index = used_raw_variables_indices[j];
+            const Index used_raw_variable_index = used_raw_variables_indices[j];
 
             const Dataset::RawVariableType raw_variable_type = dataset->get_raw_variable_type(used_raw_variable_index);
 

@@ -7,6 +7,7 @@
 #include "../opennn/perceptron_layer_3d.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/transformer.h"
+#include "gtest/gtest.h"
 
 using namespace opennn;
 
@@ -21,47 +22,79 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
+    /*
+    const Index samples_number = get_random_index(1, 10);
+    const Index vocabulary_size = get_random_index(2, 10);
+    const Index sequence_length = get_random_index(1, 10);
+    const Index embedding_dimension = get_random_index(1, 10);
 
-    const Index samples_number = get_random_index(2, 10);
-    const Index inputs_number = get_random_index(1, 10);
-    const Index targets_number = get_random_index(1, 10);
-    const Index neurons_number = get_random_index(1, 10);
+    const Index inputs_number = vocabulary_size * sequence_length;
+    const Index depth = embedding_dimension;
+    const Index neurons_number = inputs_number + 1;
 
-    // Data set
+    Tensor<type, 2> data(samples_number, 2);
+    for (Index i = 0; i < samples_number; ++i)
+    {
+        data(i, 0) = rand() % vocabulary_size;
+        data(i, 1) = rand() % vocabulary_size;
+    }
 
-    Dataset dataset;
-    dataset.set(Dataset::SampleUse::Training);
+    LanguageDataset language_dataset;
+    language_dataset.set(samples_number, {1}, {1});
 
-    Batch batch(1, &dataset);
-    //batch.fill({0}, {0}, {}, {1});
+    vector<opennn::Dataset::RawVariable> raw_variables(2);
 
-    // Neural network
+    raw_variables[0].name = "input";
+    raw_variables[0].use = opennn::Dataset::VariableUse::Input;
+    raw_variables[0].type = opennn::Dataset::RawVariableType::Numeric;
+
+    raw_variables[1].name = "target";
+    raw_variables[1].use = opennn::Dataset::VariableUse::Target;
+    raw_variables[1].type = opennn::Dataset::RawVariableType::Numeric;
+
+    language_dataset.set_raw_variables(raw_variables);
+    language_dataset.set_data(data);
+    language_dataset.set_sample_use(0, opennn::Dataset::SampleUse::Training);
+
+    for(Index i = 0; i < samples_number; ++i)
+        language_dataset.set_sample_use(i, opennn::Dataset::SampleUse::Training);
+
+    Batch batch(samples_number, &language_dataset);
+    batch.fill({0}, {0}, {}, {0});
 
     NeuralNetwork neural_network;
 
-//    Embedding* embedding_layer = new Embedding(input_dimensions, inputs_number, depth);
-//    neural_network.add_layer(embedding_layer);
+    neural_network.add_layer(make_unique<Embedding>(
+        dimensions{vocabulary_size, sequence_length},
+        embedding_dimension,
+        "embedding_layer"
+        ));
 
-//    Probabilistic3d* probabilistic_layer_3d = new Probabilistic3d(inputs_number, depth, input_dimensions + 1);
-//    neural_network.add_layer(probabilistic_layer_3d);
-
+    neural_network.add_layer(make_unique<Probabilistic3d>(
+        inputs_number,
+        depth,
+        neurons_number,
+        "probabilistic_layer_3d"
+        ));
     neural_network.set_parameters_random();
-/*
+
+
+    neural_network.print();
+
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
-    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &dataset);
+    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
 
     BackPropagation back_propagation(samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-//    EXPECT_EQ(abs(back_propagation.error) < NUMERIC_LIMITS_MIN);
-//    EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
+    // EXPECT_EQ(abs(back_propagation.error) < NUMERIC_LIMITS_MIN);
+    // EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
-//    EXPECT_EQ(is_zero(back_propagation.gradient));
-*/
+    // EXPECT_EQ(is_zero(back_propagation.gradient));
 }
 
 

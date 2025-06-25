@@ -388,7 +388,7 @@ string TrainingResults::write_stopping_condition() const
 }
 
 
-type TrainingResults::get_training_error()
+type TrainingResults::get_training_error() const
 {
     const Index size = training_error_history.size();
 

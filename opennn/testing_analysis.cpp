@@ -2102,7 +2102,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     const type markedness = (true_negative + false_positive == 0)
                           ? precision - type(1)
-                          : precision + type(true_negative) / type(true_negative + false_positive) - type(1);
+                          : precision + negative_predictive_value - type(1);
 
     Tensor<type, 1> binary_classification_test(15);
 

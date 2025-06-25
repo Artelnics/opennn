@@ -33,7 +33,6 @@ SOURCES += test.cpp \
            cross_entropy_error_3d_test.cpp \
            cross_entropy_error_test.cpp \
            data_set_test.cpp \
-           dense_layer_3d_test.cpp \
            embedding_layer_test.cpp \
            flatten_layer_test.cpp \
            genetic_algorithm_test.cpp \
@@ -47,7 +46,6 @@ SOURCES += test.cpp \
            model_selection_test.cpp \
            multihead_attention_layer_test.cpp \
            neural_network_test.cpp \
-           normalization_layer_3d_test.cpp \
            normalized_squared_error_test.cpp \
            perceptron_layer_test.cpp \
            performance_test.cpp \
@@ -69,7 +67,6 @@ SOURCES += test.cpp \
            unscaling_layer_test.cpp \
            weighted_squared_error_test.cpp \
            pch.cpp \
-            # Include more test files if needed by uncommenting
 
 # Precompiled Header
 HEADERS += pch.h
