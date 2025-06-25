@@ -183,17 +183,24 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     set_vocabularies();
 
     Batch training_batch(training_batch_samples_number, dataset);
-    Batch selection_batch(selection_batch_samples_number, dataset);
+    unique_ptr<Batch> selection_batch;
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
-    ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
+    unique_ptr<ForwardPropagation> selection_forward_propagation;
 
     // Loss index
 
     loss_index->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
-    BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
+    unique_ptr<BackPropagation> selection_back_propagation;
+
+    if (has_selection)
+    {
+        selection_batch = make_unique<Batch>(selection_batch_samples_number, dataset);
+        selection_forward_propagation = make_unique<ForwardPropagation>(selection_batch_samples_number, neural_network);
+        selection_back_propagation = make_unique<BackPropagation>(selection_batch_samples_number, loss_index);
+    }
 
     type training_error = type(0);
     type training_accuracy = type(0);
@@ -281,27 +288,27 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                selection_batch.fill(selection_batches[iteration],
-                                     input_variable_indices,
-                                     decoder_variable_indices,
-                                     target_variable_indices);
+                selection_batch->fill(selection_batches[iteration],
+                                      input_variable_indices,
+                                      decoder_variable_indices,
+                                      target_variable_indices);
 
                 // Neural network
 
-                neural_network->forward_propagate(selection_batch.get_input_pairs(),
-                                                  selection_forward_propagation,
+                neural_network->forward_propagate(selection_batch->get_input_pairs(),
+                                                  *selection_forward_propagation,
                                                   is_training);
                 
                 // Loss
 
-                loss_index->calculate_error(selection_batch,
-                                            selection_forward_propagation,
-                                            selection_back_propagation);
+                loss_index->calculate_error(*selection_batch,
+                                            *selection_forward_propagation,
+                                            *selection_back_propagation);
 
-                selection_error += selection_back_propagation.error();
+                selection_error += selection_back_propagation->error();
 
                 if(is_classification_model) 
-                    selection_accuracy += selection_back_propagation.accuracy(0);
+                    selection_accuracy += selection_back_propagation->accuracy(0);
             }
 
             selection_error /= type(selection_batches_number);
@@ -578,10 +585,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     set_vocabularies();
 
     BatchCuda training_batch_cuda(training_batch_samples_number, dataset);
-    BatchCuda selection_batch_cuda(selection_batch_samples_number, dataset);
+    unique_ptr<BatchCuda> selection_batch_cuda;
 
     ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
-    ForwardPropagationCuda selection_forward_propagation_cuda(selection_batch_samples_number, neural_network);
+    unique_ptr<ForwardPropagationCuda> selection_forward_propagation_cuda;
 
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
@@ -591,7 +598,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     loss_index->set_normalization_coefficient();
 
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
-    BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
+    unique_ptr<BackPropagationCuda> selection_back_propagation_cuda;
+
+    if (has_selection)
+    {
+        selection_batch_cuda = make_unique<BatchCuda>(selection_batch_samples_number, dataset);
+        selection_forward_propagation_cuda = make_unique<ForwardPropagationCuda>(selection_batch_samples_number, neural_network);
+        selection_back_propagation_cuda = make_unique<BackPropagationCuda>(selection_batch_samples_number, loss_index);
+    }
 
     type training_error = type(0);
     type training_accuracy = type(0);
@@ -682,27 +696,27 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             {
                 // Data set
 
-                selection_batch_cuda.fill(selection_batches[iteration],
-                                          input_variable_indices,
-                                          decoder_variable_indices,
-                                          target_variable_indices);
+                selection_batch_cuda->fill(selection_batches[iteration],
+                                           input_variable_indices,
+                                           decoder_variable_indices,
+                                           target_variable_indices);
 
                 // Neural network
 
-                neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_device(),
-                                                       selection_forward_propagation_cuda,
+                neural_network->forward_propagate_cuda(selection_batch_cuda->get_input_device(),
+                                                       *selection_forward_propagation_cuda,
                                                        is_training);
 
                 // Loss
 
-                loss_index->calculate_error_cuda(selection_batch_cuda,
-                                                 selection_forward_propagation_cuda,
-                                                 selection_back_propagation_cuda);
+                loss_index->calculate_error_cuda(*selection_batch_cuda,
+                                                 *selection_forward_propagation_cuda,
+                                                 *selection_back_propagation_cuda);
 
-                selection_error += selection_back_propagation_cuda.error();
+                selection_error += selection_back_propagation_cuda->error();
 
                 if (is_classification_model)    
-                    selection_accuracy += selection_back_propagation_cuda.accuracy();
+                    selection_accuracy += selection_back_propagation_cuda->accuracy();
             }
 
             selection_error /= type(selection_batches_number);

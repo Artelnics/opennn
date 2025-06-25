@@ -60,11 +60,11 @@ int main()
         */
         ImageDataset dataset;
 
-        dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
-        //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
+        //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
+        dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
         //dataset.set_data_path("../examples/mnist/data_bin");
 
-        dimensions data_dimensions = { 224,224,3 };
+        dimensions data_dimensions = { 224, 224, 3 };
 
         dataset.read_bmp(data_dimensions);
         //dataset.read_bmp();
@@ -72,20 +72,19 @@ int main()
         dataset.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions = dataset.get_dimensions(Dataset::VariableUse::Input);
-
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+        /*NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             input_dimensions,
             { 64, 64, 128, 128, 32 },
-            output_dimensions);
+            output_dimensions);*/
         
-        //VGG16 neural_network_vgg(input_dimensions, output_dimensions);
+        VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
-
+        
         TrainingStrategy training_strategy(&neural_network, &dataset);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
@@ -106,7 +105,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
-
+        
         #endif
 
         cout << "Bye!" << endl;

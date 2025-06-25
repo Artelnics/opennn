@@ -46,7 +46,7 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-//#define OPENNN_CUDA // Comment this line to disable cuda files
+#define OPENNN_CUDA // Comment this line to disable cuda files
 
 #ifdef OPENNN_CUDA
 
@@ -67,6 +67,11 @@
                 __FILE__, __LINE__, cudaGetErrorString(err), err); \
     } \
 } while(0)
+
+#define MALLOC_GPU_LOG(ptr, size_bytes) do { \
+    printf("Allocating %s: %.2f MB\n", #ptr, (float)size_bytes / (1024 * 1024)); \
+    CHECK_CUDA(cudaMalloc(ptr, size_bytes)); \
+} while (0)
 
 #endif
 

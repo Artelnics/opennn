@@ -244,16 +244,11 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
     void print() const override;
 
     void free() override;
-    
-    float* combination_deltas_device = nullptr;
 
     float* bias_deltas_device = nullptr;
     float* weight_deltas_device = nullptr;
     
     float* ones = nullptr;
-    float one = 1.0f;
-
-    cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
 
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
 };
