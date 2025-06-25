@@ -6,10 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "dataset.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
-#include "training_strategy.h"
 
 namespace opennn
 {
@@ -56,7 +56,7 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_size)
+void AdaptiveMomentEstimation::set_batch_size(const Index& new_batch_size)
 {
     batch_size = new_batch_size;
 }
@@ -448,9 +448,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 }
 
 
-string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
+string AdaptiveMomentEstimation::get_name() const
 {
-    return "ADAPTIVE_MOMENT_ESTIMATION";
+    return "AdaptiveMomentEstimation";
 }
 
 
@@ -476,7 +476,7 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
-    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
+    set_batch_size(read_xml_index(root_element, "BatchSize"));
     set_loss_goal(read_xml_type(root_element, "LossGoal")); 
     set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));   
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));    

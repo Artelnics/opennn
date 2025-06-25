@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "neural_network.h"
+#include "registry.h"
 #include "tensors.h"
-#include "weighted_squared_error.h"
 #include "dataset.h"
+#include "neural_network.h"
+#include "weighted_squared_error.h"
 
 namespace opennn
 {
@@ -230,15 +231,9 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 }
 
 
-string WeightedSquaredError::get_loss_method() const
+string WeightedSquaredError::get_name() const
 {
-    return "WEIGHTED_SQUARED_ERROR";
-}
-
-
-string WeightedSquaredError::get_error_type_text() const
-{
-    return "Weighted squared error";
+    return "WeightedSquaredError";
 }
 
 
@@ -283,6 +278,8 @@ void WeightedSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cu
 }
 
 #endif
+
+REGISTER(LossIndex, WeightedSquaredError, "WeightedSquaredError");
 
 }
 

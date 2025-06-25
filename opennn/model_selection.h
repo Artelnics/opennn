@@ -27,22 +27,13 @@ public:
 
     ModelSelection(TrainingStrategy* = nullptr);
 
-    enum class NeuronsSelectionMethod{GROWING_NEURONS};
-
-    enum class InputsSelectionMethod{GROWING_INPUTS, GENETIC_ALGORITHM};
-
     // Get
 
     TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
 
-    const NeuronsSelectionMethod& get_neurons_selection_method() const;
-    const InputsSelectionMethod& get_inputs_selection_method() const;
-
-    GrowingNeurons* get_growing_neurons();
-
-    GrowingInputs* get_growing_inputs();
-    GeneticAlgorithm* get_genetic_algorithm();
+    const NeuronsSelection* get_neurons_selection() const;
+    const InputsSelection* get_inputs_selection() const;
 
     // Set
 
@@ -50,13 +41,8 @@ public:
 
     void set_default();
 
-    void set_display(const bool&);
-
-    void set_neurons_selection_method(const NeuronsSelectionMethod&);
-    void set_neurons_selection_method(const string&);
-
-    void set_inputs_selection_method(const InputsSelectionMethod&);
-    void set_inputs_selection_method(const string&);
+    void set_neurons_selection(const string&);
+    void set_inputs_selection(const string&);
 
     // Model selection
 
@@ -72,9 +58,6 @@ public:
 
     void to_XML(XMLPrinter&) const;
 
-    string write_neurons_selection_method() const;
-    string write_inputs_selection_method() const;
-
     void print() const;
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
@@ -83,17 +66,9 @@ private:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    GrowingNeurons growing_neurons;
+    unique_ptr<NeuronsSelection> neurons_selection;
 
-    GrowingInputs growing_inputs;
-
-    GeneticAlgorithm genetic_algorithm;
-
-    NeuronsSelectionMethod neurons_selection_method = NeuronsSelectionMethod::GROWING_NEURONS;
-
-    InputsSelectionMethod inputs_selection_method = InputsSelectionMethod::GROWING_INPUTS;
-
-    bool display = true;
+    unique_ptr<InputsSelection> inputs_selection;
 };
 
 }

@@ -77,7 +77,7 @@ public:
 
    TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const override;
+   string get_name() const override;
 
    // Serialization
    

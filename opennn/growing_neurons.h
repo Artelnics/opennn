@@ -47,6 +47,11 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
+    string get_name() const
+    {
+        return "GrowingNeurons";
+    }
+
 private:
 
    Index neurons_increment = 0;

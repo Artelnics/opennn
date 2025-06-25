@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
 #include "loss_index.h"
@@ -178,11 +179,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
-    if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
+    if(loss_index->get_name() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss_index->get_loss_method() == "CROSS_ENTROPY_ERROR_2D")
+    else if(loss_index->get_name() == "CROSS_ENTROPY_ERROR_2D")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    else if(loss_index->get_loss_method() == "WEIGHTED_SQUARED_ERROR")
+    else if(loss_index->get_name() == "WEIGHTED_SQUARED_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
@@ -466,9 +467,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 }
 
 
-string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
+string LevenbergMarquardtAlgorithm::get_name() const
 {
-    return "LEVENBERG_MARQUARDT_ALGORITHM";
+    return "LevenbergMarquardtAlgorithm";
 }
 
 
@@ -544,6 +545,8 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     potential_parameters.resize(parameters_number);
     parameters_increment.resize(parameters_number);
 }
+
+REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardtAlgorithm");
 
 }
 
