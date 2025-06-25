@@ -166,6 +166,7 @@ HEADERS += \
     addition_layer_3d.h \
     normalization_layer_3d.h \
     flatten_layer_3d.h \
+    standard_networks.h \
     opennn.h
 
 SOURCES += \
