@@ -18,6 +18,7 @@ struct BackPropagation;
 struct AdaptiveMomentEstimationData;
 
 #ifdef OPENNN_CUDA
+struct BackPropagationCuda;
 struct ADAMOptimizationDataCuda;
 #endif
 

@@ -695,6 +695,16 @@ void QuasiNewtonMethodData::print() const
         << learning_rate << endl;
 }
 
+
+#ifdef OPENNN_CUDA
+
+TrainingResults QuasiNewtonMethod::perform_training_cuda()
+{
+    return TrainingResults();
+}
+
+#endif
+
 REGISTER(OptimizationAlgorithm, QuasiNewtonMethod, "QuasiNewtonMethod");
 
 }

@@ -108,6 +108,14 @@ private:
    type maximum_time = type(360000);
 
    const type epsilon = numeric_limits<type>::epsilon();
+
+   #ifdef OPENNN_CUDA
+
+    public:
+
+    TrainingResults perform_training_cuda();
+
+   #endif
 };
 
 

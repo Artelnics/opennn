@@ -104,6 +104,14 @@ private:
    Index maximum_epochs_number = 0;
 
    type maximum_time = type(360000);
+
+   #ifdef OPENNN_CUDA
+
+    public:
+
+    TrainingResults perform_training_cuda();
+
+   #endif
 };
 
 

@@ -103,18 +103,6 @@ public:
 
    // Set
 
-   void set(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
-            const dimensions& = {}, 
-            const dimensions& = {},
-            const dimensions& = {});
-
-   void set_approximation(const dimensions&, const dimensions&, const dimensions&);
-   void set_classification(const dimensions&, const dimensions&, const dimensions&);
-   void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
-   void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
-   void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
-   void set_text_classification(const dimensions&, const dimensions&, const dimensions&);
-
    void set(const filesystem::path&);
 
    void set_layers_number(const Index&);
