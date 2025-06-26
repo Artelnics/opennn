@@ -16,6 +16,7 @@
 #include "../opennn/pch.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/vgg16.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
@@ -76,7 +77,7 @@ int main()
         
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+        ImageClassificationNetwork neural_network(
             input_dimensions,
             { 64, 64, 128, 128, 32 },
             output_dimensions);
@@ -90,7 +91,7 @@ int main()
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_batch_size(8);
-        adam->set_maximum_epochs_number(10);
+        adam->set_maximum_epochs_number(8);
 
         //training_strategy.perform_training();
         training_strategy.perform_training_cuda();

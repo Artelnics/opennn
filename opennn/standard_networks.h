@@ -18,7 +18,9 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
+#include "flatten_layer_3d.h"
 #include "neural_network.h"
 
 namespace opennn
@@ -214,16 +216,15 @@ public:
             get_output_dimensions()
             ));
 
-        // add_layer(make_unique<Flatten3d>(
-        //     get_output_dimensions()
-        //     ));
+        add_layer(make_unique<Flatten3d>(
+            get_output_dimensions()
+            ));
 
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),
             output_dimensions,
             Dense2d::Activation::Logistic,
             "classification_layer"));
-
     }
 };
 

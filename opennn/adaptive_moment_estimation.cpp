@@ -593,7 +593,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
-    
+
     // Loss Index
 
     loss_index->set_normalization_coefficient();
@@ -634,7 +634,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
         shuffle = false;
 
     // Main loop
-  
+
     optimization_data_cuda.iteration = 1;
 
     for (Index epoch = 0; epoch <= maximum_epochs_number; epoch++)

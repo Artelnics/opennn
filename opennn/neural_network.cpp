@@ -36,7 +36,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type,
                              const dimensions& complexity_dimensions,
                              const dimensions& output_dimensions)
 {
-//    set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
+    //set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
 }
 
 
