@@ -48,8 +48,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
         input_maximums = scaling_layer_2d->get_maximums();
     }
 
-    const NeuralNetwork::ModelType model_type = neural_network->get_model_type();
-
+    // @todo model_type removed
+/*
     if(model_type == NeuralNetwork::ModelType::Classification
     || model_type == NeuralNetwork::ModelType::Default)
     {
@@ -59,7 +59,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
         output_maximums.resize(outputs_number);
         output_maximums.setConstant(type(1));
     }
-
+*/
     if(neural_network->has(Layer::Type::Bounding))
     {
         Bounding* bounding_layer = static_cast<Bounding*>(neural_network->get_first(Layer::Type::Bounding));
