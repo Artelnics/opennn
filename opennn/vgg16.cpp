@@ -33,14 +33,14 @@ namespace opennn
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, new_input_dimensions[2], 64 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_1"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 64, 64 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_2"));
@@ -58,14 +58,14 @@ namespace opennn
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 64, 128 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_3"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 128, 128 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_4"));
@@ -83,21 +83,21 @@ namespace opennn
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 128, 256 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_5"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_6"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_7"));
@@ -114,21 +114,21 @@ namespace opennn
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_8"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_9"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_10"));
@@ -145,21 +145,21 @@ namespace opennn
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_11"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_12"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
-                Convolutional::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 dimensions{ 1, 1 },
                 Convolutional::Convolution::Same,
                 "conv_13"));
@@ -180,7 +180,7 @@ namespace opennn
             auto fc1 = make_unique<Dense2d>(
                 get_output_dimensions(),
                 dimensions{ 4096 },
-                Dense2d::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 "fc1");
             //fc1->set_dropout_rate(0.5f);
             add_layer(move(fc1));
@@ -189,7 +189,7 @@ namespace opennn
             auto fc2 = make_unique<Dense2d>(
                 get_output_dimensions(),
                 dimensions{ 4096 },
-                Dense2d::Activation::RectifiedLinear,
+                "RectifiedLinear",
                 "fc2");
             //fc2->set_dropout_rate(0.5f);
             add_layer(move(fc2));
@@ -198,7 +198,7 @@ namespace opennn
             add_layer(make_unique<Dense2d>(
                 get_output_dimensions(),
                 new_target_dimensions,
-                Dense2d::Activation::Softmax,
+                "Softmax",
                 "softmax_output"));
         }
     }

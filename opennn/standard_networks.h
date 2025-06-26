@@ -40,12 +40,12 @@ public:
         for (Index i = 0; i < complexity_size; i++)
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{ complexity_dimensions[i] },
-                                           Dense2d::Activation::RectifiedLinear,
+                                           "RectifiedLinear",
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
-                                       Dense2d::Activation::Linear,
+                                       "Linear",
                                        "approximation_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
@@ -71,12 +71,12 @@ public:
         for (Index i = 0; i < complexity_size; i++)
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{complexity_dimensions[i]},
-                                           Dense2d::Activation::HyperbolicTangent,
+                                           "HyperbolicTangent",
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
-                                       Dense2d::Activation::Logistic,
+                                       "Logistic",
                                        "classification_layer"));
     }
 };
@@ -118,26 +118,25 @@ public:
 
         add_layer(make_unique<Dense2d>(input_dimensions,
                                        dimensions{mapping_neurons_number},
-                                       Dense2d::Activation::HyperbolicTangent,
+                                       "HyperbolicTangent",
                                        "mapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ bottle_neck_neurons_number },
-                                       Dense2d::Activation::Linear,
+                                       "Linear",
                                        "bottleneck_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ bottle_neck_neurons_number },
                                        dimensions{ mapping_neurons_number },
-                                       Dense2d::Activation::HyperbolicTangent,
+                                       "HyperbolicTangent",
                                        "demapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ output_dimensions },
-                                       Dense2d::Activation::Linear,
+                                       "Linear",
                                        "output_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
-
     }
 };
 
@@ -164,7 +163,7 @@ public:
 
             add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                                  kernel_dimensions,
-                                                 Convolutional::Activation::RectifiedLinear,
+                                                 "RectifiedLinear",
                                                  stride_dimensions,
                                                  Convolutional::Convolution::Same,
                                                  "convolutional_layer_" + to_string(i+1)));
@@ -185,7 +184,7 @@ public:
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
-                                       Dense2d::Activation::Softmax,
+                                       "Softmax",
                                        "dense_2d_layer_softmax"));
     }
 };
@@ -221,7 +220,7 @@ public:
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),
             output_dimensions,
-            Dense2d::Activation::Logistic,
+            "Logistic",
             "classification_layer"));
 
     }

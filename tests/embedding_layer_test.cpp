@@ -76,7 +76,7 @@ TEST(Embedding, BackPropagate)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
     neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-    neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
+    neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), "Logistic"));
 
     Tensor<type, 2> inputs = language_dataset.get_data(Dataset::VariableUse::Input);
 /*

@@ -525,15 +525,15 @@ string NeuralNetwork::get_expression() const
 
     ostringstream buffer;
 
-    for (Index i = 0; i < layers_number; i++){
+    for (Index i = 0; i < layers_number; i++)
+    {
         if (i == layers_number - 1)
         {
-            for (int j = 0; j < output_names.size(); j++){
-                if (!output_names[j].empty())
-                    new_output_names[j] = output_names[j];
-                else
-                    new_output_names[j] = "output_" + to_string(i);
-            }
+            for (int j = 0; j < outputs_number; j++)
+                new_output_names[j] = !output_names[j].empty()
+                      ? output_names[j]
+                      : "output_" + to_string(i);
+
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
         }
         else
@@ -543,10 +543,9 @@ string NeuralNetwork::get_expression() const
             new_output_names.resize(layer_neurons_number);
             
             for (Index j = 0; j < layer_neurons_number; j++)
-                if (layer_names[i] == "scaling_layer")
-                    new_output_names[j] = "scaled_" + input_names[j];
-                else
-                    new_output_names[j] = layer_names[i] + "_output_" + to_string(j);
+                new_output_names[j] = (layer_names[i] == "scaling_layer")
+                      ? "scaled_" + input_names[j]
+                      : layer_names[i] + "_output_" + to_string(j);
 
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
@@ -748,7 +747,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 
         const Dense2d* dense2d_layer = static_cast<Dense2d*>(layers[i].get());
 
-        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function_string();
+        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function();
 
         dense2d_layer_index++;
     }
@@ -779,7 +778,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
         const Dense2d* dense_2d = static_cast<Dense2d*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = dense_2d->get_activation_function_string();
+        information(probabilistic_layer_index,2) = dense_2d->get_activation_function();
 
         probabilistic_layer_index++;
     }
