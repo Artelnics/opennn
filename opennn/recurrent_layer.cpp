@@ -88,10 +88,6 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 
-    hidden_states.resize(batch_size, time_steps, new_output_dimensions[0]);
-
-    hidden_states.setZero();
-
     set_parameters_random();
 
     name = "recurrent_layer";
@@ -200,9 +196,6 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
 
-    hidden_states.resize(batch_size, time_steps, input_size);
-    hidden_states.setZero();
-
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
     RecurrentLayerForwardPropagation* recurrent_forward =
@@ -211,6 +204,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
     Tensor<type, 2>& current_activations_derivatives = recurrent_forward->current_activations_derivatives;
+    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
 
     outputs.resize(batch_size, input_size);
 
@@ -258,6 +252,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     RecurrentBackPropagation* recurrent_backward =
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
+    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
+
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
@@ -268,10 +264,13 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
 
-    current_deltas = deltas;
-
     for(Index t = time_steps - 1; t >= 0; --t)
     {
+        if (t == time_steps - 1)
+            current_deltas = deltas;
+        else
+            current_deltas += current_combinations_derivatives;
+
         combination_deltas.device(*thread_pool_device) =
             current_deltas * activation_derivatives.chip(t,1);
 
@@ -287,9 +286,9 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
             current_combinations_derivatives.device(*thread_pool_device) =
                 combination_deltas.contract(recurrent_weights, axes(1,0));
-
-            current_deltas = current_combinations_derivatives;
         }
+        else
+            current_combinations_derivatives.setZero();
 
         bias_deltas.device(*thread_pool_device) += combination_deltas.sum(array<Index, 1>({ 0 }));
 
@@ -423,8 +422,8 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index time_steps = layer->get_input_dimensions()[1];
 
     current_inputs.resize(batch_size, time_steps, inputs_number);
 
@@ -434,6 +433,9 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
 
     outputs.resize(batch_size, outputs_number);
     outputs.setZero();
+
+    hidden_states.resize(batch_size, time_steps, outputs_number);
+    hidden_states.setZero();
 }
 
 
@@ -449,8 +451,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index time_steps = layer->get_input_dimensions()[1];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);
