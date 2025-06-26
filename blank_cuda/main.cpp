@@ -85,15 +85,16 @@ int main()
 
         // Training strategy
         
+        CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
+        cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error);
+        adaptive_moment_estimation.set_batch_size(8);
+        adaptive_moment_estimation.set_maximum_epochs_number(10);
+        adaptive_moment_estimation.set_display_period(1);
+
         TrainingStrategy training_strategy(&neural_network, &dataset);
-        /*
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(4);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
-        training_strategy.set_display_period(1);
-        */
+
         //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
 
