@@ -84,16 +84,13 @@ int main()
         //VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
-        
-        CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
-        cross_entropy_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error);
-        adaptive_moment_estimation.set_batch_size(8);
-        adaptive_moment_estimation.set_maximum_epochs_number(10);
-        adaptive_moment_estimation.set_display_period(1);
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_optimization_algorithm()->set_display_period(1);
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_batch_size(8);
+        adam->set_maximum_epochs_number(10);
 
         //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
