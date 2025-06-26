@@ -68,10 +68,9 @@
     } \
 } while(0)
 
-#define MALLOC_GPU_LOG(ptr, size_bytes) do { \
-    printf("Allocating %s: %.2f MB\n", #ptr, (float)size_bytes / (1024 * 1024)); \
-    CHECK_CUDA(cudaMalloc(ptr, size_bytes)); \
-} while (0)
+#define CHECK_CUDA_MALLOC(ptr, size) do { \
+    printf("CUDA Malloc: Allocating %.2f MB for %s\n", (double)(size) / (1024 * 1024), #ptr); \
+} while(0)
 
 #endif
 

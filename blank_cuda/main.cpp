@@ -71,17 +71,17 @@ int main()
 
         dataset.split_samples_random(0.8, 0.0, 0.2);
 
-        const dimensions input_dimensions = dataset.get_dimensions(Dataset::VariableUse::Input);
+        const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
         
         // Neural network
 
-        /*NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             input_dimensions,
             { 64, 64, 128, 128, 32 },
-            output_dimensions);*/
+            output_dimensions);
         
-        VGG16 neural_network(input_dimensions, output_dimensions);
+        //VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
         

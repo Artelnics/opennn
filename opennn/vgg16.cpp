@@ -37,14 +37,14 @@ namespace opennn
                 dimensions{ 3, 3, new_input_dimensions[2], 64 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_1"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 64, 64 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_2"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
@@ -62,14 +62,14 @@ namespace opennn
                 dimensions{ 3, 3, 64, 128 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_3"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 128, 128 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_4"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
@@ -87,21 +87,21 @@ namespace opennn
                 dimensions{ 3, 3, 128, 256 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_5"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_6"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 256, 256 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_7"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
@@ -118,21 +118,21 @@ namespace opennn
                 dimensions{ 3, 3, 256, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_8"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_9"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_10"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
@@ -149,21 +149,21 @@ namespace opennn
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_11"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_12"));
             add_layer(make_unique<Convolutional>(
                 get_output_dimensions(),
                 dimensions{ 3, 3, 512, 512 },
                 Convolutional::Activation::RectifiedLinear,
                 dimensions{ 1, 1 },
-                Convolutional::Convolution::Valid,
+                Convolutional::Convolution::Same,
                 "conv_13"));
             add_layer(make_unique<Pooling>(
                 get_output_dimensions(),
