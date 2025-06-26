@@ -46,6 +46,11 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
+    string get_name() const override
+    {
+        return "GrowingInputs";
+    }
+
 private:
 
     Index maximum_inputs_number = 1;

@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "neural_network.h"
 #include "cross_entropy_error_3d.h"
@@ -80,15 +81,9 @@ void CrossEntropyError3d::calculate_output_delta(const Batch&,
 }
 
 
-string CrossEntropyError3d::get_loss_method() const
+string CrossEntropyError3d::get_name() const
 {
-    return "CROSS_ENTROPY_ERROR_3D";
-}
-
-
-string CrossEntropyError3d::get_error_type_text() const
-{
-    return "Cross entropy error 3D";
+    return "CrossEntropyError3d";
 }
 
 
@@ -133,6 +128,8 @@ void CrossEntropyError3d::calculate_output_delta_cuda(const BatchCuda& batch_cud
 }
 
 #endif
+
+REGISTER(LossIndex, CrossEntropyError3d, "CrossEntropyError3d");
 
 }
 

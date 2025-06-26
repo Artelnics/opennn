@@ -121,15 +121,12 @@ TEST(Dense2dTest, ForwardPropagate)
         forward_propagate,
         is_training);
 
-    Dense2dForwardPropagation* forward_ptr =
+    Dense2dForwardPropagation* forward_propagation =
         static_cast<Dense2dForwardPropagation*>(forward_propagate.get());
 
-<<<<<<< HEAD
     pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
-=======
-    const Tensor<type, 2>& outputs = forward_ptr->outputs;
-    const Tensor<type, 2>& activation_derivatives = forward_ptr->activation_derivatives;
->>>>>>> f2ec3fa0d (wip)
+    const Tensor<type, 2>& outputs = forward_propagation->outputs;
+    const Tensor<type, 2>& activation_derivatives = forward_propagation->activation_derivatives;
 
     EXPECT_EQ(dense2d_layer.get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(dense2d_layer.get_input_dimensions(), dimensions({inputs_number}));

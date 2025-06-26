@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "neural_network.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
@@ -85,8 +86,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     type elapsed_time = type(0);
 
     TrainingResults training_results;
-
-    training_strategy->set_display(false);
 
     time(&beginning_time);
 
@@ -290,6 +289,8 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 
     from_XML(document);
 }
+
+REGISTER(NeuronsSelection, GrowingNeurons, "GrowingNeurons");
 
 }
 

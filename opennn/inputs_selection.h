@@ -70,7 +70,11 @@ public:
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 
+    virtual string get_name() const = 0;
+
     string write_time(const type&) const;
+
+    virtual void print(){}
 
 protected:
 

@@ -302,15 +302,9 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 }
 
 
-string LossIndex::get_loss_method() const
+string LossIndex::get_name() const
 {
-    return "USER_ERROR_TERM";
-}
-
-
-string LossIndex::get_error_type_text() const
-{
-    return "USER_ERROR_TERM";
+    return string();
 }
 
 

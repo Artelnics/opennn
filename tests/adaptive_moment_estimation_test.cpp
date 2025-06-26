@@ -46,14 +46,13 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     // neural_network.set_parameters_constant(type(1));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
-  
-    AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
-    adaptive_moment_estimation->set_maximum_epochs_number(1);
-    adaptive_moment_estimation->set_display(false);
+    AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
+    adaptive_moment_estimation.set_maximum_epochs_number(1);
+    adaptive_moment_estimation.set_display(false);
 
-    TrainingResults training_results = adaptive_moment_estimation->perform_training();
+    const TrainingResults training_results = adaptive_moment_estimation.perform_training();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 }

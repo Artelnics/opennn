@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer_2d.h"
@@ -130,8 +131,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
     // Training strategy
-
-    training_strategy->set_display(false);
 
     Index selection_failures = 0;
 
@@ -408,6 +407,8 @@ void GrowingInputs::load(const filesystem::path& file_name)
 
     from_XML(document);
 }
+
+REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 
 }
 

@@ -1063,9 +1063,9 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
         information(probabilistic_layer_index,1) = to_string(layers[i]->get_output_dimensions()[0]);
 
-        const Dense2d* dense_2d_layer = static_cast<Dense2d*>(layers[i].get());
+        const Dense2d* dense_2d = static_cast<Dense2d*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = dense_2d_layer->get_activation_function_string();
+        information(probabilistic_layer_index,2) = dense_2d->get_activation_function_string();
 
         probabilistic_layer_index++;
     }

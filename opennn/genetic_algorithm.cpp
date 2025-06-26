@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "genetic_algorithm.h"
@@ -571,10 +572,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     initialize_population();
 
-    // Training strategy
-
-    training_strategy->set_display(false);
-
     // Loss index
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
@@ -887,6 +884,8 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
 
     from_XML(document);
 }
+
+REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
 
 }
 

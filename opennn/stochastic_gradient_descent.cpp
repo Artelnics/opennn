@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "dataset.h"
 #include "neural_network.h"
 #include "loss_index.h"
@@ -78,7 +79,7 @@ void StochasticGradientDescent::set_default()
 }
 
 
-void StochasticGradientDescent::set_batch_samples_number(const Index& new_batch_size)
+void StochasticGradientDescent::set_batch_size(const Index& new_batch_size)
 {
     batch_size = new_batch_size;
 }
@@ -434,9 +435,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 }
 
 
-string StochasticGradientDescent::write_optimization_algorithm_type() const
+string StochasticGradientDescent::get_name() const
 {
-    return "STOCHASTIC_GRADIENT_DESCENT";
+    return "StochasticGradientDescent";
 }
 
 
@@ -483,7 +484,7 @@ void StochasticGradientDescent::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");
 
-    set_batch_samples_number(read_xml_index(root_element, "BatchSize"));
+    set_batch_size(read_xml_index(root_element, "BatchSize"));
 
     const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
     set_momentum(apply_momentum ? type(0.9) : type(0));
@@ -841,6 +842,8 @@ void SGDOptimizationDataCuda::print() const
 }
 
 #endif
+
+REGISTER(OptimizationAlgorithm, StochasticGradientDescent, "StochasticGradientDescent");
 
 }
 

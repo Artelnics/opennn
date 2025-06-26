@@ -26,6 +26,7 @@ INCLUDEPATH += $$GTEST_DIR
 
 SOURCES += test.cpp \
            adaptive_moment_estimation_test.cpp \
+           addition_layer_3d_test.cpp \
            bounding_layer_test.cpp \
            convolutional_layer_test.cpp \
            correlations_test.cpp \

@@ -98,9 +98,6 @@ void TimeSeriesDataset::print() const
 
 void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 {
-    // if(model_type != ModelType::Forecasting)
-    //     throw runtime_error("No forecasting model type");
-
     printer.OpenElement("Dataset");
 
     printer.OpenElement("DataSource");

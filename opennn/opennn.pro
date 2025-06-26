@@ -141,6 +141,7 @@ HEADERS += \
     minkowski_error.h \
     mean_squared_error.h \
     vgg16.h \
+    registry.h \
     weighted_squared_error.h\
     cross_entropy_error_2d.h \
     training_strategy.h \
@@ -207,6 +208,7 @@ SOURCES += \
     minkowski_error.cpp \
     mean_squared_error.cpp \
     vgg16.cpp \
+    registry.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     learning_rate_algorithm.cpp \

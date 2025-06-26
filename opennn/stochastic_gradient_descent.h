@@ -39,7 +39,7 @@ public:
 
    void set_default();
 
-   void set_batch_samples_number(const Index&);
+   void set_batch_size(const Index&);
 
    Index get_samples_number() const;
 
@@ -58,7 +58,7 @@ public:
 
    TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const override;
+   string get_name() const override;
 
    Tensor<string, 2> to_string_matrix() const override;
 
