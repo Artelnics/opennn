@@ -6,13 +6,25 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "perceptron_layer.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "dataset.h"
-#include "neural_network.h"
-#include "training_strategy.h"
 #include "scaling_layer_2d.h"
+#include "perceptron_layer.h"
+#include "neural_network.h"
+#include "mean_squared_error.h"
+#include "normalized_squared_error.h"
+#include "weighted_squared_error.h"
+#include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
+#include "minkowski_error.h"
+#include "stochastic_gradient_descent.h"
+#include "adaptive_moment_estimation.h"
+#include "quasi_newton_method.h"
+#include "levenberg_marquardt_algorithm.h"
+#include "growing_neurons.h"
+#include "growing_inputs.h"
+#include "genetic_algorithm.h"
 
 namespace opennn
 {
@@ -512,6 +524,8 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
+
+
 Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_pool_device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 1>& y)
@@ -546,24 +560,15 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     neural_network.set_parameters_random();
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_display(false);
-
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-
-    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-    training_strategy.set_maximum_epochs_number(10000);
-
-    training_strategy.perform_training();
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
+    levenberg_marquardt_algorithm.set_display(false);
+    levenberg_marquardt_algorithm.perform_training();
 
     const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
-
     const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
-
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
@@ -618,13 +623,10 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const Tensor<type, 2> data = assemble_vector_vector(x_rank, y_filtered);
 
-    Dataset Dataset(x_filtered.size(), {1}, {1});
-
-    Dataset.set_data(data);
-
-    Dataset.set(Dataset::SampleUse::Training);
-
-    Dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    Dataset dataset(x_filtered.size(), {1}, {1});
+    dataset.set_data(data);
+    dataset.set(Dataset::SampleUse::Training);
+    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
@@ -632,21 +634,15 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
 
-    TrainingStrategy training_strategy(&neural_network, &Dataset);
-    training_strategy.set_display(false);
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
+    levenberg_marquardt_algorithm.set_display(false);
+    levenberg_marquardt_algorithm.perform_training();
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-
-    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-    training_strategy.perform_training();
-
-    const Tensor<type, 2> inputs = Dataset.get_data(Dataset::VariableUse::Input);
-
-    const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
-
+    const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
+    const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
@@ -738,29 +734,22 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
+    dense_2d->set_activation_function(Dense2d::Activation::Softmax);
     scaling_layer_2d->set_display(false);
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    CrossEntropyError2d cross_entropy_error_2d(&neural_network, &dataset);
+    cross_entropy_error_2d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
-
-    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-    training_strategy.set_display(false);
-
-    training_strategy.set_display_period(1000);
-
-    training_strategy.perform_training();
+    QuasiNewtonMethod quasi_newton_method(&cross_entropy_error_2d);
+    quasi_newton_method.set_display(false);
+    quasi_newton_method.set_display_period(1000);
+    quasi_newton_method.perform_training();
 
     // Logistic correlation
 
     const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
-
     const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
@@ -858,25 +847,19 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
+    dense_2d->set_activation_function(Dense2d::Activation::Softmax);
 
     scaling_layer_2d->set_display(false);
 
-    TrainingStrategy training_strategy(&neural_network, &Dataset);
+    MeanSquaredError mean_squared_error(&neural_network, &Dataset);
+    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-
-    training_strategy.set_maximum_epochs_number(500);
-
-    training_strategy.set_display(false);
-
-    training_strategy.perform_training();
+    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
+    quasi_newton_method.set_maximum_epochs_number(500);
+    quasi_newton_method.set_display(false);
+    quasi_newton_method.perform_training();
 
     // Logistic correlation
 
@@ -968,6 +951,40 @@ void Correlation::print() const
          << "Lower confidence: " << lower_confidence << endl
          << "Upper confidence: " << upper_confidence << endl;
 }
+
+void register_loss_indices()
+{
+    CrossEntropyError2d cross_entropy_error_2d;//cross_entropy_error_2d.print();
+    CrossEntropyError3d cross_entropy_error_3d;//cross_entropy_error_3d.print();
+    MeanSquaredError mean_squared_error;//mean_squared_error.print();
+    MinkowskiError minkowski_error;//minkowski_error.print();
+    NormalizedSquaredError normalized_squared_error;//normalized_squared_error.print();
+    WeightedSquaredError weighted_squared_error;//weighted_squared_error.print();
+
+}
+
+void register_optimization_algorithms()
+{
+    AdaptiveMomentEstimation adaptive_moment_estimation; //adaptive_moment_estimation.print();
+    StochasticGradientDescent stochastic_gradient_descent; //stochastic_gradient_descent.print();
+    QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
+
+}
+
+void register_neurons_selection()
+{
+    GrowingNeurons growing_neurons; growing_neurons.print();
+}
+
+
+void register_inputs_selection()
+{
+    GrowingInputs growing_inputs; growing_inputs.print();
+    GeneticAlgorithm genetic_algorithm; genetic_algorithm.print();
+
+}
+
 
 }
 

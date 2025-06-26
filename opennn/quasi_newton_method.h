@@ -77,7 +77,7 @@ public:
 
    TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const override;
+   string get_name() const override;
 
    // Serialization
    
@@ -108,6 +108,14 @@ private:
    type maximum_time = type(360000);
 
    const type epsilon = numeric_limits<type>::epsilon();
+
+   #ifdef OPENNN_CUDA
+
+    public:
+
+    TrainingResults perform_training_cuda();
+
+   #endif
 };
 
 

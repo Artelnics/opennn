@@ -14,9 +14,11 @@
 namespace opennn
 {
 
+struct BackPropagation;
 struct AdaptiveMomentEstimationData;
 
 #ifdef OPENNN_CUDA
+struct BackPropagationCuda;
 struct ADAMOptimizationDataCuda;
 #endif
 
@@ -38,7 +40,7 @@ public:
 
    // Set
 
-   void set_batch_samples_number(const Index& new_batch_size);
+   void set_batch_size(const Index& new_batch_size);
 
    void set_default();
 
@@ -69,7 +71,7 @@ public:
 
    TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const override;
+   string get_name() const override;
 
    // Serialization
 

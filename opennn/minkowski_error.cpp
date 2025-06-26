@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
 #include "neural_network.h"
@@ -99,15 +100,9 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 }
 
 
-string MinkowskiError::get_loss_method() const
+string MinkowskiError::get_name() const
 {
-    return "MINKOWSKI_ERROR";
-}
-
-
-string MinkowskiError::get_error_type_text() const
-{
-    return "Minkowski error";
+    return "MinkowskiError";
 }
 
 
@@ -150,6 +145,8 @@ void MinkowskiError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
 }
 
 #endif
+
+REGISTER(LossIndex, MinkowskiError, "MinkowskiError");
 
 }
 

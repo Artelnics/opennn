@@ -29,7 +29,7 @@ TEST(PerformanceTest, Rosenbrock)
 
     training_strategy.set_maximum_epochs_number(10);
     training_strategy.set_display_period(1);
-    training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
+    training_strategy.get_adaptive_moment_estimation()->set_batch_size(1000);
     training_strategy.set_maximum_time(86400);
 
 //    training_strategy.perform_training();
@@ -64,7 +64,7 @@ TEST(PerformanceTest, ImageClassification)
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-    training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
+    training_strategy.get_adaptive_moment_estimation()->set_batch_size(512);
     training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
     training_strategy.set_display_period(1);
     

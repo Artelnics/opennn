@@ -70,6 +70,10 @@ public:
 
     string write_time(const type&) const;
 
+    virtual string get_name() const = 0;
+
+    virtual void print(){}
+
 protected:
 
     TrainingStrategy* training_strategy = nullptr;

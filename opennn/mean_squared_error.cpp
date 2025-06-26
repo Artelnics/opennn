@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
 #include "neural_network.h"
@@ -151,15 +152,9 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 }
 
 
-string MeanSquaredError::get_loss_method() const
+string MeanSquaredError::get_name() const
 {
-    return "MEAN_SQUARED_ERROR";
-}
-
-
-string MeanSquaredError::get_error_type_text() const
-{
-    return "Mean squared error";
+    return "MeanSquaredError";
 }
 
 
@@ -252,6 +247,8 @@ void MeanSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
 }
 
 #endif
+
+REGISTER(LossIndex, MeanSquaredError, "MeanSquaredError");
 
 }
 

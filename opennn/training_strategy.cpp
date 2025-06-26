@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "training_strategy.h"
-#include "optimization_algorithm.h"
+#include "registry.h"
 #include "recurrent_layer.h"
+#include "optimization_algorithm.h"
+#include "training_strategy.h"
 
 namespace opennn
 {
@@ -16,6 +17,8 @@ namespace opennn
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     set(new_neural_network, new_data_set);
+
+
 }
 
 
@@ -33,39 +36,13 @@ NeuralNetwork* TrainingStrategy::get_neural_network() const
 
 LossIndex* TrainingStrategy::get_loss_index()
 {
-    switch(loss_method)
-    {
-        case LossMethod::MEAN_SQUARED_ERROR: return &mean_squared_error;
-
-        case LossMethod::NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
-
-        case LossMethod::MINKOWSKI_ERROR: return &Minkowski_error;
-
-        case LossMethod::WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
-
-        case LossMethod::CROSS_ENTROPY_ERROR_2D: return &cross_entropy_error_2d;
-
-        case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
-
-        default: throw runtime_error("Unknown loss method.");
-    }
+    return loss_index.get();
 }
 
 
 OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
-    switch(optimization_method)
-    {
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
-
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
-
-    case OptimizationMethod::QUASI_NEWTON_METHOD: return &quasi_Newton_method;
-
-    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
-
-    default: return nullptr;
-    }
+    return optimization_algorithm.get();
 }
 
 
@@ -81,376 +58,64 @@ bool TrainingStrategy::has_data_set() const
 }
 
 
-QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method()
-{
-    return &quasi_Newton_method;
-}
-
-
-LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm()
-{
-    return &Levenberg_Marquardt_algorithm;
-}
-
-
-StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent()
-{
-    return &stochastic_gradient_descent;
-}
-
-
-AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
-{
-    return &adaptive_moment_estimation;
-}
-
-
-MeanSquaredError* TrainingStrategy::get_mean_squared_error()
-{
-    return &mean_squared_error;
-}
-
-
-NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error()
-{
-
-    return &normalized_squared_error;
-}
-
-
-MinkowskiError* TrainingStrategy::get_Minkowski_error()
-{
-    return &Minkowski_error;
-}
-
-
-CrossEntropyError2d* TrainingStrategy::get_cross_entropy_error()
-{
-    return &cross_entropy_error_2d;
-}
-
-
-WeightedSquaredError* TrainingStrategy::get_weighted_squared_error()
-{
-    return &weighted_squared_error;
-}
-
-
-const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
-{
-    return loss_method;
-}
-
-
-const TrainingStrategy::OptimizationMethod& TrainingStrategy::get_optimization_method() const
-{
-    return optimization_method;
-}
-
-
-string TrainingStrategy::write_loss_method() const
-{
-    switch(loss_method)
-    {
-    case LossMethod::MEAN_SQUARED_ERROR:
-        return "MEAN_SQUARED_ERROR";
-
-    case LossMethod::NORMALIZED_SQUARED_ERROR:
-        return "NORMALIZED_SQUARED_ERROR";
-
-    case LossMethod::MINKOWSKI_ERROR:
-        return "MINKOWSKI_ERROR";
-
-    case LossMethod::WEIGHTED_SQUARED_ERROR:
-        return "WEIGHTED_SQUARED_ERROR";
-
-    case LossMethod::CROSS_ENTROPY_ERROR_2D:
-        return "CROSS_ENTROPY_ERROR_2D";
-
-    case LossMethod::CROSS_ENTROPY_ERROR_3D:
-        return "CROSS_ENTROPY_ERROR_3D";
-
-    default:
-        return string();
-    }
-}
-
-
-string TrainingStrategy::write_optimization_method() const
-{
-    switch (optimization_method)
-    {     
-    case OptimizationMethod::QUASI_NEWTON_METHOD:
-        return "QUASI_NEWTON_METHOD";
-    
-    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-        return "LEVENBERG_MARQUARDT_ALGORITHM";
-    
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-        return "STOCHASTIC_GRADIENT_DESCENT";
-    
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-        return "ADAPTIVE_MOMENT_ESTIMATION";
-    
-    default:
-    
-        throw runtime_error("Unknown optimization method.\n");
-    }
-}
-
-
-string TrainingStrategy::write_optimization_method_text() const
-{
-    switch (optimization_method)
-    {
-    case OptimizationMethod::QUASI_NEWTON_METHOD:
-        return "quasi-Newton method";
-
-    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-        return "Levenberg-Marquardt algorithm";
-
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-        return "stochastic gradient descent";
-
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-        return "adaptive moment estimation";
-
-    default:
-        throw runtime_error("Unknown main type.\n");
-    }
-}
-
-
-string TrainingStrategy::write_loss_method_text() const
-{
-    switch(loss_method)
-    {
-    case LossMethod::MEAN_SQUARED_ERROR:
-        return "Mean squared error";
-
-    case LossMethod::NORMALIZED_SQUARED_ERROR:
-        return "Normalized squared error";
-
-    case LossMethod::MINKOWSKI_ERROR:
-        return "Minkowski error";
-
-    case LossMethod::WEIGHTED_SQUARED_ERROR:
-        return "Weighted squared error";
-
-    case LossMethod::CROSS_ENTROPY_ERROR_2D:
-        return "Cross entropy error";
-
-    default:
-        return string();
-    }
-}
-
-
-const bool& TrainingStrategy::get_display() const
-{
-    return display;
-}
-
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     neural_network = new_neural_network;
     dataset = new_data_set;
 
     set_default();
-
-    mean_squared_error.set(new_neural_network, new_data_set);
-    normalized_squared_error.set(new_neural_network, new_data_set);
-    cross_entropy_error_2d.set(new_neural_network, new_data_set);
-    cross_entropy_error_3d.set(new_neural_network, new_data_set);
-    weighted_squared_error.set(new_neural_network, new_data_set);
-    Minkowski_error.set(new_neural_network, new_data_set);
-
-    LossIndex* new_loss_index = get_loss_index();
-
-    stochastic_gradient_descent.set_loss_index(new_loss_index);
-    adaptive_moment_estimation.set_loss_index(new_loss_index);
-    quasi_Newton_method.set_loss_index(new_loss_index);
-    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 }
 
 
-void TrainingStrategy::set_loss_method(const string& new_loss_method)
+void TrainingStrategy::set_loss_index(const string& new_loss_index)
 {
-    if(new_loss_method == "MEAN_SQUARED_ERROR")
-        set_loss_method(LossMethod::MEAN_SQUARED_ERROR);
-    else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
-        set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-    else if(new_loss_method == "MINKOWSKI_ERROR")
-        set_loss_method(LossMethod::MINKOWSKI_ERROR);
-    else if(new_loss_method == "WEIGHTED_SQUARED_ERROR")
-        set_loss_method(LossMethod::WEIGHTED_SQUARED_ERROR);
-    else if(new_loss_method == "CROSS_ENTROPY_ERROR_2D")
-        set_loss_method(LossMethod::CROSS_ENTROPY_ERROR_2D);
-    else
-        throw runtime_error("Unknown loss method: " + new_loss_method + ".\n");
+    loss_index = Registry<LossIndex>::instance().create(new_loss_index);
+
+    loss_index->set(neural_network, dataset);
+
+    if(optimization_algorithm)
+        optimization_algorithm->set(loss_index.get());
 }
 
 
-void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
+void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
 {
-    loss_method = new_loss_method;
+    optimization_algorithm = Registry<OptimizationAlgorithm>::instance().create(new_optimization_algorithm);
 
-    set_loss_index(get_loss_index());
-}
-
-
-void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_optimization_method)
-{
-    optimization_method = new_optimization_method;
-}
-
-
-void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
-{
-    if(new_optimization_method == "QUASI_NEWTON_METHOD")
-        set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-    else if(new_optimization_method == "LEVENBERG_MARQUARDT_ALGORITHM")
-        set_optimization_method(OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-    else if(new_optimization_method == "STOCHASTIC_GRADIENT_DESCENT")
-        set_optimization_method(OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-    else if(new_optimization_method == "ADAPTIVE_MOMENT_ESTIMATION")
-        set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-    else
-        throw runtime_error("Unknown main type: " + new_optimization_method + ".\n");
-}
-
-
-void TrainingStrategy::set_threads_number(const int& new_threads_number)
-{
-    mean_squared_error.set_threads_number(new_threads_number);
-    normalized_squared_error.set_threads_number(new_threads_number);
-    Minkowski_error.set_threads_number(new_threads_number);
-    weighted_squared_error.set_threads_number(new_threads_number);
-    cross_entropy_error_2d.set_threads_number(new_threads_number);
-    cross_entropy_error_3d.set_threads_number(new_threads_number);
-
-    quasi_Newton_method.set_threads_number(new_threads_number);
-    Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
-    stochastic_gradient_descent.set_threads_number(new_threads_number);
-    adaptive_moment_estimation.set_threads_number(new_threads_number);
+    optimization_algorithm->set(loss_index.get());
 }
 
 
 void TrainingStrategy::set_data_set(Dataset* new_data_set)
 {
     dataset = new_data_set;
-
-    mean_squared_error.set_data_set(new_data_set);
-
-    normalized_squared_error.set_data_set(new_data_set);
-
-    cross_entropy_error_2d.set_data_set(new_data_set);
-    cross_entropy_error_3d.set_data_set(new_data_set);
-
-    weighted_squared_error.set_data_set(new_data_set);
-
-    Minkowski_error.set_data_set(new_data_set);
 }
 
 
 void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
-
-    mean_squared_error.set_neural_network(new_neural_network);
-    normalized_squared_error.set_neural_network(new_neural_network);
-    cross_entropy_error_2d.set_neural_network(new_neural_network);
-    cross_entropy_error_3d.set_neural_network(new_neural_network);
-    weighted_squared_error.set_neural_network(new_neural_network);
-    Minkowski_error.set_neural_network(new_neural_network);
-}
-
-
-void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
-{
-    stochastic_gradient_descent.set_loss_index(new_loss_index);
-    adaptive_moment_estimation.set_loss_index(new_loss_index);
-    quasi_Newton_method.set_loss_index(new_loss_index);
-    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
-}
-
-
-void TrainingStrategy::set_display(const bool& new_display)
-{
-    display = new_display;
-
-    // Loss index
-
-    mean_squared_error.set_display(display);
-    normalized_squared_error.set_display(display);
-    cross_entropy_error_2d.set_display(display);
-    weighted_squared_error.set_display(display);
-    Minkowski_error.set_display(display);
-
-    // Optimization algorithm
-
-    stochastic_gradient_descent.set_display(display);
-    adaptive_moment_estimation.set_display(display);
-    quasi_Newton_method.set_display(display);
-    Levenberg_Marquardt_algorithm.set_display(display);
-}
-
-
-void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
-{
-    quasi_Newton_method.set_loss_goal(new_loss_goal);
-    Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
-}
-
-
-void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
-{
-    quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
-    Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
-}
-
-
-void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
-{
-    stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
-    adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
-    quasi_Newton_method.set_maximum_epochs_number(maximum_epochs_number);
-    Levenberg_Marquardt_algorithm.set_maximum_epochs_number(maximum_epochs_number);
-}
-
-
-void TrainingStrategy::set_display_period(const int & display_period)
-{
-    get_optimization_algorithm()->set_display_period(display_period);
-}
-
-
-void TrainingStrategy::set_maximum_time(const type&  maximum_time)
-{
-    stochastic_gradient_descent.set_maximum_time(maximum_time);
-    adaptive_moment_estimation.set_maximum_time(maximum_time);
-    quasi_Newton_method.set_maximum_time(maximum_time);
-    Levenberg_Marquardt_algorithm.set_maximum_time(maximum_time);
 }
 
 
 void TrainingStrategy::set_default()
 {
-    loss_method = LossMethod::MEAN_SQUARED_ERROR;
-
-    optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
-
     if(!has_neural_network()) return;
 
     const NeuralNetwork::ModelType model_type = neural_network->get_model_type();
-
+/*
     if(model_type == NeuralNetwork::ModelType::Classification
     || model_type == NeuralNetwork::ModelType::ImageClassification)
-            loss_method = LossMethod::CROSS_ENTROPY_ERROR_2D;
+        set_loss_index("CrossEntropyError2d");
+    else if(model_type == NeuralNetwork::ModelType::TextClassification)
+        set_loss_index("CrossEntropyError3d");
+    else
+        set_loss_index("NormalizedSquaredError");
+*/
 
-    if(model_type == NeuralNetwork::ModelType::TextClassification)
-        loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
+    set_loss_index("MeanSquaredError");
+    set_optimization_algorithm("AdaptiveMomentEstimation");
+
 }
 
 
@@ -462,31 +127,22 @@ TrainingResults TrainingStrategy::perform_training()
     if(!has_data_set())
         throw runtime_error("Data set is null.");
 
+    if(!loss_index->has_neural_network() || !loss_index->has_data_set())
+        throw runtime_error("Loss index is wrong.");
+
+    if(!optimization_algorithm->has_loss_index())
+        throw runtime_error("Optimization algorithm is wrong.");
+
     if(neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
-    switch(optimization_method)
-    {  
-        case OptimizationMethod::QUASI_NEWTON_METHOD:
-            return quasi_Newton_method.perform_training();
-        
-        case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-            return Levenberg_Marquardt_algorithm.perform_training();
-        
-        case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-            return stochastic_gradient_descent.perform_training();
-
-        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-            return adaptive_moment_estimation.perform_training();
-        
-        default:
-            return TrainingResults(0);
-    }
+    return optimization_algorithm->perform_training();
 }
 
 
 void TrainingStrategy::fix_forecasting()
 {
+/*
     Index time_steps = 0;
 
     if(neural_network->has(Layer::Type::Recurrent))
@@ -511,23 +167,24 @@ void TrainingStrategy::fix_forecasting()
         : Index(batch_size/time_steps);
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        adaptive_moment_estimation.set_batch_samples_number(constant*time_steps);
+        adaptive_moment_estimation.set_batch_size(constant*time_steps);
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        stochastic_gradient_descent.set_batch_samples_number(constant*time_steps);
-
+        stochastic_gradient_descent.set_batch_size(constant*time_steps);
+*/
 }
 
 
 void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl
-         << "Loss index: " << write_loss_method() << endl
-         << "Optimization algorithm: " << write_optimization_method() << endl;
+         << "Loss index: " << loss_index->get_name() << endl
+         << "Optimization algorithm: " << optimization_algorithm->get_name() << endl;
 }
 
 
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
+/*
     printer.OpenElement("TrainingStrategy");
 
     printer.OpenElement("LossIndex");
@@ -576,11 +233,13 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Display", to_string(get_display())); 
 
     printer.CloseElement();
+*/
 }
 
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
+/*
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
@@ -720,6 +379,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Display
 
     set_display(read_xml_bool(root_element, "Display"));
+*/
 }
 
 
@@ -758,6 +418,9 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 
     if (!has_data_set())
         throw runtime_error("Data set is null.");
+            
+    if(!optimization_algorithm->has_loss_index())
+        throw runtime_error("Optimization algorithm is wrong.");
 
     neural_network->create_cuda();
 
@@ -768,19 +431,7 @@ TrainingResults TrainingStrategy::perform_training_cuda()
     if (neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
-    set_display(true);
-
-    switch (optimization_method)
-    {
-    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-        //return stochastic_gradient_descent.perform_training_cuda();
-
-    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-        return adaptive_moment_estimation.perform_training_cuda();
-
-    default:
-        return TrainingResults(0);
-    }
+    return optimization_algorithm->perform_training_cuda();
 }
 
 #endif

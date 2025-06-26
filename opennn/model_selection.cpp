@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "loss_index.h"
 #include "model_selection.h"
 #include "training_strategy.h"
@@ -31,106 +32,46 @@ bool ModelSelection::has_training_strategy() const
 }
 
 
-const ModelSelection::NeuronsSelectionMethod& ModelSelection::get_neurons_selection_method() const
+const NeuronsSelection* ModelSelection::get_neurons_selection() const
 {
-    return neurons_selection_method;
+    return neurons_selection.get();
 }
 
 
-const ModelSelection::InputsSelectionMethod& ModelSelection::get_inputs_selection_method() const
+const InputsSelection* ModelSelection::get_inputs_selection() const
 {
-    return inputs_selection_method;
-}
-
-
-GrowingNeurons* ModelSelection::get_growing_neurons()
-{
-    return &growing_neurons;
-}
-
-
-GrowingInputs* ModelSelection::get_growing_inputs()
-{
-    return &growing_inputs;
-}
-
-
-GeneticAlgorithm* ModelSelection::get_genetic_algorithm()
-{
-    return &genetic_algorithm;
+    return inputs_selection.get();
 }
 
 
 void ModelSelection::set_default()
 {
-    set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
+    set_neurons_selection("GrowingNeurons");
 
-    set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
-
-    display = true;
+    set_inputs_selection("GrowingInputs");
 }
 
 
-void ModelSelection::set_display(const bool& new_display)
+
+void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
 {
-    display = new_display;
+    neurons_selection = Registry<NeuronsSelection>::instance().create(new_neurons_selection);
 
-    // Neurons selection
-
-    growing_neurons.set_display(new_display);
-
-    // Inputs selection
-
-    growing_inputs.set_display(new_display);
-
-    genetic_algorithm.set_display(new_display);
-
+    neurons_selection->set(training_strategy);
 }
 
 
-void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsSelectionMethod& new_neurons_selection_method)
+void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 {
-    neurons_selection_method = new_neurons_selection_method;
-}
+    inputs_selection = Registry<InputsSelection>::instance().create(new_inputs_selection);
 
-
-void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
-{
-    new_neurons_selection_method == "GROWING_NEURONS"
-        ? set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS)
-        : throw runtime_error("Unknown neurons selection type: " + new_neurons_selection_method + ".\n");
-}
-
-
-void ModelSelection::set_inputs_selection_method(const ModelSelection::InputsSelectionMethod& new_inputs_selection_method)
-{
-    inputs_selection_method = new_inputs_selection_method;
-}
-
-
-void ModelSelection::set_inputs_selection_method(const string& new_inputs_selection_method)
-{
-    if(new_inputs_selection_method == "GROWING_INPUTS")
-        set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
-    else if(new_inputs_selection_method == "GENETIC_ALGORITHM")
-        set_inputs_selection_method(InputsSelectionMethod::GENETIC_ALGORITHM);
-    else
-        throw runtime_error("Unknown inputs selection type: " + new_inputs_selection_method + ".\n");
+    inputs_selection->set(training_strategy);
 }
 
 
 void ModelSelection::set(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;
-
-    // Neurons selection
-
-    growing_neurons.set_training_strategy(new_training_strategy);
-
-    // Inputs selection
-
-    growing_inputs.set(new_training_strategy);
-    genetic_algorithm.set(new_training_strategy);
 }
 
 
@@ -174,44 +115,33 @@ void ModelSelection::check() const
 
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
-    if(neurons_selection_method == NeuronsSelectionMethod::GROWING_NEURONS)
-        return growing_neurons.perform_neurons_selection();
-    else
-        return NeuronsSelectionResults();
+    return neurons_selection->perform_neurons_selection();
 }
 
 
 InputsSelectionResults ModelSelection::perform_input_selection()
 {
-    switch(inputs_selection_method)
-    {
-    case InputsSelectionMethod::GROWING_INPUTS:
-        return growing_inputs.perform_input_selection();
-
-    case InputsSelectionMethod::GENETIC_ALGORITHM:
-        return genetic_algorithm.perform_input_selection();
-    }
-
-    return InputsSelectionResults();
+    return inputs_selection->perform_input_selection();
 }
 
 
 void ModelSelection::to_XML(XMLPrinter& printer) const
 {
+/*
     printer.OpenElement("ModelSelection");
 
     printer.OpenElement("NeuronsSelection");
-    add_xml_element(printer, "NeuronsSelectionMethod", write_neurons_selection_method());
-    growing_neurons.to_XML(printer);
+    add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
+    neurons_selection->to_XML(printer);
     printer.CloseElement();  
 
     printer.OpenElement("InputsSelection");
-    add_xml_element(printer, "InputsSelectionMethod", write_inputs_selection_method());
-    growing_inputs.to_XML(printer);
-    genetic_algorithm.to_XML(printer);
+    add_xml_element(printer, "InputsSelectionMethod", inputs_selection->get_name());
+    inputs_selection->to_XML(printer);
     printer.CloseElement(); 
 
     printer.CloseElement();
+*/
 }
 
 
@@ -226,8 +156,8 @@ void ModelSelection::from_XML(const XMLDocument& document)
 
     if (neurons_selection_element) 
     {
-        set_neurons_selection_method(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
-
+        set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
+/*
         const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
 
         if (growing_neurons_element)
@@ -236,56 +166,41 @@ void ModelSelection::from_XML(const XMLDocument& document)
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
             growing_neurons.from_XML(growing_neurons_document);
         }
+*/
     }
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
-    if (inputs_selection_element) {
-        set_inputs_selection_method(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
+/*
+
+    if (inputs_selection_element)
+    {
+        set_inputs_selection(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
 
         const XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
-        if (growing_inputs_element) {
+
+        if (growing_inputs_element)
+        {
             XMLDocument growing_inputs_document;
             growing_inputs_document.InsertFirstChild(growing_inputs_element->DeepClone(&growing_inputs_document));
             growing_inputs.from_XML(growing_inputs_document);
         }
 
         const XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
+
         if (genetic_algorithm_element) {
             XMLDocument genetic_algorithm_document;
             genetic_algorithm_document.InsertFirstChild(genetic_algorithm_element->DeepClone(&genetic_algorithm_document));
             genetic_algorithm.from_XML(genetic_algorithm_document);
         }
     }
-}
-
-
-string ModelSelection::write_neurons_selection_method() const
-{
-    if(neurons_selection_method ==  NeuronsSelectionMethod::GROWING_NEURONS)
-        return "GROWING_NEURONS";
-    else
-        return string();
-}
-
-
-string ModelSelection::write_inputs_selection_method() const
-{
-    switch(inputs_selection_method)
-    {
-    case InputsSelectionMethod::GROWING_INPUTS:
-        return "GROWING_INPUTS";
-
-    case InputsSelectionMethod::GENETIC_ALGORITHM:
-        return "GENETIC_ALGORITHM";
-    default:
-        return string();
-    }
+*/
 }
 
 
 void ModelSelection::print() const
 {
-//    cout << to_string();
+    cout << get_neurons_selection() << endl;
+    cout << get_inputs_selection() << endl;
 }
 
 

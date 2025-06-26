@@ -158,7 +158,7 @@ void OptimizationAlgorithm::check() const
 }
 
 
-string OptimizationAlgorithm::write_optimization_algorithm_type() const
+string OptimizationAlgorithm::get_name() const
 {
     return string();
 }

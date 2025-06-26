@@ -137,6 +137,7 @@
     <ClCompile Include="..\opennn\probabilistic_layer_3d.cpp" />
     <ClCompile Include="..\opennn\quasi_newton_method.cpp" />
     <ClCompile Include="..\opennn\recurrent_layer.cpp" />
+    <ClCompile Include="..\opennn\registry.cpp" />
     <ClCompile Include="..\opennn\response_optimization.cpp" />
     <ClCompile Include="..\opennn\scaling.cpp" />
     <ClCompile Include="..\opennn\scaling_layer_2d.cpp" />
@@ -215,6 +216,7 @@
     <ClInclude Include="..\opennn\probabilistic_layer_3d.h" />
     <ClInclude Include="..\opennn\quasi_newton_method.h" />
     <ClInclude Include="..\opennn\recurrent_layer.h" />
+    <ClInclude Include="..\opennn\registry.h" />
     <ClInclude Include="..\opennn\response_optimization.h" />
     <ClInclude Include="..\opennn\scaling.h" />
     <ClInclude Include="..\opennn\scaling_layer_2d.h" />
