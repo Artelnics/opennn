@@ -18,6 +18,7 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
 
@@ -186,7 +187,6 @@ public:
                                        output_dimensions,
                                        Dense2d::Activation::Softmax,
                                        "dense_2d_layer_softmax"));
-
     }
 };
 

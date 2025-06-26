@@ -49,8 +49,6 @@ void Transformer::set(const Index& new_decoder_length,
 {
     name = "transformer";
 
-    model_type = ModelType::TextClassification;
-
     input_length = new_input_length;
     decoder_length = new_decoder_length;
 

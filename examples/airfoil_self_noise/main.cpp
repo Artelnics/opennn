@@ -12,6 +12,7 @@
 
 #include "../../opennn/registry.h"
 #include "../../opennn/dataset.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/perceptron_layer.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
@@ -31,8 +32,7 @@ int main()
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
+        ApproximationNetwork aproximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
 /*
         for (const auto& name : Registry<LossIndex>::instance().registered_names())
@@ -42,7 +42,7 @@ int main()
             std::cout << "Registered optimizer: " << name << "\n";
 */
 
-        MeanSquaredError mean_squared_error(&neural_network, &dataset);
+        MeanSquaredError mean_squared_error(&aproximation_network, &dataset);
 
         cout << mean_squared_error.calculate_numerical_error() << endl;
 

@@ -84,9 +84,9 @@ public:
 
 private:
 
-    Index time_steps = type(10);
+    Index time_steps = type(0);
 
-    Index batch_size = type(10);
+    Index batch_size = type(0);
 
     Tensor<type, 1> biases;
 
@@ -94,11 +94,9 @@ private:
 
     Tensor<type, 2> recurrent_weights;
 
-    Activation activation_function = Activation::HyperbolicTangent;
-
-    Tensor<type, 3> hidden_states;
-
     Tensor<type, 2> previous_hidden_states;
+
+    Activation activation_function = Activation::Linear;
 
 #ifdef OPENNN_CUDA
     // @todo
@@ -123,6 +121,8 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> current_activations_derivatives;
 
     Tensor<type, 3> activation_derivatives;
+
+    Tensor<type, 3> hidden_states;
 };
 
 
