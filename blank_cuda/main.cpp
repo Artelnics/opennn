@@ -99,7 +99,7 @@ int main()
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-        testing_analysis.set_batch_size(8);
+        testing_analysis.set_batch_size(16);
 
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();

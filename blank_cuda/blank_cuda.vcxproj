@@ -221,6 +221,7 @@
     <ClInclude Include="..\opennn\scaling.h" />
     <ClInclude Include="..\opennn\scaling_layer_2d.h" />
     <ClInclude Include="..\opennn\scaling_layer_4d.h" />
+    <ClInclude Include="..\opennn\standard_networks.h" />
     <ClInclude Include="..\opennn\statistics.h" />
     <ClInclude Include="..\opennn\stochastic_gradient_descent.h" />
     <ClInclude Include="..\opennn\strings_utilities.h" />
