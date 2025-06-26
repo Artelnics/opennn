@@ -51,18 +51,7 @@ class NeuralNetwork
 
 public:
 
-   enum class ModelType{Default,
-                        AutoAssociation,
-                        Approximation,
-                        Classification,
-                        Forecasting,
-                        ImageClassification,
-                        TextClassification};
-
-   NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
-                 const dimensions& = {},
-                 const dimensions& = {},
-                 const dimensions& = {});
+   NeuralNetwork();
 
    NeuralNetwork(const filesystem::path&);
 
@@ -79,9 +68,6 @@ public:
 
    const vector<string>& get_input_names() const;
    Index get_input_index(const string&) const;
-
-   ModelType get_model_type() const;
-   string get_model_type_string() const;
 
    const vector<string>& get_output_names() const;
    Index get_output_index(const string&) const;
@@ -103,18 +89,6 @@ public:
 
    // Set
 
-   void set(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
-            const dimensions& = {}, 
-            const dimensions& = {},
-            const dimensions& = {});
-
-   void set_approximation(const dimensions&, const dimensions&, const dimensions&);
-   void set_classification(const dimensions&, const dimensions&, const dimensions&);
-   void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
-   void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
-   void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
-   void set_text_classification(const dimensions&, const dimensions&, const dimensions&);
-
    void set(const filesystem::path&);
 
    void set_layers_number(const Index&);
@@ -126,8 +100,6 @@ public:
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 
-   void set_model_type(const ModelType&);
-   void set_model_type_string(const string&);
    void set_input_names(const vector<string>&);
    void set_output_names(const vector<string>&);
 
@@ -305,8 +277,6 @@ protected:
 protected:
 
    string name = "neural_network";
-
-   NeuralNetwork::ModelType model_type = NeuralNetwork::ModelType::Default;
 
    vector<string> input_names;
 

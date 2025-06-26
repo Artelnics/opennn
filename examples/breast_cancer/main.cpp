@@ -10,6 +10,7 @@
 
 #include "../../opennn/dataset.h"
 #include "../../opennn/neural_network.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 
@@ -32,19 +33,17 @@ int main()
 
         const Index neurons_number = 3;
         
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                    { inputs_number }, { neurons_number}, { targets_number });
+        ClassificationNetwork classification_network({ inputs_number }, { neurons_number}, { targets_number });
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &dataset);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.print();
 
         training_strategy.perform_training();
 
-        TestingAnalysis testing_analysis(&neural_network, &dataset);
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
         testing_analysis.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;

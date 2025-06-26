@@ -43,7 +43,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     neural_network.add_layer(make_unique<Dense2d>(dimensions{ 1 },
         dimensions{ 1 },
-        Dense2d::Activation::Linear));
+        "Linear"));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
     

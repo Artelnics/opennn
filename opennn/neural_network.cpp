@@ -31,12 +31,8 @@
 namespace opennn
 {
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
-                             const dimensions& input_dimensions,
-                             const dimensions& complexity_dimensions,
-                             const dimensions& output_dimensions)
+NeuralNetwork::NeuralNetwork()
 {
-    set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
 }
 
 
@@ -97,28 +93,6 @@ Index NeuralNetwork::get_input_index(const string& input_name) const
             return i;
 
     throw runtime_error("Input name not found: " + input_name);
-}
-
-
-NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
-{
-    return model_type;
-}
-
-
-string NeuralNetwork::get_model_type_string() const
-{
-    switch (model_type)
-    {
-        case ModelType::Default: return "Default";
-        case ModelType::AutoAssociation: return "AutoAssociation";
-        case ModelType::Approximation: return "Approximation";
-        case ModelType::Classification: return "Classification";
-        case ModelType::Forecasting: return "Forecasting";
-        case ModelType::TextClassification: return "TextClassification";
-        case ModelType::ImageClassification: return "ImageClassification";
-        default: throw runtime_error("Unkown model type");
-    }
 }
 
 
@@ -231,271 +205,9 @@ const bool& NeuralNetwork::get_display() const
 }
 
 
-void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
-                        const dimensions& input_dimensions, 
-                        const dimensions& complexity_dimensions,
-                        const dimensions& output_dimensions)
-{
-    set_default();
-
-    layers.resize(0);
-
-    model_type = new_model_type;
-
-    const Index inputs_number = accumulate(input_dimensions.begin(), 
-                                           input_dimensions.end(), 
-                                           1, 
-                                           multiplies<Index>());
-
-    if(input_names.empty())
-    {
-        input_names.resize(inputs_number);
-
-        for(Index i = 0; i < inputs_number; i++)
-            input_names[i] = "input_" + to_string(i+1);
-    }
-
-    const Index outputs_number = accumulate(output_dimensions.begin(),
-                                            output_dimensions.end(),
-                                            1,
-                                            multiplies<Index>());
-
-    if(output_names.empty())
-    {
-        output_names.resize(outputs_number);
-        for(Index i = 0; i < outputs_number; i++)
-            output_names[i] = "output_" + to_string(i+1);
-    }
-
-    switch(model_type)
-    {    
-    case ModelType::Approximation:
-        set_approximation(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-    
-    case ModelType::Classification: 
-        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
-    case ModelType::Forecasting:
-        set_forecasting(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
-    case ModelType::ImageClassification:
-        set_image_classification(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-    
-    case ModelType::AutoAssociation:
-        set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
-    case ModelType::TextClassification:
-        set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
-    default:
-        break;
-    }
-}
-
-
-void NeuralNetwork::set_approximation(const dimensions& input_dimensions, 
-                                      const dimensions& complexity_dimensions, 
-                                      const dimensions& output_dimensions)
-{
-    const Index complexity_size = complexity_dimensions.size();
-
-    add_layer(make_unique<Scaling2d>(input_dimensions));
-
-    for (Index i = 0; i < complexity_size; i++)
-        add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                       dimensions{ complexity_dimensions[i] },
-                                       Dense2d::Activation::RectifiedLinear,
-                                       "dense2d_layer_" + to_string(i + 1)));
-
-    add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                   output_dimensions,
-                                   Dense2d::Activation::Linear,
-                                   "approximation_layer"));
-
-    add_layer(make_unique<Unscaling>(output_dimensions));
-
-    add_layer(make_unique<Bounding>(output_dimensions));
-}
-
-
-void NeuralNetwork::set_classification(const dimensions& input_dimensions, 
-                                       const dimensions& complexity_dimensions, 
-                                       const dimensions& output_dimensions)
-{
-    const Index complexity_size = complexity_dimensions.size();
-
-    add_layer(make_unique<Scaling2d>(input_dimensions));
-
-    for (Index i = 0; i < complexity_size; i++)
-        add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                       dimensions{complexity_dimensions[i]},
-                                       Dense2d::Activation::HyperbolicTangent,
-                                       "dense2d_layer_" + to_string(i + 1)));
-
-    add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                   output_dimensions,
-                                   Dense2d::Activation::Logistic,
-                                   "classification_layer"));
-}
-
-
-void NeuralNetwork::set_forecasting(const dimensions& input_dimensions, 
-                                    const dimensions& complexity_dimensions, 
-                                    const dimensions& output_dimensions)
-{
-    add_layer(make_unique<Scaling2d>(input_dimensions));
-
-    add_layer(make_unique<Recurrent>(get_output_dimensions(),
-                                     output_dimensions));
-
-    add_layer(make_unique<Unscaling>(output_dimensions));
-
-    add_layer(make_unique<Bounding>(output_dimensions));
-}
-
-
-void NeuralNetwork::set_auto_association(const dimensions& input_dimensions, 
-                                         const dimensions& complexity_dimensions, 
-                                         const dimensions& output_dimensions)
-{
-    add_layer(make_unique<Scaling2d>(input_dimensions));
-
-    const Index mapping_neurons_number = 10;
-    const Index bottle_neck_neurons_number = complexity_dimensions[0];
-
-    add_layer(make_unique<Dense2d>(input_dimensions,
-                                      dimensions{mapping_neurons_number}, 
-                                      Dense2d::Activation::HyperbolicTangent,
-                                      "mapping_layer"));
-
-    add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
-                                      dimensions{ bottle_neck_neurons_number },
-                                      Dense2d::Activation::Linear,
-                                      "bottleneck_layer"));
-
-    add_layer(make_unique<Dense2d>(dimensions{ bottle_neck_neurons_number },
-                                      dimensions{ mapping_neurons_number },
-                                      Dense2d::Activation::HyperbolicTangent,
-                                      "demapping_layer"));
-
-    add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
-                                      dimensions{ output_dimensions }, 
-                                      Dense2d::Activation::Linear,
-                                      "output_layer"));
-
-    add_layer(make_unique<Unscaling>(output_dimensions));
-}
-
-
-void NeuralNetwork::set_image_classification(const dimensions& input_dimensions, 
-                                             const dimensions& complexity_dimensions, 
-                                             const dimensions& output_dimensions)
-{
-    if (input_dimensions.size() != 3)
-        throw runtime_error("Input dimensions size is not 3.");
-
-    add_layer(make_unique<Scaling4d>(input_dimensions));
-    
-    const Index complexity_size = complexity_dimensions.size();
-    
-    for (Index i = 0; i < complexity_size; i++)
-    {
-        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
-        const dimensions stride_dimensions = { 1, 1 };
-        
-        add_layer(make_unique<Convolutional>(get_output_dimensions(),
-                                             kernel_dimensions,
-                                             Convolutional::Activation::RectifiedLinear,
-                                             stride_dimensions,
-                                             Convolutional::Convolution::Same,
-                                             "convolutional_layer_" + to_string(i+1)));
-        
-        const dimensions pool_dimensions = { 2, 2 };
-        const dimensions pooling_stride_dimensions = { 2, 2 };
-        const dimensions padding_dimensions = { 0, 0 };
-        
-        add_layer(make_unique<Pooling>(get_output_dimensions(),
-                                       pool_dimensions,
-                                       pooling_stride_dimensions,
-                                       padding_dimensions,
-                                       Pooling::PoolingMethod::MaxPooling,
-                                       "pooling_layer_" + to_string(i + 1)));
-    }
-    
-    add_layer(make_unique<Flatten>(get_output_dimensions()));
-
-    add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                   output_dimensions,
-                                   Dense2d::Activation::Softmax,
-                                   "dense_2d_layer_softmax"));
-}
-
-
-void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
-                                            const dimensions& complexity_dimensions,
-                                            const dimensions& output_dimensions)
-{
-    layers.clear();
-
-    const Index vocabulary_size = input_dimensions[0];
-    const Index sequence_length = input_dimensions[1];
-    const Index embedding_dimension = input_dimensions[2];
-
-    add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
-        embedding_dimension,
-        "embedding_layer"
-        ));
-
-    add_layer(make_unique<Pooling3d>(
-        get_output_dimensions()
-        ));
-
-    // add_layer(make_unique<Flatten3d>(
-    //     get_output_dimensions()
-    //     ));
-
-    add_layer(make_unique<Dense2d>(
-        get_output_dimensions(),
-        output_dimensions,
-        Dense2d::Activation::Logistic,
-        "classification_layer"));
-}
-
-
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
     load(file_name);
-}
-
-
-void NeuralNetwork::set_model_type(const NeuralNetwork::ModelType& new_model_type)
-{
-    model_type = new_model_type;
-}
-
-
-void NeuralNetwork::set_model_type_string(const string& new_model_type)
-{
-    if(new_model_type == "Approximation")
-        set_model_type(ModelType::Approximation);
-    else if(new_model_type == "Classification")
-        set_model_type(ModelType::Classification);
-    else if(new_model_type == "Forecasting")
-        set_model_type(ModelType::Forecasting);
-    else if(new_model_type == "ImageClassification")
-        set_model_type(ModelType::ImageClassification);
-    else if(new_model_type == "TextClassification")
-        set_model_type(ModelType::TextClassification);
-    else if(new_model_type == "AutoAssociation")
-        set_model_type(ModelType::AutoAssociation);
-    else
-        throw runtime_error("Unknown model type: " + new_model_type + "\n");
 }
 
 
@@ -598,9 +310,11 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
+    // @todo model_type has been removed
+/*
     if(model_type == ModelType::TextClassification)
         return input_names.size();
-
+*/
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
@@ -811,15 +525,15 @@ string NeuralNetwork::get_expression() const
 
     ostringstream buffer;
 
-    for (Index i = 0; i < layers_number; i++){
+    for (Index i = 0; i < layers_number; i++)
+    {
         if (i == layers_number - 1)
         {
-            for (int j = 0; j < output_names.size(); j++){
-                if (!output_names[j].empty())
-                    new_output_names[j] = output_names[j];
-                else
-                    new_output_names[j] = "output_" + to_string(i);
-            }
+            for (int j = 0; j < outputs_number; j++)
+                new_output_names[j] = !output_names[j].empty()
+                      ? output_names[j]
+                      : "output_" + to_string(i);
+
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
         }
         else
@@ -829,10 +543,9 @@ string NeuralNetwork::get_expression() const
             new_output_names.resize(layer_neurons_number);
             
             for (Index j = 0; j < layer_neurons_number; j++)
-                if (layer_names[i] == "scaling_layer")
-                    new_output_names[j] = "scaled_" + input_names[j];
-                else
-                    new_output_names[j] = layer_names[i] + "_output_" + to_string(j);
+                new_output_names[j] = (layer_names[i] == "scaling_layer")
+                      ? "scaled_" + input_names[j]
+                      : layer_names[i] + "_output_" + to_string(j);
 
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
@@ -1034,7 +747,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 
         const Dense2d* dense2d_layer = static_cast<Dense2d*>(layers[i].get());
 
-        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function_string();
+        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function();
 
         dense2d_layer_index++;
     }
@@ -1063,9 +776,9 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
         information(probabilistic_layer_index,1) = to_string(layers[i]->get_output_dimensions()[0]);
 
-        const Dense2d* dense_2d_layer = static_cast<Dense2d*>(layers[i].get());
+        const Dense2d* dense_2d = static_cast<Dense2d*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = dense_2d_layer->get_activation_function_string();
+        information(probabilistic_layer_index,2) = dense_2d->get_activation_function();
 
         probabilistic_layer_index++;
     }
@@ -1116,7 +829,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     // Outputs
 
     printer.OpenElement("Outputs");
-
+/*
     if(model_type != ModelType::TextClassification)
         add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
@@ -1130,7 +843,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     else
         for (size_t i = 0; i < output_names.size(); i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
+*/
     printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(display));
@@ -1141,7 +854,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
-    set();
+    //set();
 
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
@@ -1295,19 +1008,9 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
 void NeuralNetwork::print() const
 {
-    cout << "Neural network" << endl
-         << "Model type:" << get_model_type_string() << endl;
+    cout << "Neural network" << endl;
 
-    if(model_type != ModelType::ImageClassification)
-         cout << "Model type:" << endl
-         << get_model_type_string() << endl;
-
-    if(model_type != ModelType::ImageClassification
-    && model_type != ModelType::TextClassification)
-    {
-        cout << "Inputs:" << endl;
-        print_vector(get_input_names());
-    }
+    print_vector(get_input_names());
 
     const Index layers_number = get_layers_number();       
 
@@ -1478,7 +1181,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
+    {           
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:

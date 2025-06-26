@@ -49,8 +49,7 @@ public:
 
    void to_XML(XMLPrinter &) const override;
 
-   string get_loss_method() const override;
-   string get_error_type_text() const override;
+   string get_name() const override;
 
 #ifdef OPENNN_CUDA
 

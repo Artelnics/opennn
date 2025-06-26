@@ -19,12 +19,6 @@ class Recurrent : public Layer
 
 public:
 
-    enum class Activation{Logistic, 
-                          HyperbolicTangent,
-                          Linear, 
-                          RectifiedLinear,
-                          ExponentialLinear};
-
    Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
    dimensions get_input_dimensions() const override;
@@ -35,9 +29,7 @@ public:
    Index get_parameters_number() const override;
    void get_parameters(Tensor<type, 1>&) const override;
 
-   const Recurrent::Activation& get_activation_function() const;
-
-   string get_activation_function_string() const;
+   string get_activation_function() const;
 
    void set(const dimensions& = {}, const dimensions& = {});
 
@@ -48,17 +40,12 @@ public:
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   
    void set_parameters_random() override;
 
    void calculate_combinations(const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
-
-   void calculate_activations(Tensor<type, 2>&,
-                              Tensor<type, 2>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
@@ -84,9 +71,9 @@ public:
 
 private:
 
-    Index time_steps = type(10);
+    Index time_steps = type(0);
 
-    Index batch_size = type(10);
+    Index batch_size = type(0);
 
     Tensor<type, 1> biases;
 
@@ -94,11 +81,9 @@ private:
 
     Tensor<type, 2> recurrent_weights;
 
-    Activation activation_function = Activation::HyperbolicTangent;
-
-    Tensor<type, 3> hidden_states;
-
     Tensor<type, 2> previous_hidden_states;
+
+    string activation_function = "Linear";
 
 #ifdef OPENNN_CUDA
     // @todo
@@ -123,6 +108,8 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> current_activations_derivatives;
 
     Tensor<type, 3> activation_derivatives;
+
+    Tensor<type, 3> hidden_states;
 };
 
 

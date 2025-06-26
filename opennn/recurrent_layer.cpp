@@ -58,23 +58,9 @@ void Recurrent::get_parameters(Tensor<type, 1>& parameters) const
 }
 
 
-const Recurrent::Activation& Recurrent::get_activation_function() const
+string Recurrent::get_activation_function() const
 {
     return activation_function;
-}
-
-
-string Recurrent::get_activation_function_string() const
-{
-    switch(activation_function)
-    {
-    case Activation::Logistic: return "Logistic";
-    case Activation::HyperbolicTangent: return "HyperbolicTangent";
-    case Activation::Linear: return "Linear";
-    case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::ExponentialLinear: return "ExponentialLinear";
-    default: return string();
-    }
 }
 
 
@@ -87,10 +73,6 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
     input_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
-
-    hidden_states.resize(batch_size, time_steps, new_output_dimensions[0]);
-
-    hidden_states.setZero();
 
     set_parameters_random();
 
@@ -134,26 +116,17 @@ void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, Index& ind
 }
 
 
-void Recurrent::set_activation_function(const Recurrent::Activation& new_activation_function)
-{
-    activation_function = new_activation_function;
-}
 
-
-void Recurrent::set_activation_function(const string& new_activation_function_name)
+void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function_name == "Logistic")
-        activation_function = Activation::Logistic;
-    else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = Activation::HyperbolicTangent;
-    else if(new_activation_function_name == "Linear")
-        activation_function = Activation::Linear;
-    else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = Activation::RectifiedLinear;
-    else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = Activation::ExponentialLinear;
+    if(new_activation_function == "Logistic"
+    || new_activation_function == "HyperbolicTangent"
+    || new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "ExponentialLinear")
+        activation_function = new_activation_function;
     else
-        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
+        throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
 
@@ -177,21 +150,6 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void Recurrent::calculate_activations(Tensor<type, 2>& activations,
-                                      Tensor<type, 2>& activation_derivatives) const
-{
-    switch(activation_function)
-    {
-    case Activation::Linear: linear(activations, activation_derivatives); return;
-    case Activation::Logistic: logistic(activations, activation_derivatives); return;
-    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-    default: throw runtime_error("Unknown activation function");
-    }
-}
-
-
 void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool& is_training)
@@ -199,9 +157,6 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
-
-    hidden_states.resize(batch_size, time_steps, input_size);
-    hidden_states.setZero();
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
@@ -211,6 +166,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
     Tensor<type, 2>& current_activations_derivatives = recurrent_forward->current_activations_derivatives;
+    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
 
     outputs.resize(batch_size, input_size);
 
@@ -230,7 +186,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         current_activations_derivatives = activation_derivatives.chip(t, 1);
 
-        calculate_activations(outputs, current_activations_derivatives);
+        calculate_activations(activation_function, outputs, current_activations_derivatives);
 
         activation_derivatives.chip(t,1) = current_activations_derivatives;
 
@@ -258,6 +214,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     RecurrentBackPropagation* recurrent_backward =
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
+    Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
+
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
@@ -268,10 +226,13 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
 
-    current_deltas = deltas;
-
     for(Index t = time_steps - 1; t >= 0; --t)
     {
+        if (t == time_steps - 1)
+            current_deltas = deltas;
+        else
+            current_deltas += current_combinations_derivatives;
+
         combination_deltas.device(*thread_pool_device) =
             current_deltas * activation_derivatives.chip(t,1);
 
@@ -287,9 +248,9 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
             current_combinations_derivatives.device(*thread_pool_device) =
                 combination_deltas.contract(recurrent_weights, axes(1,0));
-
-            current_deltas = current_combinations_derivatives;
         }
+        else
+            current_combinations_derivatives.setZero();
 
         bias_deltas.device(*thread_pool_device) += combination_deltas.sum(array<Index, 1>({ 0 }));
 
@@ -336,12 +297,15 @@ string Recurrent::get_expression(const vector<string>& input_names,
 
 string Recurrent::get_activation_function_string_expression() const
 {
+/*
     switch(activation_function)
     {
     case Activation::HyperbolicTangent: return "tanh";
     case Activation::Linear: return string();
     default: return get_activation_function_string();
     }
+*/
+    return string();
 }
 
 
@@ -361,7 +325,7 @@ void Recurrent::print() const
     cout << "Recurrent weights:" << endl;
     cout << recurrent_weights << endl;
     cout << "Activation function:" << endl;
-    cout << get_activation_function_string() << endl;
+    cout << activation_function << endl;
 }
 
 
@@ -391,7 +355,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", get_name());
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "Activation", get_activation_function_string());
+    add_xml_element(printer, "Activation", activation_function);
 
     Tensor<type, 1> parameters;
     get_parameters(parameters);
@@ -423,8 +387,8 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index time_steps = layer->get_input_dimensions()[1];
 
     current_inputs.resize(batch_size, time_steps, inputs_number);
 
@@ -434,6 +398,9 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
 
     outputs.resize(batch_size, outputs_number);
     outputs.setZero();
+
+    hidden_states.resize(batch_size, time_steps, outputs_number);
+    hidden_states.setZero();
 }
 
 
@@ -449,8 +416,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index time_steps = layer->get_input_dimensions()[1];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);

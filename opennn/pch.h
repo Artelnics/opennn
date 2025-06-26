@@ -68,6 +68,10 @@
     } \
 } while(0)
 
+#define CHECK_CUDA_MALLOC(ptr, size) do { \
+    printf("CUDA Malloc: Allocating %.2f MB for %s\n", (double)(size) / (1024 * 1024), #ptr); \
+} while(0)
+
 #endif
 
 using namespace std;

@@ -15,7 +15,7 @@ namespace opennn
 
 Convolutional::Convolutional(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions,
-                             const Convolutional::Activation& new_activation_function,
+                             const string& new_activation_function,
                              const dimensions& new_stride_dimensions,
                              const Convolutional::Convolution& new_convolution_type,
                              const string new_name) : Layer()
@@ -103,20 +103,6 @@ void Convolutional::apply_batch_normalization(unique_ptr<LayerForwardPropagation
 }
 
 
-void Convolutional::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activation_derivatives) const
-{
-    switch(activation_function)
-    {
-    case Activation::Linear: linear(activations, activation_derivatives); return;
-    case Activation::Logistic: logistic(activations, activation_derivatives); return;
-    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-    default: return;
-    }
-}
-
-
 void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                       unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                       const bool& is_training)
@@ -138,8 +124,8 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
         apply_batch_normalization(layer_forward_propagation, is_training);
 
     is_training
-        ? calculate_activations(outputs, activation_derivatives)
-        : calculate_activations(outputs, empty_4);
+        ? calculate_activations(activation_function, outputs, activation_derivatives)
+        : calculate_activations(activation_function, outputs, empty_4);
 }
 
 
@@ -275,24 +261,9 @@ void Convolutional::insert_gradient(unique_ptr<LayerBackPropagation>& back_propa
 }
 
 
-Convolutional::Activation Convolutional::get_activation_function() const
+const string& Convolutional::get_activation_function() const
 {
     return activation_function;
-}
-
-
-string Convolutional::get_activation_function_string() const
-{
-    switch(activation_function)
-    {
-    case Activation::Logistic: return "Logistic";
-    case Activation::HyperbolicTangent: return "HyperbolicTangent";
-    case Activation::Linear: return "Linear";
-    case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::ExponentialLinear: return "ExponentialLinear";
-    }
-
-    return string();
 }
 
 
@@ -440,7 +411,7 @@ Index Convolutional::get_parameters_number() const
 
 void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
-                        const Convolutional::Activation& new_activation_function,
+                        const string& new_activation_function,
                         const dimensions& new_stride_dimensions,
                         const Convolution& new_convolution_type,
                         const string new_name)
@@ -520,26 +491,16 @@ void Convolutional::set_parameters_random()
 }
 
 
-void Convolutional::set_activation_function(const Convolutional::Activation& new_activation_function)
+void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    activation_function = new_activation_function;
-}
-
-
-void Convolutional::set_activation_function(const string& new_activation_function_name)
-{
-    if(new_activation_function_name == "Logistic")
-        activation_function = Activation::Logistic;
-    else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = Activation::HyperbolicTangent;
-    else if(new_activation_function_name == "Linear")
-        activation_function = Activation::Linear;
-    else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = Activation::RectifiedLinear;
-    else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = Activation::ExponentialLinear;
+    if(new_activation_function == "Logistic"
+    || new_activation_function == "HyperbolicTangent"
+    || new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "ExponentialLinear")
+        activation_function = new_activation_function;
     else
-        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
+        throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
 
@@ -665,7 +626,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
     add_xml_element(printer, "KernelsWidth", to_string(get_kernel_width()));
     add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
-    add_xml_element(printer, "Activation", get_activation_function_string());
+    add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
 

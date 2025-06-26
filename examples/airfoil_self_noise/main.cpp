@@ -10,7 +10,9 @@
 #include <string>
 #include <time.h>
 
+#include "../../opennn/registry.h"
 #include "../../opennn/dataset.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/perceptron_layer.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
@@ -30,17 +32,33 @@ int main()
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
+        ApproximationNetwork aproximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
-        TrainingStrategy training_strategy(&neural_network, &dataset);
+/*
+        for (const auto& name : Registry<LossIndex>::instance().registered_names())
+            std::cout << "Registered loss: " << name << "\n";
 
-        training_strategy.perform_training();
+        for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
+            std::cout << "Registered optimizer: " << name << "\n";
+*/
 
+        MeanSquaredError mean_squared_error(&aproximation_network, &dataset);
+
+        cout << mean_squared_error.calculate_numerical_error() << endl;
+
+/*
+        AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
+
+        adaptive_moment_estimation.perform_training();
+
+//        TrainingStrategy training_strategy(&neural_network, &dataset);
+
+//        training_strategy.perform_training();
+/*
         TestingAnalysis testing_analysis(&neural_network, &dataset);
 
         testing_analysis.print_goodness_of_fit_analysis();
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

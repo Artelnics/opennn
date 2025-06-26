@@ -11,6 +11,7 @@
 
 #include "../../opennn/dataset.h"
 #include "../../opennn/neural_network.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 
@@ -35,20 +36,19 @@ int main()
 
         const Index neurons_number = 6;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                     {inputs_number}, {neurons_number}, {targets_number});
+        ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
 
-        neural_network.print();
+        classification_network.print();
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &dataset);
+        TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.perform_training();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &dataset);
+        const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;

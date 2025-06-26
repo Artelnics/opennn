@@ -157,6 +157,26 @@ protected:
     bool display = true;
 
     template <int Rank>
+    void calculate_activations(const string& activation_function,
+                               Tensor<type, Rank>& activations,
+                               Tensor<type, Rank>& activation_derivatives) const
+    {
+        if (activation_function == "Linear")
+            linear(activations, activation_derivatives);
+        else if (activation_function == "Logistic")
+            logistic(activations, activation_derivatives);
+        else if (activation_function == "HyperbolicTangent")
+            hyperbolic_tangent(activations, activation_derivatives);
+        else if (activation_function == "RectifiedLinear")
+            rectified_linear(activations, activation_derivatives);
+        else if (activation_function == "ExponentialLinear")
+            exponential_linear(activations, activation_derivatives);
+        else
+            throw runtime_error("Unknown activation: " + activation_function);
+    }
+
+
+    template <int Rank>
     void binary(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type threshold) const
     {
         y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
