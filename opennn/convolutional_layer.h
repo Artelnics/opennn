@@ -21,24 +21,16 @@ public:
     enum class Convolution{Valid, 
                            Same};
 
-    enum class Activation{Logistic,
-                          HyperbolicTangent,
-                          Linear,
-                          RectifiedLinear,
-                          ExponentialLinear};
-
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
-                  const Activation& = Activation::Linear,
+                  const string& = "Linear",
                   const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                   const Convolution& = Convolution::Valid,          // Convolution type (Valid || Same)
                   const string = "convolutional_layer");
 
     bool get_batch_normalization() const;
 
-    Activation get_activation_function() const;
-
-    string get_activation_function_string() const;
+    const string& get_activation_function() const;
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -76,12 +68,11 @@ public:
 
     void set(const dimensions& = {0, 0, 0},
              const dimensions& = {3, 3, 1, 1},
-             const Activation& = Activation::Linear,
+             const string& = "Linear",
              const dimensions& = {1, 1},
              const Convolution& = Convolution::Valid,
              const string = "convolutional_layer");
 
-    void set_activation_function(const Activation&);
     void set_activation_function(const string&);
 
     void set_batch_normalization(const bool&);
@@ -112,8 +103,6 @@ public:
                                 Tensor<type, 4>&) const;
 
     void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
-
-    void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -187,7 +176,7 @@ private:
 
    Convolution convolution_type = Convolution::Valid;
 
-   Activation activation_function = Activation::Linear;
+   string activation_function = "Linear";
 
    // Batch normalization
 
@@ -207,7 +196,7 @@ private:
 
 struct ConvolutionalForwardPropagation : LayerForwardPropagation
 {
-   
+
    ConvolutionalForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_output_pair() const override;

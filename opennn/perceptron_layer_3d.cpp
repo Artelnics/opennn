@@ -16,7 +16,7 @@ namespace opennn
 Dense3d::Dense3d(const Index& new_sequence_length,
                  const Index& new_input_embedding,
                  const Index& new_output_embedding,
-                 const Dense3d::Activation& new_activation_function,
+                 const string& new_activation_function,
                  const string& new_name) : Layer()
 {
     set(new_sequence_length, new_input_embedding, new_output_embedding, new_activation_function, new_name);
@@ -82,29 +82,17 @@ void Dense3d::get_parameters(Tensor<type, 1>& parameters) const
 }
 
 
-const Dense3d::Activation& Dense3d::get_activation_function() const
+
+string Dense3d::get_activation_function() const
 {
     return activation_function;
-}
-
-
-string Dense3d::get_activation_function_string() const
-{
-    switch (activation_function)
-    {
-    case Activation::HyperbolicTangent: return "HyperbolicTangent";
-    case Activation::Linear: return "Linear";
-    case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::Softmax: return "Softmax";
-    default: return {};
-    }
 }
 
 
 void Dense3d::set(const Index& new_sequence_length,
                   const Index& new_input_dimension,
                   const Index& new_output_dimension,
-                  const Dense3d::Activation& new_activation_function,
+                  const string& new_activation_function,
                   const string& new_name)
 {
     sequence_length = new_sequence_length;
@@ -115,7 +103,7 @@ void Dense3d::set(const Index& new_sequence_length,
 
     set_parameters_glorot();
 
-    activation_function = new_activation_function;
+    set_activation_function(new_activation_function);
 
     name = new_name;
 
@@ -132,24 +120,15 @@ void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index
 }
 
 
-void Dense3d::set_activation_function(const Dense3d::Activation& new_activation_function)
+void Dense3d::set_activation_function(const string& new_activation_function)
 {
-    activation_function = new_activation_function;
-}
-
-
-void Dense3d::set_activation_function(const string& new_activation_function_name)
-{
-    if (new_activation_function_name == "HyperbolicTangent")
-        activation_function = Activation::HyperbolicTangent;
-    else if (new_activation_function_name == "Linear")
-        activation_function = Activation::Linear;
-    else if (new_activation_function_name == "RectifiedLinear")
-        activation_function = Activation::RectifiedLinear;
-    else if (new_activation_function_name == "Softmax")
-        activation_function = Activation::Softmax;
+    if(new_activation_function == "HyperbolicTangent"
+    ||  new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "Softmax")
+        activation_function = new_activation_function;
     else
-        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
+        throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
 
@@ -181,20 +160,6 @@ void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
 }
 
 
-void Dense3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
-{
-    switch(activation_function)
-    {
-    case Activation::Linear: linear(activations, activation_derivatives); return;
-    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::Logistic: logistic(activations, activation_derivatives); return;
-    case Activation::Softmax: softmax(activations); return;
-    default: return;
-    }
-}
-
-
 void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
@@ -213,8 +178,8 @@ void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
         dropout(outputs, dropout_rate);
 
     is_training
-        ? calculate_activations(outputs, this_forward_propagation->activation_derivatives)
-        : calculate_activations(outputs, empty_3);
+        ? calculate_activations(activation_function, outputs, this_forward_propagation->activation_derivatives)
+        : calculate_activations(activation_function, outputs, empty_3);
 }
 
 
@@ -299,7 +264,7 @@ void Dense3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
     add_xml_element(printer, "InputsDepth", to_string(get_input_embedding()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
-    add_xml_element(printer, "Activation", get_activation_function_string());
+    add_xml_element(printer, "Activation", activation_function);
 
     Tensor<type, 1> parameters;
     get_parameters(parameters);

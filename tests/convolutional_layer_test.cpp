@@ -36,7 +36,7 @@ class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLaye
 
 INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
-        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, Convolutional::Activation::Linear, Convolutional::Convolution::Valid, "ConvolutionLayer",
+        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, "Linear", Convolutional::Convolution::Valid, "ConvolutionLayer",
         ([] {
             Tensor<type, 2> data(1, 16);
             data.setValues({

@@ -21,10 +21,10 @@ public:
 
    enum class Activation { Softmax, Competitive };
 
-   Probabilistic3d(const Index& = 0, 
-                        const Index& = 0, 
-                        const Index& = 0,
-                        const string& = "probabilistic_layer_3d");
+   Probabilistic3d(const Index& = 0,
+                   const Index& = 0,
+                   const Index& = 0,
+                   const string& = "probabilistic_layer_3d");
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;

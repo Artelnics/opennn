@@ -116,7 +116,7 @@ void Transformer::set(const Index& new_decoder_length,
         add_layer(make_unique<Dense3d>(new_input_length,
                                        new_embedding_dimension,
                                        new_perceptron_depth,
-                                       Dense3d::Activation::RectifiedLinear,
+                                       "RectifiedLinear",
                                        "encoder_internal_perceptron_" + to_string(i+1)));
         
         set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "input_self_attention_normalization_" + to_string(i+1));
@@ -126,7 +126,7 @@ void Transformer::set(const Index& new_decoder_length,
         add_layer(make_unique<Dense3d>(new_input_length,
                                        new_perceptron_depth,
                                        new_embedding_dimension,
-                                       Dense3d::Activation::HyperbolicTangent,
+                                       "HyperbolicTangent",
                                        "encoder_external_perceptron_" + to_string(i+1)));
 
         set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i+1), "encoder_internal_perceptron_" + to_string(i+1));
@@ -200,7 +200,7 @@ void Transformer::set(const Index& new_decoder_length,
         add_layer(make_unique<Dense3d>(new_decoder_length,
                                        new_embedding_dimension,
                                        new_perceptron_depth,
-                                       Dense3d::Activation::RectifiedLinear,
+                                       "RectifiedLinear",
                                        "decoder_internal_perceptron_" + to_string(i+1)));
         
         set_layer_inputs_indices("decoder_internal_perceptron_" + to_string(i+1), "cross_attention_normalization_" + to_string(i+1));
@@ -208,7 +208,7 @@ void Transformer::set(const Index& new_decoder_length,
         add_layer(make_unique<Dense3d>(new_decoder_length,
                                        new_perceptron_depth,
                                        new_embedding_dimension,
-                                       Dense3d::Activation::HyperbolicTangent,
+                                       "HyperbolicTangent",
                                        "decoder_external_perceptron_" + to_string(i+1)));
 
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));

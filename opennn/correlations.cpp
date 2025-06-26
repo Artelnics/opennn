@@ -557,7 +557,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
-    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
+    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, "Logistic"));
 
     neural_network.set_parameters_random();
 
@@ -633,7 +633,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
-    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
+    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, "Logistic"));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
     mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
@@ -736,7 +736,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    dense_2d->set_activation_function(Dense2d::Activation::Softmax);
+    dense_2d->set_activation_function("Softmax");
     scaling_layer_2d->set_display(false);
 
     CrossEntropyError2d cross_entropy_error_2d(&neural_network, &dataset);
@@ -848,7 +848,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    dense_2d->set_activation_function(Dense2d::Activation::Softmax);
+    dense_2d->set_activation_function("Softmax");
 
     scaling_layer_2d->set_display(false);
 

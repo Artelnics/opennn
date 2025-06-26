@@ -15,7 +15,7 @@ namespace opennn
 
 Dense2d::Dense2d(const dimensions& new_input_dimensions,
                  const dimensions& new_output_dimensions,
-                 const Activation& new_activation_function,
+                 const string& new_activation_function,
                  const string& new_layer_name) : Layer()
 {
     set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_name);
@@ -38,6 +38,7 @@ void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
         throw runtime_error("Dropout rate must be in [0,1).");
+
     dropout_rate = new_dropout_rate;
 }
 
@@ -67,31 +68,15 @@ void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
 }
 
 
-const Dense2d::Activation& Dense2d::get_activation_function() const
+const string& Dense2d::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string Dense2d::get_activation_function_string() const
-{
-    switch(activation_function)
-    {
-    case Activation::Logistic: return "Logistic";
-    case Activation::HyperbolicTangent: return "HyperbolicTangent";
-    case Activation::Linear: return "Linear";
-    case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::ExponentialLinear: return "ExponentialLinear";
-    case Activation::Softmax: return "Softmax";
-    }
-
-    return string();
-}
-
-
 void Dense2d::set(const dimensions& new_input_dimensions,
                   const dimensions& new_output_dimensions,
-                  const Dense2d::Activation& new_activation_function,
+                  const string& new_activation_function,
                   const string& new_name)
 {
     if (new_input_dimensions.size() != 1)
@@ -168,35 +153,17 @@ void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index
 }
 
 
-void Dense2d::set_activation_function(const Dense2d::Activation& new_activation_function)
+void Dense2d::set_activation_function(const string& new_activation_function)
 {
-    if (new_activation_function == Activation::Softmax)
-    {
-        get_output_dimensions()[0] == 1
-            ? activation_function = Activation::Logistic
-            : activation_function = Activation::Softmax;
-    }
-    else
+    if(new_activation_function == "Logistic"
+    || new_activation_function == "HyperbolicTangent"
+    || new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "ExponentialLinear"
+    || new_activation_function == "Softmax")
         activation_function = new_activation_function;
-}
-
-
-void Dense2d::set_activation_function(const string& new_activation_function_name)
-{
-    if(new_activation_function_name == "Logistic")
-        activation_function = Activation::Logistic;
-    else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = Activation::HyperbolicTangent;
-    else if(new_activation_function_name == "Linear")
-        activation_function = Activation::Linear;
-    else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = Activation::RectifiedLinear;
-    else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = Activation::ExponentialLinear;
-    else if(new_activation_function_name == "Softmax")
-        activation_function = Activation::Softmax;
     else
-        throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
+        throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
 
@@ -241,21 +208,6 @@ void Dense2d::batch_normalization(Tensor<type, 1>& means,
 }
 */
 
-void Dense2d::calculate_activations(Tensor<type, 2>& activations,
-                                    Tensor<type, 2>& activation_derivatives) const
-{
-    switch(activation_function)
-    {
-    case Activation::Linear: linear(activations, activation_derivatives); return;
-    case Activation::Logistic: logistic(activations, activation_derivatives);return;
-    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-    case Activation::Softmax: softmax(activations); return;
-    default: return;
-    }
-}
-
 
 void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
@@ -272,8 +224,8 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                            outputs);
 
     is_training
-        ? calculate_activations(outputs, dense2d_forward_propagation->activation_derivatives)
-        : calculate_activations(outputs, empty_2);
+        ? calculate_activations(activation_function, outputs, dense2d_forward_propagation->activation_derivatives)
+        : calculate_activations(activation_function, outputs, empty_2);
 
     if(is_training && dropout_rate > type(0))
         dropout(outputs, dropout_rate);
@@ -308,7 +260,7 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
-    if(activation_function != Activation::Softmax)
+    if(activation_function != "Softmax")
         deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
     bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
@@ -460,7 +412,7 @@ void Dense2d::print() const
     cout << weights << endl;
 
     cout << "Activation function:" << endl;
-    cout << get_activation_function_string() << endl;
+    cout << activation_function << endl;
 }
 
 
@@ -489,7 +441,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "Activation", get_activation_function_string());
+    add_xml_element(printer, "Activation", activation_function);
 
     Tensor<type, 1> parameters;
     get_parameters(parameters);
@@ -502,6 +454,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
 
 string Dense2d::get_activation_function_string_expression() const
 {
+/*
     switch(activation_function)
     {
     case Activation::Logistic: return "logistic";
@@ -511,6 +464,8 @@ string Dense2d::get_activation_function_string_expression() const
     case Activation::ExponentialLinear: return "ELU";
     default: return string();
     }
+*/
+    return string();
 }
 
 
@@ -1126,5 +1081,5 @@ void Dense2dBackPropagationCuda::free()
 // Lesser General Public License for more details.
 
 // You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
+// License along with this library; if not, write to the Free Software Foundation.
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
