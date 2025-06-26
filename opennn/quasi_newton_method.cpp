@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
 #include "loss_index.h"
@@ -399,7 +400,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     const bool has_selection = dataset->has_selection();
 
-    const string error_type = loss_index->get_loss_method();
+    const string error_type = loss_index->get_name();
 
     const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 
@@ -570,9 +571,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
 }
 
 
-string QuasiNewtonMethod::write_optimization_algorithm_type() const
+string QuasiNewtonMethod::get_name() const
 {
-    return "QUASI_NEWTON_METHOD";
+    return "QuasiNewtonMethod";
 }
 
 
@@ -693,6 +694,18 @@ void QuasiNewtonMethodData::print() const
         << "Learning rate:" << endl
         << learning_rate << endl;
 }
+
+
+#ifdef OPENNN_CUDA
+
+TrainingResults QuasiNewtonMethod::perform_training_cuda()
+{
+    return TrainingResults();
+}
+
+#endif
+
+REGISTER(OptimizationAlgorithm, QuasiNewtonMethod, "QuasiNewtonMethod");
 
 }
 

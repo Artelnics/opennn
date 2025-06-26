@@ -793,20 +793,18 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
 
     float* ones = dense2d_layer_back_propagation->ones;
-    float* error_combinations_derivatives = dense2d_layer_back_propagation->combination_deltas_device;
 
     float* bias_deltas = dense2d_layer_back_propagation->bias_deltas_device;
     float* weight_deltas = dense2d_layer_back_propagation->weight_deltas_device;
     float* input_deltas = dense2d_layer_back_propagation->input_deltas;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = dense2d_layer_back_propagation->deltas_tensor_descriptor;
-    const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = dense2d_layer_back_propagation->combination_deltas_tensor_descriptor;
 
     // Dropout
 
     if (get_dropout_rate() > type(0))
     {
-        cudnnStatus_t dstatus = cudnnDropoutBackward(cudnn_handle,
+        cudnnStatus_t status = cudnnDropoutBackward(cudnn_handle,
             dense2d_layer_forward_propagation_cuda->dropout_descriptor,
             deltas_tensor_descriptor,
             deltas_device[0],
@@ -815,37 +813,39 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
             dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
             dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
 
-        if (dstatus != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(dstatus) << endl;
+        if (status != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(status) << endl;
     }
 
     // Error combinations derivatives
 
     if (dense2d_layer->get_activation_function() != Activation::Linear && dense2d_layer->get_activation_function() != Activation::Softmax)
-        cudnnActivationBackward(cudnn_handle,
+    {
+        cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
             &alpha,
-            combination_deltas_tensor_descriptor,
+            deltas_tensor_descriptor,
             outputs,
             deltas_tensor_descriptor,
             deltas_device[0],
-            combination_deltas_tensor_descriptor,
+            deltas_tensor_descriptor,
             combinations,
             &beta,
-            combination_deltas_tensor_descriptor,
-            error_combinations_derivatives);
-    else
-        cudaMemcpy(error_combinations_derivatives, deltas_device[0], batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+            deltas_tensor_descriptor,
+            deltas_device[0]);
+
+        if (status != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+        }
 
     // Bias derivatives
 
-    cublasSgemm(cublas_handle,
-        CUBLAS_OP_T, CUBLAS_OP_N,
+    cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
         1,
         batch_size,
         &alpha,
-        error_combinations_derivatives,
+        deltas_device[0],
         batch_size,
         ones,
         batch_size,
@@ -862,7 +862,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         &alpha,
         inputs_device[0],
         batch_size,
-        error_combinations_derivatives,
+        deltas_device[0],
         batch_size,
         &beta,
         weight_deltas,
@@ -870,13 +870,12 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Input derivatives
 
-    cublasSgemm(cublas_handle,
-        CUBLAS_OP_N, CUBLAS_OP_T,
+    cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_T,
         batch_size,
         inputs_number,
         outputs_number,
         &alpha,
-        error_combinations_derivatives,
+        deltas_device[0],
         batch_size,
         weights_device,
         inputs_number,
@@ -1066,12 +1065,16 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     // Ones
 
     CHECK_CUDA(cudaMalloc(&ones, batch_size * sizeof(float)));
+    vector<float> ones_host(batch_size, 1.0f);
+    CHECK_CUDA(cudaMemcpy(ones, ones_host.data(), batch_size * sizeof(float), cudaMemcpyHostToDevice));
 
-    for (Index i = 0; i < batch_size; i++)
-        CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
+    // Parameters
 
     CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
+
+    // Input deltas
+    
     CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
 
     // Deltas
@@ -1079,20 +1082,6 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     cudnnCreateTensorDescriptor(&deltas_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(deltas_tensor_descriptor,
-        CUDNN_TENSOR_NHWC,
-        CUDNN_DATA_FLOAT,
-        batch_size,
-        outputs_number,
-        1,
-        1);
-
-    // Error combinations derivatives
-
-    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * outputs_number * sizeof(float)));
-
-    cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
-
-    cudnnSetTensor4dDescriptor(combination_deltas_tensor_descriptor,
         CUDNN_TENSOR_NHWC,
         CUDNN_DATA_FLOAT,
         batch_size,
@@ -1112,13 +1101,10 @@ void Dense2dBackPropagationCuda::free()
 {
     cudaFree(bias_deltas_device);
     cudaFree(weight_deltas_device);
-    cudaFree(combination_deltas_device);
     cudaFree(input_deltas);
     cudaFree(ones);
 
-    cudnnDestroyTensorDescriptor(combination_deltas_tensor_descriptor);
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
-
 }
 
 #endif

@@ -155,8 +155,7 @@ public:
    void regularization_from_XML(const XMLDocument&);
    void write_regularization_XML(XMLPrinter&) const;
 
-   virtual string get_loss_method() const;
-   virtual string get_error_type_text() const;
+   virtual string get_name() const;
 
    string write_regularization_method() const;
 
@@ -234,6 +233,8 @@ protected:
     cudnnHandle_t cudnn_handle = nullptr;
 
 #endif
+
+    void print(){}
 
 protected:
 

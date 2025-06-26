@@ -35,8 +35,7 @@ public:
                                ForwardPropagation&,
                                BackPropagation&) const override;
 
-   string get_loss_method() const override;
-   string get_error_type_text() const override;
+   string get_name() const override;
 
    virtual void from_XML(const XMLDocument&);
 

@@ -82,7 +82,7 @@ public:
 
     virtual TrainingResults perform_training() = 0;
 
-    virtual string write_optimization_algorithm_type() const;
+    virtual string get_name() const;
 
     virtual void print() const;
 
@@ -143,6 +143,8 @@ public:
         cublasDestroy(cublas_handle);
         cudnnDestroy(cudnn_handle);
     }
+
+    virtual TrainingResults perform_training_cuda() = 0;
 
 #endif
 
