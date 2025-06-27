@@ -151,8 +151,6 @@ public:
                                const dimensions& complexity_dimensions,
                                const dimensions& output_dimensions) : NeuralNetwork()
     {
-        set_model_type(NeuralNetwork::ModelType::ImageClassification);
-
         if (input_dimensions.size() != 3)
             throw runtime_error("Input dimensions size is not 3.");
 
@@ -190,7 +188,6 @@ public:
                                        output_dimensions,
                                        Dense2d::Activation::Softmax,
                                        "dense_2d_layer_softmax"));
-
     }
 };
 

@@ -19,6 +19,7 @@
 
 #include "../../opennn/time_series_dataset.h"
 #include "../../opennn/neural_network.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 
 using namespace opennn;
@@ -33,10 +34,9 @@ int main()
 
         TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting,
-                                     {time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
-                                     {},
-                                     {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
+        ForecastingNetwork neural_network({time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
+                                          {},
+                                          {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
 
         neural_network.print();
 

@@ -1290,8 +1290,9 @@ string ModelExpression::write_subheader_python()
            "\tinput_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})\n"
            "\toutputs = model.calculate_batch_output(input_batch.values)\n"
            "\'\'\' \n" ;
-
 }
+
+
 string ModelExpression::get_expression_python(const NeuralNetwork& neural_network)
 {
     ostringstream buffer;
@@ -1305,8 +1306,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     const Index inputs_number = inputs.size();
     const Index outputs_number = outputs.size();
-
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     bool logistic     = false;
     bool ReLU         = false;
@@ -1369,7 +1368,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     }
 
     buffer << "import numpy as np\n" << endl;
-
+/*
     if(model_type == NeuralNetwork::ModelType::AutoAssociation)
         buffer << "def calculate_distances(input, output):" << endl
                << "\t" << "return (np.linalg.norm(np.array(input)-np.array(output)))/len(input)\n" << endl
@@ -1384,7 +1383,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     if(model_type == NeuralNetwork::ModelType::AutoAssociation)
     {
-        /*
+
         buffer << "\t" << "minimum = " << to_string(distance_descriptives.minimum) << endl;
         buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
         buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
@@ -1393,9 +1392,9 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
         buffer << "\t" << "maximum = " << to_string(distance_descriptives.maximum) << endl;
         buffer << "\t" << "standard_deviation = " << to_string(distance_descriptives.standard_deviation) << endl;
         buffer << "\n" << endl;
-*/
-    }
 
+    }
+*/
     string inputs_list;
 
     for(size_t i = 0; i < original_inputs.size();i++)
@@ -1490,7 +1489,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     }
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, outputs, ProgrammingLanguage::Python);
-
+/*
     if(model_type != NeuralNetwork::ModelType::AutoAssociation)
         for(size_t i = 0; i < fixed_outputs.size(); i++)
             buffer << "\t\t" << fixed_outputs[i] << endl;

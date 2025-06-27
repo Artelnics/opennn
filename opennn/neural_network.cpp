@@ -31,10 +31,7 @@
 namespace opennn
 {
 
-NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
-                             const dimensions& input_dimensions,
-                             const dimensions& complexity_dimensions,
-                             const dimensions& output_dimensions)
+NeuralNetwork::NeuralNetwork()
 {
     //set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
 }
@@ -97,28 +94,6 @@ Index NeuralNetwork::get_input_index(const string& input_name) const
             return i;
 
     throw runtime_error("Input name not found: " + input_name);
-}
-
-
-NeuralNetwork::ModelType NeuralNetwork::get_model_type() const
-{
-    return model_type;
-}
-
-
-string NeuralNetwork::get_model_type_string() const
-{
-    switch (model_type)
-    {
-        case ModelType::Default: return "Default";
-        case ModelType::AutoAssociation: return "AutoAssociation";
-        case ModelType::Approximation: return "Approximation";
-        case ModelType::Classification: return "Classification";
-        case ModelType::Forecasting: return "Forecasting";
-        case ModelType::TextClassification: return "TextClassification";
-        case ModelType::ImageClassification: return "ImageClassification";
-        default: throw runtime_error("Unkown model type");
-    }
 }
 
 
@@ -237,31 +212,6 @@ void NeuralNetwork::set(const filesystem::path& file_name)
 }
 
 
-void NeuralNetwork::set_model_type(const NeuralNetwork::ModelType& new_model_type)
-{
-    model_type = new_model_type;
-}
-
-
-void NeuralNetwork::set_model_type_string(const string& new_model_type)
-{
-    if(new_model_type == "Approximation")
-        set_model_type(ModelType::Approximation);
-    else if(new_model_type == "Classification")
-        set_model_type(ModelType::Classification);
-    else if(new_model_type == "Forecasting")
-        set_model_type(ModelType::Forecasting);
-    else if(new_model_type == "ImageClassification")
-        set_model_type(ModelType::ImageClassification);
-    else if(new_model_type == "TextClassification")
-        set_model_type(ModelType::TextClassification);
-    else if(new_model_type == "AutoAssociation")
-        set_model_type(ModelType::AutoAssociation);
-    else
-        throw runtime_error("Unknown model type: " + new_model_type + "\n");
-}
-
-
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
     input_names = new_input_names;
@@ -361,9 +311,11 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
+    // @todo model_type has been removed
+/*
     if(model_type == ModelType::TextClassification)
         return input_names.size();
-
+*/
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
@@ -879,7 +831,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     // Outputs
 
     printer.OpenElement("Outputs");
-
+/*
     if(model_type != ModelType::TextClassification)
         add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
@@ -893,7 +845,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     else
         for (size_t i = 0; i < output_names.size(); i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
+*/
     printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(display));
@@ -1058,19 +1010,9 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
 void NeuralNetwork::print() const
 {
-    cout << "Neural network" << endl
-         << "Model type:" << get_model_type_string() << endl;
+    cout << "Neural network" << endl;
 
-    if(model_type != ModelType::ImageClassification)
-         cout << "Model type:" << endl
-         << get_model_type_string() << endl;
-
-    if(model_type != ModelType::ImageClassification
-    && model_type != ModelType::TextClassification)
-    {
-        cout << "Inputs:" << endl;
-        print_vector(get_input_names());
-    }
+    print_vector(get_input_names());
 
     const Index layers_number = get_layers_number();       
 
@@ -1241,7 +1183,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
+    {           
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:

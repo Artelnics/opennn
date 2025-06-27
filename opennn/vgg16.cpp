@@ -25,8 +25,6 @@ namespace opennn
 
     void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     {
-        set_model_type(NeuralNetwork::ModelType::ImageClassification);
-
         // Scaling 4D
         add_layer(make_unique<Scaling4d>(new_input_dimensions));
 

@@ -13,6 +13,7 @@
 
 #include "../../opennn/image_dataset.h"
 #include "../../opennn/neural_network.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 
@@ -30,14 +31,13 @@ int main()
 
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            image_dataset.get_dimensions(Dataset::VariableUse::Input),
+        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions(Dataset::VariableUse::Input),
             {8, 4},
             image_dataset.get_dimensions(Dataset::VariableUse::Target));
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &image_dataset);
+        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
         training_strategy.set_loss_index("CrossEntropyError2d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
@@ -50,7 +50,7 @@ int main()
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &image_dataset);
+        const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();

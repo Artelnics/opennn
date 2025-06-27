@@ -12,6 +12,7 @@
 #include "scaling_layer_2d.h"
 #include "perceptron_layer.h"
 #include "neural_network.h"
+#include "standard_networks.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "weighted_squared_error.h"
@@ -729,8 +730,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = dataset.get_variables_number(Dataset::VariableUse::Input);
     const Index target_variables_number = dataset.get_variables_number(Dataset::VariableUse::Target);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 { input_variables_number }, {1}, {target_variables_number});
+    ClassificationNetwork neural_network({ input_variables_number }, {1}, {target_variables_number});
 
     Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
@@ -842,8 +842,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     const Index input_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Input);
     const Index target_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Target);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 {input_variables_number }, {}, {target_variables_number});
+    ClassificationNetwork neural_network({input_variables_number }, {}, {target_variables_number});
 
     Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
