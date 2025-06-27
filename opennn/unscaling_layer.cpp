@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "unscaling_layer.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -483,6 +484,8 @@ void UnscalingForwardPropagation::print() const
     cout << "Outputs:" << endl
         << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Unscaling", UnscalingForwardPropagation);
 
 }
 

@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "scaling_layer_2d.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "statistics.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {
@@ -593,6 +594,8 @@ void Scaling2dForwardPropagation::print() const
     cout << "Outputs:" << endl
          << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Scaling2d", Scaling2dForwardPropagation);
 
 }
 

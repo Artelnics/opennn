@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
-#include "normalization_layer_3d.h"
 #include "strings_utilities.h"
+#include "normalization_layer_3d.h"
 
 namespace opennn
 {
@@ -296,11 +297,13 @@ void Normalization3dForwardPropagation::print() const
 
 void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
 
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
@@ -341,6 +344,9 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
 
     return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
+
+REGISTER_FORWARD_PROPAGATION("Normalization3d", Normalization3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Normalization3d", Normalization3dBackPropagation);
 
 }
 

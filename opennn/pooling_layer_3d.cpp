@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pooling_layer_3d.h"
+#include "registry.h"
 #include "tensors.h"
+#include "pooling_layer_3d.h"
 
 namespace opennn
 {
@@ -185,6 +186,11 @@ void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 void Pooling3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    if (!layer) return;
+
     layer = static_cast<Pooling3d*>(new_layer);
 
     const dimensions layer_input_dimensions = layer->get_input_dimensions();
@@ -192,6 +198,7 @@ void Pooling3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     input_derivatives.resize(batch_size,
                              layer_input_dimensions[0],
                              layer_input_dimensions[1]);
+
     input_derivatives.setZero();
 }
 
@@ -248,6 +255,9 @@ void Pooling3d::print() const
     cout << "Output dimensions: " << dimensions_to_string(get_output_dimensions()) << endl;
     cout << "Pooling Method: " << write_pooling_method() << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Pooling3d", Pooling3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Pooling3d", Pooling3dBackPropagation);
 
 }
 // OpenNN: Open Neural Networks Library.

@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "multihead_attention_layer.h"
@@ -825,6 +826,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
              {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}} };
     }
 
+    REGISTER_FORWARD_PROPAGATION("MultiHeadAttention", MultiheadAttentionForwardPropagation);
+    REGISTER_BACK_PROPAGATION("MultiHeadAttention", MultiheadAttentionBackPropagation);
 }
 
 // OpenNN: Open Neural Networks Library.

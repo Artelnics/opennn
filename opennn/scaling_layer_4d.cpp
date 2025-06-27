@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "scaling_layer_4d.h"
 
@@ -207,7 +208,11 @@ void Scaling4dForwardPropagationCuda::free()
     cudaFree(outputs);
 }
 
+REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
 
 }
 

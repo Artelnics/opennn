@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "addition_layer_3d.h"
+#include "registry.h"
 #include "tensors.h"
+#include "addition_layer_3d.h"
 
 namespace opennn
 {
@@ -166,11 +167,13 @@ void Addition3dForwardPropagation::print() const
 
 void Addition3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
     const Index embedding_dimension = addition_layer_3d->get_embedding_dimension();
@@ -217,8 +220,8 @@ void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Forward propagation
 
-    AdditionLayer3DForwardPropagationCuda* addition_layer_3d_forward_propagation_cuda
-        = static_cast<AdditionLayer3DForwardPropagationCuda*>(forward_propagation_cuda.get());
+    Addition3dForwardPropagationCuda* addition_layer_3d_forward_propagation_cuda
+        = static_cast<Addition3dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     const Index batch_size = addition_layer_3d_forward_propagation_cuda->batch_size;
 
@@ -239,8 +242,8 @@ void Addition3d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Back propagation
 
-    AdditionLayer3DBackPropagationCuda* addition_layer_3d_back_propagation =
-        static_cast<AdditionLayer3DBackPropagationCuda*>(back_propagation_cuda.get());
+    Addition3dBackPropagationCuda* addition_layer_3d_back_propagation =
+        static_cast<Addition3dBackPropagationCuda*>(back_propagation_cuda.get());
 
     const Index batch_size = addition_layer_3d_back_propagation->batch_size;
 
@@ -256,44 +259,51 @@ void Addition3d::back_propagate_cuda(const vector<float*>& inputs_device,
 
 // CUDA structs
 
-AdditionLayer3DForwardPropagationCuda::AdditionLayer3DForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+Addition3dForwardPropagationCuda::Addition3dForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void AdditionLayer3DForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
 
 
-void AdditionLayer3DForwardPropagationCuda::print() const
+void Addition3dForwardPropagationCuda::print() const
 {
 
 }
 
 
-AdditionLayer3DBackPropagationCuda::AdditionLayer3DBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void AdditionLayer3DBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
 
 
-void AdditionLayer3DBackPropagationCuda::print() const
+void Addition3dBackPropagationCuda::print() const
 {
  
 }
 
-#endif 
+REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
+REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
+
+#endif
+
+
+REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
 
 }
 

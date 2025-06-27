@@ -981,9 +981,16 @@ void register_inputs_selection()
 {
     GrowingInputs growing_inputs; growing_inputs.print();
     GeneticAlgorithm genetic_algorithm; genetic_algorithm.print();
-
 }
 
+
+void register_layer_forward_propagation()
+{
+    Dense2dForwardPropagation dense_2d_forward_propagation; dense_2d_forward_propagation.print();
+    Dense2dBackPropagation dense_2d_back_propagation; dense_2d_back_propagation.print();
+
+    //Dense2d dense_2d; dense_2d.print();
+}
 
 }
 

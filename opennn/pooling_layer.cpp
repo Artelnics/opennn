@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pooling_layer.h"
+#include "registry.h"
 #include "tensors.h"
+#include "pooling_layer.h"
 
 namespace opennn
 {
@@ -615,6 +616,8 @@ void PoolingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 
     layer = new_layer;
 
+    if (!layer) return;
+
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
     const dimensions& input_dimensions = pooling_layer->get_input_dimensions();
@@ -858,7 +861,14 @@ void PoolingBackPropagationCuda::free()
     cudaFree(input_deltas);
 }
 
+REGISTER_FORWARD_CUDA("Pooling", PoolingForwardPropagationCuda);
+REGISTER_BACK_CUDA("Pooling", PoolingBackPropagationCuda);
+
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
+REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
 
 }
 

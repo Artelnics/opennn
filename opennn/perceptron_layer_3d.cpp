@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "perceptron_layer_3d.h"
+#include "registry.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "perceptron_layer_3d.h"
 
 namespace opennn
 {
@@ -322,11 +323,13 @@ void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_laye
 
 void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     const Index output_embedding = dense_3d->get_output_embedding();
     const Index sequence_length = dense_3d->get_sequence_length();
@@ -363,6 +366,9 @@ vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pai
 
     return {{(type*)(input_deltas.data()), {batch_size, sequence_length, input_embedding}}};
 }
+
+REGISTER_FORWARD_PROPAGATION("Dense3d", Dense3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Dense3d", Dense3dBackPropagation);
 
 }
 

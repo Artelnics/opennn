@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "bounding_layer.h"
+#include "registry.h"
 #include "tensors.h"
+#include "bounding_layer.h"
 
 namespace opennn
 {
@@ -314,6 +315,8 @@ void BoundingForwardPropagation::print() const
     cout << "Outputs:" << endl
          << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
 
 }
 

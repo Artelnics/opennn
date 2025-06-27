@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "convolutional_layer.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "convolutional_layer.h"
 
 namespace opennn
 {
@@ -467,15 +468,16 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-    switch (get_activation_function())
-    {
-    case Convolutional::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-    case Convolutional::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-    case Convolutional::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-    case Convolutional::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-    case Convolutional::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
-    default: break;
-    }
+    if(activation_function == "Linear")
+        activation = CUDNN_ACTIVATION_IDENTITY;
+    else if(activation_function == "Logistic")
+        activation = CUDNN_ACTIVATION_SIGMOID;
+    else if(activation_function == "HyperbolicTangent")
+        activation = CUDNN_ACTIVATION_TANH;
+    else if(activation_function == "RectifiedLinear")
+        activation = CUDNN_ACTIVATION_RELU;
+    else if(activation_function == "ExponentialLinear")
+        activation = CUDNN_ACTIVATION_ELU;
 
     cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
 
@@ -756,6 +758,8 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
 
     layer = new_layer;
 
+    if (!layer) return;
+
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
     const Index input_height = convolutional_layer->get_input_height();
@@ -884,7 +888,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    if (convolutional_layer->get_activation_function() != "Linear")
     {
         cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
             activation_descriptor,
@@ -950,7 +954,7 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Error combinations derivatives
 
-    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    if (convolutional_layer->get_activation_function() != "Linear")
     {
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
@@ -1428,7 +1432,13 @@ void ConvolutionalBackPropagationCuda::free()
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
 
+REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
+REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
+REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 
 }
 

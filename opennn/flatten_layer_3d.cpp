@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "flatten_layer_3d.h"
 
@@ -161,9 +162,11 @@ void Flatten3dForwardPropagation::print() const
 
 void Flatten3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    batch_size = new_batch_size;
+    if (!layer) return;
 
     const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 
@@ -196,6 +199,9 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
     return {{(type*)(input_deltas.data()),
              {batch_size, input_dimensions[0], input_dimensions[1]}}};
 }
+
+REGISTER_FORWARD_PROPAGATION("Flatten3d", Flatten3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Flatten3d", Flatten3dBackPropagation);
 
 }
 

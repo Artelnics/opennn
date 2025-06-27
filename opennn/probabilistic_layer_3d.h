@@ -118,9 +118,9 @@ private:
 };
 
 
-struct Probabilistic3DForwardPropagation : LayerForwardPropagation
+struct Probabilistic3dForwardPropagation : LayerForwardPropagation
 {
-    Probabilistic3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Probabilistic3dForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_output_pair() const override;
 
