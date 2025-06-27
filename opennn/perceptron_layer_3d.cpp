@@ -93,7 +93,7 @@ void Dense3d::set(const Index& new_sequence_length,
                   const Index& new_input_dimension,
                   const Index& new_output_dimension,
                   const string& new_activation_function,
-                  const string& new_name)
+                  const string& new_label)
 {
     sequence_length = new_sequence_length;
 
@@ -105,7 +105,7 @@ void Dense3d::set(const Index& new_sequence_length,
 
     set_activation_function(new_activation_function);
 
-    name = new_name;
+    label = new_label;
 
     layer_type = Type::Dense3d;
 
@@ -247,7 +247,7 @@ void Dense3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     Index index = 0;
@@ -260,7 +260,7 @@ void Dense3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Dense3d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
     add_xml_element(printer, "InputsDepth", to_string(get_input_embedding()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));

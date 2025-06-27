@@ -76,7 +76,7 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     set_parameters_random();
 
-    name = "recurrent_layer";
+    label = "recurrent_layer";
 
     layer_type = Type::Recurrent;
 }
@@ -336,7 +336,7 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
-    set_name(read_xml_string(recurrent_layer_element,"Name"));
+    set_label(read_xml_string(recurrent_layer_element,"Label"));
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
@@ -352,7 +352,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
-    add_xml_element(printer, "Name", get_name());
+    add_xml_element(printer, "Label", get_label());
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);

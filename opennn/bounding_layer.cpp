@@ -60,11 +60,11 @@ const Tensor<type, 1>& Bounding::get_upper_bounds() const
 }
 
 
-void Bounding::set(const dimensions& new_output_dimensions, const string& new_name)
+void Bounding::set(const dimensions& new_output_dimensions, const string& new_label)
 {
     set_output_dimensions(new_output_dimensions);
 
-    name = new_name;
+    label = new_label;
 
     bounding_method = BoundingMethod::Bounding;
 

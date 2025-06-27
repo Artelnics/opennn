@@ -98,9 +98,9 @@ void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
 
 
 void Probabilistic3d::set(const Index& new_inputs_number, 
-                               const Index& new_inputs_depth, 
-                               const Index& new_neurons_number, 
-                               const string& new_name)
+                               const Index& new_inputs_depth,
+                               const Index& new_neurons_number,
+                               const string& new_label)
 {
     inputs_number_xxx = new_inputs_number;
 
@@ -111,7 +111,7 @@ void Probabilistic3d::set(const Index& new_inputs_number,
     set_parameters_glorot();
     // set_parameters_random();
 
-    name = new_name;
+    label = new_label;
 
     layer_type = Layer::Type::Probabilistic3d;
 
@@ -337,7 +337,7 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
 
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
-    set_name(read_xml_string(probabilistic_layer_element, "Name"));
+    set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
     Index index = 0;
@@ -350,7 +350,7 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic3d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));

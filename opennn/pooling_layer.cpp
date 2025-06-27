@@ -156,7 +156,7 @@ void Pooling::set(const dimensions& new_input_dimensions,
                        const dimensions& new_stride_dimensions,
                        const dimensions& new_padding_dimensions,
                        const PoolingMethod& new_pooling_method,
-                       const string new_name)
+                       const string new_label)
 {
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
@@ -191,9 +191,9 @@ void Pooling::set(const dimensions& new_input_dimensions,
 
     set_pooling_method(new_pooling_method);
 
-    set_name(new_name);
+    set_label(new_label);
 
-    name = "pooling_layer";
+    label = "pooling_layer";
 
 #ifdef OPENNN_CUDA
 
@@ -502,7 +502,7 @@ void Pooling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Pooling");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
     add_xml_element(printer, "PoolHeight", to_string(get_pool_height()));
     add_xml_element(printer, "PoolWidth", to_string(get_pool_width()));
@@ -523,7 +523,7 @@ void Pooling::from_XML(const XMLDocument& document)
     if(!pooling_layer_element)
         throw runtime_error("Pooling layer element is nullptr.\batch_index");
 
-    set_name(read_xml_string(pooling_layer_element, "Name"));
+    set_label(read_xml_string(pooling_layer_element, "Label"));
 
     set_input_dimensions(string_to_dimensions(read_xml_string(pooling_layer_element, "InputDimensions")));
 

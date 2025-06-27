@@ -37,14 +37,14 @@
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
-         <Parameters>0.0105996 0.0681815 -0.0924834 0.039255 0.0184262 -0.0249273 0.0273166 0.0441652 -0.0880973 -0.0883962 -0.084852 -0.012799 0.00290902 0.0629264 -0.0101565 0.00668329 0.030538 0.091656 </Parameters>
+         <Parameters>0.0716759 0.0155607 0.00134496 -0.0592669 -0.0278085 0.085654 -0.0435453 0.0835816 0.050395 0.0110645 0.0381855 0.0848493 -0.061457 0.0873876 -0.0160303 0.0182339 0.00280935 -0.0860366 </Parameters>
       </Dense2d>
       <Dense2d>
          <Name>approximation_layer</Name>
          <InputsNumber>3</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>Linear</Activation>
-         <Parameters>0.0876067 -0.0886727 0.0631959 -0.000567555 </Parameters>
+         <Parameters>-0.0508461 0.0639073 0.0585357 0.0252208 </Parameters>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>1</NeuronsNumber>

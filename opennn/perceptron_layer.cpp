@@ -16,9 +16,9 @@ namespace opennn
 Dense2d::Dense2d(const dimensions& new_input_dimensions,
                  const dimensions& new_output_dimensions,
                  const string& new_activation_function,
-                 const string& new_layer_name) : Layer()
+                 const string& new_layer_label) : Layer()
 {
-    set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_name);
+    set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_label);
 }
 
 
@@ -77,7 +77,7 @@ const string& Dense2d::get_activation_function() const
 void Dense2d::set(const dimensions& new_input_dimensions,
                   const dimensions& new_output_dimensions,
                   const string& new_activation_function,
-                  const string& new_name)
+                  const string& new_label)
 {
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
@@ -92,7 +92,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     set_activation_function(new_activation_function);
 
-    set_name(new_name);
+    set_label(new_label);
     
     layer_type = Layer::Type::Dense2d;
 
@@ -423,7 +423,7 @@ void Dense2d::from_XML(const XMLDocument& document)
     if(!dense2d_layer_element)
         throw runtime_error("Dense2d element is nullptr.\n");
 
-    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_input_dimensions({ read_xml_index(dense2d_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
@@ -438,7 +438,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Dense2d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);

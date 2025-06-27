@@ -15,13 +15,13 @@ namespace opennn
 
 Embedding::Embedding(const dimensions& new_input_dimensions,
                      const Index& new_embedding_dimension,
-                     const string& new_name) : Layer()
+                     const string& new_label) : Layer()
 {
-    set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_name);
+    set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_label);
 
     layer_type = Type::Embedding;
 
-    name = new_name;
+    label = new_label;
 }
 
 
@@ -76,7 +76,7 @@ void Embedding::get_parameters(Tensor<type, 1>& parameters) const
 void Embedding::set(const Index& new_vocabulary_size,
                     const Index& new_sequence_length,
                     const Index& new_embedding_dimension,
-                    const string& new_name)
+                    const string& new_label)
 {
     sequence_length = new_sequence_length;
 
@@ -98,7 +98,7 @@ void Embedding::set(const Index& new_vocabulary_size,
             ? sin(i / pow(10000, j / half_depth))
             : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-    name = new_name;
+    label = new_label;
 }
 
 
@@ -241,7 +241,7 @@ void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
 void Embedding::print() const
 {
     cout << "Embedding Layer" << endl;
-    cout << "Name: " << name << endl;
+    cout << "Label: " << label << endl;
     cout << "Type: Embedding" << endl;
 
     cout << "Input dimensions: ";
@@ -287,7 +287,7 @@ void Embedding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Embedding");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));

@@ -124,33 +124,33 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const Index& layer_index) cons
 }
 
 
-const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) const
+const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
-    const vector<string> layer_names = get_layer_names();
+    const vector<string> labels = get_layer_labels();
 
-    for(size_t i = 0; i < layer_names.size(); i++)
-        if(layer_names[i] == layer_name)
+    for(size_t i = 0; i < labels.size(); i++)
+        if(labels[i] == label)
             return layers[i];
 
     throw runtime_error("Layer not found in neural network");
 }
 
 
-Index NeuralNetwork::get_layer_index(const string& layer_name) const
+Index NeuralNetwork::get_layer_index(const string& new_label) const
 {
-    if(layer_name == "Dataset" || layer_name == "decoder")
+    if(new_label == "Dataset" || new_label == "decoder")
         return -1;
 
-    if(layer_name == "input")
+    if(new_label == "input")
         return -2;
 
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_name() == layer_name)
+        if(layers[i]->get_label() == new_label)
             return i;
 
-    throw runtime_error("Layer not found: " + layer_name);
+    throw runtime_error("Layer not found: " + new_label);
 }
 
 
@@ -272,36 +272,36 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vec
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name,
-                                             const vector<string>& new_layer_input_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
+                                             const vector<string>& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(layer_label);
 
-    const Index size = new_layer_input_names.size();
+    const Index size = new_layer_input_labels.size();
 
     vector<Index> new_layer_input_indices(size);
 
     for(Index i = 0; i < size; i++)
-        new_layer_input_indices[i] = get_layer_index(new_layer_input_names[i]);
+        new_layer_input_indices[i] = get_layer_index(new_layer_input_labels[i]);
 
     layer_input_indices[layer_index] = new_layer_input_indices;
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, 
-                                             const initializer_list<string>& new_layer_input_names_list)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
+                                             const initializer_list<string>& new_layer_input_labels_list)
 {
-    const vector<string> new_layer_input_names = new_layer_input_names_list;
+    const vector<string> new_layer_input_labels = new_layer_input_labels_list;
 
-    set_layer_inputs_indices(layer_name, new_layer_input_names);
+    set_layer_inputs_indices(layer_label, new_layer_input_labels);
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_input_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label, const string& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(layer_label);
 
-    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
+    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_labels)};
 }
 
 
@@ -510,7 +510,7 @@ string NeuralNetwork::get_expression() const
 {
     const Index layers_number = get_layers_number();
 
-    const vector<string> layer_names = get_layer_names();
+    const vector<string> layer_labels = get_layer_labels();
 
     vector<string> new_input_names = get_input_names();
     vector<string> new_output_names = get_output_names();
@@ -543,9 +543,9 @@ string NeuralNetwork::get_expression() const
             new_output_names.resize(layer_neurons_number);
             
             for (Index j = 0; j < layer_neurons_number; j++)
-                new_output_names[j] = (layer_names[i] == "scaling_layer")
+                new_output_names[j] = (layer_labels[i] == "scaling_layer")
                       ? "scaled_" + input_names[j]
-                      : layer_names[i] + "_output_" + to_string(j);
+                      : layer_labels[i] + "_output_" + to_string(j);
 
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
@@ -1135,16 +1135,16 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
 }
 
 
-vector<string> NeuralNetwork::get_layer_names() const
+vector<string> NeuralNetwork::get_layer_labels() const
 {
     const Index layers_number = get_layers_number();
 
-    vector<string> layer_names(layers_number);
+    vector<string> layer_labels(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        layer_names[i] = layers[i]->get_name();
+        layer_labels[i] = layers[i]->get_label();
 
-    return layer_names;
+    return layer_labels;
 }
 
 
@@ -1430,7 +1430,7 @@ void ForwardPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << endl;
 
         layers[i]->print();
     }
@@ -1722,8 +1722,8 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
 
         layer_input_device[i].resize(1);
 
-        if (neural_network->get_model_type_string() == "TextClassification") {
-
+        if (false/*neural_network->get_model_type_string() == "TextClassification"*/)
+        {
             if (i == first_trainable_layer_index)
             {
                 vector<float*> batch_input_pairs1;
@@ -1740,7 +1740,8 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
                 continue;
             }
         }
-        else {
+        else
+        {
             if ((i == first_trainable_layer_index && is_training) || i == 0)
             {
                 layer_input_device[i] = batch_input_device;

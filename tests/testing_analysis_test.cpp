@@ -4,6 +4,7 @@
 
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/testing_analysis.h"
 
 using namespace opennn;
@@ -18,7 +19,7 @@ TEST(TestingAnalysis, ErrorData)
     dataset.set_data_constant(type(0));
     dataset.set(Dataset::SampleUse::Testing);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { targets_number });
+    ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -46,8 +47,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     dataset.set_data_constant(type(0));
     dataset.set(Dataset::SampleUse::Testing);
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -103,8 +103,7 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
     dataset.set_data_constant(type(0));
     dataset.set(Dataset::SampleUse::Testing);
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -164,8 +163,7 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     dataset.set_data_constant(type(0));
     dataset.set(Dataset::SampleUse::Testing);
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -191,8 +189,7 @@ TEST(TestingAnalysis, MaximalErrors)
     dataset.set_data_constant(type(0));
     dataset.set(Dataset::SampleUse::Testing);
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -297,8 +294,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     // Neural Network
 
-    NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Classification, {1}, {1}, {1});
+    ClassificationNetwork neural_network({1}, {1}, {1});
     neural_network.set_parameters_random();
 
     // Testing Analysis

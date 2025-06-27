@@ -231,7 +231,7 @@ public:
    void load(const filesystem::path&);
    void load_parameters_binary(const filesystem::path&);
 
-   vector<string> get_layer_names() const;
+   vector<string> get_layer_labels() const;
    vector<string> get_layer_types_string() const;
 
    void save_outputs(Tensor<type, 2>&, const filesystem::path&);

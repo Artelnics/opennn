@@ -145,9 +145,9 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 }
 
 
-string Layer::get_name() const
+const string& Layer::get_label() const
 {
-    return name;
+    return label;
 }
 
 
@@ -183,9 +183,9 @@ string Layer::get_type_string() const
 }
 
 
-void Layer::set_name(const string& new_name)
+void Layer::set_label(const string& new_label)
 {
-    name = new_name;
+    label = new_label;
 }
 
 

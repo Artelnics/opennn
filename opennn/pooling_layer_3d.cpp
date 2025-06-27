@@ -44,12 +44,12 @@ string Pooling3d::write_pooling_method() const
 }
 
 
-void Pooling3d::set(const dimensions& new_input_dimensions, const PoolingMethod& new_pooling_method, const string& new_name)
+void Pooling3d::set(const dimensions& new_input_dimensions, const PoolingMethod& new_pooling_method, const string& new_label)
 {
     layer_type = Layer::Type::Pooling3d;
     input_dimensions = new_input_dimensions;
     pooling_method = new_pooling_method;
-    set_name(new_name);
+    set_label(new_label);
 }
 
 

@@ -23,7 +23,7 @@ struct ConvolutionalLayerConfig {
     dimensions input_dimensions;
     dimensions kernel_dimensions;
     dimensions stride_dimensions;
-    Convolutional::Activation activation_function;
+    string activation_function;
     Convolutional::Convolution convolution_type;
     string test_name;
     Tensor<type, 4> input_data;

@@ -65,9 +65,9 @@ void Normalization3d::get_parameters(Tensor<type, 1>& parameters) const
 }
 
 
-void Normalization3d::set(const Index& new_sequence_length, 
-                          const Index& new_embedding_dimension, 
-                          const string& new_name)
+void Normalization3d::set(const Index& new_sequence_length,
+                          const Index& new_embedding_dimension,
+                          const string& new_label)
 {
     sequence_length = new_sequence_length;
 
@@ -77,7 +77,7 @@ void Normalization3d::set(const Index& new_sequence_length,
     betas.resize(new_embedding_dimension);
     betas.setZero();
 
-    name = new_name;
+    label = new_label;
 
     layer_type = Type::Normalization3d;
 }
@@ -242,7 +242,7 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
     Tensor<type, 1> parameters;
     get_parameters(parameters);
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
     add_xml_element(printer, "Parameters", tensor_to_string(parameters));

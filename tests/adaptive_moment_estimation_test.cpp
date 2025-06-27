@@ -121,7 +121,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     Dataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_random();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     // neural_network.set_parameters_constant(-1);
 
     MeanSquaredError loss(&neural_network, &dataset);
@@ -151,7 +151,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     Dataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_random();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_random();
 
     MeanSquaredError loss(&neural_network, &dataset);

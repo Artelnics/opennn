@@ -160,7 +160,7 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
 
     scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 
-    name = "scaling_layer";
+    label = "scaling_layer";
 
     set_scalers(Scaler::MeanStandardDeviation);
 

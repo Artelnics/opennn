@@ -38,7 +38,7 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
 
     layer_type = Type::Scaling4d;
 
-    name = "scaling_layer_4d";
+    label = "scaling_layer_4d";
 
     is_trainable = false;
 }

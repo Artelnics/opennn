@@ -52,7 +52,7 @@ void Flatten::set(const dimensions& new_input_dimensions)
 {
     layer_type = Type::Flatten;
 
-    set_name("flatten_layer");
+    set_label("flatten_layer");
 
     input_dimensions = new_input_dimensions;
 }

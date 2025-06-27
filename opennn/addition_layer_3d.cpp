@@ -44,15 +44,15 @@ dimensions Addition3d::get_output_dimensions() const
 }
 
 
-void Addition3d::set(const Index& new_sequence_length, 
-                     const Index& new_embedding_dimension, 
-                     const string& new_name)
+void Addition3d::set(const Index& new_sequence_length,
+                     const Index& new_embedding_dimension,
+                     const string& new_label)
 {
     sequence_length = new_sequence_length;
 
     embedding_dimension = new_embedding_dimension;
 
-    name = new_name;
+    label = new_label;
 
     layer_type = Type::Addition3d;
 }
@@ -115,7 +115,7 @@ void Addition3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Addition3d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingLength", to_string(get_embedding_dimension()));
 

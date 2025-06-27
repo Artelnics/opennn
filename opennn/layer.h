@@ -58,7 +58,7 @@ public:
             thread_pool_device.reset();
     }
 
-    string get_name() const;
+    const string& get_label() const;
 
     const bool& get_display() const;
 
@@ -72,7 +72,7 @@ public:
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
 
-    void set_name(const string&);
+    void set_label(const string&);
 
     void set_display(const bool&);
 
@@ -144,7 +144,7 @@ protected:
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-    string name = "layer";
+    string label = "layer";
 
     Type layer_type = Type::None;
 
