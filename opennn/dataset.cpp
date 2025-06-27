@@ -11,6 +11,8 @@
 #include "correlations.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "time_series_dataset.h"
+#include <iterator>
 
 namespace opennn
 {
@@ -4320,6 +4322,14 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
+
+    if (dynamic_cast<opennn::TimeSeriesDataset*>(dataset))
+    {
+        input_dimensions.clear();
+        input_dimensions.push_back(sample_indices.size());
+        input_dimensions.push_back(input_indices.size());
+        input_dimensions.push_back(input_indices.size());
+    }
 
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 
