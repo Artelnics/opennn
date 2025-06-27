@@ -32,13 +32,13 @@ bool ModelSelection::has_training_strategy() const
 }
 
 
-const NeuronsSelection* ModelSelection::get_neurons_selection() const
+NeuronsSelection* ModelSelection::get_neurons_selection() const
 {
     return neurons_selection.get();
 }
 
 
-const InputsSelection* ModelSelection::get_inputs_selection() const
+InputsSelection* ModelSelection::get_inputs_selection() const
 {
     return inputs_selection.get();
 }
@@ -127,27 +127,30 @@ InputsSelectionResults ModelSelection::perform_input_selection()
 
 void ModelSelection::to_XML(XMLPrinter& printer) const
 {
-/*
     printer.OpenElement("ModelSelection");
 
     printer.OpenElement("NeuronsSelection");
-    add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
-    neurons_selection->to_XML(printer);
+    const string neurons_method = neurons_selection->get_name();
+    add_xml_element(printer, "NeuronsSelectionMethod", neurons_method);
+    if(neurons_method == "GrowingNeurons")
+        static_cast<const GrowingNeurons*>(this->get_neurons_selection())->to_XML(printer);
     printer.CloseElement();  
 
     printer.OpenElement("InputsSelection");
-    add_xml_element(printer, "InputsSelectionMethod", inputs_selection->get_name());
-    inputs_selection->to_XML(printer);
-    printer.CloseElement(); 
+    const string inputs_method = inputs_selection->get_name();
+    add_xml_element(printer, "InputsSelectionMethod", inputs_method);
+    if(inputs_method == "GrowingInputs")
+        static_cast<const GrowingInputs*>(this->get_inputs_selection())->to_XML(printer);
+    else if(inputs_method == "GeneticAlgorithm")
+        static_cast<const GeneticAlgorithm*>(this->get_inputs_selection())->to_XML(printer);
+    printer.CloseElement();
 
     printer.CloseElement();
-*/
 }
 
 
 void ModelSelection::from_XML(const XMLDocument& document)
 {
-    /*
     const XMLElement* root_element = document.FirstChildElement("ModelSelection");
     
     if (!root_element) 
@@ -158,41 +161,46 @@ void ModelSelection::from_XML(const XMLDocument& document)
     if (neurons_selection_element) 
     {
         set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
-
         const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
 
         if (growing_neurons_element)
         {
+            set_neurons_selection("GrowingNeurons");
             XMLDocument growing_neurons_document;
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
-            growing_neurons.from_XML(growing_neurons_document);
+            static_cast<GrowingNeurons*>(this->get_neurons_selection())->from_XML(growing_neurons_document);
         }
+
+
+        set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
     }
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
 
     if (inputs_selection_element)
     {
-        set_inputs_selection(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
-
         const XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
 
         if (growing_inputs_element)
         {
+            set_inputs_selection("GrowingInputs");
             XMLDocument growing_inputs_document;
             growing_inputs_document.InsertFirstChild(growing_inputs_element->DeepClone(&growing_inputs_document));
-            growing_inputs.from_XML(growing_inputs_document);
+            static_cast<GrowingInputs*>(this->get_inputs_selection())->from_XML(growing_inputs_document);
         }
 
         const XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
 
-        if (genetic_algorithm_element) {
+        if (genetic_algorithm_element)
+        {
+            set_inputs_selection("GeneticAlgorithm");
             XMLDocument genetic_algorithm_document;
             genetic_algorithm_document.InsertFirstChild(genetic_algorithm_element->DeepClone(&genetic_algorithm_document));
-            genetic_algorithm.from_XML(genetic_algorithm_document);
+            static_cast<GeneticAlgorithm*>(this->get_inputs_selection())->from_XML(genetic_algorithm_document);
         }
+
+        set_inputs_selection(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
     }
-*/
 }
 
 

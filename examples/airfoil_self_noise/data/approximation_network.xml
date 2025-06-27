@@ -1,30 +1,50 @@
 <NeuralNetwork>
    <Inputs>
-      <InputsNumber>1</InputsNumber>
+      <InputsNumber>5</InputsNumber>
       <Input Index="1"></Input>
+      <Input Index="2"></Input>
+      <Input Index="3"></Input>
+      <Input Index="4"></Input>
+      <Input Index="5"></Input>
    </Inputs>
    <Layers>
       <LayersNumber>5</LayersNumber>
       <Scaling2d>
-         <NeuronsNumber>1</NeuronsNumber>
+         <NeuronsNumber>5</NeuronsNumber>
          <ScalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
             <Descriptives>-1 1 0 1 </Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
       </Scaling2d>
       <Dense2d>
          <Name>dense2d_layer_1</Name>
-         <InputsNumber>1</InputsNumber>
-         <NeuronsNumber>1</NeuronsNumber>
+         <InputsNumber>5</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
-         <Parameters>0.0365593 0.0911168 </Parameters>
+         <Parameters>0.0624909 0.0858058 -0.0995884 0.0837172 -0.0242512 -0.0441419 -0.0926188 -0.0888022 0.0023071 0.0490518 0.025374 0.0154505 0.0273687 -0.0526887 0.0878316 -0.076556 -0.0208687 0.0937828 </Parameters>
       </Dense2d>
       <Dense2d>
          <Name>approximation_layer</Name>
-         <InputsNumber>1</InputsNumber>
+         <InputsNumber>3</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>Linear</Activation>
-         <Parameters>0.0174282 -0.0835228 </Parameters>
+         <Parameters>0.0189809 0.0775459 -0.0761597 -0.0201174 </Parameters>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>1</NeuronsNumber>

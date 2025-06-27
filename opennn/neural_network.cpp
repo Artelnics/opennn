@@ -801,7 +801,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
-    cout << "adri71 - 10 - " << inputs_number << endl;
     for (Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
@@ -831,25 +830,21 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Outputs");
 
-    add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
 
-    for (size_t i = 0; i < output_names.size(); i++)
-        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-/*
-    if(model_type != ModelType::TextClassification)
+    if(this->has(Layer::Type::Embedding))
         add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
     else
         add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
 
-    if(model_type != ModelType::TextClassification)
+    if(this->has(Layer::Type::Embedding))
         for (Index i = 0; i < outputs_number; i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     else
         for (size_t i = 0; i < output_names.size(); i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-*/
+
     printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(display));

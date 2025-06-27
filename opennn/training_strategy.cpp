@@ -180,67 +180,39 @@ void TrainingStrategy::print() const
 
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
-    // printer.OpenElement("TrainingStrategy");
+
+    printer.OpenElement("TrainingStrategy");
 
     // printer.OpenElement("LossIndex");
 
-    // const string loss_method = ;
-    // cout << "adri71 --" << endl;
-    // add_xml_element(printer, "LossMethod", loss_method);
+    add_xml_element(printer, "LossMethod", this->loss_index->get_name());
 
-    // mean_squared_error.to_XML(printer);
-    // normalized_squared_error.to_XML(printer);
-    // Minkowski_error.to_XML(printer);
-    // cross_entropy_error_2d.to_XML(printer);
-    // weighted_squared_error.to_XML(printer);
+    this->loss_index->to_XML(printer);
 
-    // switch (loss_method) {
-    // case LossMethod::MEAN_SQUARED_ERROR:
-    //     mean_squared_error.write_regularization_XML(printer);
-    //     break;
-    // case LossMethod::NORMALIZED_SQUARED_ERROR:
-    //     normalized_squared_error.write_regularization_XML(printer);
-    //     break;
-    // case LossMethod::MINKOWSKI_ERROR:
-    //     Minkowski_error.write_regularization_XML(printer);
-    //     break;
-    // case LossMethod::CROSS_ENTROPY_ERROR_2D:
-    //     cross_entropy_error_2d.write_regularization_XML(printer);
-    //     break;
-    // case LossMethod::WEIGHTED_SQUARED_ERROR:
-    //     weighted_squared_error.write_regularization_XML(printer);
-    //     break;
-    // default:
-    //     break;
-    // }
+    this->loss_index->write_regularization_XML(printer);
 
-    // printer.CloseElement();
+    printer.CloseElement();
 
     // printer.OpenElement("OptimizationAlgorithm");
     // cout << "adri71" << endl;
     // const string optimization_method = get_optimization_algorithm()->get_name();
     // add_xml_element(printer, "OptimizationMethod", optimization_method);
 
+    add_xml_element(printer, "OptimizationMethod", this->optimization_algorithm->get_name());
 
-    // cout << "adri71 -- " << optimization_method << " -- "  << endl;
-    // stochastic_gradient_descent.to_XML(printer);
-    // adaptive_moment_estimation.to_XML(printer);
-    // quasi_Newton_method.to_XML(printer);
-    // Levenberg_Marquardt_algorithm.to_XML(printer);
+    this->optimization_algorithm->to_XML(printer);
 
     // printer.CloseElement();
 
-    // add_xml_element(printer, "Display", to_string(get_display()));
 
-    // printer.CloseElement();
+    add_xml_element(printer, "Display", to_string(this->optimization_algorithm->get_display()));
 
+    printer.CloseElement();
 }
 
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
-
-/*
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
@@ -248,8 +220,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     if (!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
 
     // Loss method
-
-    set_loss_method(read_xml_string(loss_index_element, "LossMethod"));
+    const string loss_method = read_xml_string(loss_index_element, "LossMethod");
 
     // Minkowski error
 
@@ -257,6 +228,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (minkowski_error_element)
     {
+        set_loss_index("MinkowskiError");
         XMLDocument minkowski_document;
         XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
 
@@ -264,7 +236,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             minkowski_error_element_copy->InsertEndChild(node->DeepClone(&minkowski_document));
 
         minkowski_document.InsertEndChild(minkowski_error_element_copy);
-        Minkowski_error.from_XML(minkowski_document);
+        static_cast<MinkowskiError*>(this->get_loss_index())->from_XML(minkowski_document);
     }
 
     // Cross entropy error
@@ -273,6 +245,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (cross_entropy_element)
     {
+        set_loss_index("CrossEntropyError2d");
         XMLDocument cross_entropy_document;
         XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError2d");
 
@@ -280,7 +253,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));
 
         cross_entropy_document.InsertEndChild(cross_entropy_error_element_copy);
-        cross_entropy_error_2d.from_XML(cross_entropy_document);
+        static_cast<CrossEntropyError2d*>(this->get_loss_index())->from_XML(cross_entropy_document);
     }
 
     // Weighted squared error
@@ -289,6 +262,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (weighted_squared_error_element)
     {
+        set_loss_index("WeightedSquaredError");
         XMLDocument weighted_squared_error_document;
         XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
 
@@ -296,7 +270,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             weighted_squared_error_element_copy->InsertEndChild(node->DeepClone(&weighted_squared_error_document));
 
         weighted_squared_error_document.InsertEndChild(weighted_squared_error_element_copy);
-        weighted_squared_error.from_XML(weighted_squared_error_document);
+        static_cast<WeightedSquaredError*>(this->get_loss_index())->from_XML(weighted_squared_error_document);
     }
 
     // Regularization
@@ -305,6 +279,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (regularization_element)
     {
+        set_loss_index(loss_method);
         XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         get_loss_index()->regularization_from_XML(regularization_document);
@@ -317,7 +292,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Optimization method
 
-    set_optimization_method(read_xml_string(optimization_algorithm_element, "OptimizationMethod"));
+    const string optimization_algorithm = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
 
     // Stochastic gradient descent
 
@@ -325,6 +300,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (stochastic_gradient_descent_element)
     {
+        set_optimization_algorithm("StochasticGradientDescent");
         XMLDocument stochastic_gradient_document;
         XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
 
@@ -332,13 +308,16 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             stochastic_gradient_element_copy->InsertEndChild(node->DeepClone(&stochastic_gradient_document));
 
         stochastic_gradient_document.InsertEndChild(stochastic_gradient_element_copy);
-        stochastic_gradient_descent.from_XML(stochastic_gradient_document);
+        static_cast<StochasticGradientDescent*>(this->get_optimization_algorithm())->from_XML(stochastic_gradient_document);
     }
 
     // Adaptive moment estimation
 
     const XMLElement* adaptive_moment_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
-    if (adaptive_moment_element) {
+
+    if (adaptive_moment_element)
+    {
+        set_optimization_algorithm("AdaptiveMomentEstimation");
         XMLDocument adaptive_moment_document;
         XMLElement* adaptive_moment_element_copy = adaptive_moment_document.NewElement("AdaptiveMomentEstimation");
 
@@ -346,13 +325,16 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             adaptive_moment_element_copy->InsertEndChild(node->DeepClone(&adaptive_moment_document));
 
         adaptive_moment_document.InsertEndChild(adaptive_moment_element_copy);
-        adaptive_moment_estimation.from_XML(adaptive_moment_document);
+        static_cast<AdaptiveMomentEstimation*>(this->get_optimization_algorithm())->from_XML(adaptive_moment_document);
     }
 
     // Quasi-Newton method
 
     const XMLElement* quasi_newton_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
-    if (quasi_newton_element) {
+
+    if (quasi_newton_element)
+    {
+        set_optimization_algorithm("QuasiNewtonMethod");
         XMLDocument quasi_newton_document;
         XMLElement* quasi_newton_element_copy = quasi_newton_document.NewElement("QuasiNewtonMethod");
 
@@ -360,13 +342,16 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             quasi_newton_element_copy->InsertEndChild(node->DeepClone(&quasi_newton_document));
 
         quasi_newton_document.InsertEndChild(quasi_newton_element_copy);
-        quasi_Newton_method.from_XML(quasi_newton_document);
+        static_cast<QuasiNewtonMethod*>(this->get_optimization_algorithm())->from_XML(quasi_newton_document);
     }
 
     // Levenberg-Marquardt
 
     const XMLElement* levenberg_marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
-    if (levenberg_marquardt_element) {
+
+    if (levenberg_marquardt_element)
+    {
+        set_optimization_algorithm("LevenbergMarquardtAlgorithm");
         XMLDocument levenberg_document;
         XMLElement* levenberg_element_copy = levenberg_document.NewElement("LevenbergMarquardt");
 
@@ -374,13 +359,14 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             levenberg_element_copy->InsertEndChild(node->DeepClone(&levenberg_document));
 
         levenberg_document.InsertEndChild(levenberg_element_copy);
-        Levenberg_Marquardt_algorithm.from_XML(levenberg_document);
+        static_cast<LevenbergMarquardtAlgorithm*>(this->get_optimization_algorithm())->from_XML(levenberg_document);
     }
+
+    set_optimization_algorithm(optimization_algorithm);
 
     // Display
 
-    set_display(read_xml_bool(root_element, "Display"));
-*/
+    this->get_optimization_algorithm()->set_display(read_xml_bool(root_element, "Display"));
 }
 
 

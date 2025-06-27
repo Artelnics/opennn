@@ -32,8 +32,8 @@ public:
     TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
 
-    const NeuronsSelection* get_neurons_selection() const;
-    const InputsSelection* get_inputs_selection() const;
+    NeuronsSelection* get_neurons_selection() const;
+    InputsSelection* get_inputs_selection() const;
 
     // Set
 

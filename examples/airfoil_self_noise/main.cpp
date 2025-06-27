@@ -28,17 +28,18 @@ int main()
     {
         cout << "Airfoil self noise " << endl;
 
-        //const Index neurons_number = 12;
+        const Index neurons_number = 3;
 
-        //Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
+        Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        //ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
+        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
-        ApproximationNetwork approximation_network({1}, {1}, {1});
+        //ApproximationNetwork approximation_network({1}, {1}, {1});
 
         approximation_network.print();
 
         approximation_network.save("../data/approximation_network.xml");
+
         approximation_network.load("../data/approximation_network.xml");
 /*
         for (const auto& name : Registry<LossIndex>::instance().registered_names())
