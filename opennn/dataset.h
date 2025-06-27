@@ -498,9 +498,9 @@ public:
     virtual void read_csv();
 
     void prepare_line(string&) const;
-    void process_tokens(vector<string>&);
+    void infer_column_types(const vector<vector<string>>&);
 
-    void read_data_file_preview(ifstream&);
+    void read_data_file_preview(const vector<vector<string>>&);
 
     void check_separators(const string&) const;
 
