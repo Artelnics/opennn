@@ -19,7 +19,7 @@ Embedding::Embedding(const dimensions& new_input_dimensions,
 {
     set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_label);
 
-    layer_type = Type::Embedding;
+    name = "Embedding";
 
     label = new_label;
 }

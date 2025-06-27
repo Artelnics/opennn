@@ -166,7 +166,7 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
 
     set_min_max_range(type(-1), type(1));
 
-    layer_type = Type::Scaling2d;
+    name = "Scaling2d";
 
     is_trainable = false;
 }

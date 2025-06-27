@@ -27,159 +27,15 @@ const bool& Layer::get_display() const
 }
 
 
-string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
-{
-    switch(this_layer_type)
-    {
-    case Type::Dense2d:
-        return "Dense2d";
-
-    case Type::Dense3d:
-        return "Dense3d";
-
-    case Type::Bounding:
-        return "Bounding";
-
-    case Type::Pooling:
-        return "Pooling";
-
-    case Type::Probabilistic3d:
-        return "Probabilistic3d";
-
-    case Type::Convolutional:
-        return "Convolutional";
-
-    case Type::Recurrent:
-        return "Recurrent";
-
-    case Type::Scaling2d:
-        return "Scaling2d";
-
-    case Type::Scaling4d:
-        return "Scaling4d";
-
-    case Type::Unscaling:
-        return "Unscaling";
-
-    case Type::Flatten:
-        return "Flatten";
-
-    case Type::Flatten3d:
-        return "Flatten3d";
-
-    case Type::NonMaxSuppression:
-        return "NonMaxSuppression";
-
-    case Type::Addition3d:
-        return "Addition3d";
-
-    case Type::Normalization3d:
-        return "Normalization3d";
-
-    case Type::Embedding:
-        return "Embedding";
-
-    case Type::MultiheadAttention:
-        return "MultiheadAttention";
-
-    default:
-        throw runtime_error("Unknown layer type.");
-    }
-}
-
-
-Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
-{
-    if(this_layer_type == "Dense2d")
-        return Type::Dense2d;
-
-    if(this_layer_type == "Dense3d")
-        return Type::Dense3d;
-
-    if(this_layer_type == "Bounding")
-        return Type::Bounding;
-
-    if(this_layer_type == "Pooling")
-        return Type::Pooling;
-
-    if(this_layer_type == "Probabilistic3d")
-        return Type::Probabilistic3d;
-
-    if(this_layer_type == "Convolutional")
-        return Type::Convolutional;
-
-    if(this_layer_type == "Recurrent")
-        return Type::Recurrent;
-
-    if(this_layer_type == "Scaling2d")
-        return Type::Scaling2d;
-
-    if(this_layer_type == "Scaling4d")
-        return Type::Scaling4d;
-
-    if(this_layer_type == "Unscaling")
-        return Type::Unscaling;
-
-    if(this_layer_type == "Flatten")
-        return Type::Flatten;
-
-    if(this_layer_type == "Flatten3d")
-        return Type::Flatten3d;
-
-    if(this_layer_type == "NonMaxSuppression")
-        return Type::NonMaxSuppression;
-
-    if(this_layer_type == "Addition3d")
-        return Type::Addition3d;
-
-    if(this_layer_type == "Normalization3d")
-        return Type::Normalization3d;
-
-    if(this_layer_type == "Embedding")
-        return Type::Embedding;
-
-    if(this_layer_type == "MultiheadAttention")
-        return Type::MultiheadAttention;
-
-    throw runtime_error("Unknown layer type.");
-}
-
-
 const string& Layer::get_label() const
 {
     return label;
 }
 
 
-Layer::Type Layer::get_type () const
+const string& Layer::get_name() const
 {
-    return layer_type;
-}
-
-
-string Layer::get_type_string() const
-{
-    switch(layer_type)
-    {
-    case Type::Dense2d: return "Dense2d";
-    case Type::Dense3d: return "Dense3d";
-    case Type::Bounding: return "Bounding";
-    case Type::Pooling: return "Pooling";
-    case Type::Probabilistic3d: return "Probabilistic3d";
-    case Type::Convolutional: return "Convolutional";
-    case Type::Recurrent: return "Recurrent";
-    case Type::Scaling2d: return "Scaling2d";
-    case Type::Scaling4d: return "Scaling4d";
-    case Type::Unscaling: return "Unscaling";
-    case Type::Flatten: return "Flatten";
-    case Type::Flatten3d: return "Flatten3d";
-    case Type::NonMaxSuppression: return "NonMaxSuppression";
-    case Type::Addition3d: return "Addition3d";
-    case Type::Normalization3d: return "Normalization3d";
-    case Type::Embedding: return "Embedding";
-    case Type::MultiheadAttention: return "MultiheadAttention";
-    default: return "Unkown type";
-    }
+    return name;
 }
 
 
@@ -238,6 +94,11 @@ vector<string> Layer::get_default_output_names() const
     return output_names;
 }
 
+bool Layer::get_is_trainable() const
+{
+    return is_trainable;
+}
+
 
 void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) const
 {
@@ -288,20 +149,20 @@ Index Layer::get_outputs_number() const
 void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
                               unique_ptr<LayerForwardPropagation>&, const bool&)
 {
-    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 
 
 void Layer::set_input_dimensions(const dimensions&)
 {
-    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 
 void Layer::set_output_dimensions(const dimensions&)
 {
-    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
 

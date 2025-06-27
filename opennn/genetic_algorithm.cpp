@@ -731,9 +731,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     neural_network->set_input_names(dataset->get_variable_names(Dataset::VariableUse::Input));
 
-    if(neural_network->has(Layer::Type::Scaling2d))
+    if(neural_network->has("Scaling2d"))
     {
-        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
+        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }

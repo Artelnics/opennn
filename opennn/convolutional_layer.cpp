@@ -20,7 +20,7 @@ Convolutional::Convolutional(const dimensions& new_input_dimensions,
                              const Convolutional::Convolution& new_convolution_type,
                              const string new_name) : Layer()
 {
-    layer_type = Layer::Type::Convolutional;
+    name = "Convolutional";
 
     set(new_input_dimensions, 
         new_kernel_dimensions, 
@@ -1227,7 +1227,7 @@ void ConvolutionalForwardPropagationCuda::print() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    cout << layer->get_type_string() + " forward propagation" << endl;
+    cout << layer->get_name() + " forward propagation" << endl;
 
     cout << "Outputs:" << endl;
     cout << matrix_4d_from_device(outputs, batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]) << endl;
@@ -1398,7 +1398,7 @@ void ConvolutionalBackPropagationCuda::print() const
     const dimensions input_dimensions = layer->get_input_dimensions();
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    cout << layer->get_type_string() + " back propagation" << endl;
+    cout << layer->get_name() + " back propagation" << endl;
 
     cout << "bias_deltas_device" << endl;
     //vector_from_device(bias_deltas,);

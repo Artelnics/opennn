@@ -78,7 +78,7 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     label = "recurrent_layer";
 
-    layer_type = Type::Recurrent;
+    name = "Recurrent";
 }
 
 

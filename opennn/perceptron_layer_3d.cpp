@@ -107,7 +107,7 @@ void Dense3d::set(const Index& new_sequence_length,
 
     label = new_label;
 
-    layer_type = Type::Dense3d;
+    name = "Dense3d";
 
     dropout_rate = 0;
 }

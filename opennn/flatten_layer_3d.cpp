@@ -44,7 +44,7 @@ Index Flatten3d::get_input_width() const
 
 void Flatten3d::set(const dimensions& new_input_dimensions)
 {
-    layer_type = Type::Flatten3d;
+    name = "Flatten3d";
 
     set_label("flatten_layer");
 

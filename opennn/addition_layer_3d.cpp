@@ -54,7 +54,7 @@ void Addition3d::set(const Index& new_sequence_length,
 
     label = new_label;
 
-    layer_type = Type::Addition3d;
+    name = "Addition3d";
 }
 
 

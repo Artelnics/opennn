@@ -207,7 +207,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs<2,2>(testing_input_data);
 
-    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
@@ -265,7 +265,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs<2,2>(testing_input_data);
 
-    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;

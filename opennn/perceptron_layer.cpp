@@ -94,7 +94,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     set_label(new_label);
     
-    layer_type = Layer::Type::Dense2d;
+    name = "Dense2d";
 
     #ifdef OPENNN_CUDA
 

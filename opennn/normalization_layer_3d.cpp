@@ -79,7 +79,7 @@ void Normalization3d::set(const Index& new_sequence_length,
 
     label = new_label;
 
-    layer_type = Type::Normalization3d;
+    name = "Normalization3d";
 }
 
 

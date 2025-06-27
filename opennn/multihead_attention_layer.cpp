@@ -130,7 +130,7 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
                              const bool& new_use_causal_mask,
                              const string& new_label)
 {
-    layer_type = Type::MultiheadAttention;
+    name = "MultiheadAttention";
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     heads_number = new_heads_number;

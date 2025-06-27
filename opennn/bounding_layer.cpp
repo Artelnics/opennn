@@ -68,7 +68,7 @@ void Bounding::set(const dimensions& new_output_dimensions, const string& new_la
 
     bounding_method = BoundingMethod::Bounding;
 
-    layer_type = Layer::Type::Bounding;
+    name = "Bounding";
 }
 
 

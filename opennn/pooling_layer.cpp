@@ -19,7 +19,7 @@ Pooling::Pooling(const dimensions& new_input_dimensions,
                  const PoolingMethod& new_pooling_method,
                  const string new_name) : Layer()
 {
-    layer_type = Layer::Type::Pooling;
+    name = "Pooling";
 
     set(new_input_dimensions,
         new_pool_dimensions,

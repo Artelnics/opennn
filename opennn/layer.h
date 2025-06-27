@@ -28,26 +28,6 @@ class Layer
 
 public:
 
-    enum class Type{None,
-                    Scaling2d,
-                    Scaling4d,
-                    Addition3d,
-                    Normalization3d,
-                    Convolutional,
-                    Dense2d,
-                    Dense3d,
-                    Pooling,
-                    Pooling3d,
-                    Probabilistic3d,
-                    Recurrent,
-                    Unscaling,
-                    Bounding,
-                    Flatten,
-                    Flatten3d,
-                    NonMaxSuppression,
-                    MultiheadAttention,
-                    Embedding};
-
     Layer();
 
     ~Layer()
@@ -62,12 +42,7 @@ public:
 
     const bool& get_display() const;
 
-    string layer_type_to_string(const Layer::Type&);
-    Type string_to_layer_type(const string&);
-
-    Type get_type() const;
-
-    string get_type_string() const;
+    const string& get_name() const;
 
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
@@ -134,10 +109,7 @@ public:
 
     vector<string> get_default_output_names() const;
 
-    bool get_is_trainable() const
-    {
-        return is_trainable;
-    }
+    bool get_is_trainable() const;
 
 protected:
 
@@ -146,7 +118,7 @@ protected:
 
     string label = "layer";
 
-    Type layer_type = Type::None;
+    string name;
 
     bool is_trainable = true;
 
@@ -307,7 +279,7 @@ public:
                                         unique_ptr<LayerForwardPropagationCuda>&,
                                         const bool&) 
     {
-        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_type_string());
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_name());
     }
 
     virtual void back_propagate_cuda(const vector<float*>&,

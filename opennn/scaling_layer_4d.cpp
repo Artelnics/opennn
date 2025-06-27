@@ -36,7 +36,7 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
 
     set_min_max_range(type(0), type(255));
 
-    layer_type = Type::Scaling4d;
+    name = "Scaling4d";
 
     label = "scaling_layer_4d";
 

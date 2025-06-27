@@ -33,18 +33,18 @@
          </ScalingNeuron>
       </Scaling2d>
       <Dense2d>
-         <Name>dense2d_layer_1</Name>
+         <Label>dense2d_layer_1</Label>
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
-         <Parameters>0.0716759 0.0155607 0.00134496 -0.0592669 -0.0278085 0.085654 -0.0435453 0.0835816 0.050395 0.0110645 0.0381855 0.0848493 -0.061457 0.0873876 -0.0160303 0.0182339 0.00280935 -0.0860366 </Parameters>
+         <Parameters>-0.0287963 0.0390742 -0.0498324 0.078594 -0.0339765 0.0232361 0.0313595 0.0242309 0.0794491 0.0618589 0.0832561 -0.0514957 0.015376 -0.0117042 -0.0327203 0.0820762 0.0763682 0.0802216 </Parameters>
       </Dense2d>
       <Dense2d>
-         <Name>approximation_layer</Name>
+         <Label>approximation_layer</Label>
          <InputsNumber>3</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>Linear</Activation>
-         <Parameters>-0.0508461 0.0639073 0.0585357 0.0252208 </Parameters>
+         <Parameters>-0.00364528 0.00520815 -0.0938164 -0.0410539 </Parameters>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>1</NeuronsNumber>

@@ -50,7 +50,7 @@ Index Flatten::get_input_channels() const
 
 void Flatten::set(const dimensions& new_input_dimensions)
 {
-    layer_type = Type::Flatten;
+    name = "Flatten";
 
     set_label("flatten_layer");
 

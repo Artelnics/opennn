@@ -217,7 +217,7 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_label)
 
     set_min_max_range(type(-1), type(1));
 
-    layer_type = Type::Unscaling;
+    name = "Unscaling";
 
     is_trainable = false;
 }

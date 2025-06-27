@@ -113,7 +113,7 @@ void Probabilistic3d::set(const Index& new_inputs_number,
 
     label = new_label;
 
-    layer_type = Layer::Type::Probabilistic3d;
+    name = "Probabilistic3d";
 
     activation_function = Activation::Softmax;
 }

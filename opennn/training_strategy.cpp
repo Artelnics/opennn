@@ -129,7 +129,7 @@ TrainingResults TrainingStrategy::perform_training()
     if(!optimization_algorithm->has_loss_index())
         throw runtime_error("Optimization algorithm is wrong.");
 
-    if(neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has("Recurrent"))
         fix_forecasting();
 
     return optimization_algorithm->perform_training();
@@ -141,8 +141,8 @@ void TrainingStrategy::fix_forecasting()
 /*
     Index time_steps = 0;
 
-    if(neural_network->has(Layer::Type::Recurrent))
-        time_steps = static_cast<Recurrent*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
+    if(neural_network->has(Recurrent))
+        time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
     else
         return;
 
@@ -414,7 +414,7 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 
     get_optimization_algorithm()->create_cuda();
 
-    if (neural_network->has(Layer::Type::Recurrent))
+    if (neural_network->has("Recurrent"))
         fix_forecasting();
 
     return optimization_algorithm->perform_training_cuda();
