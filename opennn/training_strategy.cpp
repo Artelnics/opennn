@@ -194,7 +194,6 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     // printer.OpenElement("OptimizationAlgorithm");
-    // cout << "adri71" << endl;
     // const string optimization_method = get_optimization_algorithm()->get_name();
     // add_xml_element(printer, "OptimizationMethod", optimization_method);
 
