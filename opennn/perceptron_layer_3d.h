@@ -19,16 +19,10 @@ class Dense3d : public Layer
 
 public:
 
-    enum class Activation{HyperbolicTangent,
-                          Logistic,
-                          Linear,
-                          RectifiedLinear,
-                          Softmax};
-
     Dense3d(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const Activation& = Dense3d::Activation::HyperbolicTangent,
+            const string& = "HyperbolicTangent",
             const string& = "dense3d_layer");
 
     Index get_sequence_length() const;
@@ -44,19 +38,16 @@ public:
    type get_dropout_rate() const;
    void get_parameters(Tensor<type, 1>&) const override;
 
-   const Dense3d::Activation& get_activation_function() const;
-
-   string get_activation_function_string() const;
+   string get_activation_function() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const Dense3d::Activation& = Dense3d::Activation::HyperbolicTangent,
+            const string& = "HyperbolicTangent",
             const string & = "dense3d_layer");
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
@@ -65,9 +56,6 @@ public:
 
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
-
-   void calculate_activations(Tensor<type, 3>&,
-                              Tensor<type, 3>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
@@ -97,7 +85,7 @@ private:
 
    Tensor<type, 2> weights;
 
-   Activation activation_function;
+   string activation_function;
 
    type dropout_rate = type(0);
 };

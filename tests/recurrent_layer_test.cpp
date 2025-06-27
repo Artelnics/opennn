@@ -91,14 +91,14 @@ TEST(RecurrentLayerTest, Activations)
 
 TEST(RecurrentLayerTest, ForwardPropagate)
 {
-    using Activation = Recurrent::Activation;
-
     Index neurons_number = 4;
     Index samples_number = 3;
     Index inputs_number = 3;
     Index time_steps = 5;
     bool is_training = true;
 /*
+    using Activation = Recurrent::Activation;
+
     Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
 
     // Test HyperbolicTangent

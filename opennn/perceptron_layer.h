@@ -20,17 +20,9 @@ class Dense2d : public Layer
 
 public:
 
-    enum class Activation {
-        Logistic,
-        HyperbolicTangent,
-        Linear,
-        RectifiedLinear,
-        ExponentialLinear,
-        Softmax};
-
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},
-            const Activation& = Dense2d::Activation::HyperbolicTangent,
+            const string& = "HyperbolicTangent",
             const string& = "dense2d_layer");
 
     dimensions get_input_dimensions() const override;
@@ -41,13 +33,11 @@ public:
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
-    const Dense2d::Activation& get_activation_function() const;
-
-    string get_activation_function_string() const;
+    const string& get_activation_function() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
-             const Dense2d::Activation & = Dense2d::Activation::HyperbolicTangent,
+             const string& = "HyperbolicTangent",
              const string& = "dense2d_layer");
 
     void set_input_dimensions(const dimensions&) override;
@@ -57,7 +47,6 @@ public:
     
     void set_parameters_random() override;
 
-    void set_activation_function(const Activation&);
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
@@ -66,9 +55,6 @@ public:
 
 
     void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
-
-    void calculate_activations(Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -146,7 +132,7 @@ private:
     Tensor<type, 1> scales;
     Tensor<type, 1> shifts;
 
-    Activation activation_function = Activation::HyperbolicTangent;
+    string activation_function = "HyperbolicTangent";
 
     type dropout_rate = type(0);
 };

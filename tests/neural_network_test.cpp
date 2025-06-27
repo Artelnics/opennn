@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/neural_network.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/perceptron_layer.h"
 #include "../opennn/layer.h"
 #include "../opennn/dataset.h"
@@ -20,7 +21,7 @@ TEST(NeuralNetworkTest, DefaultConstructor)
 
 TEST(NeuralNetworkTest, ApproximationConstructor)
 {
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 4 }, { 2 });
+    ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
@@ -60,7 +61,7 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
 
 TEST(NeuralNetworkTest, ClassificationConstructor)
 {   
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, { 4 }, { 2 });
+    ClassificationNetwork neural_network({ 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 3);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
@@ -71,7 +72,7 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
 
 TEST(NeuralNetworkTest, AproximationConstructor)
 {
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 4 }, { 2 });
+    ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
@@ -84,7 +85,7 @@ TEST(NeuralNetworkTest, AproximationConstructor)
 
 TEST(NeuralNetworkTest, ForecastingConstructor)
 {
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
+    ForecastingNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 4);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
@@ -96,7 +97,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
 
 TEST(NeuralNetworkTest, AutoAssociationConstructor)
 {
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::AutoAssociation, { 1 }, { 4 }, { 2 });
+    AutoAssociationNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 6);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
@@ -118,8 +119,7 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 
     const Index outputs_number = 1;
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-        {height, width, channels}, {blocks}, { outputs_number });
+    ImageClassificationNetwork neural_network({height, width, channels}, {blocks}, { outputs_number });
  
     EXPECT_EQ(neural_network.get_layers_number(), 5); 
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling4d);
@@ -162,11 +162,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     // Test Logistic
 
-    NeuralNetwork neural_network_aproximation(
-        NeuralNetwork::ModelType::Approximation,
-        {inputs_number},
-        {neurons_number},
-        {outputs_number});
+    ApproximationNetwork neural_network_aproximation({inputs_number}, {neurons_number}, {outputs_number});
 
     ForwardPropagation forward_propagation(dataset.get_samples_number(), &neural_network_aproximation);
 
@@ -186,14 +182,10 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     // Test Probabilistic
 
-    NeuralNetwork neural_network_classification(
-        NeuralNetwork::ModelType::Classification,
-        {inputs_number},
-        {neurons_number},
-        {outputs_number});
+    ClassificationNetwork neural_network_classification({inputs_number}, {neurons_number}, {outputs_number});
 
     Dense2d* probabilistic_layer =static_cast<Dense2d*>(neural_network_classification.get_first(Layer::Type::Dense2d));
-    probabilistic_layer->set_activation_function(Dense2d::Activation::Softmax);
+    probabilistic_layer->set_activation_function("Softmax");
 
     ForwardPropagation forward_propagation_0(dataset.get_samples_number(), &neural_network_classification);
 
@@ -238,7 +230,7 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
 
     // Test
         
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 3 }, { 4 }, { 2 });
+    ApproximationNetwork neural_network({ 3 }, { 4 }, { 2 });
     neural_network.set_parameters_random();
 
     inputs.resize(2,3);
