@@ -1,0 +1,57 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>1</InputsNumber>
+      <Input Index="1"></Input>
+   </Inputs>
+   <Layers>
+      <LayersNumber>5</LayersNumber>
+      <Scaling2d>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </Scaling2d>
+      <Dense2d>
+         <Name>dense2d_layer_1</Name>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <Activation>RectifiedLinear</Activation>
+         <Parameters>0.0365593 0.0911168 </Parameters>
+      </Dense2d>
+      <Dense2d>
+         <Name>approximation_layer</Name>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <Activation>Linear</Activation>
+         <Parameters>0.0174282 -0.0835228 </Parameters>
+      </Dense2d>
+      <Unscaling>
+         <NeuronsNumber>1</NeuronsNumber>
+         <UnscalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+      </Unscaling>
+      <Bounding>
+         <NeuronsNumber>1</NeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <BoundingMethod>Bounding</BoundingMethod>
+      </Bounding>
+      <LayerInputIndices>
+         <LayerInputsIndices LayerIndex="0">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="1">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">2</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="4">3</LayerInputsIndices>
+      </LayerInputIndices>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1"></Output>
+   </Outputs>
+   <Display>1</Display>
+</NeuralNetwork>

@@ -32,13 +32,13 @@ NeuralNetwork* TrainingStrategy::get_neural_network() const
 }
 
 
-LossIndex* TrainingStrategy::get_loss_index()
+LossIndex* TrainingStrategy::get_loss_index() const
 {
     return loss_index.get();
 }
 
 
-OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
+OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm() const
 {
     return optimization_algorithm.get();
 }
@@ -180,61 +180,66 @@ void TrainingStrategy::print() const
 
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
-/*
-    printer.OpenElement("TrainingStrategy");
+    // printer.OpenElement("TrainingStrategy");
 
-    printer.OpenElement("LossIndex");
+    // printer.OpenElement("LossIndex");
 
-    add_xml_element(printer, "LossMethod", write_loss_method());
+    // const string loss_method = ;
+    // cout << "adri71 --" << endl;
+    // add_xml_element(printer, "LossMethod", loss_method);
 
-    mean_squared_error.to_XML(printer);
-    normalized_squared_error.to_XML(printer);
-    Minkowski_error.to_XML(printer);
-    cross_entropy_error_2d.to_XML(printer);
-    weighted_squared_error.to_XML(printer);
+    // mean_squared_error.to_XML(printer);
+    // normalized_squared_error.to_XML(printer);
+    // Minkowski_error.to_XML(printer);
+    // cross_entropy_error_2d.to_XML(printer);
+    // weighted_squared_error.to_XML(printer);
 
-    switch (loss_method) {
-    case LossMethod::MEAN_SQUARED_ERROR:
-        mean_squared_error.write_regularization_XML(printer);
-        break;
-    case LossMethod::NORMALIZED_SQUARED_ERROR:
-        normalized_squared_error.write_regularization_XML(printer);
-        break;
-    case LossMethod::MINKOWSKI_ERROR:
-        Minkowski_error.write_regularization_XML(printer);
-        break;
-    case LossMethod::CROSS_ENTROPY_ERROR_2D:
-        cross_entropy_error_2d.write_regularization_XML(printer);
-        break;
-    case LossMethod::WEIGHTED_SQUARED_ERROR:
-        weighted_squared_error.write_regularization_XML(printer);
-        break;
-    default:
-        break;
-    }
+    // switch (loss_method) {
+    // case LossMethod::MEAN_SQUARED_ERROR:
+    //     mean_squared_error.write_regularization_XML(printer);
+    //     break;
+    // case LossMethod::NORMALIZED_SQUARED_ERROR:
+    //     normalized_squared_error.write_regularization_XML(printer);
+    //     break;
+    // case LossMethod::MINKOWSKI_ERROR:
+    //     Minkowski_error.write_regularization_XML(printer);
+    //     break;
+    // case LossMethod::CROSS_ENTROPY_ERROR_2D:
+    //     cross_entropy_error_2d.write_regularization_XML(printer);
+    //     break;
+    // case LossMethod::WEIGHTED_SQUARED_ERROR:
+    //     weighted_squared_error.write_regularization_XML(printer);
+    //     break;
+    // default:
+    //     break;
+    // }
 
-    printer.CloseElement();  
+    // printer.CloseElement();
 
-    printer.OpenElement("OptimizationAlgorithm");
+    // printer.OpenElement("OptimizationAlgorithm");
+    // cout << "adri71" << endl;
+    // const string optimization_method = get_optimization_algorithm()->get_name();
+    // add_xml_element(printer, "OptimizationMethod", optimization_method);
 
-    add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    stochastic_gradient_descent.to_XML(printer);
-    adaptive_moment_estimation.to_XML(printer);
-    quasi_Newton_method.to_XML(printer);
-    Levenberg_Marquardt_algorithm.to_XML(printer);
+    // cout << "adri71 -- " << optimization_method << " -- "  << endl;
+    // stochastic_gradient_descent.to_XML(printer);
+    // adaptive_moment_estimation.to_XML(printer);
+    // quasi_Newton_method.to_XML(printer);
+    // Levenberg_Marquardt_algorithm.to_XML(printer);
 
-    printer.CloseElement();  
+    // printer.CloseElement();
 
-    add_xml_element(printer, "Display", to_string(get_display())); 
+    // add_xml_element(printer, "Display", to_string(get_display()));
 
-    printer.CloseElement();
-*/
+    // printer.CloseElement();
+
 }
 
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
+
 /*
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");

@@ -147,6 +147,7 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 
 void ModelSelection::from_XML(const XMLDocument& document)
 {
+    /*
     const XMLElement* root_element = document.FirstChildElement("ModelSelection");
     
     if (!root_element) 
@@ -157,7 +158,7 @@ void ModelSelection::from_XML(const XMLDocument& document)
     if (neurons_selection_element) 
     {
         set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
-/*
+
         const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
 
         if (growing_neurons_element)
@@ -166,11 +167,9 @@ void ModelSelection::from_XML(const XMLDocument& document)
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
             growing_neurons.from_XML(growing_neurons_document);
         }
-*/
     }
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
-/*
 
     if (inputs_selection_element)
     {

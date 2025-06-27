@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/mean_squared_error.h"
@@ -43,7 +44,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
     Dataset dataset(1, {1}, {1});
     dataset.set_data_constant(type(1));
     
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
+    ApproximationNetwork neural_network({1}, {1}, {1});
     // neural_network.set_parameters_constant(type(1));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);

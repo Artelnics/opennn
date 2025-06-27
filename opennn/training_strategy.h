@@ -40,8 +40,8 @@ public:
     Dataset* get_data_set();
     NeuralNetwork* get_neural_network() const;
 
-    LossIndex* get_loss_index();
-    OptimizationAlgorithm* get_optimization_algorithm();
+    LossIndex* get_loss_index() const;
+    OptimizationAlgorithm* get_optimization_algorithm() const;
 
     bool has_neural_network() const;
     bool has_data_set() const;
