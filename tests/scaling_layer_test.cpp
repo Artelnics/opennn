@@ -21,7 +21,7 @@ TEST(Scaling2dTest, GeneralConstructor)
 
     EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{ 1 });
-    EXPECT_EQ(scaling_layer_2d.get_type(), Layer::Type::Scaling2d);
+    EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling2d");
     EXPECT_EQ(scaling_layer_2d.get_descriptives().size(), 1);
     EXPECT_EQ(scaling_layer_2d.get_scaling_methods().size(), 1);
 }

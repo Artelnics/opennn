@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "perceptron_layer.h"
+#include "registry.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "perceptron_layer.h"
 
 namespace opennn
 {
@@ -16,9 +17,9 @@ namespace opennn
 Dense2d::Dense2d(const dimensions& new_input_dimensions,
                  const dimensions& new_output_dimensions,
                  const string& new_activation_function,
-                 const string& new_layer_name) : Layer()
+                 const string& new_layer_label) : Layer()
 {
-    set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_name);
+    set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_label);
 }
 
 
@@ -77,7 +78,7 @@ const string& Dense2d::get_activation_function() const
 void Dense2d::set(const dimensions& new_input_dimensions,
                   const dimensions& new_output_dimensions,
                   const string& new_activation_function,
-                  const string& new_name)
+                  const string& new_label)
 {
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
@@ -92,30 +93,30 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     set_activation_function(new_activation_function);
 
-    set_name(new_name);
+    set_label(new_label);
     
-    layer_type = Layer::Type::Dense2d;
+    name = "Dense2d";
 
     #ifdef OPENNN_CUDA
 
     // Activations
     
-    if (activation_function != Activation::Softmax)
+    if (activation_function != "Softmax")
     {
         cudnnCreateActivationDescriptor(&activation_descriptor);
 
         cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-        switch (get_activation_function())
-        {
-        case Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-        case Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-        case Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-        case Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-        case Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
-
-        default: break;
-        }
+        if(activation_function == "Linear")
+            activation = CUDNN_ACTIVATION_IDENTITY;
+        else if(activation_function == "Logistic")
+            activation = CUDNN_ACTIVATION_SIGMOID;
+        else if(activation_function == "HyperbolicTangent")
+            activation = CUDNN_ACTIVATION_TANH;
+        else if(activation_function == "RectifiedLinear")
+            activation = CUDNN_ACTIVATION_RELU;
+        else if(activation_function == "ExponentialLinear")
+            activation = CUDNN_ACTIVATION_ELU;
 
         cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
@@ -386,7 +387,7 @@ string Dense2d::get_expression(const vector<string>& new_input_names,
     {
         const TensorMap<Tensor<type, 1>> weights_column = tensor_map(weights, j);
 
-        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " + ";
+        buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " + ";
 
         for(Index i = 0; i < inputs_number - 1; i++)
             buffer << "(" << weights_column(i) << "*" << input_names[i] << ") + ";
@@ -423,7 +424,7 @@ void Dense2d::from_XML(const XMLDocument& document)
     if(!dense2d_layer_element)
         throw runtime_error("Dense2d element is nullptr.\n");
 
-    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_input_dimensions({ read_xml_index(dense2d_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
@@ -438,7 +439,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Dense2d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
@@ -449,23 +450,6 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
-}
-
-
-string Dense2d::get_activation_function_string_expression() const
-{
-/*
-    switch(activation_function)
-    {
-    case Activation::Logistic: return "logistic";
-    case Activation::HyperbolicTangent: return "tanh";
-    case Activation::Linear: return string();
-    case Activation::RectifiedLinear: return "ReLU";
-    case Activation::ExponentialLinear: return "ELU";
-    default: return string();
-    }
-*/
-    return string();
 }
 
 
@@ -495,8 +479,7 @@ pair<type *, dimensions> Dense2dForwardPropagation::get_output_pair() const
 }
 
 
-Dense2dForwardPropagation::Dense2dForwardPropagation(const Index&new_batch_size,
-                                                                     Layer *new_layer)
+Dense2dForwardPropagation::Dense2dForwardPropagation(const Index& new_batch_size, Layer *new_layer)
 : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
@@ -512,20 +495,21 @@ void Dense2dForwardPropagation::print() const
 }
 
 
-Dense2dBackPropagation::Dense2dBackPropagation(const Index&new_batch_size, Layer *new_layer)
+Dense2dBackPropagation::Dense2dBackPropagation(const Index& new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void Dense2dBackPropagation::set(const Index&new_batch_size,
-                                    Layer *new_layer)
+void Dense2dBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
-    layer = new_layer;
-    
     batch_size = new_batch_size;
-    
+
+    layer = new_layer;
+        
+    if (!layer) return;
+
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -556,7 +540,7 @@ void Dense2dBackPropagation::print() const
 }
 
 
-Dense2dLayerBackPropagationLM::Dense2dLayerBackPropagationLM(const Index&new_batch_size,
+Dense2dLayerBackPropagationLM::Dense2dLayerBackPropagationLM(const Index& new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
@@ -668,14 +652,9 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    switch (activation_function)
-    {
-    case Activation::Linear:
+    if(activation_function == "Linear")
         cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
-
-        break;
-
-    case Activation::Softmax:
+    else if(activation_function == "Softmax")
         cudnnSoftmaxForward(cudnn_handle,
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -685,10 +664,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             &beta,
             output_softmax_tensor_descriptor,
             outputs);
-
-        break;
-
-    default:
+    else
         cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
@@ -697,9 +673,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             &beta,
             output_tensor_descriptor,
             outputs);
-
-        break;
-    }
 
     // Droput
 
@@ -774,7 +747,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Error combinations derivatives
 
-    if (dense2d_layer->get_activation_function() != Activation::Linear && dense2d_layer->get_activation_function() != Activation::Softmax)
+    if (dense2d_layer->get_activation_function() != "Linear" && dense2d_layer->get_activation_function() != "Softmax")
     {
         cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
@@ -1062,7 +1035,13 @@ void Dense2dBackPropagationCuda::free()
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }
 
+REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
+REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
 
 } // namespace opennn
 

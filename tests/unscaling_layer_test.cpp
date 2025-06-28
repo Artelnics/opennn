@@ -11,7 +11,7 @@ TEST(UnscalingTest, DefaultConstructor)
 {
     Unscaling unscaling_layer;
 
-    EXPECT_EQ(unscaling_layer.get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(unscaling_layer.get_name(), "Unscaling");
     EXPECT_EQ(unscaling_layer.get_descriptives().size(), 0);
     EXPECT_EQ(unscaling_layer.get_input_dimensions(), dimensions{ 0 });
     EXPECT_EQ(unscaling_layer.get_output_dimensions(), dimensions{ 0 });
@@ -23,7 +23,7 @@ TEST(UnscalingTest, GeneralConstructor)
 
     EXPECT_EQ(unscaling_layer.get_input_dimensions(), dimensions{ 3 });
     EXPECT_EQ(unscaling_layer.get_output_dimensions(), dimensions{ 3 });
-    EXPECT_EQ(unscaling_layer.get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(unscaling_layer.get_name(), "Unscaling");
     EXPECT_EQ(unscaling_layer.get_descriptives().size(), 3);
 }
 

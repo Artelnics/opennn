@@ -62,8 +62,6 @@ public:
 
    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-   string get_activation_function_string_expression() const;
-
    void print() const override;
 
    void from_XML(const XMLDocument&) override;
@@ -92,9 +90,9 @@ private:
 };
 
 
-struct RecurrentLayerForwardPropagation : LayerForwardPropagation
+struct RecurrentForwardPropagation : LayerForwardPropagation
 {
-    RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_output_pair() const override;
 

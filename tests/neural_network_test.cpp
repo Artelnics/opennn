@@ -24,31 +24,31 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
     
-    
-    for (Index i = 0; i < neural_network.get_layers_number(); i++) {
-        Layer::Type type = neural_network.get_layer(i)->get_type();
+    for (Index i = 0; i < neural_network.get_layers_number(); i++)
+    {
+        const string& name = neural_network.get_layer(i)->get_name();
 
         switch (i) {
         case 0:
-            EXPECT_EQ(type, Layer::Type::Scaling2d);
+            EXPECT_EQ(name, "Scaling2d");
             break;    
         case 1:
-            EXPECT_EQ(type, Layer::Type::Dense2d);
+            EXPECT_EQ(name, "Dense2d");
             break;
         case 2:
-            EXPECT_EQ(type, Layer::Type::Dense2d);
+            EXPECT_EQ(name, "Dense2d");
             break;
         case 3:
-            EXPECT_EQ(type, Layer::Type::Unscaling);
+            EXPECT_EQ(name, "Unscaling");
             break;
         case 4:
-            EXPECT_EQ(type, Layer::Type::Bounding);
+            EXPECT_EQ(name, "Bounding");
             break;
         default:
             break;
@@ -64,9 +64,9 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
     ClassificationNetwork neural_network({ 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 3);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
 }
 
 
@@ -75,11 +75,11 @@ TEST(NeuralNetworkTest, AproximationConstructor)
     ApproximationNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
 
 
@@ -88,10 +88,10 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     ForecastingNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 4);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Unscaling);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Recurrent");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Bounding");
 }
 
 
@@ -100,12 +100,12 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     AutoAssociationNetwork neural_network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 6);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Dense2d);
-    EXPECT_EQ(neural_network.get_layer(5)->get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Unscaling");
 }
 
 
@@ -122,11 +122,11 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     ImageClassificationNetwork neural_network({height, width, channels}, {blocks}, { outputs_number });
  
     EXPECT_EQ(neural_network.get_layers_number(), 5); 
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling4d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Convolutional);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Pooling);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Flatten);
-    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling4d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Convolutional");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Pooling");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Flatten");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense2d");
 }
 
 
@@ -184,7 +184,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     ClassificationNetwork neural_network_classification({inputs_number}, {neurons_number}, {outputs_number});
 
-    Dense2d* probabilistic_layer =static_cast<Dense2d*>(neural_network_classification.get_first(Layer::Type::Dense2d));
+    Dense2d* probabilistic_layer =static_cast<Dense2d*>(neural_network_classification.get_first("Dense2d"));
     probabilistic_layer->set_activation_function("Softmax");
 
     ForwardPropagation forward_propagation_0(dataset.get_samples_number(), &neural_network_classification);

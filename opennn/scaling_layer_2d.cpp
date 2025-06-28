@@ -6,10 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "scaling_layer_2d.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "statistics.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {
@@ -160,13 +161,13 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
 
     scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 
-    name = "scaling_layer";
+    label = "scaling_layer";
 
     set_scalers(Scaler::MeanStandardDeviation);
 
     set_min_max_range(type(-1), type(1));
 
-    layer_type = Type::Scaling2d;
+    name = "Scaling2d";
 
     is_trainable = false;
 }
@@ -593,6 +594,8 @@ void Scaling2dForwardPropagation::print() const
     cout << "Outputs:" << endl
          << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Scaling2d", Scaling2dForwardPropagation);
 
 }
 

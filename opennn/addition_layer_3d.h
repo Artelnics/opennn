@@ -95,9 +95,9 @@ struct Addition3dBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-    struct AdditionLayer3DForwardPropagationCuda : public LayerForwardPropagationCuda
+    struct Addition3dForwardPropagationCuda : public LayerForwardPropagationCuda
     {
-        AdditionLayer3DForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+        Addition3dForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
         void set(const Index& = 0, Layer* = nullptr);
 
@@ -105,9 +105,9 @@ struct Addition3dBackPropagation : LayerBackPropagation
     };
 
 
-    struct AdditionLayer3DBackPropagationCuda : public LayerBackPropagationCuda
+    struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
     {
-        AdditionLayer3DBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+        Addition3dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
         void set(const Index& = 0, Layer* = nullptr);
 

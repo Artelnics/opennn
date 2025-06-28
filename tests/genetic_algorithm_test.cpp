@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/genetic_algorithm.h"
 
@@ -36,7 +37,7 @@ TEST(GeneticAlgorithmTest, InitializePopulation)
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_display(false);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 
@@ -71,7 +72,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_display(false);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 
@@ -79,7 +80,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     genetic_algorithm.set_individuals_number(individuals_number);
     genetic_algorithm.perform_fitness_assignment();
 
-    Tensor <type, 1> fitness = genetic_algorithm.get_fitness();
+    Tensor<type, 1> fitness = genetic_algorithm.get_fitness();
 
     //EXPECT_EQ(maximal_index(fitness), 3);
     //EXPECT_EQ(minimal_index(fitness), 0);
@@ -97,7 +98,7 @@ TEST(GeneticAlgorithmTest, Selection)
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_display(false);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 
@@ -196,7 +197,7 @@ TEST(GeneticAlgorithmTest, Mutation)
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_display(false);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 

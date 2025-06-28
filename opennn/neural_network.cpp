@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
@@ -44,9 +45,9 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
-    const Layer::Type layer_type = layer->get_type();
+    const string& name = layer->get_name();
 
-    if(!validate_layer_type(layer_type)) return;
+    if(!validate_name(name)) return;
 
     const Index old_layers_number = get_layers_number();
 
@@ -58,19 +59,19 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 }
 
 
-bool NeuralNetwork::validate_layer_type(const Layer::Type& layer_type) const
+bool NeuralNetwork::validate_name(const string& name) const
 {
-    if(has(Layer::Type::Bounding))
+    if(has("Bounding"))
         throw runtime_error("No layers can be added after a bounding layer.\n");
 
     return true;
 }
 
 
-bool NeuralNetwork::has(const Layer::Type& layer_type) const
+bool NeuralNetwork::has(const string& name) const
 {
     return any_of(layers.begin(), layers.end(),
-                  [&](const unique_ptr<Layer>& layer) {return layer->get_type() == layer_type;});
+                  [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
 }
 
 
@@ -124,33 +125,33 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const Index& layer_index) cons
 }
 
 
-const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) const
+const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
-    const vector<string> layer_names = get_layer_names();
+    const vector<string> labels = get_layer_labels();
 
-    for(size_t i = 0; i < layer_names.size(); i++)
-        if(layer_names[i] == layer_name)
+    for(size_t i = 0; i < labels.size(); i++)
+        if(labels[i] == label)
             return layers[i];
 
     throw runtime_error("Layer not found in neural network");
 }
 
 
-Index NeuralNetwork::get_layer_index(const string& layer_name) const
+Index NeuralNetwork::get_layer_index(const string& new_label) const
 {
-    if(layer_name == "Dataset" || layer_name == "decoder")
+    if(new_label == "Dataset" || new_label == "decoder")
         return -1;
 
-    if(layer_name == "input")
+    if(new_label == "input")
         return -2;
 
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_name() == layer_name)
+        if(layers[i]->get_label() == new_label)
             return i;
 
-    throw runtime_error("Layer not found: " + layer_name);
+    throw runtime_error("Layer not found: " + new_label);
 }
 
 
@@ -189,10 +190,10 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 }
 
 
-Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
+Layer* NeuralNetwork::get_first(const string& name) const
 {
     for(const unique_ptr<Layer>& layer : layers)
-        if(layer->get_type() == layer_type)
+        if(layer->get_name() == name)
             return layer.get();
 
     throw runtime_error("Neural network must have at least one Dense2d Layer to perform this task.");
@@ -227,9 +228,9 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     input_names.resize(new_input_dimensions[0]);
 
-    if(has(Layer::Type::Scaling2d))
+    if(has("Scaling2d"))
     {
-        Scaling2d* scaling_layer = static_cast<Scaling2d*>(get_first(Layer::Type::Scaling2d));
+        Scaling2d* scaling_layer = static_cast<Scaling2d*>(get_first("Scaling2d"));
 
         scaling_layer->set_input_dimensions(new_input_dimensions);
     }
@@ -272,36 +273,36 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vec
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name,
-                                             const vector<string>& new_layer_input_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
+                                             const vector<string>& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(layer_label);
 
-    const Index size = new_layer_input_names.size();
+    const Index size = new_layer_input_labels.size();
 
     vector<Index> new_layer_input_indices(size);
 
     for(Index i = 0; i < size; i++)
-        new_layer_input_indices[i] = get_layer_index(new_layer_input_names[i]);
+        new_layer_input_indices[i] = get_layer_index(new_layer_input_labels[i]);
 
     layer_input_indices[layer_index] = new_layer_input_indices;
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, 
-                                             const initializer_list<string>& new_layer_input_names_list)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
+                                             const initializer_list<string>& new_layer_input_labels_list)
 {
-    const vector<string> new_layer_input_names = new_layer_input_names_list;
+    const vector<string> new_layer_input_labels = new_layer_input_labels_list;
 
-    set_layer_inputs_indices(layer_name, new_layer_input_names);
+    set_layer_inputs_indices(layer_label, new_layer_input_labels);
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_input_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_label, const string& new_layer_input_labels)
 {
-    const Index layer_index = get_layer_index(layer_name);
+    const Index layer_index = get_layer_index(layer_label);
 
-    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
+    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_labels)};
 }
 
 
@@ -449,10 +450,10 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
 }
 
 
-Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
+Index NeuralNetwork::get_layers_number(const string& name) const
 {
     return count_if(layers.begin(), layers.end(),
-                    [&](const unique_ptr<Layer>& layer) {return layer->get_type() == layer_type;});
+                    [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
 }
 
 
@@ -510,7 +511,7 @@ string NeuralNetwork::get_expression() const
 {
     const Index layers_number = get_layers_number();
 
-    const vector<string> layer_names = get_layer_names();
+    const vector<string> layer_labels = get_layer_labels();
 
     vector<string> new_input_names = get_input_names();
     vector<string> new_output_names = get_output_names();
@@ -543,9 +544,9 @@ string NeuralNetwork::get_expression() const
             new_output_names.resize(layer_neurons_number);
             
             for (Index j = 0; j < layer_neurons_number; j++)
-                new_output_names[j] = (layer_names[i] == "scaling_layer")
+                new_output_names[j] = (layer_labels[i] == "scaling_layer")
                       ? "scaled_" + input_names[j]
-                      : layer_names[i] + "_output_" + to_string(j);
+                      : layer_labels[i] + "_output_" + to_string(j);
 
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
@@ -587,7 +588,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         bool is_training = false;
 
-        if(layers[0]->get_type_string() == "Scaling2d")
+        if(layers[0]->get_name() == "Scaling2d")
         {
             pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, {inputs_dimensions[0], inputs_dimensions[1]});
 
@@ -611,7 +612,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         for(Index i = 1; i < layers_number; i++)
         {
-            if(layers[i]->get_type_string() != "Unscaling" && layers[i]->get_type_string() != "Scaling2d")
+            if(layers[i]->get_name() != "Unscaling" && layers[i]->get_name() != "Scaling2d")
             {
                 scaled_outputs.resize(inputs_dimensions[0], layers[0]->get_outputs_number());
 
@@ -677,7 +678,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     Tensor<type, 3> image = read_bmp_image(image_path);
 
-    Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first(Layer::Type::Scaling4d));
+    Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first("Scaling4d"));
 
     const Index height = scaling_layer_4d->get_input_dimensions()[0];
     const Index width = scaling_layer_4d->get_input_dimensions()[1];
@@ -729,7 +730,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index dense2d_layers_number = get_layers_number(Layer::Type::Dense2d);
+    const Index dense2d_layers_number = get_layers_number("Dense2d");
 
     Tensor<string, 2> information(dense2d_layers_number, 3);
 
@@ -737,9 +738,9 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        const Layer::Type layer_type = layers[i]->get_type();
+        const string& name = layers[i]->get_name();
 
-        if (layer_type != Layer::Type::Dense2d)
+        if (name != "Dense2d")
             continue;
 
         information(dense2d_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
@@ -760,7 +761,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index probabilistic_layers_number = get_layers_number(Layer::Type::Dense2d);
+    const Index probabilistic_layers_number = get_layers_number("Dense2d");
 
     Tensor<string, 2> information(probabilistic_layers_number, 3);
 
@@ -768,9 +769,9 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        const Layer::Type layer_type = layers[i]->get_type();
+        const string& name = layers[i]->get_name();
 
-        if (layer_type != Layer::Type::Dense2d)
+        if (name != "Dense2d")
             continue;
 
         information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
@@ -829,26 +830,28 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     // Outputs
 
     printer.OpenElement("Outputs");
-/*
-    if(model_type != ModelType::TextClassification)
+
+
+    if(this->has("Embedding"))
         add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
     else
         add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
 
-    if(model_type != ModelType::TextClassification)
+    if(this->has("Embedding"))
         for (Index i = 0; i < outputs_number; i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     else
         for (size_t i = 0; i < output_names.size(); i++)
             add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-*/
+
     printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
+
 }
 
 
@@ -934,12 +937,12 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         if (!layer_element)
             throw runtime_error("Layer element is nullptr.");
 
-        const string layer_type_string = layer_element->Name();
+        const string name_string = layer_element->Name();
 
-        auto it = layer_factories.find(layer_type_string);
+        auto it = layer_factories.find(name_string);
 
         if (it == layer_factories.end())
-            throw runtime_error("Unknown layer type: " + layer_type_string);
+            throw runtime_error("Unknown layer type: " + name_string);
 
         unique_ptr<Layer> layer = it->second();
         XMLDocument layer_document;
@@ -1133,29 +1136,29 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
 }
 
 
-vector<string> NeuralNetwork::get_layer_names() const
+vector<string> NeuralNetwork::get_layer_labels() const
 {
     const Index layers_number = get_layers_number();
 
-    vector<string> layer_names(layers_number);
+    vector<string> layer_labels(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        layer_names[i] = layers[i]->get_name();
+        layer_labels[i] = layers[i]->get_label();
 
-    return layer_names;
+    return layer_labels;
 }
 
 
-vector<string> NeuralNetwork::get_layer_types_string() const
+vector<string> NeuralNetwork::get_names_string() const
 {
     const Index layers_number = get_layers_number();
 
-    vector<string> layer_types(layers_number);
+    vector<string> names(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        layer_types[i] = layers[i]->get_type_string();
+        names[i] = layers[i]->get_name();
 
-    return layer_types;
+    return names;
 }
 
 
@@ -1181,64 +1184,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {           
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique<Dense2dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Dense3d:
-            layers[i] = make_unique <Dense3dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Probabilistic3d:
-            layers[i] = make_unique <Probabilistic3dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Recurrent:
-            layers[i] = make_unique <RecurrentBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Convolutional:
-            layers[i] = make_unique <ConvolutionalBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Pooling:
-            layers[i] = make_unique <PoolingBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Pooling3d:
-            layers[i] = make_unique <Pooling3dBackPropagation>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten:
-            layers[i] = make_unique <FlattenBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Embedding:
-            layers[i] = make_unique <EmbeddingBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::MultiheadAttention:
-            layers[i] = make_unique <MultiheadAttentionBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Addition3d:
-            layers[i] = make_unique <Addition3dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Normalization3d:
-            layers[i] = make_unique <Normalization3dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Flatten3d:
-            layers[i] = make_unique<Flatten3dBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
-        default: break;
-        }
-    }
+        layers[i] = BackRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
 }
 
 
@@ -1263,7 +1209,7 @@ void NeuralNetworkBackPropagation::print() const
     for (Index i = 0; i < layers_number; i++)
     {
         cout << "Layer " << i << ": "
-             << neural_network->get_layer(i)->get_type_string() << endl;
+             << neural_network->get_layer(i)->get_name() << endl;
 
         if (!layers[i]) continue;
 
@@ -1293,80 +1239,7 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique<Dense2dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-        
-        case Layer::Type::Dense3d:
-            layers[i] = make_unique<Dense3dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Probabilistic3d:
-            layers[i] = make_unique<Probabilistic3DForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Recurrent:
-            layers[i] = make_unique<RecurrentLayerForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Convolutional:
-            layers[i] = make_unique<ConvolutionalForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Pooling:
-            layers[i] = make_unique<PoolingForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Pooling3d:
-            layers[i] = make_unique<Pooling3dForwardPropagation>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten:
-            layers[i] = make_unique<FlattenForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Scaling2d:
-            layers[i] = make_unique<Scaling2dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Scaling4d:
-            layers[i] = make_unique<Scaling4dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Unscaling:
-            layers[i] = make_unique<UnscalingForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Bounding:
-            layers[i] = make_unique<BoundingForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Embedding:
-            layers[i] = make_unique<EmbeddingForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::MultiheadAttention:
-            layers[i] = make_unique<MultiheadAttentionForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Addition3d:
-            layers[i] = make_unique<Addition3dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Normalization3d:
-            layers[i] = make_unique<Normalization3dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Flatten3d:
-            layers[i] = make_unique<Flatten3dForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        default: cout << "Default" << endl; break;
-        }
-    }
+        layers[i] = ForwardRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
 }
 
 
@@ -1428,7 +1301,7 @@ void ForwardPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_name() << endl;
+        cout << "Layer " << i + 1 << ": " << neural_network->get_layer(i)->get_label() << endl;
 
         layers[i]->print();
     }
@@ -1449,18 +1322,8 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_size,
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Dense2d:
+        if(neural_network_layers[i]->get_name() == "Dense2d")
             layers[i] = make_unique<Dense2dLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
-            break;
-
-        default:
-            continue;
-            //throw runtime_error("Levenberg-Marquardt can only be used with Dense2d and Dense2d layers.\n");
-        }
-    }
 }
 
 
@@ -1612,76 +1475,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     layers.resize(layers_number);
 
     for (Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique<Dense2dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Dense3d:
-            //layers[i] = make_unique<Perceptron3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Probabilistic3d:
-            //layers[i] = make_unique<Probabilistic3DForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Recurrent:
-            //layers[i] = make_unique<RecurrentForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Convolutional:
-            layers[i] = make_unique<ConvolutionalForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Pooling:
-            layers[i] = make_unique<PoolingForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten:
-            layers[i] = make_unique<FlattenForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Scaling2d:
-            layers[i] = nullptr;
-            break;
-
-        case Layer::Type::Scaling4d:
-            layers[i] = make_unique<Scaling4dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Unscaling:
-            layers[i] = nullptr;
-            break;
-
-        case Layer::Type::Bounding:
-            layers[i] = nullptr;
-            break;
-
-        case Layer::Type::Embedding:
-            //layers[i] = make_unique<EmbeddingForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::MultiheadAttention:
-            //layers[i] = make_unique<MultiheadAttentionForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Addition3d:
-            //layers[i] = make_unique<Addition3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Normalization3d:
-            //layers[i] = make_unique<Normalization3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten3d:
-            layers[i] = nullptr;
-            break;
-
-        default: cout << "Default" << endl; break;
-        }
-    }
+        layers[i] = ForwardCudaRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
 }
 
 
@@ -1720,8 +1514,8 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
 
         layer_input_device[i].resize(1);
 
-        if (neural_network->get_model_type_string() == "TextClassification") {
-
+        if (false/*neural_network->get_model_type_string() == "TextClassification"*/)
+        {
             if (i == first_trainable_layer_index)
             {
                 vector<float*> batch_input_pairs1;
@@ -1738,7 +1532,8 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
                 continue;
             }
         }
-        else {
+        else
+        {
             if ((i == first_trainable_layer_index && is_training) || i == 0)
             {
                 layer_input_device[i] = batch_input_device;
@@ -1808,60 +1603,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
     layers.resize(layers_number);
 
     for (Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique<Dense2dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Dense3d:
-            //layers[i] = make_unique <Perceptron3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Probabilistic3d:
-            //layers[i] = make_unique <Probabilistic3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Recurrent:
-            //layers[i] = make_unique <RecurrentBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Convolutional:
-            layers[i] = make_unique <ConvolutionalBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Pooling:
-            layers[i] = make_unique <PoolingBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten:
-            layers[i] = make_unique <FlattenBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Embedding:
-            //layers[i] = make_unique <EmbeddingBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::MultiheadAttention:
-            //layers[i] = make_unique <MultiheadAttentionBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Addition3d:
-            //layers[i] = make_unique <Addition3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Normalization3d:
-            //layers[i] = make_unique <Normalization3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Flatten3d:
-            layers[i] = nullptr;
-            break;
-
-        default: break;
-        }
-    }
+        layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
 }
 
 

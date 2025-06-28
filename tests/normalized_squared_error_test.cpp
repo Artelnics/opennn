@@ -1,7 +1,8 @@
 #include "pch.h"
 
-#include "../opennn/normalized_squared_error.h"
 #include "../opennn/tensors.h"
+#include "../opennn/standard_networks.h"
+#include "../opennn/normalized_squared_error.h"
 
 using namespace opennn;
 
@@ -43,11 +44,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
                dataset.get_variable_indices(Dataset::VariableUse::Decoder),
                dataset.get_variable_indices(Dataset::VariableUse::Target));
 
-    NeuralNetwork neural_network(
-        NeuralNetwork::ModelType::Approximation,
-        {inputs_number},
-        {neurons_number},
-        {targets_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
 
     neural_network.set_parameters_random();
 
@@ -91,11 +88,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
                dataset.get_variable_indices(Dataset::VariableUse::Decoder),
                dataset.get_variable_indices(Dataset::VariableUse::Target));
 
-    NeuralNetwork neural_network(
-        NeuralNetwork::ModelType::Approximation,
-        {inputs_number},
-        {neurons_number},
-        {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_random();
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
@@ -146,11 +139,7 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
     Eigen::array<int, 1> dimensions({0});
     targets_mean = target_data.mean(dimensions);
 
-    NeuralNetwork neural_network(
-        NeuralNetwork::ModelType::Approximation,
-        {inputs_number},
-        {neurons_number},
-        {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_random();
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);

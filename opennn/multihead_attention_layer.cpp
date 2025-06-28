@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "multihead_attention_layer.h"
@@ -128,14 +129,14 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
                              const Index& new_embedding_dimension,
                              const Index& new_heads_number,
                              const bool& new_use_causal_mask,
-                             const string& new_name)
+                             const string& new_label)
 {
-    layer_type = Type::MultiheadAttention;
+    name = "MultiheadAttention";
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     heads_number = new_heads_number;
     embedding_dimension = new_embedding_dimension;
-    name = new_name;
+    label = new_label;
     dropout_rate = 0;
 
     const Index hidden_depth = get_hidden_depth();
@@ -664,7 +665,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     void MultiHeadAttention::print() const
     {
         cout << "Multi-head attention Layer" << endl
-             << "Name: " << name << endl
+             << "Label: " << label << endl
              << "Type: Embedding" << endl
              << "Input dimensions: ";
         print_vector(get_input_dimensions());
@@ -678,7 +679,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     {
         printer.OpenElement("MultiheadAttention");
 
-        add_xml_element(printer, "Name", name);
+        add_xml_element(printer, "Label", label);
         add_xml_element(printer, "InputSize", to_string(get_query_sequence_length()));
         add_xml_element(printer, "ContextSize", to_string(get_source_sequence_length()));
         add_xml_element(printer, "Depth", to_string(get_embedding_dimension()));
@@ -825,6 +826,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
              {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}} };
     }
 
+    REGISTER_FORWARD_PROPAGATION("MultiHeadAttention", MultiheadAttentionForwardPropagation);
+    REGISTER_BACK_PROPAGATION("MultiHeadAttention", MultiheadAttentionBackPropagation);
 }
 
 // OpenNN: Open Neural Networks Library.

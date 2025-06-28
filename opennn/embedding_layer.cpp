@@ -6,22 +6,23 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "embedding_layer.h"
+#include "registry.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "embedding_layer.h"
 
 namespace opennn
 {
 
 Embedding::Embedding(const dimensions& new_input_dimensions,
                      const Index& new_embedding_dimension,
-                     const string& new_name) : Layer()
+                     const string& new_label) : Layer()
 {
-    set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_name);
+    set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_label);
 
-    layer_type = Type::Embedding;
+    name = "Embedding";
 
-    name = new_name;
+    label = new_label;
 }
 
 
@@ -76,7 +77,7 @@ void Embedding::get_parameters(Tensor<type, 1>& parameters) const
 void Embedding::set(const Index& new_vocabulary_size,
                     const Index& new_sequence_length,
                     const Index& new_embedding_dimension,
-                    const string& new_name)
+                    const string& new_label)
 {
     sequence_length = new_sequence_length;
 
@@ -98,7 +99,7 @@ void Embedding::set(const Index& new_vocabulary_size,
             ? sin(i / pow(10000, j / half_depth))
             : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-    name = new_name;
+    label = new_label;
 }
 
 
@@ -241,7 +242,7 @@ void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
 void Embedding::print() const
 {
     cout << "Embedding Layer" << endl;
-    cout << "Name: " << name << endl;
+    cout << "Label: " << label << endl;
     cout << "Type: Embedding" << endl;
 
     cout << "Input dimensions: ";
@@ -287,7 +288,7 @@ void Embedding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Embedding");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
@@ -362,11 +363,13 @@ vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_p
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
 
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();
@@ -402,8 +405,8 @@ void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_
                                      Index& index,
                                      float* gradient) const
 {
-    EmbeddingLayerBackPropagationCuda* embedding_layer_back_propagation =
-        static_cast<EmbeddingLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    EmbeddingBackPropagationCuda* embedding_layer_back_propagation =
+        static_cast<EmbeddingBackPropagationCuda*>(back_propagation_cuda.get());
 
     copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_deltas_device, weights.size(), index);
 }
@@ -450,44 +453,50 @@ void Embedding::copy_parameters_host()
 }
 
 
-EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+EmbeddingForwardPropagationCuda::EmbeddingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
 
 
-void EmbeddingLayerForwardPropagationCuda::print() const
+void EmbeddingForwardPropagationCuda::print() const
 {
 
 }
 
 
-EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
 
 
-void EmbeddingLayerBackPropagationCuda::print() const
+void EmbeddingBackPropagationCuda::print() const
 {
 
 }
+
+REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
+REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
 
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
+REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
 
 }
 

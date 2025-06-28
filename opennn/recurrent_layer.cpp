@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
-#include "recurrent_layer.h"
 #include "strings_utilities.h"
+#include "recurrent_layer.h"
 
 namespace opennn
 {
@@ -76,9 +77,9 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     set_parameters_random();
 
-    name = "recurrent_layer";
+    label = "recurrent_layer";
 
-    layer_type = Type::Recurrent;
+    name = "Recurrent";
 }
 
 
@@ -160,8 +161,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
-    RecurrentLayerForwardPropagation* recurrent_forward =
-        static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
+    RecurrentForwardPropagation* recurrent_forward =
+        static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
@@ -208,8 +209,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
     TensorMap<Tensor<type, 2>> deltas(delta_pairs[0].first, batch_size, output_size);
 
-    RecurrentLayerForwardPropagation* recurrent_forward =
-        static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
+    RecurrentForwardPropagation* recurrent_forward =
+        static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
     RecurrentBackPropagation* recurrent_backward =
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
@@ -283,7 +284,7 @@ string Recurrent::get_expression(const vector<string>& input_names,
     {
         const Tensor<type, 1> weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " +";
 
         for(size_t i = 0; i < input_names.size() - 1; i++)
             buffer << " (" << input_names[i] << "*" << weights_column(i) << ") +";
@@ -292,20 +293,6 @@ string Recurrent::get_expression(const vector<string>& input_names,
     }
 
     return buffer.str();
-}
-
-
-string Recurrent::get_activation_function_string_expression() const
-{
-/*
-    switch(activation_function)
-    {
-    case Activation::HyperbolicTangent: return "tanh";
-    case Activation::Linear: return string();
-    default: return get_activation_function_string();
-    }
-*/
-    return string();
 }
 
 
@@ -336,7 +323,7 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
-    set_name(read_xml_string(recurrent_layer_element,"Name"));
+    set_label(read_xml_string(recurrent_layer_element,"Label"));
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
@@ -352,7 +339,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
-    add_xml_element(printer, "Name", get_name());
+    add_xml_element(printer, "Label", get_label());
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
@@ -366,13 +353,13 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 }
 
 
-RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer) : LayerForwardPropagation()
+RecurrentForwardPropagation::RecurrentForwardPropagation(const Index& new_batch_size, Layer* new_layer) : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> RecurrentLayerForwardPropagation::get_output_pair() const
+pair<type*, dimensions> RecurrentForwardPropagation::get_output_pair() const
 {
     const Index outputs_number = layer->get_outputs_number();
 
@@ -380,7 +367,7 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_output_pair() cons
 }
 
 
-void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     batch_size=new_batch_size;
 
@@ -404,16 +391,18 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
 }
 
 
-void RecurrentLayerForwardPropagation::print() const
+void RecurrentForwardPropagation::print() const
 {
 }
 
 
 void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
-    batch_size=new_batch_size;
+    batch_size = new_batch_size;
 
     layer = new_layer;
+
+    if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
@@ -458,6 +447,9 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
 
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
+
+REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
+REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
 
 }
 

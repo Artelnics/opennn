@@ -732,9 +732,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     ClassificationNetwork neural_network({ input_variables_number }, {1}, {target_variables_number});
 
-    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
+    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first("Scaling2d"));
 
-    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first("Dense2d"));
 
     dense_2d->set_activation_function("Softmax");
     scaling_layer_2d->set_display(false);
@@ -844,9 +844,9 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     ClassificationNetwork neural_network({input_variables_number }, {}, {target_variables_number});
 
-    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
+    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first("Scaling2d"));
 
-    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    Dense2d* dense_2d = static_cast<Dense2d*>(neural_network.get_first("Dense2d"));
 
     dense_2d->set_activation_function("Softmax");
 
@@ -981,9 +981,16 @@ void register_inputs_selection()
 {
     GrowingInputs growing_inputs; growing_inputs.print();
     GeneticAlgorithm genetic_algorithm; genetic_algorithm.print();
-
 }
 
+
+void register_layer_forward_propagation()
+{
+    Dense2dForwardPropagation dense_2d_forward_propagation; dense_2d_forward_propagation.print();
+    Dense2dBackPropagation dense_2d_back_propagation; dense_2d_back_propagation.print();
+
+    //Dense2d dense_2d; dense_2d.print();
+}
 
 }
 

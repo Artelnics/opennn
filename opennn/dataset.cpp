@@ -11,6 +11,8 @@
 #include "correlations.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "time_series_dataset.h"
+#include <iterator>
 
 namespace opennn
 {
@@ -2325,7 +2327,7 @@ void Dataset::set_gmt(const Index& new_gmt)
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_correlations() const
 {
-    if (display) cout << "Calculating correlations..." << endl;
+    cout << "Calculating pearson correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2341,6 +2343,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data
@@ -2363,7 +2366,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_correlations() const
 {
-    if (display) cout << "Calculating correlations..." << endl;
+    cout << "Calculating spearman correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2377,6 +2380,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_sample_indices);
@@ -2479,15 +2483,18 @@ void Dataset::print_top_input_target_raw_variables_correlations() const
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlations() const
 {
     // list to return
+    cout << "Calculating pearson inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
-    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index input_raw_variables_number = input_raw_variable_indices.size();
 
     Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
+
         const Index current_input_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
@@ -2517,6 +2524,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlations() const
 {
+    cout << "Calculating spearman inputs correlations..." << endl;
+
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
@@ -2525,6 +2534,8 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
+        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
+
         const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
@@ -3774,43 +3785,49 @@ void Dataset::prepare_line(string& line) const
 }
 
 
-void Dataset::process_tokens(vector<string>& tokens)
+void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 {
     const Index raw_variables_number = raw_variables.size();
+    const size_t rows_to_check = std::min(size_t(100), sample_rows.size());
 
-    //#pragma omp parallel for reduction(+:missing_values_number)
+    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx) {
+        RawVariable& raw_variable = raw_variables[col_idx];
+        raw_variable.type = RawVariableType::None;
 
-    for (Index i = 0; i < raw_variables_number; i++)
-    {
-        RawVariable& raw_variable = raw_variables[i];
+        for (size_t row_idx = 0; row_idx < rows_to_check; ++row_idx) {
+            const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
+            if (token_idx >= sample_rows[row_idx].size()) continue;
 
-        const string token = has_sample_ids ? tokens[i + 1] : tokens[i];
+            const string& token = sample_rows[row_idx][token_idx];
+            if (token.empty() || token == missing_values_label) continue;
 
-        if (token.empty() || token == missing_values_label)
-        {
-            missing_values_number++;
-            continue;
-        }
-        else if (is_numeric_string(token))
-        {
-            if (raw_variable.type != RawVariableType::Numeric)
-                raw_variable.type = RawVariableType::Numeric;
+            if (raw_variable.type == RawVariableType::Categorical) break;
 
-            if (raw_variable.type == RawVariableType::Categorical)
-                throw runtime_error("Error: Found number in categorical variable: " + raw_variable.name);
-        }
-        else if (is_date_time_string(token))
-        {
-            if (raw_variable.type != RawVariableType::DateTime)
-                raw_variable.type = RawVariableType::DateTime;
-        }
-        else // is string
-        {
-            if (raw_variable.type != RawVariableType::Categorical)
+            if (is_numeric_string(token)) {
+                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::Numeric;
+            } else if (is_date_time_string(token)) {
+                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::DateTime;
+                else raw_variable.type = RawVariableType::Categorical;
+            } else {
                 raw_variable.type = RawVariableType::Categorical;
+            }
+        }
 
-            if (!contains(raw_variable.categories, token))
-                raw_variable.categories.push_back(token);
+        if (raw_variable.type == RawVariableType::None) {
+            raw_variable.type = RawVariableType::Numeric;
+        }
+    }
+
+    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx) {
+        if (raw_variables[col_idx].type == RawVariableType::Categorical) {
+            std::set<string> unique_categories;
+            for (const auto& row : sample_rows) {
+                const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
+                if (token_idx < row.size() && !row[token_idx].empty() && row[token_idx] != missing_values_label) {
+                    unique_categories.insert(row[token_idx]);
+                }
+            }
+            raw_variables[col_idx].categories.assign(unique_categories.begin(), unique_categories.end());
         }
     }
 }
@@ -3821,223 +3838,138 @@ void Dataset::read_csv()
     if (data_path.empty())
         throw runtime_error("Data path is empty.\n");
 
-    ifstream file(data_path);
-
+    ifstream file(data_path, ios::binary);
     if (!file.is_open())
         throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
-    const string separator_string = get_separator_string();
-
-    string line;
-
-    vector<string> tokens;
-
-    size_t columns_number = 0;
-
-    // Read first line
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (line.empty()) continue;
-
-        check_separators(line);
-
-        tokens = get_tokens(line, separator_string);
-
-        columns_number = tokens.size();
-
-        if (columns_number != 0) break;
+    char bom[3] = {0};
+    file.read(bom, 3);
+    if (static_cast<unsigned char>(bom[0]) != 0xEF || static_cast<unsigned char>(bom[1]) != 0xBB || static_cast<unsigned char>(bom[2]) != 0xBF) {
+        file.seekg(0);
     }
 
-    const Index raw_variables_number = has_sample_ids
-        ? columns_number - 1
-        : columns_number;
+    vector<vector<string>> raw_file_content;
+    string line;
+    const string separator_string = get_separator_string();
+    while (getline(file, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        prepare_line(line);
+        if (line.empty()) continue;
+        check_separators(line);
+        raw_file_content.push_back(get_tokens(line, separator_string));
+    }
 
+    file.close();
+
+    if (raw_file_content.empty())
+        throw runtime_error("File " + data_path.string() + " is empty or contains no valid data rows.");
+
+    read_data_file_preview(raw_file_content);
+
+    vector<string> header_tokens = raw_file_content[0];
+    if (has_header) {
+        if (has_numbers(header_tokens)) throw runtime_error("Error: Some header names are numeric.");
+        raw_file_content.erase(raw_file_content.begin());
+    }
+
+    if (raw_file_content.empty()) throw runtime_error("Data file only contains a header.");
+
+    const Index samples_number = raw_file_content.size();
+    const size_t columns_number = header_tokens.size();
+    const Index raw_variables_number = has_sample_ids ? columns_number - 1 : columns_number;
     raw_variables.resize(raw_variables_number);
 
-    Index samples_number = 0;
-
-    if (has_header)
-    {
-        if (has_numbers(tokens))
-            throw runtime_error("Error: Some header names are numeric: " + line + "\n");
-
-        if (has_sample_ids)
-            for (Index i = 0; i < raw_variables_number; i++)
-                raw_variables[i].name = tokens[i + 1];
-        else
-            set_raw_variable_names(tokens);
-    }
-    else
-    {
-        samples_number++;
+    if (has_header) {
+        if (has_sample_ids) for (Index i = 0; i < raw_variables_number; i++) raw_variables[i].name = header_tokens[i + 1];
+        else set_raw_variable_names(header_tokens);
+    } else {
         set_default_raw_variable_names();
     }
-    // Rest of lines
-    while (getline(file, line))
-    {
-        prepare_line(line);
-        if (line.empty()) continue;
 
-        check_separators(line);
-
-        tokens = get_tokens(line, separator_string);
-
-        if (tokens.size() != columns_number)
-            throw runtime_error("Sample " + to_string(samples_number + 1) + ": "
-                "Tokens number is not equal to columns number.");
-
-        process_tokens(tokens);
-
-        samples_number++;
-    }
+    infer_column_types(raw_file_content);
 
     for (Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.type == RawVariableType::Categorical
-            && raw_variable.get_categories_number() == 2)
+        if (raw_variable.type == RawVariableType::Categorical && raw_variable.get_categories_number() == 2)
             raw_variable.type = RawVariableType::Binary;
 
     sample_uses.resize(samples_number);
-
     sample_ids.resize(samples_number);
-
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
-
-    data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
+    const Index total_numeric_columns = all_variable_indices.empty() ? 0 : all_variable_indices.back().back() + 1;
+    data.resize(samples_number, total_numeric_columns);
     data.setZero();
 
     rows_missing_values_number = 0;
-
     missing_values_number = 0;
-
     raw_variables_missing_values_number.resize(raw_variables_number);
     raw_variables_missing_values_number.setZero();
 
-    // Fill data
-
-    file.clear();
-    file.seekg(0);
-
-    if (has_header)
+    // #pragma omp parallel for
+    for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
-        while (getline(file, line))
-        {
-            prepare_line(line);
+        const vector<string>& tokens = raw_file_content[sample_index];
 
-            if (line.empty()) continue;
-            break;
-        }
-    }
-
-    Index sample_index = 0;
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (line.empty()) continue;
-
-        check_separators(line);
-
-        tokens = get_tokens(line, separator_string);
-
-        if (has_missing_values(tokens))
-        {
+        if (has_missing_values(tokens)) {
             rows_missing_values_number++;
-
-            for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++)
-            {
-                if (tokens[i].empty() || tokens[i] == missing_values_label)
-                {
+            for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++) {
+                if (tokens[i].empty() || tokens[i] == missing_values_label) {
                     missing_values_number++;
                     raw_variables_missing_values_number(has_sample_ids ? i - 1 : i)++;
                 }
             }
         }
 
-        if (has_sample_ids)
+        if (has_sample_ids) {
             sample_ids[sample_index] = tokens[0];
-
-        // #pragma omp parallel for
-        for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
-        {
-            const RawVariableType raw_variable_type = raw_variables[raw_variable_index].type;
-
-            const string token = has_sample_ids
-                ? tokens[raw_variable_index + 1]
-                : tokens[raw_variable_index];
-
-            const vector<Index>& variable_indices = all_variable_indices[raw_variable_index];
-
-            if (raw_variable_type == RawVariableType::Numeric)
-            {
-                (token.empty() || token == missing_values_label)
-                    ? data(sample_index, variable_indices[0]) = NAN
-                    : data(sample_index, variable_indices[0]) = stof(token);
-            }
-            else if (raw_variable_type == RawVariableType::DateTime)
-            {
-                data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
-            }
-            else if (raw_variable_type == RawVariableType::Categorical)
-            {
-                const Index categories_number = raw_variables[raw_variable_index].get_categories_number();
-
-                if (token.empty() || token == missing_values_label)
-                {
-                    for (Index category_index = 0; category_index < categories_number; category_index++)
-                        data(sample_index, variable_indices[category_index]) = NAN;
-                }
-                else
-                {
-                    const vector<string> categories = raw_variables[raw_variable_index].categories;
-
-                    for (Index category_index = 0; category_index < categories_number; category_index++)
-                        if (token == categories[category_index])
-                            data(sample_index, variable_indices[category_index]) = 1;
-                }
-            }
-            else if (raw_variable_type == RawVariableType::Binary)
-            {
-                if (contains(positive_words, token) || contains(negative_words, token))
-                {
-                    data(sample_index, variable_indices[0]) = contains(positive_words, token)
-                        ? 1
-                        : 0;
-                }
-                else
-                {
-                    const vector<string> categories = raw_variables[raw_variable_index].categories;
-
-                    type& value = data(sample_index, variable_indices[0]);
-
-                    if (token.empty() || token == missing_values_label)
-                        value = type(NAN);
-                    else if (token == categories[0])
-                        value = 1;
-                    else if (token == categories[1])
-                        value = 0;
-                    else
-                        throw runtime_error("Unknown token " + token);
-                }
-            }
         }
 
-        sample_index++;
+        for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
+        {
+            const RawVariable& raw_variable = raw_variables[raw_variable_index];
+            const string& token = has_sample_ids ? tokens[raw_variable_index + 1] : tokens[raw_variable_index];
+            const vector<Index>& variable_indices = all_variable_indices[raw_variable_index];
+
+            switch(raw_variable.type) {
+            case RawVariableType::Numeric:
+                data(sample_index, variable_indices[0]) = (token.empty() || token == missing_values_label) ? NAN : stof(token);
+                break;
+            case RawVariableType::DateTime:
+                data(sample_index, variable_indices[0]) = time_t(date_to_timestamp(token));
+                break;
+            case RawVariableType::Categorical:
+                if (token.empty() || token == missing_values_label) {
+                    for (Index cat_idx : variable_indices) data(sample_index, cat_idx) = NAN;
+                } else {
+                    auto it = std::find(raw_variable.categories.begin(), raw_variable.categories.end(), token);
+                    if (it != raw_variable.categories.end()) {
+                        Index category_index = std::distance(raw_variable.categories.begin(), it);
+                        data(sample_index, variable_indices[category_index]) = 1;
+                    }
+                }
+                break;
+            case RawVariableType::Binary:
+                if (contains(positive_words, token) || contains(negative_words, token)) {
+                    data(sample_index, variable_indices[0]) = contains(positive_words, token) ? 1 : 0;
+                } else {
+                    const vector<string>& categories = raw_variable.categories;
+                    if (token.empty() || token == missing_values_label)
+                        data(sample_index, variable_indices[0]) = NAN;
+                    else if (categories.size() > 0 && token == categories[0])
+                        data(sample_index, variable_indices[0]) = 1;
+                    else if (categories.size() > 1 && token == categories[1])
+                        data(sample_index, variable_indices[0]) = 0;
+                    else
+                        data(sample_index, variable_indices[0]) = stof(token);
+                }
+                break;
+            default: break;
+            }
+        }
     }
-
-    file.clear();
-    file.seekg(0);
-    read_data_file_preview(file);
-
-    file.close();
 
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-
 }
 
 
@@ -4063,68 +3995,23 @@ string Dataset::RawVariable::get_type_string() const
 }
 
 
-void Dataset::read_data_file_preview(ifstream& file)
+void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 {
-//    if (display) cout << "Reading data file preview..." << endl;
+    if (all_rows.empty())
+        return;
 
-    const string separator_string = get_separator_string();
+    const Index num_first_rows_to_show = 3;
 
-    Index lines_number = has_header ? 4 : 3;
+    data_file_preview.clear();
 
-    data_file_preview.resize(lines_number);
+    for (Index i = 0; i < std::min((size_t)num_first_rows_to_show, all_rows.size()); ++i)
+        data_file_preview.push_back(all_rows[i]);
 
-    string line;
-    string lastLine;
-
-    Index lines_count = 0;
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (line.empty()) continue;
-
-        check_separators(line);
-
-        data_file_preview[lines_count] = get_tokens(line, separator_string);
-        lines_count++;
-
-        if (lines_count == lines_number) break;
-    }
-
-    while (getline(file, line)) {
-        lastLine = line;
-    }
-
-    if (!lastLine.empty()) {
-        prepare_line(lastLine);
-        check_separators(lastLine);
-        data_file_preview[lines_count - 1] = get_tokens(lastLine, separator_string);
-    }
-
-    file.close();
-
-    // Check empty file
-
-    if (data_file_preview[0].empty())
-        throw runtime_error("File " + data_path.string() + " is empty.\n");
-
-    // Resize data file preview to original
-
-    if (data_file_preview.size() > 4)
-    {
-        lines_number = has_header ? 4 : 3;
-
-        vector<vector<string>> data_file_preview_copy(data_file_preview);
-
-        data_file_preview.resize(lines_number);
-
-        data_file_preview[0] = data_file_preview_copy[1];
-        data_file_preview[1] = data_file_preview_copy[1];
-        data_file_preview[2] = data_file_preview_copy[2];
-        data_file_preview[lines_number - 2] = data_file_preview_copy[data_file_preview_copy.size() - 2];
-        data_file_preview[lines_number - 1] = data_file_preview_copy[data_file_preview_copy.size() - 1];
-    }
+    if (all_rows.size() > num_first_rows_to_show)
+        data_file_preview.push_back(all_rows.back());
+    else if (all_rows.empty() && data_file_preview.size() < num_first_rows_to_show +1 )
+        while(data_file_preview.size() < num_first_rows_to_show +1)
+            data_file_preview.push_back(vector<string>());
 }
 
 
@@ -4435,6 +4322,14 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
+
+    if (dynamic_cast<opennn::TimeSeriesDataset*>(dataset))
+    {
+        input_dimensions.clear();
+        input_dimensions.push_back(sample_indices.size());
+        input_dimensions.push_back(input_indices.size());
+        input_dimensions.push_back(input_indices.size());
+    }
 
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 

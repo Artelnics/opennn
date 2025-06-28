@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "bounding_layer.h"
+#include "registry.h"
 #include "tensors.h"
+#include "bounding_layer.h"
 
 namespace opennn
 {
@@ -60,15 +61,15 @@ const Tensor<type, 1>& Bounding::get_upper_bounds() const
 }
 
 
-void Bounding::set(const dimensions& new_output_dimensions, const string& new_name)
+void Bounding::set(const dimensions& new_output_dimensions, const string& new_label)
 {
     set_output_dimensions(new_output_dimensions);
 
-    name = new_name;
+    label = new_label;
 
     bounding_method = BoundingMethod::Bounding;
 
-    layer_type = Layer::Type::Bounding;
+    name = "Bounding";
 }
 
 
@@ -314,6 +315,8 @@ void BoundingForwardPropagation::print() const
     cout << "Outputs:" << endl
          << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
 
 }
 

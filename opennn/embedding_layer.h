@@ -144,9 +144,9 @@ struct EmbeddingBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    EmbeddingLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    EmbeddingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 
@@ -154,9 +154,9 @@ struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
-struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
+struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
-    EmbeddingLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 

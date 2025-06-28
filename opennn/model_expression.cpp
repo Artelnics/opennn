@@ -829,9 +829,9 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     buffer << subheader_javascript();
 
-    if(neural_network.has(Layer::Type::Scaling2d) || neural_network.has(Layer::Type::Scaling4d))
+    if(neural_network.has("Scaling2d") || neural_network.has("Scaling4d"))
     {
-        const vector<Descriptives> inputs_descriptives = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d))->get_descriptives();
+        const vector<Descriptives> inputs_descriptives = static_cast<Scaling2d*>(neural_network.get_first("Scaling2d"))->get_descriptives();
 
         float min_value;
         float max_value;

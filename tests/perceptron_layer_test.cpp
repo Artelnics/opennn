@@ -10,7 +10,7 @@ TEST(Dense2dTest, DefaultConstructor)
 {
     Dense2d perceptron_layer;
 
-    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(perceptron_layer.get_name(), "Dense2d");
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
     EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
 }
@@ -129,7 +129,7 @@ TEST(Dense2dTest, ForwardPropagate)
     const Tensor<type, 2>& outputs = forward_propagation->outputs;
     const Tensor<type, 2>& activation_derivatives = forward_propagation->activation_derivatives;
 
-    EXPECT_EQ(dense2d_layer.get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(dense2d_layer.get_name(), "Dense2d");
     EXPECT_EQ(dense2d_layer.get_input_dimensions(), dimensions({inputs_number}));
     EXPECT_EQ(dense2d_layer.get_output_dimensions(), dimensions({outputs_number}));
 

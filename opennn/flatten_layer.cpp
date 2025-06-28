@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "flatten_layer.h"
+#include "registry.h"
 #include "tensors.h"
+#include "flatten_layer.h"
 
 namespace opennn
 {
@@ -50,9 +51,9 @@ Index Flatten::get_input_channels() const
 
 void Flatten::set(const dimensions& new_input_dimensions)
 {
-    layer_type = Type::Flatten;
+    name = "Flatten";
 
-    set_name("flatten_layer");
+    set_label("flatten_layer");
 
     input_dimensions = new_input_dimensions;
 }
@@ -165,9 +166,11 @@ void FlattenForwardPropagation::print() const
 
 void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    batch_size = new_batch_size;
+    if (!layer) return;
 
     const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
@@ -339,7 +342,13 @@ void FlattenBackPropagationCuda::free()
     cudaFree(input_deltas);
 }
 
+REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
+REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
+REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
 
 }
 

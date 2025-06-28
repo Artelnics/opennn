@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "scaling_layer_4d.h"
 
@@ -36,9 +37,9 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
 
     set_min_max_range(type(0), type(255));
 
-    layer_type = Type::Scaling4d;
+    name = "Scaling4d";
 
-    name = "scaling_layer_4d";
+    label = "scaling_layer_4d";
 
     is_trainable = false;
 }
@@ -207,7 +208,11 @@ void Scaling4dForwardPropagationCuda::free()
     cudaFree(outputs);
 }
 
+REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
+
 #endif
+
+REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
 
 }
 
