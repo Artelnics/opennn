@@ -301,7 +301,7 @@ REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
 
 #endif
 
-
+REGISTER(Layer, Addition3d, "Addition3d")
 REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
 

@@ -116,7 +116,6 @@ private:
 
     float* biases_device = nullptr;
     float* weights_device = nullptr;
-
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
 #endif

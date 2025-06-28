@@ -28,13 +28,21 @@ int main()
     {
         cout << "Airfoil self noise " << endl;
 
-//        register_layer_forward_propagation();
+        register_layer_forward_propagation();
 
         cout << "Registered forward propagation types:\n";
         for(const auto& name : BackRegistry::instance().registered_names())
-        {
             cout << "- " << name << endl;
-        }
+
+        for (const auto& name : Registry<LossIndex>::instance().registered_names())
+            std::cout << "Registered loss: " << name << "\n";
+
+        for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
+            std::cout << "Registered optimizer: " << name << "\n";
+
+        for (const auto& name : Registry<Layer>::instance().registered_names())
+            std::cout << "Registered layer: " << name << "\n";
+
 
  /*
         const Index neurons_number = 3;
@@ -50,12 +58,6 @@ int main()
         approximation_network.save("../data/approximation_network.xml");
 
         approximation_network.load("../data/approximation_network.xml");
-
-        for (const auto& name : Registry<LossIndex>::instance().registered_names())
-            std::cout << "Registered loss: " << name << "\n";
-
-        for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
-            std::cout << "Registered optimizer: " << name << "\n";
 
 
         MeanSquaredError mean_squared_error(&aproximation_network, &dataset);

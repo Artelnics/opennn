@@ -316,6 +316,7 @@ void BoundingForwardPropagation::print() const
          << outputs << endl;
 }
 
+REGISTER(Layer, Bounding, "Bounding")
 REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
 
 }

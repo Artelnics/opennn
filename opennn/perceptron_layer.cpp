@@ -1040,6 +1040,7 @@ REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Dense2d, "Dense2d")
 REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
 

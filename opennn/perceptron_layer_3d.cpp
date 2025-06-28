@@ -367,6 +367,7 @@ vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pai
     return {{(type*)(input_deltas.data()), {batch_size, sequence_length, input_embedding}}};
 }
 
+REGISTER(Layer, Dense3d, "Dense3d")
 REGISTER_FORWARD_PROPAGATION("Dense3d", Dense3dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Dense3d", Dense3dBackPropagation);
 

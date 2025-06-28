@@ -1437,6 +1437,7 @@ REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Convolutional, "Convolutional")
 REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
 REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 

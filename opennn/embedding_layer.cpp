@@ -495,6 +495,7 @@ REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Embedding, "Embedding")
 REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
 REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
 

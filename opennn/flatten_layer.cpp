@@ -347,6 +347,7 @@ REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Flatten, "Flatten")
 REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
 REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
 

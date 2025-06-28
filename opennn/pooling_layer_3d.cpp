@@ -256,6 +256,7 @@ void Pooling3d::print() const
     cout << "Pooling Method: " << write_pooling_method() << endl;
 }
 
+REGISTER(Layer, Pooling3d, "Pooling3d")
 REGISTER_FORWARD_PROPAGATION("Pooling3d", Pooling3dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Pooling3d", Pooling3dBackPropagation);
 

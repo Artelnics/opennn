@@ -448,6 +448,7 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
 
+REGISTER(Layer, Recurrent, "Recurrent")
 REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
 REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
 
