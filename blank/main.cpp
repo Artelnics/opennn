@@ -22,8 +22,8 @@
 #include "../opennn/recurrent_layer.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/time_series_dataset.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
+#include "../opennn/scaling_layer_2d.h"
+#include "../opennn/unscaling_layer.h"
 
 using namespace opennn;
 
