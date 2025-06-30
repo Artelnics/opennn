@@ -26,25 +26,26 @@ int main()
 {
     try
     {
-        // cout << "Airfoil self noise " << endl;
 
-        // register_layer_forward_propagation();
+        cout << "Airfoil self noise" << endl;
 
-        // cout << "Registered forward propagation types:\n";
-        // for(const auto& name : BackRegistry::instance().registered_names())
-        //     cout << "- " << name << endl;
+        register_layer_forward_propagation();
 
-        // for (const auto& name : Registry<LossIndex>::instance().registered_names())
-        //     std::cout << "Registered loss: " << name << "\n";
+        cout << "Registered forward propagation types:\n";
+        for(const auto& name : BackRegistry::instance().registered_names())
+            cout << "- " << name << endl;
 
-        // for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
-        //     std::cout << "Registered optimizer: " << name << "\n";
+        for (const auto& name : Registry<LossIndex>::instance().registered_names())
+            std::cout << "Registered loss: " << name << "\n";
 
-        // for (const auto& name : Registry<Layer>::instance().registered_names())
-        //     std::cout << "Registered layer: " << name << "\n";
+        for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
+            std::cout << "Registered optimizer: " << name << "\n";
+
+        for (const auto& name : Registry<Layer>::instance().registered_names())
+            std::cout << "Registered layer: " << name << "\n";
 
 
-        cout << "Airfoil self noise " << endl;
+ /*
         const Index neurons_number = 3;
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
@@ -79,9 +80,17 @@ int main()
 //        training_strategy.perform_training();
 /*
         TestingAnalysis testing_analysis(&neural_network, &dataset);
+        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
+        TrainingStrategy training_strategy(&approximation_network, &dataset);
+        training_strategy.perform_training();
+
+        TestingAnalysis testing_analysis(&approximation_network, &dataset);
+        cout << "Goodness of fit analysis:\n" << endl;
         testing_analysis.print_goodness_of_fit_analysis();
-*/
+
+        // Testing analysis
+
         cout << "Good bye!" << endl;
 
         return 0;

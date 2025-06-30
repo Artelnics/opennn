@@ -458,11 +458,12 @@ void NeuralNetwork::set_parameters_random() const
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
-{
+{   
     const Index layers_number = get_layers_number();
 
     Index first_layer_index = 0;
     Index last_layer_index = layers_number-1;
+
 
     if(is_training)
     {

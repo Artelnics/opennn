@@ -57,8 +57,8 @@ TEST(Dense2dTest, Activations)
 
     Tensor<type, 2> activations(1, 1);
     Tensor<type, 2> activation_derivatives(1, 1);
-/*
     perceptron_layer.set_activation_function("Logistic");
+    /*
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations("Logistic", activations, activation_derivatives);
 

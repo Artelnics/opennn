@@ -41,11 +41,10 @@ TEST(Addition3dTest, ForwardPropagate)
 
     Tensor<type, 3> inputs_2(batch_size, sequence_length, embedding_dimension);
     inputs_2.setConstant(1.0);
-/*
+
     const Tensor<type, 3> outputs = neural_network.calculate_outputs(inputs_1, inputs_2);
 
     EXPECT_EQ(outputs.dimension(0), batch_size);
     EXPECT_EQ(outputs.dimension(1), sequence_length);
     EXPECT_EQ(outputs.dimension(2), embedding_dimension);
-*/
 }
