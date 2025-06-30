@@ -71,8 +71,12 @@ void TrainingStrategy::set_loss_index(const string& new_loss_index)
 
     loss_index->set(neural_network, dataset);
 
-    if(optimization_algorithm)
-        optimization_algorithm->set(loss_index.get());
+    if(optimization_algorithm){
+        if(optimization_algorithm->get_name() == "QuasiNewtonMethod")
+            static_cast<QuasiNewtonMethod*>(optimization_algorithm.get())->set_loss_index(loss_index.get());
+        else
+            optimization_algorithm->set(loss_index.get());
+    }
 }
 
 
@@ -261,18 +265,6 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         static_cast<WeightedSquaredError*>(this->get_loss_index())->from_XML(weighted_squared_error_document);
     }
 
-    // Regularization
-
-    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
-
-    if (regularization_element)
-    {
-        set_loss_index(loss_method);
-        XMLDocument regularization_document;
-        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-        get_loss_index()->regularization_from_XML(regularization_document);
-    }
-
     // Optimization algorithm
 
     const XMLElement* optimization_algorithm_element = root_element->FirstChildElement("OptimizationAlgorithm");
@@ -351,6 +343,18 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     }
 
     set_optimization_algorithm(optimization_algorithm);
+
+    // Regularization
+
+    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
+
+    if (regularization_element)
+    {
+        set_loss_index(loss_method);
+        XMLDocument regularization_document;
+        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+        get_loss_index()->regularization_from_XML(regularization_document);
+    }
 
     // Display
 
