@@ -34,7 +34,6 @@ public:
                          const dimensions& complexity_dimensions,
                          const dimensions& output_dimensions) : NeuralNetwork()
     {
-        cout << "adri71 - creando aproximaatioon network -- " << endl;
         const Index complexity_size = complexity_dimensions.size();
 
         add_layer(make_unique<Scaling2d>(input_dimensions));
@@ -56,9 +55,21 @@ public:
 
         const Index inputs_number = get_inputs_number();
         input_names.resize(inputs_number);
+        vector<string> new_input_names(inputs_number);
+        for (int i = 0; i < inputs_number; i++)
+            input_names[i].empty()
+                ? new_input_names[i] = "input_" + to_string(i)
+                : new_input_names[i] = input_names[i];
+        set_input_names(new_input_names);
 
         const Index outputs_number = get_outputs_number();
         output_names.resize(outputs_number);
+        vector<string> new_output_names(outputs_number);
+        for (int i = 0; i < outputs_number; i++)
+            output_names[i].empty()
+                ? new_output_names[i] = "output_" + to_string(i)
+                : new_output_names[i] = output_names[i];
+        set_output_names(new_output_names);
     }
 };
 

@@ -635,16 +635,20 @@ type LossIndex::calculate_numerical_error()
 
     const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
     const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
     const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
     Batch batch(samples_number, dataset);
 
-    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+    batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
+    // alvaros
     neural_network->forward_propagate(batch.get_input_pairs(),
                                       forward_propagation);
+
+    // return 0;
 
     BackPropagation back_propagation(samples_number, this);
 
@@ -694,7 +698,16 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     Batch batch(samples_number, dataset);
 
-    batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    // @todo decoder variables
+    // if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+    // {
+    //     const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    //     batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    // }
+    // else
+    //     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
