@@ -1,11 +1,11 @@
 <NeuralNetwork>
    <Inputs>
       <InputsNumber>5</InputsNumber>
-      <Input Index="1"></Input>
-      <Input Index="2"></Input>
-      <Input Index="3"></Input>
-      <Input Index="4"></Input>
-      <Input Index="5"></Input>
+      <Input Index="1">input_0</Input>
+      <Input Index="2">input_1</Input>
+      <Input Index="3">input_2</Input>
+      <Input Index="4">input_3</Input>
+      <Input Index="5">input_4</Input>
    </Inputs>
    <Layers>
       <LayersNumber>5</LayersNumber>
@@ -37,14 +37,14 @@
          <InputsNumber>5</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
-         <Parameters>-0.0165953 -0.0463968 0.0201741 -0.0624314 0.0759455 -0.0420725 0.0196427 0.06277 -0.0338781 0.0612261 -0.00541729 -0.0363094 0.0385141 -0.00642923 -0.00708649 -0.0848261 -0.0986778 0.0717779 </Parameters>
+         <Parameters>-0.0662295 0.0557848 -0.0474388 0.0453481 -0.0438856 -0.000382721 0.0942541 0.0749578 0.0144342 -0.0078842 -0.0408675 -0.0900005 0.0746883 -0.0515604 -0.0492015 -0.0705841 -0.0245606 -0.0721084 </Parameters>
       </Dense2d>
       <Dense2d>
          <Label>approximation_layer</Label>
          <InputsNumber>3</InputsNumber>
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>Linear</Activation>
-         <Parameters>-0.0169776 -0.00590502 -0.0119861 0.0241889 </Parameters>
+         <Parameters>-0.0468346 -0.0112863 -0.039002 -0.0237455 </Parameters>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>1</NeuronsNumber>
@@ -71,7 +71,7 @@
    </Layers>
    <Outputs>
       <OutputsNumber>1</OutputsNumber>
-      <Output Index="1"></Output>
+      <Output Index="1">output_0</Output>
    </Outputs>
    <Display>1</Display>
 </NeuralNetwork>

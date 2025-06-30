@@ -485,6 +485,7 @@ void UnscalingForwardPropagation::print() const
         << outputs << endl;
 }
 
+REGISTER(Layer, Unscaling, "Unscaling")
 REGISTER_FORWARD_PROPAGATION("Unscaling", UnscalingForwardPropagation);
 
 }

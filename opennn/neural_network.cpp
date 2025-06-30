@@ -31,23 +31,25 @@ NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
-    const string& name = layer->get_name();
+    const Index old_layers_number = get_layers_number() - 1;
 
-    if(!validate_name(name)) return;
-
-    const Index old_layers_number = get_layers_number();
+    if (old_layers_number >= 0)
+    {
+        const string& name = layers[old_layers_number]->get_name();
+        if(!validate_name(name)) return;
+    }
 
     layers.push_back(std::move(layer));
 
     layer_input_indices.push_back(input_indices.empty()
-        ? vector<Index>(1, old_layers_number - 1)
+        ? vector<Index>(1, old_layers_number )
         : input_indices);
 }
 
 
 bool NeuralNetwork::validate_name(const string& name) const
 {
-    if(has("Bounding"))
+    if(name == "Bounding")
         throw runtime_error("No layers can be added after a bounding layer.\n");
 
     return true;
@@ -844,7 +846,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
     //set();
-
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
     if(!neural_network_element)
@@ -893,6 +894,8 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 
     const Index layers_number = read_xml_index(layers_element, "LayersNumber");
 
+    layers.clear();
+
     const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
 
     for (Index i = 0; i < layers_number; i++)
@@ -903,7 +906,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
             throw runtime_error("Layer element is nullptr.");
 
         const string name_string = layer_element->Name();
-
         unique_ptr<Layer> layer = Registry<Layer>::instance().create(name_string);
 
         XMLDocument layer_document;
