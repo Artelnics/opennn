@@ -50,21 +50,16 @@ int main()
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        cout << "adri71" << endl;
         ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
-        cout << "adri71" << endl;
         //ApproximationNetwork approximation_network({1}, {1}, {1});
 
         approximation_network.print();
 
         approximation_network.save("../data/approximation_network.xml");
 
-        cout << "adri71 - creado xml" << endl;
-
         approximation_network.load("../data/approximation_network.xml");
 
-        cout << "adri71 - leido xml" << endl;
 /*
         MeanSquaredError mean_squared_error(&aproximation_network, &dataset);
 
@@ -90,7 +85,7 @@ int main()
         testing_analysis.print_goodness_of_fit_analysis();
 
         // Testing analysis
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

@@ -10,9 +10,9 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
 
     // Disable Google Test's own exception catching
-    ::testing::GTEST_FLAG(catch_exceptions) = false;
+    //::testing::GTEST_FLAG(catch_exceptions) = false;
 
-    //::testing::GTEST_FLAG(filter) = "RecurrentLayerTest.*";
+    ::testing::GTEST_FLAG(filter) = "Dense2dTest.*";
 
     try {
         return RUN_ALL_TESTS();
