@@ -100,22 +100,22 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     // Activations
     
-    if (activation_function != Activation::Softmax)
+    if (activation_function != "Softmax")
     {
         cudnnCreateActivationDescriptor(&activation_descriptor);
 
         cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-        switch (get_activation_function())
-        {
-        case Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-        case Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-        case Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-        case Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-        case Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
-
-        default: break;
-        }
+        if (get_activation_function() == "Linear")
+            activation = CUDNN_ACTIVATION_IDENTITY;
+        else if (get_activation_function() == "Logistic")
+            activation = CUDNN_ACTIVATION_SIGMOID;
+        else if (get_activation_function() == "HyperbolicTangent")
+            activation = CUDNN_ACTIVATION_TANH;
+        else if (get_activation_function() == "RectifiedLinear")
+            activation = CUDNN_ACTIVATION_RELU;
+        else if (get_activation_function() == "ExponentialLinear")
+            activation = CUDNN_ACTIVATION_ELU;
 
         cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
@@ -406,10 +406,10 @@ void Dense2d::print() const
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Weights dimensions: " << weights.dimensions() << endl;
 
-    cout << "Biases:" << endl;
-    cout << biases << endl;
-    cout << "Weights:" << endl;
-    cout << weights << endl;
+    //cout << "Biases:" << endl;
+    //cout << biases << endl;
+    //cout << "Weights:" << endl;
+    //cout << weights << endl;
 
     cout << "Activation function:" << endl;
     cout << activation_function << endl;
@@ -668,14 +668,9 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    switch (activation_function)
-    {
-    case Activation::Linear:
+    if (activation_function == "Linear")
         cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
-
-        break;
-
-    case Activation::Softmax:
+    else if (activation_function == "Softmax")
         cudnnSoftmaxForward(cudnn_handle,
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -685,10 +680,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             &beta,
             output_softmax_tensor_descriptor,
             outputs);
-
-        break;
-
-    default:
+    else
         cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
@@ -697,9 +689,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             &beta,
             output_tensor_descriptor,
             outputs);
-
-        break;
-    }
 
     // Droput
 
@@ -774,7 +763,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Error combinations derivatives
 
-    if (dense2d_layer->get_activation_function() != Activation::Linear && dense2d_layer->get_activation_function() != Activation::Softmax)
+    if (dense2d_layer->get_activation_function() != "Linear" && dense2d_layer->get_activation_function() != "Softmax")
     {
         cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
             activation_descriptor,

@@ -1721,31 +1721,11 @@ vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vec
 
         layer_input_device[i].resize(1);
 
-        if (neural_network->get_model_type_string() == "TextClassification") {
-
-            if (i == first_trainable_layer_index)
-            {
-                vector<float*> batch_input_pairs1;
-                batch_input_pairs1.push_back(batch_input_device[0]);
-                layer_input_device[i] = batch_input_pairs1;
-                continue;
-            }
-
-            if (i == first_trainable_layer_index + 1)
-            {
-                vector<float*> batch_input_pairs2;
-                batch_input_pairs2.push_back(batch_input_device[1]);
-                layer_input_device[i] = batch_input_pairs2;
-                continue;
-            }
+        if ((i == first_trainable_layer_index && is_training) || i == 0)
+        {
+            layer_input_device[i] = batch_input_device;
+            continue;
         }
-        else {
-            if ((i == first_trainable_layer_index && is_training) || i == 0)
-            {
-                layer_input_device[i] = batch_input_device;
-                continue;
-            }
-        };
 
         const Index this_layer_inputs_number = this_layer_input_indices.size();
 

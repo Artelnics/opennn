@@ -99,17 +99,7 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 void TrainingStrategy::set_default()
 {
     if(!has_neural_network()) return;
-/*
-    if (model_type == NeuralNetwork::ModelType::Classification
-        || model_type == NeuralNetwork::ModelType::ImageClassification)
-        set_loss_index("CrossEntropyError2d");
-    else if(model_type == NeuralNetwork::ModelType::TextClassification)
-        set_loss_index("CrossEntropyError3d");
-    else if(model_type == NeuralNetwork::ModelType::Forecasting)
-        set_loss_index("NormalizedSquaredError");
-    else
-        set_loss_index("MeanSquaredError");
-*/
+
     set_loss_index("MeanSquaredError");
     set_optimization_algorithm("AdaptiveMomentEstimation");
 }

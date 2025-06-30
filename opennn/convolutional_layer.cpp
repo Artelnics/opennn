@@ -467,15 +467,16 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-    switch (get_activation_function())
-    {
-    case Convolutional::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-    case Convolutional::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-    case Convolutional::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-    case Convolutional::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-    case Convolutional::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
-    default: break;
-    }
+    if (get_activation_function() == "Linear")
+        activation = CUDNN_ACTIVATION_IDENTITY;
+    else if (get_activation_function() == "Logistic")
+        activation = CUDNN_ACTIVATION_SIGMOID;
+    else if (get_activation_function() == "HyperbolicTangent")
+        activation = CUDNN_ACTIVATION_TANH;
+    else if (get_activation_function() == "RectifiedLinear")
+        activation = CUDNN_ACTIVATION_RELU;
+    else if (get_activation_function() == "ExponentialLinear")
+        activation = CUDNN_ACTIVATION_ELU;
 
     cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
 
@@ -610,9 +611,9 @@ void Convolutional::print() const
     cout << "Biases dimensions: " << biases.dimensions() << endl;
     cout << "Weights dimensions: " << weights.dimensions() << endl;
     cout << "biases:" << endl;
-    cout << biases << endl;
+    //cout << biases << endl;
     cout << "Weights:" << endl;
-    cout << weights << endl;
+    //cout << weights << endl;
 }
 
 
@@ -823,7 +824,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
     const Index channels = get_input_channels();
 
     const float* input_device = inputs_device[0];
-    
+
     // Forward propagation
 
     ConvolutionalForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
@@ -884,7 +885,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    if (convolutional_layer->get_activation_function() != "Linear")
     {
         cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
             activation_descriptor,
@@ -950,7 +951,7 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Error combinations derivatives
 
-    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    if (convolutional_layer->get_activation_function() != "Linear")
     {
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
