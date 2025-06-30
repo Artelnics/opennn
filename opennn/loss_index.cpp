@@ -1352,7 +1352,7 @@ void BackPropagationLM::set(const Index&new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index)
+BackPropagationLM::BackPropagationLM(const Index& new_batch_size, LossIndex *new_loss_index)
 {
     set(new_batch_size, new_loss_index);
 }

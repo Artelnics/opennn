@@ -561,10 +561,6 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
-
-    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(Dataset::VariableUse::Input);
-    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(Dataset::VariableUse::Target);
-
     // Selection algorithm
 
     original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(Dataset::VariableUse::Input);
@@ -633,7 +629,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         input_selection_results.mean_selection_error_history(epoch) = mean_selection_error;
 
         input_selection_results.mean_training_error_history(epoch)= mean_training_error;
-
 
         if(selection_errors(optimal_individual_index) < input_selection_results.optimum_selection_error)
         {
@@ -736,9 +731,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     neural_network->set_input_names(dataset->get_variable_names(Dataset::VariableUse::Input));
 
-    if(neural_network->has(Layer::Type::Scaling2d))
+    if(neural_network->has("Scaling2d"))
     {
-        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
+        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }

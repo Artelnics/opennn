@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/mean_squared_error.h"
 #include "../opennn/quasi_newton_method.h"
 
@@ -90,7 +91,7 @@ TEST(QuasiNewtonMethodTest, Train)
     Dataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_constant(1);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_random();
 
     QuasiNewtonMethod quasi_newton_method;

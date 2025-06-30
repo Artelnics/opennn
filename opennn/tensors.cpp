@@ -642,6 +642,9 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
                           const vector<Index>& columns_indices,
                           type* tensor_data)
 {
+    if (rows_indices.empty() || columns_indices.empty())
+        return;
+
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
@@ -652,6 +655,7 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
     TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, sequence_length, input_size);
 
     //#pragma omp parallel for collapse(3)
+
     for (Index i = 0; i < batch_size; i++)
     {
         for (Index j = 0; j < sequence_length; j++)

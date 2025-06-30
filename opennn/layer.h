@@ -28,26 +28,6 @@ class Layer
 
 public:
 
-    enum class Type{None,
-                    Scaling2d,
-                    Scaling4d,
-                    Addition3d,
-                    Normalization3d,
-                    Convolutional,
-                    Dense2d,
-                    Dense3d,
-                    Pooling,
-                    Pooling3d,
-                    Probabilistic3d,
-                    Recurrent,
-                    Unscaling,
-                    Bounding,
-                    Flatten,
-                    Flatten3d,
-                    NonMaxSuppression,
-                    MultiheadAttention,
-                    Embedding};
-
     Layer();
 
     ~Layer()
@@ -58,21 +38,16 @@ public:
             thread_pool_device.reset();
     }
 
-    string get_name() const;
+    const string& get_label() const;
 
     const bool& get_display() const;
 
-    string layer_type_to_string(const Layer::Type&);
-    Type string_to_layer_type(const string&);
-
-    Type get_type() const;
-
-    string get_type_string() const;
+    const string& get_name() const;
 
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
 
-    void set_name(const string&);
+    void set_label(const string&);
 
     void set_display(const bool&);
 
@@ -134,19 +109,16 @@ public:
 
     vector<string> get_default_output_names() const;
 
-    bool get_is_trainable() const
-    {
-        return is_trainable;
-    }
+    bool get_is_trainable() const;
 
 protected:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-    string name = "layer";
+    string label = "layer";
 
-    Type layer_type = Type::None;
+    string name;
 
     bool is_trainable = true;
 
@@ -307,7 +279,7 @@ public:
                                         unique_ptr<LayerForwardPropagationCuda>&,
                                         const bool&) 
     {
-        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_type_string());
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_name());
     }
 
     virtual void back_propagate_cuda(const vector<float*>&,
@@ -428,7 +400,7 @@ struct LayerBackPropagationCuda
 
     virtual void free() {}
 
-    virtual vector<float*> get_input_derivatives_device() { return { input_deltas }; }
+    virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
 
     Index batch_size = 0;
 

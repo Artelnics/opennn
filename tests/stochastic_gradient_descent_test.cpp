@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/language_dataset.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/transformer.h"
 #include "../opennn/mean_squared_error.h"
 #include "../opennn/cross_entropy_error_3d.h"
@@ -41,7 +42,7 @@ TEST(StochasticGradientDescentTest, Train)
     Dataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_constant(type(1));
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_random();
 
     StochasticGradientDescent stochastic_gradient_descent;

@@ -80,8 +80,6 @@ public:
 
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-    string get_activation_function_string_expression() const;
-
     void print() const override;
 
     void from_XML(const XMLDocument&) override;
@@ -118,7 +116,6 @@ private:
 
     float* biases_device = nullptr;
     float* weights_device = nullptr;
-
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
 #endif

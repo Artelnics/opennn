@@ -43,8 +43,8 @@ public:
 TEST_F(FlattenLayerTest, Constructor) 
 {
     EXPECT_EQ(flatten_layer->get_input_dimensions(), input_dimensions);
-    EXPECT_EQ(flatten_layer->get_type(), Layer::Type::Flatten);
-    EXPECT_EQ(flatten_layer->get_name(), "flatten_layer");
+    EXPECT_EQ(flatten_layer->get_name(), "Flatten");
+    EXPECT_EQ(flatten_layer->get_label(), "flatten_layer");
 }
 
 

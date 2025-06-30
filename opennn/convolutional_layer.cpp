@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "convolutional_layer.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "convolutional_layer.h"
 
 namespace opennn
 {
@@ -20,7 +21,7 @@ Convolutional::Convolutional(const dimensions& new_input_dimensions,
                              const Convolutional::Convolution& new_convolution_type,
                              const string new_name) : Layer()
 {
-    layer_type = Layer::Type::Convolutional;
+    name = "Convolutional";
 
     set(new_input_dimensions, 
         new_kernel_dimensions, 
@@ -414,7 +415,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
                         const string& new_activation_function,
                         const dimensions& new_stride_dimensions,
                         const Convolution& new_convolution_type,
-                        const string new_name)
+                        const string new_label)
 {
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
@@ -459,7 +460,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
     scales.resize(kernels_number);
     offsets.resize(kernels_number);
 
-    set_name(new_name);
+    set_label(new_label);
 
 #ifdef OPENNN_CUDA
 
@@ -467,15 +468,15 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-    if (get_activation_function() == "Linear")
+    if(activation_function == "Linear")
         activation = CUDNN_ACTIVATION_IDENTITY;
-    else if (get_activation_function() == "Logistic")
+    else if(activation_function == "Logistic")
         activation = CUDNN_ACTIVATION_SIGMOID;
-    else if (get_activation_function() == "HyperbolicTangent")
+    else if(activation_function == "HyperbolicTangent")
         activation = CUDNN_ACTIVATION_TANH;
-    else if (get_activation_function() == "RectifiedLinear")
+    else if(activation_function == "RectifiedLinear")
         activation = CUDNN_ACTIVATION_RELU;
-    else if (get_activation_function() == "ExponentialLinear")
+    else if(activation_function == "ExponentialLinear")
         activation = CUDNN_ACTIVATION_ELU;
 
     cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
@@ -621,7 +622,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Convolutional");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
     add_xml_element(printer, "KernelsNumber", to_string(get_kernels_number()));
     add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
@@ -647,7 +648,7 @@ void Convolutional::from_XML(const XMLDocument& document)
     if (!convolutional_layer_element) 
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    set_name(read_xml_string(convolutional_layer_element, "Name"));
+    set_label(read_xml_string(convolutional_layer_element, "Label"));
 
     set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
 
@@ -756,6 +757,8 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
     batch_size = new_batch_size;
 
     layer = new_layer;
+
+    if (!layer) return;
 
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
@@ -1148,9 +1151,9 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
     const Index stride_height = convolutional_layer->get_row_stride();
     const Index stride_width = convolutional_layer->get_column_stride();
 
-    string layer_name = convolutional_layer->get_name();
+    string layer_label = convolutional_layer->get_label();
 
-    if (!layer_name.empty() && layer_name.substr(layer_name.length() - 2) == "_1")
+    if (!layer_label.empty() && layer_label.substr(layer_label.length() - 2) == "_1")
         is_first_layer = true;
 
     if (is_first_layer)
@@ -1228,7 +1231,7 @@ void ConvolutionalForwardPropagationCuda::print() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    cout << layer->get_type_string() + " forward propagation" << endl;
+    cout << layer->get_name() + " forward propagation" << endl;
 
     cout << "Outputs:" << endl;
     cout << matrix_4d_from_device(outputs, batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]) << endl;
@@ -1399,7 +1402,7 @@ void ConvolutionalBackPropagationCuda::print() const
     const dimensions input_dimensions = layer->get_input_dimensions();
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    cout << layer->get_type_string() + " back propagation" << endl;
+    cout << layer->get_name() + " back propagation" << endl;
 
     cout << "bias_deltas_device" << endl;
     //vector_from_device(bias_deltas,);
@@ -1429,7 +1432,14 @@ void ConvolutionalBackPropagationCuda::free()
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
 
+REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
+REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
+
 #endif
+
+REGISTER(Layer, Convolutional, "Convolutional")
+REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
+REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 
 }
 

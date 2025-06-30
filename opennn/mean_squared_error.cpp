@@ -154,6 +154,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
 string MeanSquaredError::get_name() const
 {
+    cout << "adri71 - ejecutamdo" << endl;
     return "MeanSquaredError";
 }
 

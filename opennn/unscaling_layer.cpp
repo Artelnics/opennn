@@ -6,17 +6,18 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "unscaling_layer.h"
+#include "registry.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
 
-Unscaling::Unscaling(const dimensions& new_input_dimensions, const string& layer_name)
+Unscaling::Unscaling(const dimensions& new_input_dimensions, const string& label)
     : Layer()
 {
-    set(new_input_dimensions[0], layer_name);
+    set(new_input_dimensions[0], label);
 }
 
 
@@ -202,7 +203,7 @@ void Unscaling::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Unscaling::set(const Index& new_neurons_number, const string& new_name)
+void Unscaling::set(const Index& new_neurons_number, const string& new_label)
 {
     descriptives.resize(new_neurons_number);
 
@@ -211,13 +212,13 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_name)
 
     scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
-    name = new_name;
+    label = new_label;
 
     set_scalers(Scaler::MinimumMaximum);
 
     set_min_max_range(type(-1), type(1));
 
-    layer_type = Type::Unscaling;
+    name = "Unscaling";
 
     is_trainable = false;
 }
@@ -483,6 +484,8 @@ void UnscalingForwardPropagation::print() const
     cout << "Outputs:" << endl
         << outputs << endl;
 }
+
+REGISTER_FORWARD_PROPAGATION("Unscaling", UnscalingForwardPropagation);
 
 }
 

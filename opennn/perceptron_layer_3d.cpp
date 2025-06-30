@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "perceptron_layer_3d.h"
+#include "registry.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "perceptron_layer_3d.h"
 
 namespace opennn
 {
@@ -93,7 +94,7 @@ void Dense3d::set(const Index& new_sequence_length,
                   const Index& new_input_dimension,
                   const Index& new_output_dimension,
                   const string& new_activation_function,
-                  const string& new_name)
+                  const string& new_label)
 {
     sequence_length = new_sequence_length;
 
@@ -105,9 +106,9 @@ void Dense3d::set(const Index& new_sequence_length,
 
     set_activation_function(new_activation_function);
 
-    name = new_name;
+    label = new_label;
 
-    layer_type = Type::Dense3d;
+    name = "Dense3d";
 
     dropout_rate = 0;
 }
@@ -247,7 +248,7 @@ void Dense3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     Index index = 0;
@@ -260,7 +261,7 @@ void Dense3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Dense3d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
     add_xml_element(printer, "InputsDepth", to_string(get_input_embedding()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
@@ -322,11 +323,13 @@ void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_laye
 
 void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     const Index output_embedding = dense_3d->get_output_embedding();
     const Index sequence_length = dense_3d->get_sequence_length();
@@ -363,6 +366,10 @@ vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pai
 
     return {{(type*)(input_deltas.data()), {batch_size, sequence_length, input_embedding}}};
 }
+
+REGISTER(Layer, Dense3d, "Dense3d")
+REGISTER_FORWARD_PROPAGATION("Dense3d", Dense3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Dense3d", Dense3dBackPropagation);
 
 }
 

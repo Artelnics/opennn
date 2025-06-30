@@ -105,6 +105,7 @@ void register_loss_indices();
 void register_optimization_algorithms();
 void register_neurons_selection();
 void register_inputs_selection();
+void register_layer_forward_propagation();
 
 }
 

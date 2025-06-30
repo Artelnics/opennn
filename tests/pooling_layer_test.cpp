@@ -125,7 +125,7 @@ TEST_P(PoolingLayerTest, Constructor)
                                parameters.pooling_method,
                                parameters.test_name);
 
-    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+    EXPECT_EQ(pooling_layer.get_name(), "Pooling");
     EXPECT_EQ(pooling_layer.get_input_dimensions(), parameters.input_dimensions);
     EXPECT_EQ(pooling_layer.get_pool_height(), parameters.pool_dimensions[0]);
     EXPECT_EQ(pooling_layer.get_pool_width(), parameters.pool_dimensions[1]);

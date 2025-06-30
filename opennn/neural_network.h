@@ -58,11 +58,11 @@ public:
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
 
-   bool validate_layer_type(const Layer::Type&) const;
+   bool validate_name(const string&) const;
 
    // Get
 
-   bool has(const Layer::Type&) const;
+   bool has(const string&) const;
 
    bool is_empty() const;
 
@@ -83,7 +83,7 @@ public:
 
    Index find_input_index(const vector<Index>&, const Index&) const;
 
-   Layer* get_first(const Layer::Type&) const;
+   Layer* get_first(const string&) const;
 
    const bool& get_display() const;
 
@@ -114,7 +114,7 @@ public:
    // Layers
 
    Index get_layers_number() const;
-   Index get_layers_number(const Layer::Type&) const;
+   Index get_layers_number(const string&) const;
 
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
@@ -231,8 +231,8 @@ public:
    void load(const filesystem::path&);
    void load_parameters_binary(const filesystem::path&);
 
-   vector<string> get_layer_names() const;
-   vector<string> get_layer_types_string() const;
+   vector<string> get_layer_labels() const;
+   vector<string> get_names_string() const;
 
    void save_outputs(Tensor<type, 2>&, const filesystem::path&);
 

@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "registry.h"
 #include "tensors.h"
 #include "probabilistic_layer_3d.h"
 #include "strings_utilities.h"
@@ -98,9 +99,9 @@ void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
 
 
 void Probabilistic3d::set(const Index& new_inputs_number, 
-                               const Index& new_inputs_depth, 
-                               const Index& new_neurons_number, 
-                               const string& new_name)
+                               const Index& new_inputs_depth,
+                               const Index& new_neurons_number,
+                               const string& new_label)
 {
     inputs_number_xxx = new_inputs_number;
 
@@ -111,9 +112,9 @@ void Probabilistic3d::set(const Index& new_inputs_number,
     set_parameters_glorot();
     // set_parameters_random();
 
-    name = new_name;
+    label = new_label;
 
-    layer_type = Layer::Type::Probabilistic3d;
+    name = "Probabilistic3d";
 
     activation_function = Activation::Softmax;
 }
@@ -225,8 +226,8 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
 
-    Probabilistic3DForwardPropagation* this_forward_propagation =
-        static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.get());
+    Probabilistic3dForwardPropagation* this_forward_propagation =
+        static_cast<Probabilistic3dForwardPropagation*>(forward_propagation.get());
     
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -246,8 +247,8 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    Probabilistic3DForwardPropagation* this_forward_propagation =
-            static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.get());
+    Probabilistic3dForwardPropagation* this_forward_propagation =
+            static_cast<Probabilistic3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -337,7 +338,7 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
 
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
-    set_name(read_xml_string(probabilistic_layer_element, "Name"));
+    set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
     Index index = 0;
@@ -350,7 +351,7 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic3d");
 
-    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
@@ -365,14 +366,14 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
 }
 
 
-Probabilistic3DForwardPropagation::Probabilistic3DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Probabilistic3dForwardPropagation::Probabilistic3dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> Probabilistic3DForwardPropagation::get_output_pair() const
+pair<type*, dimensions> Probabilistic3dForwardPropagation::get_output_pair() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
@@ -383,7 +384,7 @@ pair<type*, dimensions> Probabilistic3DForwardPropagation::get_output_pair() con
 }
 
 
-void Probabilistic3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -398,7 +399,7 @@ void Probabilistic3DForwardPropagation::set(const Index& new_batch_size, Layer* 
 }
 
 
-void Probabilistic3DForwardPropagation::print() const
+void Probabilistic3dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl;
@@ -407,11 +408,13 @@ void Probabilistic3DForwardPropagation::print() const
 
 void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size = new_batch_size;
+
     layer = new_layer;
 
-    Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
+    if (!layer) return;
 
-    batch_size = new_batch_size;
+    Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
@@ -453,6 +456,10 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
 
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number, inputs_depth}} };
 }
+
+REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
+REGISTER_FORWARD_PROPAGATION("Probabilistic3d", Probabilistic3dForwardPropagation);
+REGISTER_BACK_PROPAGATION("Probabilistic3d", Probabilistic3dBackPropagation);
 
 }
 
