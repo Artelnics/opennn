@@ -137,6 +137,8 @@ protected:
             linear(activations, activation_derivatives);
         else if (activation_function == "Logistic")
             logistic(activations, activation_derivatives);
+        else if (activation_function == "Softmax")
+            softmax(activations);
         else if (activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
         else if (activation_function == "RectifiedLinear")
