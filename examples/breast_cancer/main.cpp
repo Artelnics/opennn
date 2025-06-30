@@ -13,6 +13,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/standard_networks.h"
 
 using namespace opennn;
 
@@ -28,23 +29,35 @@ int main()
 
         const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
         const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
+
+        const vector<string> inputs_names = dataset.get_variable_names(Dataset::VariableUse::Input);
+        const vector<string> targets_names = dataset.get_variable_names(Dataset::VariableUse::Target);
         
         // Neural network
 
         const Index neurons_number = 3;
         
         ClassificationNetwork classification_network({ inputs_number }, { neurons_number}, { targets_number });
+        classification_network.set_input_names(inputs_names);
+        classification_network.set_output_names(targets_names);
+
+        classification_network.print();
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&classification_network, &dataset);
+        /*TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.print();
 
         training_strategy.perform_training();
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
-        testing_analysis.print_binary_classification_tests();
+        testing_analysis.print_binary_classification_tests();*/
+
+        classification_network.save("../data/approx.xml");
+        classification_network.load("../data/approx.xml");
+
+        classification_network.print();
 
         cout << "Good bye!" << endl;
 

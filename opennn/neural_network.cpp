@@ -300,11 +300,9 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    // @todo model_type has been removed
-/*
-    if(model_type == ModelType::TextClassification)
+    if(this->has("Embedding"))
         return input_names.size();
-*/
+
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
@@ -841,13 +839,13 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
-
 }
 
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
     //set();
+
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
     if(!neural_network_element)

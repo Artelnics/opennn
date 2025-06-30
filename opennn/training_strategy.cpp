@@ -173,7 +173,7 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("TrainingStrategy");
 
-    // printer.OpenElement("LossIndex");
+    printer.OpenElement("LossIndex");
 
     add_xml_element(printer, "LossMethod", this->loss_index->get_name());
 
@@ -183,16 +183,13 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    // printer.OpenElement("OptimizationAlgorithm");
-    // const string optimization_method = get_optimization_algorithm()->get_name();
-    // add_xml_element(printer, "OptimizationMethod", optimization_method);
+    printer.OpenElement("OptimizationAlgorithm");
 
     add_xml_element(printer, "OptimizationMethod", this->optimization_algorithm->get_name());
 
     this->optimization_algorithm->to_XML(printer);
 
-    // printer.CloseElement();
-
+    printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(this->optimization_algorithm->get_display()));
 
