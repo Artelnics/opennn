@@ -24,16 +24,74 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 }
 
 
-LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input_sequence_length, const Index& input_vocabulary_size) : Dataset()
-{
-//    input_dimensions = new_input_dimensions;
+// LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input_sequence_length, const Index& input_vocabulary_size) : Dataset()
+// {
+// //    input_dimensions = new_input_dimensions;
 
-//    target_dimensions = { new_targets_number };
+// //    target_dimensions = { new_targets_number };
+
+//     maximum_input_length = input_sequence_length;
+//     maximum_target_length = 1;
+
+//     const Index variables_number = input_sequence_length + 1;
+
+//     data.resize(samples_number, variables_number);
+
+//     raw_variables.resize(variables_number);
+
+//     set_default();
+
+//     for (Index i = 0; i < variables_number; i++)
+//     {
+//         RawVariable& raw_variable = raw_variables[i];
+
+//         raw_variable.type = RawVariableType::Numeric;
+//         raw_variable.name = "variable_" + to_string(i + 1);
+
+//         raw_variable.use = (i < input_sequence_length)
+//                                ? VariableUse::Input
+//                                : VariableUse::Target;
+//     }
+
+//     const vector<Index> target_variable_indices = get_variable_indices(Dataset::VariableUse::Target);
+
+//     cout << "variables_number: " << variables_number << endl;
+
+//     cout << "target_variable_indices : " << endl;
+//     print_vector(target_variable_indices);
+
+//     sample_uses.resize(samples_number);
+
+//     split_samples_random();
+
+//     // Initialize data
+
+//     default_random_engine generator;
+//     uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
+//     uniform_int_distribution<int> dist_binary(0, 1);
+
+//     for (Index i = 0; i < data.dimension(0); ++i)
+//         for (Index j = 0; j < data.dimension(1) - 1; ++j)
+//             data(i, j) = static_cast<type>(dist_main(generator));
+
+//     for (Index i = 0; i < data.dimension(0); ++i)
+//         data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
+
+//     input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
+//     target_vocabulary.resize(1);
+
+// }
+
+LanguageDataset::LanguageDataset(const Index& samples_number,
+                                 const Index& input_sequence_length,
+                                 const Index& input_vocabulary_size) : Dataset()
+{
+    maximum_input_length = input_sequence_length;
+    maximum_target_length = 1;
 
     const Index variables_number = input_sequence_length + 1;
 
     data.resize(samples_number, variables_number);
-
     raw_variables.resize(variables_number);
 
     set_default();
@@ -50,26 +108,35 @@ LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input
                                : VariableUse::Target;
     }
 
-    sample_uses.resize(samples_number);
 
+    sample_uses.resize(samples_number);
     split_samples_random();
 
-    // Initialize data
-
     default_random_engine generator;
-    uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
+    uniform_int_distribution<int> dist_main(0, input_vocabulary_size - 1);
     uniform_int_distribution<int> dist_binary(0, 1);
 
-    for (size_t i = 0; i < data.dimension(0); ++i)
-        for (size_t j = 0; j < data.dimension(1) - 1; ++j)
+    const Index target_column_index = data.dimension(1) - 1;
+
+    for (Index i = 0; i < data.dimension(0); ++i)
+    {
+        for (Index j = 0; j < target_column_index; ++j)
+        {
             data(i, j) = static_cast<type>(dist_main(generator));
+        }
+        data(i, target_column_index) = static_cast<type>(dist_binary(generator));
+    }
 
-    for (size_t i = 0; i < data.dimension(0); ++i)
-        data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
+    input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
+    target_vocabulary.resize(2);
 
-    input_vocabulary.resize(input_sequence_length);
-    target_vocabulary.resize(1);
+    input_dimensions = { get_input_sequence_length() };
+    target_dimensions = { get_target_sequence_length() };
+    decoder_dimensions = { 0 };
 
+    set_raw_variable_scalers(Scaler::None);
+    set_default_raw_variable_names();
+    set_binary_raw_variables();
 }
 
 

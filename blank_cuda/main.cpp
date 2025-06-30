@@ -64,11 +64,7 @@ int main()
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
         dataset.set_data_path("../examples/mnist/data_bin");
 
-<<<<<<< HEAD
-        //dimensions data_dimensions = { 224,224,3 };
-=======
         dimensions data_dimensions = { 224, 224, 3 };
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
 
         //dataset.read_bmp(data_dimensions);
         dataset.read_bmp();
@@ -91,28 +87,18 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-<<<<<<< HEAD
+
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(256);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
-=======
-        training_strategy.get_optimization_algorithm()->set_display_period(1);
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(8);
-        adam->set_maximum_epochs_number(10);
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
-
         //training_strategy.perform_training();
+
         training_strategy.perform_training_cuda();
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-<<<<<<< HEAD
         testing_analysis.set_batch_size(256);
-=======
-        testing_analysis.set_batch_size(8);
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
 
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();

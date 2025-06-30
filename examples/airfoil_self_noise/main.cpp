@@ -26,7 +26,7 @@ int main()
 {
     try
     {
-        cout << "Airfoil self noise " << endl;
+        cout << "Airfoil self noise" << endl;
 
         register_layer_forward_propagation();
 
@@ -74,9 +74,17 @@ int main()
 //        training_strategy.perform_training();
 /*
         TestingAnalysis testing_analysis(&neural_network, &dataset);
+        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
+        TrainingStrategy training_strategy(&approximation_network, &dataset);
+        training_strategy.perform_training();
+
+        TestingAnalysis testing_analysis(&approximation_network, &dataset);
+        cout << "Goodness of fit analysis:\n" << endl;
         testing_analysis.print_goodness_of_fit_analysis();
-*/
+
+        // Testing analysis
+
         cout << "Good bye!" << endl;
 
         return 0;

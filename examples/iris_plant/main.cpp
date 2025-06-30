@@ -30,17 +30,11 @@ int main()
         const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
         const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
 
-        cout << "targets_number: " << targets_number << endl;
-
         // Neural network
 
         const Index neurons_number = 6;
 
         ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
-
-        classification_network.print();
-
-        // Training strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
