@@ -137,6 +137,8 @@ protected:
             linear(activations, activation_derivatives);
         else if (activation_function == "Logistic")
             logistic(activations, activation_derivatives);
+        else if (activation_function == "Softmax")
+            softmax(activations);
         else if (activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
         else if (activation_function == "RectifiedLinear")
@@ -400,7 +402,7 @@ struct LayerBackPropagationCuda
 
     virtual void free() {}
 
-    virtual vector<float*> get_input_derivatives_device() { return { input_deltas }; }
+    virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
 
     Index batch_size = 0;
 

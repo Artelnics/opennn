@@ -1668,12 +1668,12 @@ void Dataset::set(const Index& new_samples_number,
         1,
         multiplies<Index>());
 
-    const Index new_targets_number = accumulate(new_target_dimensions.begin(),
+    Index new_targets_number = accumulate(new_target_dimensions.begin(),
         new_target_dimensions.end(),
         1,
         multiplies<Index>());
 
-    //const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+    new_targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
 
     target_dimensions = { new_targets_number };
 
@@ -3033,8 +3033,8 @@ void Dataset::print() const
         << "Number of testing samples: " << testing_samples_number << endl
         << "Number of unused samples: " << unused_samples_number << endl;
 
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
-        raw_variable.print();
+    //for (const Dataset::RawVariable& raw_variable : raw_variables)
+    //    raw_variable.print();
 }
 
 

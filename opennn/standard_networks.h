@@ -20,6 +20,7 @@
 #include "pooling_layer.h"
 #include "pooling_layer_3d.h"
 #include "flatten_layer.h"
+#include "flatten_layer_3d.h"
 #include "neural_network.h"
 
 namespace opennn
@@ -33,7 +34,6 @@ public:
                          const dimensions& complexity_dimensions,
                          const dimensions& output_dimensions) : NeuralNetwork()
     {
-        cout << "adri71 - creando aproximaatioon network -- " << endl;
         const Index complexity_size = complexity_dimensions.size();
 
         add_layer(make_unique<Scaling2d>(input_dimensions));
@@ -161,7 +161,7 @@ public:
         add_layer(make_unique<Scaling4d>(input_dimensions));
 
         const Index complexity_size = complexity_dimensions.size();
-
+        
         for (Index i = 0; i < complexity_size; i++)
         {
             const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
@@ -171,7 +171,7 @@ public:
                                                  kernel_dimensions,
                                                  "RectifiedLinear",
                                                  stride_dimensions,
-                                                 Convolutional::Convolution::Same,
+                                                 Convolutional::Convolution::Valid,
                                                  "convolutional_layer_" + to_string(i+1)));
 
             const dimensions pool_dimensions = { 2, 2 };
@@ -185,7 +185,7 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-
+        
         add_layer(make_unique<Flatten>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
@@ -219,16 +219,15 @@ public:
             get_output_dimensions()
             ));
 
-        // add_layer(make_unique<Flatten3d>(
-        //     get_output_dimensions()
-        //     ));
+        add_layer(make_unique<Flatten3d>(
+            get_output_dimensions()
+            ));
 
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),
             output_dimensions,
             "Logistic",
             "classification_layer"));
-
     }
 };
 

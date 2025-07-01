@@ -9,6 +9,7 @@
 #include "tensors.h"
 #include "correlations.h"
 #include "dataset.h"
+#include "bounding_layer.h"
 #include "scaling_layer_2d.h"
 #include "perceptron_layer.h"
 #include "neural_network.h"
@@ -950,6 +951,12 @@ void Correlation::print() const
          << "Lower confidence: " << lower_confidence << endl
          << "Upper confidence: " << upper_confidence << endl;
 }
+
+void register_layers()
+{
+    Bounding bounding_layer;bounding_layer.print();
+}
+
 
 void register_loss_indices()
 {

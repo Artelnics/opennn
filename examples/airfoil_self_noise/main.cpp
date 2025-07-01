@@ -26,55 +26,21 @@ int main()
 {
     try
     {
-        cout << "Airfoil self noise " << endl;
+        cout << "Airfoil self noise" << endl;
 
-//        register_layer_forward_propagation();
-
-        cout << "Registered forward propagation types:\n";
-        for(const auto& name : BackRegistry::instance().registered_names())
-        {
-            cout << "- " << name << endl;
-        }
-
- /*
         const Index neurons_number = 3;
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
         ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
 
-        //ApproximationNetwork approximation_network({1}, {1}, {1});
+        TrainingStrategy training_strategy(&approximation_network, &dataset);
+        training_strategy.perform_training();
 
-        approximation_network.print();
-
-        approximation_network.save("../data/approximation_network.xml");
-
-        approximation_network.load("../data/approximation_network.xml");
-
-        for (const auto& name : Registry<LossIndex>::instance().registered_names())
-            std::cout << "Registered loss: " << name << "\n";
-
-        for (const auto& name : Registry<OptimizationAlgorithm>::instance().registered_names())
-            std::cout << "Registered optimizer: " << name << "\n";
-
-
-        MeanSquaredError mean_squared_error(&aproximation_network, &dataset);
-
-        cout << mean_squared_error.calculate_numerical_error() << endl;
-
-/*
-        AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
-
-        adaptive_moment_estimation.perform_training();
-
-//        TrainingStrategy training_strategy(&neural_network, &dataset);
-
-//        training_strategy.perform_training();
-/*
-        TestingAnalysis testing_analysis(&neural_network, &dataset);
-
+        TestingAnalysis testing_analysis(&approximation_network, &dataset);
+        cout << "Goodness of fit analysis:\n" << endl;
         testing_analysis.print_goodness_of_fit_analysis();
-*/
+
         cout << "Good bye!" << endl;
 
         return 0;

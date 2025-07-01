@@ -200,6 +200,7 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
              {batch_size, input_dimensions[0], input_dimensions[1]}}};
 }
 
+REGISTER(Layer, Flatten3d, "Flatten3d")
 REGISTER_FORWARD_PROPAGATION("Flatten3d", Flatten3dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Flatten3d", Flatten3dBackPropagation);
 

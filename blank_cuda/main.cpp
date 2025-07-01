@@ -16,6 +16,7 @@
 #include "../opennn/pch.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/standard_networks.h"
 #include "../opennn/vgg16.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
@@ -46,7 +47,7 @@ int main()
 
         const Index image_height = 3;
         const Index image_width = 3;
-        const Index channels = 3;
+        const Index channels = 1;
         const Index targets = 2;
 
         ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
@@ -62,25 +63,24 @@ int main()
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
-        dataset.set_data_path("../examples/mnist/data_bin");
+        //dataset.set_data_path("../examples/mnist/data_bin");
+        dataset.set_data_path("../examples/mnist/data");
 
-<<<<<<< HEAD
-        //dimensions data_dimensions = { 224,224,3 };
-=======
-        dimensions data_dimensions = { 224, 224, 3 };
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
+        //dimensions data_dimensions = { 224, 224, 3 };
 
         //dataset.read_bmp(data_dimensions);
         dataset.read_bmp();
 
-        dataset.split_samples_random(0.8, 0.0, 0.2);
+        //dataset.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
-        
+
+        dataset.print();
+
         // Neural network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+        ImageClassificationNetwork neural_network(
             input_dimensions,
             {16},//{ 64, 64, 128, 128, 32 },
             output_dimensions);
@@ -90,29 +90,20 @@ int main()
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
+        training_strategy.set_loss_index("CrossEntropyError2d");
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-<<<<<<< HEAD
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(256);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
-        training_strategy.set_display_period(1);
-=======
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(8);
+        adam->set_batch_size(1024);
         adam->set_maximum_epochs_number(10);
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
 
-        //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
+        //training_strategy.perform_training();
 
         // Testing analysis
-
+        
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-<<<<<<< HEAD
-        testing_analysis.set_batch_size(256);
-=======
-        testing_analysis.set_batch_size(8);
->>>>>>> 3b4b1c8642604987186808cd3e1c8f59a7475778
+        //testing_analysis.set_batch_size(256);
 
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();

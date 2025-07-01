@@ -612,9 +612,9 @@ void Convolutional::print() const
     cout << "Biases dimensions: " << biases.dimensions() << endl;
     cout << "Weights dimensions: " << weights.dimensions() << endl;
     cout << "biases:" << endl;
-    cout << biases << endl;
+    //cout << biases << endl;
     cout << "Weights:" << endl;
-    cout << weights << endl;
+    //cout << weights << endl;
 }
 
 
@@ -827,7 +827,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
     const Index channels = get_input_channels();
 
     const float* input_device = inputs_device[0];
-    
+
     // Forward propagation
 
     ConvolutionalForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
@@ -1437,6 +1437,7 @@ REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Convolutional, "Convolutional")
 REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
 REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 

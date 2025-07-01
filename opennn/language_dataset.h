@@ -80,7 +80,7 @@ private:
     Index maximum_input_length = 0;
     Index maximum_target_length = 0;
 
-    Index minimum_word_frequency = 2;
+    Index minimum_word_frequency = 1;
     Index maximum_vocabulary_size = 1000;
 };
 

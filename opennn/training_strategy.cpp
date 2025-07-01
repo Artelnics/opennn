@@ -71,8 +71,12 @@ void TrainingStrategy::set_loss_index(const string& new_loss_index)
 
     loss_index->set(neural_network, dataset);
 
-    if(optimization_algorithm)
-        optimization_algorithm->set(loss_index.get());
+    if(optimization_algorithm){
+        if(optimization_algorithm->get_name() == "QuasiNewtonMethod")
+            static_cast<QuasiNewtonMethod*>(optimization_algorithm.get())->set_loss_index(loss_index.get());
+        else
+            optimization_algorithm->set(loss_index.get());
+    }
 }
 
 
@@ -99,17 +103,7 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 void TrainingStrategy::set_default()
 {
     if(!has_neural_network()) return;
-/*
-    if (model_type == NeuralNetwork::ModelType::Classification
-        || model_type == NeuralNetwork::ModelType::ImageClassification)
-        set_loss_index("CrossEntropyError2d");
-    else if(model_type == NeuralNetwork::ModelType::TextClassification)
-        set_loss_index("CrossEntropyError3d");
-    else if(model_type == NeuralNetwork::ModelType::Forecasting)
-        set_loss_index("NormalizedSquaredError");
-    else
-        set_loss_index("MeanSquaredError");
-*/
+
     set_loss_index("MeanSquaredError");
     set_optimization_algorithm("AdaptiveMomentEstimation");
 }
@@ -131,6 +125,8 @@ TrainingResults TrainingStrategy::perform_training()
 
     if(neural_network->has("Recurrent"))
         fix_forecasting();
+
+    optimization_algorithm->set_display(true);
 
     return optimization_algorithm->perform_training();
 }
@@ -183,7 +179,7 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("TrainingStrategy");
 
-    // printer.OpenElement("LossIndex");
+    printer.OpenElement("LossIndex");
 
     add_xml_element(printer, "LossMethod", this->loss_index->get_name());
 
@@ -193,16 +189,13 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    // printer.OpenElement("OptimizationAlgorithm");
-    // const string optimization_method = get_optimization_algorithm()->get_name();
-    // add_xml_element(printer, "OptimizationMethod", optimization_method);
+    printer.OpenElement("OptimizationAlgorithm");
 
     add_xml_element(printer, "OptimizationMethod", this->optimization_algorithm->get_name());
 
     this->optimization_algorithm->to_XML(printer);
 
-    // printer.CloseElement();
-
+    printer.CloseElement();
 
     add_xml_element(printer, "Display", to_string(this->optimization_algorithm->get_display()));
 
@@ -270,18 +263,6 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
         weighted_squared_error_document.InsertEndChild(weighted_squared_error_element_copy);
         static_cast<WeightedSquaredError*>(this->get_loss_index())->from_XML(weighted_squared_error_document);
-    }
-
-    // Regularization
-
-    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
-
-    if (regularization_element)
-    {
-        set_loss_index(loss_method);
-        XMLDocument regularization_document;
-        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-        get_loss_index()->regularization_from_XML(regularization_document);
     }
 
     // Optimization algorithm
@@ -362,6 +343,18 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     }
 
     set_optimization_algorithm(optimization_algorithm);
+
+    // Regularization
+
+    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
+
+    if (regularization_element)
+    {
+        set_loss_index(loss_method);
+        XMLDocument regularization_document;
+        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+        get_loss_index()->regularization_from_XML(regularization_document);
+    }
 
     // Display
 

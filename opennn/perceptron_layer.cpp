@@ -165,6 +165,9 @@ void Dense2d::set_activation_function(const string& new_activation_function)
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
+
+    if (new_activation_function == "Softmax" && get_outputs_number() == 1)
+        activation_function = "Logistic";
 }
 
 
@@ -407,10 +410,10 @@ void Dense2d::print() const
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Weights dimensions: " << weights.dimensions() << endl;
 
-    cout << "Biases:" << endl;
-    cout << biases << endl;
-    cout << "Weights:" << endl;
-    cout << weights << endl;
+    //cout << "Biases:" << endl;
+    //cout << biases << endl;
+    //cout << "Weights:" << endl;
+    //cout << weights << endl;
 
     cout << "Activation function:" << endl;
     cout << activation_function << endl;
@@ -652,9 +655,9 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    if(activation_function == "Linear")
+    if (activation_function == "Linear")
         cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
-    else if(activation_function == "Softmax")
+    else if (activation_function == "Softmax")
         cudnnSoftmaxForward(cudnn_handle,
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
@@ -1040,6 +1043,7 @@ REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Dense2d, "Dense2d")
 REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
 

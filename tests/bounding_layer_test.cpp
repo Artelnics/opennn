@@ -6,8 +6,9 @@
 using namespace opennn;
 
 
-TEST(BoundingTest, Constructor) 
+TEST(BoundingTest, Constructor)
 {
+
     Bounding bounding_layer;
 
     EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{0});

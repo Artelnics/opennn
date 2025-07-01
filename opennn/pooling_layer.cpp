@@ -867,6 +867,7 @@ REGISTER_BACK_CUDA("Pooling", PoolingBackPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Pooling, "Pooling")
 REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
 REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
 

@@ -345,6 +345,7 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
     return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
 
+REGISTER(Layer, Normalization3d, "Normalization3d")
 REGISTER_FORWARD_PROPAGATION("Normalization3d", Normalization3dForwardPropagation);
 REGISTER_BACK_PROPAGATION("Normalization3d", Normalization3dBackPropagation);
 

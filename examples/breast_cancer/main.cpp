@@ -13,6 +13,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/standard_networks.h"
 
 using namespace opennn;
 
@@ -26,21 +27,11 @@ int main()
 
         Dataset dataset("../data/breast_cancer.csv", ";", true, false);
 
-        const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
-        const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
-        
-        // Neural network
-
         const Index neurons_number = 3;
-        
-        ClassificationNetwork classification_network({ inputs_number }, { neurons_number}, { targets_number });
 
-        // Training strategy
+        ClassificationNetwork classification_network(dataset.get_input_dimensions(), { neurons_number}, dataset.get_target_dimensions());
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
-
-        training_strategy.print();
-
         training_strategy.perform_training();
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);

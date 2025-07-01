@@ -635,16 +635,20 @@ type LossIndex::calculate_numerical_error()
 
     const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
     const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
     const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
     Batch batch(samples_number, dataset);
 
-    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+    batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
+    // alvaros
     neural_network->forward_propagate(batch.get_input_pairs(),
                                       forward_propagation);
+
+    // return 0;
 
     BackPropagation back_propagation(samples_number, this);
 
@@ -694,7 +698,16 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     Batch batch(samples_number, dataset);
 
-    batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    // @todo decoder variables
+    // if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+    // {
+    //     const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    //     batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    // }
+    // else
+    //     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
@@ -1649,7 +1662,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     loss_index = new_loss_index;
 
     if (!loss_index) return;
-    
+
     // Neural network
 
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
@@ -1659,7 +1672,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     const dimensions output_dimensions = neural_network_ptr->get_output_dimensions();
 
     const Index outputs_number = output_dimensions[0];
-    
+
     // First order loss
 
     neural_network.set(samples_number, neural_network_ptr);
@@ -1667,7 +1680,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     loss = type(0);
     error(0) = type(0);
     regularization = type(0);
-
+   
     CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&parameters_square, parameters_number * sizeof(float)));
@@ -1783,9 +1796,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     CHECK_CUDA(cudaMalloc(&workspace, workspaceSize));
     CHECK_CUDA(cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)));
-
-    for (Index i = 0; i < samples_number; i++)
-        CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
+    vector<float> ones_host(samples_number* outputs_number, 1.0f);
+    CHECK_CUDA(cudaMemcpy(ones, ones_host.data(), samples_number* outputs_number * sizeof(float), cudaMemcpyHostToDevice));
 
     //if (is_instance_of<CrossEntropyError3d>(loss_index))
     //{

@@ -160,7 +160,6 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
                                                    forward_propagation,
                                                    back_propagation,
                                                    optimization_data);
-
     try
     {
         triplet.check();

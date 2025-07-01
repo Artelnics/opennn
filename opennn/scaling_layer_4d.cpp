@@ -212,6 +212,7 @@ REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
 
 #endif
 
+REGISTER(Layer, Scaling4d, "Scaling4d")
 REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
 
 }

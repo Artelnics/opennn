@@ -18,6 +18,7 @@ namespace opennn
 QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
+
     learning_rate_algorithm.set_loss_index(new_loss_index);
 
     set_default();

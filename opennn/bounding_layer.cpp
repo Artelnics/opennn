@@ -70,6 +70,8 @@ void Bounding::set(const dimensions& new_output_dimensions, const string& new_la
     bounding_method = BoundingMethod::Bounding;
 
     name = "Bounding";
+
+    is_trainable = false;
 }
 
 
@@ -316,6 +318,7 @@ void BoundingForwardPropagation::print() const
          << outputs << endl;
 }
 
+REGISTER(Layer, Bounding, "Bounding")
 REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
 
 }
