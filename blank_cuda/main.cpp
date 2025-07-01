@@ -58,12 +58,13 @@ int main()
         dataset.set(Dataset::SampleUse::Training);
 
         dataset.print_data();
-      
+        
         //ImageDataset dataset;
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
         //dataset.set_data_path("../examples/mnist/data_bin");
+        //dataset.set_data_path("../examples/mnist/data");
 
         //dimensions data_dimensions = { 224, 224, 3 };
 
@@ -74,7 +75,7 @@ int main()
 
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
-        
+
         // Neural network
 
         ImageClassificationNetwork neural_network(
@@ -103,7 +104,8 @@ int main()
         testing_analysis.set_batch_size(256);
 
         cout << "Calculating confusion...." << endl;
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
         */
         #endif
