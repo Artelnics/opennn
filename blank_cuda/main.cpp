@@ -76,13 +76,11 @@ int main()
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
 
-        dataset.print();
-
         // Neural network
 
         ImageClassificationNetwork neural_network(
             input_dimensions,
-            {16},//{ 64, 64, 128, 128, 32 },
+            {1},//{ 64, 64, 128, 128, 32 },
             output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
@@ -103,7 +101,7 @@ int main()
         // Testing analysis
         
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-        //testing_analysis.set_batch_size(256);
+        testing_analysis.set_batch_size(256);
 
         cout << "Calculating confusion...." << endl;
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();

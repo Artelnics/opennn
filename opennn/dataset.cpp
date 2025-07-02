@@ -383,29 +383,23 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     const Index samples_number = sample_indices.size();
 
-    Index batches_number;
-
-    const Index new_batch_size = min(batch_size, samples_number);
-
-    samples_number < new_batch_size
-        ? batches_number = 1
-        : batches_number = samples_number / new_batch_size;
+    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
     vector<Index> samples_copy(sample_indices);
 
-    std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
+    std::shuffle(samples_copy.begin(), samples_copy.end(), urng);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {
-        batches[i].resize(new_batch_size);
+        const Index start_index = i * batch_size;
 
-        const Index offset = i * new_batch_size;
+        const Index end_index = min(start_index + batch_size, samples_number);
 
-        for (Index j = 0; j < new_batch_size; j++)
-            batches[i][j] = samples_copy[offset + j];
+        batches[i].assign(samples_copy.begin() + start_index,
+            samples_copy.begin() + end_index);
     }
 
     return batches;
@@ -4281,18 +4275,19 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
         batch_size = samples_number;
     }
     else
-        batches_number = samples_number / batch_size;
+        batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {
-        batches[i].resize(batch_size);
-        for (Index j = 0; j < batch_size; ++j)
-            batches[i][j] = sample_indices[i * batch_size + j];
-    }
+        const Index start_index = i * batch_size;
+        const Index end_index = std::min(start_index + batch_size, samples_number);
 
+        batches[i].assign(sample_indices.begin() + start_index,
+            sample_indices.begin() + end_index);
+    }
     return batches;
 }
 
