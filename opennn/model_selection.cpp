@@ -165,14 +165,10 @@ void ModelSelection::from_XML(const XMLDocument& document)
 
         if (growing_neurons_element)
         {
-            set_neurons_selection("GrowingNeurons");
             XMLDocument growing_neurons_document;
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
             static_cast<GrowingNeurons*>(this->get_neurons_selection())->from_XML(growing_neurons_document);
         }
-
-
-        set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
     }
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
