@@ -165,6 +165,9 @@ void Dense2d::set_activation_function(const string& new_activation_function)
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
+
+    if (new_activation_function == "Softmax" && get_outputs_number() == 1)
+        activation_function = "Logistic";
 }
 
 
@@ -1035,14 +1038,20 @@ void Dense2dBackPropagationCuda::free()
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }
 
-REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
-REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, Dense2dForwardPropagationCuda, "Dense2d")
+REGISTER(LayerBackPropagationCuda, Dense2dBackPropagationCuda, "Dense2d")
+
+//REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Dense2d, "Dense2d")
-REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
+REGISTER(LayerForwardPropagation, Dense2dForwardPropagation, "Dense2d")
+REGISTER(LayerBackPropagation, Dense2dBackPropagation, "Dense2d")
+
+//REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
 
 } // namespace opennn
 

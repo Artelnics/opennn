@@ -457,9 +457,13 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number, inputs_depth}} };
 }
 
+
 REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
-REGISTER_FORWARD_PROPAGATION("Probabilistic3d", Probabilistic3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Probabilistic3d", Probabilistic3dBackPropagation);
+REGISTER(LayerForwardPropagation, Probabilistic3dForwardPropagation, "Probabilistic3d")
+REGISTER(LayerBackPropagation, Probabilistic3dBackPropagation, "Probabilistic3d")
+
+//REGISTER_FORWARD_PROPAGATION("Probabilistic3d", Probabilistic3dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Probabilistic3d", Probabilistic3dBackPropagation);
 
 }
 

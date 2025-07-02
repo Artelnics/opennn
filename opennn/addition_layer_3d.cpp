@@ -296,14 +296,21 @@ void Addition3dBackPropagationCuda::print() const
  
 }
 
-REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
-REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, Addition3dForwardPropagationCuda, "Addition3d")
+REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
+
+
+//REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Addition3d, "Addition3d")
-REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
+REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
+REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+
+//REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
 
 }
 

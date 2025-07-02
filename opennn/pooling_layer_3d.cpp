@@ -257,8 +257,11 @@ void Pooling3d::print() const
 }
 
 REGISTER(Layer, Pooling3d, "Pooling3d")
-REGISTER_FORWARD_PROPAGATION("Pooling3d", Pooling3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Pooling3d", Pooling3dBackPropagation);
+REGISTER(LayerForwardPropagation, Pooling3dForwardPropagation, "Pooling3d")
+REGISTER(LayerBackPropagation, Pooling3dBackPropagation, "Pooling3d")
+
+//REGISTER_FORWARD_PROPAGATION("Pooling3d", Pooling3dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Pooling3d", Pooling3dBackPropagation);
 
 }
 // OpenNN: Open Neural Networks Library.

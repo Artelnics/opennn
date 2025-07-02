@@ -23,8 +23,8 @@ CrossEntropyError2d::CrossEntropyError2d(NeuralNetwork* new_neural_network, Data
 
 
 void CrossEntropyError2d::calculate_error(const Batch& batch,
-                                        const ForwardPropagation& forward_propagation,
-                                        BackPropagation& back_propagation) const
+                                          const ForwardPropagation& forward_propagation,
+                                          BackPropagation& back_propagation) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -114,11 +114,6 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
-
-    // cout << "samples_number: " << samples_number << endl;
-    // cout << "targets_pair_first: " << targets_pair.first << endl;
-    // cout << "targets_pair_second: " << endl;
-    // print_vector(targets_pair.second);
 
     // Forward propagation
 

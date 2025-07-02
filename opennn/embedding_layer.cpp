@@ -500,14 +500,20 @@ void EmbeddingBackPropagationCuda::print() const
 
 }
 
-REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
-REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, EmbeddingForwardPropagationCuda, "Embedding")
+REGISTER(LayerBackPropagationCuda, EmbeddingBackPropagationCuda, "Embedding")
+
+//REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Embedding, "Embedding")
-REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
-REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
+REGISTER(LayerForwardPropagation, EmbeddingForwardPropagation, "Embedding")
+REGISTER(LayerBackPropagation, EmbeddingBackPropagation, "Embedding")
+
+//REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
 
 }
 

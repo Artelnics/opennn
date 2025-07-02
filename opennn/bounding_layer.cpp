@@ -319,7 +319,9 @@ void BoundingForwardPropagation::print() const
 }
 
 REGISTER(Layer, Bounding, "Bounding")
-REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
+REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
+
+//REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
 
 }
 

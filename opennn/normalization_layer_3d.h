@@ -94,7 +94,7 @@ struct Normalization3dBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 

@@ -56,11 +56,11 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel_weights = tensor_map(weights, kernel_index);
-
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
-        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, array<Index, 3>({1, 2, 3}))
-                                                          + biases(kernel_index);
+        kernel_convolutions.device(*thread_pool_device) =
+            (inputs.convolve(kernel_weights, std::array<Index, 3>({ 1, 2, 3 })))
+            .reshape(kernel_convolutions.dimensions()) + biases(kernel_index);
     }
 }
 
@@ -1432,14 +1432,20 @@ void ConvolutionalBackPropagationCuda::free()
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
 
-REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
-REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")
+REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutional")
+
+//REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Convolutional, "Convolutional")
-REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
-REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
+REGISTER(LayerForwardPropagation, ConvolutionalForwardPropagation, "Convolutional")
+REGISTER(LayerBackPropagation, ConvolutionalBackPropagation, "Convolutional")
+
+//REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 
 }
 

@@ -56,7 +56,7 @@ struct Flatten3dForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 
@@ -70,7 +70,7 @@ struct Flatten3dBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 
