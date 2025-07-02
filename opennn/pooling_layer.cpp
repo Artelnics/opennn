@@ -861,15 +861,22 @@ void PoolingBackPropagationCuda::free()
     cudaFree(input_deltas);
 }
 
-REGISTER_FORWARD_CUDA("Pooling", PoolingForwardPropagationCuda);
-REGISTER_BACK_CUDA("Pooling", PoolingBackPropagationCuda);
+
+REGISTER(LayerForwardPropagationCuda, PoolingForwardPropagationCuda, "Pooling")
+REGISTER(LayerBackPropagationCuda, PoolingBackPropagationCuda, "Pooling")
+
+//REGISTER_FORWARD_CUDA("Pooling", PoolingForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Pooling", PoolingBackPropagationCuda);
 
 
 #endif
 
 REGISTER(Layer, Pooling, "Pooling")
-REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
-REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
+REGISTER(LayerForwardPropagation, PoolingForwardPropagation, "Pooling")
+REGISTER(LayerBackPropagation, PoolingBackPropagation, "Pooling")
+
+//REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
 
 }
 

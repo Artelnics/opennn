@@ -20,7 +20,6 @@ namespace opennn
 
 NeuralNetwork::NeuralNetwork()
 {
-    //set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
 }
 
 
@@ -1148,7 +1147,10 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
     layers.resize(layers_number);
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
-        layers[i] = BackRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+    {
+        layers[i] = Registry<LayerBackPropagation>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(batch_size, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1203,7 +1205,12 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        layers[i] = ForwardRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+    {       
+        //layers[i] = ForwardRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+
+        layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(samples_number, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1439,7 +1446,12 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     layers.resize(layers_number);
 
     for (Index i = 0; i < layers_number; i++)
-        layers[i] = ForwardCudaRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+    {
+        //layers[i] = ForwardCudaRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+
+        layers[i] = Registry<LayerForwardPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(samples_number, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1569,7 +1581,12 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
     layers.resize(layers_number);
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
-        layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+    {
+        //layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+
+        layers[i] = Registry<LayerBackPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(batch_size, neural_network_layers[i].get());
+    }
 }
 
 
