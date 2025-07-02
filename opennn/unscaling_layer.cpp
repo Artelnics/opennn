@@ -306,7 +306,8 @@ void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         const Descriptives& descriptive = descriptives[i];
 
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-            throw runtime_error("Standard deviation is zero.");
+            descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
+            //throw runtime_error("Standard deviation is zero.");
 
         switch(scaler)
         {
