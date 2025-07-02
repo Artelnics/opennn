@@ -80,7 +80,7 @@ int main()
 
         ImageClassificationNetwork neural_network(
             input_dimensions,
-            {1},//{ 64, 64, 128, 128, 32 },
+            {16},//{ 64, 64, 128, 128, 32 },
             output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
@@ -104,7 +104,8 @@ int main()
         testing_analysis.set_batch_size(256);
 
         cout << "Calculating confusion...." << endl;
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
         
         #endif
