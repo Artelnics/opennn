@@ -1038,14 +1038,20 @@ void Dense2dBackPropagationCuda::free()
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }
 
-REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
-REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, Dense2dForwardPropagationCuda, "Dense2d")
+REGISTER(LayerBackPropagationCuda, Dense2dBackPropagationCuda, "Dense2d")
+
+//REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Dense2d, "Dense2d")
-REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
+REGISTER(LayerForwardPropagation, Dense2dForwardPropagation, "Dense2d")
+REGISTER(LayerBackPropagation, Dense2dBackPropagation, "Dense2d")
+
+//REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
 
 } // namespace opennn
 

@@ -342,14 +342,21 @@ void FlattenBackPropagationCuda::free()
     cudaFree(input_deltas);
 }
 
-REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
-REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
+REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
+
+//REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Flatten, "Flatten")
-REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
-REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
+REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
+REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
+
+
+//REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
 
 }
 

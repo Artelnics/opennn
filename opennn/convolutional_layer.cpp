@@ -1432,14 +1432,20 @@ void ConvolutionalBackPropagationCuda::free()
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
 
-REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
-REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")
+REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutional")
+
+//REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Convolutional, "Convolutional")
-REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
-REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
+REGISTER(LayerForwardPropagation, ConvolutionalForwardPropagation, "Convolutional")
+REGISTER(LayerBackPropagation, ConvolutionalBackPropagation, "Convolutional")
+
+//REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 
 }
 

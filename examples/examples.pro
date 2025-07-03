@@ -15,7 +15,7 @@ SUBDIRS += airfoil_self_noise
 # SUBDIRS += amazon_reviews
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
-# SUBDIRS += mnist
+SUBDIRS += mnist
 # SUBDIRS += translation
 
 win32:{

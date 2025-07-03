@@ -326,11 +326,13 @@ struct LayerForwardPropagation
 {
     LayerForwardPropagation() {}
 
-    virtual ~LayerForwardPropagation() {}
+    //virtual ~LayerForwardPropagation() {}
 
-    virtual void print() const {}
+    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual pair<type*, dimensions> get_output_pair() const = 0;
+
+    virtual void print() const {}
 
     Index batch_size = 0;
 
@@ -341,6 +343,8 @@ struct LayerForwardPropagation
 struct LayerBackPropagation
 {
     LayerBackPropagation() {}
+
+    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 
@@ -360,6 +364,8 @@ struct LayerBackPropagationLM
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 
+    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+
     virtual void print() const {}
 
     Index batch_size = 0;
@@ -377,6 +383,8 @@ struct LayerForwardPropagationCuda
     explicit LayerForwardPropagationCuda() {}
 
     virtual ~LayerForwardPropagationCuda() {}
+
+    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual void print() const {}
 
@@ -397,6 +405,8 @@ struct LayerForwardPropagationCuda
 struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
+
+    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual void print() const {}
 

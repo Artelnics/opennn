@@ -14,7 +14,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "layer.h"
+//#include "layer.h"
 
 using namespace std;
 
@@ -25,6 +25,7 @@ template<typename T>
 class Registry
 {
 public:
+
     using Creator = function<unique_ptr<T>()>;
 
     static Registry& instance()
@@ -72,7 +73,7 @@ namespace { \
       }(); \
 }
 
-
+/*
 class ForwardRegistry
 {
 public:
@@ -278,7 +279,7 @@ namespace { \
 }
 
 #endif
-
+*/
 }
 
 #endif
