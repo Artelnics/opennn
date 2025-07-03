@@ -458,11 +458,11 @@ void Dense2d::to_XML(XMLPrinter& printer) const
 
 void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
     
     batch_size = new_batch_size;
-
-    if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
 
@@ -507,11 +507,11 @@ Dense2dBackPropagation::Dense2dBackPropagation(const Index& new_batch_size, Laye
 
 void Dense2dBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-        
-    if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
@@ -885,6 +885,8 @@ Dense2dForwardPropagationCuda::Dense2dForwardPropagationCuda(const Index& new_ba
 
 void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -986,6 +988,8 @@ Dense2dBackPropagationCuda::Dense2dBackPropagationCuda(const Index& new_batch_si
 
 void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -1038,14 +1042,17 @@ void Dense2dBackPropagationCuda::free()
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }
 
-REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
-REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, Dense2dForwardPropagationCuda, "Dense2d")
+REGISTER(LayerBackPropagationCuda, Dense2dBackPropagationCuda, "Dense2d")
+
+//REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Dense2d, "Dense2d")
-REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
+REGISTER(LayerForwardPropagation, Dense2dForwardPropagation, "Dense2d")
+REGISTER(LayerBackPropagation, Dense2dBackPropagation, "Dense2d")
 
 } // namespace opennn
 

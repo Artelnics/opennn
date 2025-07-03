@@ -386,6 +386,8 @@ pair<type*, dimensions> Probabilistic3dForwardPropagation::get_output_pair() con
 
 void Probabilistic3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
@@ -408,11 +410,11 @@ void Probabilistic3dForwardPropagation::print() const
 
 void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
@@ -457,9 +459,10 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number, inputs_depth}} };
 }
 
+
 REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
-REGISTER_FORWARD_PROPAGATION("Probabilistic3d", Probabilistic3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Probabilistic3d", Probabilistic3dBackPropagation);
+REGISTER(LayerForwardPropagation, Probabilistic3dForwardPropagation, "Probabilistic3d")
+REGISTER(LayerBackPropagation, Probabilistic3dBackPropagation, "Probabilistic3d")
 
 }
 

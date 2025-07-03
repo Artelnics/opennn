@@ -121,7 +121,7 @@ struct EmbeddingForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 
@@ -135,7 +135,7 @@ struct EmbeddingBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 
@@ -148,7 +148,7 @@ struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
     EmbeddingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 };
@@ -158,7 +158,7 @@ struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
     EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const override;
 

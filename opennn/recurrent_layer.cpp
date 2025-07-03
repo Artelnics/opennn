@@ -449,8 +449,11 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
 }
 
 REGISTER(Layer, Recurrent, "Recurrent")
-REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
-REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
+REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
+REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")
+
+//REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
 
 }
 

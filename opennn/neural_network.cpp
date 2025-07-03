@@ -20,7 +20,6 @@ namespace opennn
 
 NeuralNetwork::NeuralNetwork()
 {
-    //set(model_type, input_dimensions, complexity_dimensions, output_dimensions);
 }
 
 
@@ -475,8 +474,8 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);
+            forward_propagation.layers[i],
+            is_training);
 }
 
 
@@ -718,29 +717,36 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index dense2d_layers_number = get_layers_number("Dense2d");
+    Index dense2d_layers_number = 0;
 
-    Tensor<string, 2> information(dense2d_layers_number, 3);
+    for(Index i = 0; i < layers_number; i++)
+        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == std::string::npos)
+            dense2d_layers_number++;
+
+    Tensor<string, 2> information(dense2d_layers_number, 4);
 
     Index dense2d_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
         const string& name = layers[i]->get_name();
+        const string label = layers[i]->get_label();
 
-        if (name != "Dense2d")
+        if (name != "Dense2d" || label.find("classification") != std::string::npos)
             continue;
 
-        information(dense2d_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
-        information(dense2d_layer_index, 1) = to_string(layers[i]->get_output_dimensions()[0]);
+        information(dense2d_layer_index, 0) = label;
+        information(dense2d_layer_index, 1) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(dense2d_layer_index, 2) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const Dense2d* dense2d_layer = static_cast<Dense2d*>(layers[i].get());
 
-        information(dense2d_layer_index, 2) = dense2d_layer->get_activation_function();
+        information(dense2d_layer_index, 3) = dense2d_layer->get_activation_function();
 
         dense2d_layer_index++;
     }
 
+    cout << "adri -- lega al fin!!" << endl;
     return information;
 }
 
@@ -749,25 +755,31 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index probabilistic_layers_number = get_layers_number("Dense2d");
+    Index probabilistic_layers_number = 0;
 
-    Tensor<string, 2> information(probabilistic_layers_number, 3);
+    for(Index i = 0; i < layers_number; i++)
+        if (layers[i]->get_label().find("classification") != std::string::npos)
+            probabilistic_layers_number++;
+
+    Tensor<string, 2> information(probabilistic_layers_number,4);
 
     Index probabilistic_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
         const string& name = layers[i]->get_name();
+        const string label = layers[i]->get_label();
 
-        if (name != "Dense2d")
+        if (name != "Dense2d" || label.find("dense2d") != std::string::npos)
             continue;
 
-        information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
-        information(probabilistic_layer_index,1) = to_string(layers[i]->get_output_dimensions()[0]);
+        information(probabilistic_layer_index, 0) = label;
+        information(probabilistic_layer_index, 1) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(probabilistic_layer_index, 2) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const Dense2d* dense_2d = static_cast<Dense2d*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = dense_2d->get_activation_function();
+        information(probabilistic_layer_index, 3) = dense_2d->get_activation_function();
 
         probabilistic_layer_index++;
     }
@@ -1148,7 +1160,10 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
     layers.resize(layers_number);
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
-        layers[i] = BackRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+    {
+        layers[i] = Registry<LayerBackPropagation>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(batch_size, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1203,7 +1218,10 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        layers[i] = ForwardRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+    {       
+        layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(samples_number, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1439,7 +1457,10 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     layers.resize(layers_number);
 
     for (Index i = 0; i < layers_number; i++)
-        layers[i] = ForwardCudaRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
+    {
+        layers[i] = Registry<LayerForwardPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(samples_number, neural_network_layers[i].get());
+    }
 }
 
 
@@ -1569,7 +1590,12 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
     layers.resize(layers_number);
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
-        layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+    {
+        //layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
+
+        layers[i] = Registry<LayerBackPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
+        layers[i]->set(batch_size, neural_network_layers[i].get());
+    }
 }
 
 

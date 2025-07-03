@@ -383,29 +383,23 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     const Index samples_number = sample_indices.size();
 
-    Index batches_number;
-
-    const Index new_batch_size = min(batch_size, samples_number);
-
-    samples_number < new_batch_size
-        ? batches_number = 1
-        : batches_number = samples_number / new_batch_size;
+    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
     vector<Index> samples_copy(sample_indices);
 
-    std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
+    std::shuffle(samples_copy.begin(), samples_copy.end(), urng);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {
-        batches[i].resize(new_batch_size);
+        const Index start_index = i * batch_size;
 
-        const Index offset = i * new_batch_size;
+        const Index end_index = min(start_index + batch_size, samples_number);
 
-        for (Index j = 0; j < new_batch_size; j++)
-            batches[i][j] = samples_copy[offset + j];
+        batches[i].assign(samples_copy.begin() + start_index,
+            samples_copy.begin() + end_index);
     }
 
     return batches;
@@ -1923,32 +1917,76 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 }
 
 
-vector<string> Dataset::unuse_multicollinear_raw_variables(vector<Index>& original_variable_indices, vector<Index>& override_variable_indices)
+vector<string> Dataset::unuse_collinear_raw_variables(const type& maximum_correlation)
 {
-    vector<string> unused_raw_variables;
+    const Tensor<Correlation, 2> correlations = calculate_input_raw_variable_pearson_correlations();
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const Index input_raw_variables_number = input_raw_variable_indices.size();
 
-    for (Index i = 0; i < (Index)original_variable_indices.size(); i++)
+    vector<Index> high_corr_counts(input_raw_variables_number, 0);
+    vector<type> mean_abs_corr(input_raw_variables_number, 0.0);
+    vector<bool> to_be_removed(input_raw_variables_number, false);
+
+    for (Index i = 0; i < input_raw_variables_number; ++i)
     {
-        const Index original_raw_variable_index = original_variable_indices[i];
-
-        bool found = false;
-
-        for (Index j = 0; j < (Index)override_variable_indices.size(); j++)
+        type sum_of_abs_corr = 0.0;
+        for (Index j = 0; j < input_raw_variables_number; ++j)
         {
-            if (original_raw_variable_index == override_variable_indices[j])
+            if (i == j) continue;
+
+            const type abs_r = abs(correlations(i, j).r);
+            if (!isnan(abs_r))
             {
-                found = true;
-                break;
+                if (abs_r >= maximum_correlation)
+                    high_corr_counts[i]++;
+
+                sum_of_abs_corr += abs_r;
             }
         }
+        if (input_raw_variables_number > 1)
+            mean_abs_corr[i] = sum_of_abs_corr / (input_raw_variables_number - 1);
+    }
 
-        const Index raw_variable_index = get_raw_variable_index(original_raw_variable_index);
-
-        if (!found && raw_variables[raw_variable_index].use != VariableUse::None)
+    for (Index i = 0; i < input_raw_variables_number; ++i)
+    {
+        for (Index j = i + 1; j < input_raw_variables_number; ++j)
         {
-            raw_variables[raw_variable_index].set_use(VariableUse::None);
 
-            unused_raw_variables.push_back(raw_variables[raw_variable_index].name);
+            if (to_be_removed[i] || to_be_removed[j])
+                continue;
+
+            if (!isnan(correlations(i, j).r) && abs(correlations(i, j).r) >= maximum_correlation)
+            {
+                Index index_to_flag_for_removal;
+
+                if (high_corr_counts[i] > high_corr_counts[j])
+                    index_to_flag_for_removal = i;
+                else if (high_corr_counts[j] > high_corr_counts[i])
+                    index_to_flag_for_removal = j;
+                else
+                {
+                    if (mean_abs_corr[i] >= mean_abs_corr[j])
+                        index_to_flag_for_removal = i;
+                    else
+                        index_to_flag_for_removal = j;
+                }
+                to_be_removed[index_to_flag_for_removal] = true;
+            }
+        }
+    }
+
+    vector<string> unused_raw_variables;
+    for (Index i = 0; i < input_raw_variables_number; ++i)
+    {
+        if (to_be_removed[i])
+        {
+            const Index global_raw_index = input_raw_variable_indices[i];
+
+            if (raw_variables[global_raw_index].use != VariableUse::None)
+            {
+                raw_variables[global_raw_index].set_use(VariableUse::None);
+                unused_raw_variables.push_back(raw_variables[global_raw_index].name);
+            }
         }
     }
 
@@ -3522,7 +3560,7 @@ Tensor<Index, 1> Dataset::filter_data(const Tensor<type, 1>& minimums,
         {
             sample_index = used_sample_indices[j];
 
-            const type value = data(sample_index, i);
+            const type value = data(sample_index, used_variable_indices[i]);
 
             if (get_sample_use(sample_index) == SampleUse::None
                 || isnan(value))
@@ -4281,18 +4319,19 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
         batch_size = samples_number;
     }
     else
-        batches_number = samples_number / batch_size;
+        batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {
-        batches[i].resize(batch_size);
-        for (Index j = 0; j < batch_size; ++j)
-            batches[i][j] = sample_indices[i * batch_size + j];
-    }
+        const Index start_index = i * batch_size;
+        const Index end_index = std::min(start_index + batch_size, samples_number);
 
+        batches[i].assign(sample_indices.begin() + start_index,
+            sample_indices.begin() + end_index);
+    }
     return batches;
 }
 
@@ -4448,7 +4487,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
+    dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
 
     dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 

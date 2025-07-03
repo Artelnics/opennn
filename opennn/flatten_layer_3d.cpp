@@ -143,6 +143,8 @@ pair<type*, dimensions> Flatten3dForwardPropagation::get_output_pair() const
 
 void Flatten3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -162,11 +164,11 @@ void Flatten3dForwardPropagation::print() const
 
 void Flatten3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 
@@ -201,8 +203,8 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
 }
 
 REGISTER(Layer, Flatten3d, "Flatten3d")
-REGISTER_FORWARD_PROPAGATION("Flatten3d", Flatten3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Flatten3d", Flatten3dBackPropagation);
+REGISTER(LayerForwardPropagation, Flatten3dForwardPropagation, "Flatten3d")
+REGISTER(LayerBackPropagation, Flatten3dBackPropagation, "Flatten3d")
 
 }
 

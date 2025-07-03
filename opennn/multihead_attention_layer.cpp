@@ -716,11 +716,13 @@ pair<type*, dimensions> MultiheadAttentionForwardPropagation::get_output_pair() 
 
 void MultiheadAttentionForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
-    MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
-
     batch_size = new_batch_size;
+
+    MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
     const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
@@ -758,11 +760,13 @@ void MultiheadAttentionForwardPropagation::print() const
 
 void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
-    MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
-
     batch_size = new_batch_size;
+
+    MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
     const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
@@ -827,8 +831,9 @@ vector<pair<type*, dimensions>> MultiheadAttentionBackPropagation::get_input_der
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
-REGISTER_FORWARD_PROPAGATION("MultiHeadAttention", MultiheadAttentionForwardPropagation);
-REGISTER_BACK_PROPAGATION("MultiHeadAttention", MultiheadAttentionBackPropagation);
+REGISTER(LayerForwardPropagation, MultiheadAttentionForwardPropagation, "MultiHeadAttention")
+REGISTER(LayerBackPropagation, MultiheadAttentionBackPropagation, "MultiHeadAttention")
+
 }
 
 // OpenNN: Open Neural Networks Library.

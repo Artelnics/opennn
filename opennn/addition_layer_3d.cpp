@@ -145,6 +145,8 @@ pair<type*, dimensions> Addition3dForwardPropagation::get_output_pair() const
 
 void Addition3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
@@ -167,11 +169,11 @@ void Addition3dForwardPropagation::print() const
 
 void Addition3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
 
@@ -268,7 +270,7 @@ Addition3dForwardPropagationCuda::Addition3dForwardPropagationCuda(const Index& 
 
 void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-
+    if (!new_layer) return;
 }
 
 
@@ -287,7 +289,7 @@ Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_ba
 
 void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-
+    if (!new_layer) return;
 }
 
 
@@ -296,14 +298,21 @@ void Addition3dBackPropagationCuda::print() const
  
 }
 
-REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
-REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, Addition3dForwardPropagationCuda, "Addition3d")
+REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
+
+
+//REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Addition3d, "Addition3d")
-REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
+REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
+REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+
+//REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
 
 }
 

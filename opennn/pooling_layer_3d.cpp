@@ -168,7 +168,10 @@ void Pooling3d::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
 void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
+
     layer = new_layer;
 
     Pooling3d* pooling_layer = static_cast<Pooling3d*>(new_layer);
@@ -185,11 +188,11 @@ void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
 void Pooling3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     layer = static_cast<Pooling3d*>(new_layer);
 
@@ -257,8 +260,8 @@ void Pooling3d::print() const
 }
 
 REGISTER(Layer, Pooling3d, "Pooling3d")
-REGISTER_FORWARD_PROPAGATION("Pooling3d", Pooling3dForwardPropagation);
-REGISTER_BACK_PROPAGATION("Pooling3d", Pooling3dBackPropagation);
+REGISTER(LayerForwardPropagation, Pooling3dForwardPropagation, "Pooling3d")
+REGISTER(LayerBackPropagation, Pooling3dBackPropagation, "Pooling3d")
 
 }
 // OpenNN: Open Neural Networks Library.

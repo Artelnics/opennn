@@ -333,6 +333,8 @@ pair<type*, dimensions> EmbeddingForwardPropagation::get_output_pair() const
 
 void EmbeddingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
@@ -373,11 +375,11 @@ vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_p
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
 
@@ -472,7 +474,7 @@ EmbeddingForwardPropagationCuda::EmbeddingForwardPropagationCuda(const Index& ne
 
 void EmbeddingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-
+    if (!new_layer) return;
 }
 
 
@@ -491,7 +493,7 @@ EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index& new_batc
 
 void EmbeddingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-
+    if (!new_layer) return;
 }
 
 
@@ -500,14 +502,20 @@ void EmbeddingBackPropagationCuda::print() const
 
 }
 
-REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
-REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, EmbeddingForwardPropagationCuda, "Embedding")
+REGISTER(LayerBackPropagationCuda, EmbeddingBackPropagationCuda, "Embedding")
+
+//REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Embedding, "Embedding")
-REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
-REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
+REGISTER(LayerForwardPropagation, EmbeddingForwardPropagation, "Embedding")
+REGISTER(LayerBackPropagation, EmbeddingBackPropagation, "Embedding")
+
+//REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
 
 }
 

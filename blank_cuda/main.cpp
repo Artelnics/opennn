@@ -71,12 +71,10 @@ int main()
         //dataset.read_bmp(data_dimensions);
         dataset.read_bmp();
 
-        //dataset.split_samples_random(0.8, 0.0, 0.2);
+        dataset.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
-
-        dataset.print();
 
         // Neural network
 
@@ -103,10 +101,11 @@ int main()
         // Testing analysis
         
         TestingAnalysis testing_analysis(&neural_network, &dataset);
-        //testing_analysis.set_batch_size(256);
+        testing_analysis.set_batch_size(256);
 
         cout << "Calculating confusion...." << endl;
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
         
         #endif

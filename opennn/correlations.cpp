@@ -450,38 +450,38 @@ Tensor<type, 1> confidence_interval_z_correlation(const type& z_correlation, con
 
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 {
-    // @todo Improve this method to be more similar to the other code.
+    const Index n = x.size();
 
-    const int n = x.size();
-
-    vector<pair<type, size_t> > sorted_vector(n);
-
-    for(size_t i = 0U; i < n; i++)
-        sorted_vector[i] = make_pair(x[i], i);
-
-    sort(sorted_vector.begin(), sorted_vector.end());
-
-    vector<type> x_rank_vector(n);
-
-    type rank = type(1);
-
-    for(size_t i = 0; i < n; i++)
+    if (n == 0)
     {
-        size_t repeated = 1U;
-
-        for(size_t j = i + 1U; j < sorted_vector.size() && sorted_vector[j].first == sorted_vector[i].first; j++, repeated++);
-
-        for(size_t k = 0; k < repeated; k++)
-            x_rank_vector[sorted_vector[i + k].second] = rank + type(repeated - 1) / type(2);
-
-        i += repeated - 1;
-
-        rank += type(repeated);
+        return Tensor<type, 1>();
     }
 
-    TensorMap<Tensor<type, 1>> x_rank(x_rank_vector.data(), x_rank_vector.size());
+    Tensor<Index, 1> sorted_indices(n);
 
-    return x_rank;
+    iota(sorted_indices.data(), sorted_indices.data() + n, 0);
+
+    sort(sorted_indices.data(), sorted_indices.data() + n,
+         [&](Index i, Index j) { return x(i) < x(j); });
+
+    Tensor<type, 1> ranks(n);
+
+    Index i = 0;
+    while (i < n)
+    {
+        Index j = i;
+        while (j + 1 < n && x(sorted_indices(j + 1)) == x(sorted_indices(i)))
+            j++;
+
+        const type average_rank = (static_cast<type>(i + 1) + static_cast<type>(j + 1)) / type(2.0);
+
+        for (Index k = i; k <= j; k++)
+            ranks(sorted_indices(k)) = average_rank;
+
+        i = j + 1;
+    }
+
+    return ranks;
 }
 
 

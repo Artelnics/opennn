@@ -124,6 +124,8 @@ pair<type*, dimensions> Scaling4dForwardPropagation::get_output_pair() const
 
 void Scaling4dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -170,7 +172,7 @@ Scaling4dForwardPropagationCuda::Scaling4dForwardPropagationCuda(const Index& ne
 
 void Scaling4dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     layer = new_layer;
 
@@ -208,12 +210,16 @@ void Scaling4dForwardPropagationCuda::free()
     cudaFree(outputs);
 }
 
-REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
+
+REGISTER(LayerForwardPropagationCuda, Scaling4dForwardPropagationCuda, "Scaling4d")
+
+//REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
 
 #endif
 
+
 REGISTER(Layer, Scaling4d, "Scaling4d")
-REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
+REGISTER(LayerForwardPropagation, Scaling4dForwardPropagation, "Scaling4d")
 
 }
 

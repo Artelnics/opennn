@@ -147,6 +147,8 @@ pair<type*, dimensions> FlattenForwardPropagation::get_output_pair() const
 
 void FlattenForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -166,11 +168,11 @@ void FlattenForwardPropagation::print() const
 
 void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
@@ -234,7 +236,7 @@ void Flatten::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width);
 
-    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);  
+    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
 }
 
 
@@ -271,7 +273,7 @@ FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_ba
 
 void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     layer = new_layer;
 
@@ -312,7 +314,7 @@ FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_si
 
 void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     layer = new_layer;
 
@@ -342,14 +344,21 @@ void FlattenBackPropagationCuda::free()
     cudaFree(input_deltas);
 }
 
-REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
-REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
+REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
+REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
+
+//REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
+//REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
 
 #endif
 
 REGISTER(Layer, Flatten, "Flatten")
-REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
-REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
+REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
+REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
+
+
+//REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
+//REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
 
 }
 

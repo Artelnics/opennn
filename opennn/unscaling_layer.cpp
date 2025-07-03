@@ -306,7 +306,8 @@ void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         const Descriptives& descriptive = descriptives[i];
 
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-            throw runtime_error("Standard deviation is zero.");
+            descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
+            //throw runtime_error("Standard deviation is zero.");
 
         switch(scaler)
         {
@@ -469,11 +470,13 @@ pair<type*, dimensions> UnscalingForwardPropagation::get_output_pair() const
 
 void UnscalingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
-    const dimensions output_dimensions = static_cast<Unscaling*>(layer)->get_output_dimensions();
-
     batch_size = new_batch_size;
+
+    const dimensions output_dimensions = static_cast<Unscaling*>(layer)->get_output_dimensions();
 
     outputs.resize(batch_size, output_dimensions[0]);
 }
@@ -486,7 +489,9 @@ void UnscalingForwardPropagation::print() const
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")
-REGISTER_FORWARD_PROPAGATION("Unscaling", UnscalingForwardPropagation);
+REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
+
+//REGISTER_FORWARD_PROPAGATION("Unscaling", UnscalingForwardPropagation);
 
 }
 
