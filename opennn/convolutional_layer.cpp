@@ -696,6 +696,8 @@ pair<type*, dimensions> ConvolutionalForwardPropagation::get_output_pair() const
 
 void ConvolutionalForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
    
     layer = new_layer;
@@ -754,11 +756,11 @@ ConvolutionalBackPropagation::ConvolutionalBackPropagation(const Index& new_batc
 
 void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
@@ -1129,7 +1131,7 @@ ConvolutionalForwardPropagationCuda::ConvolutionalForwardPropagationCuda(const I
 
 void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     batch_size = new_batch_size;
 
@@ -1262,7 +1264,7 @@ ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& 
 
 void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     batch_size = new_batch_size;
 

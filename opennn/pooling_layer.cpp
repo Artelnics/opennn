@@ -563,6 +563,8 @@ pair<type*, dimensions> PoolingForwardPropagation::get_output_pair() const
 
 void PoolingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -612,11 +614,11 @@ PoolingBackPropagation::PoolingBackPropagation(const Index& new_batch_size, Laye
 
 void PoolingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
@@ -735,7 +737,7 @@ PoolingForwardPropagationCuda::PoolingForwardPropagationCuda(const Index& new_ba
 
 void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     batch_size = new_batch_size;
 
@@ -824,7 +826,7 @@ PoolingBackPropagationCuda::PoolingBackPropagationCuda(const Index& new_batch_si
 
 void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     batch_size = new_batch_size;
 

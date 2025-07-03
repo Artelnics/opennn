@@ -579,6 +579,8 @@ pair<type*, dimensions> Scaling2dForwardPropagation::get_output_pair() const
 
 void Scaling2dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();

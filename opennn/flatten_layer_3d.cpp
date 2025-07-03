@@ -143,6 +143,8 @@ pair<type*, dimensions> Flatten3dForwardPropagation::get_output_pair() const
 
 void Flatten3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -162,11 +164,11 @@ void Flatten3dForwardPropagation::print() const
 
 void Flatten3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 

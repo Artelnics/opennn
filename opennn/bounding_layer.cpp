@@ -302,6 +302,8 @@ pair<type*, dimensions> BoundingForwardPropagation::get_output_pair() const
 
 void BoundingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     const Index neurons_number = static_cast<Bounding*>(layer)->get_output_dimensions()[0];

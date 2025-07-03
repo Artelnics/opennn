@@ -587,7 +587,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     BatchCuda training_batch_cuda(training_batch_samples_number, dataset);
     unique_ptr<BatchCuda> selection_batch_cuda;
-
+    
     ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
     unique_ptr<ForwardPropagationCuda> selection_forward_propagation_cuda;
 

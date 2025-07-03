@@ -386,6 +386,8 @@ pair<type*, dimensions> Probabilistic3dForwardPropagation::get_output_pair() con
 
 void Probabilistic3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
@@ -408,11 +410,11 @@ void Probabilistic3dForwardPropagation::print() const
 
 void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 

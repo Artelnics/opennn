@@ -272,11 +272,13 @@ pair<type*, dimensions> Normalization3dForwardPropagation::get_output_pair() con
 
 void Normalization3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     layer = new_layer;
 
-    Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
-
     batch_size = new_batch_size;
+
+    Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 
     const Index sequence_length = normalization_3d->get_sequence_length();
     const Index embedding_dimension = normalization_3d->get_embedding_dimension();
@@ -297,11 +299,11 @@ void Normalization3dForwardPropagation::print() const
 
 void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
 

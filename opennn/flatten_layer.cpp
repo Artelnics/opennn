@@ -147,6 +147,8 @@ pair<type*, dimensions> FlattenForwardPropagation::get_output_pair() const
 
 void FlattenForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -166,11 +168,11 @@ void FlattenForwardPropagation::print() const
 
 void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
-
-    if (!layer) return;
 
     const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
@@ -271,7 +273,7 @@ FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_ba
 
 void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     layer = new_layer;
 
@@ -312,7 +314,7 @@ FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_si
 
 void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_size == 0) return;
+    if (!new_layer) return;
 
     layer = new_layer;
 
