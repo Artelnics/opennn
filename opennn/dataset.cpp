@@ -4487,7 +4487,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
+    dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
 
     dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 

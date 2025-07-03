@@ -42,7 +42,7 @@ int main()
         #ifdef OPENNN_CUDA
 
         // Data set
-        
+        /*
         const Index samples_number = 2;
 
         const Index image_height = 3;
@@ -58,20 +58,20 @@ int main()
         dataset.set(Dataset::SampleUse::Training);
 
         dataset.print_data();
-        
-        //ImageDataset dataset;
+        */
+        ImageDataset dataset;
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
         //dataset.set_data_path("../examples/mnist/data_bin");
-        //dataset.set_data_path("../examples/mnist/data");
+        dataset.set_data_path("../examples/mnist/data");
 
         //dimensions data_dimensions = { 224, 224, 3 };
 
         //dataset.read_bmp(data_dimensions);
-        //dataset.read_bmp();
+        dataset.read_bmp();
 
-        //dataset.split_samples_random(0.8, 0.0, 0.2);
+        dataset.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);

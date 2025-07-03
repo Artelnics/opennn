@@ -124,6 +124,8 @@ pair<type*, dimensions> Scaling4dForwardPropagation::get_output_pair() const
 
 void Scaling4dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
