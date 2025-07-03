@@ -351,9 +351,6 @@ REGISTER(Layer, Normalization3d, "Normalization3d")
 REGISTER(LayerForwardPropagation, Normalization3dForwardPropagation, "Normalization3d")
 REGISTER(LayerBackPropagation, Normalization3dBackPropagation, "Normalization3d")
 
-//REGISTER_FORWARD_PROPAGATION("Normalization3d", Normalization3dForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Normalization3d", Normalization3dBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

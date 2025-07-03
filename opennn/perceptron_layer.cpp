@@ -1054,9 +1054,6 @@ REGISTER(Layer, Dense2d, "Dense2d")
 REGISTER(LayerForwardPropagation, Dense2dForwardPropagation, "Dense2d")
 REGISTER(LayerBackPropagation, Dense2dBackPropagation, "Dense2d")
 
-//REGISTER_FORWARD_PROPAGATION("Dense2d", Dense2dForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Dense2d", Dense2dBackPropagation);
-
 } // namespace opennn
 
 
