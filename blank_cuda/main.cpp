@@ -71,7 +71,7 @@ int main()
         //dataset.read_bmp(data_dimensions);
         dataset.read_bmp();
 
-        //dataset.split_samples_random(0.8, 0.0, 0.2);
+        dataset.split_samples_random(0.8, 0.0, 0.2);
 
         const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);

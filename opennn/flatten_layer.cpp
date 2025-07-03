@@ -234,7 +234,7 @@ void Flatten::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width);
 
-    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);  
+    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
 }
 
 
