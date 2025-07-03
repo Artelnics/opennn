@@ -1447,7 +1447,7 @@ ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_size, Neur
 void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork* new_neural_network)
 {
     samples_number = new_samples_number;
-    cout << "samples_number: " << samples_number << endl;
+
     neural_network = new_neural_network;
 
     if (!neural_network) throw runtime_error("There is no neural network.");
@@ -1460,14 +1460,9 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "samples_number layer: " << samples_number << " " << i << endl;
-        //layers[i] = ForwardCudaRegistry::instance().create(neural_network_layers[i]->get_name(), samples_number, neural_network_layers[i].get());
-
         layers[i] = Registry<LayerForwardPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
-        cout << "layer end: " << i << endl;
     }
-    cout << "sale" << endl;
 }
 
 
