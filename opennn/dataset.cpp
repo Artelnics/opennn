@@ -1937,7 +1937,7 @@ vector<string> Dataset::unuse_collinear_raw_variables(const type& maximum_correl
             const type abs_r = abs(correlations(i, j).r);
             if (!isnan(abs_r))
             {
-                if (abs_r > maximum_correlation)
+                if (abs_r >= maximum_correlation)
                     high_corr_counts[i]++;
 
                 sum_of_abs_corr += abs_r;
@@ -1955,7 +1955,7 @@ vector<string> Dataset::unuse_collinear_raw_variables(const type& maximum_correl
             if (to_be_removed[i] || to_be_removed[j])
                 continue;
 
-            if (!isnan(correlations(i, j).r) && abs(correlations(i, j).r) > maximum_correlation)
+            if (!isnan(correlations(i, j).r) && abs(correlations(i, j).r) >= maximum_correlation)
             {
                 Index index_to_flag_for_removal;
 
@@ -3560,7 +3560,7 @@ Tensor<Index, 1> Dataset::filter_data(const Tensor<type, 1>& minimums,
         {
             sample_index = used_sample_indices[j];
 
-            const type value = data(sample_index, i);
+            const type value = data(sample_index, used_variable_indices[i]);
 
             if (get_sample_use(sample_index) == SampleUse::None
                 || isnan(value))
@@ -4487,7 +4487,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
+    dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
 
     dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 

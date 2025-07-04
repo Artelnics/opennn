@@ -508,9 +508,9 @@ public:
                                    const vector<Index>&,
                                    type*) const;
 
-    void fill_input_tensor_row_major(const vector<Index>&, 
-                                     const vector<Index>&, 
-                                     type*) const;
+    virtual void fill_input_tensor_row_major(const vector<Index>&, 
+                                             const vector<Index>&, 
+                                             type*) const;
 
     virtual void fill_target_tensor(const vector<Index>&,
                                     const vector<Index>&,

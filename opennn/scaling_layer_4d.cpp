@@ -124,6 +124,8 @@ pair<type*, dimensions> Scaling4dForwardPropagation::get_output_pair() const
 
 void Scaling4dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -218,8 +220,6 @@ REGISTER(LayerForwardPropagationCuda, Scaling4dForwardPropagationCuda, "Scaling4
 
 REGISTER(Layer, Scaling4d, "Scaling4d")
 REGISTER(LayerForwardPropagation, Scaling4dForwardPropagation, "Scaling4d")
-
-//REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
 
 }
 

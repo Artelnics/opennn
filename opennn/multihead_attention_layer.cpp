@@ -834,8 +834,6 @@ REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 REGISTER(LayerForwardPropagation, MultiheadAttentionForwardPropagation, "MultiHeadAttention")
 REGISTER(LayerBackPropagation, MultiheadAttentionBackPropagation, "MultiHeadAttention")
 
-//REGISTER_FORWARD_PROPAGATION("MultiHeadAttention", MultiheadAttentionForwardPropagation);
-//REGISTER_BACK_PROPAGATION("MultiHeadAttention", MultiheadAttentionBackPropagation);
 }
 
 // OpenNN: Open Neural Networks Library.
