@@ -464,9 +464,6 @@ REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
 REGISTER(LayerForwardPropagation, Probabilistic3dForwardPropagation, "Probabilistic3d")
 REGISTER(LayerBackPropagation, Probabilistic3dBackPropagation, "Probabilistic3d")
 
-//REGISTER_FORWARD_PROPAGATION("Probabilistic3d", Probabilistic3dForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Probabilistic3d", Probabilistic3dBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

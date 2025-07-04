@@ -221,8 +221,6 @@ REGISTER(LayerForwardPropagationCuda, Scaling4dForwardPropagationCuda, "Scaling4
 REGISTER(Layer, Scaling4d, "Scaling4d")
 REGISTER(LayerForwardPropagation, Scaling4dForwardPropagation, "Scaling4d")
 
-//REGISTER_FORWARD_PROPAGATION("Scaling4d", Scaling4dForwardPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.
