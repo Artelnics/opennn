@@ -164,6 +164,7 @@ public:
         
         for (Index i = 0; i < complexity_size; i++)
         {
+            /*
             const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
             const dimensions stride_dimensions = { 1, 1 };
 
@@ -173,7 +174,7 @@ public:
                                                  stride_dimensions,
                                                  Convolutional::Convolution::Valid,
                                                  "convolutional_layer_" + to_string(i+1)));
-
+            
             const dimensions pool_dimensions = { 2, 2 };
             const dimensions pooling_stride_dimensions = { 2, 2 };
             const dimensions padding_dimensions = { 0, 0 };
@@ -184,6 +185,7 @@ public:
                                            padding_dimensions,
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
+            */
         }
         
         add_layer(make_unique<Flatten>(get_output_dimensions()));
