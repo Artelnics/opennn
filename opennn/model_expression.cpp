@@ -148,7 +148,7 @@ string ModelExpression::get_expression_c() const
 
     buffer << write_comments_c();
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
     buffer << "\n \n \n#include <iostream>\n"
@@ -188,7 +188,7 @@ string ModelExpression::get_expression_c() const
 
     vector<string> variable_names;
 
-    for (size_t i = 0; i < lines_number; i++)
+    for (Index i = 0; i < lines_number; i++)
     {
         const string first_word = get_first_word(lines[i]);
 
@@ -207,12 +207,12 @@ string ModelExpression::get_expression_c() const
     buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
            << "{" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\t" << "const float " << input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
-    for(size_t i = 0; i < lines_number; i++)
+    for(Index i = 0; i < lines_number; i++)
         lines[i].size() <= 1
             ? outputs_buffer << endl
             : outputs_buffer << "\t" << lines[i] << endl;
@@ -228,13 +228,13 @@ string ModelExpression::get_expression_c() const
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
 
     if(fixed_outputs.size() > 0)
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "\t" << fixed_outputs[i] << endl;
 
     buffer << "\t" << "vector<float> out(" << outputs_number << ");" << endl;
 
 
-    for(size_t i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -242,7 +242,7 @@ string ModelExpression::get_expression_c() const
            << "int main(){ \n" << endl
            << "\tvector<float> inputs(" << to_string(inputs_number) << "); \n" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\t" << "const float " << input_names[i] << " =" << " //enter your value here; " << endl
                << "\t" << "inputs[" << to_string(i) << "] = " << input_names[i] << ";" << endl;
 
@@ -253,7 +253,7 @@ string ModelExpression::get_expression_c() const
            << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
 
-    for(size_t i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
 
     buffer << "\n\t" << "return 0;" << endl
@@ -419,7 +419,7 @@ string ModelExpression::get_expression_api() const
 
     buffer << write_header_api();
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\n\t\t" << i << ")  " << input_names[i];
 
     buffer << write_subheader_api();
@@ -448,7 +448,7 @@ string ModelExpression::get_expression_api() const
 
     string word;
 
-    for(size_t i = 0; i < lines_number; i++)
+    for(Index i = 0; i < lines_number; i++)
     {
         string line = lines[i];
         word = get_first_word(line);
@@ -468,13 +468,13 @@ string ModelExpression::get_expression_api() const
            << "$url_components = parse_url($url);" << endl
            << "parse_str($url_components['query'], $params);\n" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
                << "$" << input_names[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         i != inputs_number - 1
             ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
             : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -536,7 +536,7 @@ string ModelExpression::get_expression_api() const
     buffer << "if($status === 200){" << endl
            << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for(size_t i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         buffer << ", '" << output_names[i] << "' => " << "$" << output_names[i] << endl;
 
     buffer << "];" << endl
@@ -823,7 +823,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << header_javascript();
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\n\t " << i + 1 << ")  " << input_names[i];
 
     buffer << subheader_javascript();
@@ -941,7 +941,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         }
     }
     else
-        for(size_t i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
@@ -959,7 +959,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
@@ -980,7 +980,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "<td>" << endl
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
@@ -994,7 +994,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "</tr>\n" << endl;
     }
     else
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
                    << "<td>" << endl
@@ -1015,7 +1015,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
                    << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
@@ -1119,7 +1119,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
@@ -1239,7 +1239,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for(size_t i = 0; i < outputs_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -1415,7 +1415,7 @@ string ModelExpression::get_expression_python() const
 
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
 
     buffer << endl;
@@ -1436,7 +1436,7 @@ string ModelExpression::get_expression_python() const
 
     const Index lines_number = lines.size();
 
-    for(size_t i = 0; i < lines_number; i++)
+    for(Index i = 0; i < lines_number; i++)
     {
         string line = lines[i];
 
@@ -1653,7 +1653,7 @@ vector<string> ModelExpression::fix_input_names(vector<string>& input_names) con
     const Index inputs_number = input_names.size();
     vector<string> fixes_input_names(inputs_number);
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
             fixes_input_names[i] = "input_" + to_string(i);
         else
@@ -1671,7 +1671,7 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names) c
 
     vector<string> fixes_output_names(outputs_number);
 
-    for (size_t i = 0; i < outputs_number; i++)
+    for (Index i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
             fixes_output_names[i] = "output_" + to_string(i);
         else
