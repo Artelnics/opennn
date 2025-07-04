@@ -246,7 +246,6 @@ public:
 
    string get_expression() const;
 
-
 #ifdef OPENNN_CUDA
 
 public:
