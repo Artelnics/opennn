@@ -179,7 +179,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     set_names();
 
-    //set_scaling();
+    set_scaling();
 
     set_vocabularies();
 
@@ -223,7 +223,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has("Recurrent"))
         shuffle = false;
@@ -581,7 +581,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     set_names();
 
-    //set_scaling();
+    set_scaling();
 
     set_vocabularies();
 
@@ -628,7 +628,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has("Recurrent"))
         shuffle = false;

@@ -383,8 +383,23 @@ void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const 
     }
     else
     {
-        fill_tensor_data_row_major(data, sample_indices, input_indices, input_tensor_data);
+        fill_tensor_data(data, sample_indices, input_indices, input_tensor_data);
     }
+}
+
+
+void ImageDataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_tensor_data) const
+{
+    if (get_augmentation())
+    {
+        // Optional: apply augmentation here
+        // Tensor<type, 2> augmented_data = perform_augmentation(data);
+        // fill_tensor_data_row_major(augmented_data, sample_indices, input_indices, destination_data);
+    }
+    else
+    {
+        fill_tensor_data_row_major(data, sample_indices, input_indices, input_tensor_data);
+    } 
 }
 
 

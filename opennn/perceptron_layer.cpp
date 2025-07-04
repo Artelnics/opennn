@@ -173,10 +173,8 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
 void Dense2d::set_parameters_random()
 {
-    //set_random(biases);
-    //set_random(weights);
-    weights.setRandom();
-    biases.setRandom();
+    set_random(biases);
+    set_random(weights);
 }
 
 
@@ -221,26 +219,6 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    std::cout << "\n--- Dense2d CPU - INPUTS ---" << std::endl;
-    for (long long i = 0; i < inputs.size(); ++i) {
-        std::cout << inputs.data()[i] << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "--- Dense2d CPU - WEIGHTS ---" << std::endl;
-    for (long long i = 0; i < weights.size(); ++i) {
-        std::cout << weights.data()[i] << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "--- Dense2d CPU - BIASES ---" << std::endl;
-    for (long long i = 0; i < biases.size(); ++i) {
-        std::cout << biases.data()[i] << " ";
-    }
-    std::cout << std::endl << "-----------------------------" << std::endl;
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
-
     Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
 
@@ -249,30 +227,12 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
     calculate_combinations(inputs,
                            outputs);
 
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    std::cout << "--- Dense2d CPU - COMBINATIONS ---" << std::endl;
-    const type* combinations_data = outputs.data();
-    for (long long i = 0; i < outputs.size(); ++i) {
-        std::cout << combinations_data[i] << " ";
-    }
-    std::cout << std::endl << "-----------------------------" << std::endl;
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
-
     is_training
         ? calculate_activations(activation_function, outputs, dense2d_forward_propagation->activation_derivatives)
         : calculate_activations(activation_function, outputs, empty_2);
 
     if(is_training && dropout_rate > type(0))
         dropout(outputs, dropout_rate);
-
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    std::cout << "--- Dense2d CPU - OUTPUTS ---" << std::endl;
-    const type* output_data = outputs.data();
-    for (long long i = 0; i < outputs.size(); ++i) {
-        std::cout << output_data[i] << " ";
-    }
-    std::cout << std::endl << "-----------------------------" << std::endl;
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
 }
 
 
@@ -670,39 +630,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Combinations
 
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    {
-        std::cout << "\n--- Dense2d GPU - INPUTS ---" << std::endl;
-        const long long total_elements = (long long)batch_size * inputs_number;
-        std::vector<float> host_buffer(total_elements);
-        cudaMemcpy(host_buffer.data(), inputs_device[0], total_elements * sizeof(float), cudaMemcpyDeviceToHost);
-        for (long long i = 0; i < total_elements; ++i) {
-            std::cout << host_buffer[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    {
-        std::cout << "--- Dense2d GPU - WEIGHTS ---" << std::endl;
-        const long long total_elements = weights.size();
-        std::vector<float> host_buffer(total_elements);
-        cudaMemcpy(host_buffer.data(), weights_device, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
-        for (long long i = 0; i < total_elements; ++i) {
-            std::cout << host_buffer[i] << " ";
-        }
-        std::cout << std::endl;
-    }
-    {
-        std::cout << "--- Dense2d GPU - BIASES ---" << std::endl;
-        const long long total_elements = biases.size();
-        std::vector<float> host_buffer(total_elements);
-        cudaMemcpy(host_buffer.data(), biases_device, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
-        for (long long i = 0; i < total_elements; ++i) {
-            std::cout << host_buffer[i] << " ";
-        }
-        std::cout << std::endl << "-----------------------------" << std::endl;
-    }
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
-
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
         batch_size, outputs_number, inputs_number,
@@ -725,19 +652,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     if (status != CUDNN_STATUS_SUCCESS)
         cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(status) << endl;
-
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    {
-        std::cout << "--- Dense2d GPU - OUTPUTS ---" << std::endl;
-        const long long total_elements = (long long)batch_size * outputs_number;
-        std::vector<float> host_combinations(total_elements);
-        cudaMemcpy(host_combinations.data(), combinations, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
-        for (long long i = 0; i < total_elements; ++i) {
-            std::cout << host_combinations[i] << " ";
-        }
-        std::cout << std::endl << "-----------------------------" << std::endl;
-    }
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
 
     // Activations
 
@@ -779,19 +693,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
     }
-
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (INICIO) <<<<<
-    {
-        std::cout << "--- Dense2d GPU - OUTPUTS ---" << std::endl;
-        const long long total_elements = (long long)batch_size * outputs_number;
-        std::vector<float> host_outputs(total_elements);
-        cudaMemcpy(host_outputs.data(), outputs, total_elements * sizeof(float), cudaMemcpyDeviceToHost);
-        for (long long i = 0; i < total_elements; ++i) {
-            std::cout << host_outputs[i] << " ";
-        }
-        std::cout << std::endl << "-----------------------------" << std::endl;
-    }
-    // >>>>> PEGA ESTE CÓDIGO AQUÍ (FIN) <<<<<
 }
 
 

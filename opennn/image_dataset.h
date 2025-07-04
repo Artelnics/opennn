@@ -68,6 +68,10 @@ public:
                            const vector<Index>&,
                            type*) const override;
 
+    void fill_input_tensor_row_major(const vector<Index>&,
+                                     const vector<Index>&,
+                                     type*) const override;
+
     Tensor<type, 2> perform_augmentation(const Tensor<type, 2>& data);
 
 private:
