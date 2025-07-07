@@ -794,6 +794,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     set_unscaling();
 
     neural_network->copy_parameters_host();
+    neural_network->free_parameters_device();
 
     if (display) results.print();
 

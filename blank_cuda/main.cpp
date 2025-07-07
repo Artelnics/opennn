@@ -97,6 +97,8 @@ int main()
 
         training_strategy.perform_training_cuda();
 
+        cudaDeviceSynchronize();
+
         // Testing analysis
         
         TestingAnalysis testing_analysis(&neural_network, &dataset);

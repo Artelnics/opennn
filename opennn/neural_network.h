@@ -382,6 +382,8 @@ struct ForwardPropagationCuda
 {
     ForwardPropagationCuda(const Index& = 0, NeuralNetwork* = nullptr);
 
+    ~ForwardPropagationCuda() { free(); }
+
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 
     float* get_last_trainable_layer_outputs_device() const;

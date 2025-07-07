@@ -152,6 +152,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     {
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
 
+        ~ADAMOptimizationDataCuda() { free(); }
+
         void set(AdaptiveMomentEstimation* = nullptr);
 
         void free();
