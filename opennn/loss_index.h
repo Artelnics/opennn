@@ -339,6 +339,8 @@ struct BackPropagationCuda
 {
     BackPropagationCuda(const Index& = 0, LossIndex* = nullptr);
 
+    ~BackPropagationCuda() { free(); }
+
     void set(const Index& = 0, LossIndex* = nullptr);
 
     vector<vector<float*>> get_layer_deltas_device() const;

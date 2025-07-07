@@ -2364,6 +2364,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
     BatchCuda testing_batch_cuda(batch_size, dataset);
     ForwardPropagationCuda testing_forward_propagation_cuda(batch_size, neural_network);
 
+    neural_network->allocate_parameters_device();
+    neural_network->copy_parameters_device();
+
     for (const auto& current_batch_indices : testing_batches)
     {
         const Index current_batch_size = current_batch_indices.size();
@@ -2395,8 +2398,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
         total_confusion_matrix += batch_confusion;
     }
 
-    testing_batch_cuda.free();
-    testing_forward_propagation_cuda.free();
+    neural_network->free_parameters_device();
 
     total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 
