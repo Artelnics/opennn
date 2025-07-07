@@ -19,6 +19,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/model_expression.h""
 
 using namespace opennn;
 

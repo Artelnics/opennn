@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "model_expression.h"
 #include "registry.h"
 #include "tensors.h"
 #include "images.h"
@@ -746,7 +747,6 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
         dense2d_layer_index++;
     }
 
-    cout << "adri -- lega al fin!!" << endl;
     return information;
 }
 
