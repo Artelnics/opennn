@@ -149,12 +149,10 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<pair<type*, Index>> layer_parameters = layer->get_parameter_pairs();
         vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        for(Index j = 0; j < layer_parameters.size(); j++)
+        for(Index j = 0; j < (Index)layer_parameters.size(); j++)
         {
-            //layer_parameters[j] = layer_parameters[j] - layer_parameter_deltas[j]*0.01;
-
-            Tensor<type, 1> parameters;// = back_propagation.parameters;
-            Tensor<type, 1> gradient;// = back_propagation.gradient;
+            TensorMap<Tensor<type, 1>> parameters(layer_parameters[j].first, layer_parameters[j].second);
+            const TensorMap<Tensor<type, 1>> gradient(layer_parameter_delta_pairs[j].first, layer_parameter_delta_pairs[j].second);
 
             Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment[i][j];
             Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment[i][j];
@@ -187,44 +185,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
             }
         }
     }
-/*
-    Tensor<type, 1>& parameters = back_propagation.parameters;
-    const Tensor<type, 1>& gradient = back_propagation.gradient;
-
-    Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment;
-    Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment;
-    
-    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-
-    if(momentum <= type(0))
-    {
-        parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
-
-        parameters.device(*thread_pool_device) += parameters_increment;
-    }    
-    else if(momentum > type(0) && !nesterov)
-    {
-        parameters_increment.device(*thread_pool_device) =
-            gradient * (-learning_rate) + momentum * last_parameters_increment;
-
-        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-
-        parameters.device(*thread_pool_device) += parameters_increment;
-    }
-    else if(momentum > type(0) && nesterov)
-    {
-        parameters_increment.device(*thread_pool_device)
-            = gradient * (-learning_rate) + momentum * last_parameters_increment;
-
-        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-
-        parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
-    }
-
-    // optimization_data.iteration++;
-
-    neural_network->set_parameters(parameters);
-*/
 }
 
 
@@ -573,20 +533,12 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
         for(Index j = 0; j < layer_parameter_pairs.size(); j++)
         {
             parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
-            last_parameters_increment.resize(layer_parameter_pairs[j].second);
+            last_parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
+
+            parameters_increment[i][j].setZero();
+            last_parameters_increment[i][j].setZero();
         }
     }
-
-
-    //const Index parameters_number = neural_network->get_parameters_number();
-
-
-
-    //parameters_increment.resize(parameters_number);
-    //last_parameters_increment.resize(parameters_number);
-
-    //parameters_increment.setZero();
-    //last_parameters_increment.setZero();
 }
 
 
