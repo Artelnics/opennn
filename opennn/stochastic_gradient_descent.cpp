@@ -210,7 +210,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         last_parameters_increment.device(*thread_pool_device) = parameters_increment;
 
         parameters.device(*thread_pool_device) += parameters_increment;
-
     }
     else if(momentum > type(0) && nesterov)
     {

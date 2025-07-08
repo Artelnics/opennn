@@ -571,7 +571,7 @@ void QuasiNewtonMethodData::print() const
 }
 
 
-QuasiNewtonMethod::Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
+Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
@@ -827,6 +827,69 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     }
 
     return triplet.U;
+}
+
+
+Triplet::Triplet()
+{
+    A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+}
+
+
+type Triplet::get_length() const
+{
+    return abs(B.first - A.first);
+}
+
+
+pair<type, type> Triplet::minimum() const
+{
+    Tensor<type, 1> losses(3);
+
+    losses.setValues({ A.second, U.second, B.second });
+
+    const Index minimal_index = opennn::minimal_index(losses);
+
+    if (minimal_index == 0) return A;
+    else if (minimal_index == 1) return U;
+    else return B;
+}
+
+
+string Triplet::struct_to_string() const
+{
+    ostringstream buffer;
+
+    buffer << "A = (" << A.first << "," << A.second << ")\n"
+           << "U = (" << U.first << "," << U.second << ")\n"
+           << "B = (" << B.first << "," << B.second << ")" << endl;
+
+    return buffer.str();
+}
+
+
+void Triplet::print() const
+{
+    cout << struct_to_string()
+    << "Length: " << get_length() << endl;
+}
+
+
+void Triplet::check() const
+{
+    if (U.first < A.first)
+        throw runtime_error("U is less than A:\n" + struct_to_string());
+
+    if (U.first > B.first)
+        throw runtime_error("U is greater than B:\n" + struct_to_string());
+
+    if (U.second >= A.second)
+        throw runtime_error("fU is equal or greater than fA:\n" + struct_to_string());
+
+    if (U.second >= B.second)
+        throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
 }
 
 

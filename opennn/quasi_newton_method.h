@@ -9,44 +9,24 @@
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
+#include "dataset.h"
+#include "neural_network.h"
+#include "loss_index.h"
 #include "optimization_algorithm.h"
-#include "learning_rate_algorithm.h"
+
+//#include "learning_rate_algorithm.h"
 
 namespace opennn
 {
 
 struct QuasiNewtonMethodData;
+struct Triplet;
 
 class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
 public:
 
-    struct Triplet
-    {
-        Triplet();
-
-        bool operator == (const Triplet& other_triplet) const
-        {
-            return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
-        }
-
-        type get_length() const;
-
-        pair<type, type> minimum() const;
-
-        string struct_to_string() const;
-
-        void print() const;
-
-        void check() const;
-
-        pair<type, type> A;
-
-        pair<type, type> U;
-
-        pair<type, type> B;
-    };
 
    QuasiNewtonMethod(LossIndex* = nullptr);
 
@@ -134,6 +114,33 @@ private:
    type loss_tolerance;
 
    const type golden_ratio = type(1.618);
+};
+
+
+struct Triplet
+{
+    Triplet();
+
+    bool operator == (const Triplet& other_triplet) const
+    {
+        return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
+    }
+
+    type get_length() const;
+
+    pair<type, type> minimum() const;
+
+    string struct_to_string() const;
+
+    void print() const;
+
+    void check() const;
+
+    pair<type, type> A;
+
+    pair<type, type> U;
+
+    pair<type, type> B;
 };
 
 
