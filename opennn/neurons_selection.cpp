@@ -8,6 +8,7 @@
 
 #include "dataset.h"
 #include "neural_network.h"
+#include "optimization_algorithm.h"
 #include "training_strategy.h"
 #include "neurons_selection.h"
 

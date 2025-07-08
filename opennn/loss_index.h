@@ -148,7 +148,8 @@ public:
 
    // Serialization
 
-   void from_XML(const XMLDocument&);
+   //void from_XML(const XMLDocument&);
+   virtual void from_XML(const XMLDocument&) = 0;
 
    virtual void to_XML(XMLPrinter&) const;
 
