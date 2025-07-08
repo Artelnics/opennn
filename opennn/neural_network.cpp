@@ -1591,8 +1591,6 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
     {
-        //layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
-
         layers[i] = Registry<LayerBackPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(batch_size, neural_network_layers[i].get());
     }

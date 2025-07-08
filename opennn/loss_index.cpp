@@ -1680,6 +1680,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index outputs_number = output_dimensions[0];
 
+    cout << "BackPropagationCuda set:" << endl;
+
     // First order loss
 
     neural_network.set(samples_number, neural_network_ptr);
@@ -1688,9 +1690,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     error(0) = type(0);
     regularization = type(0);
    
-    CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&parameters_square, parameters_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(errors, samples_number * outputs_number * sizeof(float));
+
+    //CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(parameters, parameters_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&parameters_square, parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(parameters_square, parameters_number * sizeof(float));
 
     cudnnCreateTensorDescriptor(&parameters_tensor_descriptor);
 
@@ -1718,11 +1724,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    CHECK_CUDA(cudaMalloc(&gradient, parameters_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&gradient, parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(gradient, parameters_number * sizeof(float));
 
     // Regularization gradient
 
-    CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(regularization_gradient, parameters_number * sizeof(float));
 
     // Outputs_delta
 
@@ -1731,7 +1739,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index size = accumulate(output_dimensions.begin(), output_dimensions.end(), samples_number, multiplies<>());
 
-    CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(output_deltas, size * sizeof(float));
 
     // Sum
 
@@ -1771,13 +1780,20 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         CUDNN_REDUCE_TENSOR_NO_INDICES,
         CUDNN_32BIT_INDICES);
 
-    CHECK_CUDA(cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&numerator_reduce, sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(numerator, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(numerator_2, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(numerator_3, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs_plus_epsilon, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(one_minus_outputs, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(one_minus_targets, samples_number* outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&numerator_reduce, sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(numerator_reduce, samples_number* outputs_number * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -1918,7 +1934,7 @@ void BackPropagationCuda::free()
     cudaFree(one_minus_targets);
     cudaFree(one_minus_outputs);
     cudaFree(numerator_reduce);
-    cudaFree(regularization_gradient);
+    //cudaFree(regularization_gradient);
     cudaFree(ones);
     cudaFree(workspace);
     //cudaFree(predictions);
