@@ -9,6 +9,7 @@
 #ifndef LEVENBERGMARQUARDTALGORITHM_H
 #define LEVENBERGMARQUARDTALGORITHM_H
 
+#include "dataset.h"
 #include "optimization_algorithm.h"
 
 namespace opennn
@@ -104,14 +105,6 @@ private:
    Index maximum_epochs_number = 0;
 
    type maximum_time = type(360000);
-
-   #ifdef OPENNN_CUDA
-
-    public:
-
-    TrainingResults perform_training_cuda();
-
-   #endif
 };
 
 
@@ -126,6 +119,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     // Neural network data
 
+    Tensor<type, 1> parameters;
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;
 

@@ -320,10 +320,10 @@ struct BackPropagation
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;
 
-    Tensor<type, 1> parameters;
+    //Tensor<type, 1> parameters;
 
-    Tensor<type, 1> gradient;
-    Tensor<type, 1> regularization_gradient;
+    //Tensor<type, 1> gradient;
+    //Tensor<type, 1> regularization_gradient;
 
     Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;

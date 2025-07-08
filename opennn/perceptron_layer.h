@@ -31,6 +31,13 @@ public:
     void get_parameters(Tensor<type, 1>&) const override;
 
     Index get_parameters_number() const override;
+
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {{(type*)(biases.data()), biases.size()},
+                {(type*)(weights.data()), weights.size()}};
+    }
+
     type get_dropout_rate() const;
 
     const string& get_activation_function() const;

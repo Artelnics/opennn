@@ -1,3 +1,4 @@
+/*
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -28,8 +29,6 @@ class LearningRateAlgorithm
 {
 
 public:
-
-   enum class LearningRateMethod{GoldenSection, BrentMethod};
 
    LearningRateAlgorithm(LossIndex* = nullptr);
 
@@ -71,8 +70,6 @@ public:
 
    bool has_loss_index() const;
 
-   const LearningRateMethod& get_learning_rate_method() const;
-   string write_learning_rate_method() const;
 
    const type& get_learning_rate_tolerance() const;
    
@@ -83,16 +80,12 @@ public:
    void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
 
-   void set_learning_rate_method(const LearningRateMethod&);
-   void set_learning_rate_method(const string&);
-
    void set_learning_rate_tolerance(const type&);
 
    void set_display(const bool&);
 
    void set_default();
 
-   type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const Batch&,
@@ -113,13 +106,9 @@ private:
 
    LossIndex* loss_index = nullptr;
 
-   LearningRateMethod learning_rate_method;
-
    type learning_rate_tolerance;
 
    type loss_tolerance;
-
-   bool display = true;
 
    const type golden_ratio = type(1.618);
 
@@ -148,3 +137,4 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

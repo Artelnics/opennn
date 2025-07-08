@@ -144,7 +144,10 @@ public:
         cudnnDestroy(cudnn_handle);
     }
 
-    virtual TrainingResults perform_training_cuda() = 0;
+    virtual TrainingResults perform_training_cuda()
+    {
+        return TrainingResults();
+    }
 
 #endif
 

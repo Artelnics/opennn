@@ -56,6 +56,13 @@ public:
     virtual Index get_parameters_number() const;
     virtual void get_parameters(Tensor<type, 1>&) const;
 
+    virtual vector<pair<type*, Index>> get_parameter_pairs() const
+    {
+        return vector<pair<type*, Index>>();
+    }
+
+    //virtual pair
+
     virtual dimensions get_input_dimensions() const = 0;
     virtual dimensions get_output_dimensions() const = 0;
 
@@ -347,6 +354,11 @@ struct LayerBackPropagation
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+
+    virtual vector<pair<type*, Index>> get_parameter_delta_pairs() const
+    {
+        return vector<pair<type*, Index>>();
+    }
 
     virtual void print() const {}
 

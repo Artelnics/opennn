@@ -135,9 +135,59 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   StochasticGradientDescentData& optimization_data) const
-{
+{               
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
+    const Index layers_number = neural_network->get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+
+        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[i].get();
+
+        const vector<pair<type*, Index>> layer_parameters = layer->get_parameter_pairs();
+        vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+
+        for(Index j = 0; j < layer_parameters.size(); j++)
+        {
+            //layer_parameters[j] = layer_parameters[j] - layer_parameter_deltas[j]*0.01;
+
+            Tensor<type, 1> parameters;// = back_propagation.parameters;
+            Tensor<type, 1> gradient;// = back_propagation.gradient;
+
+            Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment[i][j];
+            Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment[i][j];
+
+            const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
+
+            if(momentum <= type(0))
+            {
+                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
+
+                parameters.device(*thread_pool_device) += parameters_increment;
+            }
+            else if(momentum > type(0) && !nesterov)
+            {
+                parameters_increment.device(*thread_pool_device) =
+                    gradient * (-learning_rate) + momentum * last_parameters_increment;
+
+                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+
+                parameters.device(*thread_pool_device) += parameters_increment;
+            }
+            else if(momentum > type(0) && nesterov)
+            {
+                parameters_increment.device(*thread_pool_device)
+                = gradient * (-learning_rate) + momentum * last_parameters_increment;
+
+                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+
+                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+            }
+        }
+    }
+/*
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
 
@@ -175,6 +225,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     // optimization_data.iteration++;
 
     neural_network->set_parameters(parameters);
+*/
 }
 
 
@@ -510,13 +561,33 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index layers_number = neural_network->get_layers_number();
 
-    parameters_increment.resize(parameters_number);
-    last_parameters_increment.resize(parameters_number);
+    parameters_increment.resize(layers_number);
 
-    parameters_increment.setZero();
-    last_parameters_increment.setZero();
+    for(Index i = 0; i < layers_number; i++)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
+
+        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
+        {
+            parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
+            last_parameters_increment.resize(layer_parameter_pairs[j].second);
+        }
+    }
+
+
+    //const Index parameters_number = neural_network->get_parameters_number();
+
+
+
+    //parameters_increment.resize(parameters_number);
+    //last_parameters_increment.resize(parameters_number);
+
+    //parameters_increment.setZero();
+    //last_parameters_increment.setZero();
 }
 
 

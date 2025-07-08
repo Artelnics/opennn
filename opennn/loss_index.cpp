@@ -179,6 +179,7 @@ void LossIndex::back_propagate(const Batch& batch,
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
+/*
     if(regularization_method == RegularizationMethod::NoRegularization)
         return;
 
@@ -196,6 +197,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
     calculate_regularization_gradient(parameters, regularization_gradient);
 
     gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
+*/
 }
 
 
@@ -411,6 +413,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
 void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation) const
 {
+/*
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
     const Index layers_number = neural_network->get_layers_number();
@@ -421,6 +424,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
             index,
             back_propagation.gradient);
+*/
 }
 
 
@@ -543,11 +547,11 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     errors.resize(samples_number, outputs_number);
 
-    neural_network_ptr->get_parameters(parameters);
+    //neural_network_ptr->get_parameters(parameters);
 
-    gradient.resize(parameters_number);
+    //gradient.resize(parameters_number);
 
-    regularization_gradient.resize(parameters_number);
+    //regularization_gradient.resize(parameters_number);
 
     output_deltas_dimensions = { samples_number };
     output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
@@ -621,9 +625,9 @@ void BackPropagation::print() const
          << "Regularization:" << endl
          << regularization << endl
          << "Loss:" << endl
-         << loss << endl
-         << "Gradient:" << endl
-         << gradient << endl;
+         << loss << endl;
+         //<< "Gradient:" << endl
+         //<< gradient << endl;
 
     neural_network.print();
 }
@@ -660,6 +664,7 @@ type LossIndex::calculate_numerical_error()
 
 Tensor<type, 1> LossIndex::calculate_gradient()
 {
+/*
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 
     const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
@@ -684,6 +689,8 @@ Tensor<type, 1> LossIndex::calculate_gradient()
     back_propagate(batch, forward_propagation, back_propagation);
 
     return back_propagation.gradient;
+*/
+    return Tensor<type, 1>();
 }
 
 

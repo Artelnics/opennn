@@ -546,15 +546,6 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     parameters_increment.resize(parameters_number);
 }
 
-#ifdef OPENNN_CUDA
-
-TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
-{
-    return TrainingResults();
-}
-
-#endif
-
 REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardtAlgorithm");
 
 }

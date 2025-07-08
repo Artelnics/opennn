@@ -22,15 +22,33 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-   enum class InverseHessianApproximationMethod{DFP, BFGS};
+    struct Triplet
+    {
+        Triplet();
+
+        bool operator == (const Triplet& other_triplet) const
+        {
+            return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
+        }
+
+        type get_length() const;
+
+        pair<type, type> minimum() const;
+
+        string struct_to_string() const;
+
+        void print() const;
+
+        void check() const;
+
+        pair<type, type> A;
+
+        pair<type, type> U;
+
+        pair<type, type> B;
+    };
 
    QuasiNewtonMethod(LossIndex* = nullptr);
-
-   const LearningRateAlgorithm& get_learning_rate_algorithm() const;
-   LearningRateAlgorithm* get_learning_rate_algorithm();
-
-   const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
-   string write_inverse_hessian_approximation_method() const;
 
    const Index& get_epochs_number() const;
 
@@ -48,9 +66,6 @@ public:
 
    void set_loss_index(LossIndex*) override;
 
-   void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
-   void set_inverse_hessian_approximation_method(const string&);
-
    void set_display(const bool&) override;
 
    void set_default();
@@ -67,11 +82,7 @@ public:
 
    // Training
 
-   void calculate_DFP_inverse_hessian(QuasiNewtonMethodData&) const;
-
-   void calculate_BFGS_inverse_hessian(QuasiNewtonMethodData&) const;
-
-   void calculate_inverse_hessian_approximation(QuasiNewtonMethodData&) const;
+   void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
 
    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&) const;
 
@@ -87,11 +98,20 @@ public:
    
    Tensor<string, 2> to_string_matrix() const override;
 
+   type calculate_learning_rate(const Triplet&) const;
+
+   Triplet calculate_bracketing_triplet(const Batch&,
+                                        ForwardPropagation&,
+                                        BackPropagation&,
+                                        QuasiNewtonMethodData&) const;
+
+   pair<type, type> calculate_directional_point(const Batch&,
+                                                ForwardPropagation&,
+                                                BackPropagation&,
+                                                QuasiNewtonMethodData&) const;
+
+
 private: 
-
-   LearningRateAlgorithm learning_rate_algorithm;
-
-   InverseHessianApproximationMethod inverse_hessian_approximation_method;
 
    type first_learning_rate = type(0.01);
 
@@ -109,13 +129,11 @@ private:
 
    const type epsilon = numeric_limits<type>::epsilon();
 
-   #ifdef OPENNN_CUDA
+   type learning_rate_tolerance;
 
-    public:
+   type loss_tolerance;
 
-    TrainingResults perform_training_cuda();
-
-   #endif
+   const type golden_ratio = type(1.618);
 };
 
 
@@ -131,6 +149,7 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 
     // Neural network data
 
+    Tensor<type, 1> parameters;
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;
 
@@ -138,6 +157,7 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 
     // Loss index data
 
+    Tensor<type, 1> gradient;
     Tensor<type, 1> old_gradient;
     Tensor<type, 1> gradient_difference;
 
