@@ -279,8 +279,6 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    float* combination_deltas_device = nullptr;
-
     type* bias_deltas_device = nullptr;
     type* weight_deltas_device = nullptr;
 
@@ -289,11 +287,12 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     size_t backward_data_workspace_bytes = 0;
     size_t backward_filter_workspace_bytes = 0;
 
-    cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
+
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnFilterDescriptor_t weight_deltas_tensor_descriptor = nullptr;
+
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 };
 

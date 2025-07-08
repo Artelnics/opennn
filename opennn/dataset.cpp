@@ -4505,6 +4505,7 @@ BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_data_set)
 
 void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
 {
+    cout << "BatchCuda set:" << endl;
     if (!new_data_set) return;
 
     samples_number = new_samples_number;
@@ -4522,7 +4523,8 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
         const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 
         CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&inputs_device, input_size * sizeof(float)));
+        //CHECK_CUDA(cudaMalloc(&inputs_device, input_size * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(inputs_device, input_size * sizeof(float));
     }
 
     if (!data_set_decoder_dimensions.empty())
@@ -4544,7 +4546,8 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
         const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
 
         CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&targets_device, target_size * sizeof(float)));
+        //CHECK_CUDA(cudaMalloc(&targets_device, target_size * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(targets_device, target_size * sizeof(float));
     }
 }
 

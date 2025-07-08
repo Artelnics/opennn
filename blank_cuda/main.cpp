@@ -78,12 +78,12 @@ int main()
 
         // Neural network
 
-        ImageClassificationNetwork neural_network(
-            input_dimensions,
-            { 64, 64, 128, 128, 32 },
-            output_dimensions);
+        //ImageClassificationNetwork neural_network(
+        //    input_dimensions,
+        //    { 64, 64, 128, 128, 32 },
+        //    output_dimensions);
         
-        //VGG16 neural_network(input_dimensions, output_dimensions);
+        VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
 
@@ -95,8 +95,9 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
+        //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
-
+        
         cudaDeviceSynchronize();
 
         // Testing analysis

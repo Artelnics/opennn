@@ -866,12 +866,15 @@ ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new
 
 void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
+    cout << "ADAMOptimizationDataCuda set:" << endl;
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    CHECK_CUDA(cudaMalloc(&gradient_exponential_decay,parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay,parameters_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&gradient_exponential_decay,parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(gradient_exponential_decay, parameters_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay,parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(square_gradient_exponential_decay, parameters_number * sizeof(float));
 
     CHECK_CUDA(cudaMemset(gradient_exponential_decay,           0, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMemset(square_gradient_exponential_decay,    0, parameters_number * sizeof(float)));

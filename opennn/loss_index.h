@@ -387,7 +387,7 @@ struct BackPropagationCuda
 
     float* gradient = nullptr;
     cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
-    float* regularization_gradient = nullptr;
+    //float* regularization_gradient = nullptr;
 
     float* ones = nullptr;
     float one = 1.0f;
