@@ -210,24 +210,47 @@ public:
         const Index sequence_length = input_dimensions[1];
         const Index embedding_dimension = input_dimensions[2];
 
+
+        cout << "input_dimensions" << endl;
+        print_vector(input_dimensions);
+
+        cout << "complexity_dimensions" << endl;
+        print_vector(complexity_dimensions);
+
+        cout << "output_dimensions" << endl;
+        print_vector(output_dimensions);
+
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"
                                          ));
 
-        add_layer(make_unique<Pooling3d>(
-            get_output_dimensions()
-            ));
+        // cout << "after Embedding" << endl;
+        // print_vector(get_output_dimensions());
 
-        add_layer(make_unique<Flatten3d>(
-            get_output_dimensions()
-            ));
+        // // add_layer(make_unique<Pooling3d>(
+        // //     get_output_dimensions()
+        // //     ));
 
-        add_layer(make_unique<Dense2d>(
-            get_output_dimensions(),
-            output_dimensions,
-            "Logistic",
-            "classification_layer"));
+        // add_layer(make_unique<Flatten3d>(
+        //     get_output_dimensions()
+        //     ));
+
+        // cout << "after Flatten3d" << endl;
+        // print_vector(get_output_dimensions());
+
+
+        // add_layer(make_unique<Dense2d>(
+        //     get_output_dimensions(),
+        //     output_dimensions,
+        //     "Logistic",
+        //     "classification_layer"));
+
+        // cout << "after Dense2d" << endl;
+        // print_vector(get_output_dimensions());
+
+        // cout << "=================> get_input_dimensions()" << endl;
+        // print_vector(get_input_dimensions());
     }
 };
 

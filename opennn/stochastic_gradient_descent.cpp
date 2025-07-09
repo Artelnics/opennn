@@ -135,52 +135,54 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   StochasticGradientDescentData& optimization_data) const
-{               
+{
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
     const Index layers_number = neural_network->get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
 
+        if (!layer->get_is_trainable())
+            continue;
+
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[i].get();
 
-        const vector<pair<type*, Index>> layer_parameters = layer->get_parameter_pairs();
-        vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
+        const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        for(Index j = 0; j < (Index)layer_parameters.size(); j++)
+        // #pragma omp parallel for #@todo check pragma vs thread_pool_device
+        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
         {
-            TensorMap<Tensor<type, 1>> parameters(layer_parameters[j].first, layer_parameters[j].second);
-            const TensorMap<Tensor<type, 1>> gradient(layer_parameter_delta_pairs[j].first, layer_parameter_delta_pairs[j].second);
+            type* parameter_data = layer_parameter_pairs[j].first;
+            const Index parameter_size = layer_parameter_pairs[j].second;
+            type* delta_data = layer_parameter_delta_pairs[j].first;
+
+            TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
+            TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
 
             Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment[i][j];
             Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment[i][j];
 
-            const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
+            const type learning_rate = initial_learning_rate / (type(1) + type(optimization_data.iteration) * initial_decay);
 
-            if(momentum <= type(0))
+            if (momentum <= type(0))
             {
                 parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
-
                 parameters.device(*thread_pool_device) += parameters_increment;
             }
-            else if(momentum > type(0) && !nesterov)
+            else if (momentum > type(0) && !nesterov)
             {
                 parameters_increment.device(*thread_pool_device) =
                     gradient * (-learning_rate) + momentum * last_parameters_increment;
-
                 last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-
                 parameters.device(*thread_pool_device) += parameters_increment;
             }
-            else if(momentum > type(0) && nesterov)
+            else if (momentum > type(0) && nesterov)
             {
                 parameters_increment.device(*thread_pool_device)
                 = gradient * (-learning_rate) + momentum * last_parameters_increment;
-
                 last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-
                 parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
             }
         }
@@ -524,21 +526,30 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     parameters_increment.resize(layers_number);
 
+    parameters_increment.resize(layers_number);
+    last_parameters_increment.resize(layers_number);
+
+    # pragma omp parallel for
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
+        const vector<pair<type*, Index>> parameter_pairs = layer->get_parameter_pairs();
 
-        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
+        parameters_increment[i].resize(parameter_pairs.size());
+        last_parameters_increment[i].resize(parameter_pairs.size());
 
-        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
+        for(Index j = 0; j < (Index)parameter_pairs.size(); j++)
         {
-            parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
-            last_parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
+            const Index size = parameter_pairs[j].second;
+
+            parameters_increment[i][j].resize(array<Index, 1>{size});
+            last_parameters_increment[i][j].resize(array<Index, 1>{size});
 
             parameters_increment[i][j].setZero();
             last_parameters_increment[i][j].setZero();
         }
     }
+
 }
 
 

@@ -452,9 +452,6 @@ REGISTER(Layer, Recurrent, "Recurrent")
 REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
 REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")
 
-//REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -38,14 +38,13 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         training_strategy.perform_training();
 
-        // Testing analysis
+        // const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        const TestingAnalysis testing_analysis(&classification_network, &dataset);
-
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        // cout << "Confusion matrix:\n"
+        //      << testing_analysis.calculate_confusion() << endl;
 
         cout << "Good bye!" << endl;
 

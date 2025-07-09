@@ -664,53 +664,53 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    Tensor<type, 3> image = read_bmp_image(image_path);
+    // Tensor<type, 3> image = read_bmp_image(image_path);
 
-    Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first("Scaling4d"));
+    // Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first("Scaling4d"));
 
-    const Index height = scaling_layer_4d->get_input_dimensions()[0];
-    const Index width = scaling_layer_4d->get_input_dimensions()[1];
-    const Index channels = scaling_layer_4d->get_input_dimensions()[2];
+    // const Index height = scaling_layer_4d->get_input_dimensions()[0];
+    // const Index width = scaling_layer_4d->get_input_dimensions()[1];
+    // const Index channels = scaling_layer_4d->get_input_dimensions()[2];
 
-    const Index current_height = image.dimension(0);
-    const Index current_width = image.dimension(1);
-    const Index current_channels = image.dimension(2);
+    // const Index current_height = image.dimension(0);
+    // const Index current_width = image.dimension(1);
+    // const Index current_channels = image.dimension(2);
 
-    if (current_channels != channels)
-        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
+    // if (current_channels != channels)
+    //     throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    if(current_height != height || current_width != width)
-        image = resize_image(image, height, width);
+    // if(current_height != height || current_width != width)
+    //     image = resize_image(image, height, width);
 
-    Tensor<type, 4> input_data(1, height, width, channels);
+    // Tensor<type, 4> input_data(1, height, width, channels);
 
-    const Index pixels_number = height * width * channels;
+    // const Index pixels_number = height * width * channels;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < pixels_number; j++)
-        input_data(j) = image(j);
+    // #pragma omp parallel for
+    // for (Index j = 0; j < pixels_number; j++)
+    //     input_data(j) = image(j);
 
-    const Tensor<type, 2> outputs = calculate_outputs<4,2>(input_data);
+    // const Tensor<type, 2> outputs = calculate_outputs<4,2>(input_data);
 
-    Index predicted_index = -1;
+    // Index predicted_index = -1;
 
-    if (outputs.size() > 1)
-    {
-        type max_value = outputs(0);
+    // if (outputs.size() > 1)
+    // {
+    //     type max_value = outputs(0);
 
-        for (Index i = 1; i < outputs.dimension(1); ++i)
-        {
-            if (outputs(i) > max_value)
-            {
-                max_value = outputs(i);
-                predicted_index = i;
-            }
-        }
-    }
-    else
-        predicted_index = outputs(0);
+    //     for (Index i = 1; i < outputs.dimension(1); ++i)
+    //     {
+    //         if (outputs(i) > max_value)
+    //         {
+    //             max_value = outputs(i);
+    //             predicted_index = i;
+    //         }
+    //     }
+    // }
+    // else
+    //     predicted_index = outputs(0);
 
-    return predicted_index;
+    // return predicted_index;
 }
 
 
@@ -1027,10 +1027,10 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    file << parameters << endl;
+    // file << parameters << endl;
 
     file.close();
 }

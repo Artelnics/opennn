@@ -447,10 +447,10 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
 }

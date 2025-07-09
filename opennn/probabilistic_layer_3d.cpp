@@ -357,10 +357,10 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "Activation", get_activation_function_string());
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

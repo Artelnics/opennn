@@ -1,0 +1,1235 @@
+commit d605ca7ee533e6c93f3b443d7531b41f106bcd6e
+Author: Roberto Lopez <robertolopez@artelnics.com>
+Date:   Tue Jul 8 12:27:22 2025 +0200
+
+    Remove parameter and gradient vector
+
+diff --git a/opennn/adaptive_moment_estimation.cpp b/opennn/adaptive_moment_estimation.cpp
+index 57acfbba2..df7722324 100644
+--- a/opennn/adaptive_moment_estimation.cpp
++++ b/opennn/adaptive_moment_estimation.cpp
+@@ -413,6 +413,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
+ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
+                                                  AdaptiveMomentEstimationData& optimization_data) const
+ {
++/*
+     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+ 
+     Index& iteration = optimization_data.iteration;
+@@ -452,6 +453,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
+ 
+     // Update parameters
+     neural_network->set_parameters(parameters);
++*/
+ }
+ 
+ 
+diff --git a/opennn/layer.h b/opennn/layer.h
+index 62b370966..ff80d5537 100644
+--- a/opennn/layer.h
++++ b/opennn/layer.h
+@@ -56,6 +56,13 @@ public:
+     virtual Index get_parameters_number() const;
+     virtual void get_parameters(Tensor<type, 1>&) const;
+ 
++    virtual vector<pair<type*, Index>> get_parameter_pairs() const
++    {
++        return vector<pair<type*, Index>>();
++    }
++
++    //virtual pair
++
+     virtual dimensions get_input_dimensions() const = 0;
+     virtual dimensions get_output_dimensions() const = 0;
+ 
+@@ -348,6 +355,11 @@ struct LayerBackPropagation
+ 
+     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+ 
++    virtual vector<pair<type*, Index>> get_parameter_delta_pairs() const
++    {
++        return vector<pair<type*, Index>>();
++    }
++
+     virtual void print() const {}
+ 
+     Index batch_size = 0;
+diff --git a/opennn/learning_rate_algorithm.cpp b/opennn/learning_rate_algorithm.cpp
+index c3e2d4b69..da7fa43b2 100644
+--- a/opennn/learning_rate_algorithm.cpp
++++ b/opennn/learning_rate_algorithm.cpp
+@@ -1,3 +1,4 @@
++/*
+ //   OpenNN: Open Neural Networks Library
+ //   www.opennn.net
+ //
+@@ -34,39 +35,12 @@ bool LearningRateAlgorithm::has_loss_index() const
+ }
+ 
+ 
+-const LearningRateAlgorithm::LearningRateMethod& LearningRateAlgorithm::get_learning_rate_method() const
+-{
+-    return learning_rate_method;
+-}
+-
+-
+-string LearningRateAlgorithm::write_learning_rate_method() const
+-{
+-    switch(learning_rate_method)
+-    {
+-    case LearningRateMethod::GoldenSection:
+-        return "GoldenSection";
+-
+-    case LearningRateMethod::BrentMethod:
+-        return "BrentMethod";
+-    default:
+-        return string();
+-    }
+-}
+-
+-
+ const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
+ {
+     return learning_rate_tolerance;
+ }
+ 
+ 
+-const bool& LearningRateAlgorithm::get_display() const
+-{
+-    return display;
+-}
+-
+-
+ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
+ {
+     loss_index = new_loss_index;
+@@ -87,8 +61,6 @@ void LearningRateAlgorithm::set_default()
+     thread_pool = make_unique<ThreadPool>(threads_number);
+     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+ 
+-    learning_rate_method = LearningRateMethod::BrentMethod;
+-
+     learning_rate_tolerance = numeric_limits<type>::epsilon();
+     loss_tolerance = numeric_limits<type>::epsilon();
+ }
+@@ -112,42 +84,19 @@ void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
+ }
+ 
+ 
+-void LearningRateAlgorithm::set_learning_rate_method(
+-        const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
+-{
+-    learning_rate_method = new_learning_rate_method;
+-}
+-
+-
+-void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_rate_method)
+-{
+-    if(new_learning_rate_method == "GoldenSection")
+-        learning_rate_method = LearningRateMethod::GoldenSection;
+-    else if(new_learning_rate_method == "BrentMethod")
+-        learning_rate_method = LearningRateMethod::BrentMethod;
+-    else
+-        throw runtime_error("Unknown learning rate method: " + new_learning_rate_method + ".\n");
+-}
+-
+-
+ void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
+ {
+     learning_rate_tolerance = new_learning_rate_tolerance;
+ }
+ 
+ 
+-void LearningRateAlgorithm::set_display(const bool& new_display)
+-{
+-    display = new_display;
+-}
+-
+-
+ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
+     const Batch& batch,
+     ForwardPropagation& forward_propagation,
+     BackPropagation& back_propagation,
+     OptimizationAlgorithmData& optimization_data) const
+ {
++
+     const NeuralNetwork* neural_network = loss_index->get_neural_network();
+ 
+     const Tensor<type, 1>& parameters = back_propagation.parameters;
+@@ -249,6 +198,8 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
+     }
+ 
+     return triplet.U;
++
++    return pair<type, type>();
+ }
+ 
+ 
+@@ -387,18 +338,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
+ }
+ 
+ 
+-type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet& triplet) const
+-{
+-    const type middle = triplet.A.first + type(0.5)*(triplet.B.first - triplet.A.first);
+-
+-    const type learning_rate = triplet.U.first < middle
+-        ? triplet.A.first + type(0.618) * (triplet.B.first - triplet.A.first)
+-        : triplet.A.first + type(0.382) * (triplet.B.first - triplet.A.first);
+-
+-    return learning_rate;
+-}
+-
+-
+ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
+ { 
+     const type a = triplet.A.first;
+@@ -423,7 +362,6 @@ void LearningRateAlgorithm::to_XML(XMLPrinter& printer) const
+ {
+     printer.OpenElement("LearningRateAlgorithm");
+ 
+-    add_xml_element(printer, "LearningRateMethod", write_learning_rate_method());
+     add_xml_element(printer, "LearningRateTolerance", to_string(learning_rate_tolerance));
+ 
+     printer.CloseElement();
+@@ -437,7 +375,6 @@ void LearningRateAlgorithm::from_XML(const XMLDocument& document)
+     if(!root_element)
+         throw runtime_error("Learning rate algorithm element is nullptr.\n");
+ 
+-    set_learning_rate_method(read_xml_string(root_element, "LearningRateMethod"));
+     set_learning_rate_tolerance(read_xml_type(root_element, "LearningRateTolerance"));
+ }
+ 
+@@ -523,3 +460,4 @@ void LearningRateAlgorithm::Triplet::check() const
+ // You should have received a copy of the GNU Lesser General Public
+ // License along with this library; if not, write to the Free Software
+ // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+diff --git a/opennn/learning_rate_algorithm.h b/opennn/learning_rate_algorithm.h
+index b7f941023..4d4b46fb3 100644
+--- a/opennn/learning_rate_algorithm.h
++++ b/opennn/learning_rate_algorithm.h
+@@ -1,3 +1,4 @@
++/*
+ //   OpenNN: Open Neural Networks Library
+ //   www.opennn.net
+ //
+@@ -29,8 +30,6 @@ class LearningRateAlgorithm
+ 
+ public:
+ 
+-   enum class LearningRateMethod{GoldenSection, BrentMethod};
+-
+    LearningRateAlgorithm(LossIndex* = nullptr);
+ 
+    ~LearningRateAlgorithm()
+@@ -71,8 +70,6 @@ public:
+ 
+    bool has_loss_index() const;
+ 
+-   const LearningRateMethod& get_learning_rate_method() const;
+-   string write_learning_rate_method() const;
+ 
+    const type& get_learning_rate_tolerance() const;
+    
+@@ -83,16 +80,12 @@ public:
+    void set_loss_index(LossIndex*);
+    void set_threads_number(const int&);
+ 
+-   void set_learning_rate_method(const LearningRateMethod&);
+-   void set_learning_rate_method(const string&);
+-
+    void set_learning_rate_tolerance(const type&);
+ 
+    void set_display(const bool&);
+ 
+    void set_default();
+ 
+-   type calculate_golden_section_learning_rate(const Triplet&) const;
+    type calculate_Brent_method_learning_rate(const Triplet&) const;
+ 
+    Triplet calculate_bracketing_triplet(const Batch&,
+@@ -113,14 +106,10 @@ private:
+ 
+    LossIndex* loss_index = nullptr;
+ 
+-   LearningRateMethod learning_rate_method;
+-
+    type learning_rate_tolerance;
+ 
+    type loss_tolerance;
+ 
+-   bool display = true;
+-
+    const type golden_ratio = type(1.618);
+ 
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+@@ -148,3 +137,4 @@ private:
+ // You should have received a copy of the GNU Lesser General Public
+ // License along with this library; if not, write to the Free Software
+ // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++*/
+diff --git a/opennn/levenberg_marquardt_algorithm.cpp b/opennn/levenberg_marquardt_algorithm.cpp
+index 708b44d93..5cfa8a9bb 100644
+--- a/opennn/levenberg_marquardt_algorithm.cpp
++++ b/opennn/levenberg_marquardt_algorithm.cpp
+@@ -546,15 +546,6 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
+     parameters_increment.resize(parameters_number);
+ }
+ 
+-#ifdef OPENNN_CUDA
+-
+-TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
+-{
+-    return TrainingResults();
+-}
+-
+-#endif
+-
+ REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardtAlgorithm");
+ 
+ }
+diff --git a/opennn/levenberg_marquardt_algorithm.h b/opennn/levenberg_marquardt_algorithm.h
+index ce0640e58..235d3022d 100644
+--- a/opennn/levenberg_marquardt_algorithm.h
++++ b/opennn/levenberg_marquardt_algorithm.h
+@@ -9,6 +9,7 @@
+ #ifndef LEVENBERGMARQUARDTALGORITHM_H
+ #define LEVENBERGMARQUARDTALGORITHM_H
+ 
++#include "dataset.h"
+ #include "optimization_algorithm.h"
+ 
+ namespace opennn
+@@ -104,14 +105,6 @@ private:
+    Index maximum_epochs_number = 0;
+ 
+    type maximum_time = type(360000);
+-
+-   #ifdef OPENNN_CUDA
+-
+-    public:
+-
+-    TrainingResults perform_training_cuda();
+-
+-   #endif
+ };
+ 
+ 
+@@ -126,6 +119,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
+ 
+     // Neural network data
+ 
++    Tensor<type, 1> parameters;
+     Tensor<type, 1> old_parameters;
+     Tensor<type, 1> parameters_difference;
+ 
+diff --git a/opennn/loss_index.cpp b/opennn/loss_index.cpp
+index 07efcc211..60e45fce9 100644
+--- a/opennn/loss_index.cpp
++++ b/opennn/loss_index.cpp
+@@ -179,6 +179,7 @@ void LossIndex::back_propagate(const Batch& batch,
+ 
+ void LossIndex::add_regularization(BackPropagation& back_propagation) const
+ {
++/*
+     if(regularization_method == RegularizationMethod::NoRegularization)
+         return;
+ 
+@@ -196,6 +197,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
+     calculate_regularization_gradient(parameters, regularization_gradient);
+ 
+     gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
++*/
+ }
+ 
+ 
+@@ -411,6 +413,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
+ 
+ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation) const
+ {
++/*
+     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
+ 
+     const Index layers_number = neural_network->get_layers_number();
+@@ -421,6 +424,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
+         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
+             index,
+             back_propagation.gradient);
++*/
+ }
+ 
+ 
+@@ -543,11 +547,11 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
+ 
+     errors.resize(samples_number, outputs_number);
+ 
+-    neural_network_ptr->get_parameters(parameters);
++    //neural_network_ptr->get_parameters(parameters);
+ 
+-    gradient.resize(parameters_number);
++    //gradient.resize(parameters_number);
+ 
+-    regularization_gradient.resize(parameters_number);
++    //regularization_gradient.resize(parameters_number);
+ 
+     output_deltas_dimensions = { samples_number };
+     output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
+@@ -621,9 +625,9 @@ void BackPropagation::print() const
+          << "Regularization:" << endl
+          << regularization << endl
+          << "Loss:" << endl
+-         << loss << endl
+-         << "Gradient:" << endl
+-         << gradient << endl;
++         << loss << endl;
++         //<< "Gradient:" << endl
++         //<< gradient << endl;
+ 
+     neural_network.print();
+ }
+@@ -660,6 +664,7 @@ type LossIndex::calculate_numerical_error()
+ 
+ Tensor<type, 1> LossIndex::calculate_gradient()
+ {
++/*
+     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+ 
+     const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+@@ -684,6 +689,8 @@ Tensor<type, 1> LossIndex::calculate_gradient()
+     back_propagate(batch, forward_propagation, back_propagation);
+ 
+     return back_propagation.gradient;
++*/
++    return Tensor<type, 1>();
+ }
+ 
+ 
+diff --git a/opennn/loss_index.h b/opennn/loss_index.h
+index 604739b46..bef2a31b6 100644
+--- a/opennn/loss_index.h
++++ b/opennn/loss_index.h
+@@ -320,10 +320,10 @@ struct BackPropagation
+     Tensor<type, 1> output_deltas;
+     dimensions output_deltas_dimensions;
+ 
+-    Tensor<type, 1> parameters;
++    //Tensor<type, 1> parameters;
+ 
+-    Tensor<type, 1> gradient;
+-    Tensor<type, 1> regularization_gradient;
++    //Tensor<type, 1> gradient;
++    //Tensor<type, 1> regularization_gradient;
+ 
+     Tensor<type, 0> accuracy;
+     Tensor<type, 2> predictions;
+diff --git a/opennn/optimization_algorithm.h b/opennn/optimization_algorithm.h
+index aa8724561..473011cae 100644
+--- a/opennn/optimization_algorithm.h
++++ b/opennn/optimization_algorithm.h
+@@ -144,7 +144,10 @@ public:
+         cudnnDestroy(cudnn_handle);
+     }
+ 
+-    virtual TrainingResults perform_training_cuda() = 0;
++    virtual TrainingResults perform_training_cuda()
++    {
++        return TrainingResults();
++    }
+ 
+ #endif
+ 
+diff --git a/opennn/perceptron_layer.h b/opennn/perceptron_layer.h
+index 51070c7fc..41935baa0 100644
+--- a/opennn/perceptron_layer.h
++++ b/opennn/perceptron_layer.h
+@@ -31,6 +31,13 @@ public:
+     void get_parameters(Tensor<type, 1>&) const override;
+ 
+     Index get_parameters_number() const override;
++
++    vector<pair<type*, Index>> get_parameter_pairs() const override
++    {
++        return {{(type*)(biases.data()), biases.size()},
++                {(type*)(weights.data()), weights.size()}};
++    }
++
+     type get_dropout_rate() const;
+ 
+     const string& get_activation_function() const;
+diff --git a/opennn/quasi_newton_method.cpp b/opennn/quasi_newton_method.cpp
+index f55406c66..b413a953e 100644
+--- a/opennn/quasi_newton_method.cpp
++++ b/opennn/quasi_newton_method.cpp
+@@ -19,46 +19,10 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
+     : OptimizationAlgorithm(new_loss_index)
+ {
+ 
+-    learning_rate_algorithm.set_loss_index(new_loss_index);
+-
+     set_default();
+ }
+ 
+ 
+-const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
+-{
+-    return learning_rate_algorithm;
+-}
+-
+-
+-LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm()
+-{
+-    return &learning_rate_algorithm;
+-}
+-
+-
+-const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::get_inverse_hessian_approximation_method() const
+-{
+-    return inverse_hessian_approximation_method;
+-}
+-
+-
+-string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
+-{
+-    switch(inverse_hessian_approximation_method)
+-    {
+-    case InverseHessianApproximationMethod::DFP:
+-        return "DFP";
+-
+-    case InverseHessianApproximationMethod::BFGS:
+-        return "BFGS";
+-
+-    default:
+-        throw runtime_error("Unknown inverse hessian approximation method.\n");
+-    }
+-}
+-
+-
+ const Index& QuasiNewtonMethod::get_epochs_number() const
+ {
+     return epochs_number;
+@@ -98,26 +62,6 @@ const type& QuasiNewtonMethod::get_maximum_time() const
+ void QuasiNewtonMethod::set_loss_index(LossIndex* new_loss_index)
+ {
+     loss_index = new_loss_index;
+-
+-    learning_rate_algorithm.set_loss_index(new_loss_index);
+-}
+-
+-
+-void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
+-    const QuasiNewtonMethod::InverseHessianApproximationMethod& new_inverse_hessian_approximation_method)
+-{
+-    inverse_hessian_approximation_method = new_inverse_hessian_approximation_method;
+-}
+-
+-
+-void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
+-{
+-    if(new_inverse_hessian_approximation_method_name == "DFP")
+-        inverse_hessian_approximation_method = InverseHessianApproximationMethod::DFP;
+-    else if(new_inverse_hessian_approximation_method_name == "BFGS")
+-        inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
+-    else
+-        throw runtime_error("Unknown inverse hessian approximation method: " + new_inverse_hessian_approximation_method_name + ".\n");
+ }
+ 
+ 
+@@ -129,9 +73,8 @@ void QuasiNewtonMethod::set_display(const bool& new_display)
+ 
+ void QuasiNewtonMethod::set_default()
+ {
+-    inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
+-
+-    learning_rate_algorithm.set_default();
++    learning_rate_tolerance = numeric_limits<type>::epsilon();
++    loss_tolerance = numeric_limits<type>::epsilon();
+ 
+     // Stopping criteria
+ 
+@@ -179,64 +122,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
+ }
+ 
+ 
+-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMethodData& optimization_data) const
+-{
+-    switch(inverse_hessian_approximation_method)
+-    {
+-    case InverseHessianApproximationMethod::DFP:
+-        calculate_DFP_inverse_hessian(optimization_data);
+-        return;
+-
+-    case InverseHessianApproximationMethod::BFGS:
+-        calculate_BFGS_inverse_hessian(optimization_data);
+-        return;
+-
+-    default:
+-        throw runtime_error("Unknown inverse hessian approximation method.\n");
+-    }
+-}
+-
+-
+-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
+-{
+-    const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
+-    const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
+-
+-    Tensor<type, 1>& old_inverse_hessian_dot_gradient_difference = optimization_data.old_inverse_hessian_dot_gradient_difference;
+-
+-    const Tensor<type, 2>& old_inverse_hessian = optimization_data.old_inverse_hessian;
+-    Tensor<type, 2>& inverse_hessian = optimization_data.inverse_hessian;
+-
+-    // Dots
+-
+-    Tensor<type, 0> parameters_difference_dot_gradient_difference;
+-
+-    parameters_difference_dot_gradient_difference.device(*thread_pool_device)
+-        = parameters_difference.contract(gradient_difference, axes(0,0));
+-
+-    old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
+-            = old_inverse_hessian.contract(gradient_difference, axes(1,0));
+-
+-    Tensor<type, 0> gradient_dot_hessian_dot_gradient;
+-
+-    gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
+-        = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
+-
+-    // Calculate approximation
+-
+-    inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
+-
+-    inverse_hessian.device(*thread_pool_device)
+-    += self_kronecker_product(thread_pool_device.get(), parameters_difference)
+-    /parameters_difference_dot_gradient_difference(0);
+-
+-    inverse_hessian.device(*thread_pool_device)
+-    -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
+-    / gradient_dot_hessian_dot_gradient(0);
+-}
+-
+-
+-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
++void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
+ {
+     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
+     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
+@@ -286,8 +172,8 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
+                                           BackPropagation& back_propagation,
+                                           QuasiNewtonMethodData& optimization_data) const
+ {
+-    Tensor<type, 1>& parameters = back_propagation.parameters;
+-    const Tensor<type, 1>& gradient = back_propagation.gradient;
++    Tensor<type, 1>& parameters = optimization_data.parameters;
++    const Tensor<type, 1>& gradient = optimization_data.gradient;
+ 
+     Tensor<type, 1>& old_parameters = optimization_data.old_parameters;
+     Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
+@@ -312,7 +198,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
+ 
+     optimization_data.epoch == 0 || is_equal(parameters_difference, type(0)) || is_equal(gradient_difference, type(0))
+         ? set_identity(inverse_hessian)
+-        : calculate_inverse_hessian_approximation(optimization_data);
++        : calculate_inverse_hessian(optimization_data);
+ 
+     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, axes(1,0));
+ 
+@@ -327,7 +213,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
+             ? optimization_data.initial_learning_rate = first_learning_rate
+             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
+ 
+-    const pair<type, type> directional_point = learning_rate_algorithm.calculate_directional_point(
++    const pair<type, type> directional_point = calculate_directional_point(
+              batch,
+              forward_propagation,
+              back_propagation,
+@@ -582,10 +468,6 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
+ {
+     printer.OpenElement("QuasiNewtonMethod");
+ 
+-    add_xml_element(printer, "InverseHessianApproximationMethod", write_inverse_hessian_approximation_method());
+-
+-    learning_rate_algorithm.to_XML(printer);
+-
+     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+     add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+@@ -601,9 +483,7 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
+     Tensor<string, 2> string_matrix(8, 2);
+ 
+     string_matrix.setValues({
+-    {"Inverse hessian approximation method", write_inverse_hessian_approximation_method()},
+-    {"Learning rate method", learning_rate_algorithm.write_learning_rate_method()},
+-    {"Learning rate tolerance", to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()))},
++    {"Learning rate tolerance", to_string(double(learning_rate_tolerance))},
+     {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
+     {"Loss goal", to_string(double(training_loss_goal))},
+     {"Maximum selection error increases", to_string(maximum_selection_failures)},
+@@ -621,17 +501,11 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
+     if (!root_element) 
+         throw runtime_error("Quasi-Newton method element is nullptr.\n");
+     
+-    set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
+-
+     const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+     
+     if (!learning_rate_algorithm_element) 
+         throw runtime_error("Learning rate algorithm element is nullptr.\n");
+     
+-    XMLDocument learning_rate_algorithm_document;
+-    learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
+-    learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
+-
+     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+     set_loss_goal(read_xml_type(root_element, "LossGoal"));
+     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+@@ -691,20 +565,270 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
+ void QuasiNewtonMethodData::print() const
+ {
+     cout << "Training Direction:" << endl
+-        << training_direction << endl
+-        << "Learning rate:" << endl
+-        << learning_rate << endl;
++         << training_direction << endl
++         << "Learning rate:" << endl
++         << learning_rate << endl;
+ }
+ 
+ 
+-#ifdef OPENNN_CUDA
++QuasiNewtonMethod::Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
++    const Batch& batch,
++    ForwardPropagation& forward_propagation,
++    BackPropagation& back_propagation,
++    QuasiNewtonMethodData& optimization_data) const
++{
++    Triplet triplet;
++
++    const NeuralNetwork* neural_network = loss_index->get_neural_network();
++
++    const type regularization_weight = loss_index->get_regularization_weight();
++
++    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
++
++    const Tensor<type, 1>& parameters = optimization_data.parameters;
++
++    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
++
++    // Left point
++
++    triplet.A = { type(0), back_propagation.loss };
++
++    // Right point
++
++    Index count = 0;
++
++    do
++    {
++        count++;
++
++        triplet.B.first = optimization_data.initial_learning_rate*type(count);
++
++        potential_parameters.device(*thread_pool_device)
++                = parameters + training_direction * triplet.B.first;
++
++
++        neural_network->forward_propagate(batch.get_input_pairs(),
++            potential_parameters, forward_propagation);
++
++        loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++        const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
++
++    } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance && triplet.A.second != triplet.B.second);
++
++    if(triplet.A.second > triplet.B.second)
++    {
++        triplet.U = triplet.B;
++
++        triplet.B.first *= golden_ratio;
+ 
+-TrainingResults QuasiNewtonMethod::perform_training_cuda()
++        potential_parameters.device(*thread_pool_device)
++                = parameters + training_direction*triplet.B.first;
++
++        neural_network->forward_propagate(batch.get_input_pairs(),
++                                          potential_parameters,
++                                          forward_propagation);
++
++        loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++        const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
++
++        while(triplet.U.second > triplet.B.second)
++        {
++            triplet.A = triplet.U;
++            triplet.U = triplet.B;
++
++            triplet.B.first *= golden_ratio;
++
++            potential_parameters.device(*thread_pool_device)
++                    = parameters + training_direction*triplet.B.first;
++
++            neural_network->forward_propagate(batch.get_input_pairs(),
++                                              potential_parameters,
++                                              forward_propagation);
++
++            loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++            const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++            triplet.B.second = back_propagation.error() + regularization_weight * regularization;
++        }
++    }
++    else if(triplet.A.second < triplet.B.second)
++    {
++        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
++
++        potential_parameters.device(*thread_pool_device)
++                = parameters + training_direction*triplet.U.first;
++
++        neural_network->forward_propagate(batch.get_input_pairs(),
++                                          potential_parameters,
++                                          forward_propagation);
++
++        loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++        const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++        triplet.U.second = back_propagation.error() + regularization_weight * regularization;
++
++        while(triplet.A.second < triplet.U.second)
++        {
++            triplet.B = triplet.U;
++
++            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
++
++            potential_parameters.device(*thread_pool_device)
++                    = parameters + training_direction*triplet.U.first;
++
++            neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
++
++            loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++            const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++            triplet.U.second = back_propagation.error() + regularization_weight * regularization;
++
++            if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
++            {
++                triplet.U = triplet.A;
++                triplet.B = triplet.A;
++
++                return triplet;
++            }
++        }
++    }
++
++    return triplet;
++}
++
++
++type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
++{
++    const type a = triplet.A.first;
++    const type u = triplet.U.first;
++    const type b = triplet.B.first;
++
++    const type fa = triplet.A.second;
++    const type fu = triplet.U.second;
++    const type fb = triplet.B.second;
++
++    const type numerator = (u-a)*(u-a)*(fu-fb) - (u-b)*(u-b)*(fu-fa);
++
++    const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
++
++    return denominator != type(0)
++       ? u - type(0.5) * (numerator / denominator)
++       : type(0);
++}
++
++
++pair<type, type> QuasiNewtonMethod::calculate_directional_point(
++    const Batch& batch,
++    ForwardPropagation& forward_propagation,
++    BackPropagation& back_propagation,
++    QuasiNewtonMethodData& optimization_data) const
+ {
+-    return TrainingResults();
++
++    const NeuralNetwork* neural_network = loss_index->get_neural_network();
++
++    const Tensor<type, 1>& parameters = optimization_data.parameters;
++
++    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
++
++    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
++
++    Triplet triplet = calculate_bracketing_triplet(batch,
++                                                   forward_propagation,
++                                                   back_propagation,
++                                                   optimization_data);
++    try
++    {
++        triplet.check();
++    }
++    catch(const exception& error)
++    {
++        return triplet.minimum();
++    }
++
++    const type regularization_weight = loss_index->get_regularization_weight();
++
++    pair<type, type> V;
++
++    // Reduce the interval
++
++    while(abs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
++       || abs(triplet.A.second - triplet.B.second) > loss_tolerance)
++    {
++        try
++        {
++            V.first = calculate_learning_rate(triplet);
++        }
++        catch(const exception& error)
++        {
++            cout << error.what() << endl;
++
++            return triplet.minimum();
++        }
++
++        // Calculate loss for V
++
++        potential_parameters.device(*thread_pool_device)
++                = parameters + training_direction*V.first;
++
++        neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
++
++        loss_index->calculate_error(batch, forward_propagation, back_propagation);
++
++        const type regularization = loss_index->calculate_regularization(potential_parameters);
++
++        V.second = back_propagation.error() + regularization_weight * regularization;
++
++        // Update points
++
++        if(V.first <= triplet.U.first)
++        {
++            if(V.second >= triplet.U.second)
++            {
++                triplet.A = V;
++            }
++            else
++            {
++                triplet.B = triplet.U;
++                triplet.U = V;
++            }
++        }
++        else
++        {
++            if(V.second >= triplet.U.second)
++            {
++                triplet.B = V;
++            }
++            else
++            {
++                triplet.A = triplet.U;
++                triplet.U = V;
++            }
++        }
++
++        // Check triplet
++
++        try
++        {
++            triplet.check();
++        }
++        catch(const exception& error)
++        {
++            return triplet.minimum();
++        }
++    }
++
++    return triplet.U;
+ }
+ 
+-#endif
+ 
+ REGISTER(OptimizationAlgorithm, QuasiNewtonMethod, "QuasiNewtonMethod");
+ 
+diff --git a/opennn/quasi_newton_method.h b/opennn/quasi_newton_method.h
+index 0cf030fb7..bffbacb03 100644
+--- a/opennn/quasi_newton_method.h
++++ b/opennn/quasi_newton_method.h
+@@ -22,15 +22,33 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
+ 
+ public:
+ 
+-   enum class InverseHessianApproximationMethod{DFP, BFGS};
++    struct Triplet
++    {
++        Triplet();
+ 
+-   QuasiNewtonMethod(LossIndex* = nullptr);
++        bool operator == (const Triplet& other_triplet) const
++        {
++            return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
++        }
++
++        type get_length() const;
++
++        pair<type, type> minimum() const;
++
++        string struct_to_string() const;
++
++        void print() const;
+ 
+-   const LearningRateAlgorithm& get_learning_rate_algorithm() const;
+-   LearningRateAlgorithm* get_learning_rate_algorithm();
++        void check() const;
+ 
+-   const InverseHessianApproximationMethod& get_inverse_hessian_approximation_method() const;
+-   string write_inverse_hessian_approximation_method() const;
++        pair<type, type> A;
++
++        pair<type, type> U;
++
++        pair<type, type> B;
++    };
++
++   QuasiNewtonMethod(LossIndex* = nullptr);
+ 
+    const Index& get_epochs_number() const;
+ 
+@@ -48,9 +66,6 @@ public:
+ 
+    void set_loss_index(LossIndex*) override;
+ 
+-   void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
+-   void set_inverse_hessian_approximation_method(const string&);
+-
+    void set_display(const bool&) override;
+ 
+    void set_default();
+@@ -67,11 +82,7 @@ public:
+ 
+    // Training
+ 
+-   void calculate_DFP_inverse_hessian(QuasiNewtonMethodData&) const;
+-
+-   void calculate_BFGS_inverse_hessian(QuasiNewtonMethodData&) const;
+-
+-   void calculate_inverse_hessian_approximation(QuasiNewtonMethodData&) const;
++   void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
+ 
+    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&) const;
+ 
+@@ -87,11 +98,20 @@ public:
+    
+    Tensor<string, 2> to_string_matrix() const override;
+ 
+-private: 
++   type calculate_learning_rate(const Triplet&) const;
+ 
+-   LearningRateAlgorithm learning_rate_algorithm;
++   Triplet calculate_bracketing_triplet(const Batch&,
++                                        ForwardPropagation&,
++                                        BackPropagation&,
++                                        QuasiNewtonMethodData&) const;
+ 
+-   InverseHessianApproximationMethod inverse_hessian_approximation_method;
++   pair<type, type> calculate_directional_point(const Batch&,
++                                                ForwardPropagation&,
++                                                BackPropagation&,
++                                                QuasiNewtonMethodData&) const;
++
++
++private: 
+ 
+    type first_learning_rate = type(0.01);
+ 
+@@ -109,13 +129,11 @@ private:
+ 
+    const type epsilon = numeric_limits<type>::epsilon();
+ 
+-   #ifdef OPENNN_CUDA
+-
+-    public:
++   type learning_rate_tolerance;
+ 
+-    TrainingResults perform_training_cuda();
++   type loss_tolerance;
+ 
+-   #endif
++   const type golden_ratio = type(1.618);
+ };
+ 
+ 
+@@ -131,6 +149,7 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
+ 
+     // Neural network data
+ 
++    Tensor<type, 1> parameters;
+     Tensor<type, 1> old_parameters;
+     Tensor<type, 1> parameters_difference;
+ 
+@@ -138,6 +157,7 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
+ 
+     // Loss index data
+ 
++    Tensor<type, 1> gradient;
+     Tensor<type, 1> old_gradient;
+     Tensor<type, 1> gradient_difference;
+ 
+diff --git a/opennn/stochastic_gradient_descent.cpp b/opennn/stochastic_gradient_descent.cpp
+index 827406399..180f1b1c0 100644
+--- a/opennn/stochastic_gradient_descent.cpp
++++ b/opennn/stochastic_gradient_descent.cpp
+@@ -135,9 +135,59 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
+ 
+ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
+                                                   StochasticGradientDescentData& optimization_data) const
+-{
++{               
+     NeuralNetwork* neural_network = loss_index->get_neural_network();
+ 
++    const Index layers_number = neural_network->get_layers_number();
++
++    for(Index i = 0; i < layers_number; i++)
++    {
++        Layer* layer = neural_network->get_layer(i).get();
++
++        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[i].get();
++
++        const vector<pair<type*, Index>> layer_parameters = layer->get_parameter_pairs();
++        vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
++
++        for(Index j = 0; j < layer_parameters.size(); j++)
++        {
++            //layer_parameters[j] = layer_parameters[j] - layer_parameter_deltas[j]*0.01;
++
++            Tensor<type, 1> parameters;// = back_propagation.parameters;
++            Tensor<type, 1> gradient;// = back_propagation.gradient;
++
++            Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment[i][j];
++            Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment[i][j];
++
++            const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
++
++            if(momentum <= type(0))
++            {
++                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
++
++                parameters.device(*thread_pool_device) += parameters_increment;
++            }
++            else if(momentum > type(0) && !nesterov)
++            {
++                parameters_increment.device(*thread_pool_device) =
++                    gradient * (-learning_rate) + momentum * last_parameters_increment;
++
++                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
++
++                parameters.device(*thread_pool_device) += parameters_increment;
++            }
++            else if(momentum > type(0) && nesterov)
++            {
++                parameters_increment.device(*thread_pool_device)
++                = gradient * (-learning_rate) + momentum * last_parameters_increment;
++
++                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
++
++                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
++            }
++        }
++    }
++/*
+     Tensor<type, 1>& parameters = back_propagation.parameters;
+     const Tensor<type, 1>& gradient = back_propagation.gradient;
+ 
+@@ -175,6 +225,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
+     // optimization_data.iteration++;
+ 
+     neural_network->set_parameters(parameters);
++*/
+ }
+ 
+ 
+@@ -510,13 +561,33 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
+ 
+     const NeuralNetwork* neural_network = loss_index->get_neural_network();
+ 
+-    const Index parameters_number = neural_network->get_parameters_number();
++    const Index layers_number = neural_network->get_layers_number();
++
++    parameters_increment.resize(layers_number);
++
++    for(Index i = 0; i < layers_number; i++)
++    {
++        Layer* layer = neural_network->get_layer(i).get();
++
++        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
++
++        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
++        {
++            parameters_increment[i][j].resize(layer_parameter_pairs[j].second);
++            last_parameters_increment.resize(layer_parameter_pairs[j].second);
++        }
++    }
++
++
++    //const Index parameters_number = neural_network->get_parameters_number();
++
++
+ 
+-    parameters_increment.resize(parameters_number);
+-    last_parameters_increment.resize(parameters_number);
++    //parameters_increment.resize(parameters_number);
++    //last_parameters_increment.resize(parameters_number);
+ 
+-    parameters_increment.setZero();
+-    last_parameters_increment.setZero();
++    //parameters_increment.setZero();
++    //last_parameters_increment.setZero();
+ }
+ 
+ 
+diff --git a/opennn/stochastic_gradient_descent.h b/opennn/stochastic_gradient_descent.h
+index 7784a68c0..d83302528 100644
+--- a/opennn/stochastic_gradient_descent.h
++++ b/opennn/stochastic_gradient_descent.h
+@@ -50,7 +50,6 @@ public:
+ 
+    void set_maximum_epochs_number(const Index&);
+ 
+-
+    void set_loss_goal(const type&);
+    void set_maximum_time(const type&);
+ 
+@@ -109,8 +108,8 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
+ 
+     Index iteration = 0;
+ 
+-    Tensor<type, 1> parameters_increment;
+-    Tensor<type, 1> last_parameters_increment;
++    vector<vector<Tensor<type, 1>>> parameters_increment;
++    vector<vector<Tensor<type, 1>>> last_parameters_increment;
+ };
+ 
+ 
+diff --git a/tests/normalized_squared_error_test.cpp b/tests/normalized_squared_error_test.cpp
+index 86b44d41e..0d037f533 100644
+--- a/tests/normalized_squared_error_test.cpp
++++ b/tests/normalized_squared_error_test.cpp
+@@ -65,7 +65,9 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
+     EXPECT_EQ(back_propagation.errors.dimension(0), samples_number);
+     EXPECT_EQ(back_propagation.errors.dimension(1), targets_number);
+     EXPECT_GE(back_propagation.error(), 0);
++/*
+     EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
++*/
+ }
+ 
+ 
