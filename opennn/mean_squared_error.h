@@ -51,6 +51,8 @@ public:
 
    string get_name() const override;
 
+   void from_XML(const XMLDocument& document) override;
+
 #ifdef OPENNN_CUDA
 
    void calculate_error_cuda(const BatchCuda&,

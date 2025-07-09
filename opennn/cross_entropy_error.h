@@ -53,7 +53,7 @@ public:
 
    // Serialization
       
-   virtual void from_XML(const XMLDocument&);
+   void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
 

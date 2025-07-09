@@ -158,6 +158,22 @@ string MeanSquaredError::get_name() const
 }
 
 
+void MeanSquaredError::from_XML(const XMLDocument& document)
+{
+    const XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
+
+    if(!root_element)
+        throw runtime_error("Mean squared element is nullptr.\n");
+
+    // Regularization
+
+    XMLDocument regularization_document;
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+    regularization_from_XML(regularization_document);
+}
+
+
 void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("MeanSquaredError");

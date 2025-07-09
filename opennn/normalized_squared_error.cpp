@@ -274,7 +274,7 @@ void NormalizedSquaredError::to_XML(XMLPrinter& file_stream) const
 }
 
 
-void NormalizedSquaredError::from_XML(const XMLDocument& document) const
+void NormalizedSquaredError::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 

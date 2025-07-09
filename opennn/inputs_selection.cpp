@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "optimization_algorithm.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 

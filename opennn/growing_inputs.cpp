@@ -10,6 +10,7 @@
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer_2d.h"
+#include "optimization_algorithm.h"
 #include "training_strategy.h"
 
 namespace opennn
