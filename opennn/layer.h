@@ -62,8 +62,25 @@ public:
 
             set_random(this_parameters);
         }
-
     }
+
+    virtual void set_parameters_glorot()
+    {
+        const Index inputs_number = get_inputs_number();
+        const Index outputs_number = get_outputs_number();
+
+        const type limit = sqrt(6.0 / (inputs_number + outputs_number));
+
+        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+
+        for(Index i = 0; i < parameter_pairs.size(); i++)
+        {
+            TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+
+            set_random(this_parameters, -limit, limit);
+        }
+    }
+
 
     Index get_parameters_number() const
     {

@@ -61,10 +61,6 @@ public:
 
    void get_parameters(Tensor<type, 1>&) const override;
 
-   // Parameters initialization
-
-   void set_parameters_glorot();
-
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,

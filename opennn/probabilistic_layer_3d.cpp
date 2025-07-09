@@ -172,16 +172,6 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
 }
 
 
-void Probabilistic3d::set_parameters_glorot()
-{
-    biases.setZero();
-    
-    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
-
-    set_random(weights, -limit, limit);
-}
-
-
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                              Tensor<type, 3>& combinations) const
 {

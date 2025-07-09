@@ -175,27 +175,6 @@ copy_from_vector(projection_biases, new_parameters, index);
 
 
 
-void MultiHeadAttention::set_parameters_glorot()
-{
-query_biases.setZero();
-key_biases.setZero();
-value_biases.setZero();
-projection_biases.setZero();
-
-const Index hidden_depth = get_hidden_depth();
-const Index embedding_dimension = get_embedding_dimension();
-const Index heads_number = get_heads_number();
-const type limit = sqrt(6 / type(embedding_dimension + hidden_depth * heads_number));
-const type minimum = -limit;
-const type maximum = limit;
-
-set_random(query_weights, minimum, maximum);
-set_random(key_weights, minimum, maximum);
-set_random(value_weights, minimum, maximum);
-set_random(projection_weights, minimum, maximum);
-}
-
-
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
 {
 dropout_rate = new_dropout_rate;
