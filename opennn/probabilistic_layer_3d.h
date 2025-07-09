@@ -61,6 +61,7 @@ public:
 
    void get_parameters(Tensor<type, 1>&) const override;
 
+<<<<<<< HEAD
    vector<pair<type*, Index>> get_parameter_pairs() const override
    {
        return {{(type*)(biases.data()), biases.size()},
@@ -71,6 +72,8 @@ public:
 
    void set_parameters_glorot();
 
+=======
+>>>>>>> 57673245845e745cc1260946ccf2e510d33c97d9
    // Forward propagation
 
    void calculate_combinations(const Tensor<type, 3>&,

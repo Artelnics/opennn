@@ -139,6 +139,7 @@ public:
    // Parameters initialization
 
    void set_parameters_random() const;
+   void set_parameters_glorot() const;
 
    // Output
 

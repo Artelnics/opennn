@@ -454,6 +454,16 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
+void NeuralNetwork::set_parameters_glorot() const
+{
+    const Index layers_number = get_layers_number();
+
+    #pragma omp parallel for
+    for(Index i = 0; i < layers_number; i++)
+        layers[i]->set_parameters_glorot();
+}
+
+
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
@@ -462,7 +472,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     Index first_layer_index = 0;
     Index last_layer_index = layers_number-1;
-
 
     if(is_training)
     {

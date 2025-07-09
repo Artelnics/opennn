@@ -179,13 +179,13 @@ void LossIndex::back_propagate(const Batch& batch,
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
-/*
+
     if(regularization_method == RegularizationMethod::NoRegularization)
         return;
 
     type& regularization = back_propagation.regularization;
     type& loss = back_propagation.loss;
-
+/*
     const Tensor<type, 1>& parameters = back_propagation.parameters;
     Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
     Tensor<type, 1>& gradient = back_propagation.gradient;

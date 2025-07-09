@@ -48,7 +48,10 @@ public:
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
+<<<<<<< HEAD
    // void set_parameters_random() override;
+=======
+>>>>>>> 57673245845e745cc1260946ccf2e510d33c97d9
    void set_parameters_glorot();
 
    void calculate_combinations(const Tensor<type, 3>&,

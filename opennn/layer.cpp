@@ -94,6 +94,7 @@ vector<string> Layer::get_default_output_names() const
     return output_names;
 }
 
+
 bool Layer::get_is_trainable() const
 {
     return is_trainable;

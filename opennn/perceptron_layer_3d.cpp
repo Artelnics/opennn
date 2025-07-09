@@ -127,16 +127,6 @@ void Dense3d::set_activation_function(const string& new_activation_function)
 }
 
 
-void Dense3d::set_parameters_glorot()
-{
-    biases.setZero();
-
-    const type limit = sqrt(6 / type(get_input_embedding() + get_output_embedding()));
-
-    set_random(weights, -limit, limit);
-}
-
-
 void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                      Tensor<type, 3>& combinations) const
 {

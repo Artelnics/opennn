@@ -64,7 +64,6 @@ public:
              const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
-    void set_parameters_glorot();   
 
     void set_dropout_rate(const type&);
 
@@ -105,9 +104,7 @@ public:
 private:
 
     Index query_sequence_length = 0;
-
     Index source_sequence_length = 0;
-
 
     Index heads_number = 0;
     Index embedding_dimension = 0;
