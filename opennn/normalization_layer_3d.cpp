@@ -335,6 +335,15 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
     return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
 
+vector<pair<type*, Index>> Normalization3dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)gamma_derivatives.data(), gamma_derivatives.size()},
+        {(type*)beta_derivatives.data(), beta_derivatives.size()}
+    };
+}
+
+
 REGISTER(Layer, Normalization3d, "Normalization3d")
 REGISTER(LayerForwardPropagation, Normalization3dForwardPropagation, "Normalization3d")
 REGISTER(LayerBackPropagation, Normalization3dBackPropagation, "Normalization3d")

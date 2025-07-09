@@ -30,6 +30,14 @@ public:
 
     void get_parameters(Tensor<type, 1>&) const override;
 
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {
+            {(type*)gammas.data(), gammas.size()},
+            {(type*)betas.data(), betas.size()}
+        };
+    }
+
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
@@ -89,6 +97,8 @@ struct Normalization3dBackPropagation : LayerBackPropagation
                                    Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

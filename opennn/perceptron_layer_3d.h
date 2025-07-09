@@ -29,8 +29,6 @@ public:
     Index get_input_embedding() const;
     Index get_output_embedding() const;
 
-   // @todo
-
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
 
@@ -50,7 +48,7 @@ public:
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
-   void set_parameters_random() override;
+   // void set_parameters_random() override;
    void set_parameters_glorot();
 
    void calculate_combinations(const Tensor<type, 3>&,

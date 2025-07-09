@@ -446,6 +446,14 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
 }
 
 
+vector<pair<type*, Index>> Probabilistic3dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
+
 REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
 REGISTER(LayerForwardPropagation, Probabilistic3dForwardPropagation, "Probabilistic3d")
 REGISTER(LayerBackPropagation, Probabilistic3dBackPropagation, "Probabilistic3d")

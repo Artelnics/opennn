@@ -32,6 +32,14 @@ public:
 
     void get_parameters(Tensor<type, 1>&) const override;
 
+
+    // @todo check bias
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {
+            {(type*)(weights.data()), weights.size()}
+        };
+    }
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
@@ -106,6 +114,8 @@ private:
 
     Index sequence_length = 0;
 
+    Tensor<type, 1> biases;
+
     Tensor<type, 2> weights;
 
     Tensor<type, 2> positional_encoding;
@@ -133,6 +143,8 @@ struct EmbeddingBackPropagation : LayerBackPropagation
     EmbeddingBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

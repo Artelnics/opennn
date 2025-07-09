@@ -42,6 +42,20 @@ public:
 
     void get_parameters(Tensor<type, 1>&) const override;
 
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {
+            {(type*)query_weights.data(), query_weights.size()},
+            {(type*)query_biases.data(), query_biases.size()},
+            {(type*)key_weights.data(), key_weights.size()},
+            {(type*)key_biases.data(), key_biases.size()},
+            {(type*)value_weights.data(), value_weights.size()},
+            {(type*)value_biases.data(), value_biases.size()},
+            {(type*)projection_weights.data(), projection_weights.size()},
+            {(type*)projection_biases.data(), projection_biases.size()}
+        };
+    }
+
     void set(const Index& = 0,
              const Index& = 0,
              const Index& = 0,
@@ -154,6 +168,8 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     MultiheadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

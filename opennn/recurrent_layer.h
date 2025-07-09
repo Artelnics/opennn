@@ -28,6 +28,15 @@ public:
 
    void get_parameters(Tensor<type, 1>&) const override;
 
+   vector<pair<type*, Index>> get_parameter_pairs() const override
+   {
+       return {
+           {(type*)biases.data(), biases.size()},
+           {(type*)input_weights.data(), input_weights.size()},
+           {(type*)recurrent_weights.data(), recurrent_weights.size()}
+       };
+   }
+
    string get_activation_function() const;
 
    void set(const dimensions& = {}, const dimensions& = {});
@@ -113,6 +122,8 @@ struct RecurrentBackPropagation : LayerBackPropagation
     RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

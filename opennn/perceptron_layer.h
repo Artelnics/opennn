@@ -163,13 +163,7 @@ struct Dense2dBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override
-    {
-        return {
-            { (type*)bias_deltas.data(), bias_deltas.size() },
-            { (type*)weight_deltas.data(), weight_deltas.size() }
-        };
-    }
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

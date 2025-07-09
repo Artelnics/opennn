@@ -359,6 +359,14 @@ vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_p
     return vector<pair<type*, dimensions>>();
 }
 
+vector<pair<type*, Index>> EmbeddingBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
+
+
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {

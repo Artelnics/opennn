@@ -435,6 +435,15 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
 
+vector<pair<type*, Index>> RecurrentBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)input_weight_deltas.data(), input_weight_deltas.size()},
+        {(type*)recurrent_weight_deltas.data(), recurrent_weight_deltas.size()}
+    };
+}
+
 REGISTER(Layer, Recurrent, "Recurrent")
 REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
 REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")

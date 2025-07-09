@@ -521,6 +521,14 @@ vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pai
 }
 
 
+vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        { (type*)bias_deltas.data(), bias_deltas.size() },
+        { (type*)weight_deltas.data(), weight_deltas.size() }
+    };
+}
+
 void Dense2dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl

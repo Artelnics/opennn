@@ -806,6 +806,21 @@ vector<pair<type*, dimensions>> MultiheadAttentionBackPropagation::get_input_der
          {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}} };
 }
 
+
+vector<pair<type*, Index>> MultiheadAttentionBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)query_weight_deltas.data(), query_weight_deltas.size()},
+        {(type*)query_bias_deltas.data(), query_bias_deltas.size()},
+        {(type*)key_weight_deltas.data(), key_weight_deltas.size()},
+        {(type*)key_bias_deltas.data(), key_bias_deltas.size()},
+        {(type*)value_weight_deltas.data(), value_weight_deltas.size()},
+        {(type*)value_bias_deltas.data(), value_bias_deltas.size()},
+        {(type*)projection_weight_deltas.data(), projection_weight_deltas.size()},
+        {(type*)projection_bias_deltas.data(), projection_bias_deltas.size()}
+    };
+}
+
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 REGISTER(LayerForwardPropagation, MultiheadAttentionForwardPropagation, "MultiHeadAttention")
 REGISTER(LayerBackPropagation, MultiheadAttentionBackPropagation, "MultiHeadAttention")
