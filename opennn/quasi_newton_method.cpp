@@ -289,15 +289,15 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     const string error_type = loss_index->get_name();
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index training_samples_number = dataset->get_samples_number("Training");
 
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     // Neural network
 

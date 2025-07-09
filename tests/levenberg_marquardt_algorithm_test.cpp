@@ -33,7 +33,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     Dataset dataset(1, { 1 }, { 1 });
     //dataset.set_data_constant(type(1));
     dataset.set_data_random();
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     //NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     //neural_network.set_parameters_random();

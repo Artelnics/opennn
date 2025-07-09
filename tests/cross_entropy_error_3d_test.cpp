@@ -45,19 +45,19 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     vector<opennn::Dataset::RawVariable> raw_variables(2);
 
     raw_variables[0].name = "input";
-    raw_variables[0].use = opennn::Dataset::VariableUse::Input;
+    raw_variables[0].use = opennn::"Input";
     raw_variables[0].type = opennn::Dataset::RawVariableType::Numeric;
 
     raw_variables[1].name = "target";
-    raw_variables[1].use = opennn::Dataset::VariableUse::Target;
+    raw_variables[1].use = opennn::"Target";
     raw_variables[1].type = opennn::Dataset::RawVariableType::Numeric;
 
     language_dataset.set_raw_variables(raw_variables);
     language_dataset.set_data(data);
-    language_dataset.set_sample_use(0, opennn::Dataset::SampleUse::Training);
+    language_dataset.set_sample_use(0, opennn::"Training");
 
     for(Index i = 0; i < samples_number; ++i)
-        language_dataset.set_sample_use(i, opennn::Dataset::SampleUse::Training);
+        language_dataset.set_sample_use(i, opennn::"Training");
 
     Batch batch(samples_number, &language_dataset);
     batch.fill({0}, {0}, {}, {0});
@@ -117,14 +117,14 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     dataset.set_data(data);
 
     for (Index i = 0; i < inputs_number; i++)
-        dataset.set_raw_variable_use(i, Dataset::VariableUse::Input);
+        dataset.set_raw_variable_use(i, "Input");
 
     for (Index i = 0; i < inputs_number; i++)
-        dataset.set_raw_variable_use(i + inputs_number, Dataset::VariableUse::Target);
+        dataset.set_raw_variable_use(i + inputs_number, "Target");
 
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
-    training_samples_indices = dataset.get_sample_indices(SampleUse::Training);
+    training_samples_indices = dataset.get_sample_indices("Training");
 
     input_variables_indices = dataset.get_input_variables_indices();
     target_variables_indices = dataset.get_target_variables_indices();
@@ -195,12 +195,12 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         dataset.set_data_random_language_model(batch_size, inputs_number, context_length, input_dimensions, context_dimension);
 
-        dataset.set(Dataset::SampleUse::Training);
+        dataset.set("Training");
 
-        training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
-        decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Decoder);
-        input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
-        target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
+        training_samples_indices = dataset.get_sample_indices("Training");
+        decoder_variables_indices = dataset.get_variable_indices("Decoder");
+        input_variables_indices = dataset.get_variable_indices("Input");
+        target_variables_indices = dataset.get_variable_indices("Target");
         
         batch.set(batch_size, &dataset);
 
@@ -209,7 +209,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, layers_number });
         
-        ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
+        ForwardPropagation forward_propagation(dataset.get_samples_number("Training"), &transformer);
         
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
         

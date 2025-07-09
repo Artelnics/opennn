@@ -154,7 +154,7 @@ void InputsSelection::check() const
 
     const Dataset* dataset = loss_index->get_data_set();
 
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
@@ -273,14 +273,14 @@ string InputsSelection::write_time(const type& time) const
 }
 
 
-Index InputsSelection::get_input_index(const Tensor<Dataset::VariableUse, 1>& uses, const Index& inputs_number) const
+Index InputsSelection::get_input_index(const Tensor<string, 1>& uses, const Index& inputs_number) const
 {
     Index i = 0;
     Index j = 0;
 
     while(i < uses.size())
     {
-        if (uses[i] == Dataset::VariableUse::Input)
+        if (uses[i] == "Input")
         {
             if (j == inputs_number)
                 break;

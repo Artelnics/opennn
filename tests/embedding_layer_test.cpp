@@ -89,7 +89,7 @@ TEST(Embedding, ForwardPropagate)
 TEST(Embedding, BackPropagate)
 {
     LanguageDataset language_dataset("../../examples/amazon_reviews/data/amazon_cells_labelled.txt");
-    language_dataset.set(Dataset::SampleUse::Training);
+    language_dataset.set("Training");
 
     const Index embedding_dimension   = 3;
     const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
@@ -103,7 +103,7 @@ TEST(Embedding, BackPropagate)
 
     neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), "Logistic"));
 
-    Tensor<type, 2> inputs  = language_dataset.get_data(Dataset::VariableUse::Input);
+    Tensor<type, 2> inputs  = language_dataset.get_data_variables("Input");
     Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     MeanSquaredError mse(&neural_network, &language_dataset);
@@ -116,7 +116,7 @@ TEST(Embedding, BackPropagate)
     // const Index embedding_dimension = 8;
 
     // LanguageDataset language_dataset(samples_number, sequence_length, vocabulary_size);
-    // language_dataset.set(Dataset::SampleUse::Training);
+    // language_dataset.set("Training");
 
     // NeuralNetwork neural_network;
 
@@ -126,13 +126,13 @@ TEST(Embedding, BackPropagate)
     // neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
     // neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), Dense2d::Activation::Logistic));
 
-    // Tensor<type, 2> inputs = language_dataset.get_data(Dataset::VariableUse::Input);
+    // Tensor<type, 2> inputs = language_dataset.get_data("Input");
 
     // Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
 
-    // const vector<Index> target_variable_indices = language_dataset.get_variable_indices(Dataset::VariableUse::Target);
+    // const vector<Index> target_variable_indices = language_dataset.get_variable_indices("Target");
     // print_vector(target_variable_indices);
 
     // cout << "mean_squared_error.calculate_numerical_error(): " << mean_squared_error.calculate_numerical_error() << endl;

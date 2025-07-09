@@ -102,7 +102,7 @@ void WeightedSquaredError::set_weights()
     if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables 
-        = dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables("Target");
 
     if(target_raw_variables.empty())
     {
@@ -135,13 +135,13 @@ void WeightedSquaredError::set_normalization_coefficient()
     if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables
-        = dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables("Target");
 
     if(target_raw_variables.empty())
         normalization_coefficient = type(1);
     else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+        const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
         const Index negatives = dataset->calculate_used_negatives(target_variable_indices[0]);
 

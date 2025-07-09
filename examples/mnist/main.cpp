@@ -32,9 +32,9 @@ int main()
 
         // Neural network
 
-        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions(Dataset::VariableUse::Input),
+        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions("Input"),
             {8, 4},
-            image_dataset.get_dimensions(Dataset::VariableUse::Target));
+            image_dataset.get_dimensions("Target"));
 
         // Training strategy
 

@@ -56,8 +56,8 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-    vector<Descriptives> scale_variables(const VariableUse&) override;
-    void unscale_variables(const VariableUse&);
+    vector<Descriptives> scale_variables(const string&) override;
+    void unscale_variables(const string&);
 
     void read_bmp(const dimensions& new_input_dimensions = { 0, 0, 0 });
 

@@ -635,12 +635,12 @@ void BackPropagation::print() const
 
 type LossIndex::calculate_numerical_error()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
 
@@ -665,12 +665,12 @@ type LossIndex::calculate_numerical_error()
 Tensor<type, 1> LossIndex::calculate_gradient()
 {
 /*
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
 
@@ -696,19 +696,19 @@ Tensor<type, 1> LossIndex::calculate_gradient()
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     Batch batch(samples_number, dataset);
 
     // @todo decoder variables
     // if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
     // {
-    //     const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    //     const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
     //     batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
     // }
     // else
@@ -771,11 +771,11 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
@@ -845,14 +845,14 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 Tensor<type, 1> LossIndex::calculate_numerical_input_deltas()
 {
 
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const dimensions inputs_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const Index samples_number = dataset->get_samples_number("Training");
+    const dimensions inputs_dimensions = dataset->get_dimensions("Input");
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
@@ -902,11 +902,11 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_deltas()
 
 Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
@@ -981,11 +981,11 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);

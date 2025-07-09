@@ -110,7 +110,7 @@ int main()
         // cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
 
-        // const Tensor<type, 2> inputs = language_dataset.get_data(Dataset::VariableUse::Input);
+        // const Tensor<type, 2> inputs = language_dataset.get_data("Input");
 
         // cout << "inputs_dataset: " << inputs.dimensions() << endl;
 

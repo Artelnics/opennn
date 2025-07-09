@@ -150,13 +150,13 @@ TEST(NeuralNetworkTest, ForwardPropagate)
                     dimensions{inputs_number},
                     dimensions{outputs_number});
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     Batch batch(batch_size, &dataset);
-    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
-               dataset.get_variable_indices(Dataset::VariableUse::Input),
-               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
-               dataset.get_variable_indices(Dataset::VariableUse::Target));
+    batch.fill(dataset.get_sample_indices("Training"),
+               dataset.get_variable_indices("Input"),
+               dataset.get_variable_indices("Decoder"),
+               dataset.get_variable_indices("Target"));
 
     // Test Logistic
 
