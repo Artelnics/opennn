@@ -34,7 +34,6 @@ public:
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
 
-   Index get_parameters_number() const override;
    type get_dropout_rate() const;
    void get_parameters(Tensor<type, 1>&) const override;
 

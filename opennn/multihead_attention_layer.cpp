@@ -97,15 +97,6 @@ return { query_sequence_length, embedding_dimension};
 }
 
 
-Index MultiHeadAttention::get_parameters_number() const
-{
-return query_weights.size() + query_biases.size()
-     + key_weights.size() + key_biases.size()
-     + value_weights.size() + value_biases.size()
-     + projection_weights.size() + projection_biases.size();
-}
-
-
 void MultiHeadAttention::get_parameters(Tensor<type, 1>& parameters) const
 {
 parameters.resize(get_parameters_number());
@@ -182,21 +173,6 @@ copy_from_vector(projection_weights, new_parameters, index);
 copy_from_vector(projection_biases, new_parameters, index);
 }
 
-
-void MultiHeadAttention::set_parameters_random()
-{
-const type minimum = type(-0.2);
-const type maximum = type(0.2);
-
-set_random(query_weights, minimum, maximum);
-set_random(query_biases, minimum, maximum);
-set_random(key_weights, minimum, maximum);
-set_random(key_biases, minimum, maximum);
-set_random(value_weights, minimum, maximum);
-set_random(value_biases, minimum, maximum);
-set_random(projection_weights, minimum, maximum);
-set_random(projection_biases, minimum, maximum);
-}
 
 
 void MultiHeadAttention::set_parameters_glorot()

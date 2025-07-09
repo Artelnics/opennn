@@ -109,23 +109,7 @@ void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) con
 }
 
 
-void Layer::set_parameters_random()
-{
-}
-
-
 void Layer::set_parameters(const Tensor<type, 1>&, Index&)
-{
-}
-
-
-Index Layer::get_parameters_number() const
-{
-    return 0;
-}
-
-
-void Layer::get_parameters(Tensor<type, 1>&) const
 {
 }
 

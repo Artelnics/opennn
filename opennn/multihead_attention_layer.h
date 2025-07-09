@@ -40,7 +40,6 @@ public:
 
     dimensions get_output_dimensions() const override;
 
-    Index get_parameters_number() const override;
     void get_parameters(Tensor<type, 1>&) const override;
 
     void set(const Index& = 0,
@@ -51,9 +50,7 @@ public:
              const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
-    void set_parameters_random() override;
-    void set_parameters_glorot();
-    
+    void set_parameters_glorot();   
 
     void set_dropout_rate(const type&);
 

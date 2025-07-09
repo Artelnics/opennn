@@ -58,12 +58,6 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-Index Embedding::get_parameters_number() const
-{
-    return weights.size();
-}
-
-
 void Embedding::get_parameters(Tensor<type, 1>& parameters) const
 {
     parameters.resize(get_parameters_number());

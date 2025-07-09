@@ -49,12 +49,6 @@ dimensions Normalization3d::get_output_dimensions() const
 }
 
 
-Index Normalization3d::get_parameters_number() const
-{
-    return gammas.size() + betas.size();
-}
-
-
 void Normalization3d::get_parameters(Tensor<type, 1>& parameters) const
 {
     parameters.resize(gammas.size() + betas.size());
@@ -90,12 +84,6 @@ void Normalization3d::set_parameters(const Tensor<type, 1>& new_parameters, Inde
     copy_from_vector(betas, new_parameters, index);
 }
 
-
-void Normalization3d::set_parameters_random()
-{
-    set_random(gammas);
-    set_random(betas);
-}
 
 
 void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,

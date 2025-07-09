@@ -711,6 +711,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     //     predicted_index = outputs(0);
 
     // return predicted_index;
+    return 0;
 }
 
 

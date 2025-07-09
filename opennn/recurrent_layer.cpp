@@ -33,12 +33,6 @@ dimensions Recurrent::get_output_dimensions() const
 }
 
 
-Index Recurrent::get_parameters_number() const
-{
-    return biases.size() + input_weights.size() + recurrent_weights.size();
-}
-
-
 Index Recurrent::get_timesteps() const
 {
     return time_steps;
@@ -130,13 +124,6 @@ void Recurrent::set_activation_function(const string& new_activation_function)
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
-
-void Recurrent::set_parameters_random()
-{
-    set_random(biases);
-    set_random(input_weights);
-    set_random(recurrent_weights);
-}
 
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
                                        Tensor<type, 2>& combinations) const

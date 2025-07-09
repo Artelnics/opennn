@@ -44,12 +44,6 @@ void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-Index Dense2d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 type Dense2d::get_dropout_rate() const
 {
     return dropout_rate;
@@ -168,13 +162,6 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
     if (new_activation_function == "Softmax" && get_outputs_number() == 1)
         activation_function = "Logistic";
-}
-
-
-void Dense2d::set_parameters_random()
-{
-    set_random(biases);
-    set_random(weights);
 }
 
 
@@ -583,7 +570,10 @@ void Dense2dLayerBackPropagationLM::print() const
 }
 
 
-void Dense2d::normalization(Tensor<type, 1> &means, Tensor<type, 1> &standard_deviations, const Tensor<type, 2> &inputs, Tensor<type, 2> &outputs) const
+void Dense2d::normalization(Tensor<type, 1> &means,
+                            Tensor<type, 1> &standard_deviations,
+                            const Tensor<type, 2> &inputs,
+                            Tensor<type, 2> &outputs) const
 {
 
     const array<Index, 2> rows({outputs.dimension(0), 1});

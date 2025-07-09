@@ -81,12 +81,6 @@ string Probabilistic3d::get_activation_function_text() const
 }
 
 
-Index Probabilistic3d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
 {
     parameters.resize(weights.size() + biases.size());
@@ -175,14 +169,6 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
         set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-}
-
-
-void Probabilistic3d::set_parameters_random()
-{
-    set_random(biases);
-
-    set_random(weights);
 }
 
 

@@ -59,13 +59,10 @@ public:
 
    // Parameters
 
-   Index get_parameters_number() const override;
    void get_parameters(Tensor<type, 1>&) const override;
 
    // Parameters initialization
 
-   
-   void set_parameters_random() override;
    void set_parameters_glorot();
 
    // Forward propagation
