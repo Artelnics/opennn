@@ -58,12 +58,6 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-Index Embedding::get_parameters_number() const
-{
-    return weights.size();
-}
-
-
 void Embedding::get_parameters(Tensor<type, 1>& parameters) const
 {
     parameters.resize(get_parameters_number());
@@ -133,8 +127,6 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 
     // #pragma omp parallel for
 
-    cout << "weights.dimension(0): " << weights.dimension(0) << endl;
-
     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_output = outputs.chip(sample_index, 0);
@@ -142,9 +134,6 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
         for (Index word_index = 0; word_index < sequence_length; word_index++)
         {
             const Index token_id = inputs(sample_index, word_index);
-
-            cout << "word_index: " << word_index << endl;
-            cout << "token_id: " << token_id << endl;
 
             if (token_id < 0 || token_id >= weights.dimension(0))
                 throw runtime_error("Invalid token_id \n");
@@ -165,8 +154,6 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index batch_size = embeddings.dimension(0);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    cout << embeddings << endl;
-
     embeddings.device(*thread_pool_device) += positional_encoding
         .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
         .broadcast(array<Index, 3>({batch_size, 1, 1}));
@@ -177,7 +164,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[1]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -186,11 +173,11 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     embedding_lookup(inputs, outputs);
 
-    // if(positional_encoding_xxx)
-    //     add_positional_encodings(outputs);
+    if(positional_encoding_xxx)
+        add_positional_encodings(outputs);
 
-    // if(is_training && dropout_rate > 0)
-    //     dropout(outputs, dropout_rate);
+    if(is_training && dropout_rate > 0)
+        dropout(outputs, dropout_rate);
 }
 
 
@@ -371,6 +358,14 @@ vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_p
 {
     return vector<pair<type*, dimensions>>();
 }
+
+vector<pair<type*, Index>> EmbeddingBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
+
 
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)

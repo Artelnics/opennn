@@ -38,7 +38,7 @@ TEST(MinkowskiErrorTest, BackPropagate)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_random();
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });

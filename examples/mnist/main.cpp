@@ -16,6 +16,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/optimization_algorithm.h"
 
 using namespace opennn;
 
@@ -31,9 +32,9 @@ int main()
 
         // Neural network
 
-        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions(Dataset::VariableUse::Input),
+        ImageClassificationNetwork image_classification_network(image_dataset.get_dimensions("Input"),
             {8, 4},
-            image_dataset.get_dimensions(Dataset::VariableUse::Target));
+            image_dataset.get_dimensions("Target"));
 
         // Training strategy
 

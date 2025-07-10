@@ -6,6 +6,22 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+
+#include "loss_index.h"
+
+//#include "mean_squared_error.h"
+//#include "normalized_squared_error.h"
+//#include "minkowski_error.h"
+//#include "cross_entropy_error.h"
+//#include "cross_entropy_error_3d.h"
+//#include "weighted_squared_error.h"
+
+#include "quasi_newton_method.h"
+//#include "levenberg_marquardt_algorithm.h"
+//#include "stochastic_gradient_descent.h"
+//#include "adaptive_moment_estimation.h"
+
+
 #include "registry.h"
 #include "recurrent_layer.h"
 #include "optimization_algorithm.h"
@@ -216,7 +232,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Minkowski error
 
-    const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
+    /*const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
 
     if (minkowski_error_element)
     {
@@ -342,7 +358,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         static_cast<LevenbergMarquardtAlgorithm*>(this->get_optimization_algorithm())->from_XML(levenberg_document);
     }
 
-    set_optimization_algorithm(optimization_algorithm);
+    set_optimization_algorithm(optimization_algorithm);*/
 
     // Regularization
 

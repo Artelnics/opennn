@@ -14,6 +14,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/optimization_algorithm.h"
 
 using namespace opennn;
 
@@ -27,8 +28,8 @@ int main()
 
         Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
 
-        const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
-        const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
+        const Index inputs_number = dataset.get_variables_number("Input");
+        const Index targets_number = dataset.get_variables_number("Target");
 
         // Neural network
 
@@ -38,14 +39,13 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         training_strategy.perform_training();
 
-        // Testing analysis
+        // const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        const TestingAnalysis testing_analysis(&classification_network, &dataset);
-
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        // cout << "Confusion matrix:\n"
+        //      << testing_analysis.calculate_confusion() << endl;
 
         cout << "Good bye!" << endl;
 

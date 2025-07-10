@@ -33,12 +33,6 @@ dimensions Recurrent::get_output_dimensions() const
 }
 
 
-Index Recurrent::get_parameters_number() const
-{
-    return biases.size() + input_weights.size() + recurrent_weights.size();
-}
-
-
 Index Recurrent::get_timesteps() const
 {
     return time_steps;
@@ -130,13 +124,6 @@ void Recurrent::set_activation_function(const string& new_activation_function)
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
 
-
-void Recurrent::set_parameters_random()
-{
-    set_random(biases);
-    set_random(input_weights);
-    set_random(recurrent_weights);
-}
 
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
                                        Tensor<type, 2>& combinations) const
@@ -448,12 +435,18 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
 }
 
+vector<pair<type*, Index>> RecurrentBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)input_weight_deltas.data(), input_weight_deltas.size()},
+        {(type*)recurrent_weight_deltas.data(), recurrent_weight_deltas.size()}
+    };
+}
+
 REGISTER(Layer, Recurrent, "Recurrent")
 REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
 REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")
-
-//REGISTER_FORWARD_PROPAGATION("Recurrent", RecurrentForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Recurrent", RecurrentBackPropagation);
 
 }
 

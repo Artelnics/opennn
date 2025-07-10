@@ -139,6 +139,7 @@ public:
    // Parameters initialization
 
    void set_parameters_random() const;
+   void set_parameters_glorot() const;
 
    // Output
 
@@ -158,6 +159,18 @@ public:
        input_dimensions.reserve(input_rank);
        input_dimensions.push_back(batch_size);
 
+       cout << "Input tensor rank: " << input_rank << endl;
+       cout << "Input tensor dimensions: ";
+       for(int i = 0; i < inputs.NumDimensions; i++) {
+           cout << inputs.dimension(i) << " ";
+       }
+       cout << endl;
+
+       cout << "batch_size (inputs.dimension(0)): " << batch_size << endl;
+
+       cout << "calcualte_outputs:: input_dimensions: " << endl;
+       print_vector(input_dimensions);
+
        if constexpr (input_rank >= 2) input_dimensions.push_back(inputs.dimension(1));
        if constexpr (input_rank >= 3) input_dimensions.push_back(inputs.dimension(2));
        if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
@@ -170,18 +183,20 @@ public:
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
-       if constexpr (output_rank == 2)
-           return tensor_map<2>(outputs_pair);
-       else if constexpr (output_rank == 3)
-           return tensor_map<3>(outputs_pair);
-       else if constexpr (output_rank == 4)
-           return tensor_map<4>(outputs_pair);
-       else
-           static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
+       cout << "Output dimensions:" << endl;
+       print_vector(outputs_pair.second);
+
+       // if constexpr (output_rank == 2)
+       //     return tensor_map<2>(outputs_pair);
+       // else if constexpr (output_rank == 3)
+       //     return tensor_map<3>(outputs_pair);
+       // else if constexpr (output_rank == 4)
+       //     return tensor_map<4>(outputs_pair);
+       // else
+       //     static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
 
        return Tensor<type, output_rank>();
    }
-
 
    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
    {
@@ -198,6 +213,8 @@ public:
        const pair<type*, dimensions> input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
 
        forward_propagate({input_pair_1, input_pair_2}, forward_propagation, false);
+
+       const vector<string> layer_labels = get_layer_labels();
 
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_output_pair();

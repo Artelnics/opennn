@@ -62,7 +62,12 @@ public:
     Index get_input_width() const;
 
     void get_parameters(Tensor<type, 1>&) const override;
-    Index get_parameters_number() const override;
+
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {{(type*)(biases.data()), biases.size()},
+                {(type*)(weights.data()), weights.size()}};
+    }
 
     // Set
 
@@ -87,12 +92,6 @@ public:
     void set_column_stride(const Index&);
 
     void set_input_dimensions(const dimensions&) override;
-
-    // Initialization
-
-    
-
-    void set_parameters_random() override;
 
     // Forward propagation
 
@@ -221,6 +220,14 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
    ConvolutionalBackPropagation(const Index& = 0, Layer* = nullptr);
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+   vector<pair<type*, Index>> get_parameter_delta_pairs() const override
+   {
+       return {
+           {(type*)bias_deltas.data(), bias_deltas.size()},
+           {(type*)weight_deltas.data(), weight_deltas.size()}
+       };
+   }
 
    void set(const Index& = 0, Layer* = nullptr) override;
 

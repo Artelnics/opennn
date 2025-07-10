@@ -60,12 +60,6 @@ dimensions Dense3d::get_output_dimensions() const
 }
 
 
-Index Dense3d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 type Dense3d::get_dropout_rate() const
 {
     return dropout_rate;
@@ -124,29 +118,12 @@ void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index
 void Dense3d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "HyperbolicTangent"
-    ||  new_activation_function == "Linear"
+    || new_activation_function == "Linear"
     || new_activation_function == "RectifiedLinear"
     || new_activation_function == "Softmax")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
-}
-
-
-void Dense3d::set_parameters_random()
-{
-    set_random(biases);
-    set_random(weights);
-}
-
-
-void Dense3d::set_parameters_glorot()
-{
-    biases.setZero();
-
-    const type limit = sqrt(6 / type(get_input_embedding() + get_output_embedding()));
-
-    set_random(weights, -limit, limit);
 }
 
 
@@ -267,10 +244,10 @@ void Dense3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

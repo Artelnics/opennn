@@ -57,7 +57,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     
     dataset.set_data(data);
 
-    vector<Dataset::VariableUse> uses = { Dataset::VariableUse::Input, Dataset::VariableUse::Target };
+    vector<string> uses = { "Input", "Target" };
     dataset.set_raw_variable_uses(uses);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });

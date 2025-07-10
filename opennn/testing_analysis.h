@@ -124,13 +124,13 @@ public:
 
     Tensor<type, 2> calculate_errors() const;
     Tensor<type, 1> calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-    Tensor<type, 1> calculate_errors(const Dataset::SampleUse&) const;
+    Tensor<type, 1> calculate_errors(const string&) const;
 
     Tensor<type, 2> calculate_binary_classification_errors() const;
-    Tensor<type, 1> calculate_binary_classification_errors(const Dataset::SampleUse&) const;
+    Tensor<type, 1> calculate_binary_classification_errors(const string&) const;
 
     Tensor<type, 2> calculate_multiple_classification_errors() const;
-    Tensor<type, 1> calculate_multiple_classification_errors(const Dataset::SampleUse&) const;
+    Tensor<type, 1> calculate_multiple_classification_errors(const string&) const;
 
     type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
     type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;

@@ -17,7 +17,7 @@ TEST(TestingAnalysis, ErrorData)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
     neural_network.set_parameters_random();
@@ -45,7 +45,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -68,7 +68,7 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
@@ -101,7 +101,7 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -128,7 +128,7 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     NeuralNetwork neural_network;
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
@@ -161,7 +161,7 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -187,7 +187,7 @@ TEST(TestingAnalysis, MaximalErrors)
     Dataset dataset;
     dataset.set(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_constant(type(0));
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
     neural_network.set_parameters_random();
@@ -215,7 +215,7 @@ TEST(TestingAnalysis, LinearRegression)
 
     Dataset dataset(samples_number, {inputs_number}, {targets_number});
     dataset.set_data_random();
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_random();
@@ -290,7 +290,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     dataset.set_data_constant(type(0));
 
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     // Neural Network
 

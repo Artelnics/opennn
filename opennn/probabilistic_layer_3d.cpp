@@ -81,12 +81,6 @@ string Probabilistic3d::get_activation_function_text() const
 }
 
 
-Index Probabilistic3d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
 {
     parameters.resize(weights.size() + biases.size());
@@ -175,24 +169,6 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
         set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
-}
-
-
-void Probabilistic3d::set_parameters_random()
-{
-    set_random(biases);
-
-    set_random(weights);
-}
-
-
-void Probabilistic3d::set_parameters_glorot()
-{
-    biases.setZero();
-    
-    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
-
-    set_random(weights, -limit, limit);
 }
 
 
@@ -357,10 +333,10 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "Activation", get_activation_function_string());
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -459,6 +435,14 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
     return {{(type*)(input_deltas.data()), {batch_size, inputs_number, inputs_depth}} };
 }
 
+
+vector<pair<type*, Index>> Probabilistic3dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
 
 REGISTER(Layer, Probabilistic3d, "Probabilistic3d")
 REGISTER(LayerForwardPropagation, Probabilistic3dForwardPropagation, "Probabilistic3d")

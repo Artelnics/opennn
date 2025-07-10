@@ -31,8 +31,8 @@ TEST(Dataset, DimensionsConstructor)
 
     EXPECT_EQ(dataset.get_samples_number(), 1);
     EXPECT_EQ(dataset.get_variables_number(), 2);
-    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Input), 1);
-    EXPECT_EQ(dataset.get_variables_number(Dataset::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_variables_number("Input"), 1);
+    EXPECT_EQ(dataset.get_variables_number("Target"), 1);
 
 }
 
@@ -126,8 +126,8 @@ TEST(Dataset, FilterData_MixedFiltering) {
         Tensor<Index, 1> filtered_data = dataset.filter_data(minimums, maximums);
 
         EXPECT_EQ(filtered_data.size(), 2);
-        EXPECT_EQ(dataset.get_sample_use(0), Dataset::SampleUse::None);
-        EXPECT_EQ(dataset.get_sample_use(1), Dataset::SampleUse::None);
+        EXPECT_EQ(dataset.get_sample_use(0), "None");
+        EXPECT_EQ(dataset.get_sample_use(1), "None");
     }
 
     // Test
@@ -146,8 +146,8 @@ TEST(Dataset, FilterData_MixedFiltering) {
         Tensor<Index, 1> filtered_data = dataset.filter_data(minimums, maximums);
 
         EXPECT_EQ(filtered_data.size(), 1);
-        EXPECT_EQ(dataset.get_sample_use(0), Dataset::SampleUse::Training);
-        EXPECT_EQ(dataset.get_sample_use(1), Dataset::SampleUse::None);
+        EXPECT_EQ(dataset.get_sample_use(0), "Training");
+        EXPECT_EQ(dataset.get_sample_use(1), "None");
     }
 }
 
@@ -196,8 +196,8 @@ TEST(Dataset, UnuseConstantRawVariables)
 
     dataset.unuse_constant_raw_variables();
 
-    EXPECT_EQ(dataset.get_raw_variables_number(Dataset::VariableUse::Input), 0);
-    EXPECT_EQ(dataset.get_raw_variables_number(Dataset::VariableUse::Target), 1);
+    EXPECT_EQ(dataset.get_raw_variables_number("Input"), 0);
+    EXPECT_EQ(dataset.get_raw_variables_number("Target"), 1);
 
 }
 
@@ -296,8 +296,8 @@ TEST(Dataset, ReadCSV_Basic)
 
     dataset.set_default_raw_variables_uses();
 
-    dataset.set_dimensions(Dataset::VariableUse::Input, { dataset.get_variables_number(opennn::Dataset::VariableUse::Input) });
-    dataset.set_dimensions(Dataset::VariableUse::Target, { dataset.get_variables_number(opennn::Dataset::VariableUse::Target) });
+    dataset.set_dimensions("Input", { dataset.get_variables_number("Input") });
+    dataset.set_dimensions("Target", { dataset.get_variables_number("Target") });
 
     EXPECT_EQ(dataset.get_samples_number(), 2);
     EXPECT_EQ(dataset.get_raw_variables_number(), 3);
@@ -314,9 +314,9 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_EQ(raw_vars[1].type, Dataset::RawVariableType::Numeric);
     EXPECT_EQ(raw_vars[2].type, Dataset::RawVariableType::Binary);
 
-    EXPECT_EQ(raw_vars[0].use, Dataset::VariableUse::Input);
-    EXPECT_EQ(raw_vars[1].use, Dataset::VariableUse::Input);
-    EXPECT_EQ(raw_vars[2].use, Dataset::VariableUse::Target);
+    EXPECT_EQ(raw_vars[0].use, "Input");
+    EXPECT_EQ(raw_vars[1].use, "Input");
+    EXPECT_EQ(raw_vars[2].use, "Target");
 
     // Data Tensor Content
     const Tensor<type, 2>& data = dataset.get_data();
@@ -352,8 +352,8 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_NEAR(data(1, v2_idx), 20.0, 1e-9);
     EXPECT_NEAR(data(1, t1_idx), 1.0, 1e-9);
 
-    dimensions input_dims = dataset.get_dimensions(Dataset::VariableUse::Input);
-    dimensions target_dims = dataset.get_dimensions(Dataset::VariableUse::Target);
+    dimensions input_dims = dataset.get_dimensions("Input");
+    dimensions target_dims = dataset.get_dimensions("Target");
 
     ASSERT_EQ(input_dims.size(), 1);
     EXPECT_EQ(input_dims[0], 2);
@@ -864,7 +864,7 @@ void Dataset::test_calculate_input_raw_variable_correlations()
 
     inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
-    for(Index i = 0; i <  dataset.get_raw_variables_number(Dataset::VariableUse::Input) ; i++)
+    for(Index i = 0; i <  dataset.get_raw_variables_number("Input") ; i++)
     {
         EXPECT_EQ(inputs_correlations(i,i).r == 1);
 
@@ -1214,7 +1214,7 @@ void Dataset::test_unuse_repeated_samples()
     dataset = opennn::Dataset();
 
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     indices = dataset.unuse_repeated_samples();
 
@@ -1233,7 +1233,7 @@ void Dataset::test_unuse_repeated_samples()
     dataset = opennn::Dataset();
 
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     indices = dataset.unuse_repeated_samples();
 
@@ -1253,7 +1253,7 @@ void Dataset::test_unuse_repeated_samples()
     dataset.set();
 
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     indices = dataset.unuse_repeated_samples();
 
@@ -1299,11 +1299,11 @@ void Dataset::test_calculate_training_negatives()
 
     target_index = 2;
 
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
     dataset.set_training(training_indices);
 
     //training_negatives = dataset.calculate_training_negatives(target_index);
-    training_negatives = dataset.calculate_negatives(Dataset::SampleUse::Training,target_index);
+    training_negatives = dataset.calculate_negatives("Training",target_index);
 
     EXPECT_EQ(training_negatives == 1);
 }
@@ -1334,15 +1334,15 @@ void Dataset::test_calculate_selection_negatives()
 
     Index target_index = 2;
 
-    dataset.set(Dataset::SampleUse::Testing);
+    dataset.set("Testing");
 
     dataset.set_selection(selection_indices);
 
     dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     //Index selection_negatives = dataset.calculate_selection_negatives(target_index);
-    Index selection_negatives = dataset.calculate_negatives(Dataset::SampleUse::Selection,target_index);
-    dataset.calculate_negatives(Dataset::SampleUse::Training,target_index);
+    Index selection_negatives = dataset.calculate_negatives("Selection",target_index);
+    dataset.calculate_negatives("Training",target_index);
     data = dataset.get_data();
 
     EXPECT_EQ(selection_negatives == 0);
@@ -1356,14 +1356,14 @@ void Dataset::test_fill()
     data.setValues({{1,4,7},{2,5,8},{3,6,9}});
     dataset.set_data(data);
 
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
-    const Index training_samples_number = dataset.get_samples_number(Dataset::SampleUse::Training);
+    const Index training_samples_number = dataset.get_samples_number("Training");
 
-    const Tensor<Index, 1> training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
+    const Tensor<Index, 1> training_samples_indices = dataset.get_sample_indices("Training");
 
-    const Tensor<Index, 1> input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
+    const Tensor<Index, 1> input_variables_indices = dataset.get_variable_indices("Input");
+    const Tensor<Index, 1> target_variables_indices = dataset.get_variable_indices("Target");
 
     batch.set(training_samples_number, &dataset);
     /*

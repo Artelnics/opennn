@@ -30,7 +30,12 @@ public:
 
     void get_parameters(Tensor<type, 1>&) const override;
 
-    Index get_parameters_number() const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override
+    {
+        return {{(type*)(biases.data()), biases.size()},
+                {(type*)(weights.data()), weights.size()}};
+    }
+
     type get_dropout_rate() const;
 
     const string& get_activation_function() const;
@@ -45,8 +50,6 @@ public:
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     
-    void set_parameters_random() override;
-
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
@@ -159,6 +162,8 @@ struct Dense2dBackPropagation : LayerBackPropagation
     Dense2dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

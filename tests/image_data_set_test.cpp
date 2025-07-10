@@ -21,7 +21,7 @@ TEST(ImageDataset, GeneralConstructor)
     EXPECT_EQ(image_data_set.get_image_height(), 4);
     EXPECT_EQ(image_data_set.get_image_width(), 3);
     EXPECT_EQ(image_data_set.get_channels_number(), 2);
-    EXPECT_EQ(image_data_set.get_raw_variables_number(Dataset::VariableUse::Target), 1);
+    EXPECT_EQ(image_data_set.get_raw_variables_number("Target"), 1);
 
 }
 

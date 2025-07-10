@@ -404,12 +404,6 @@ void Convolutional::get_parameters(Tensor<type, 1>& parameters) const
 }
 
 
-Index Convolutional::get_parameters_number() const
-{
-    return weights.size() + biases.size();
-}
-
-
 void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
                         const string& new_activation_function,
@@ -483,13 +477,6 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
 #endif
 
-}
-
-
-void Convolutional::set_parameters_random()
-{
-    set_random(biases);
-    set_random(weights);
 }
 
 

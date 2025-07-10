@@ -15,7 +15,7 @@ TEST(PerformanceTest, Rosenbrock)
 
     dataset.set_data_rosenbrock();
 
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { hidden_neurons_number }, { outputs_number });
@@ -50,7 +50,7 @@ TEST(PerformanceTest, ImageClassification)
     
     //image_data_set.set_data_random();
     /*
-    image_data_set.set(Dataset::SampleUse::Training);
+    image_data_set.set("Training");
 
     const dimensions complexity_dimensions = { 8 };
 

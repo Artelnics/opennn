@@ -97,15 +97,6 @@ return { query_sequence_length, embedding_dimension};
 }
 
 
-Index MultiHeadAttention::get_parameters_number() const
-{
-return query_weights.size() + query_biases.size()
-     + key_weights.size() + key_biases.size()
-     + value_weights.size() + value_biases.size()
-     + projection_weights.size() + projection_biases.size();
-}
-
-
 void MultiHeadAttention::get_parameters(Tensor<type, 1>& parameters) const
 {
 parameters.resize(get_parameters_number());
@@ -182,42 +173,6 @@ copy_from_vector(projection_weights, new_parameters, index);
 copy_from_vector(projection_biases, new_parameters, index);
 }
 
-
-void MultiHeadAttention::set_parameters_random()
-{
-const type minimum = type(-0.2);
-const type maximum = type(0.2);
-
-set_random(query_weights, minimum, maximum);
-set_random(query_biases, minimum, maximum);
-set_random(key_weights, minimum, maximum);
-set_random(key_biases, minimum, maximum);
-set_random(value_weights, minimum, maximum);
-set_random(value_biases, minimum, maximum);
-set_random(projection_weights, minimum, maximum);
-set_random(projection_biases, minimum, maximum);
-}
-
-
-void MultiHeadAttention::set_parameters_glorot()
-{
-query_biases.setZero();
-key_biases.setZero();
-value_biases.setZero();
-projection_biases.setZero();
-
-const Index hidden_depth = get_hidden_depth();
-const Index embedding_dimension = get_embedding_dimension();
-const Index heads_number = get_heads_number();
-const type limit = sqrt(6 / type(embedding_dimension + hidden_depth * heads_number));
-const type minimum = -limit;
-const type maximum = limit;
-
-set_random(query_weights, minimum, maximum);
-set_random(key_weights, minimum, maximum);
-set_random(value_weights, minimum, maximum);
-set_random(projection_weights, minimum, maximum);
-}
 
 
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
@@ -828,6 +783,21 @@ vector<pair<type*, dimensions>> MultiheadAttentionBackPropagation::get_input_der
     return
         {{(type*)(input_query_deltas.data()), {batch_size, query_sequence_length, embedding_dimension}},
          {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}} };
+}
+
+
+vector<pair<type*, Index>> MultiheadAttentionBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)query_weight_deltas.data(), query_weight_deltas.size()},
+        {(type*)query_bias_deltas.data(), query_bias_deltas.size()},
+        {(type*)key_weight_deltas.data(), key_weight_deltas.size()},
+        {(type*)key_bias_deltas.data(), key_bias_deltas.size()},
+        {(type*)value_weight_deltas.data(), value_weight_deltas.size()},
+        {(type*)value_bias_deltas.data(), value_bias_deltas.size()},
+        {(type*)projection_weight_deltas.data(), projection_weight_deltas.size()},
+        {(type*)projection_bias_deltas.data(), projection_bias_deltas.size()}
+    };
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")

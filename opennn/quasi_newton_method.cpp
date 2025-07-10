@@ -19,43 +19,7 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
 
-    learning_rate_algorithm.set_loss_index(new_loss_index);
-
     set_default();
-}
-
-
-const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
-{
-    return learning_rate_algorithm;
-}
-
-
-LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm()
-{
-    return &learning_rate_algorithm;
-}
-
-
-const QuasiNewtonMethod::InverseHessianApproximationMethod& QuasiNewtonMethod::get_inverse_hessian_approximation_method() const
-{
-    return inverse_hessian_approximation_method;
-}
-
-
-string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
-{
-    switch(inverse_hessian_approximation_method)
-    {
-    case InverseHessianApproximationMethod::DFP:
-        return "DFP";
-
-    case InverseHessianApproximationMethod::BFGS:
-        return "BFGS";
-
-    default:
-        throw runtime_error("Unknown inverse hessian approximation method.\n");
-    }
 }
 
 
@@ -98,26 +62,6 @@ const type& QuasiNewtonMethod::get_maximum_time() const
 void QuasiNewtonMethod::set_loss_index(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
-
-    learning_rate_algorithm.set_loss_index(new_loss_index);
-}
-
-
-void QuasiNewtonMethod::set_inverse_hessian_approximation_method(
-    const QuasiNewtonMethod::InverseHessianApproximationMethod& new_inverse_hessian_approximation_method)
-{
-    inverse_hessian_approximation_method = new_inverse_hessian_approximation_method;
-}
-
-
-void QuasiNewtonMethod::set_inverse_hessian_approximation_method(const string& new_inverse_hessian_approximation_method_name)
-{
-    if(new_inverse_hessian_approximation_method_name == "DFP")
-        inverse_hessian_approximation_method = InverseHessianApproximationMethod::DFP;
-    else if(new_inverse_hessian_approximation_method_name == "BFGS")
-        inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
-    else
-        throw runtime_error("Unknown inverse hessian approximation method: " + new_inverse_hessian_approximation_method_name + ".\n");
 }
 
 
@@ -129,9 +73,8 @@ void QuasiNewtonMethod::set_display(const bool& new_display)
 
 void QuasiNewtonMethod::set_default()
 {
-    inverse_hessian_approximation_method = InverseHessianApproximationMethod::BFGS;
-
-    learning_rate_algorithm.set_default();
+    learning_rate_tolerance = numeric_limits<type>::epsilon();
+    loss_tolerance = numeric_limits<type>::epsilon();
 
     // Stopping criteria
 
@@ -179,64 +122,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 }
 
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMethodData& optimization_data) const
-{
-    switch(inverse_hessian_approximation_method)
-    {
-    case InverseHessianApproximationMethod::DFP:
-        calculate_DFP_inverse_hessian(optimization_data);
-        return;
-
-    case InverseHessianApproximationMethod::BFGS:
-        calculate_BFGS_inverse_hessian(optimization_data);
-        return;
-
-    default:
-        throw runtime_error("Unknown inverse hessian approximation method.\n");
-    }
-}
-
-
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
-{
-    const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
-    const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
-
-    Tensor<type, 1>& old_inverse_hessian_dot_gradient_difference = optimization_data.old_inverse_hessian_dot_gradient_difference;
-
-    const Tensor<type, 2>& old_inverse_hessian = optimization_data.old_inverse_hessian;
-    Tensor<type, 2>& inverse_hessian = optimization_data.inverse_hessian;
-
-    // Dots
-
-    Tensor<type, 0> parameters_difference_dot_gradient_difference;
-
-    parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-        = parameters_difference.contract(gradient_difference, axes(0,0));
-
-    old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, axes(1,0));
-
-    Tensor<type, 0> gradient_dot_hessian_dot_gradient;
-
-    gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-        = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
-
-    // Calculate approximation
-
-    inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
-
-    inverse_hessian.device(*thread_pool_device)
-    += self_kronecker_product(thread_pool_device.get(), parameters_difference)
-    /parameters_difference_dot_gradient_difference(0);
-
-    inverse_hessian.device(*thread_pool_device)
-    -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
-    / gradient_dot_hessian_dot_gradient(0);
-}
-
-
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
@@ -286,8 +172,8 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           QuasiNewtonMethodData& optimization_data) const
 {
-    Tensor<type, 1>& parameters = back_propagation.parameters;
-    const Tensor<type, 1>& gradient = back_propagation.gradient;
+    Tensor<type, 1>& parameters = optimization_data.parameters;
+    const Tensor<type, 1>& gradient = optimization_data.gradient;
 
     Tensor<type, 1>& old_parameters = optimization_data.old_parameters;
     Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
@@ -312,7 +198,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     optimization_data.epoch == 0 || is_equal(parameters_difference, type(0)) || is_equal(gradient_difference, type(0))
         ? set_identity(inverse_hessian)
-        : calculate_inverse_hessian_approximation(optimization_data);
+        : calculate_inverse_hessian(optimization_data);
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, axes(1,0));
 
@@ -327,7 +213,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
-    const pair<type, type> directional_point = learning_rate_algorithm.calculate_directional_point(
+    const pair<type, type> directional_point = calculate_directional_point(
              batch,
              forward_propagation,
              back_propagation,
@@ -403,15 +289,15 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     const string error_type = loss_index->get_name();
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index training_samples_number = dataset->get_samples_number("Training");
 
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     // Neural network
 
@@ -582,10 +468,6 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("QuasiNewtonMethod");
 
-    add_xml_element(printer, "InverseHessianApproximationMethod", write_inverse_hessian_approximation_method());
-
-    learning_rate_algorithm.to_XML(printer);
-
     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
@@ -601,9 +483,7 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
     Tensor<string, 2> string_matrix(8, 2);
 
     string_matrix.setValues({
-    {"Inverse hessian approximation method", write_inverse_hessian_approximation_method()},
-    {"Learning rate method", learning_rate_algorithm.write_learning_rate_method()},
-    {"Learning rate tolerance", to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()))},
+    {"Learning rate tolerance", to_string(double(learning_rate_tolerance))},
     {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
     {"Loss goal", to_string(double(training_loss_goal))},
     {"Maximum selection error increases", to_string(maximum_selection_failures)},
@@ -621,17 +501,11 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
     if (!root_element) 
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
-    set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
-
     const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
     if (!learning_rate_algorithm_element) 
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
     
-    XMLDocument learning_rate_algorithm_document;
-    learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
-    learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
-
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
@@ -691,20 +565,333 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 void QuasiNewtonMethodData::print() const
 {
     cout << "Training Direction:" << endl
-        << training_direction << endl
-        << "Learning rate:" << endl
-        << learning_rate << endl;
+         << training_direction << endl
+         << "Learning rate:" << endl
+         << learning_rate << endl;
 }
 
 
-#ifdef OPENNN_CUDA
-
-TrainingResults QuasiNewtonMethod::perform_training_cuda()
+Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
+    const Batch& batch,
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
+    QuasiNewtonMethodData& optimization_data) const
 {
-    return TrainingResults();
+    Triplet triplet;
+
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    const type regularization_weight = loss_index->get_regularization_weight();
+
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
+
+    const Tensor<type, 1>& parameters = optimization_data.parameters;
+
+    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
+
+    // Left point
+
+    triplet.A = { type(0), back_propagation.loss };
+
+    // Right point
+
+    Index count = 0;
+
+    do
+    {
+        count++;
+
+        triplet.B.first = optimization_data.initial_learning_rate*type(count);
+
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction * triplet.B.first;
+
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+            potential_parameters, forward_propagation);
+
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
+
+    } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance && triplet.A.second != triplet.B.second);
+
+    if(triplet.A.second > triplet.B.second)
+    {
+        triplet.U = triplet.B;
+
+        triplet.B.first *= golden_ratio;
+
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*triplet.B.first;
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          potential_parameters,
+                                          forward_propagation);
+
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+        triplet.B.second = back_propagation.error() + regularization_weight * regularization;
+
+        while(triplet.U.second > triplet.B.second)
+        {
+            triplet.A = triplet.U;
+            triplet.U = triplet.B;
+
+            triplet.B.first *= golden_ratio;
+
+            potential_parameters.device(*thread_pool_device)
+                    = parameters + training_direction*triplet.B.first;
+
+            neural_network->forward_propagate(batch.get_input_pairs(),
+                                              potential_parameters,
+                                              forward_propagation);
+
+            loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+            const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+            triplet.B.second = back_propagation.error() + regularization_weight * regularization;
+        }
+    }
+    else if(triplet.A.second < triplet.B.second)
+    {
+        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
+
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*triplet.U.first;
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          potential_parameters,
+                                          forward_propagation);
+
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+        triplet.U.second = back_propagation.error() + regularization_weight * regularization;
+
+        while(triplet.A.second < triplet.U.second)
+        {
+            triplet.B = triplet.U;
+
+            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
+
+            potential_parameters.device(*thread_pool_device)
+                    = parameters + training_direction*triplet.U.first;
+
+            neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
+
+            loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+            const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+            triplet.U.second = back_propagation.error() + regularization_weight * regularization;
+
+            if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
+            {
+                triplet.U = triplet.A;
+                triplet.B = triplet.A;
+
+                return triplet;
+            }
+        }
+    }
+
+    return triplet;
 }
 
-#endif
+
+type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
+{
+    const type a = triplet.A.first;
+    const type u = triplet.U.first;
+    const type b = triplet.B.first;
+
+    const type fa = triplet.A.second;
+    const type fu = triplet.U.second;
+    const type fb = triplet.B.second;
+
+    const type numerator = (u-a)*(u-a)*(fu-fb) - (u-b)*(u-b)*(fu-fa);
+
+    const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
+
+    return denominator != type(0)
+       ? u - type(0.5) * (numerator / denominator)
+       : type(0);
+}
+
+
+pair<type, type> QuasiNewtonMethod::calculate_directional_point(
+    const Batch& batch,
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
+    QuasiNewtonMethodData& optimization_data) const
+{
+
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    const Tensor<type, 1>& parameters = optimization_data.parameters;
+
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
+
+    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
+
+    Triplet triplet = calculate_bracketing_triplet(batch,
+                                                   forward_propagation,
+                                                   back_propagation,
+                                                   optimization_data);
+    try
+    {
+        triplet.check();
+    }
+    catch(const exception& error)
+    {
+        return triplet.minimum();
+    }
+
+    const type regularization_weight = loss_index->get_regularization_weight();
+
+    pair<type, type> V;
+
+    // Reduce the interval
+
+    while(abs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
+       || abs(triplet.A.second - triplet.B.second) > loss_tolerance)
+    {
+        try
+        {
+            V.first = calculate_learning_rate(triplet);
+        }
+        catch(const exception& error)
+        {
+            cout << error.what() << endl;
+
+            return triplet.minimum();
+        }
+
+        // Calculate loss for V
+
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*V.first;
+
+        neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
+
+        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
+
+        V.second = back_propagation.error() + regularization_weight * regularization;
+
+        // Update points
+
+        if(V.first <= triplet.U.first)
+        {
+            if(V.second >= triplet.U.second)
+            {
+                triplet.A = V;
+            }
+            else
+            {
+                triplet.B = triplet.U;
+                triplet.U = V;
+            }
+        }
+        else
+        {
+            if(V.second >= triplet.U.second)
+            {
+                triplet.B = V;
+            }
+            else
+            {
+                triplet.A = triplet.U;
+                triplet.U = V;
+            }
+        }
+
+        // Check triplet
+
+        try
+        {
+            triplet.check();
+        }
+        catch(const exception& error)
+        {
+            return triplet.minimum();
+        }
+    }
+
+    return triplet.U;
+}
+
+
+Triplet::Triplet()
+{
+    A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+}
+
+
+type Triplet::get_length() const
+{
+    return abs(B.first - A.first);
+}
+
+
+pair<type, type> Triplet::minimum() const
+{
+    Tensor<type, 1> losses(3);
+
+    losses.setValues({ A.second, U.second, B.second });
+
+    const Index minimal_index = opennn::minimal_index(losses);
+
+    if (minimal_index == 0) return A;
+    else if (minimal_index == 1) return U;
+    else return B;
+}
+
+
+string Triplet::struct_to_string() const
+{
+    ostringstream buffer;
+
+    buffer << "A = (" << A.first << "," << A.second << ")\n"
+           << "U = (" << U.first << "," << U.second << ")\n"
+           << "B = (" << B.first << "," << B.second << ")" << endl;
+
+    return buffer.str();
+}
+
+
+void Triplet::print() const
+{
+    cout << struct_to_string()
+    << "Length: " << get_length() << endl;
+}
+
+
+void Triplet::check() const
+{
+    if (U.first < A.first)
+        throw runtime_error("U is less than A:\n" + struct_to_string());
+
+    if (U.first > B.first)
+        throw runtime_error("U is greater than B:\n" + struct_to_string());
+
+    if (U.second >= A.second)
+        throw runtime_error("fU is equal or greater than fA:\n" + struct_to_string());
+
+    if (U.second >= B.second)
+        throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
+}
+
 
 REGISTER(OptimizationAlgorithm, QuasiNewtonMethod, "QuasiNewtonMethod");
 

@@ -316,7 +316,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &input_tensor)
 {
 /*
-    const dimensions input_dimensions = get_dimensions(Dataset::VariableUse::Input);
+    const dimensions input_dimensions = get_dimensions("Input");
 
     const Index samples_number = input_dimensions[0];
 //    const Index input_height = input_dimensions[0];
@@ -420,9 +420,9 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    set_dimensions(ImageDataset::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
-                                                       read_xml_index(data_source_element, "Width"),
-                                                       read_xml_index(data_source_element, "Channels") });
+    set_dimensions("Input", { read_xml_index(data_source_element, "Height"),
+                              read_xml_index(data_source_element, "Width"),
+                              read_xml_index(data_source_element, "Channels") });
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -491,7 +491,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-vector<Descriptives> ImageDataset::scale_variables(const VariableUse&)
+vector<Descriptives> ImageDataset::scale_variables(const string&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -504,7 +504,7 @@ vector<Descriptives> ImageDataset::scale_variables(const VariableUse&)
     return vector<Descriptives>();
 }
 
-void ImageDataset::unscale_variables(const VariableUse&)
+void ImageDataset::unscale_variables(const string&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -646,7 +646,7 @@ void ImageDataset::read_bmp(const dimensions& new_input_dimensions)
 
 
     // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
-    // scale_variables(VariableUse::Input);
+    // scale_variables("Input");
 }
 
 } // opennn namespace

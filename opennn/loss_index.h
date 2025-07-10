@@ -148,7 +148,8 @@ public:
 
    // Serialization
 
-   void from_XML(const XMLDocument&);
+   //void from_XML(const XMLDocument&);
+   virtual void from_XML(const XMLDocument&) = 0;
 
    virtual void to_XML(XMLPrinter&) const;
 
@@ -320,10 +321,10 @@ struct BackPropagation
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;
 
-    Tensor<type, 1> parameters;
+    //Tensor<type, 1> parameters;
 
-    Tensor<type, 1> gradient;
-    Tensor<type, 1> regularization_gradient;
+    //Tensor<type, 1> gradient;
+    //Tensor<type, 1> regularization_gradient;
 
     Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;

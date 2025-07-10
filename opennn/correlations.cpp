@@ -551,7 +551,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     Dataset dataset(x_filtered.size(), {1}, {1});
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
     dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network;
@@ -569,8 +569,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     levenberg_marquardt_algorithm.set_display(false);
     levenberg_marquardt_algorithm.perform_training();
 
-    const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
-    const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = dataset.get_data_variables("Input");
+    const Tensor<type, 2> targets = dataset.get_data_variables("Target");
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
@@ -627,7 +627,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     Dataset dataset(x_filtered.size(), {1}, {1});
     dataset.set_data(data);
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set_sample_uses("Training");
     dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network;
@@ -643,8 +643,8 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     levenberg_marquardt_algorithm.set_display(false);
     levenberg_marquardt_algorithm.perform_training();
 
-    const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
-    const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = dataset.get_data_variables("Input");
+    const Tensor<type, 2> targets = dataset.get_data_variables("Target");
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
@@ -722,14 +722,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Dataset.print();
 
-    dataset.set(Dataset::SampleUse::Training);
-    dataset.set_dimensions(Dataset::VariableUse::Input,
-                           {dataset.get_variables_number(Dataset::VariableUse::Input)});
-    dataset.set_dimensions(Dataset::VariableUse::Target,
-                           {dataset.get_variables_number(Dataset::VariableUse::Target)});
+    dataset.set_sample_uses("Training");
+    dataset.set_dimensions("Input", {dataset.get_variables_number("Input")});
+    dataset.set_dimensions("Target", {dataset.get_variables_number("Target")});
 
-    const Index input_variables_number = dataset.get_variables_number(Dataset::VariableUse::Input);
-    const Index target_variables_number = dataset.get_variables_number(Dataset::VariableUse::Target);
+    const Index input_variables_number = dataset.get_variables_number("Input");
+    const Index target_variables_number = dataset.get_variables_number("Target");
 
     ClassificationNetwork neural_network({ input_variables_number }, {1}, {target_variables_number});
 
@@ -750,8 +748,8 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    const Tensor<type, 2> inputs = dataset.get_data(Dataset::VariableUse::Input);
-    const Tensor<type, 2> targets = dataset.get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = dataset.get_data_variables("Input");
+    const Tensor<type, 2> targets = dataset.get_data_variables("Target");
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
@@ -838,10 +836,10 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
 
-    Dataset.set(Dataset::SampleUse::Training);
+    Dataset.set_sample_uses("Training");
 
-    const Index input_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Input);
-    const Index target_variables_number = Dataset.get_variables_number(Dataset::VariableUse::Target);
+    const Index input_variables_number = Dataset.get_variables_number("Input");
+    const Index target_variables_number = Dataset.get_variables_number("Target");
 
     ClassificationNetwork neural_network({input_variables_number }, {}, {target_variables_number});
 
@@ -863,9 +861,9 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     // Logistic correlation
 
-    const Tensor<type, 2> inputs = Dataset.get_data(Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = Dataset.get_data_variables("Input");
 
-    const Tensor<type, 2> targets = Dataset.get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = Dataset.get_data_variables("Target");
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
