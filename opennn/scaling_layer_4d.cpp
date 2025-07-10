@@ -172,8 +172,9 @@ Scaling4dForwardPropagationCuda::Scaling4dForwardPropagationCuda(const Index& ne
 
 void Scaling4dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "Scaling4dForwardPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "Scaling4dForwardPropagationCuda set:" << endl;
 
     layer = new_layer;
 

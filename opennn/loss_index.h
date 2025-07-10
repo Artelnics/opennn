@@ -357,7 +357,11 @@ struct BackPropagationCuda
 
     NeuralNetworkBackPropagationCuda neural_network;
 
+    float* errors = nullptr;
+
     Tensor<type, 0> error;
+    float* error_device = nullptr;
+
     type regularization = type(0);
     type loss = type(0);
 
@@ -365,17 +369,8 @@ struct BackPropagationCuda
     void* workspace = nullptr;
     size_t workspaceSize = 0;
 
-    float* numerator = nullptr;
-    float* numerator_2 = nullptr;
-    float* numerator_3 = nullptr;
-    float* outputs_plus_epsilon = nullptr;
-    float* one_minus_targets = nullptr;
-    float* one_minus_outputs = nullptr;
-    float* numerator_reduce = nullptr;
     cudnnTensorDescriptor_t output_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
-
-    float* errors = nullptr;
 
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
@@ -389,9 +384,6 @@ struct BackPropagationCuda
     cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
     //float* regularization_gradient = nullptr;
 
-    float* ones = nullptr;
-    float one = 1.0f;
-
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;
     float* matches = nullptr;
@@ -399,8 +391,6 @@ struct BackPropagationCuda
     bool built_mask = false;
 
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_square_root_descriptor = nullptr;
 };
 
 #endif

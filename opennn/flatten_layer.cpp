@@ -273,8 +273,9 @@ FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_ba
 
 void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "FlattenForwardPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "FlattenForwardPropagationCuda set:" << endl;
 
     layer = new_layer;
 
@@ -317,8 +318,9 @@ FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_si
 
 void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "FlattenBackPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "FlattenBackPropagationCuda set:" << endl;
 
     layer = new_layer;
 

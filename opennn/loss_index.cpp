@@ -1673,11 +1673,11 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index outputs_number = output_dimensions[0];
 
-    cout << "BackPropagationCuda set:" << endl;
-
     // First order loss
 
     neural_network.set(samples_number, neural_network_ptr);
+
+    cout << "BackPropagationCuda set:" << endl;
 
     loss = type(0);
     error(0) = type(0);
@@ -1685,6 +1685,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
    
     //CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(errors, samples_number * outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(error_device, sizeof(float));
 
     //CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(parameters, parameters_number * sizeof(float));
@@ -1720,11 +1722,6 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     //CHECK_CUDA(cudaMalloc(&gradient, parameters_number * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(gradient, parameters_number * sizeof(float));
 
-    // Regularization gradient
-
-    //CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
-    //CUDA_MALLOC_AND_REPORT(regularization_gradient, parameters_number * sizeof(float));
-
     // Outputs_delta
 
     output_deltas_dimensions = { samples_number };
@@ -1734,33 +1731,6 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     //CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(output_deltas, size * sizeof(float));
-
-    // Sum
-
-    cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-        CUDNN_OP_TENSOR_ADD,
-        CUDNN_DATA_FLOAT,
-        CUDNN_NOT_PROPAGATE_NAN);
-
-    // Multiplication
-
-    cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_multiplication_descriptor,
-        CUDNN_OP_TENSOR_MUL,
-        CUDNN_DATA_FLOAT,
-        CUDNN_NOT_PROPAGATE_NAN);
-
-    // Square Root
-
-    cudnnCreateOpTensorDescriptor(&operator_square_root_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_square_root_descriptor,
-        CUDNN_OP_TENSOR_SQRT,
-        CUDNN_DATA_FLOAT,
-        CUDNN_PROPAGATE_NAN);
 
     // Reduce
 
@@ -1772,21 +1742,6 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         CUDNN_PROPAGATE_NAN,
         CUDNN_REDUCE_TENSOR_NO_INDICES,
         CUDNN_32BIT_INDICES);
-
-    //CHECK_CUDA(cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(numerator, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(numerator_2, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(numerator_3, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs_plus_epsilon, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(one_minus_outputs, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(one_minus_targets, samples_number* outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&numerator_reduce, sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(numerator_reduce, samples_number* outputs_number * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -1811,9 +1766,15 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, output_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
 
     CHECK_CUDA(cudaMalloc(&workspace, workspaceSize));
-    CHECK_CUDA(cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)));
-    vector<float> ones_host(samples_number* outputs_number, 1.0f);
-    CHECK_CUDA(cudaMemcpy(ones, ones_host.data(), samples_number* outputs_number * sizeof(float), cudaMemcpyHostToDevice));
+
+    // Sum
+
+    cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
+
+    cudnnSetOpTensorDescriptor(operator_sum_descriptor,
+        CUDNN_OP_TENSOR_ADD,
+        CUDNN_DATA_FLOAT,
+        CUDNN_NOT_PROPAGATE_NAN);
 
     //if (is_instance_of<CrossEntropyError3d>(loss_index))
     //{
@@ -1825,6 +1786,9 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     //}
 
     // Regularization @todo
+
+    //CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(regularization_gradient, parameters_number * sizeof(float));
     /*
     if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
         CHECK_CUDA(cudaMalloc(&aux_regularization, parameters_number * sizeof(float)));
@@ -1915,20 +1879,13 @@ void BackPropagationCuda::print()
 
 void BackPropagationCuda::free()
 {
+    cudaFree(error_device);
     cudaFree(errors);
     cudaFree(gradient);
     cudaFree(parameters);
     cudaFree(parameters_square);
     cudaFree(output_deltas);
-    cudaFree(numerator);
-    cudaFree(numerator_2);
-    cudaFree(numerator_3);
-    cudaFree(outputs_plus_epsilon);
-    cudaFree(one_minus_targets);
-    cudaFree(one_minus_outputs);
-    cudaFree(numerator_reduce);
     //cudaFree(regularization_gradient);
-    cudaFree(ones);
     cudaFree(workspace);
     //cudaFree(predictions);
     //cudaFree(matches);
@@ -1936,8 +1893,6 @@ void BackPropagationCuda::free()
 
     cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-    cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
-    cudnnDestroyOpTensorDescriptor(operator_square_root_descriptor);
     cudnnDestroyTensorDescriptor(gradient_tensor_descriptor);
     cudnnDestroyTensorDescriptor(parameters_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);

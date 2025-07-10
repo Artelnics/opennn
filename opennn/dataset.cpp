@@ -4505,7 +4505,6 @@ BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_data_set)
 
 void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
 {
-    cout << "BatchCuda set:" << endl;
     if (!new_data_set) return;
 
     samples_number = new_samples_number;

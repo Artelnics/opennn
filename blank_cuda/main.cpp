@@ -43,11 +43,11 @@ int main()
 
         // Data set
         /*
-        const Index samples_number = 2;
+        const Index samples_number = 6;
 
         const Index image_height = 3;
         const Index image_width = 3;
-        const Index channels = 1;
+        const Index channels = 3;
         const Index targets = 2;
 
         ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
@@ -78,12 +78,12 @@ int main()
 
         // Neural network
 
-        //ImageClassificationNetwork neural_network(
-        //    input_dimensions,
-        //    { 64, 64, 128, 128, 32 },
-        //    output_dimensions);
+        ImageClassificationNetwork neural_network(
+            input_dimensions,
+            { 64, 64, 128, 128, 32 },
+            output_dimensions);
         
-        VGG16 neural_network(input_dimensions, output_dimensions);
+        //VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
 

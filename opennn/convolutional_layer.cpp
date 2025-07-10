@@ -1125,8 +1125,9 @@ ConvolutionalForwardPropagationCuda::ConvolutionalForwardPropagationCuda(const I
 
 void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "ConvolutionalForwardPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "ConvolutionalForwardPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 
@@ -1264,8 +1265,9 @@ ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& 
 
 void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "ConvolutionalBackPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "ConvolutionalBackPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 

@@ -737,8 +737,9 @@ PoolingForwardPropagationCuda::PoolingForwardPropagationCuda(const Index& new_ba
 
 void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "PoolingForwardPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "PoolingForwardPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 
@@ -828,8 +829,9 @@ PoolingBackPropagationCuda::PoolingBackPropagationCuda(const Index& new_batch_si
 
 void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "PoolingBackPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "PoolingBackPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 

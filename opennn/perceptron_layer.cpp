@@ -888,8 +888,9 @@ Dense2dForwardPropagationCuda::Dense2dForwardPropagationCuda(const Index& new_ba
 
 void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "Dense2dForwardPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "Dense2dForwardPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 
@@ -994,8 +995,9 @@ Dense2dBackPropagationCuda::Dense2dBackPropagationCuda(const Index& new_batch_si
 
 void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    cout << "Dense2dBackPropagationCuda set:" << endl;
     if (!new_layer) return;
+
+    cout << "Dense2dBackPropagationCuda set:" << endl;
 
     batch_size = new_batch_size;
 
