@@ -56,10 +56,8 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
     dataset = new_data_set;
 
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    thread_pool.reset();
+    thread_pool_device.reset();
 
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
