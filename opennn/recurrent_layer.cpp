@@ -61,7 +61,7 @@ string Recurrent::get_activation_function() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    time_steps = new_input_dimensions[1];
+    time_steps = new_input_dimensions[0];
 
     biases.resize(new_output_dimensions[0]);
 

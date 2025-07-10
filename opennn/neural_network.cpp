@@ -1228,7 +1228,7 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {       
+    {
         layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
