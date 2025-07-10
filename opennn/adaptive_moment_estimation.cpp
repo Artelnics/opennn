@@ -454,6 +454,53 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     // Update parameters
     neural_network->set_parameters(parameters);
 */
+
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
+
+    optimization_data.iteration++;
+    Index& iteration = optimization_data.iteration;
+
+    const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
+    const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
+
+    for(Index layer_index = 0; layer_index < layers_number; layer_index++)
+    {
+        Layer* layer = neural_network->get_layer(layer_index).get();
+
+        if (!layer->get_is_trainable())
+            continue;
+
+        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
+
+        const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
+        const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+
+        for(Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        {
+            type* parameter_data = parameter_pairs[parameter_index].first;
+            const Index parameter_size = parameter_pairs[parameter_index].second;
+            type* delta_data = delta_pairs[parameter_index].first;
+
+            TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
+            TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
+
+            Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay[layer_index][parameter_index];
+            Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay[layer_index][parameter_index];
+
+            gradient_exponential_decay.device(*thread_pool_device)
+                = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
+
+            square_gradient_exponential_decay.device(*thread_pool_device)
+                = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
+
+            Tensor<type, 1> corrected_gradient_exponential_decay = gradient_exponential_decay / bias_correction_1;
+            Tensor<type, 1> corrected_square_gradient_exponential_decay = square_gradient_exponential_decay / bias_correction_2;
+
+            parameters.device(*thread_pool_device)
+                -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+        }
+    }
 }
 
 
@@ -499,30 +546,68 @@ AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimat
 }
 
 
+// void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
+// {
+//     adaptive_moment_estimation = new_adaptive_moment_estimation;
+
+//     LossIndex* loss_index = new_adaptive_moment_estimation->get_loss_index();
+
+//     NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+//     const Index parameters_number = neural_network->get_parameters_number();
+
+//     // gradient_exponential_decay.resize(parameters_number);
+//     // gradient_exponential_decay.setZero();
+
+//     // square_gradient_exponential_decay.resize(parameters_number);
+//     // square_gradient_exponential_decay.setZero();
+// }
+
 void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     LossIndex* loss_index = new_adaptive_moment_estimation->get_loss_index();
-
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index layers_number = neural_network->get_layers_number();
 
-    gradient_exponential_decay.resize(parameters_number);
-    gradient_exponential_decay.setZero();
+    gradient_exponential_decay.resize(layers_number);
+    square_gradient_exponential_decay.resize(layers_number);
 
-    square_gradient_exponential_decay.resize(parameters_number);
-    square_gradient_exponential_decay.setZero();
+    for (Index i = 0; i < layers_number; i++)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+
+        if (!layer->get_is_trainable())
+            continue;
+
+        const auto& parameter_pairs = layer->get_parameter_pairs();
+        const Index parameter_sets_number = parameter_pairs.size();
+
+        gradient_exponential_decay[i].resize(parameter_sets_number);
+        square_gradient_exponential_decay[i].resize(parameter_sets_number);
+
+        for (Index j = 0; j < parameter_sets_number; j++)
+        {
+            const Index parameter_size = parameter_pairs[j].second;
+
+            gradient_exponential_decay[i][j].resize(parameter_size);
+            gradient_exponential_decay[i][j].setZero();
+
+            square_gradient_exponential_decay[i][j].resize(parameter_size);
+            square_gradient_exponential_decay[i][j].setZero();
+        }
+    }
 }
 
 
 void AdaptiveMomentEstimationData::print() const
 {
-    cout << "Gradient exponential decay:" << endl
-         << gradient_exponential_decay << endl
-         << "Square gradient exponential decay:" << endl
-         << square_gradient_exponential_decay << endl;
+    // cout << "Gradient exponential decay:" << endl
+    //      << gradient_exponential_decay << endl
+    //      << "Square gradient exponential decay:" << endl
+    //      << square_gradient_exponential_decay << endl;
 }
 
 

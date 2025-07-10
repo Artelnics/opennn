@@ -168,12 +168,7 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error();
 
     // Regularization
-
     add_regularization(back_propagation);
-
-    // Assemble gradient
-
-    assemble_layers_error_gradient(back_propagation);
 }
 
 
@@ -183,22 +178,46 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
     if(regularization_method == RegularizationMethod::NoRegularization)
         return;
 
-    type& regularization = back_propagation.regularization;
-    type& loss = back_propagation.loss;
-/*
-    const Tensor<type, 1>& parameters = back_propagation.parameters;
-    Tensor<type, 1>& regularization_gradient = back_propagation.regularization_gradient;
-    Tensor<type, 1>& gradient = back_propagation.gradient;
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    const Index layers_numbers = neural_network->get_layers_number();
 
-    regularization = calculate_regularization(parameters);
+    type regularization_value = 0;
 
-    loss += regularization_weight * regularization;
+    // #pragma omp parallel for schedule(dynamic) // @todo check this pragma vs thread_pool
+    for (Index layer_index = 0; layer_index < layers_numbers; layer_index++)
+    {
+        Layer* layer = neural_network->get_layer(layer_index).get();
 
-    calculate_regularization_gradient(parameters, regularization_gradient);
+        if(!layer->get_is_trainable())
+            continue;
 
-    gradient.device(*thread_pool_device) += regularization_weight * regularization_gradient;
-*/
+        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
+
+        const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
+        const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+
+        for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        {
+            type* parameter_data = parameter_pairs[parameter_index].first;
+            const Index parameter_size = parameter_pairs[parameter_index].second;
+            TensorMap<Tensor<type, 1>> parameters_map(parameter_data, parameter_size);
+
+            regularization_value += calculate_regularization(parameters_map);
+
+            Tensor<type, 1> regularization_gradient(parameter_size);
+            calculate_regularization_gradient(parameters_map, regularization_gradient);
+
+            type* delta_data = delta_pairs[parameter_index].first;
+            TensorMap<Tensor<type, 1>> delta_map(delta_data, parameter_size);
+
+            delta_map.device(*thread_pool_device) += regularization_gradient * regularization_weight;
+        }
+    }
+
+    back_propagation.regularization = regularization_value;
+    back_propagation.loss += regularization_weight * regularization_value;
 }
+
 
 
 void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
