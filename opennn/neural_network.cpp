@@ -363,13 +363,10 @@ void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
     {
         const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
 
-        for(Index i = 0; i < layer_parameter_pairs.size(); i++)
+        for(const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
         {
-            memcpy(parameters.data() + position,
-                   layer_parameter_pairs[i].first,
-                   layer_parameter_pairs[i].second * sizeof(type));
-
-            position += layer_parameter_pairs[i].second;
+            memcpy(parameters.data() + position, parameter_pair.first, parameter_pair.second * sizeof(type));
+            position += parameter_pair.second;
         }
     }
 }
