@@ -216,7 +216,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         // Loss index
 
         back_propagation.set(batch_size, &cross_entropy_error_3d);
-        cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        cross_entropy_error_3d.set_regularization_method("NoRegularization");
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         
         EXPECT_EQ(back_propagation.gradient.size() == transformer.get_parameters_number());

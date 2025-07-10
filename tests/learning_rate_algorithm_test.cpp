@@ -62,7 +62,7 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
+    mean_squared_error.set_regularization_method(LossIndex::"L2");
 
     neural_network.set_parameters_random();
 

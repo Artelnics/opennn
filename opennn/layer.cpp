@@ -105,10 +105,8 @@ vector<pair<type *, Index> > Layer::get_parameter_pairs() const
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    thread_pool.reset();
+    thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);

@@ -31,14 +31,6 @@ public:
 
     Layer();
 
-    ~Layer()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     const string& get_label() const;
 
     const bool& get_display() const;

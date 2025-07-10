@@ -38,15 +38,7 @@ public:
 
    LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    ~LossIndex()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
-   enum class RegularizationMethod{L1, L2, NoRegularization};
+   //enum class RegularizationMethod{L1, L2, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
    {
@@ -66,7 +58,7 @@ public:
 
    bool has_data_set() const;
 
-   RegularizationMethod get_regularization_method() const;
+   string get_regularization_method() const;
 
    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -76,7 +68,6 @@ public:
 
    virtual void set_data_set(Dataset*);
 
-   void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);
 
@@ -157,8 +148,6 @@ public:
    void write_regularization_XML(XMLPrinter&) const;
 
    virtual string get_name() const;
-
-   string write_regularization_method() const;
 
    // Numerical differentiation
 
@@ -246,7 +235,7 @@ protected:
 
     Dataset* dataset = nullptr;
 
-    RegularizationMethod regularization_method = RegularizationMethod::L2;
+    string regularization_method = "L2";
 
     type regularization_weight = type(0.01);
 

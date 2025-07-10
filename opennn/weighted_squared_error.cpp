@@ -24,17 +24,6 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Da
 
 void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
-    regularization_method = RegularizationMethod::L2;
     set_neural_network(new_neural_network);
     set_data_set(new_data_set);
 }
