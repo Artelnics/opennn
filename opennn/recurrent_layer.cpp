@@ -39,20 +39,6 @@ Index Recurrent::get_timesteps() const
 }
 
 
-void Recurrent::get_parameters(Tensor<type, 1>& parameters) const
-{
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, biases, index);
-    copy_to_vector(parameters, input_weights, index);
-    copy_to_vector(parameters, recurrent_weights, index);
-}
-
-
 string Recurrent::get_activation_function() const
 {
     return activation_function;
@@ -101,15 +87,6 @@ void Recurrent::set_timesteps(const Index& new_timesteps)
 {
     time_steps = new_timesteps;
 }
-
-
-void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(biases, new_parameters, index);
-    copy_from_vector(input_weights, new_parameters, index);
-    copy_from_vector(recurrent_weights, new_parameters, index);
-}
-
 
 
 void Recurrent::set_activation_function(const string& new_activation_function)

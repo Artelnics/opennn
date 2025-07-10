@@ -110,11 +110,6 @@ void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) con
 }
 
 
-void Layer::set_parameters(const Tensor<type, 1>&, Index&)
-{
-}
-
-
 Index Layer::get_inputs_number() const
 {
     const dimensions input_dimensions = get_input_dimensions();

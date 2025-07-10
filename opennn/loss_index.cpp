@@ -566,12 +566,6 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     errors.resize(samples_number, outputs_number);
 
-    //neural_network_ptr->get_parameters(parameters);
-
-    //gradient.resize(parameters_number);
-
-    //regularization_gradient.resize(parameters_number);
-
     output_deltas_dimensions = { samples_number };
     output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
 
@@ -683,7 +677,7 @@ type LossIndex::calculate_numerical_error()
 
 Tensor<type, 1> LossIndex::calculate_gradient()
 {
-/*
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
@@ -706,7 +700,7 @@ Tensor<type, 1> LossIndex::calculate_gradient()
                                       forward_propagation);
 
     back_propagate(batch, forward_propagation, back_propagation);
-
+/*
     return back_propagation.gradient;
 */
     return Tensor<type, 1>();

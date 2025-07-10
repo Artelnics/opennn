@@ -117,6 +117,14 @@ public:
 */
     }
 
+
+    void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
+    {
+        //copy_from_vector(weights, new_parameters, index);
+        //copy_from_vector(biases, new_parameters, index);
+    }
+
+
     virtual vector<pair<type*, Index>> get_parameter_pairs() const
     {
         return vector<pair<type*, Index>>();
@@ -130,8 +138,6 @@ public:
     Index get_inputs_number() const;
 
     Index get_outputs_number() const;
-
-    virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
 

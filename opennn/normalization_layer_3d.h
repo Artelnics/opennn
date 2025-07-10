@@ -28,8 +28,6 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
     vector<pair<type*, Index>> get_parameter_pairs() const override
     {
         return {
@@ -39,8 +37,6 @@ public:
     }
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,

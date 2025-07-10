@@ -391,19 +391,6 @@ Index Convolutional::get_padding_width() const
 }
 
 
-void Convolutional::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-
-    // @todo add scales and offsets
-}
-
-
 void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
                         const string& new_activation_function,
@@ -540,13 +527,6 @@ void Convolutional::set_input_dimensions(const dimensions& new_input_dimensions)
         throw runtime_error("Input new_input_dimensions.size() must be 3");
 
     input_dimensions = new_input_dimensions;
-}
-
-
-void Convolutional::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);    
-    copy_from_vector(biases, new_parameters, index);
 }
 
 

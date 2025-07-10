@@ -28,8 +28,6 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
     vector<pair<type*, Index>> get_parameter_pairs() const override
     {
         return {{(type*)(biases.data()), biases.size()},
@@ -47,8 +45,6 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
     
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);

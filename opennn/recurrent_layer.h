@@ -26,8 +26,6 @@ public:
 
    Index get_timesteps() const;
 
-   void get_parameters(Tensor<type, 1>&) const override;
-
    vector<pair<type*, Index>> get_parameter_pairs() const override
    {
        return {
@@ -45,8 +43,6 @@ public:
    void set_output_dimensions(const dimensions&) override;
 
    void set_timesteps(const Index&);
-
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const string&);
 

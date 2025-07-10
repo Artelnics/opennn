@@ -36,8 +36,6 @@ public:
    const Tensor<type, 1>& get_upper_bounds() const;
    type get_upper_bound(const Index&) const;
 
-   // Variables bounds
-
    void set(const dimensions & = { 0 }, const string & = "bounding_layer");
 
    void set_input_dimensions(const dimensions&) override;

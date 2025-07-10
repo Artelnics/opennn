@@ -97,24 +97,6 @@ return { query_sequence_length, embedding_dimension};
 }
 
 
-void MultiHeadAttention::get_parameters(Tensor<type, 1>& parameters) const
-{
-parameters.resize(get_parameters_number());
-
-Index index = 0;
-
-copy_to_vector(parameters, query_weights, index);
-copy_to_vector(parameters, query_biases, index);
-copy_to_vector(parameters, key_weights, index);
-copy_to_vector(parameters, key_biases, index);
-copy_to_vector(parameters, value_weights, index);
-copy_to_vector(parameters, value_biases, index);
-copy_to_vector(parameters, projection_weights, index);
-copy_to_vector(parameters, projection_biases, index);
-
-}
-
-
 void MultiHeadAttention::set(const Index& new_query_sequence_length,
                          const Index& new_source_sequence_length,
                          const Index& new_embedding_dimension,
@@ -159,20 +141,6 @@ for (Index i = 0; i < query_sequence_length; i++)
     for (Index j = i + 1; j < source_sequence_length; j++)
         causal_mask(i, j) = minus_inf;
 }
-
-
-void MultiHeadAttention::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-copy_from_vector(query_weights, new_parameters, index);
-copy_from_vector(query_biases, new_parameters, index);
-copy_from_vector(key_weights, new_parameters, index);
-copy_from_vector(key_biases, new_parameters, index);
-copy_from_vector(value_weights, new_parameters, index);
-copy_from_vector(value_biases, new_parameters, index);
-copy_from_vector(projection_weights, new_parameters, index);
-copy_from_vector(projection_biases, new_parameters, index);
-}
-
 
 
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)

@@ -108,13 +108,6 @@ void Dense3d::set(const Index& new_sequence_length,
 }
 
 
-void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 void Dense3d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "HyperbolicTangent"

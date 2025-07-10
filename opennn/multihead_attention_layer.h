@@ -40,8 +40,6 @@ public:
 
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
     vector<pair<type*, Index>> get_parameter_pairs() const override
     {
         return {
@@ -62,8 +60,6 @@ public:
              const Index& = 0,
              const bool& = false,
              const string& = "multihead_attention_layer");
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_dropout_rate(const type&);
 

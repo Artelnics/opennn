@@ -546,23 +546,6 @@ AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimat
 }
 
 
-// void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
-// {
-//     adaptive_moment_estimation = new_adaptive_moment_estimation;
-
-//     LossIndex* loss_index = new_adaptive_moment_estimation->get_loss_index();
-
-//     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-//     const Index parameters_number = neural_network->get_parameters_number();
-
-//     // gradient_exponential_decay.resize(parameters_number);
-//     // gradient_exponential_decay.setZero();
-
-//     // square_gradient_exponential_decay.resize(parameters_number);
-//     // square_gradient_exponential_decay.setZero();
-// }
-
 void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;

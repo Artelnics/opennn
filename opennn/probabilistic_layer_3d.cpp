@@ -81,17 +81,6 @@ string Probabilistic3d::get_activation_function_text() const
 }
 
 
-void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(weights.size() + biases.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-}
-
-
 void Probabilistic3d::set(const Index& new_inputs_number, 
                                const Index& new_inputs_depth,
                                const Index& new_neurons_number,
@@ -145,13 +134,6 @@ void Probabilistic3d::set_output_dimensions(const dimensions& new_output_dimensi
     biases.resize(neurons_number);
 
     weights.resize(inputs_depth, neurons_number);
-}
-
-
-void Probabilistic3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
 }
 
 

@@ -49,17 +49,6 @@ dimensions Normalization3d::get_output_dimensions() const
 }
 
 
-void Normalization3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(gammas.size() + betas.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, gammas, index);
-    copy_to_vector(parameters, betas, index);
-}
-
-
 void Normalization3d::set(const Index& new_sequence_length,
                           const Index& new_embedding_dimension,
                           const string& new_label)
@@ -76,14 +65,6 @@ void Normalization3d::set(const Index& new_sequence_length,
 
     name = "Normalization3d";
 }
-
-
-void Normalization3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(gammas, new_parameters, index);
-    copy_from_vector(betas, new_parameters, index);
-}
-
 
 
 void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,

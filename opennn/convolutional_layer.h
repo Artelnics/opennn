@@ -61,8 +61,6 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
     vector<pair<type*, Index>> get_parameter_pairs() const override
     {
         return {{(type*)(biases.data()), biases.size()},
@@ -84,8 +82,6 @@ public:
 
     void set_convolution_type(const Convolution&);
     void set_convolution_type(const string&);
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_row_stride(const Index&);
 

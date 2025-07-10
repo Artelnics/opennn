@@ -50,19 +50,6 @@ type Dense2d::get_dropout_rate() const
 }
 
 
-void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-}
-
-
 const string& Dense2d::get_activation_function() const
 {
     return activation_function;
@@ -138,13 +125,6 @@ void Dense2d::set_output_dimensions(const dimensions& new_output_dimensions)
     biases.resize(neurons_number);
 
     weights.resize(inputs_number, neurons_number);
-}
-
-
-void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{   
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
 }
 
 

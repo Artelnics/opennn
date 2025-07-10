@@ -58,16 +58,6 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-void Embedding::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-}
-
-
 void Embedding::set(const Index& new_vocabulary_size,
                     const Index& new_sequence_length,
                     const Index& new_embedding_dimension,
@@ -100,12 +90,6 @@ void Embedding::set(const Index& new_vocabulary_size,
 void Embedding::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
-}
-
-
-void Embedding::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
 }
 
 
