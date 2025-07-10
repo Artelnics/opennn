@@ -498,12 +498,12 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
-    if (!root_element) 
+    if (!root_element)
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
     const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
-    if (!learning_rate_algorithm_element) 
+    if (!learning_rate_algorithm_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
     
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));

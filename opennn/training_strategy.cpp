@@ -224,62 +224,31 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
+    // Loss index
+
     const XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
     if (!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
 
     // Loss method
+
     const string loss_method = read_xml_string(loss_index_element, "LossMethod");
 
-    // Minkowski error
+    const XMLElement* loss_method_element = loss_index_element->FirstChildElement(loss_method.c_str());
 
-    /*const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
-
-    if (minkowski_error_element)
+    if(loss_method_element)
     {
-        set_loss_index("MinkowskiError");
-        XMLDocument minkowski_document;
-        XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
+        set_loss_index(loss_method);
 
-        for (const XMLNode* node = minkowski_error_element->FirstChild(); node; node = node->NextSibling())
-            minkowski_error_element_copy->InsertEndChild(node->DeepClone(&minkowski_document));
+        XMLDocument loss_method_document;
+        XMLElement* loss_index_element_copy = loss_method_document.NewElement(loss_method.c_str());
 
-        minkowski_document.InsertEndChild(minkowski_error_element_copy);
-        static_cast<MinkowskiError*>(this->get_loss_index())->from_XML(minkowski_document);
+        for (const XMLNode* node = loss_index_element->FirstChild(); node; node = node->NextSibling())
+            loss_index_element_copy->InsertEndChild(node->DeepClone(&loss_method_document));
+
+        loss_method_document.InsertEndChild(loss_index_element_copy);
+        loss_index->from_XML(loss_method_document);
     }
-
-    // Cross entropy error
-
-    const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError2d");
-
-    if (cross_entropy_element)
-    {
-        set_loss_index("CrossEntropyError2d");
-        XMLDocument cross_entropy_document;
-        XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError2d");
-
-        for (const XMLNode* node = cross_entropy_element->FirstChild(); node; node = node->NextSibling())
-            cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));
-
-        cross_entropy_document.InsertEndChild(cross_entropy_error_element_copy);
-        static_cast<CrossEntropyError2d*>(this->get_loss_index())->from_XML(cross_entropy_document);
-    }
-
-    // Weighted squared error
-
-    const XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
-
-    if (weighted_squared_error_element)
-    {
-        set_loss_index("WeightedSquaredError");
-        XMLDocument weighted_squared_error_document;
-        XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
-
-        for (const XMLNode* node = weighted_squared_error_element->FirstChild(); node; node = node->NextSibling())
-            weighted_squared_error_element_copy->InsertEndChild(node->DeepClone(&weighted_squared_error_document));
-
-        weighted_squared_error_document.InsertEndChild(weighted_squared_error_element_copy);
-        static_cast<WeightedSquaredError*>(this->get_loss_index())->from_XML(weighted_squared_error_document);
-    }
+    else throw runtime_error(loss_method + " element is nullptr.\n");
 
     // Optimization algorithm
 
@@ -288,75 +257,27 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Optimization method
 
-    const string optimization_algorithm = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
+    const string optimization_method = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
 
-    // Stochastic gradient descent
+    const XMLElement* optimization_method_element = optimization_algorithm_element->FirstChildElement(optimization_method.c_str());
 
-    const XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
-
-    if (stochastic_gradient_descent_element)
+    if(optimization_method_element)
     {
-        set_optimization_algorithm("StochasticGradientDescent");
-        XMLDocument stochastic_gradient_document;
-        XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
+        if(optimization_method == "LevenbergMarquardt")
+            set_optimization_algorithm("LevenbergMarquardtAlgorithm");
+        else
+            set_optimization_algorithm(optimization_method);
 
-        for (const XMLNode* node = stochastic_gradient_descent_element->FirstChild(); node; node = node->NextSibling())
-            stochastic_gradient_element_copy->InsertEndChild(node->DeepClone(&stochastic_gradient_document));
+        XMLDocument optimization_method_document;
+        XMLElement* optimization_method_element_copy = optimization_method_document.NewElement(optimization_method.c_str());
 
-        stochastic_gradient_document.InsertEndChild(stochastic_gradient_element_copy);
-        static_cast<StochasticGradientDescent*>(this->get_optimization_algorithm())->from_XML(stochastic_gradient_document);
+        for (const XMLNode* node = optimization_method_element->FirstChild(); node; node = node->NextSibling())
+            optimization_method_element_copy->InsertEndChild(node->DeepClone(&optimization_method_document));
+
+        optimization_method_document.InsertEndChild(optimization_method_element_copy);
+        optimization_algorithm->from_XML(optimization_method_document);
     }
-
-    // Adaptive moment estimation
-
-    const XMLElement* adaptive_moment_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
-
-    if (adaptive_moment_element)
-    {
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-        XMLDocument adaptive_moment_document;
-        XMLElement* adaptive_moment_element_copy = adaptive_moment_document.NewElement("AdaptiveMomentEstimation");
-
-        for (const XMLNode* node = adaptive_moment_element->FirstChild(); node; node = node->NextSibling())
-            adaptive_moment_element_copy->InsertEndChild(node->DeepClone(&adaptive_moment_document));
-
-        adaptive_moment_document.InsertEndChild(adaptive_moment_element_copy);
-        static_cast<AdaptiveMomentEstimation*>(this->get_optimization_algorithm())->from_XML(adaptive_moment_document);
-    }
-
-    // Quasi-Newton method
-
-    const XMLElement* quasi_newton_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
-
-    if (quasi_newton_element)
-    {
-        set_optimization_algorithm("QuasiNewtonMethod");
-        XMLDocument quasi_newton_document;
-        XMLElement* quasi_newton_element_copy = quasi_newton_document.NewElement("QuasiNewtonMethod");
-
-        for (const XMLNode* node = quasi_newton_element->FirstChild(); node; node = node->NextSibling())
-            quasi_newton_element_copy->InsertEndChild(node->DeepClone(&quasi_newton_document));
-
-        quasi_newton_document.InsertEndChild(quasi_newton_element_copy);
-        static_cast<QuasiNewtonMethod*>(this->get_optimization_algorithm())->from_XML(quasi_newton_document);
-    }
-
-    // Levenberg-Marquardt
-
-    const XMLElement* levenberg_marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
-
-    if (levenberg_marquardt_element)
-    {
-        set_optimization_algorithm("LevenbergMarquardtAlgorithm");
-        XMLDocument levenberg_document;
-        XMLElement* levenberg_element_copy = levenberg_document.NewElement("LevenbergMarquardt");
-
-        for (const XMLNode* node = levenberg_marquardt_element->FirstChild(); node; node = node->NextSibling())
-            levenberg_element_copy->InsertEndChild(node->DeepClone(&levenberg_document));
-
-        levenberg_document.InsertEndChild(levenberg_element_copy);
-        static_cast<LevenbergMarquardtAlgorithm*>(this->get_optimization_algorithm())->from_XML(levenberg_document);
-    }*/
+    else throw runtime_error(optimization_method + " element is nullptr.\n");
 
     // Regularization
 
@@ -364,15 +285,14 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if (regularization_element)
     {
-        set_loss_index(loss_method);
         XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-        get_loss_index()->regularization_from_XML(regularization_document);
+        loss_index->regularization_from_XML(regularization_document);
     }
 
     // Display
 
-    this->get_optimization_algorithm()->set_display(read_xml_bool(root_element, "Display"));
+    optimization_algorithm->set_display(read_xml_bool(root_element, "Display"));
 }
 
 
