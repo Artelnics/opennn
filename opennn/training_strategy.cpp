@@ -356,9 +356,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
         levenberg_document.InsertEndChild(levenberg_element_copy);
         static_cast<LevenbergMarquardtAlgorithm*>(this->get_optimization_algorithm())->from_XML(levenberg_document);
-    }
-
-    set_optimization_algorithm(optimization_algorithm);*/
+    }*/
 
     // Regularization
 

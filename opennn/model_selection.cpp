@@ -194,8 +194,6 @@ void ModelSelection::from_XML(const XMLDocument& document)
             genetic_algorithm_document.InsertFirstChild(genetic_algorithm_element->DeepClone(&genetic_algorithm_document));
             static_cast<GeneticAlgorithm*>(this->get_inputs_selection())->from_XML(genetic_algorithm_document);
         }
-
-        set_inputs_selection(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
     }
 }
 
