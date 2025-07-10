@@ -83,6 +83,15 @@ public:
    void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
+
+#ifdef OPENNN_CUDA
+
+   TrainingResults perform_training_cuda() override 
+   {
+       throw runtime_error("CUDA perform_training_cuda is not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
+   }
+
+#endif
    
 private:
 
