@@ -847,20 +847,11 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Outputs");
 
+    const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
 
-    if(this->has("Embedding"))
-        add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
-
-    else
-        add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
-
-    if(this->has("Embedding"))
-        for (Index i = 0; i < outputs_number; i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
-    else
-        for (size_t i = 0; i < output_names.size(); i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
+    for(Index i = 0; i < outputs_count; i++)
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
