@@ -33,7 +33,6 @@ public:
    dimensions get_output_dimensions() const override;
 
    type get_dropout_rate() const;
-   void get_parameters(Tensor<type, 1>&) const override;
 
    string get_activation_function() const;
 

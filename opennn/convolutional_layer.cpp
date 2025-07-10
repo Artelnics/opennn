@@ -563,6 +563,13 @@ Index Convolutional::get_input_width() const
 }
 
 
+vector<pair<type *, Index> > Convolutional::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 Index Convolutional::get_input_channels() const
 {
     return input_dimensions[2];
@@ -599,10 +606,9 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -636,9 +642,8 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
 }
 
 

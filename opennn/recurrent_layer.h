@@ -26,14 +26,7 @@ public:
 
    Index get_timesteps() const;
 
-   vector<pair<type*, Index>> get_parameter_pairs() const override
-   {
-       return {
-           {(type*)biases.data(), biases.size()},
-           {(type*)input_weights.data(), input_weights.size()},
-           {(type*)recurrent_weights.data(), recurrent_weights.size()}
-       };
-   }
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    string get_activation_function() const;
 

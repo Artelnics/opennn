@@ -361,15 +361,16 @@ void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        Tensor<type, 1> layer_parameters;
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
 
-        layer->get_parameters(layer_parameters);
+        for(Index i = 0; i < layer_parameter_pairs.size(); i++)
+        {
+            memcpy(parameters.data() + position,
+                   layer_parameter_pairs[i].first,
+                   layer_parameter_pairs[i].second * sizeof(type));
 
-        memcpy(parameters.data() + position,
-               layer_parameters.data(),
-               layer_parameters.size() * sizeof(type));
-
-        position += layer_parameters.size();
+            position += layer_parameter_pairs[i].second;
+        }
     }
 }
 
@@ -397,7 +398,15 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
     Index index = 0;
 
     for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters(new_parameters, index);
+    {
+        const vector<pair<type *, Index> > layer_parameter_pairs = layer->get_parameter_pairs();
+
+        for (const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        {
+            memcpy(parameter_pair.first, new_parameters.data() + index, parameter_pair.second * sizeof(type));
+            index += parameter_pair.second;
+        }
+    }
 }
 
 

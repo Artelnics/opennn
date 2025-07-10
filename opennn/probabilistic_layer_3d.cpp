@@ -154,6 +154,13 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
 }
 
 
+vector<pair<type *, Index> > Probabilistic3d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                              Tensor<type, 3>& combinations) const
 {
@@ -299,9 +306,8 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
     set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
 }
 
 

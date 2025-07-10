@@ -55,13 +55,7 @@ public:
    void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   vector<pair<type*, Index>> get_parameter_pairs() const override
-   {
-       return {{(type*)(biases.data()), biases.size()},
-               {(type*)(weights.data()), weights.size()}};
-   }
-
-   // Forward propagation
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;

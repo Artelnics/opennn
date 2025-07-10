@@ -61,11 +61,7 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {{(type*)(biases.data()), biases.size()},
-                {(type*)(weights.data()), weights.size()}};
-    }
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     // Set
 

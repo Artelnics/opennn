@@ -49,6 +49,15 @@ dimensions Normalization3d::get_output_dimensions() const
 }
 
 
+vector<pair<type *, Index> > Normalization3d::get_parameter_pairs() const
+{
+    return {
+        {(type*)gammas.data(), gammas.size()},
+        {(type*)betas.data(), betas.size()}
+    };
+}
+
+
 void Normalization3d::set(const Index& new_sequence_length,
                           const Index& new_embedding_dimension,
                           const string& new_label)
@@ -200,22 +209,21 @@ void Normalization3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
 }
 
 
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3d");
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
     add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

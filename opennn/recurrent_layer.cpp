@@ -39,6 +39,16 @@ Index Recurrent::get_timesteps() const
 }
 
 
+vector<pair<type *, Index> > Recurrent::get_parameter_pairs() const
+{
+    return {
+        {(type*)biases.data(), biases.size()},
+        {(type*)input_weights.data(), input_weights.size()},
+        {(type*)recurrent_weights.data(), recurrent_weights.size()}
+    };
+}
+
+
 string Recurrent::get_activation_function() const
 {
     return activation_function;
@@ -292,9 +302,8 @@ void Recurrent::from_XML(const XMLDocument& document)
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
 
 }
 
@@ -308,10 +317,9 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

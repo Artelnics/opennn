@@ -28,11 +28,7 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {{(type*)(biases.data()), biases.size()},
-                {(type*)(weights.data()), weights.size()}};
-    }
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     type get_dropout_rate() const;
 

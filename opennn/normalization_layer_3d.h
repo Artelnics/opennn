@@ -28,13 +28,7 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {
-            {(type*)gammas.data(), gammas.size()},
-            {(type*)betas.data(), betas.size()}
-        };
-    }
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 

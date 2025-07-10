@@ -35,6 +35,13 @@ dimensions Dense2d::get_output_dimensions() const
 }
 
 
+vector<pair<type *, Index> > Dense2d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -399,9 +406,8 @@ void Dense2d::from_XML(const XMLDocument& document)
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 
