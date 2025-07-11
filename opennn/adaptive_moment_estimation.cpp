@@ -38,6 +38,7 @@ const type& AdaptiveMomentEstimation::get_beta_2() const
     return beta_2;
 }
 
+
 const type& AdaptiveMomentEstimation::get_learning_rate() const
 {
     return learning_rate;
