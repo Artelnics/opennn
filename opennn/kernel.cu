@@ -332,55 +332,68 @@ void divide_subtract(const size_t& n, type* parameters, const type* numerator, c
 }
 
 
-__global__ void update_parameters_kernel(
+__global__ void adam_update_kernel(
     const int n,
-    float* parameters,
+    float* params,
     float* m,
     float* v,
-    const float* gradient,
+    const float* grads,
     const float beta1,
     const float beta2,
-    const float effective_lr,
-    const float epsilon)
+    const float learning_rate,
+    const float epsilon,
+    const float bias_correction_1,
+    const float bias_correction_2)
 {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= n) return;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const float grad = grads[i];
 
-    float gi = gradient[i];
-    float mi = beta1 * m[i] + (1.0f - beta1) * gi;
-    m[i] = mi;
+        const float new_m = beta1 * m[i] + (1.0f - beta1) * grad;
+        m[i] = new_m;
 
-    float vi = beta2 * v[i] + (1.0f - beta2) * gi * gi;
-    v[i] = vi;
+        const float new_v = beta2 * v[i] + (1.0f - beta2) * grad * grad;
+        v[i] = new_v;
 
-    float denom = sqrtf(vi) + epsilon;
-    float delta = effective_lr * mi / denom;
-    parameters[i] -= delta;
+        const float m_hat = new_m / bias_correction_1;
+        const float v_hat = new_v / bias_correction_2;
+
+        params[i] -= learning_rate * m_hat / (sqrtf(v_hat) + epsilon);
+    }
 }
 
-void update_parameters_device(
-    const size_t& n,
-    float* parameters,
+
+void adam_update_device(
+    const size_t n,
+    float* params,
     float* m,
     float* v,
-    const float* gradient,
+    const float* grads,
     const float beta1,
     const float beta2,
-    const float effective_lr,
-    const float epsilon)
+    const float learning_rate,
+    const float epsilon,
+    const float bias_correction_1,
+    const float bias_correction_2)
 {
-    int grid = (static_cast<int>(n) + 255) / 256;
-    update_parameters_kernel<<<grid, 256>>>(
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    adam_update_kernel << <grid_size, block_size >> > (
         static_cast<int>(n),
-        parameters,
+        params,
         m,
         v,
-        gradient,
+        grads,
         beta1,
         beta2,
-        effective_lr,
-        epsilon
-    );
+        learning_rate,
+        epsilon,
+        bias_correction_1,
+        bias_correction_2
+        );
 }
 
 

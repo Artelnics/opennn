@@ -800,22 +800,10 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-void Dense2d::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                      Index& index, 
-                                      float* gradient) const
+vector<pair<float*, Index>> Dense2d::get_parameter_pair_device() const
 {
-    Dense2dBackPropagationCuda* dense2d_layer_back_propagation =
-        static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->weight_deltas_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->bias_deltas_device, biases.size(), index);
-}
-
-
-void Dense2d::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
-    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
+    return { {biases_device, biases.size()},
+             {weights_device, weights.size()}};
 }
 
 
@@ -1019,6 +1007,22 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
         outputs_number,
         1,
         1);
+}
+
+
+vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+
+    const Index weight_deltas_size = dense_layer->get_input_dimensions()[0] * dense_layer->get_output_dimensions()[0];
+
+    const Index bias_deltas_size = dense_layer->get_output_dimensions()[0];
+
+    return
+    {
+        { bias_deltas_device,   bias_deltas_size },
+        { weight_deltas_device, weight_deltas_size }
+    };
 }
 
 

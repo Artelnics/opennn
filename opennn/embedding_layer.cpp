@@ -398,20 +398,9 @@ void Embedding::back_propagate_cuda(const vector<float*>&,
 }
 
 
-void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                     Index& index,
-                                     float* gradient) const
+vector<pair<float*, Index>> Embedding::get_parameter_pair_device() const
 {
-    EmbeddingBackPropagationCuda* embedding_layer_back_propagation =
-        static_cast<EmbeddingBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_deltas_device, weights.size(), index);
-}
-
-
-void Embedding::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+    return vector<pair<float*, Index>>();
 }
 
 
@@ -473,6 +462,12 @@ EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index& new_batc
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
+}
+
+
+vector<pair<float*, Index>> EmbeddingBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    return vector<pair<float*, Index>>();
 }
 
 

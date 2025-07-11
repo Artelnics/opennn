@@ -778,6 +778,16 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagation::get_input_derivati
 }
 
 
+vector<pair<type*, Index>> ConvolutionalBackPropagation::get_parameter_delta_pairs() const
+{
+    return 
+    {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
+
+
 void ConvolutionalBackPropagation::print() const
 {
     cout << "Convolutional layer back propagation" << endl
@@ -982,22 +992,13 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-void Convolutional::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                         Index& index,
-                                         float* gradient) const
+vector<pair<float*, Index>> Convolutional::get_parameter_pair_device() const
 {
-    ConvolutionalBackPropagationCuda* convolutional_layer_back_propagation =
-        static_cast<ConvolutionalBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->weight_deltas_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->bias_deltas_device, biases.size(), index);
-}
-
-
-void Convolutional::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
-    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
+    return
+    {
+        {biases_device, biases.size()},
+        {weights_device, weights.size()}
+    };
 }
 
 
@@ -1232,6 +1233,25 @@ ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& 
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
+}
+
+
+vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+
+    const Index weight_deltas_size = convolutional_layer->get_kernels_number() *
+                                     convolutional_layer->get_kernel_channels() *
+                                     convolutional_layer->get_kernel_height() *
+                                     convolutional_layer->get_kernel_width();
+
+    const Index bias_deltas_size = convolutional_layer->get_kernels_number();
+
+    return
+    {
+        { bias_deltas_device,   bias_deltas_size },
+        { weight_deltas_device, weight_deltas_size }
+    };
 }
 
 

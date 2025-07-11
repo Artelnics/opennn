@@ -379,6 +379,12 @@ cudnnHandle_t Layer::get_cudnn_handle()
     return cudnn_handle;
 }
 
+
+vector<pair<float*, Index>> Layer::get_parameter_pair_device() const
+{
+    return vector<pair<float*, Index>>();
+}
+
 #endif
 
 }

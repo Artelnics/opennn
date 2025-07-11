@@ -63,14 +63,14 @@ int main()
         ImageDataset dataset;
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
-        //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
-        dataset.set_data_path("../examples/mnist/data_bin");
+        dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
+        //dataset.set_data_path("../examples/mnist/data_bin");
         //dataset.set_data_path("../examples/mnist/data");
 
-        //dimensions data_dimensions = { 224, 224, 3 };
+        dimensions data_dimensions = { 224, 224, 3 };
 
-        //dataset.read_bmp(data_dimensions);
-        dataset.read_bmp();
+        dataset.read_bmp(data_dimensions);
+        //dataset.read_bmp();
 
         dataset.split_samples_random(0.8, 0.0, 0.2);
 
@@ -81,7 +81,7 @@ int main()
 
         ImageClassificationNetwork neural_network(
             input_dimensions,
-            {16},//{ 64, 64, 128, 128, 32 },
+            { 64, 64, 128, 128, 32 },
             output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
@@ -90,15 +90,13 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.set_loss_index("CrossEntropyError2d");
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
-        training_strategy.perform_training();
-        //training_strategy.perform_training_cuda();
+        training_strategy.perform_training_cuda();
         
         cudaDeviceSynchronize();
 
