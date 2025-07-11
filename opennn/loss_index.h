@@ -38,8 +38,6 @@ public:
 
    LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-   //enum class RegularizationMethod{L1, L2, NoRegularization};
-
    inline NeuralNetwork* get_neural_network() const 
    {
       return neural_network;
@@ -94,7 +92,7 @@ public:
                                         ForwardPropagation&,
                                         BackPropagation&) const;
 
-   void assemble_layers_error_gradient(BackPropagation&) const;
+   void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
    void back_propagate(const Batch&,
                        ForwardPropagation&,

@@ -215,17 +215,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 }
 
 
-void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                     Index& index,
-                                     Tensor<type, 1>& gradient) const
-{
-    const EmbeddingBackPropagation* embedding_back_propagation =
-        static_cast<EmbeddingBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, embedding_back_propagation->weight_deltas, index);
-}
-
-
 void Embedding::print() const
 {
     cout << "Embedding Layer" << endl;

@@ -558,24 +558,6 @@ for(Index head_index = 0; head_index < heads_number; head_index++)
 }
 
 
-void MultiHeadAttention::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         Index& index,
-                                         Tensor<type, 1>& gradient) const
-{
-    MultiheadAttentionBackPropagation* this_back_propagation =
-        static_cast<MultiheadAttentionBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, this_back_propagation->query_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->query_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->key_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->key_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->value_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->value_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->projection_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->projection_bias_deltas, index);
-}
-
-
 void MultiHeadAttention::from_XML(const XMLDocument& document)
 {
     // @todo update notation

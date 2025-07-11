@@ -64,10 +64,6 @@ public:
                            unique_ptr<LayerForwardPropagation>&,
                            unique_ptr<LayerBackPropagationLM>&) const override;
 
-    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         Index&,
-                         Tensor<type, 1>&) const override;
-
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
                                            Tensor<type, 2>&) const override;

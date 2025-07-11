@@ -181,18 +181,6 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 }
 
 
-void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                              Index& index,
-                              Tensor<type, 1>& gradient) const
-{
-    Dense3dBackPropagation* dense3d_back_propagation =
-        static_cast<Dense3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, dense3d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, dense3d_back_propagation->bias_deltas, index);
-}
-
-
 void Dense3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* dense2d_layer_element = document.FirstChildElement("Dense3d");

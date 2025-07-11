@@ -41,10 +41,6 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         Index&,
-                         Tensor<type, 1>&) const override;
-
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 

@@ -172,7 +172,11 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           QuasiNewtonMethodData& optimization_data) const
 {
+    NeuralNetwork* neural_network = forward_propagation.neural_network;
+
     Tensor<type, 1>& parameters = optimization_data.parameters;
+    neural_network->get_parameters(parameters);
+
     const Tensor<type, 1>& gradient = optimization_data.gradient;
 
     Tensor<type, 1>& old_parameters = optimization_data.old_parameters;
@@ -260,8 +264,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     // Set parameters
-
-    NeuralNetwork* neural_network = forward_propagation.neural_network;
 
     neural_network->set_parameters(parameters);
 }

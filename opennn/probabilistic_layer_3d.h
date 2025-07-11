@@ -80,10 +80,6 @@ public:
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
 
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index&, 
-                        Tensor<type, 1>&) const override;
-
    // Serialization
 
    void from_XML(const XMLDocument&) override;

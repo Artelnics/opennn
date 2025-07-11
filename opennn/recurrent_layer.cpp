@@ -236,18 +236,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     }
 }
 
-void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                Index& index,
-                                Tensor<type, 1>& gradient) const
-{
-    RecurrentBackPropagation* recurrent_back_propagation =
-        static_cast<RecurrentBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, recurrent_back_propagation->bias_deltas, index);
-    copy_to_vector(gradient, recurrent_back_propagation->input_weight_deltas, index);
-    copy_to_vector(gradient, recurrent_back_propagation->recurrent_weight_deltas, index);
-}
-
 
 string Recurrent::get_expression(const vector<string>& input_names,
                                  const vector<string>& output_names) const

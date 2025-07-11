@@ -314,18 +314,6 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 }
 
 
-void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                              Index& index,
-                              Tensor<type, 1>& gradient) const
-{
-    Dense2dBackPropagation* dense2d_back_propagation =
-        static_cast<Dense2dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, dense2d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, dense2d_back_propagation->bias_deltas, index);
-}
-
-
 void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                    const Index& index,
                                                    Tensor<type, 2>& squared_errors_Jacobian) const

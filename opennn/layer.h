@@ -109,10 +109,6 @@ public:
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                                 Index&,
-                                 Tensor<type, 1>&) const {}
-
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
                                                       unique_ptr<LayerForwardPropagation>&,
                                                       unique_ptr<LayerBackPropagationLM>&) {}

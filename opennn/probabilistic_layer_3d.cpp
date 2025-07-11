@@ -278,18 +278,6 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
 }
 
 
-void Probabilistic3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                           Index& index,
-                                           Tensor<type, 1>& gradient) const
-{
-    const Probabilistic3dBackPropagation* probabilistic_3d_back_propagation =
-        static_cast<Probabilistic3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->bias_deltas, index);
-}
-
-
 void Probabilistic3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic3d");

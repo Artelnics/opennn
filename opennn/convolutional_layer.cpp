@@ -250,18 +250,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 }
 
 
-void Convolutional::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         Index& index,
-                                         Tensor<type, 1>& gradient) const
-{
-    ConvolutionalBackPropagation* convolutional_back_propagation =
-        static_cast<ConvolutionalBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, convolutional_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, convolutional_back_propagation->bias_deltas, index);
-}
-
-
 const string& Convolutional::get_activation_function() const
 {
     return activation_function;
