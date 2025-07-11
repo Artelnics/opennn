@@ -364,15 +364,6 @@ struct BackPropagationCuda
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
 
-    //float* parameters = nullptr;
-    //float* parameters_square = nullptr;
-    //cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
-    //Tensor<type, 1> parameters_host;
-
-    //float* gradient = nullptr;
-    //cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
-    //float* regularization_gradient = nullptr;
-
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;
     float* matches = nullptr;
