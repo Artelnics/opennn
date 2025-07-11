@@ -361,15 +361,13 @@ void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        Tensor<type, 1> layer_parameters;
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
 
-        layer->get_parameters(layer_parameters);
-
-        memcpy(parameters.data() + position,
-               layer_parameters.data(),
-               layer_parameters.size() * sizeof(type));
-
-        position += layer_parameters.size();
+        for(const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        {
+            memcpy(parameters.data() + position, parameter_pair.first, parameter_pair.second * sizeof(type));
+            position += parameter_pair.second;
+        }
     }
 }
 
@@ -397,7 +395,15 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
     Index index = 0;
 
     for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters(new_parameters, index);
+    {
+        const vector<pair<type *, Index> > layer_parameter_pairs = layer->get_parameter_pairs();
+
+        for (const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        {
+            memcpy(parameter_pair.first, new_parameters.data() + index, parameter_pair.second * sizeof(type));
+            index += parameter_pair.second;
+        }
+    }
 }
 
 
@@ -454,6 +460,16 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
+void NeuralNetwork::set_parameters_glorot() const
+{
+    const Index layers_number = get_layers_number();
+
+    #pragma omp parallel for
+    for(Index i = 0; i < layers_number; i++)
+        layers[i]->set_parameters_glorot();
+}
+
+
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
@@ -462,7 +478,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     Index first_layer_index = 0;
     Index last_layer_index = layers_number-1;
-
 
     if(is_training)
     {
@@ -664,53 +679,54 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    Tensor<type, 3> image = read_bmp_image(image_path);
+    // Tensor<type, 3> image = read_bmp_image(image_path);
 
-    Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first("Scaling4d"));
+    // Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(get_first("Scaling4d"));
 
-    const Index height = scaling_layer_4d->get_input_dimensions()[0];
-    const Index width = scaling_layer_4d->get_input_dimensions()[1];
-    const Index channels = scaling_layer_4d->get_input_dimensions()[2];
+    // const Index height = scaling_layer_4d->get_input_dimensions()[0];
+    // const Index width = scaling_layer_4d->get_input_dimensions()[1];
+    // const Index channels = scaling_layer_4d->get_input_dimensions()[2];
 
-    const Index current_height = image.dimension(0);
-    const Index current_width = image.dimension(1);
-    const Index current_channels = image.dimension(2);
+    // const Index current_height = image.dimension(0);
+    // const Index current_width = image.dimension(1);
+    // const Index current_channels = image.dimension(2);
 
-    if (current_channels != channels)
-        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
+    // if (current_channels != channels)
+    //     throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    if(current_height != height || current_width != width)
-        image = resize_image(image, height, width);
+    // if(current_height != height || current_width != width)
+    //     image = resize_image(image, height, width);
 
-    Tensor<type, 4> input_data(1, height, width, channels);
+    // Tensor<type, 4> input_data(1, height, width, channels);
 
-    const Index pixels_number = height * width * channels;
+    // const Index pixels_number = height * width * channels;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < pixels_number; j++)
-        input_data(j) = image(j);
+    // #pragma omp parallel for
+    // for (Index j = 0; j < pixels_number; j++)
+    //     input_data(j) = image(j);
 
-    const Tensor<type, 2> outputs = calculate_outputs<4,2>(input_data);
+    // const Tensor<type, 2> outputs = calculate_outputs<4,2>(input_data);
 
-    Index predicted_index = -1;
+    // Index predicted_index = -1;
 
-    if (outputs.size() > 1)
-    {
-        type max_value = outputs(0);
+    // if (outputs.size() > 1)
+    // {
+    //     type max_value = outputs(0);
 
-        for (Index i = 1; i < outputs.dimension(1); ++i)
-        {
-            if (outputs(i) > max_value)
-            {
-                max_value = outputs(i);
-                predicted_index = i;
-            }
-        }
-    }
-    else
-        predicted_index = outputs(0);
+    //     for (Index i = 1; i < outputs.dimension(1); ++i)
+    //     {
+    //         if (outputs(i) > max_value)
+    //         {
+    //             max_value = outputs(i);
+    //             predicted_index = i;
+    //         }
+    //     }
+    // }
+    // else
+    //     predicted_index = outputs(0);
 
-    return predicted_index;
+    // return predicted_index;
+    return 0;
 }
 
 
@@ -831,20 +847,11 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Outputs");
 
+    const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
 
-    if(this->has("Embedding"))
-        add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
-
-    else
-        add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
-
-    if(this->has("Embedding"))
-        for (Index i = 0; i < outputs_number; i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
-    else
-        for (size_t i = 0; i < output_names.size(); i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
+    for(Index i = 0; i < outputs_count; i++)
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
@@ -1031,10 +1038,10 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    file << parameters << endl;
+    // file << parameters << endl;
 
     file.close();
 }
@@ -1596,8 +1603,6 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
 
     for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
     {
-        //layers[i] = BackCudaRegistry::instance().create(neural_network_layers[i]->get_name(), batch_size, neural_network_layers[i].get());
-
         layers[i] = Registry<LayerBackPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(batch_size, neural_network_layers[i].get());
     }

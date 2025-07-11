@@ -14,13 +14,10 @@
 #include <time.h>
 
 #include "../../opennn/language_dataset.h"
+#include "../../opennn/standard_networks.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/embedding_layer.h"
-#include "../../opennn/flatten_layer_3d.h"
-#include "../../opennn/perceptron_layer.h"
-#include "../../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 
@@ -28,57 +25,102 @@ int main()
 {
     try
     {
+        /*
         cout << "OpenNN. Amazon reviews example." << endl;
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        // language_dataset.print_data();
-/*
-        NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
-        //neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
-        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), "Logistic"));
+        const Index embedding_dimension = 32;
+        const Index neurons_number = 1;
 
-        print_vector(language_dataset.get_input_vocabulary());
+        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
 
-        cout << language_dataset.get_data() << endl;
+        const Index input_sequence_length = language_dataset.get_input_sequence_length();
+        const Index targets_number = language_dataset.get_target_sequence_length();
 
-        // const Index batch_size = 1;
-        // const Index embedding_dimension = 32;
-        // const Index neurons_number = 1;
+        dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
+        dimensions complexity_dimensions = {neurons_number};
+        dimensions output_dimensions = {targets_number};
 
-        // const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        // const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
 
-        // const Index input_sequence_length = language_dataset.get_input_sequence_length();
-        // const Index targets_number = language_dataset.get_target_sequence_length();
+        // std::cout << "embedding_dimension = " << embedding_dimension << std::endl;
+        // std::cout << "neurons_number = " << neurons_number << std::endl;
 
-        // dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
-        // dimensions complexity_dimensions = {neurons_number};
-        // dimensions output_dimensions = {targets_number};
+        // std::cout << "input_vocabulary_size = " << input_vocabulary_size << std::endl;
+        // std::cout << "target_vocabulary_size = " << target_vocabulary_size << std::endl;
 
-        // NeuralNetwork neural_network(
-        //     NeuralNetwork::ModelType::TextClassification,
+        // std::cout << "input_sequence_length = " << input_sequence_length << std::endl;
+        // std::cout << "targets_number = " << targets_number << std::endl;
+
+        // cout << "input_dimensions" << endl;
+        // print_vector(input_dimensions);
+
+        // cout << "complexity_dimensions" << endl;
+        // print_vector(complexity_dimensions);
+
+        // cout << "output_dimensions" << endl;
+        // print_vector(output_dimensions);
+
+        // TextClassificationNetwork text_classification_network(
         //     input_dimensions,
         //     complexity_dimensions,
-        //     output_dimensions);
+        //     output_dimensions
+        //     );
 
-        // TrainingStrategy training_strategy(&neural_network, &language_dataset);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
+        NeuralNetwork neural_network;
+
+        neural_network.add_layer(make_unique<Embedding>(dimensions({input_vocabulary_size, input_sequence_length}),
+                                         embedding_dimension,
+                                         "embedding_layer"
+                                         ));
+
+        cout << "neural_network " << endl;
+        print_vector(neural_network.get_output_dimensions());
+
+        // TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+
+        // AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        // adam->set_maximum_epochs_number(50);
 
         // training_strategy.perform_training();
 
-        // TestingAnalysis testing_analysis(&neural_network, &language_dataset);
+        const Index batch_size = 1;
+        Tensor<type, 2> input(batch_size, input_sequence_length);
+        input.setRandom();
 
-        // MeanSquaredError mean_squared_error(&neural_network, &language_dataset);
+        const Tensor<type, 3> outputs = neural_network.calculate_outputs<2,3>(input);
+        // const Tensor<type, 3> outputs = text_classification_network.calculate_outputs<2, 3>(input);
+
+        cout << "Outputs:\n" << outputs << endl;
+
+        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<3, 2>(input);
+
+        // cout << "Outputs:\n" << outputs << endl;
+
+
+        // const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
+
+
+        // cout << "Confusion matrix:\n"
+        //      << testing_analysis.calculate_confusion() << endl;
+
+        // MeanSquaredError mean_squared_error(&text_classification_network, &language_dataset);
         // cout << mean_squared_error.calculate_numerical_error() << endl;
         // cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
-        cout << "Good bye!" << endl;
 
+        // const Tensor<type, 2> inputs = language_dataset.get_data("Input");
+
+        // cout << "inputs_dataset: " << inputs.dimensions() << endl;
+
+        // const Eigen::array<Index, 3> new_dims = {1, inputs.dimension(0), inputs.dimension(1)};
+        // const Tensor<type, 3> input = inputs.reshape(new_dims);
+
+        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<3, 2>(input);
+
+*/
+        cout << "Good bye!" << endl;
         return 0;
     }
     catch(const exception& e)

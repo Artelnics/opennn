@@ -344,7 +344,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const Index input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
     vector<Index> used_raw_variables_indices = dataset->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)

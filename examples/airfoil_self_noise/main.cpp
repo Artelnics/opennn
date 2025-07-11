@@ -19,7 +19,8 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/model_expression.h""
+#include "../../opennn/model_expression.h"
+#include "../../opennn/optimization_algorithm.h"
 
 using namespace opennn;
 
@@ -37,7 +38,7 @@ int main()
         approximation_network.print();
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
-        training_strategy.perform_training();
+        TrainingResults training_results = training_strategy.perform_training();
 
         // TestingAnalysis testing_analysis(&approximation_network, &dataset);
         // cout << "Goodness of fit analysis:\n" << endl;

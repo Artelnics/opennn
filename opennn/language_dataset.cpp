@@ -49,11 +49,11 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 //         raw_variable.name = "variable_" + to_string(i + 1);
 
 //         raw_variable.use = (i < input_sequence_length)
-//                                ? VariableUse::Input
-//                                : VariableUse::Target;
+//                                ? Input
+//                                : "Target";
 //     }
 
-//     const vector<Index> target_variable_indices = get_variable_indices(Dataset::VariableUse::Target);
+//     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
 //     cout << "variables_number: " << variables_number << endl;
 
@@ -104,8 +104,8 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
         raw_variable.name = "variable_" + to_string(i + 1);
 
         raw_variable.use = (i < input_sequence_length)
-                               ? VariableUse::Input
-                               : VariableUse::Target;
+                               ? "Input"
+                               : "Target";
     }
 
 
@@ -429,8 +429,8 @@ void LanguageDataset::print() const
          << "Target vocabulary size: " << get_target_vocabulary_size() << endl
          << "Input length: " << get_input_sequence_length() << endl
          << "Target length: " << get_target_sequence_length() << endl
-         << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl
-         << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
+         << "Input variables number: " << get_variables_number("Input") << endl
+         << "Target variables number: " << get_variables_number("Target") << endl;
 }
 
 
@@ -525,7 +525,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
         sample_uses.resize(new_samples_number);
 
-        set(Dataset::SampleUse::Training);
+        set_sample_uses("Training");
     }
 
     // Samples uses
@@ -793,10 +793,10 @@ void LanguageDataset::read_csv()
     raw_variables.resize(variables_number);
 
     for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_length,
-             [](auto& var) {var.use = VariableUse::Input;});
+             [](auto& var) {var.use = "Input";});
 
     for_each(raw_variables.begin() + maximum_input_length, raw_variables.begin() + maximum_input_length + maximum_target_length,
-             [](auto& var) { var.use = VariableUse::Target; });
+             [](auto& var) { var.use = "Target"; });
 
     // set data
 

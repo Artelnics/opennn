@@ -35,6 +35,13 @@ dimensions Dense2d::get_output_dimensions() const
 }
 
 
+vector<pair<type *, Index> > Dense2d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -44,28 +51,9 @@ void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-Index Dense2d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 type Dense2d::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
 }
 
 
@@ -147,13 +135,6 @@ void Dense2d::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{   
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 void Dense2d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Logistic"
@@ -168,13 +149,6 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
     if (new_activation_function == "Softmax" && get_outputs_number() == 1)
         activation_function = "Logistic";
-}
-
-
-void Dense2d::set_parameters_random()
-{
-    set_random(biases);
-    set_random(weights);
 }
 
 
@@ -432,9 +406,8 @@ void Dense2d::from_XML(const XMLDocument& document)
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -447,10 +420,10 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
 }
@@ -534,6 +507,14 @@ vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pai
 }
 
 
+vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        { (type*)bias_deltas.data(), bias_deltas.size() },
+        { (type*)weight_deltas.data(), weight_deltas.size() }
+    };
+}
+
 void Dense2dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
@@ -583,7 +564,10 @@ void Dense2dLayerBackPropagationLM::print() const
 }
 
 
-void Dense2d::normalization(Tensor<type, 1> &means, Tensor<type, 1> &standard_deviations, const Tensor<type, 2> &inputs, Tensor<type, 2> &outputs) const
+void Dense2d::normalization(Tensor<type, 1> &means,
+                            Tensor<type, 1> &standard_deviations,
+                            const Tensor<type, 2> &inputs,
+                            Tensor<type, 2> &outputs) const
 {
 
     const array<Index, 2> rows({outputs.dimension(0), 1});
@@ -767,7 +751,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
-        }
+    }
 
     // Bias derivatives
 
@@ -837,11 +821,14 @@ void Dense2d::set_parameters_cuda(const float* new_parameters, Index& index)
 
 void Dense2d::allocate_parameters_device()
 {
+    cout << "Dense2d allocate_parameters_device:" << endl;
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    CHECK_CUDA(cudaMalloc(&biases_device, outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&biases_device, outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(biases_device, outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(weights_device, inputs_number * outputs_number * sizeof(float));
 }
 
 
@@ -887,6 +874,8 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
+    cout << "Dense2dForwardPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -910,8 +899,10 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(combinations, batch_size * outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
 
@@ -990,6 +981,8 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 {
     if (!new_layer) return;
 
+    cout << "Dense2dBackPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -1005,12 +998,15 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Parameters
 
-    CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(bias_deltas_device, outputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(weight_deltas_device, inputs_number * outputs_number * sizeof(float));
 
     // Input deltas
     
-    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(float));
 
     // Deltas
 

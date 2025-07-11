@@ -74,9 +74,9 @@ void TimeSeriesDataset::print() const
     if(!display) return;
 
     const Index variables_number = get_variables_number();
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index input_variables_number = get_variables_number("Input");
     const Index samples_number = get_samples_number();
-    const Index target_variables_bumber = get_variables_number(VariableUse::Target);
+    const Index target_variables_bumber = get_variables_number("Target");
 
     cout << "Time series data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -85,11 +85,11 @@ void TimeSeriesDataset::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_vector(get_dimensions(Dataset::VariableUse::Input));
+    print_vector(get_dimensions("Input"));
 
     cout << "Target variables dimensions: ";
 
-    print_vector(get_dimensions(Dataset::VariableUse::Target));
+    print_vector(get_dimensions("Target"));
 
     cout << "Lags number: " << get_lags_number() << endl;
     cout << "Steps ahead: " << get_steps_ahead() << endl;
@@ -409,8 +409,8 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
-    input_dimensions = { get_variables_number(Dataset::VariableUse::Input) };
-    target_dimensions = { get_variables_number(Dataset::VariableUse::Target) };
+    input_dimensions = { get_variables_number("Input") };
+    target_dimensions = { get_variables_number("Target") };
 
 }
 
@@ -419,8 +419,8 @@ void TimeSeriesDataset::impute_missing_values_mean()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_variable_indices = get_used_variable_indices();
-    const vector<Index> input_variable_indices = get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const vector<Index> target_variable_indices = get_variable_indices("Target");
 
     const Tensor<type, 1> means = mean(data, used_sample_indices, used_variable_indices);
 
@@ -585,13 +585,13 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
-    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
+    const Index input_raw_variables_number = get_raw_variables_number("Input");
+    const Index target_raw_variables_number = get_raw_variables_number("Target");
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
-    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Target);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Target");
 
     Index input_target_numeric_raw_variables_number = 0;
 
@@ -637,7 +637,7 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use != VariableUse::None
+        if(raw_variables[i].use != "None"
         && raw_variables[i].type == RawVariableType::Numeric)
         {
             input_i = get_raw_variable_data(i);
@@ -671,13 +671,13 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
-    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
+    const Index input_raw_variables_number = get_raw_variables_number("Input");
+    const Index target_raw_variables_number = get_raw_variables_number("Target");
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
-    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Input");
 
     Index input_target_numeric_raw_variables_number = 0;
     int count = 0;
@@ -724,7 +724,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use == VariableUse::None
+        if(raw_variables[i].use == "None"
         || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
@@ -736,7 +736,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(raw_variables[j].use == VariableUse::None
+            if(raw_variables[j].use == "None"
             || raw_variables[j].type != RawVariableType::Numeric)
                 continue;
 

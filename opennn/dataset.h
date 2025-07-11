@@ -35,23 +35,15 @@ public:
             const bool& = false,
             const Codification& = Codification::UTF8);
 
-    ~Dataset()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     // Enumerations
 
     enum class Separator{None, Space, Tab, Comma, Semicolon};
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    enum class SampleUse{Training, Selection, Testing, None};
+    //enum class string{Training, Selection, Testing, None};
 
-    enum class VariableUse{Id, Input, Target, Time, None, Decoder};
+    //enum class string{Id, Input, Target, Time, None, Decoder};
 
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
@@ -60,20 +52,20 @@ public:
     struct RawVariable
     {
         RawVariable(const string& = string(),
-                    const Dataset::VariableUse& = Dataset::VariableUse::None,
+                    const string& = "None",
                     const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const vector<string>& = vector<string>());
 
         void set(const string& = string(),
-                 const Dataset::VariableUse& = Dataset::VariableUse::None,
+                 const string& = "None",
                  const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
                  const Scaler& = Scaler::MeanStandardDeviation,
                  const vector<string>& = vector<string>());
 
         string name;
 
-        Dataset::VariableUse use = Dataset::VariableUse::None;
+        string use = "None";
 
         Dataset::RawVariableType type = Dataset::RawVariableType::None;
 
@@ -85,7 +77,7 @@ public:
 
         // Methods
 
-        string get_use_string() const;
+        string get_use() const;
         string get_type_string() const;
 
         Index get_categories_number() const;
@@ -93,7 +85,6 @@ public:
         void set_scaler(const Scaler&);
         void set_scaler(const string&);
 
-        void set_use(const Dataset::VariableUse&);
         void set_use(const string&);
 
         void set_type(const string&);
@@ -110,16 +101,16 @@ public:
 
     inline Index get_samples_number() const {return data.dimension(0);}
 
-    Index get_samples_number(const SampleUse&) const;
+    Index get_samples_number(const string&) const;
 
     Index get_used_samples_number() const;
 
-    vector<Index> get_sample_indices(const SampleUse&) const;
+    vector<Index> get_sample_indices(const string&) const;
 
     vector<Index> get_used_sample_indices() const;
 
-    SampleUse get_sample_use(const Index&) const;
-    const vector<SampleUse>& get_sample_uses() const;
+    string get_sample_use(const Index&) const;
+    const vector<string>& get_sample_uses() const;
 
     vector<Index> get_sample_uses_vector() const;
 
@@ -129,48 +120,48 @@ public:
     string get_sample_string(const Index&) const;
 
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
-    Index get_raw_variables_number(const VariableUse&) const;
+    Index get_raw_variables_number(const string&) const;
     Index get_used_raw_variables_number() const;
 
     const vector<RawVariable>& get_raw_variables() const;
-    vector<RawVariable> get_raw_variables(const VariableUse&) const;
+    vector<RawVariable> get_raw_variables(const string&) const;
 
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-    vector<Index> get_raw_variable_indices(const VariableUse&) const;
+    vector<Index> get_raw_variable_indices(const string&) const;
     vector<Index> get_used_raw_variables_indices() const;
 
     vector<string> get_raw_variable_names() const;
-    vector<string> get_raw_variable_names(const VariableUse&) const;
+    vector<string> get_raw_variable_names(const string&) const;
 
     RawVariableType get_raw_variable_type(const Index& index) const {return raw_variables[index].type;}
 
     // Variables get
 
     Index get_variables_number() const;
-    Index get_variables_number(const VariableUse&) const;
+    Index get_variables_number(const string&) const;
     Index get_used_variables_number() const;
 
     vector<string> get_variable_names() const;
-    vector<string> get_variable_names(const VariableUse&) const;
+    vector<string> get_variable_names(const string&) const;
 
     vector<vector<Index>> get_variable_indices() const;
     vector<Index> get_variable_indices(const Index&) const;
-    vector<Index> get_variable_indices(const VariableUse&) const;
+    vector<Index> get_variable_indices(const string&) const;
     vector<Index> get_used_variable_indices() const;
 
-    dimensions get_dimensions(const VariableUse&) const;
+    dimensions get_dimensions(const string&) const;
 
-    vector<Scaler> get_variable_scalers(const VariableUse&) const;
+    vector<Scaler> get_variable_scalers(const string&) const;
 
     vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const;
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
-    Tensor<type, 2> get_data(const SampleUse&) const;
-    Tensor<type, 2> get_data(const VariableUse&) const;   
-    Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
+    Tensor<type, 2> get_data_samples(const string&) const;
+    Tensor<type, 2> get_data_variables(const string&) const;
+    Tensor<type, 2> get_data(const string&, const string&) const;
     Tensor<type, 2> get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
@@ -241,14 +232,12 @@ public:
 
     // Samples set
 
-    void set(const SampleUse&);
+    void set_sample_uses(const string&);
 
-    void set_sample_use(const Index&, const SampleUse&);
     void set_sample_use(const Index&, const string&);
 
-    void set_sample_uses(const vector<SampleUse>&);
     void set_sample_uses(const vector<string>&);
-    void set_sample_uses(const vector<Index>&, const SampleUse&);
+    void set_sample_uses(const vector<Index>&, const string&);
 
     // Raw variables set
 
@@ -259,14 +248,13 @@ public:
     void set_default_raw_variables_uses();
     void set_default_raw_variables_uses_forecasting();
     virtual void set_raw_variable_uses(const vector<string>&);
-    virtual void set_raw_variable_uses(const vector<VariableUse>&);
 
-    void set_raw_variables(const VariableUse&);
+    void set_raw_variables(const string&);
     void set_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_raw_variables_unused();
 
-    void set_raw_variable_use(const Index&, const VariableUse&);
-    void set_raw_variable_use(const string&, const VariableUse&);
+    void set_raw_variable_use(const Index&, const string&);
+    void set_raw_variable_use(const string&, const string&);
 
     void set_raw_variable_type(const Index&, const RawVariableType&);
     void set_raw_variable_type(const string&, const RawVariableType&);
@@ -288,9 +276,9 @@ public:
 
     void set_variable_names(const vector<string>&);
 
-    void set(const VariableUse&);
+    void set_variable_uses(const string&);
 
-    void set_dimensions(const VariableUse&, const dimensions&);
+    void set_dimensions(const string&, const dimensions&);
 
     // Data set
 
@@ -360,16 +348,16 @@ public:
     vector<Descriptives> calculate_raw_variable_descriptives_negative_samples() const;
     vector<Descriptives> calculate_raw_variable_descriptives_categories(const Index&) const;
 
-    vector<Descriptives> calculate_variable_descriptives(const VariableUse&) const;
+    vector<Descriptives> calculate_variable_descriptives(const string&) const;
  
     vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
-    Tensor<type, 1> calculate_means(const SampleUse& , const VariableUse&) const;
+    Tensor<type, 1> calculate_means(const string& , const string&) const;
 
     Index calculate_used_negatives(const Index&);
-    Index calculate_negatives(const Index&, const SampleUse&) const;
+    Index calculate_negatives(const Index&, const string&) const;
 
     // Distribution
 
@@ -411,11 +399,11 @@ public:
 
     vector<Descriptives> scale_data();
 
-    virtual vector<Descriptives> scale_variables(const VariableUse&);
+    virtual vector<Descriptives> scale_variables(const string&);
 
     // Data unscaling
 
-    void unscale_variables(const VariableUse&, const vector<Descriptives>&);
+    void unscale_variables(const string&, const vector<Descriptives>&);
 
     // Classification
 
@@ -538,7 +526,7 @@ protected:
 
     // Samples
 
-    vector<SampleUse> sample_uses;
+    vector<string> sample_uses;
 
     vector<string> sample_ids;
 
@@ -590,14 +578,6 @@ struct Batch
 {
     Batch(const Index& = 0, Dataset* = nullptr);
 
-    ~Batch()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;
 
@@ -638,6 +618,8 @@ struct Batch
 struct BatchCuda
 {
     BatchCuda(const Index& = 0, Dataset* = nullptr);
+
+    ~BatchCuda() { free(); }
 
     vector<float*> get_input_device() const;
     pair<type*, dimensions> get_target_pair_device() const;

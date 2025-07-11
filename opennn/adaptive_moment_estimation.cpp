@@ -146,15 +146,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -417,6 +417,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
+/*
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     Index& iteration = optimization_data.iteration;
@@ -456,6 +457,54 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     // Update parameters
     neural_network->set_parameters(parameters);
+*/
+
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
+
+    optimization_data.iteration++;
+    Index& iteration = optimization_data.iteration;
+
+    const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
+    const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
+
+    for(Index layer_index = 0; layer_index < layers_number; layer_index++)
+    {
+        Layer* layer = neural_network->get_layer(layer_index).get();
+
+        if (!layer->get_is_trainable())
+            continue;
+
+        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
+
+        const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
+        const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+
+        for(Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        {
+            type* parameter_data = parameter_pairs[parameter_index].first;
+            const Index parameter_size = parameter_pairs[parameter_index].second;
+            type* delta_data = delta_pairs[parameter_index].first;
+
+            TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
+            TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
+
+            Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay[layer_index][parameter_index];
+            Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay[layer_index][parameter_index];
+
+            gradient_exponential_decay.device(*thread_pool_device)
+                = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
+
+            square_gradient_exponential_decay.device(*thread_pool_device)
+                = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
+
+            Tensor<type, 1> corrected_gradient_exponential_decay = gradient_exponential_decay / bias_correction_1;
+            Tensor<type, 1> corrected_square_gradient_exponential_decay = square_gradient_exponential_decay / bias_correction_2;
+
+            parameters.device(*thread_pool_device)
+                -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+        }
+    }
 }
 
 
@@ -506,25 +555,46 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     LossIndex* loss_index = new_adaptive_moment_estimation->get_loss_index();
-
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index layers_number = neural_network->get_layers_number();
 
-    gradient_exponential_decay.resize(parameters_number);
-    gradient_exponential_decay.setZero();
+    gradient_exponential_decay.resize(layers_number);
+    square_gradient_exponential_decay.resize(layers_number);
 
-    square_gradient_exponential_decay.resize(parameters_number);
-    square_gradient_exponential_decay.setZero();
+    for (Index i = 0; i < layers_number; i++)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+
+        if (!layer->get_is_trainable())
+            continue;
+
+        const auto& parameter_pairs = layer->get_parameter_pairs();
+        const Index parameter_sets_number = parameter_pairs.size();
+
+        gradient_exponential_decay[i].resize(parameter_sets_number);
+        square_gradient_exponential_decay[i].resize(parameter_sets_number);
+
+        for (Index j = 0; j < parameter_sets_number; j++)
+        {
+            const Index parameter_size = parameter_pairs[j].second;
+
+            gradient_exponential_decay[i][j].resize(parameter_size);
+            gradient_exponential_decay[i][j].setZero();
+
+            square_gradient_exponential_decay[i][j].resize(parameter_size);
+            square_gradient_exponential_decay[i][j].setZero();
+        }
+    }
 }
 
 
 void AdaptiveMomentEstimationData::print() const
 {
-    cout << "Gradient exponential decay:" << endl
-         << gradient_exponential_decay << endl
-         << "Square gradient exponential decay:" << endl
-         << square_gradient_exponential_decay << endl;
+    // cout << "Gradient exponential decay:" << endl
+    //      << gradient_exponential_decay << endl
+    //      << "Square gradient exponential decay:" << endl
+    //      << square_gradient_exponential_decay << endl;
 }
 
 
@@ -552,15 +622,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -798,6 +868,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     set_unscaling();
 
     neural_network->copy_parameters_host();
+    neural_network->free_parameters_device();
 
     if (display) results.print();
 
@@ -869,12 +940,15 @@ ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new
 
 void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
+    cout << "ADAMOptimizationDataCuda set:" << endl;
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    CHECK_CUDA(cudaMalloc(&gradient_exponential_decay,parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay,parameters_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&gradient_exponential_decay,parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(gradient_exponential_decay, parameters_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay,parameters_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(square_gradient_exponential_decay, parameters_number * sizeof(float));
 
     CHECK_CUDA(cudaMemset(gradient_exponential_decay,           0, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMemset(square_gradient_exponential_decay,    0, parameters_number * sizeof(float)));

@@ -30,7 +30,7 @@ TEST(CrossEntropyErrorTest, BackPropagate)
 
     dataset.set_data_classification();
 
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
         { inputs_number }, { neurons_number }, { targets_number });

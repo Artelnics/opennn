@@ -21,7 +21,7 @@ public:
 
    MinkowskiError(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-   type get_Minkowski_parameter() const;
+   type get_Minkowski_parameter() const override;
 
    void set_default();
 
@@ -37,7 +37,7 @@ public:
 
    string get_name() const override;
 
-   virtual void from_XML(const XMLDocument&);
+   void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
 

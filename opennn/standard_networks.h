@@ -161,7 +161,7 @@ public:
         add_layer(make_unique<Scaling4d>(input_dimensions));
         
         const Index complexity_size = complexity_dimensions.size();
-        
+
         for (Index i = 0; i < complexity_size; i++)
         {
             const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
@@ -185,7 +185,7 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-        
+
         add_layer(make_unique<Flatten>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
@@ -210,24 +210,47 @@ public:
         const Index sequence_length = input_dimensions[1];
         const Index embedding_dimension = input_dimensions[2];
 
+
+        cout << "input_dimensions" << endl;
+        print_vector(input_dimensions);
+
+        cout << "complexity_dimensions" << endl;
+        print_vector(complexity_dimensions);
+
+        cout << "output_dimensions" << endl;
+        print_vector(output_dimensions);
+
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"
                                          ));
 
-        add_layer(make_unique<Pooling3d>(
-            get_output_dimensions()
-            ));
+        // cout << "after Embedding" << endl;
+        // print_vector(get_output_dimensions());
 
-        add_layer(make_unique<Flatten3d>(
-            get_output_dimensions()
-            ));
+        // // add_layer(make_unique<Pooling3d>(
+        // //     get_output_dimensions()
+        // //     ));
 
-        add_layer(make_unique<Dense2d>(
-            get_output_dimensions(),
-            output_dimensions,
-            "Logistic",
-            "classification_layer"));
+        // add_layer(make_unique<Flatten3d>(
+        //     get_output_dimensions()
+        //     ));
+
+        // cout << "after Flatten3d" << endl;
+        // print_vector(get_output_dimensions());
+
+
+        // add_layer(make_unique<Dense2d>(
+        //     get_output_dimensions(),
+        //     output_dimensions,
+        //     "Logistic",
+        //     "classification_layer"));
+
+        // cout << "after Dense2d" << endl;
+        // print_vector(get_output_dimensions());
+
+        // cout << "=================> get_input_dimensions()" << endl;
+        // print_vector(get_input_dimensions());
     }
 };
 

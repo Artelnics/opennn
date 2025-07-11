@@ -45,6 +45,20 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
 }
 
 
+template<int rank>
+void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_real_distribution<type> distribution(minimum, maximum);
+
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(gen);
+}
+
+
+
 type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);

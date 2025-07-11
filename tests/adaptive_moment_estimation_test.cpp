@@ -84,7 +84,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 
     // language_dataset.encode_input_data(input_sequences);
     // language_dataset.encode_target_data(target_sequences);
-    // language_dataset.set(LanguageDataset::SampleUse::Training);
+    // language_dataset.set(LanguageDataset::"Training");
 
     // opennn::Transformer transformer({
     //     input_length,

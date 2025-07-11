@@ -49,20 +49,12 @@ dimensions Normalization3d::get_output_dimensions() const
 }
 
 
-Index Normalization3d::get_parameters_number() const
+vector<pair<type *, Index> > Normalization3d::get_parameter_pairs() const
 {
-    return gammas.size() + betas.size();
-}
-
-
-void Normalization3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(gammas.size() + betas.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, gammas, index);
-    copy_to_vector(parameters, betas, index);
+    return {
+        {(type*)gammas.data(), gammas.size()},
+        {(type*)betas.data(), betas.size()}
+    };
 }
 
 
@@ -81,20 +73,6 @@ void Normalization3d::set(const Index& new_sequence_length,
     label = new_label;
 
     name = "Normalization3d";
-}
-
-
-void Normalization3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(gammas, new_parameters, index);
-    copy_from_vector(betas, new_parameters, index);
-}
-
-
-void Normalization3d::set_parameters_random()
-{
-    set_random(gammas);
-    set_random(betas);
 }
 
 
@@ -231,22 +209,21 @@ void Normalization3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
 }
 
 
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3d");
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
     add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -346,6 +323,15 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
 
     return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
+
+vector<pair<type*, Index>> Normalization3dBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)gamma_derivatives.data(), gamma_derivatives.size()},
+        {(type*)beta_derivatives.data(), beta_derivatives.size()}
+    };
+}
+
 
 REGISTER(Layer, Normalization3d, "Normalization3d")
 REGISTER(LayerForwardPropagation, Normalization3dForwardPropagation, "Normalization3d")

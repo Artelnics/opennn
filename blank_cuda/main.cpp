@@ -43,11 +43,11 @@ int main()
 
         // Data set
         /*
-        const Index samples_number = 2;
+        const Index samples_number = 6;
 
         const Index image_height = 3;
         const Index image_width = 3;
-        const Index channels = 1;
+        const Index channels = 3;
         const Index targets = 2;
 
         ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
@@ -95,7 +95,10 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
+        //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
+        
+        cudaDeviceSynchronize();
 
         // Testing analysis
         

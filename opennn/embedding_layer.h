@@ -30,9 +30,7 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    Index get_parameters_number() const override;
-    void get_parameters(Tensor<type, 1>&) const override;
-
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
@@ -40,9 +38,7 @@ public:
 
     void set_dropout_rate(const type&);
 
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_random() override;
-    
 
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
@@ -107,6 +103,8 @@ private:
 
     Index sequence_length = 0;
 
+    Tensor<type, 1> biases;
+
     Tensor<type, 2> weights;
 
     Tensor<type, 2> positional_encoding;
@@ -134,6 +132,8 @@ struct EmbeddingBackPropagation : LayerBackPropagation
     EmbeddingBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

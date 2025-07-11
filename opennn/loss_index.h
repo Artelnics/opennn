@@ -38,15 +38,7 @@ public:
 
    LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    ~LossIndex()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
-   enum class RegularizationMethod{L1, L2, NoRegularization};
+   //enum class RegularizationMethod{L1, L2, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
    {
@@ -66,7 +58,7 @@ public:
 
    bool has_data_set() const;
 
-   RegularizationMethod get_regularization_method() const;
+   string get_regularization_method() const;
 
    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -76,13 +68,14 @@ public:
 
    virtual void set_data_set(Dataset*);
 
-   void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);
 
    void set_display(const bool&);
 
    virtual void set_normalization_coefficient() {}
+
+   virtual type get_Minkowski_parameter() const { return 1.5; }
 
    // Back propagation
 
@@ -148,7 +141,7 @@ public:
 
    // Serialization
 
-   void from_XML(const XMLDocument&);
+   virtual void from_XML(const XMLDocument&) = 0;
 
    virtual void to_XML(XMLPrinter&) const;
 
@@ -156,8 +149,6 @@ public:
    void write_regularization_XML(XMLPrinter&) const;
 
    virtual string get_name() const;
-
-   string write_regularization_method() const;
 
    // Numerical differentiation
 
@@ -245,7 +236,7 @@ protected:
 
     Dataset* dataset = nullptr;
 
-    RegularizationMethod regularization_method = RegularizationMethod::L2;
+    string regularization_method = "L2";
 
     type regularization_weight = type(0.01);
 
@@ -320,10 +311,10 @@ struct BackPropagation
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;
 
-    Tensor<type, 1> parameters;
+    //Tensor<type, 1> parameters;
 
-    Tensor<type, 1> gradient;
-    Tensor<type, 1> regularization_gradient;
+    //Tensor<type, 1> gradient;
+    //Tensor<type, 1> regularization_gradient;
 
     Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;
@@ -338,6 +329,8 @@ struct BackPropagation
 struct BackPropagationCuda
 {
     BackPropagationCuda(const Index& = 0, LossIndex* = nullptr);
+
+    ~BackPropagationCuda() { free(); }
 
     void set(const Index& = 0, LossIndex* = nullptr);
 
@@ -355,7 +348,11 @@ struct BackPropagationCuda
 
     NeuralNetworkBackPropagationCuda neural_network;
 
+    float* errors = nullptr;
+
     Tensor<type, 0> error;
+    float* error_device = nullptr;
+
     type regularization = type(0);
     type loss = type(0);
 
@@ -363,17 +360,8 @@ struct BackPropagationCuda
     void* workspace = nullptr;
     size_t workspaceSize = 0;
 
-    float* numerator = nullptr;
-    float* numerator_2 = nullptr;
-    float* numerator_3 = nullptr;
-    float* outputs_plus_epsilon = nullptr;
-    float* one_minus_targets = nullptr;
-    float* one_minus_outputs = nullptr;
-    float* numerator_reduce = nullptr;
     cudnnTensorDescriptor_t output_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
-
-    float* errors = nullptr;
 
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
@@ -385,10 +373,7 @@ struct BackPropagationCuda
 
     float* gradient = nullptr;
     cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
-    float* regularization_gradient = nullptr;
-
-    float* ones = nullptr;
-    float one = 1.0f;
+    //float* regularization_gradient = nullptr;
 
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;
@@ -397,8 +382,6 @@ struct BackPropagationCuda
     bool built_mask = false;
 
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_square_root_descriptor = nullptr;
 };
 
 #endif

@@ -29,14 +29,10 @@ public:
     Index get_input_embedding() const;
     Index get_output_embedding() const;
 
-   // @todo
-
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
 
-   Index get_parameters_number() const override;
    type get_dropout_rate() const;
-   void get_parameters(Tensor<type, 1>&) const override;
 
    string get_activation_function() const;
 
@@ -46,13 +42,8 @@ public:
             const string& = "HyperbolicTangent",
             const string & = "dense3d_layer");
 
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
-
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
-
-   void set_parameters_random() override;
-   void set_parameters_glorot();
 
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;

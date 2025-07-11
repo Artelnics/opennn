@@ -383,3 +383,90 @@ void update_parameters_device(
     );
 }
 
+
+__global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type out = outputs[i];
+        const type tgt = targets[i];
+
+        term_results[i] = tgt * logf(out + epsilon) + (1.0f - tgt) * logf(1.0f - out + epsilon);
+    }
+}
+
+void calculate_binary_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_binary_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+}
+
+
+__global__ void calculate_binary_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type out = outputs[i];
+        const type tgt = targets[i];
+
+        const type term1 = (1.0f - tgt) / (1.0f - out + epsilon);
+        const type term2 = tgt / (out + epsilon);
+
+        deltas[i] = (term1 - term2) * scaling_factor;
+    }
+}
+
+void calculate_binary_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_binary_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, epsilon, scaling_factor);
+}
+
+
+__global__ void calculate_multiple_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+
+        if (tgt > 0.0f) {
+            term_results[i] = tgt * logf(outputs[i] + epsilon);
+        }
+        else {
+            term_results[i] = 0.0f;
+        }
+    }
+}
+
+void calculate_multiple_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_multiple_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+}
+
+
+__global__ void calculate_multiple_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        deltas[i] = (outputs[i] - targets[i]) * scaling_factor;
+    }
+}
+
+void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type scaling_factor)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_multiple_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, scaling_factor);
+}

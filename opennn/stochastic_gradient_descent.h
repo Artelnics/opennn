@@ -50,7 +50,6 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
 
@@ -109,8 +108,8 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    Tensor<type, 1> parameters_increment;
-    Tensor<type, 1> last_parameters_increment;
+    vector<vector<Tensor<type, 1>>> parameters_increment;
+    vector<vector<Tensor<type, 1>>> last_parameters_increment;
 };
 
 

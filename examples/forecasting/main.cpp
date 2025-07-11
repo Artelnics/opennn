@@ -34,22 +34,21 @@ int main()
         // Data set
 
         //TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
-        TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
+        //TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         //TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
-        time_series_dataset.print();
+        // time_series_dataset.print();
 
-        ForecastingNetwork neural_network({time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
-                                          {},
-                                          {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
+        // ForecastingNetwork neural_network({time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
+        //                                   {},
+        //                                   {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
 
-        neural_network.print();
+        // neural_network.print();
 
         // TrainingStrategy training_strategy(&neural_network, &time_series_dataset);
         //training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
         //training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         // training_strategy.perform_training();
-
 
         cout << "Good bye!" << endl;
 

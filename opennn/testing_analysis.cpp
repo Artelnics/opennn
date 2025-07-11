@@ -49,10 +49,8 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    thread_pool.reset();
+    thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
@@ -89,9 +87,9 @@ void TestingAnalysis::check() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -101,7 +99,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>& target, const Tensor<type, 2>& output) const
 {
-    const Index outputs_number = dataset->get_variables_number(Dataset::VariableUse::Target);
+    const Index outputs_number = dataset->get_variables_number("Target");
 
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
@@ -116,7 +114,7 @@ void TestingAnalysis::print_linear_correlations() const
 {
     const Tensor<Correlation, 1> linear_correlations = linear_correlation();
 
-    const vector<string> targets_name = dataset->get_variable_names(Dataset::VariableUse::Target);
+    const vector<string> targets_name = dataset->get_variable_names("Target");
 
     const Index targets_number = linear_correlations.size();
 
@@ -131,14 +129,14 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     // Data set
 
-    const Index testing_samples_number = dataset->get_samples_number(Dataset::SampleUse::Testing);
+    const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
 
     // Neural network
 
@@ -175,9 +173,9 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 
 Tensor<type, 2> TestingAnalysis::calculate_error() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -192,14 +190,14 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     // Data set
 
-    const Index testing_samples_number = dataset->get_samples_number(Dataset::SampleUse::Testing);
+    const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
 
     // Neural network
 
@@ -250,14 +248,14 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     // Data set
 
-    const Index testing_samples_number = dataset->get_samples_number(Dataset::SampleUse::Testing);
+    const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
 
     // Neural network
 
@@ -305,9 +303,9 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
 vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -330,9 +328,9 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(con
 
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -355,7 +353,7 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index testing_samples_number = dataset->get_samples_number(Dataset::SampleUse::Testing);
+    const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     // Testing analysis stuff
 
@@ -382,9 +380,9 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
 void TestingAnalysis::print_error_data_descriptives() const
 {
-    const Index targets_number = dataset->get_variables_number(Dataset::VariableUse::Target);
+    const Index targets_number = dataset->get_variables_number("Target");
 
-    const vector<string> targets_name = dataset->get_variable_names(Dataset::VariableUse::Target);
+    const vector<string> targets_name = dataset->get_variable_names("Target");
 
     const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_descriptives();
 
@@ -444,9 +442,9 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
 Tensor<type, 2> TestingAnalysis::calculate_errors() const
 {
 
-    const Tensor<type, 1> training_errors = calculate_errors(Dataset::SampleUse::Training);
-    const Tensor<type, 1> selection_errors = calculate_errors(Dataset::SampleUse::Selection);
-    const Tensor<type, 1> testing_errors = calculate_errors(Dataset::SampleUse::Testing);
+    const Tensor<type, 1> training_errors = calculate_errors("Training");
+    const Tensor<type, 1> selection_errors = calculate_errors("Selection");
+    const Tensor<type, 1> testing_errors = calculate_errors("Testing");
 
     Tensor<type, 2> errors(5, 3);
 
@@ -464,9 +462,9 @@ Tensor<type, 2> TestingAnalysis::calculate_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 {
-    const Tensor<type, 1> training_errors = calculate_binary_classification_errors(Dataset::SampleUse::Training);
-    const Tensor<type, 1> selection_errors = calculate_binary_classification_errors(Dataset::SampleUse::Selection);
-    const Tensor<type, 1> testing_errors = calculate_binary_classification_errors(Dataset::SampleUse::Testing);
+    const Tensor<type, 1> training_errors = calculate_binary_classification_errors("Training");
+    const Tensor<type, 1> selection_errors = calculate_binary_classification_errors("Selection");
+    const Tensor<type, 1> testing_errors = calculate_binary_classification_errors("Testing");
 
     Tensor<type, 2> errors(7, 3);
 
@@ -486,9 +484,9 @@ Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() const
 {
-    const Tensor<type, 1> training_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
-    const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
-    const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors(Dataset::SampleUse::Training);
+    const Tensor<type, 1> training_errors = calculate_multiple_classification_errors("Training");
+    const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors("Training");
+    const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors("Training");
 
     Tensor<type, 2> errors(6, 3);
 
@@ -523,11 +521,11 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_errors(const Dataset::SampleUse& sample_use) const
+Tensor<type, 1> TestingAnalysis::calculate_errors(const string& sample_use) const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(sample_use, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data(sample_use, "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(sample_use, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data(sample_use, "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -535,15 +533,15 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Dataset::SampleUse& samp
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const Dataset::SampleUse& sample_use) const
+Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const string& sample_use) const
 {
     // Data set
 
     const Index training_samples_number = dataset->get_samples_number(sample_use);
 
-    const Tensor<type, 2> inputs = dataset->get_data(sample_use, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data(sample_use, "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(sample_use, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data(sample_use, "Target");
 
     // Neural network
 
@@ -567,15 +565,15 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const Da
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const Dataset::SampleUse& sample_use) const
+Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const string& sample_use) const
 {
     // Data set
 
     const Index training_samples_number = dataset->get_samples_number(sample_use);
 
-    const Tensor<type, 2> inputs = dataset->get_data(sample_use, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data(sample_use, "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(sample_use, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data(sample_use, "Target");
 
     // Neural network
 
@@ -900,13 +898,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_thres
 {
     check();
 
-    Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Index samples_number = targets.dimension(0);
 
-    const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions input_dimensions = dataset->get_dimensions("Input");
 
     if(input_dimensions.size() == 1)
     {
@@ -939,11 +937,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> inputs = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> targets = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = language_dataset->get_data("Testing", "Input");
+    const Tensor<type, 2> context = language_dataset->get_data("Testing", "Decoder");
+    const Tensor<type, 2> targets = language_dataset->get_data("Testing", "Target");
 
-    const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions input_dimensions = dataset->get_dimensions("Input");
 
     const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
 
@@ -1011,8 +1009,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 
 TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1187,9 +1185,9 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_cur
 
 Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1311,9 +1309,9 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
 Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1347,9 +1345,9 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 
 TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
 {
-    Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1405,13 +1403,13 @@ vector<Histogram> TestingAnalysis::calculate_output_histogram(const Tensor<type,
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const type& decision_threshold) const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    const vector<Index> testing_indices = dataset->get_sample_indices(Dataset::SampleUse::Testing);
+    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
 
     BinaryClassificationRates binary_classification_rates;
 
@@ -1519,9 +1517,9 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() c
 {
     Tensor<type, 1> multiple_classification_tests(2);
 
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1554,7 +1552,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 
     ofstream file(file_name);
 
-    const vector<string> target_variable_names = dataset->get_variable_names(Dataset::VariableUse::Target);
+    const vector<string> target_variable_names = dataset->get_variable_names("Target");
 
     file << ",";
 
@@ -1597,13 +1595,13 @@ void TestingAnalysis::save_multiple_classification_tests(const filesystem::path&
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    const vector<Index> testing_indices = dataset->get_sample_indices(Dataset::SampleUse::Testing);
+    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 }
@@ -1662,7 +1660,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
     Index number_of_well_classified = 0;
     string class_name;
 
-    const vector<string> target_variables_names = dataset->get_variable_names(Dataset::VariableUse::Target);
+    const vector<string> target_variables_names = dataset->get_variable_names("Target");
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -1900,13 +1898,13 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_lags_number) const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    const Index targets_number = dataset->get_variables_number(Dataset::VariableUse::Target);
+    const Index targets_number = dataset->get_variables_number("Target");
 
     const Tensor<type, 2> error = outputs - targets;
 
@@ -1921,11 +1919,11 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
 
 Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
 {
-    const Index targets_number = dataset->get_variables_number(Dataset::VariableUse::Target);
+    const Index targets_number = dataset->get_variables_number("Target");
 
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
@@ -1948,9 +1946,9 @@ pair<type, type> TestingAnalysis::test_transformer() const
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> input = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> target = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> context = language_dataset->get_data("Testing", "Input");
+    const Tensor<type, 2> input = language_dataset->get_data("Testing", "Decoder");
+    const Tensor<type, 2> target = language_dataset->get_data("Testing", "Target");
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
@@ -2143,7 +2141,7 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 {
     //const Index inputs_number = neural_network->get_inputs_number();
 
-    const Index targets_number = dataset->get_variables_number(Dataset::VariableUse::Target);
+    const Index targets_number = dataset->get_variables_number("Target");
 
     //const Index outputs_number = neural_network->get_outputs_number();
 
@@ -2221,13 +2219,13 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
 type TestingAnalysis::calculate_logloss() const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    const Index testing_samples_number = dataset->get_samples_number(Dataset::SampleUse::Testing);
+    const Index testing_samples_number = dataset->get_samples_number("Testing");
 
     type logloss = type(0);
 
@@ -2346,12 +2344,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
 {
     check();
 
-    const vector<Index> testing_indices = dataset->get_sample_indices(Dataset::SampleUse::Testing);
+    const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
     const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, batch_size, false);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -2363,6 +2361,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
 
     BatchCuda testing_batch_cuda(batch_size, dataset);
     ForwardPropagationCuda testing_forward_propagation_cuda(batch_size, neural_network);
+
+    neural_network->allocate_parameters_device();
+    neural_network->copy_parameters_device();
 
     for (const auto& current_batch_indices : testing_batches)
     {
@@ -2395,8 +2396,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
         total_confusion_matrix += batch_confusion;
     }
 
-    testing_batch_cuda.free();
-    testing_forward_propagation_cuda.free();
+    neural_network->free_parameters_device();
 
     total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 

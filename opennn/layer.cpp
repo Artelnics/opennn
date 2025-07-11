@@ -51,12 +51,62 @@ void Layer::set_display(const bool& new_display)
 }
 
 
+void Layer::set_parameters_random()
+{
+    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+
+    for(Index i = 0; i < parameter_pairs.size(); i++)
+    {
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+
+        set_random(this_parameters);
+    }
+}
+
+
+void Layer::set_parameters_glorot()
+{
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
+
+    const type limit = sqrt(6.0 / (inputs_number + outputs_number));
+
+    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+
+    for(Index i = 0; i < parameter_pairs.size(); i++)
+    {
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+
+        set_random(this_parameters, -limit, limit);
+    }
+}
+
+
+Index Layer::get_parameters_number() const
+{
+    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+
+    Index parameters_number = 0;
+
+#pragma omp parallel for reduction(+:parameters_number)
+
+    for(Index i = 0; i < parameter_pairs.size(); i++)
+        parameters_number += parameter_pairs[i].second;
+
+    return parameters_number;
+}
+
+
+vector<pair<type *, Index> > Layer::get_parameter_pairs() const
+{
+    return vector<pair<type*, Index>>();
+}
+
+
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    thread_pool.reset();
+    thread_pool_device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
@@ -94,6 +144,7 @@ vector<string> Layer::get_default_output_names() const
     return output_names;
 }
 
+
 bool Layer::get_is_trainable() const
 {
     return is_trainable;
@@ -106,27 +157,6 @@ void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) con
 
     for (Index i = 1; i < Index(delta_pairs.size()); i++)
         deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
-}
-
-
-void Layer::set_parameters_random()
-{
-}
-
-
-void Layer::set_parameters(const Tensor<type, 1>&, Index&)
-{
-}
-
-
-Index Layer::get_parameters_number() const
-{
-    return 0;
-}
-
-
-void Layer::get_parameters(Tensor<type, 1>&) const
-{
 }
 
 

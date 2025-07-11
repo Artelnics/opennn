@@ -92,7 +92,7 @@ void GeneticAlgorithm::set_default()
 
     const Index individuals_number = 40;        // Modify depending on the Dataset
 
-    const Index raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number("Input");
 
     population.resize(individuals_number, raw_variables_number);
 
@@ -136,7 +136,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
     if (!training_strategy || !training_strategy->get_data_set())
         throw runtime_error("Training strategy or data set is null");
 
-    const Index new_raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index new_raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number("Input");
 
     population.resize(new_individuals_number, new_raw_variables_number);
     parameters.resize(new_individuals_number);
@@ -184,7 +184,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     const Index original_input_raw_variables_number = original_input_raw_variable_indices.size();
 
-    const Index random_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index random_raw_variables_number = dataset->get_raw_variables_number("Input");
 
     const type percentage = (random_raw_variables_number > 10000) ? type(0.1) :
                             (random_raw_variables_number >  5000) ? type(0.2) :
@@ -244,7 +244,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     const Index original_input_raw_variables_number = original_input_raw_variable_indices.size();
 
-    const Index raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index raw_variables_number = dataset->get_raw_variables_number("Input");
 
     fitness_correlations.resize(raw_variables_number);
 
@@ -275,7 +275,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     const Index individuals_number = get_individuals_number();
 
-    const Index input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+    const Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
 
     Tensor<bool, 1> individual_raw_variables(input_raw_variables_number);
 
@@ -366,9 +366,9 @@ void GeneticAlgorithm::evaluate_population()
         dataset->set_raw_variable_indices(individual_raw_variables_indices,
                                            original_target_raw_variable_indices);
 
-        const Index input_variables_number = dataset->get_variables_number(Dataset::VariableUse::Input);
+        const Index input_variables_number = dataset->get_variables_number("Input");
 
-        const vector<string> input_names = dataset->get_variable_names(Dataset::VariableUse::Input);
+        const vector<string> input_names = dataset->get_variable_names("Input");
 
         neural_network->set_input_dimensions({input_variables_number});
 
@@ -390,7 +390,7 @@ void GeneticAlgorithm::evaluate_population()
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
                  << "Variables number: " << input_names.size() << endl
-                 << "Inputs number: " << dataset->get_raw_variables_number(Dataset::VariableUse::Input) << endl;
+                 << "Inputs number: " << dataset->get_raw_variables_number("Input") << endl;
 
         dataset->set_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
     }
@@ -563,8 +563,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
     // Selection algorithm
 
-    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(Dataset::VariableUse::Input);
-    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(Dataset::VariableUse::Target);
+    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices("Target");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -645,7 +645,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             dataset->set_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variable_indices);
 
             input_selection_results.optimal_input_raw_variable_names
-                = dataset->get_raw_variable_names(Dataset::VariableUse::Input);
+                = dataset->get_raw_variable_names("Input");
 
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
@@ -719,17 +719,17 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_raw_variable_indices(optimal_raw_variable_indices, original_target_raw_variable_indices);
 
-    dataset->set_dimensions(Dataset::VariableUse::Input, { Index(optimal_inputs_raw_variables_indices.size()) });
+    dataset->set_dimensions("Input", { Index(optimal_inputs_raw_variables_indices.size()) });
 
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
 
-    const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives(Dataset::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
     // Set neural network stuff
 
-    neural_network->set_input_dimensions({ dataset->get_variables_number(Dataset::VariableUse::Input) });
+    neural_network->set_input_dimensions({ dataset->get_variables_number("Input") });
 
-    neural_network->set_input_names(dataset->get_variable_names(Dataset::VariableUse::Input));
+    neural_network->set_input_names(dataset->get_variable_names("Input"));
 
     if(neural_network->has("Scaling2d"))
     {

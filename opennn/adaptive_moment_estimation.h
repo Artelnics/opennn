@@ -136,8 +136,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
-    Tensor<type, 1> gradient_exponential_decay;
-    Tensor<type, 1> square_gradient_exponential_decay;
+    vector<vector<Tensor<type, 1>>> gradient_exponential_decay;
+    vector<vector<Tensor<type, 1>>> square_gradient_exponential_decay;
 
     Index iteration = 0;
 
@@ -151,6 +151,8 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
     {
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
+
+        ~ADAMOptimizationDataCuda() { free(); }
 
         void set(AdaptiveMomentEstimation* = nullptr);
 

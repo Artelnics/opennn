@@ -134,7 +134,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     dataset.scale_data();
 
-    dataset.unscale_variables(Dataset::VariableUse::Input,matrix_descriptives);
+    dataset.unscale_variables("Input",matrix_descriptives);
 
     unscaled_matrix = dataset.get_data();
 
@@ -159,7 +159,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     dataset.scale_data();
-    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
+    dataset.unscale_variables("Input", matrix_descriptives);
 
     unscaled_matrix = dataset.get_data();
 
@@ -184,7 +184,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     dataset.scale_data();
-    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
+    dataset.unscale_variables("Input", matrix_descriptives);
 
     unscaled_matrix = dataset.get_data();
 
@@ -208,7 +208,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     dataset.scale_data();
-    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
+    dataset.unscale_variables("Input", matrix_descriptives);
 
     unscaled_matrix = dataset.get_data();
 
@@ -233,7 +233,7 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
     dataset.scale_data();
-    dataset.unscale_variables(Dataset::VariableUse::Input, matrix_descriptives);
+    dataset.unscale_variables("Input", matrix_descriptives);
 
     unscaled_matrix = dataset.get_data();
 
