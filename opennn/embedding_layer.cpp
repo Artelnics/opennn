@@ -58,13 +58,9 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-void Embedding::get_parameters(Tensor<type, 1>& parameters) const
+vector<pair<type *, Index> > Embedding::get_parameter_pairs() const
 {
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
+    return {{(type*)(weights.data()), weights.size()}};
 }
 
 
@@ -100,12 +96,6 @@ void Embedding::set(const Index& new_vocabulary_size,
 void Embedding::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
-}
-
-
-void Embedding::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
 }
 
 
@@ -277,7 +267,7 @@ void Embedding::from_XML(const XMLDocument& document)
 
     Index index = 0;
 
-    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "), index);
+    //set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -290,10 +280,10 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();  
 }

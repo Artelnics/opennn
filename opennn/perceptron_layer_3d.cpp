@@ -66,18 +66,6 @@ type Dense3d::get_dropout_rate() const
 }
 
 
-void Dense3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(weights.size() + biases.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-}
-
-
-
 string Dense3d::get_activation_function() const
 {
     return activation_function;
@@ -105,13 +93,6 @@ void Dense3d::set(const Index& new_sequence_length,
     name = "Dense3d";
 
     dropout_rate = 0;
-}
-
-
-void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -228,9 +209,8 @@ void Dense3d::from_XML(const XMLDocument& document)
     set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 

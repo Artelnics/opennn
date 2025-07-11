@@ -40,21 +40,7 @@ public:
 
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {
-            {(type*)query_weights.data(), query_weights.size()},
-            {(type*)query_biases.data(), query_biases.size()},
-            {(type*)key_weights.data(), key_weights.size()},
-            {(type*)key_biases.data(), key_biases.size()},
-            {(type*)value_weights.data(), value_weights.size()},
-            {(type*)value_biases.data(), value_biases.size()},
-            {(type*)projection_weights.data(), projection_weights.size()},
-            {(type*)projection_biases.data(), projection_biases.size()}
-        };
-    }
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     void set(const Index& = 0,
              const Index& = 0,
@@ -62,8 +48,6 @@ public:
              const Index& = 0,
              const bool& = false,
              const string& = "multihead_attention_layer");
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_dropout_rate(const type&);
 

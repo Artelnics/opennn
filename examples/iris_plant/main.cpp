@@ -73,8 +73,8 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.set_loss_index("CrossEntropyError2d");
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        // training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
+        training_strategy.get_loss_index()->set_regularization_method("L2");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_batch_size(2048);

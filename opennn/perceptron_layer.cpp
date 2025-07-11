@@ -35,6 +35,13 @@ dimensions Dense2d::get_output_dimensions() const
 }
 
 
+vector<pair<type *, Index> > Dense2d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -47,19 +54,6 @@ void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 type Dense2d::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
 }
 
 
@@ -138,13 +132,6 @@ void Dense2d::set_output_dimensions(const dimensions& new_output_dimensions)
     biases.resize(neurons_number);
 
     weights.resize(inputs_number, neurons_number);
-}
-
-
-void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{   
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -419,9 +406,8 @@ void Dense2d::from_XML(const XMLDocument& document)
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 

@@ -81,17 +81,6 @@ string Probabilistic3d::get_activation_function_text() const
 }
 
 
-void Probabilistic3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(weights.size() + biases.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-}
-
-
 void Probabilistic3d::set(const Index& new_inputs_number, 
                                const Index& new_inputs_depth,
                                const Index& new_neurons_number,
@@ -148,13 +137,6 @@ void Probabilistic3d::set_output_dimensions(const dimensions& new_output_dimensi
 }
 
 
-void Probabilistic3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 void Probabilistic3d::set_activation_function(const Activation& new_activation_function)
 {
     activation_function = new_activation_function;
@@ -169,6 +151,13 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
         set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
+}
+
+
+vector<pair<type *, Index> > Probabilistic3d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
 }
 
 
@@ -317,9 +306,8 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
     set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
 }
 
 

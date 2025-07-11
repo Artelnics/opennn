@@ -31,14 +31,6 @@ public:
 
     Layer();
 
-    ~Layer()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     const string& get_label() const;
 
     const bool& get_display() const;
@@ -52,53 +44,15 @@ public:
 
     void set_display(const bool&);
 
-    virtual void set_parameters_random()
-    {
-        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+    virtual void set_parameters_random();
 
-        for(Index i = 0; i < parameter_pairs.size(); i++)
-        {
-            TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+    virtual void set_parameters_glorot();
 
-            set_random(this_parameters);
-        }
-    }
-
-    virtual void set_parameters_glorot()
-    {
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
-
-        const type limit = sqrt(6.0 / (inputs_number + outputs_number));
-
-        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
-
-        for(Index i = 0; i < parameter_pairs.size(); i++)
-        {
-            TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
-
-            set_random(this_parameters, -limit, limit);
-        }
-    }
-
-
-    Index get_parameters_number() const
-    {
-        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
-
-        Index parameters_number = 0;
-
-        #pragma omp parallel for reduction(+:parameters_number)
-
-        for(Index i = 0; i < parameter_pairs.size(); i++)
-            parameters_number += parameter_pairs[i].second;
-
-        return parameters_number;
-    }
+    Index get_parameters_number() const;
+    /*
 
     virtual void get_parameters(Tensor<type, 1>& parameters) const
     {
-/*
         const Index parameters_number = get_parameters_number();
 
         parameters.resize(parameters_number);
@@ -114,13 +68,17 @@ public:
             //copy_to_vector(parameters, this_parameters, index);
 
         }
+    }
 */
-    }
 
-    virtual vector<pair<type*, Index>> get_parameter_pairs() const
+/*
+    void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
     {
-        return vector<pair<type*, Index>>();
+        //copy_from_vector(weights, new_parameters, index);
+        //copy_from_vector(biases, new_parameters, index);
     }
+*/
+    virtual vector<pair<type*, Index>> get_parameter_pairs() const;
 
     //virtual pair
 
@@ -130,8 +88,6 @@ public:
     Index get_inputs_number() const;
 
     Index get_outputs_number() const;
-
-    virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
 

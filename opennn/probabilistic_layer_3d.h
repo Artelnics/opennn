@@ -52,22 +52,10 @@ public:
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
-
    void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   // Parameters
-
-   void get_parameters(Tensor<type, 1>&) const override;
-
-   vector<pair<type*, Index>> get_parameter_pairs() const override
-   {
-       return {{(type*)(biases.data()), biases.size()},
-               {(type*)(weights.data()), weights.size()}};
-   }
-
-   // Forward propagation
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;

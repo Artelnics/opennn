@@ -26,16 +26,7 @@ public:
 
    Index get_timesteps() const;
 
-   void get_parameters(Tensor<type, 1>&) const override;
-
-   vector<pair<type*, Index>> get_parameter_pairs() const override
-   {
-       return {
-           {(type*)biases.data(), biases.size()},
-           {(type*)input_weights.data(), input_weights.size()},
-           {(type*)recurrent_weights.data(), recurrent_weights.size()}
-       };
-   }
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    string get_activation_function() const;
 
@@ -45,8 +36,6 @@ public:
    void set_output_dimensions(const dimensions&) override;
 
    void set_timesteps(const Index&);
-
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const string&);
 

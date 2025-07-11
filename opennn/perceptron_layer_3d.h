@@ -33,7 +33,6 @@ public:
    dimensions get_output_dimensions() const override;
 
    type get_dropout_rate() const;
-   void get_parameters(Tensor<type, 1>&) const override;
 
    string get_activation_function() const;
 
@@ -42,8 +41,6 @@ public:
             const Index& = 0,
             const string& = "HyperbolicTangent",
             const string & = "dense3d_layer");
-
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);

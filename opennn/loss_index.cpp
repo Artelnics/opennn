@@ -44,7 +44,7 @@ bool LossIndex::has_data_set() const
 }
 
 
-LossIndex::RegularizationMethod LossIndex::get_regularization_method() const
+string LossIndex::get_regularization_method() const
 {
     return regularization_method;
 }
@@ -56,16 +56,14 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
     dataset = new_data_set;
 
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    thread_pool.reset();
+    thread_pool_device.reset();
 
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
-    regularization_method = RegularizationMethod::L2;
+    regularization_method = "L2";
 }
 
 
@@ -94,19 +92,6 @@ void LossIndex::set_data_set(Dataset* new_data_set)
 
 
 void LossIndex::set_regularization_method(const string& new_regularization_method)
-{
-    if(new_regularization_method == "L1_NORM")
-        set_regularization_method(RegularizationMethod::L1);
-    else if(new_regularization_method == "L2_NORM")
-        set_regularization_method(RegularizationMethod::L2);
-    else if(new_regularization_method == "NO_REGULARIZATION")
-        set_regularization_method(RegularizationMethod::NoRegularization);
-    else
-        throw runtime_error("Unknown regularization method: " + new_regularization_method + ".");
-}
-
-
-void LossIndex::set_regularization_method(const LossIndex::RegularizationMethod& new_regularization_method)
 {
     regularization_method = new_regularization_method;
 }
@@ -175,7 +160,7 @@ void LossIndex::back_propagate(const Batch& batch,
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
 
-    if(regularization_method == RegularizationMethod::NoRegularization)
+    if(regularization_method == "NoRegularization")
         return;
 
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
@@ -222,7 +207,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
 void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
 {
-    if(regularization_method == RegularizationMethod::NoRegularization)
+    if(regularization_method == "NoRegularization")
         return;
 
     const type regularization = calculate_regularization(back_propagation_lm.parameters);
@@ -329,75 +314,43 @@ string LossIndex::get_name() const
 }
 
 
-string LossIndex::write_regularization_method() const
-{
-    switch(regularization_method)
-    {
-    case RegularizationMethod::NoRegularization: return "NO_REGULARIZATION";
-    case RegularizationMethod::L1: return "L1_NORM";
-    case RegularizationMethod::L2: return "L2_NORM";
-
-    default: return string();
-    }
-}
-
-
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
-    switch(regularization_method)
-    {
-        case RegularizationMethod::NoRegularization: 
-            return type(0);
-
-        case RegularizationMethod::L1: 
-            return l1_norm(thread_pool_device.get(), parameters);
-
-        case RegularizationMethod::L2: 
-            return l2_norm(thread_pool_device.get(), parameters);
-
-        default: 
-            return type(0);
-    }
-
-    return type(0);
+    if(regularization_method == "NoRegularization")
+        return type(0);
+    else if(regularization_method == "L1")
+        return l1_norm(thread_pool_device.get(), parameters);
+    else if(regularization_method == "L2")
+        return l2_norm(thread_pool_device.get(), parameters);
+    else
+        throw runtime_error("Unknown regularization method: " + regularization_method);
 }
 
 
 void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& regularization_gradient) const
 {
-    switch(regularization_method)
-    {
-    case RegularizationMethod::NoRegularization:
-        regularization_gradient.setZero(); return;
-
-    case RegularizationMethod::L1:
-        l1_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
-
-    case RegularizationMethod::L2:
-        l2_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
-
-    default:
-        return;
-    }
+    if(regularization_method == "NoRegularization")
+        regularization_gradient.setZero();
+    else if(regularization_method == "L1")
+        l1_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient);
+    else if(regularization_method == "L2")
+        l2_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient);
+    else
+        throw runtime_error("Unknown regularization method: " + regularization_method);
 }
 
 
 void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters,
                                                  Tensor<type, 2>& regularization_hessian) const
 {
-    switch(regularization_method)
-    {
-    case RegularizationMethod::L1:
+    if(regularization_method == "NoRegularization")
+        ;// do nothing
+    else if(regularization_method == "L1")
         l1_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
-        return;
-
-    case RegularizationMethod::L2:
+    else if(regularization_method == "L2")
         l2_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
-        return;
-
-    default:
-        return;
-    }
+    else
+        throw runtime_error("Unknown regularization method: " + regularization_method);
 }
 
 
@@ -487,24 +440,8 @@ void LossIndex::regularization_from_XML(const XMLDocument& document)
 void LossIndex::write_regularization_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("Regularization");
-    
-    switch(regularization_method)
-    {
-    case RegularizationMethod::L1:
-        file_stream.PushAttribute("Type", "L1_NORM");
-    break;
 
-    case RegularizationMethod::L2:
-        file_stream.PushAttribute("Type", "L2_NORM");
-    break;
-
-    case RegularizationMethod::NoRegularization:
-        file_stream.PushAttribute("Type", "NO_REGULARIZATION");
-    break;
-
-    default: 
-    break;
-    }
+    file_stream.PushAttribute("Type", regularization_method.c_str());
 
     // Regularization weight
 
@@ -565,12 +502,6 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
     loss = type(0);
 
     errors.resize(samples_number, outputs_number);
-
-    //neural_network_ptr->get_parameters(parameters);
-
-    //gradient.resize(parameters_number);
-
-    //regularization_gradient.resize(parameters_number);
 
     output_deltas_dimensions = { samples_number };
     output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
@@ -683,7 +614,7 @@ type LossIndex::calculate_numerical_error()
 
 Tensor<type, 1> LossIndex::calculate_gradient()
 {
-/*
+
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
@@ -706,7 +637,7 @@ Tensor<type, 1> LossIndex::calculate_gradient()
                                       forward_propagation);
 
     back_propagate(batch, forward_propagation, back_propagation);
-
+/*
     return back_propagation.gradient;
 */
     return Tensor<type, 1>();
@@ -1328,7 +1259,7 @@ pair<type*, dimensions> BackPropagationLM::get_output_deltas_pair() const
 }
 
 
-void BackPropagationLM::set(const Index&new_samples_number,
+void BackPropagationLM::set(const Index& new_samples_number,
                             LossIndex *new_loss_index)
 {
     loss_index = new_loss_index;
@@ -1342,9 +1273,6 @@ void BackPropagationLM::set(const Index&new_samples_number,
 
     if(!neural_network_ptr)
         return;
-
-    if(!neural_network_ptr)
-        throw runtime_error("Neural network is null.");
 
     const Index parameters_number =
         neural_network_ptr->get_parameters_number();
@@ -1554,7 +1482,7 @@ float LossIndex::calculate_regularization_cuda(Index parameters_number, float* p
 
     case RegularizationMethod::L1: return l1_norm_cuda(parameters_number, parameters);
 
-    case RegularizationMethod::L2: return l2_norm_cuda(parameters_number, parameters);
+    case "L2": return l2_norm_cuda(parameters_number, parameters);
     }
 
     return 0;
@@ -1577,7 +1505,7 @@ void LossIndex::calculate_regularization_gradient_cuda(const Index parameters_nu
         gradient);
         break;
 
-    case RegularizationMethod::L2: l2_norm_gradient_cuda(parameters_number,
+    case "L2": l2_norm_gradient_cuda(parameters_number,
         regularization,
         parameters,
         aux_vector,

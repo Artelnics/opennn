@@ -391,19 +391,6 @@ Index Convolutional::get_padding_width() const
 }
 
 
-void Convolutional::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-
-    // @todo add scales and offsets
-}
-
-
 void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
                         const string& new_activation_function,
@@ -543,13 +530,6 @@ void Convolutional::set_input_dimensions(const dimensions& new_input_dimensions)
 }
 
 
-void Convolutional::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);    
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 pair<Index, Index> Convolutional::get_padding() const
 {
     return { get_padding_height(), get_padding_width() };
@@ -580,6 +560,13 @@ Index Convolutional::get_input_height() const
 Index Convolutional::get_input_width() const
 {
     return input_dimensions[1];
+}
+
+
+vector<pair<type *, Index> > Convolutional::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
 }
 
 
@@ -619,10 +606,9 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }
@@ -656,9 +642,8 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
 }
 
 
