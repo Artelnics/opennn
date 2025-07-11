@@ -304,7 +304,6 @@ void Recurrent::from_XML(const XMLDocument& document)
 
     //Index index = 0;
     //set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
-
 }
 
 
