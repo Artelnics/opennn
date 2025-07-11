@@ -49,26 +49,16 @@ public:
    void set_inputs_number(const Index);
    void set_input_dimensions(const dimensions&) override;
 
+   void set_biases(const string&) override;
+   void set_weights(const string&) override;
+
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
-
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   // Parameters
-
-   Index get_parameters_number() const override;
-   void get_parameters(Tensor<type, 1>&) const override;
-
-   // Parameters initialization
-
-   
-   void set_parameters_random() override;
-   void set_parameters_glorot();
-
-   // Forward propagation
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
@@ -92,10 +82,6 @@ public:
                                                  const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
-
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index&, 
-                        Tensor<type, 1>&) const override;
 
    // Serialization
 
@@ -137,6 +123,8 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     Probabilistic3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

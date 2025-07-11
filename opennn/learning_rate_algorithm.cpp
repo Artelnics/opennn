@@ -1,3 +1,4 @@
+/*
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -34,36 +35,9 @@ bool LearningRateAlgorithm::has_loss_index() const
 }
 
 
-const LearningRateAlgorithm::LearningRateMethod& LearningRateAlgorithm::get_learning_rate_method() const
-{
-    return learning_rate_method;
-}
-
-
-string LearningRateAlgorithm::write_learning_rate_method() const
-{
-    switch(learning_rate_method)
-    {
-    case LearningRateMethod::GoldenSection:
-        return "GoldenSection";
-
-    case LearningRateMethod::BrentMethod:
-        return "BrentMethod";
-    default:
-        return string();
-    }
-}
-
-
 const type& LearningRateAlgorithm::get_learning_rate_tolerance() const
 {
     return learning_rate_tolerance;
-}
-
-
-const bool& LearningRateAlgorithm::get_display() const
-{
-    return display;
 }
 
 
@@ -86,8 +60,6 @@ void LearningRateAlgorithm::set_default()
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
-    learning_rate_method = LearningRateMethod::BrentMethod;
 
     learning_rate_tolerance = numeric_limits<type>::epsilon();
     loss_tolerance = numeric_limits<type>::epsilon();
@@ -112,33 +84,9 @@ void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 }
 
 
-void LearningRateAlgorithm::set_learning_rate_method(
-        const LearningRateAlgorithm::LearningRateMethod& new_learning_rate_method)
-{
-    learning_rate_method = new_learning_rate_method;
-}
-
-
-void LearningRateAlgorithm::set_learning_rate_method(const string& new_learning_rate_method)
-{
-    if(new_learning_rate_method == "GoldenSection")
-        learning_rate_method = LearningRateMethod::GoldenSection;
-    else if(new_learning_rate_method == "BrentMethod")
-        learning_rate_method = LearningRateMethod::BrentMethod;
-    else
-        throw runtime_error("Unknown learning rate method: " + new_learning_rate_method + ".\n");
-}
-
-
 void LearningRateAlgorithm::set_learning_rate_tolerance(const type& new_learning_rate_tolerance)
 {
     learning_rate_tolerance = new_learning_rate_tolerance;
-}
-
-
-void LearningRateAlgorithm::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -148,6 +96,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
+
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     const Tensor<type, 1>& parameters = back_propagation.parameters;
@@ -249,6 +198,8 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     }
 
     return triplet.U;
+
+    return pair<type, type>();
 }
 
 
@@ -387,18 +338,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 }
 
 
-type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet& triplet) const
-{
-    const type middle = triplet.A.first + type(0.5)*(triplet.B.first - triplet.A.first);
-
-    const type learning_rate = triplet.U.first < middle
-        ? triplet.A.first + type(0.618) * (triplet.B.first - triplet.A.first)
-        : triplet.A.first + type(0.382) * (triplet.B.first - triplet.A.first);
-
-    return learning_rate;
-}
-
-
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
 { 
     const type a = triplet.A.first;
@@ -423,7 +362,6 @@ void LearningRateAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LearningRateAlgorithm");
 
-    add_xml_element(printer, "LearningRateMethod", write_learning_rate_method());
     add_xml_element(printer, "LearningRateTolerance", to_string(learning_rate_tolerance));
 
     printer.CloseElement();
@@ -437,7 +375,6 @@ void LearningRateAlgorithm::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
 
-    set_learning_rate_method(read_xml_string(root_element, "LearningRateMethod"));
     set_learning_rate_tolerance(read_xml_type(root_element, "LearningRateTolerance"));
 }
 
@@ -523,3 +460,4 @@ void LearningRateAlgorithm::Triplet::check() const
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

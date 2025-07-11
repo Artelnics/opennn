@@ -28,15 +28,9 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    Index get_parameters_number() const override;
-    void get_parameters(Tensor<type, 1>&) const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
-
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
-
-
-    void set_parameters_random() override;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -46,10 +40,6 @@ public:
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
-
-    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         Index&,
-                         Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -93,6 +83,8 @@ struct Normalization3dBackPropagation : LayerBackPropagation
                                    Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

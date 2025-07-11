@@ -158,6 +158,22 @@ string MeanSquaredError::get_name() const
 }
 
 
+void MeanSquaredError::from_XML(const XMLDocument& document)
+{
+    const XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
+
+    if(!root_element)
+        throw runtime_error("Mean squared element is nullptr.\n");
+
+    // Regularization
+
+    XMLDocument regularization_document;
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+    regularization_from_XML(regularization_document);
+}
+
+
 void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("MeanSquaredError");
@@ -211,13 +227,11 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
         output_tensor_descriptor,
         errors_device);
 
-    float mean_square_error = 0.0f;
-
-    cublasSdot(cublas_handle, samples_number * outputs_number, errors_device, 1, errors_device, 1, &mean_square_error);
+    cublasSdot(cublas_handle, samples_number * outputs_number, errors_device, 1, errors_device, 1, &error(0));
 
     const type coefficient = type(2.0)/type(samples_number * outputs_number);
 
-    error(0) = mean_square_error * coefficient;
+    error(0) = error(0) * coefficient;
 
     if (isnan(error())) throw runtime_error("\nError is NAN.");
 }

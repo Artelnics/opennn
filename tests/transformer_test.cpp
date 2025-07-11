@@ -278,21 +278,21 @@ TEST(Transformer, ForwardPropagate)
         
     dataset.set(data);
 
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     for(Index i = 0; i < context_length; i++)
-        dataset.set_raw_variable_use(i, Dataset::VariableUse::Context);
+        dataset.set_raw_variable_use(i, string::Context);
 
     for(Index i = 0; i < input_length; i++)
-        dataset.set_raw_variable_use(i + context_length, Dataset::VariableUse::Input);
+        dataset.set_raw_variable_use(i + context_length, "Input");
 
     for(Index i = 0; i < input_length; i++)
-        dataset.set_raw_variable_use(i + context_length + input_length, Dataset::VariableUse::Target);
+        dataset.set_raw_variable_use(i + context_length + input_length, "Target");
 
-    training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
-    decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Context);
-    input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
-    target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
+    training_samples_indices = dataset.get_sample_indices("Training");
+    decoder_variables_indices = dataset.get_variable_indices(string::Context);
+    input_variables_indices = dataset.get_variable_indices("Input");
+    target_variables_indices = dataset.get_variable_indices("Target");
 
     batch.set(batch_size, &dataset);
 
@@ -301,7 +301,7 @@ TEST(Transformer, ForwardPropagate)
     transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                         embedding_depth, perceptron_depth, heads_number, layers_number });
 
-    ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
+    ForwardPropagation forward_propagation(dataset.get_samples_number("Training"), &transformer);
 
     transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
@@ -347,21 +347,21 @@ TEST(Transformer, ForwardPropagate)
 
         dataset.set(data);
 
-        dataset.set(Dataset::SampleUse::Training);
+        dataset.set("Training");
 
         for(Index i = 0; i < context_length; i++)
-            dataset.set_raw_variable_use(i, Dataset::VariableUse::Context);
+            dataset.set_raw_variable_use(i, string::Context);
 
         for(Index i = 0; i < input_length; i++)
-            dataset.set_raw_variable_use(i + context_length, Dataset::VariableUse::Input);
+            dataset.set_raw_variable_use(i + context_length, "Input");
 
         for(Index i = 0; i < input_length; i++)
-            dataset.set_raw_variable_use(i + context_length + input_length, Dataset::VariableUse::Target);
+            dataset.set_raw_variable_use(i + context_length + input_length, "Target");
 
-        training_samples_indices = dataset.get_sample_indices(Dataset::SampleUse::Training);
-        decoder_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Context);
-        input_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Input);
-        target_variables_indices = dataset.get_variable_indices(Dataset::VariableUse::Target);
+        training_samples_indices = dataset.get_sample_indices("Training");
+        decoder_variables_indices = dataset.get_variable_indices(string::Context);
+        input_variables_indices = dataset.get_variable_indices("Input");
+        target_variables_indices = dataset.get_variable_indices("Target");
 
         batch.set(batch_size, &dataset);
 
@@ -370,7 +370,7 @@ TEST(Transformer, ForwardPropagate)
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });
 
-        ForwardPropagation forward_propagation(dataset.get_samples_number(Dataset::SampleUse::Training), &transformer);
+        ForwardPropagation forward_propagation(dataset.get_samples_number("Training"), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 

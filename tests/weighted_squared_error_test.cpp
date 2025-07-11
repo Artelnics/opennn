@@ -65,9 +65,9 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     // Dataset data_set_rand(samples_number_rand, {inputs_number_rand}, {outputs_number_rand});
     // data_set_rand.set_data_random();
 
-    // const vector<Index> training_samples_indices_rand = data_set_rand.get_sample_indices(Dataset::SampleUse::Training);
-    // const vector<Index> input_variables_indices_rand = data_set_rand.get_variable_indices(Dataset::VariableUse::Input);
-    // const vector<Index> target_variables_indices_rand = data_set_rand.get_variable_indices(Dataset::VariableUse::Target);
+    // const vector<Index> training_samples_indices_rand = data_set_rand.get_sample_indices("Training");
+    // const vector<Index> input_variables_indices_rand = data_set_rand.get_variable_indices("Input");
+    // const vector<Index> target_variables_indices_rand = data_set_rand.get_variable_indices("Target");
 
     // Batch batch_rand(samples_number_rand, &data_set_rand);
     // batch_rand.fill(training_samples_indices_rand, input_variables_indices_rand, {}, target_variables_indices_rand);

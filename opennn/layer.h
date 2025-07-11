@@ -10,6 +10,7 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
+#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -30,14 +31,6 @@ public:
 
     Layer();
 
-    ~Layer()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     const string& get_label() const;
 
     const bool& get_display() const;
@@ -47,14 +40,50 @@ public:
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
 
+    virtual void set_biases(const string&);
+    virtual void set_weights(const string&);
+
     void set_label(const string&);
 
     void set_display(const bool&);
 
     virtual void set_parameters_random();
 
-    virtual Index get_parameters_number() const;
-    virtual void get_parameters(Tensor<type, 1>&) const;
+    virtual void set_parameters_glorot();
+
+    Index get_parameters_number() const;
+    /*
+
+    virtual void get_parameters(Tensor<type, 1>& parameters) const
+    {
+        const Index parameters_number = get_parameters_number();
+
+        parameters.resize(parameters_number);
+
+        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+
+        Index index = 0;
+
+        for(Index i = 0; i < parameter_pairs.size(); i++)
+        {
+            TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+
+            //copy_to_vector(parameters, this_parameters, index);
+
+        }
+    }
+*/
+
+/*
+    void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
+    {
+        //copy_from_vector(weights, new_parameters, index);
+        //copy_from_vector(biases, new_parameters, index);
+    }
+*/
+    virtual vector<pair<type*, Index>> get_parameter_pairs() const;
+
+    //virtual pair
 
     virtual dimensions get_input_dimensions() const = 0;
     virtual dimensions get_output_dimensions() const = 0;
@@ -62,8 +91,6 @@ public:
     Index get_inputs_number() const;
 
     Index get_outputs_number() const;
-
-    virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
 
@@ -84,10 +111,6 @@ public:
                                    const vector<pair<type*, dimensions>>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
-
-    virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                                 Index&,
-                                 Tensor<type, 1>&) const {}
 
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
                                                       unique_ptr<LayerForwardPropagation>&,
@@ -289,11 +312,7 @@ public:
                                      unique_ptr<LayerForwardPropagationCuda>&,
                                      unique_ptr<LayerBackPropagationCuda>&) const {}
 
-    virtual void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                                      Index&,
-                                      float*) const {}
-
-    virtual void set_parameters_cuda(const float*, Index&) {}
+    virtual vector<pair<float*, Index>> get_parameter_pair_device() const;
 
     virtual void copy_parameters_host() {}
 
@@ -347,6 +366,11 @@ struct LayerBackPropagation
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+
+    virtual vector<pair<type*, Index>> get_parameter_delta_pairs() const
+    {
+        return vector<pair<type*, Index>>();
+    }
 
     virtual void print() const {}
 
@@ -413,6 +437,11 @@ struct LayerBackPropagationCuda
     virtual void free() {}
 
     virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
+
+    virtual vector<pair<float*, Index>> get_parameter_delta_pair_device() const
+    {
+        return vector<pair<float*, Index>>();
+    }
 
     Index batch_size = 0;
 

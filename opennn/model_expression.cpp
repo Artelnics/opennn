@@ -795,9 +795,9 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     vector<string> output_names;
 
     for (const auto& raw_variable : raw_variables)
-        if(raw_variable.use == Dataset::VariableUse::Input)
+        if(raw_variable.use == "Input")
             input_names.push_back(raw_variable.name);
-        else if(raw_variable.use == Dataset::VariableUse::Target)
+        else if(raw_variable.use == "Target")
             output_names.push_back(raw_variable.name);
 
 

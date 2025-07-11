@@ -60,28 +60,10 @@ dimensions Dense3d::get_output_dimensions() const
 }
 
 
-Index Dense3d::get_parameters_number() const
-{
-    return biases.size() + weights.size();
-}
-
-
 type Dense3d::get_dropout_rate() const
 {
     return dropout_rate;
 }
-
-
-void Dense3d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(weights.size() + biases.size());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-}
-
 
 
 string Dense3d::get_activation_function() const
@@ -114,39 +96,15 @@ void Dense3d::set(const Index& new_sequence_length,
 }
 
 
-void Dense3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 void Dense3d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "HyperbolicTangent"
-    ||  new_activation_function == "Linear"
+    || new_activation_function == "Linear"
     || new_activation_function == "RectifiedLinear"
     || new_activation_function == "Softmax")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
-}
-
-
-void Dense3d::set_parameters_random()
-{
-    set_random(biases);
-    set_random(weights);
-}
-
-
-void Dense3d::set_parameters_glorot()
-{
-    biases.setZero();
-
-    const type limit = sqrt(6 / type(get_input_embedding() + get_output_embedding()));
-
-    set_random(weights, -limit, limit);
 }
 
 
@@ -223,18 +181,6 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 }
 
 
-void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                              Index& index,
-                              Tensor<type, 1>& gradient) const
-{
-    Dense3dBackPropagation* dense3d_back_propagation =
-        static_cast<Dense3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, dense3d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, dense3d_back_propagation->bias_deltas, index);
-}
-
-
 void Dense3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* dense2d_layer_element = document.FirstChildElement("Dense3d");
@@ -251,9 +197,8 @@ void Dense3d::from_XML(const XMLDocument& document)
     set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -267,10 +212,10 @@ void Dense3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
+    // Tensor<type, 1> parameters;
+    // get_parameters(parameters);
 
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

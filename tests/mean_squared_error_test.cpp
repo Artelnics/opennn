@@ -39,7 +39,7 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_random();
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Dense2d>(dimensions{ inputs_number }, dimensions{ targets_number }));
@@ -68,13 +68,13 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
 
     Dataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
-    dataset.set(Dataset::SampleUse::Training);
+    dataset.set("Training");
 
     Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices(Dataset::SampleUse::Training),
-               dataset.get_variable_indices(Dataset::VariableUse::Input),
-               dataset.get_variable_indices(Dataset::VariableUse::Decoder),
-               dataset.get_variable_indices(Dataset::VariableUse::Target));
+    batch.fill(dataset.get_sample_indices("Training"),
+               dataset.get_variable_indices("Input"),
+               dataset.get_variable_indices("Decoder"),
+               dataset.get_variable_indices("Target"));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, 
                                 { inputs_number }, { neurons_number }, { outputs_number });

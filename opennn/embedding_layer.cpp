@@ -58,19 +58,9 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-Index Embedding::get_parameters_number() const
+vector<pair<type *, Index> > Embedding::get_parameter_pairs() const
 {
-    return weights.size();
-}
-
-
-void Embedding::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
+    return {{(type*)(weights.data()), weights.size()}};
 }
 
 
@@ -109,12 +99,6 @@ void Embedding::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void Embedding::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);
-}
-
-
 void Embedding::set_parameters_random()
 {
     if(weights.size() == 0) return;
@@ -133,8 +117,6 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 
     // #pragma omp parallel for
 
-    cout << "weights.dimension(0): " << weights.dimension(0) << endl;
-
     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_output = outputs.chip(sample_index, 0);
@@ -142,9 +124,6 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
         for (Index word_index = 0; word_index < sequence_length; word_index++)
         {
             const Index token_id = inputs(sample_index, word_index);
-
-            cout << "word_index: " << word_index << endl;
-            cout << "token_id: " << token_id << endl;
 
             if (token_id < 0 || token_id >= weights.dimension(0))
                 throw runtime_error("Invalid token_id \n");
@@ -165,8 +144,6 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index batch_size = embeddings.dimension(0);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    cout << embeddings << endl;
-
     embeddings.device(*thread_pool_device) += positional_encoding
         .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
         .broadcast(array<Index, 3>({batch_size, 1, 1}));
@@ -177,7 +154,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[1]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -186,11 +163,11 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     embedding_lookup(inputs, outputs);
 
-    // if(positional_encoding_xxx)
-    //     add_positional_encodings(outputs);
+    if(positional_encoding_xxx)
+        add_positional_encodings(outputs);
 
-    // if(is_training && dropout_rate > 0)
-    //     dropout(outputs, dropout_rate);
+    if(is_training && dropout_rate > 0)
+        dropout(outputs, dropout_rate);
 }
 
 
@@ -238,17 +215,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 }
 
 
-void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                     Index& index,
-                                     Tensor<type, 1>& gradient) const
-{
-    const EmbeddingBackPropagation* embedding_back_propagation =
-        static_cast<EmbeddingBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, embedding_back_propagation->weight_deltas, index);
-}
-
-
 void Embedding::print() const
 {
     cout << "Embedding Layer" << endl;
@@ -288,9 +254,8 @@ void Embedding::from_XML(const XMLDocument& document)
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "), index);
+    set_biases(read_xml_string(embedding_layer_element, "Biases"));
+    set_weights(read_xml_string(embedding_layer_element, "Weights"));
 }
 
 
@@ -302,13 +267,38 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string(biases));
+    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();  
+}
+
+
+void Embedding::set_biases(const string& new_biases)
+{
+    stringstream biases_strings = stringstream(new_biases);
+    type number;
+    vector<type> values;
+
+    while(biases_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        biases(i) = values[i];
+}
+
+
+void Embedding::set_weights(const string& new_weights)
+{
+    stringstream weights_strings = stringstream(new_weights);
+    type number;
+    vector<type> values;
+
+    while(weights_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        weights(i) = values[i];
 }
 
 
@@ -372,6 +362,14 @@ vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_p
     return vector<pair<type*, dimensions>>();
 }
 
+vector<pair<type*, Index>> EmbeddingBackPropagation::get_parameter_delta_pairs() const
+{
+    return {
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
+}
+
+
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
@@ -413,20 +411,9 @@ void Embedding::back_propagate_cuda(const vector<float*>&,
 }
 
 
-void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                     Index& index,
-                                     float* gradient) const
+vector<pair<float*, Index>> Embedding::get_parameter_pair_device() const
 {
-    EmbeddingBackPropagationCuda* embedding_layer_back_propagation =
-        static_cast<EmbeddingBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_deltas_device, weights.size(), index);
-}
-
-
-void Embedding::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+    return vector<pair<float*, Index>>();
 }
 
 
@@ -491,6 +478,12 @@ EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index& new_batc
 }
 
 
+vector<pair<float*, Index>> EmbeddingBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    return vector<pair<float*, Index>>();
+}
+
+
 void EmbeddingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
@@ -513,9 +506,6 @@ REGISTER(LayerBackPropagationCuda, EmbeddingBackPropagationCuda, "Embedding")
 REGISTER(Layer, Embedding, "Embedding")
 REGISTER(LayerForwardPropagation, EmbeddingForwardPropagation, "Embedding")
 REGISTER(LayerBackPropagation, EmbeddingBackPropagation, "Embedding")
-
-//REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
 
 }
 

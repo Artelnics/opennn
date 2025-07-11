@@ -739,6 +739,8 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
+    cout << "PoolingForwardPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -779,7 +781,8 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    CHECK_CUDA(cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, batch_size * output_height * output_width * channels * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -828,6 +831,8 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 {
     if (!new_layer) return;
 
+    cout << "PoolingBackPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -840,7 +845,8 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_height * input_width * channels * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_height * input_width * channels * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * input_height * input_width * channels * sizeof(float));
 }
 
 
@@ -876,9 +882,6 @@ REGISTER(LayerBackPropagationCuda, PoolingBackPropagationCuda, "Pooling")
 REGISTER(Layer, Pooling, "Pooling")
 REGISTER(LayerForwardPropagation, PoolingForwardPropagation, "Pooling")
 REGISTER(LayerBackPropagation, PoolingBackPropagation, "Pooling")
-
-//REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
 
 }
 

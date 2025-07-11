@@ -24,17 +24,6 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Da
 
 void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    if(thread_pool != nullptr)
-        thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
-    regularization_method = RegularizationMethod::L2;
     set_neural_network(new_neural_network);
     set_data_set(new_data_set);
 }
@@ -102,7 +91,7 @@ void WeightedSquaredError::set_weights()
     if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables 
-        = dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables("Target");
 
     if(target_raw_variables.empty())
     {
@@ -135,13 +124,13 @@ void WeightedSquaredError::set_normalization_coefficient()
     if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables
-        = dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables("Target");
 
     if(target_raw_variables.empty())
         normalization_coefficient = type(1);
     else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+        const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
         const Index negatives = dataset->calculate_used_negatives(target_variable_indices[0]);
 

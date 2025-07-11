@@ -50,7 +50,6 @@ public:
 
    void set_maximum_epochs_number(const Index&);
 
-
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
 
@@ -90,7 +89,7 @@ private:
 
 public:
 
-    TrainingResults perform_training_cuda();
+    TrainingResults perform_training_cuda() override;
 
     void update_parameters_cuda(BackPropagationCuda&, SGDOptimizationDataCuda&) const;
 
@@ -109,8 +108,8 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    Tensor<type, 1> parameters_increment;
-    Tensor<type, 1> last_parameters_increment;
+    vector<vector<Tensor<type, 1>>> parameters_increment;
+    vector<vector<Tensor<type, 1>>> last_parameters_increment;
 };
 
 
@@ -119,6 +118,8 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 {
     SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
+
+    ~SGDOptimizationDataCuda() { free(); }
 
     void set(StochasticGradientDescent* = nullptr);
 
@@ -130,8 +131,7 @@ struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    float* parameters_increment = nullptr;
-    float* last_parameters_increment = nullptr;
+    vector<vector<float*>> velocity;
 };
 
 #endif

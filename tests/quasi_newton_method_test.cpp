@@ -65,7 +65,7 @@ TEST(QuasiNewtonMethodTest, BGFS)
     dataset.set_data_random();
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
+    mean_squared_error.set_regularization_method(LossIndex::"L2");
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 

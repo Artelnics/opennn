@@ -275,6 +275,8 @@ void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
+    cout << "FlattenForwardPropagationCuda set:" << endl;
+
     layer = new_layer;
 
     batch_size = new_batch_size;
@@ -284,8 +286,10 @@ void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     const Index inputs_number = flatten_layer->get_inputs_number();
     const Index outputs_number = flatten_layer->get_outputs_number();
 
-    CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 }
 
 
@@ -316,6 +320,8 @@ void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 {
     if (!new_layer) return;
 
+    cout << "FlattenBackPropagationCuda set:" << endl;
+
     layer = new_layer;
 
     batch_size = new_batch_size;
@@ -326,7 +332,8 @@ void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
+    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float));
 }
 
 
@@ -355,10 +362,6 @@ REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
 REGISTER(Layer, Flatten, "Flatten")
 REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
 REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
-
-
-//REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
 
 }
 

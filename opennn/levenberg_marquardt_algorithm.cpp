@@ -198,14 +198,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     const bool has_selection = dataset->has_selection();
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     // Neural network
 
@@ -469,13 +469,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
 string LevenbergMarquardtAlgorithm::get_name() const
 {
-    return "LevenbergMarquardtAlgorithm";
+    return "LevenbergMarquardt";
 }
 
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(7, 2);
+    Tensor<string, 2> string_matrix(6, 2);
 
     string_matrix.setValues({
     {"Damping parameter factor", to_string(double(damping_parameter_factor))},
@@ -538,6 +538,7 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
 
     // Neural network data
 
+    //parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
     parameters_difference.resize(parameters_number);
@@ -546,16 +547,7 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     parameters_increment.resize(parameters_number);
 }
 
-#ifdef OPENNN_CUDA
-
-TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
-{
-    return TrainingResults();
-}
-
-#endif
-
-REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardtAlgorithm");
+REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 
 }
 

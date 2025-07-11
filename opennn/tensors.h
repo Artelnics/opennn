@@ -45,6 +45,20 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
 }
 
 
+template<int rank>
+void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_real_distribution<type> distribution(minimum, maximum);
+
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(gen);
+}
+
+
+
 type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
@@ -222,6 +236,40 @@ string tensor_to_string(const Tensor<T, 1>& x, const string& separator = " ")
 
     for(Index i = 0; i < size; i++)
         buffer << x[i] << separator;
+
+    return buffer.str();
+}
+
+
+template <typename T>
+string tensor_2_to_string(const Tensor<T, 2>& x, const string& separator = " ")
+{
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    for(Index i = 0; i < x.dimension(0); i++)
+        for(Index j = 0; j < x.dimension(1); j++)
+            buffer << x(i,j) << separator;
+
+    return buffer.str();
+}
+
+
+template <typename T>
+string tensor_4_to_string(const Tensor<T, 4>& x, const string& separator = " ")
+{
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    for(Index i = 0; i < x.dimension(0); i++)
+        for(Index j = 0; j < x.dimension(1); j++)
+            for(Index k = 0; k < x.dimension(2); k++)
+                for(Index l = 0; l < x.dimension(3); l++)
+                    buffer << x(i,j,k,l) << separator;
 
     return buffer.str();
 }

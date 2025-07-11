@@ -137,44 +137,56 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
                                                   StochasticGradientDescentData& optimization_data) const
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
 
-    Tensor<type, 1>& parameters = back_propagation.parameters;
-    const Tensor<type, 1>& gradient = back_propagation.gradient;
-
-    Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment;
-    Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment;
-    
-    const type learning_rate = initial_learning_rate/(type(1) + type(optimization_data.iteration)*initial_decay);
-
-    if(momentum <= type(0))
+    for(Index i = 0; i < layers_number; i++)
     {
-        parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
+        Layer* layer = neural_network->get_layer(i).get();
 
-        parameters.device(*thread_pool_device) += parameters_increment;
-    }    
-    else if(momentum > type(0) && !nesterov)
-    {
-        parameters_increment.device(*thread_pool_device) =
-            gradient * (-learning_rate) + momentum * last_parameters_increment;
+        if (!layer->get_is_trainable())
+            continue;
 
-        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+        LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[i].get();
 
-        parameters.device(*thread_pool_device) += parameters_increment;
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
+        const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
+        // #pragma omp parallel for #@todo check pragma vs thread_pool_device
+        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
+        {
+            type* parameter_data = layer_parameter_pairs[j].first;
+            const Index parameter_size = layer_parameter_pairs[j].second;
+            type* delta_data = layer_parameter_delta_pairs[j].first;
+
+            TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
+            TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
+
+            Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment[i][j];
+            Tensor<type, 1>& last_parameters_increment = optimization_data.last_parameters_increment[i][j];
+
+            const type learning_rate = initial_learning_rate / (type(1) + type(optimization_data.iteration) * initial_decay);
+
+            if (momentum <= type(0))
+            {
+                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
+                parameters.device(*thread_pool_device) += parameters_increment;
+            }
+            else if (momentum > type(0) && !nesterov)
+            {
+                parameters_increment.device(*thread_pool_device) =
+                    gradient * (-learning_rate) + momentum * last_parameters_increment;
+                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+                parameters.device(*thread_pool_device) += parameters_increment;
+            }
+            else if (momentum > type(0) && nesterov)
+            {
+                parameters_increment.device(*thread_pool_device)
+                = gradient * (-learning_rate) + momentum * last_parameters_increment;
+                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
+                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+            }
+        }
     }
-    else if(momentum > type(0) && nesterov)
-    {
-        parameters_increment.device(*thread_pool_device)
-            = gradient * (-learning_rate) + momentum * last_parameters_increment;
-
-        last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-
-        parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
-    }
-
-    // optimization_data.iteration++;
-
-    neural_network->set_parameters(parameters);
 }
 
 
@@ -197,15 +209,15 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     const bool has_selection = dataset->has_selection();
     
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
         
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -510,13 +522,34 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index layers_number = neural_network->get_layers_number();
 
-    parameters_increment.resize(parameters_number);
-    last_parameters_increment.resize(parameters_number);
+    parameters_increment.resize(layers_number);
 
-    parameters_increment.setZero();
-    last_parameters_increment.setZero();
+    parameters_increment.resize(layers_number);
+    last_parameters_increment.resize(layers_number);
+
+    # pragma omp parallel for
+    for(Index i = 0; i < layers_number; i++)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+        const vector<pair<type*, Index>> parameter_pairs = layer->get_parameter_pairs();
+
+        parameters_increment[i].resize(parameter_pairs.size());
+        last_parameters_increment[i].resize(parameter_pairs.size());
+
+        for(Index j = 0; j < (Index)parameter_pairs.size(); j++)
+        {
+            const Index size = parameter_pairs[j].second;
+
+            parameters_increment[i][j].resize(array<Index, 1>{size});
+            last_parameters_increment[i][j].resize(array<Index, 1>{size});
+
+            parameters_increment[i][j].setZero();
+            last_parameters_increment[i][j].setZero();
+        }
+    }
+
 }
 
 
@@ -524,8 +557,6 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 TrainingResults StochasticGradientDescent::perform_training_cuda()
 {
-    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: StochasticGradientDescent");
-
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
@@ -543,15 +574,15 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     const bool has_selection = dataset->has_selection();
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index selection_samples_number = dataset->get_samples_number("Selection");
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -560,7 +591,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
         : 0;
 
     BatchCuda training_batch_cuda(training_batch_samples_number, dataset);
-    BatchCuda selection_batch_cuda(selection_batch_samples_number, dataset);
+    unique_ptr<BatchCuda> selection_batch_cuda;
 
     const Index training_batches_number = (training_batch_samples_number != 0)
         ? training_samples_number / training_batch_samples_number
@@ -587,17 +618,24 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
     set_vocabularies();
 
     ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
-    ForwardPropagationCuda selection_forward_propagation_cuda(selection_batch_samples_number, neural_network);
+    unique_ptr<ForwardPropagationCuda> selection_forward_propagation_cuda;
 
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
 
-    // Loss index
+    // Loss Index
 
     loss_index->set_normalization_coefficient();
 
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
-    BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
+    unique_ptr<BackPropagationCuda> selection_back_propagation_cuda;
+
+    if (has_selection)
+    {
+        selection_batch_cuda = make_unique<BatchCuda>(selection_batch_samples_number, dataset);
+        selection_forward_propagation_cuda = make_unique<ForwardPropagationCuda>(selection_batch_samples_number, neural_network);
+        selection_back_propagation_cuda = make_unique<BackPropagationCuda>(selection_batch_samples_number, loss_index);
+    }
 
     //type training_loss = type(0);
     type training_error = type(0);
@@ -618,7 +656,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     bool shuffle = false;
 
-    if(neural_network->has("Recurrent"))
+    if (neural_network->has("Recurrent"))
         shuffle = false;
 
     // Main loop
@@ -643,16 +681,16 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
             // Data set
 
             training_batch_cuda.fill(training_batches[iteration],
-                                     input_variable_indices,
-                                     decoder_variable_indices,
-                                     target_variable_indices);
+                input_variable_indices,
+                decoder_variable_indices,
+                target_variable_indices);
 
             // Neural network
-            /*
-            neural_network->forward_propagate_cuda(training_batch_cuda.get_input_pairs_device(),
+
+            neural_network->forward_propagate_cuda(training_batch_cuda.get_input_device(),
                                                    training_forward_propagation_cuda,
                                                    is_training);
-                                                   */
+
             // Loss index
 
             loss_index->back_propagate_cuda(training_batch_cuda,
@@ -689,26 +727,26 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
             {
                 // Data set
 
-                selection_batch_cuda.fill(selection_batches[iteration],
-                                          input_variable_indices,
-                                          decoder_variable_indices,
-                                          target_variable_indices);
+                selection_batch_cuda->fill(selection_batches[iteration],
+                                           input_variable_indices,
+                                           decoder_variable_indices,
+                                           target_variable_indices);
 
                 // Neural network
-                /*
-                neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_pairs_device(),
-                                                       selection_forward_propagation_cuda,
+
+                neural_network->forward_propagate_cuda(selection_batch_cuda->get_input_device(),
+                                                       *selection_forward_propagation_cuda,
                                                        is_training);
-                                                       */
+
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
-                loss_index->calculate_error_cuda(selection_batch_cuda,
-                                                 selection_forward_propagation_cuda,
-                                                 selection_back_propagation_cuda);
+                loss_index->calculate_error_cuda(*selection_batch_cuda,
+                                                 *selection_forward_propagation_cuda,
+                                                 *selection_back_propagation_cuda);
 
-                selection_error += selection_back_propagation_cuda.error();
+                selection_error += selection_back_propagation_cuda->error();
             }
 
             selection_error /= type(selection_batches_number);
@@ -769,11 +807,6 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
             break;
         }
-
-        // Update stuff
-
-        if (epoch != 0 && epoch % save_period == 0)
-            neural_network->save(neural_network_file_name);
     }
 
     set_unscaling();
@@ -790,20 +823,41 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 void StochasticGradientDescent::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
                                                        SGDOptimizationDataCuda& optimization_data_cuda) const
 {
-    // @todo
-    /*
-    const float alpha = float(-initial_learning_rate);
+    NeuralNetwork* neural_network = back_propagation_cuda.loss_index->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
 
-    cublasSaxpy(cublas_handle, 
-                int(parameters_number),
-                &alpha,
-                back_propagation_cuda.gradient, 1,
-                back_propagation_cuda.parameters, 1);
+    const float current_learning_rate = static_cast<float>(initial_learning_rate / (1.0 + static_cast<double>(optimization_data_cuda.iteration) * initial_decay));
+    const float momentum_f = static_cast<float>(momentum);
 
-    optimization_data_cuda.iteration++;
+    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
+    {
+        Layer* layer = neural_network->get_layer(layer_index).get();
 
-    back_propagation_cuda.loss_index->get_neural_network()->set_parameters_cuda(back_propagation_cuda.parameters);
-    */
+        if (!layer->get_is_trainable())
+            continue;
+
+        const vector<pair<float*, Index>> parameter_pairs = layer->get_parameter_pair_device();
+        LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
+        const vector<pair<float*, Index>> delta_pairs = layer_back_prop->get_parameter_delta_pair_device();
+
+        for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); ++parameter_index)
+        {
+            float* params_d = parameter_pairs[parameter_index].first;
+            const Index param_size = parameter_pairs[parameter_index].second;
+            const float* grads_d = delta_pairs[parameter_index].first;
+            float* velocity_d = optimization_data_cuda.velocity[layer_index][parameter_index];
+
+            sgd_update_device(
+                param_size,
+                params_d,
+                velocity_d,
+                grads_d,
+                current_learning_rate,
+                momentum_f,
+                nesterov
+            );
+        }
+    }
 }
 
 
@@ -817,29 +871,78 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 {
     stochastic_gradient_descent = new_stochastic_gradient_descent;
 
-    const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
+    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss_index()->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
 
-    CHECK_CUDA(cudaMalloc(&parameters_increment, parameters_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)));
+    velocity.resize(layers_number);
+
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+        if (!layer->get_is_trainable()) continue;
+
+        const auto parameter_pairs = layer->get_parameter_pair_device();
+        const size_t param_blocks_count = parameter_pairs.size();
+
+        velocity[i].resize(param_blocks_count, nullptr);
+
+        for (Index j = 0; j < param_blocks_count; ++j)
+        {
+            const Index param_size = parameter_pairs[j].second;
+            if (param_size > 0)
+            {
+                const size_t memory_size_bytes = param_size * sizeof(float);
+                CUDA_MALLOC_AND_REPORT(velocity[i][j], memory_size_bytes);
+                CHECK_CUDA(cudaMemset(velocity[i][j], 0, memory_size_bytes));
+            }
+        }
+    }
 }
 
 
 void SGDOptimizationDataCuda::free()
 {
-    cudaFree(parameters_increment);
-    cudaFree(last_parameters_increment);
+    for (auto& layer_velocity : velocity)
+    {
+        for (float*& ptr : layer_velocity)
+        {
+            if (ptr != nullptr)
+            {
+                CHECK_CUDA(cudaFree(ptr));
+                ptr = nullptr;
+            }
+        }
+    }
+    velocity.clear();
 }
 
 
 void SGDOptimizationDataCuda::print() const
 {
-    const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
+    cout << "--- SGD Optimization Data (CUDA) ---" << endl;
+    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss_index()->get_neural_network();
+    const Index layers_number = neural_network->get_layers_number();
 
-    cout << "parameters_increment:" << endl;
-    cout << vector_from_device(parameters_increment, parameters_number) << endl;
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        Layer* layer = neural_network->get_layer(i).get();
+        if (!layer->get_is_trainable()) continue;
 
-    cout << "last_parameters_increment:" << endl;
-    cout << vector_from_device(last_parameters_increment, parameters_number) << endl;
+        cout << "Layer " << i << " (" << layer->get_name() << "):" << endl;
+        const auto parameter_pairs = layer->get_parameter_pair_device();
+
+        for (Index j = 0; j < parameter_pairs.size(); ++j)
+        {
+            const Index param_size = parameter_pairs[j].second;
+            if (param_size == 0) continue;
+
+            cout << "  - Parameter Block " << j << " (Size: " << param_size << "):" << endl;
+            cout << "    velocity_host:" << endl << "      ";
+            const float* v_device_ptr = velocity[i][j];
+            cout << vector_from_device(v_device_ptr, param_size) << endl;
+        }
+    }
+    cout << "------------------------------------" << endl;
 }
 
 #endif

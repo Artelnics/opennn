@@ -28,9 +28,8 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
-    Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
     const string& get_activation_function() const;
@@ -43,16 +42,14 @@ public:
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
+    void set_biases(const string&) override;
+    void set_weights(const string&) override;
     
-    void set_parameters_random() override;
-
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
-
 
     void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
@@ -69,10 +66,6 @@ public:
                            const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            unique_ptr<LayerBackPropagationLM>&) const override;
-
-    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         Index&,
-                         Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
@@ -98,11 +91,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                              Index&,
-                              float*) const override;
-
-    void set_parameters_cuda(const float*, Index&);
+    vector<pair<float*, Index>> get_parameter_pair_device() const override;
 
     void copy_parameters_host();
 
@@ -159,6 +148,8 @@ struct Dense2dBackPropagation : LayerBackPropagation
     Dense2dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -221,6 +212,8 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
     Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

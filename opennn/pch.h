@@ -57,6 +57,7 @@
 #include <cublasXt.h>
 #include <curand.h>
 #include <cudnn.h>
+#include <nvtx3/nvToolsExt.h>
 
 #define CHECK_CUDA(call) do \
 { \
@@ -68,9 +69,22 @@
     } \
 } while(0)
 
-#define CHECK_CUDA_MALLOC(ptr, size) do { \
-    printf("CUDA Malloc: Allocating %.2f MB for %s\n", (double)(size) / (1024 * 1024), #ptr); \
-} while(0)
+#define CUDA_MALLOC_AND_REPORT(ptr, size)                                         \
+    do {                                                                          \
+        size_t free_before, free_after, total;                                    \
+        CHECK_CUDA(cudaMemGetInfo(&free_before, &total));                         \
+        CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&(ptr)), (size)));         \
+        CHECK_CUDA(cudaMemGetInfo(&free_after,  &total));                         \
+                                                                                  \
+        size_t bytes = free_before - free_after;                                  \
+        if (bytes == 0) {                                                         \
+            printf("cudaMalloc (%s):   reutilizado (%zu bytes solicitados)\n",    \
+                   #ptr, (size_t)(size));                                         \
+        } else {                                                                  \
+            printf("cudaMalloc (%s):   %.6f MB  (%zu bytes)\n", #ptr,             \
+                   bytes / (1024.0 * 1024.0), bytes);                             \
+        }                                                                         \
+    } while (0)
 
 #endif
 

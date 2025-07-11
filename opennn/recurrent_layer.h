@@ -26,8 +26,7 @@ public:
 
    Index get_timesteps() const;
 
-   Index get_parameters_number() const override;
-   void get_parameters(Tensor<type, 1>&) const override;
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    string get_activation_function() const;
 
@@ -38,11 +37,7 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
-
    void set_activation_function(const string&);
-
-   void set_parameters_random() override;
 
    void calculate_combinations(const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
@@ -50,10 +45,6 @@ public:
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
-
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index& ,
-                        Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
@@ -116,6 +107,8 @@ struct RecurrentBackPropagation : LayerBackPropagation
     RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

@@ -139,6 +139,7 @@ public:
    // Parameters initialization
 
    void set_parameters_random() const;
+   void set_parameters_glorot() const;
 
    // Output
 
@@ -182,7 +183,6 @@ public:
        return Tensor<type, output_rank>();
    }
 
-
    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
    {
        const Index layers_number = get_layers_number();
@@ -198,6 +198,8 @@ public:
        const pair<type*, dimensions> input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
 
        forward_propagate({input_pair_1, input_pair_2}, forward_propagation, false);
+
+       const vector<string> layer_labels = get_layer_labels();
 
        const pair<type*, dimensions> outputs_pair
            = forward_propagation.layers[layers_number - 1]->get_output_pair();
@@ -261,8 +263,6 @@ public:
     void forward_propagate_cuda(const vector<float*>&,
                                 ForwardPropagationCuda&,
                                 const bool& = false) const;
-
-    void set_parameters_cuda(const float*);
 
     float* calculate_outputs_cuda(float*, const Index&);
 

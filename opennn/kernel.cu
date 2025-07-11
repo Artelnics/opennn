@@ -332,54 +332,215 @@ void divide_subtract(const size_t& n, type* parameters, const type* numerator, c
 }
 
 
-__global__ void update_parameters_kernel(
+__global__ void adam_update_kernel(
     const int n,
-    float* parameters,
+    float* params,
     float* m,
     float* v,
-    const float* gradient,
+    const float* grads,
     const float beta1,
     const float beta2,
-    const float effective_lr,
-    const float epsilon)
+    const float learning_rate,
+    const float epsilon,
+    const float bias_correction_1,
+    const float bias_correction_2)
 {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= n) return;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const float grad = grads[i];
 
-    float gi = gradient[i];
-    float mi = beta1 * m[i] + (1.0f - beta1) * gi;
-    m[i] = mi;
+        const float new_m = beta1 * m[i] + (1.0f - beta1) * grad;
+        m[i] = new_m;
 
-    float vi = beta2 * v[i] + (1.0f - beta2) * gi * gi;
-    v[i] = vi;
+        const float new_v = beta2 * v[i] + (1.0f - beta2) * grad * grad;
+        v[i] = new_v;
 
-    float denom = sqrtf(vi) + epsilon;
-    float delta = effective_lr * mi / denom;
-    parameters[i] -= delta;
+        const float m_hat = new_m / bias_correction_1;
+        const float v_hat = new_v / bias_correction_2;
+
+        params[i] -= learning_rate * m_hat / (sqrtf(v_hat) + epsilon);
+    }
 }
 
-void update_parameters_device(
-    const size_t& n,
-    float* parameters,
+
+void adam_update_device(
+    const size_t n,
+    float* params,
     float* m,
     float* v,
-    const float* gradient,
+    const float* grads,
     const float beta1,
     const float beta2,
-    const float effective_lr,
-    const float epsilon)
+    const float learning_rate,
+    const float epsilon,
+    const float bias_correction_1,
+    const float bias_correction_2)
 {
-    int grid = (static_cast<int>(n) + 255) / 256;
-    update_parameters_kernel<<<grid, 256>>>(
+    if (n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    adam_update_kernel << <grid_size, block_size >> > (
         static_cast<int>(n),
-        parameters,
+        params,
         m,
         v,
-        gradient,
+        grads,
         beta1,
         beta2,
-        effective_lr,
-        epsilon
-    );
+        learning_rate,
+        epsilon,
+        bias_correction_1,
+        bias_correction_2
+        );
 }
 
+
+__global__ void sgd_update_kernel(
+    const int n,
+    float* params,
+    float* velocity,
+    const float* grads,
+    const float learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const float grad = grads[i];
+
+        if (momentum <= 0.0f)
+        {
+            params[i] -= learning_rate * grad;
+        }
+        else
+        {
+            float v = velocity[i];
+            float v_new = momentum * v - learning_rate * grad;
+            velocity[i] = v_new;
+
+            if (nesterov)
+            {
+                params[i] += momentum * v_new - learning_rate * grad;
+            }
+            else
+            {
+                params[i] += v_new;
+            }
+        }
+    }
+}
+
+
+void sgd_update_device(
+    const size_t n,
+    float* params_d,
+    float* velocity_d,
+    const float* grads_d,
+    const float learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    if (n == 0) return;
+
+    const int threads = 256;
+    const int blocks = (static_cast<int>(n) + threads - 1) / threads;
+
+    sgd_update_kernel << <blocks, threads >> > (
+        static_cast<int>(n),
+        params_d,
+        velocity_d,
+        grads_d,
+        learning_rate,
+        momentum,
+        nesterov);
+}
+
+
+__global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type out = outputs[i];
+        const type tgt = targets[i];
+
+        term_results[i] = tgt * logf(out + epsilon) + (1.0f - tgt) * logf(1.0f - out + epsilon);
+    }
+}
+
+void calculate_binary_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_binary_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+}
+
+
+__global__ void calculate_binary_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type out = outputs[i];
+        const type tgt = targets[i];
+
+        const type term1 = (1.0f - tgt) / (1.0f - out + epsilon);
+        const type term2 = tgt / (out + epsilon);
+
+        deltas[i] = (term1 - term2) * scaling_factor;
+    }
+}
+
+void calculate_binary_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_binary_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, epsilon, scaling_factor);
+}
+
+
+__global__ void calculate_multiple_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+
+        if (tgt > 0.0f) {
+            term_results[i] = tgt * logf(outputs[i] + epsilon);
+        }
+        else {
+            term_results[i] = 0.0f;
+        }
+    }
+}
+
+void calculate_multiple_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_multiple_cross_entropy_kernel << <blocks_per_grid, threads_per_block >> > (n, term_results, targets, outputs, epsilon);
+}
+
+
+__global__ void calculate_multiple_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        deltas[i] = (outputs[i] - targets[i]) * scaling_factor;
+    }
+}
+
+void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type scaling_factor)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (n + threads_per_block - 1) / threads_per_block;
+
+    calculate_multiple_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, scaling_factor);
+}
