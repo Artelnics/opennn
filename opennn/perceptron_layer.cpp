@@ -153,7 +153,7 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
 
 void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
-                                        Tensor<type, 2>& combinations) const
+                                     Tensor<type, 2>& combinations) const
 {
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
@@ -315,8 +315,8 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
 
 void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                 Index& index,
-                                 Tensor<type, 1>& gradient) const
+                              Index& index,
+                              Tensor<type, 1>& gradient) const
 {
     Dense2dBackPropagation* dense2d_back_propagation =
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
@@ -419,11 +419,8 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
-
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
-
-    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string(biases));
+    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();  
 }

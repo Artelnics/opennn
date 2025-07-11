@@ -532,6 +532,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Neural network data
 
+    parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
     parameters_difference.resize(parameters_number);
@@ -541,6 +542,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Loss index data
 
+    gradient.resize(parameters_number);
     old_gradient.resize(parameters_number);
     old_gradient.setZero();
 
