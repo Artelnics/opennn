@@ -1403,15 +1403,6 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
 }
 
 
-void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
-{
-    Index index = 0;
-
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters_cuda(new_parameters, index);
-}
-
-
 float* NeuralNetwork::calculate_outputs_cuda(float* input_device, const Index& batch_size)
 {
     if (layers.empty())

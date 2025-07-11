@@ -313,11 +313,7 @@ public:
                                      unique_ptr<LayerForwardPropagationCuda>&,
                                      unique_ptr<LayerBackPropagationCuda>&) const {}
 
-    virtual void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                                      Index&,
-                                      float*) const {}
-
-    virtual void set_parameters_cuda(const float*, Index&) {}
+    virtual vector<pair<float*, Index>> get_parameter_pair_device() const;
 
     virtual void copy_parameters_host() {}
 
@@ -442,6 +438,11 @@ struct LayerBackPropagationCuda
     virtual void free() {}
 
     virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
+
+    virtual vector<pair<float*, Index>> get_parameter_delta_pair_device() const
+    {
+        return vector<pair<float*, Index>>();
+    }
 
     Index batch_size = 0;
 

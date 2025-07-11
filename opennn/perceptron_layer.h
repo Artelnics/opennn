@@ -92,11 +92,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                              Index&,
-                              float*) const override;
-
-    void set_parameters_cuda(const float*, Index&);
+    vector<pair<float*, Index>> get_parameter_pair_device() const override;
 
     void copy_parameters_host();
 
@@ -217,6 +213,8 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
     Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

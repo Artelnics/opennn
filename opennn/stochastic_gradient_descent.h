@@ -89,7 +89,7 @@ private:
 
 public:
 
-    TrainingResults perform_training_cuda();
+    TrainingResults perform_training_cuda() override;
 
     void update_parameters_cuda(BackPropagationCuda&, SGDOptimizationDataCuda&) const;
 

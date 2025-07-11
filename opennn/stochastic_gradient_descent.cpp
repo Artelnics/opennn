@@ -557,7 +557,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 TrainingResults StochasticGradientDescent::perform_training_cuda()
 {
-    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: StochasticGradientDescent");
+    throw runtime_error("CUDA perform_training_cuda is not implemented for OptimizationMethod: StochasticGradientDescent");
 
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();

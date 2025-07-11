@@ -31,6 +31,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     vector<pair<type*, Index>> get_parameter_pairs() const override;
+
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
@@ -77,11 +78,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                              Index&,
-                              float*) const override;
-
-    void set_parameters_cuda(const float*, Index&);
+    vector<pair<float*, Index>> get_parameter_pair_device() const override;
 
     void copy_parameters_host();
 
@@ -157,6 +154,8 @@ struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
     EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

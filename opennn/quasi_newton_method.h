@@ -90,6 +90,15 @@ public:
                                                 BackPropagation&,
                                                 QuasiNewtonMethodData&) const;
 
+#ifdef OPENNN_CUDA
+
+   TrainingResults perform_training_cuda() override
+   {
+       throw runtime_error("CUDA perform_training_cuda is not implemented for OptimizationMethod: QuasiNewtonMethod");
+   }
+
+#endif
+
 
 private: 
 

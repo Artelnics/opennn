@@ -192,8 +192,6 @@ public:
 
     void add_regularization_cuda(BackPropagationCuda&) const;
 
-    void assemble_layers_error_gradient_cuda(BackPropagationCuda&) const;
-
     float calculate_regularization_cuda(Index, float*);
 
     void calculate_regularization_gradient_cuda(const Index parameters_number,
@@ -366,13 +364,13 @@ struct BackPropagationCuda
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
 
-    float* parameters = nullptr;
-    float* parameters_square = nullptr;
-    cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
-    Tensor<type, 1> parameters_host;
+    //float* parameters = nullptr;
+    //float* parameters_square = nullptr;
+    //cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
+    //Tensor<type, 1> parameters_host;
 
-    float* gradient = nullptr;
-    cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
+    //float* gradient = nullptr;
+    //cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
     //float* regularization_gradient = nullptr;
 
     Tensor<type, 0> accuracy;
