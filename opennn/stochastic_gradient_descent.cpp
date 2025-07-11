@@ -152,7 +152,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
         // #pragma omp parallel for #@todo check pragma vs thread_pool_device
-        for(Index j = 0; j < layer_parameter_pairs.size(); j++)
+        for(size_t j = 0; j < layer_parameter_pairs.size(); j++)
         {
             type* parameter_data = layer_parameter_pairs[j].first;
             const Index parameter_size = layer_parameter_pairs[j].second;

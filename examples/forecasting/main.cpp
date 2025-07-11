@@ -21,6 +21,7 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
+#include "../../opennn/mean_squared_error.h"
 
 using namespace opennn;
 
@@ -34,9 +35,9 @@ int main()
 
         TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
 
-        ForecastingNetwork neural_network({time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
+        ForecastingNetwork neural_network({ time_series_dataset.get_variables_number("Input") },
                                           {},
-                                          {time_series_dataset.get_variables_number(Dataset::VariableUse::Target)});
+                                          {time_series_dataset.get_variables_number("Target")});
 
         neural_network.print();
 

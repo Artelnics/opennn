@@ -182,7 +182,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
         const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
         const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        for (size_t parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
         {
             type* parameter_data = parameter_pairs[parameter_index].first;
             const Index parameter_size = parameter_pairs[parameter_index].second;
@@ -394,7 +394,7 @@ void LossIndex::assemble_layers_error_gradient(const BackPropagation& back_propa
     {
         const vector<pair<type*, Index>> layer_gradient = back_propagation.neural_network.layers[i]->get_parameter_delta_pairs();
 
-        for(Index j = 0; j < layer_gradient.size(); j++)
+        for(size_t j = 0; j < layer_gradient.size(); j++)
         {
             memcpy(gradient.data() + index, layer_gradient[j].first, layer_gradient[j].second * sizeof(type));
 
