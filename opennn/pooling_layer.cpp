@@ -883,9 +883,6 @@ REGISTER(Layer, Pooling, "Pooling")
 REGISTER(LayerForwardPropagation, PoolingForwardPropagation, "Pooling")
 REGISTER(LayerBackPropagation, PoolingBackPropagation, "Pooling")
 
-//REGISTER_FORWARD_PROPAGATION("Pooling", PoolingForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Pooling", PoolingBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

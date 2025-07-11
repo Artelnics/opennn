@@ -323,8 +323,6 @@ void BoundingForwardPropagation::print() const
 REGISTER(Layer, Bounding, "Bounding")
 REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
 
-//REGISTER_FORWARD_PROPAGATION("Bounding", BoundingForwardPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

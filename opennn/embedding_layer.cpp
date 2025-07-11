@@ -483,9 +483,6 @@ REGISTER(Layer, Embedding, "Embedding")
 REGISTER(LayerForwardPropagation, EmbeddingForwardPropagation, "Embedding")
 REGISTER(LayerBackPropagation, EmbeddingBackPropagation, "Embedding")
 
-//REGISTER_FORWARD_PROPAGATION("Embedding", EmbeddingForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Embedding", EmbeddingBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

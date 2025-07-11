@@ -1416,9 +1416,6 @@ REGISTER(Layer, Convolutional, "Convolutional")
 REGISTER(LayerForwardPropagation, ConvolutionalForwardPropagation, "Convolutional")
 REGISTER(LayerBackPropagation, ConvolutionalBackPropagation, "Convolutional")
 
-//REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.
