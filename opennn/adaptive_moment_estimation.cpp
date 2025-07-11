@@ -229,8 +229,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-
     optimization_data.iteration = 1;
+
+    //adri71 - eliminar
+    maximum_epochs_number = 4;
+    display_period = 2;
+
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {

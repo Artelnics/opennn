@@ -21,6 +21,7 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
+#include "testing_analysis.h"
 
 using namespace opennn;
 
@@ -32,7 +33,11 @@ int main()
 
         // Data set
 
-        TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
+        //TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
+        TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
+        //TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
+
+        time_series_dataset.print();
 
         ForecastingNetwork neural_network({time_series_dataset.get_variables_number(Dataset::VariableUse::Input)},
                                           {},
@@ -40,14 +45,11 @@ int main()
 
         neural_network.print();
 
-        Tensor<type, 2> inputs(1, 6);
-        inputs.setRandom();
+        // TrainingStrategy training_strategy(&neural_network, &time_series_dataset);
+        //training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
+        //training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        // training_strategy.perform_training();
 
-        Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
-
-        MeanSquaredError mean_squared_error(&neural_network, &time_series_dataset);
-
-        cout << mean_squared_error.calculate_numerical_error() << endl;
 
         cout << "Good bye!" << endl;
 

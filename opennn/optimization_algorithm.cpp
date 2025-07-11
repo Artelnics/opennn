@@ -253,6 +253,7 @@ void OptimizationAlgorithm::set_names()
 
     neural_network->set_input_names(input_names);
     neural_network->set_output_names(target_names);
+
 }
 
 

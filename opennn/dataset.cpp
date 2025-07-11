@@ -4322,7 +4322,6 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
         batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
-
 #pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {

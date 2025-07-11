@@ -987,6 +987,8 @@ void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
 
+    cout << "Inputs number: " << get_inputs_number() << endl;
+
     print_vector(get_input_names());
 
     const Index layers_number = get_layers_number();       
@@ -999,6 +1001,8 @@ void NeuralNetwork::print() const
              << "Layer " << i << ": " << endl;
         layers[i]->print();
     }
+
+    cout << "Outputs number: " << get_outputs_number() << endl;
 
     cout << "Outputs:" << endl;
     print_vector(get_output_names());
@@ -1218,10 +1222,11 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
     layers.resize(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-    {       
+    {
         layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
+
 }
 
 

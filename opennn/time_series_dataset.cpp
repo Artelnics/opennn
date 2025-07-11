@@ -91,7 +91,8 @@ void TimeSeriesDataset::print() const
 
     print_vector(get_dimensions(Dataset::VariableUse::Target));
 
-
+    cout << "Lags number: " << get_lags_number() << endl;
+    cout << "Steps ahead: " << get_steps_ahead() << endl;
 
 }
 
@@ -132,8 +133,6 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
 
     const Index raw_variables_number = get_raw_variables_number();
-
-    cout << raw_variables_number << endl;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
@@ -244,7 +243,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_lags_number(stoi(read_xml_string(data_source_element, "LagsNumber")));
     set_steps_ahead_number(stoi(read_xml_string(data_source_element, "StepsAhead")));
-//    set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
+    //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
     //set_group_by_raw_variable(read_xml_string(data_source_element, "GroupByRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
@@ -743,7 +742,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
 
             input_j = get_raw_variable_data(j);
 
-            if(display) cout << "   vs. " << raw_variables[j].name << endl;
+            if(display) cout << "  vs. " << raw_variables[j].name << endl;
  
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));

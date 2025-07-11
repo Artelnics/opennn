@@ -67,7 +67,7 @@ string Recurrent::get_activation_function() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    time_steps = new_input_dimensions[1];
+    time_steps = new_input_dimensions[0];
 
     biases.resize(new_output_dimensions[0]);
 
@@ -232,7 +232,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         if (t == time_steps - 1)
             current_deltas = deltas;
         else
-            current_deltas += current_combinations_derivatives;
+            current_deltas.device(*thread_pool_device) += current_combinations_derivatives;
 
         combination_deltas.device(*thread_pool_device) =
             current_deltas * activation_derivatives.chip(t,1);
@@ -369,9 +369,13 @@ pair<type*, dimensions> RecurrentForwardPropagation::get_output_pair() const
 
 void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (!new_layer) return;
+
     batch_size=new_batch_size;
 
     layer = new_layer;
+    if(layer == nullptr)
+        throw std::runtime_error("recurrrent layer is nullptr");
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];

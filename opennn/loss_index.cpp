@@ -385,7 +385,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 BackPropagation& back_propagation) const
 {
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
-
     const Index layers_number = layers.size();
 
     if(layers_number == 0) return;
@@ -406,6 +405,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                   layer_delta_pairs[i],
                                   forward_propagation.layers[i],
                                   back_propagation.neural_network.layers[i]);
+
 }
 
 
