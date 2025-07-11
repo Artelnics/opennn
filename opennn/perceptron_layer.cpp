@@ -393,9 +393,36 @@ void Dense2d::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(dense2d_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
+    set_biases(read_xml_string(dense2d_layer_element, "Biases"));
+    set_weights(read_xml_string(dense2d_layer_element, "Weights"));
+}
 
-    //Index index = 0;
-    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+
+void Dense2d::set_biases(const string& new_biases)
+{
+    stringstream biases_strings = stringstream(new_biases);
+    type number;
+    vector<type> values;
+
+    while(biases_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        biases(i) = values[i];
+}
+
+
+void Dense2d::set_weights(const string& new_weights)
+{
+    stringstream weights_strings = stringstream(new_weights);
+    type number;
+    vector<type> values;
+
+    while(weights_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        weights(i) = values[i];
 }
 
 

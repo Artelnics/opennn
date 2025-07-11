@@ -257,6 +257,24 @@ string tensor_2_to_string(const Tensor<T, 2>& x, const string& separator = " ")
 }
 
 
+template <typename T>
+string tensor_4_to_string(const Tensor<T, 4>& x, const string& separator = " ")
+{
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    for(Index i = 0; i < x.dimension(0); i++)
+        for(Index j = 0; j < x.dimension(1); j++)
+            for(Index k = 0; k < x.dimension(2); k++)
+                for(Index l = 0; l < x.dimension(3); l++)
+                    buffer << x(i,j,k,l) << separator;
+
+    return buffer.str();
+}
+
+
 type round_to_precision(type, const int&);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);

@@ -196,6 +196,18 @@ void Layer::set_output_dimensions(const dimensions&)
 }
 
 
+void Layer::set_biases(const string&)
+{
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+}
+
+
+void Layer::set_weights(const string&)
+{
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+}
+
+
 void Layer::softmax(Tensor<type, 2>& y) const
 {    
     const Index rows_number = y.dimension(0);

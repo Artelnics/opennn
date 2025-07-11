@@ -79,6 +79,9 @@ public:
     void set_convolution_type(const Convolution&);
     void set_convolution_type(const string&);
 
+    void set_biases(const string&) override;
+    void set_weights(const string&) override;
+
     void set_row_stride(const Index&);
 
     void set_column_stride(const Index&);
