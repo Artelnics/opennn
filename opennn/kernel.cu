@@ -397,6 +397,67 @@ void adam_update_device(
 }
 
 
+__global__ void sgd_update_kernel(
+    const int n,
+    float* params,
+    float* velocity,
+    const float* grads,
+    const float learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+    {
+        const float grad = grads[i];
+
+        if (momentum <= 0.0f)
+        {
+            params[i] -= learning_rate * grad;
+        }
+        else
+        {
+            float v = velocity[i];
+            float v_new = momentum * v - learning_rate * grad;
+            velocity[i] = v_new;
+
+            if (nesterov)
+            {
+                params[i] += momentum * v_new - learning_rate * grad;
+            }
+            else
+            {
+                params[i] += v_new;
+            }
+        }
+    }
+}
+
+
+void sgd_update_device(
+    const size_t n,
+    float* params_d,
+    float* velocity_d,
+    const float* grads_d,
+    const float learning_rate,
+    const float momentum,
+    const bool nesterov)
+{
+    if (n == 0) return;
+
+    const int threads = 256;
+    const int blocks = (static_cast<int>(n) + threads - 1) / threads;
+
+    sgd_update_kernel << <blocks, threads >> > (
+        static_cast<int>(n),
+        params_d,
+        velocity_d,
+        grads_d,
+        learning_rate,
+        momentum,
+        nesterov);
+}
+
+
 __global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;

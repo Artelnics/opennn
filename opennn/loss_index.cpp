@@ -1683,21 +1683,12 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     //if (is_instance_of<CrossEntropyError3d>(loss_index))
     //{
-        /* @todo CudaMalloc GPU
+        /* @todo CudaMalloc transformers GPU
         predictions (batch_size, outputs_number);
         matches (batch_size, outputs_number);
         mask (batch_size, outputs_number);
         */
     //}
-
-    // Regularization @todo
-
-    //CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
-    //CUDA_MALLOC_AND_REPORT(regularization_gradient, parameters_number * sizeof(float));
-    /*
-    if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
-        CHECK_CUDA(cudaMalloc(&aux_regularization, parameters_number * sizeof(float)));
-    */
 }
 
 
