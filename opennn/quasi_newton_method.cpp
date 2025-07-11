@@ -480,7 +480,7 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(8, 2);
+    Tensor<string, 2> string_matrix(6, 2);
 
     string_matrix.setValues({
     {"Learning rate tolerance", to_string(double(learning_rate_tolerance))},
@@ -501,10 +501,10 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
     if (!root_element)
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
-    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    /*const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
     if (!learning_rate_algorithm_element)
-        throw runtime_error("Learning rate algorithm element is nullptr.\n");
+        throw runtime_error("Learning rate algorithm element is nullptr.\n");*/
     
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));

@@ -263,10 +263,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     if(optimization_method_element)
     {
-        if(optimization_method == "LevenbergMarquardt")
-            set_optimization_algorithm("LevenbergMarquardtAlgorithm");
-        else
-            set_optimization_algorithm(optimization_method);
+        set_optimization_algorithm(optimization_method);
 
         XMLDocument optimization_method_document;
         XMLElement* optimization_method_element_copy = optimization_method_document.NewElement(optimization_method.c_str());

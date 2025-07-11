@@ -75,6 +75,8 @@ public:
 
    virtual void set_normalization_coefficient() {}
 
+   virtual type get_Minkowski_parameter() const { return 1.5; }
+
    // Back propagation
 
    virtual void calculate_error(const Batch&,
@@ -139,7 +141,6 @@ public:
 
    // Serialization
 
-   //void from_XML(const XMLDocument&);
    virtual void from_XML(const XMLDocument&) = 0;
 
    virtual void to_XML(XMLPrinter&) const;

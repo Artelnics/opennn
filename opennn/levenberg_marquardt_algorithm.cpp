@@ -469,13 +469,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
 string LevenbergMarquardtAlgorithm::get_name() const
 {
-    return "LevenbergMarquardtAlgorithm";
+    return "LevenbergMarquardt";
 }
 
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(7, 2);
+    Tensor<string, 2> string_matrix(6, 2);
 
     string_matrix.setValues({
     {"Damping parameter factor", to_string(double(damping_parameter_factor))},
@@ -546,7 +546,7 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     parameters_increment.resize(parameters_number);
 }
 
-REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardtAlgorithm");
+REGISTER(OptimizationAlgorithm, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 
 }
 
