@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+MinkowskiError::MinkowskiError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
     set_default();

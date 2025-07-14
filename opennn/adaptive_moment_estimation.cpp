@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
+AdaptiveMomentEstimation::AdaptiveMomentEstimation(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();

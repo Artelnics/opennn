@@ -24,7 +24,7 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
-   LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
+   LevenbergMarquardtAlgorithm(const LossIndex* = nullptr);
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;

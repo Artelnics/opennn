@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+NormalizedSquaredError::NormalizedSquaredError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
     set_normalization_coefficient();

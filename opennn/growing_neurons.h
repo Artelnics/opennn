@@ -24,7 +24,7 @@ class GrowingNeurons : public NeuronsSelection
 
 public:
 
-    GrowingNeurons(TrainingStrategy* = nullptr);
+    GrowingNeurons(const TrainingStrategy* = nullptr);
 
     const Index& get_neurons_increment() const;
 

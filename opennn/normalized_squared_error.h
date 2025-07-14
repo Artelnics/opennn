@@ -19,7 +19,7 @@ class NormalizedSquaredError : public LossIndex
 
 public:
 
-   NormalizedSquaredError(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    NormalizedSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
     void set_normalization_coefficient() override;
 

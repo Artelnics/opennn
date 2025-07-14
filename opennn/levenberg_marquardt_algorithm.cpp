@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();

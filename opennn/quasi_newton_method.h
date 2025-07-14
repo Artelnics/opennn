@@ -23,7 +23,7 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-   QuasiNewtonMethod(LossIndex* = nullptr);
+   QuasiNewtonMethod(const LossIndex* = nullptr);
 
    const Index& get_epochs_number() const;
 

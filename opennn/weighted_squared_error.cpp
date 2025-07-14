@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+WeightedSquaredError::WeightedSquaredError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
     set_default();

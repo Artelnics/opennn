@@ -27,7 +27,7 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-   StochasticGradientDescent(LossIndex* = nullptr);
+   StochasticGradientDescent(const LossIndex* = nullptr);
 
    const type& get_initial_learning_rate() const;
    const type& get_initial_decay() const;

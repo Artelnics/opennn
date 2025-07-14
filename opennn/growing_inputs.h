@@ -19,7 +19,7 @@ class GrowingInputs : public InputsSelection
 
 public:
 
-    GrowingInputs(TrainingStrategy* = nullptr);
+    GrowingInputs(const TrainingStrategy* = nullptr);
 
     const Index& get_maximum_inputs_number() const;
 

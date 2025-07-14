@@ -19,7 +19,7 @@ class CrossEntropyError3d : public LossIndex
 
 public:
 
-    CrossEntropyError3d(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    CrossEntropyError3d(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
     void calculate_error(const Batch&,
                          const ForwardPropagation&,

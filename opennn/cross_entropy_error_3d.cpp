@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-CrossEntropyError3d::CrossEntropyError3d(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+CrossEntropyError3d::CrossEntropyError3d(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
 }

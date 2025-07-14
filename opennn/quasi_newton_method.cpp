@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
+QuasiNewtonMethod::QuasiNewtonMethod(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
 

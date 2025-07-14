@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
+OptimizationAlgorithm::OptimizationAlgorithm(const LossIndex* new_loss_index)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -76,9 +76,9 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 }
 
 
-void OptimizationAlgorithm::set(LossIndex* new_loss_index)
+void OptimizationAlgorithm::set(const LossIndex* new_loss_index)
 {
-    loss_index = new_loss_index;
+    loss_index = const_cast<LossIndex*>(new_loss_index);
 }
 
 
