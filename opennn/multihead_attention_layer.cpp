@@ -256,6 +256,7 @@ void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& valu
 void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outputs,
                                        Tensor<type, 3>& concatenated_attention_outputs) const
 {
+/*
     const Index batch_size = attention_outputs.dimension(2);
     const Index hidden_depth = attention_outputs.dimension(1);
 
@@ -273,6 +274,27 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
                                 array<Index,2>{query_sequence_length, hidden_depth}) = head_output;
         }
     }
+*/
+    // @todo check This gives the AI
+
+    // Original dimensions of attention_outputs: (query_sequence_length, hidden_depth, batch_size, heads_number)
+    // We want to merge dimensions 1 (hidden_depth) and 3 (heads_number) to form the new embedding_dimension.
+    // The desired output shape is (batch_size, query_sequence_length, embedding_dimension)
+
+    // Define the shuffling pattern: map old dimensions to new ones.
+    // Old: 0(seq), 1(depth), 2(batch), 3(heads)
+    // New: 2(batch), 0(seq), 3(heads), 1(depth)
+
+    const array<int, 4> shuffling_pattern = {2, 0, 3, 1};
+
+    concatenated_attention_outputs.device(*thread_pool_device) =
+        attention_outputs.shuffle(shuffling_pattern)
+            .reshape(array<Index, 3>{
+                attention_outputs.dimension(2), // batch_size
+                query_sequence_length,
+                heads_number * get_hidden_depth() // embedding_dimension
+            });
+
 }
 
 

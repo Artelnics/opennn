@@ -111,6 +111,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  TensorMap<Tensor<type, 3>>& C,
                                  array<IndexPair<Index>, 1> contraction_axes)
 {
+/*
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
 // By default contraction axes are (1, 0)
@@ -132,7 +133,10 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
         TensorMap<Tensor<type, 2>> C_matrix(C.data() + C_rows * C_columns * i, C_rows, C_columns);
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
-    }    
+    }
+*/
+    C.device(*thread_pool_device) = A.contract(B, contraction_axes);
+
 }
 
 
