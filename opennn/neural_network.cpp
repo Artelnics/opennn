@@ -361,15 +361,13 @@ void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        Tensor<type, 1> layer_parameters;
+        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
 
-        layer->get_parameters(layer_parameters);
-
-        memcpy(parameters.data() + position,
-               layer_parameters.data(),
-               layer_parameters.size() * sizeof(type));
-
-        position += layer_parameters.size();
+        for(const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        {
+            memcpy(parameters.data() + position, parameter_pair.first, parameter_pair.second * sizeof(type));
+            position += parameter_pair.second;
+        }
     }
 }
 
@@ -397,7 +395,15 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
     Index index = 0;
 
     for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters(new_parameters, index);
+    {
+        const vector<pair<type *, Index> > layer_parameter_pairs = layer->get_parameter_pairs();
+
+        for (const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        {
+            memcpy(parameter_pair.first, new_parameters.data() + index, parameter_pair.second * sizeof(type));
+            index += parameter_pair.second;
+        }
+    }
 }
 
 
@@ -841,20 +847,11 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Outputs");
 
+    const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
 
-    if(this->has("Embedding"))
-        add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
-
-    else
-        add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
-
-    if(this->has("Embedding"))
-        for (Index i = 0; i < outputs_number; i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
-    else
-        for (size_t i = 0; i < output_names.size(); i++)
-            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
+    for(Index i = 0; i < outputs_count; i++)
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
@@ -1403,15 +1400,6 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
         layers[i]->forward_propagate_cuda(layer_input_device[i],
             forward_propagation_cuda.layers[i],
             is_training);
-}
-
-
-void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
-{
-    Index index = 0;
-
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters_cuda(new_parameters, index);
 }
 
 

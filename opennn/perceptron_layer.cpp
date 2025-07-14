@@ -35,6 +35,13 @@ dimensions Dense2d::get_output_dimensions() const
 }
 
 
+vector<pair<type *, Index> > Dense2d::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
+}
+
+
 void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
@@ -47,19 +54,6 @@ void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 type Dense2d::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-void Dense2d::get_parameters(Tensor<type, 1>& parameters) const
-{
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
 }
 
 
@@ -141,13 +135,6 @@ void Dense2d::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{   
-    copy_from_vector(weights, new_parameters, index);
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 void Dense2d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Logistic"
@@ -166,7 +153,7 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
 
 void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
-                                        Tensor<type, 2>& combinations) const
+                                     Tensor<type, 2>& combinations) const
 {
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
@@ -327,18 +314,6 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 }
 
 
-void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                 Index& index,
-                                 Tensor<type, 1>& gradient) const
-{
-    Dense2dBackPropagation* dense2d_back_propagation =
-        static_cast<Dense2dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, dense2d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, dense2d_back_propagation->bias_deltas, index);
-}
-
-
 void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                    const Index& index,
                                                    Tensor<type, 2>& squared_errors_Jacobian) const
@@ -418,10 +393,36 @@ void Dense2d::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(dense2d_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
+    set_biases(read_xml_string(dense2d_layer_element, "Biases"));
+    set_weights(read_xml_string(dense2d_layer_element, "Weights"));
+}
 
-    Index index = 0;
 
-    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+void Dense2d::set_biases(const string& new_biases)
+{
+    stringstream biases_strings = stringstream(new_biases);
+    type number;
+    vector<type> values;
+
+    while(biases_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        biases(i) = values[i];
+}
+
+
+void Dense2d::set_weights(const string& new_weights)
+{
+    stringstream weights_strings = stringstream(new_weights);
+    type number;
+    vector<type> values;
+
+    while(weights_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        weights(i) = values[i];
 }
 
 
@@ -433,11 +434,8 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
-
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
-
-    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string(biases));
+    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();  
 }
@@ -814,22 +812,10 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-void Dense2d::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                      Index& index, 
-                                      float* gradient) const
+vector<pair<float*, Index>> Dense2d::get_parameter_pair_device() const
 {
-    Dense2dBackPropagationCuda* dense2d_layer_back_propagation =
-        static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->weight_deltas_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->bias_deltas_device, biases.size(), index);
-}
-
-
-void Dense2d::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
-    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
+    return { {biases_device, biases.size()},
+             {weights_device, weights.size()}};
 }
 
 
@@ -1033,6 +1019,22 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
         outputs_number,
         1,
         1);
+}
+
+
+vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+
+    const Index weight_deltas_size = dense_layer->get_input_dimensions()[0] * dense_layer->get_output_dimensions()[0];
+
+    const Index bias_deltas_size = dense_layer->get_output_dimensions()[0];
+
+    return
+    {
+        { bias_deltas_device,   bias_deltas_size },
+        { weight_deltas_device, weight_deltas_size }
+    };
 }
 
 

@@ -563,7 +563,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.set_parameters_random();
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    mean_squared_error.set_regularization_method("NoRegularization");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
@@ -637,7 +637,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, "Logistic"));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    mean_squared_error.set_regularization_method("NoRegularization");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
@@ -739,7 +739,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     scaling_layer_2d->set_display(false);
 
     CrossEntropyError2d cross_entropy_error_2d(&neural_network, &dataset);
-    cross_entropy_error_2d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    cross_entropy_error_2d.set_regularization_method("NoRegularization");
 
     QuasiNewtonMethod quasi_newton_method(&cross_entropy_error_2d);
     quasi_newton_method.set_display(false);
@@ -852,7 +852,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     scaling_layer_2d->set_display(false);
 
     MeanSquaredError mean_squared_error(&neural_network, &Dataset);
-    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    mean_squared_error.set_regularization_method("NoRegularization");
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
     quasi_newton_method.set_maximum_epochs_number(500);

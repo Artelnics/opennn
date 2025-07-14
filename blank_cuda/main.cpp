@@ -19,6 +19,7 @@
 #include "../opennn/standard_networks.h"
 #include "../opennn/vgg16.h"
 #include "../opennn/training_strategy.h"
+#include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/image_dataset.h"
 #include "../opennn/scaling_layer_4d.h"
@@ -73,8 +74,8 @@ int main()
 
         dataset.split_samples_random(0.8, 0.0, 0.2);
 
-        const dimensions input_dimensions  = dataset.get_dimensions(Dataset::VariableUse::Input);
-        const dimensions output_dimensions = dataset.get_dimensions(Dataset::VariableUse::Target);
+        const dimensions input_dimensions = dataset.get_dimensions("Input");
+        const dimensions output_dimensions = dataset.get_dimensions("Target");
 
         // Neural network
 
@@ -89,13 +90,12 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.set_loss_index("CrossEntropyError2d");
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
-        //training_strategy.perform_training();
         training_strategy.perform_training_cuda();
         
         cudaDeviceSynchronize();

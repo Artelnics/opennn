@@ -66,7 +66,7 @@ public:
 
    bool has_data_set() const;
 
-   RegularizationMethod get_regularization_method() const;
+   string get_regularization_method() const;
 
    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -76,13 +76,14 @@ public:
 
    virtual void set_data_set(Dataset*);
 
-   void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);
 
    void set_display(const bool&);
 
    virtual void set_normalization_coefficient() {}
+
+   virtual type get_Minkowski_parameter() const { return 1.5; }
 
    // Back propagation
 
@@ -101,7 +102,7 @@ public:
                                         ForwardPropagation&,
                                         BackPropagation&) const;
 
-   void assemble_layers_error_gradient(BackPropagation&) const;
+   void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
    void back_propagate(const Batch&,
                        ForwardPropagation&,
@@ -152,7 +153,6 @@ public:
 
    // Serialization
 
-   //void from_XML(const XMLDocument&);
    virtual void from_XML(const XMLDocument&) = 0;
 
    virtual void to_XML(XMLPrinter&) const;
@@ -161,8 +161,6 @@ public:
    void write_regularization_XML(XMLPrinter&) const;
 
    virtual string get_name() const;
-
-   string write_regularization_method() const;
 
    // Numerical differentiation
 
@@ -206,8 +204,6 @@ public:
 
     void add_regularization_cuda(BackPropagationCuda&) const;
 
-    void assemble_layers_error_gradient_cuda(BackPropagationCuda&) const;
-
     float calculate_regularization_cuda(Index, float*);
 
     void calculate_regularization_gradient_cuda(const Index parameters_number,
@@ -250,7 +246,7 @@ protected:
 
     Dataset* dataset = nullptr;
 
-    RegularizationMethod regularization_method = RegularizationMethod::L2;
+    string regularization_method = "L2";
 
     type regularization_weight = type(0.01);
 
@@ -379,15 +375,6 @@ struct BackPropagationCuda
 
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
-
-    float* parameters = nullptr;
-    float* parameters_square = nullptr;
-    cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
-    Tensor<type, 1> parameters_host;
-
-    float* gradient = nullptr;
-    cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
-    //float* regularization_gradient = nullptr;
 
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;

@@ -35,14 +35,6 @@ public:
             const bool& = false,
             const Codification& = Codification::UTF8);
 
-    ~Dataset()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     // Enumerations
 
     enum class Separator{None, Space, Tab, Comma, Semicolon};
@@ -585,14 +577,6 @@ protected:
 struct Batch
 {
     Batch(const Index& = 0, Dataset* = nullptr);
-
-    ~Batch()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;

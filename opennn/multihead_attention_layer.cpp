@@ -87,31 +87,28 @@ return (heads_number == 0)
 
 dimensions MultiHeadAttention::get_input_dimensions() const
 {
-return { query_sequence_length, embedding_dimension};
+    return { query_sequence_length, embedding_dimension};
 }
 
 
 dimensions MultiHeadAttention::get_output_dimensions() const
 {
-return { query_sequence_length, embedding_dimension};
+    return { query_sequence_length, embedding_dimension};
 }
 
 
-void MultiHeadAttention::get_parameters(Tensor<type, 1>& parameters) const
+vector<pair<type *, Index> > MultiHeadAttention::get_parameter_pairs() const
 {
-parameters.resize(get_parameters_number());
-
-Index index = 0;
-
-copy_to_vector(parameters, query_weights, index);
-copy_to_vector(parameters, query_biases, index);
-copy_to_vector(parameters, key_weights, index);
-copy_to_vector(parameters, key_biases, index);
-copy_to_vector(parameters, value_weights, index);
-copy_to_vector(parameters, value_biases, index);
-copy_to_vector(parameters, projection_weights, index);
-copy_to_vector(parameters, projection_biases, index);
-
+    return {
+        {(type*)query_weights.data(), query_weights.size()},
+        {(type*)query_biases.data(), query_biases.size()},
+        {(type*)key_weights.data(), key_weights.size()},
+        {(type*)key_biases.data(), key_biases.size()},
+        {(type*)value_weights.data(), value_weights.size()},
+        {(type*)value_biases.data(), value_biases.size()},
+        {(type*)projection_weights.data(), projection_weights.size()},
+        {(type*)projection_biases.data(), projection_biases.size()}
+    };
 }
 
 
@@ -122,57 +119,43 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
                          const bool& new_use_causal_mask,
                          const string& new_label)
 {
-name = "MultiheadAttention";
-query_sequence_length = new_query_sequence_length;
-source_sequence_length = new_source_sequence_length;
-heads_number = new_heads_number;
-embedding_dimension = new_embedding_dimension;
-label = new_label;
-dropout_rate = 0;
+    name = "MultiheadAttention";
+    query_sequence_length = new_query_sequence_length;
+    source_sequence_length = new_source_sequence_length;
+    heads_number = new_heads_number;
+    embedding_dimension = new_embedding_dimension;
+    label = new_label;
+    dropout_rate = 0;
 
-const Index hidden_depth = get_hidden_depth();
+    const Index hidden_depth = get_hidden_depth();
 
-query_weights.resize(embedding_dimension, hidden_depth, heads_number);
-query_biases.resize(hidden_depth, heads_number);
+    query_weights.resize(embedding_dimension, hidden_depth, heads_number);
+    query_biases.resize(hidden_depth, heads_number);
 
-key_weights.resize(embedding_dimension, hidden_depth, heads_number);
-key_biases.resize(hidden_depth, heads_number);
+    key_weights.resize(embedding_dimension, hidden_depth, heads_number);
+    key_biases.resize(hidden_depth, heads_number);
 
-value_weights.resize(embedding_dimension, hidden_depth, heads_number);
-value_biases.resize(hidden_depth, heads_number);
+    value_weights.resize(embedding_dimension, hidden_depth, heads_number);
+    value_biases.resize(hidden_depth, heads_number);
 
-projection_weights.resize(embedding_dimension, embedding_dimension);
-projection_biases.resize(embedding_dimension);
+    projection_weights.resize(embedding_dimension, embedding_dimension);
+    projection_biases.resize(embedding_dimension);
 
-set_parameters_glorot();
+    set_parameters_glorot();
 
-use_causal_mask = new_use_causal_mask;
+    use_causal_mask = new_use_causal_mask;
 
-if (!use_causal_mask) return;
+    if (!use_causal_mask) return;
 
-causal_mask.resize(query_sequence_length, source_sequence_length);
-causal_mask.setZero();
+    causal_mask.resize(query_sequence_length, source_sequence_length);
+    causal_mask.setZero();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
-for (Index i = 0; i < query_sequence_length; i++)
-    for (Index j = i + 1; j < source_sequence_length; j++)
-        causal_mask(i, j) = minus_inf;
+    for (Index i = 0; i < query_sequence_length; i++)
+        for (Index j = i + 1; j < source_sequence_length; j++)
+            causal_mask(i, j) = minus_inf;
 }
-
-
-void MultiHeadAttention::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-copy_from_vector(query_weights, new_parameters, index);
-copy_from_vector(query_biases, new_parameters, index);
-copy_from_vector(key_weights, new_parameters, index);
-copy_from_vector(key_biases, new_parameters, index);
-copy_from_vector(value_weights, new_parameters, index);
-copy_from_vector(value_biases, new_parameters, index);
-copy_from_vector(projection_weights, new_parameters, index);
-copy_from_vector(projection_biases, new_parameters, index);
-}
-
 
 
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
@@ -575,24 +558,6 @@ for(Index head_index = 0; head_index < heads_number; head_index++)
 }
 
 
-void MultiHeadAttention::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         Index& index,
-                                         Tensor<type, 1>& gradient) const
-{
-    MultiheadAttentionBackPropagation* this_back_propagation =
-        static_cast<MultiheadAttentionBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, this_back_propagation->query_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->query_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->key_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->key_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->value_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->value_bias_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->projection_weight_deltas, index);
-    copy_to_vector(gradient, this_back_propagation->projection_bias_deltas, index);
-}
-
-
 void MultiHeadAttention::from_XML(const XMLDocument& document)
 {
     // @todo update notation
@@ -611,9 +576,8 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "), index);
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -642,10 +606,9 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
     add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

@@ -50,46 +50,6 @@ int main()
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;
 
-        // ImageDataset dataset;
-
-        // dataset.set_data_path("../../mnist/data_bin");
-        // //dataset.set_data_path("../examples/mnist/data");
-
-        // dataset.read_bmp();
-
-        // dataset.split_samples_random(0.8, 0.0, 0.2);
-
-        // const dimensions input_dimensions  = dataset.get_dimensions("Input");
-        // const dimensions output_dimensions = dataset.get_dimensions("Target");
-
-        // // Neural network
-
-        // ImageClassificationNetwork neural_network(
-        //     input_dimensions,
-        //     { 16 },
-        //     output_dimensions);
-
-        // // Training strategy
-
-        // TrainingStrategy training_strategy(&neural_network, &dataset);
-        // training_strategy.set_loss_index("CrossEntropyError2d");
-        // // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::ElasticNet);
-        // training_strategy.get_optimization_algorithm()->set_display_period(1);
-        // AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        // adam->set_batch_size(2048);
-        // adam->set_maximum_epochs_number(5);
-
-        // training_strategy.perform_training();
-
-        // TestingAnalysis testing_analysis(&neural_network, &dataset);
-
-        // cout << "Calculating confusion...." << endl;
-        // Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        // cout << "\nConfusion matrix:\n" << confusion << endl;
-
-        // cout << "Good bye!" << endl;
-
         return 0;
     }
     catch(const exception& e)

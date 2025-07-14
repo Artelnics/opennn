@@ -250,18 +250,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 }
 
 
-void Convolutional::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         Index& index,
-                                         Tensor<type, 1>& gradient) const
-{
-    ConvolutionalBackPropagation* convolutional_back_propagation =
-        static_cast<ConvolutionalBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, convolutional_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, convolutional_back_propagation->bias_deltas, index);
-}
-
-
 const string& Convolutional::get_activation_function() const
 {
     return activation_function;
@@ -388,19 +376,6 @@ Index Convolutional::get_padding_width() const
     }
 
     throw runtime_error("Unknown convolution type");
-}
-
-
-void Convolutional::get_parameters(Tensor<type, 1>& parameters) const
-{
-    parameters.resize(get_parameters_number());
-
-    Index index = 0;
-
-    copy_to_vector(parameters, weights, index);
-    copy_to_vector(parameters, biases, index);
-
-    // @todo add scales and offsets
 }
 
 
@@ -543,13 +518,6 @@ void Convolutional::set_input_dimensions(const dimensions& new_input_dimensions)
 }
 
 
-void Convolutional::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(weights, new_parameters, index);    
-    copy_from_vector(biases, new_parameters, index);
-}
-
-
 pair<Index, Index> Convolutional::get_padding() const
 {
     return { get_padding_height(), get_padding_width() };
@@ -580,6 +548,13 @@ Index Convolutional::get_input_height() const
 Index Convolutional::get_input_width() const
 {
     return input_dimensions[1];
+}
+
+
+vector<pair<type *, Index> > Convolutional::get_parameter_pairs() const
+{
+    return {{(type*)(biases.data()), biases.size()},
+            {(type*)(weights.data()), weights.size()}};
 }
 
 
@@ -618,13 +593,38 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
-
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string(biases));
+    add_xml_element(printer, "Weights", tensor_4_to_string(weights));
 
     printer.CloseElement();
+}
+
+
+void Convolutional::set_biases(const string& new_biases)
+{
+    stringstream biases_strings = stringstream(new_biases);
+    type number;
+    vector<type> values;
+
+    while(biases_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        biases(i) = values[i];
+}
+
+
+void Convolutional::set_weights(const string& new_weights)
+{
+    stringstream weights_strings = stringstream(new_weights);
+    type number;
+    vector<type> values;
+
+    while(weights_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        weights(i) = values[i];
 }
 
 
@@ -656,9 +656,8 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
+    set_biases(read_xml_string(convolutional_layer_element, "Biases"));
+    set_weights(read_xml_string(convolutional_layer_element, "Weights"));
 }
 
 
@@ -790,6 +789,16 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagation::get_input_derivati
     convolutional_layer->get_input_dimensions();
 
     return {{(type*)input_deltas.data(), {batch_size, input_height, input_width, channels}}};
+}
+
+
+vector<pair<type*, Index>> ConvolutionalBackPropagation::get_parameter_delta_pairs() const
+{
+    return 
+    {
+        {(type*)bias_deltas.data(), bias_deltas.size()},
+        {(type*)weight_deltas.data(), weight_deltas.size()}
+    };
 }
 
 
@@ -997,22 +1006,13 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-void Convolutional::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
-                                         Index& index,
-                                         float* gradient) const
+vector<pair<float*, Index>> Convolutional::get_parameter_pair_device() const
 {
-    ConvolutionalBackPropagationCuda* convolutional_layer_back_propagation =
-        static_cast<ConvolutionalBackPropagationCuda*>(back_propagation_cuda.get());
-
-    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->weight_deltas_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->bias_deltas_device, biases.size(), index);
-}
-
-
-void Convolutional::set_parameters_cuda(const float* new_parameters, Index& index)
-{
-    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
-    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
+    return
+    {
+        {biases_device, biases.size()},
+        {weights_device, weights.size()}
+    };
 }
 
 
@@ -1250,6 +1250,25 @@ ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& 
 }
 
 
+vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delta_pair_device() const
+{
+    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+
+    const Index weight_deltas_size = convolutional_layer->get_kernels_number() *
+                                     convolutional_layer->get_kernel_channels() *
+                                     convolutional_layer->get_kernel_height() *
+                                     convolutional_layer->get_kernel_width();
+
+    const Index bias_deltas_size = convolutional_layer->get_kernels_number();
+
+    return
+    {
+        { bias_deltas_device,   bias_deltas_size },
+        { weight_deltas_device, weight_deltas_size }
+    };
+}
+
+
 void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
@@ -1422,9 +1441,6 @@ REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutio
 REGISTER(Layer, Convolutional, "Convolutional")
 REGISTER(LayerForwardPropagation, ConvolutionalForwardPropagation, "Convolutional")
 REGISTER(LayerBackPropagation, ConvolutionalBackPropagation, "Convolutional")
-
-//REGISTER_FORWARD_PROPAGATION("Convolutional", ConvolutionalForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Convolutional", ConvolutionalBackPropagation);
 
 }
 

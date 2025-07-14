@@ -64,8 +64,6 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const {}
-    void set_parameters_cuda(const float*, const Index&) {}
     void allocate_parameters_device() {}
     void free_parameters_device() {}
     void copy_parameters_device() {}

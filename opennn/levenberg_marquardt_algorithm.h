@@ -83,6 +83,15 @@ public:
    void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
+
+#ifdef OPENNN_CUDA
+
+   TrainingResults perform_training_cuda() override 
+   {
+       throw runtime_error("CUDA perform_training_cuda is not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
+   }
+
+#endif
    
 private:
 
@@ -119,7 +128,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     // Neural network data
 
-    Tensor<type, 1> parameters;
+//    Tensor<type, 1> parameters;
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;
 

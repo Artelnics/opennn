@@ -39,17 +39,13 @@ Index Recurrent::get_timesteps() const
 }
 
 
-void Recurrent::get_parameters(Tensor<type, 1>& parameters) const
+vector<pair<type *, Index> > Recurrent::get_parameter_pairs() const
 {
-    const Index parameters_number = get_parameters_number();
-
-    parameters.resize(parameters_number);
-
-    Index index = 0;
-
-    copy_to_vector(parameters, biases, index);
-    copy_to_vector(parameters, input_weights, index);
-    copy_to_vector(parameters, recurrent_weights, index);
+    return {
+        {(type*)biases.data(), biases.size()},
+        {(type*)input_weights.data(), input_weights.size()},
+        {(type*)recurrent_weights.data(), recurrent_weights.size()}
+    };
 }
 
 
@@ -101,15 +97,6 @@ void Recurrent::set_timesteps(const Index& new_timesteps)
 {
     time_steps = new_timesteps;
 }
-
-
-void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-{
-    copy_from_vector(biases, new_parameters, index);
-    copy_from_vector(input_weights, new_parameters, index);
-    copy_from_vector(recurrent_weights, new_parameters, index);
-}
-
 
 
 void Recurrent::set_activation_function(const string& new_activation_function)
@@ -249,18 +236,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     }
 }
 
-void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                Index& index,
-                                Tensor<type, 1>& gradient) const
-{
-    RecurrentBackPropagation* recurrent_back_propagation =
-        static_cast<RecurrentBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, recurrent_back_propagation->bias_deltas, index);
-    copy_to_vector(gradient, recurrent_back_propagation->input_weight_deltas, index);
-    copy_to_vector(gradient, recurrent_back_propagation->recurrent_weight_deltas, index);
-}
-
 
 string Recurrent::get_expression(const vector<string>& input_names,
                                  const vector<string>& output_names) const
@@ -315,10 +290,8 @@ void Recurrent::from_XML(const XMLDocument& document)
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
 
-    Index index = 0;
-
-    set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
-
+    //Index index = 0;
+    //set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -331,10 +304,9 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
 
-    Tensor<type, 1> parameters;
-    get_parameters(parameters);
-
-    add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    //Tensor<type, 1> parameters;
+    //get_parameters(parameters);
+    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
 
     printer.CloseElement();
 }

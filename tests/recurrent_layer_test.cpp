@@ -26,10 +26,6 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
     EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
 
-    Tensor<type, 1> parameters;
-    recurrent_layer.get_parameters(parameters);
-    EXPECT_EQ(parameters.size(), parameters_number);
-
     EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ time_steps,inputs_number }));
     EXPECT_EQ(recurrent_layer.get_output_dimensions(), dimensions({ neurons_number }));
 }

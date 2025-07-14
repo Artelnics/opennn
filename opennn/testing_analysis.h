@@ -24,14 +24,6 @@ public:
 
     TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    ~TestingAnalysis()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     struct GoodnessOfFitAnalysis
     {
        type determination = type(0);

@@ -363,10 +363,6 @@ REGISTER(Layer, Flatten, "Flatten")
 REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
 REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
 
-
-//REGISTER_FORWARD_PROPAGATION("Flatten", FlattenForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Flatten", FlattenBackPropagation);
-
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -30,16 +30,8 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void get_parameters(Tensor<type, 1>&) const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
-
-    // @todo check bias
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {
-            {(type*)(weights.data()), weights.size()}
-        };
-    }
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
@@ -49,7 +41,8 @@ public:
 
     void set_parameters_random() override;
 
-    void set_parameters(const Tensor<type, 1>&, Index&) override;   
+    void set_biases(const string&) override;
+    void set_weights(const string&) override;
 
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
@@ -65,10 +58,6 @@ public:
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
-
-    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         Index&,
-                         Tensor<type, 1>&) const override;
 
     void print() const override;
 
@@ -88,11 +77,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                              Index&,
-                              float*) const override;
-
-    void set_parameters_cuda(const float*, Index&);
+    vector<pair<float*, Index>> get_parameter_pair_device() const override;
 
     void copy_parameters_host();
 
@@ -168,6 +153,8 @@ struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
 struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
     EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

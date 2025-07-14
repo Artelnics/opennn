@@ -172,7 +172,11 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           QuasiNewtonMethodData& optimization_data) const
 {
+    NeuralNetwork* neural_network = forward_propagation.neural_network;
+
     Tensor<type, 1>& parameters = optimization_data.parameters;
+    neural_network->get_parameters(parameters);
+
     const Tensor<type, 1>& gradient = optimization_data.gradient;
 
     Tensor<type, 1>& old_parameters = optimization_data.old_parameters;
@@ -260,8 +264,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     // Set parameters
-
-    NeuralNetwork* neural_network = forward_propagation.neural_network;
 
     neural_network->set_parameters(parameters);
 }
@@ -482,7 +484,7 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(8, 2);
+    Tensor<string, 2> string_matrix(6, 2);
 
     string_matrix.setValues({
     {"Learning rate tolerance", to_string(double(learning_rate_tolerance))},
@@ -500,13 +502,13 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
-    if (!root_element) 
+    if (!root_element)
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
-    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    /*const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
-    if (!learning_rate_algorithm_element) 
-        throw runtime_error("Learning rate algorithm element is nullptr.\n");
+    if (!learning_rate_algorithm_element)
+        throw runtime_error("Learning rate algorithm element is nullptr.\n");*/
     
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
@@ -534,6 +536,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Neural network data
 
+    parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
     parameters_difference.resize(parameters_number);
@@ -543,6 +546,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Loss index data
 
+    gradient.resize(parameters_number);
     old_gradient.resize(parameters_number);
     old_gradient.setZero();
 

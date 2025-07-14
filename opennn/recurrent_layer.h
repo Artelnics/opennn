@@ -26,16 +26,7 @@ public:
 
    Index get_timesteps() const;
 
-   void get_parameters(Tensor<type, 1>&) const override;
-
-   vector<pair<type*, Index>> get_parameter_pairs() const override
-   {
-       return {
-           {(type*)biases.data(), biases.size()},
-           {(type*)input_weights.data(), input_weights.size()},
-           {(type*)recurrent_weights.data(), recurrent_weights.size()}
-       };
-   }
+   vector<pair<type*, Index>> get_parameter_pairs() const override;
 
    string get_activation_function() const;
 
@@ -46,8 +37,6 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, Index&) override;
-
    void set_activation_function(const string&);
 
    void calculate_combinations(const Tensor<type, 2>&,
@@ -56,10 +45,6 @@ public:
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
-
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index& ,
-                        Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,

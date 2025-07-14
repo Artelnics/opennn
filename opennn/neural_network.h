@@ -303,8 +303,6 @@ public:
                                 ForwardPropagationCuda&,
                                 const bool& = false) const;
 
-    void set_parameters_cuda(const float*);
-
     float* calculate_outputs_cuda(float*, const Index&);
 
 protected:

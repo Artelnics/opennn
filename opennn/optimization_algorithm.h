@@ -28,14 +28,6 @@ public:
 
     OptimizationAlgorithm(LossIndex* = nullptr);
 
-    ~OptimizationAlgorithm()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
-
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
@@ -144,10 +136,7 @@ public:
         cudnnDestroy(cudnn_handle);
     }
 
-    virtual TrainingResults perform_training_cuda()
-    {
-        return TrainingResults();
-    }
+    virtual TrainingResults perform_training_cuda() = 0;
 
 #endif
 

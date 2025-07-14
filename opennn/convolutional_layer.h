@@ -61,13 +61,7 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    void get_parameters(Tensor<type, 1>&) const override;
-
-    vector<pair<type*, Index>> get_parameter_pairs() const override
-    {
-        return {{(type*)(biases.data()), biases.size()},
-                {(type*)(weights.data()), weights.size()}};
-    }
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
     // Set
 
@@ -85,7 +79,8 @@ public:
     void set_convolution_type(const Convolution&);
     void set_convolution_type(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, Index&) override;
+    void set_biases(const string&) override;
+    void set_weights(const string&) override;
 
     void set_row_stride(const Index&);
 
@@ -114,10 +109,6 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index&,
-                        Tensor<type, 1>&) const override;
-
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
 
@@ -136,11 +127,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                              Index&,
-                              float*) const override;
-
-    void set_parameters_cuda(const float*, Index&);
+    vector<pair<float*, Index>> get_parameter_pair_device() const override;
 
     void copy_parameters_host();
 
@@ -221,13 +208,7 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-   vector<pair<type*, Index>> get_parameter_delta_pairs() const override
-   {
-       return {
-           {(type*)bias_deltas.data(), bias_deltas.size()},
-           {(type*)weight_deltas.data(), weight_deltas.size()}
-       };
-   }
+   vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
    void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -279,6 +260,8 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 {
     ConvolutionalBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
