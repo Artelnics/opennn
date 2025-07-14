@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
+InputsSelection::InputsSelection(const TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -73,9 +73,9 @@ const type& InputsSelection::get_minimum_correlation() const
 }
 
 
-void InputsSelection::set(TrainingStrategy* new_training_strategy)
+void InputsSelection::set(const TrainingStrategy* new_training_strategy)
 {
-    training_strategy = new_training_strategy;
+    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
 }
 
 
@@ -149,10 +149,10 @@ void InputsSelection::check() const
 
     // Data set
 
-    if(!loss_index->has_data_set())
+    if(!loss_index->has_dataset())
         throw runtime_error("Pointer to data set is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     const Index selection_samples_number = dataset->get_samples_number("Selection");
 

@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
+QuasiNewtonMethod::QuasiNewtonMethod(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
 
@@ -271,7 +271,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -282,7 +282,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if (!dataset)
         throw runtime_error("Data set is null.");
@@ -315,10 +315,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Batch
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, dataset);
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     // Loss index
 
@@ -839,6 +841,12 @@ Triplet::Triplet()
     A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
     U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
     B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+}
+
+
+bool Triplet::operator ==(const Triplet &other_triplet) const
+{
+    return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
 }
 
 

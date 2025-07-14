@@ -234,18 +234,6 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
 //}
 
 
-Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
-{
-    Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
-
-    #pragma omp parallel for
-    for(int i = 0; i < x.size(); i++)
-        result(i) = (x(i) == y(i));
-
-    return result;
-}
-
-
 void save_csv(const Tensor<type,2>& data, const filesystem::path& path)
 {
     ofstream file(path);
@@ -387,7 +375,7 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 }
 
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,
+Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>& matrix,
                                              const Index& column_index,
                                              const type& minimum,
                                              const type& maximum)
@@ -465,6 +453,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
 {
     const type norm = l2_norm(thread_pool_device, vector);
+
     if(norm < NUMERIC_LIMITS_MIN)
     {
         gradient.setZero();
@@ -476,7 +465,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 }
 
 
-void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
@@ -760,24 +749,43 @@ string dimensions_to_string(const dimensions& x, const string& separator)
 }
 
 
-dimensions string_to_dimensions(const string& x, const string& separator) {
-
+dimensions string_to_dimensions(const string& x, const string& separator)
+{
     dimensions result;
 
-    if (x.empty()) {
-        throw std::runtime_error("Error: Input string must not be empty.\n");
+    if (x.empty())
+        throw runtime_error("Error: Input string must not be empty.\n");
+
+    stringstream ss(x);
+    string token;
+
+    while (getline(ss, token, separator[0]))
+    {
+        try {
+            if (!token.empty())
+                result.push_back(stoi(token));
+        }
+        catch (const invalid_argument&)
+        {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
     }
 
+    return result;
+/*
     size_t start = 0;
     size_t end = x.find(separator);
 
-    while (end != string::npos) {
-        string token = x.substr(start, end - start);
+    while (end != string::npos)
+    {
+        const string token = x.substr(start, end - start);
 
-        try {
+        try
+        {
             result.push_back(stoi(token));
         }
-        catch (const invalid_argument&) {
+        catch (const invalid_argument&)
+        {
             throw runtime_error("Error: Input string contains non-numeric elements.\n");
         }
 
@@ -785,17 +793,22 @@ dimensions string_to_dimensions(const string& x, const string& separator) {
         end = x.find(separator, start);
     }
 
-    if (start < x.size()) {
-        string token = x.substr(start);
-        try {
+    if (start < x.size())
+    {
+        const string token = x.substr(start);
+
+        try
+        {
             result.push_back(stoi(token));
         }
-        catch (const invalid_argument&) {
+        catch (const invalid_argument&)
+        {
             throw runtime_error("Error: Input string contains non-numeric elements.\n");
         }
     }
 
     return result;
+*/
 }
 
 
@@ -902,7 +915,7 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& tensor, const Index
 }
 
 
-TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>& tensor, const Index& index_1)
+TensorMap<Tensor<type, 1>> tensor_map_(const TensorMap<Tensor<type, 2>>& tensor, const Index& index_1)
 {
     return TensorMap<Tensor<type, 1>>((type*)tensor.data() + tensor.dimension(0) * index_1,
         tensor.dimension(0));
@@ -923,7 +936,7 @@ TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>& tensor, const Index
 }
 
 
-TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>& tensor, const Index& index_3)
+TensorMap<Tensor<type, 3>> tensor_map_(const TensorMap<Tensor<type, 4>>& tensor, const Index& index_3)
 {
     return TensorMap<Tensor<type, 3>>(tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
         tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));

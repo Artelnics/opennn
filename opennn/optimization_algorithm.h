@@ -26,7 +26,7 @@ class OptimizationAlgorithm
 
 public:
 
-    OptimizationAlgorithm(LossIndex* = nullptr);
+    OptimizationAlgorithm(const LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
@@ -53,7 +53,7 @@ public:
 
     string write_time(const type&) const;
 
-    void set(LossIndex* = nullptr);
+    void set(const LossIndex* = nullptr);
 
     virtual void set_threads_number(const int&);
 

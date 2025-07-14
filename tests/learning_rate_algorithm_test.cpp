@@ -1,7 +1,6 @@
 /*
 #include "pch.h"
 
-#include "../opennn/learning_rate_algorithm.h"
 #include "../opennn/mean_squared_error.h"
 
 using namespace opennn;

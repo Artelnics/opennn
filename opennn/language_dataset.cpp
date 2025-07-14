@@ -382,7 +382,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
     else
     {
         unordered_map<string, Index> target_vocabulary_map;
-        for (size_t i = 0; i < target_vocabulary.size(); ++i)
+        for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
             target_vocabulary_map[target_vocabulary[i]] = i;
 
         const Index samples_number = get_samples_number();

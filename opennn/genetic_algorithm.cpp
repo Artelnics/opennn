@@ -9,16 +9,15 @@
 #include "registry.h"
 #include "tensors.h"
 #include "correlations.h"
-#include "genetic_algorithm.h"
 #include "tinyxml2.h"
 #include "scaling_layer_2d.h"
-#include "optimization_algorithm.h"
 #include "training_strategy.h"
+#include "genetic_algorithm.h"
 
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
+GeneticAlgorithm::GeneticAlgorithm(const TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
     set_default();
@@ -92,7 +91,7 @@ void GeneticAlgorithm::set_default()
 
     const Index individuals_number = 40;        // Modify depending on the Dataset
 
-    const Index raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number("Input");
+    const Index raw_variables_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
     population.resize(individuals_number, raw_variables_number);
 
@@ -133,10 +132,10 @@ void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-    if (!training_strategy || !training_strategy->get_data_set())
+    if (!training_strategy || !training_strategy->get_dataset())
         throw runtime_error("Training strategy or data set is null");
 
-    const Index new_raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number("Input");
+    const Index new_raw_variables_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
     population.resize(new_individuals_number, new_raw_variables_number);
     parameters.resize(new_individuals_number);
@@ -178,7 +177,7 @@ void GeneticAlgorithm::initialize_population()
 
 void GeneticAlgorithm::initialize_population_random()
 {
-    Dataset* dataset = training_strategy->get_data_set();
+    Dataset* dataset = training_strategy->get_dataset();
 
     const Index individuals_number = get_individuals_number();
 
@@ -240,7 +239,7 @@ void GeneticAlgorithm::initialize_population_random()
 
 void GeneticAlgorithm::initialize_population_correlations()
 {
-    Dataset* dataset = training_strategy->get_data_set();
+    Dataset* dataset = training_strategy->get_dataset();
 
     const Index original_input_raw_variables_number = original_input_raw_variable_indices.size();
 
@@ -337,7 +336,7 @@ void GeneticAlgorithm::evaluate_population()
 
     // Data set
 
-    Dataset* dataset = training_strategy->get_data_set();
+    Dataset* dataset = training_strategy->get_dataset();
 
     // Neural network
 
@@ -563,8 +562,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
     // Selection algorithm
 
-    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices("Input");
-    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices("Target");
+    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -578,7 +577,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     // Neural network
 

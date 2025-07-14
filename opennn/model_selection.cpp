@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
+ModelSelection::ModelSelection(const TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -69,9 +69,9 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 }
 
 
-void ModelSelection::set(TrainingStrategy* new_training_strategy)
+void ModelSelection::set(const TrainingStrategy* new_training_strategy)
 {
-    training_strategy = new_training_strategy;
+    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
 }
 
 
@@ -101,7 +101,7 @@ void ModelSelection::check() const
 
     // Data set
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("Pointer to data set is nullptr.\n");
@@ -129,22 +129,6 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ModelSelection");
 
-    printer.OpenElement("NeuronsSelection");
-    const string neurons_method = neurons_selection->get_name();
-    add_xml_element(printer, "NeuronsSelectionMethod", neurons_method);
-    if(neurons_method == "GrowingNeurons")
-        static_cast<const GrowingNeurons*>(this->get_neurons_selection())->to_XML(printer);
-    printer.CloseElement();  
-
-    printer.OpenElement("InputsSelection");
-    const string inputs_method = inputs_selection->get_name();
-    add_xml_element(printer, "InputsSelectionMethod", inputs_method);
-    if(inputs_method == "GrowingInputs")
-        static_cast<const GrowingInputs*>(this->get_inputs_selection())->to_XML(printer);
-    else if(inputs_method == "GeneticAlgorithm")
-        static_cast<const GeneticAlgorithm*>(this->get_inputs_selection())->to_XML(printer);
-    printer.CloseElement();
-
     printer.CloseElement();
 }
 
@@ -155,46 +139,50 @@ void ModelSelection::from_XML(const XMLDocument& document)
     
     if (!root_element) 
         throw runtime_error("Model Selection element is nullptr.\n");
-    
+
+    // Neurons Selection
+
     const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
+    if (!neurons_selection_element) throw runtime_error("Neurons selection element is nullptr.\n");
 
-    if (neurons_selection_element) 
+    const string selection_method = read_xml_string(root_element, "NeuronsSelectionMethod");
+    
+    const XMLElement* neurons_selection_method_element = root_element->FirstChildElement(selection_method.c_str());
+
+    if (neurons_selection_method_element)
     {
-        set_neurons_selection(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
-        const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
+        XMLDocument selection_method_document;
+        XMLElement* neurons_selection_element_copy = selection_method_document.NewElement(selection_method.c_str());
 
-        if (growing_neurons_element)
-        {
-            XMLDocument growing_neurons_document;
-            growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
-            static_cast<GrowingNeurons*>(this->get_neurons_selection())->from_XML(growing_neurons_document);
-        }
+        for (const XMLNode* node = neurons_selection_element->FirstChild(); node; node = node->NextSibling())
+            neurons_selection_element_copy->InsertEndChild(node->DeepClone(&selection_method_document));
+
+        selection_method_document.InsertEndChild(neurons_selection_element_copy);
+        neurons_selection->from_XML(selection_method_document);
     }
+    else throw runtime_error(selection_method + " element is nullptr.\n");
+
+    // Inputs Selection
 
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
+    if (!inputs_selection_element) throw runtime_error("Inputs selection element is nullptr.\n");
 
-    if (inputs_selection_element)
+    const string inputs_method = read_xml_string(root_element, "InputsSelectionMethod");
+
+    const XMLElement* inputs_selection_method_element = root_element->FirstChildElement(inputs_method.c_str());
+
+    if (inputs_selection_method_element)
     {
-        const XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
+        XMLDocument inputs_method_document;
+        XMLElement* inputs_selection_element_copy = inputs_method_document.NewElement(inputs_method.c_str());
 
-        if (growing_inputs_element)
-        {
-            set_inputs_selection("GrowingInputs");
-            XMLDocument growing_inputs_document;
-            growing_inputs_document.InsertFirstChild(growing_inputs_element->DeepClone(&growing_inputs_document));
-            static_cast<GrowingInputs*>(this->get_inputs_selection())->from_XML(growing_inputs_document);
-        }
+        for (const XMLNode* node = inputs_selection_element->FirstChild(); node; node = node->NextSibling())
+            inputs_selection_element_copy->InsertEndChild(node->DeepClone(&inputs_method_document));
 
-        const XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
-
-        if (genetic_algorithm_element)
-        {
-            set_inputs_selection("GeneticAlgorithm");
-            XMLDocument genetic_algorithm_document;
-            genetic_algorithm_document.InsertFirstChild(genetic_algorithm_element->DeepClone(&genetic_algorithm_document));
-            static_cast<GeneticAlgorithm*>(this->get_inputs_selection())->from_XML(genetic_algorithm_document);
-        }
+        inputs_method_document.InsertEndChild(inputs_selection_element_copy);
+        neurons_selection->from_XML(inputs_method_document);
     }
+    else throw runtime_error(inputs_method + " element is nullptr.\n");
 }
 
 

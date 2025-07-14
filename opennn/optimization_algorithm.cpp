@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
+OptimizationAlgorithm::OptimizationAlgorithm(const LossIndex* new_loss_index)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -76,9 +76,9 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 }
 
 
-void OptimizationAlgorithm::set(LossIndex* new_loss_index)
+void OptimizationAlgorithm::set(const LossIndex* new_loss_index)
 {
-    loss_index = new_loss_index;
+    loss_index = const_cast<LossIndex*>(new_loss_index);
 }
 
 
@@ -242,7 +242,7 @@ type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
 
 void OptimizationAlgorithm::set_names()
 {
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     const vector<string> input_names = dataset->get_variable_names("Input");
     const vector<string> target_names = dataset->get_variable_names("Target");
@@ -256,7 +256,7 @@ void OptimizationAlgorithm::set_names()
 
 void OptimizationAlgorithm::set_scaling()
 {
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has("Scaling2d"))
@@ -289,7 +289,7 @@ void OptimizationAlgorithm::set_scaling()
 
 void OptimizationAlgorithm::set_unscaling()
 {
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has("Scaling2d"))
@@ -326,7 +326,7 @@ void OptimizationAlgorithm::set_unscaling()
 
 void OptimizationAlgorithm::set_vocabularies()
 {
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if(!is_instance_of<LanguageDataset>(dataset))
         return;

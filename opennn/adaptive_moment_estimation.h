@@ -27,7 +27,7 @@ class AdaptiveMomentEstimation : public OptimizationAlgorithm
     
 public:
 
-   AdaptiveMomentEstimation(LossIndex* = nullptr);
+   AdaptiveMomentEstimation(const LossIndex* = nullptr);
    
    const type& get_learning_rate() const;
    const type& get_beta_1() const;

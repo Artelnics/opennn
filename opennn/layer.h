@@ -10,7 +10,6 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
-#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -72,9 +71,7 @@ public:
 
         }
     }
-*/
 
-/*
     void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
     {
         //copy_from_vector(weights, new_parameters, index);
@@ -304,7 +301,7 @@ public:
                                         unique_ptr<LayerForwardPropagationCuda>&,
                                         const bool&) 
     {
-        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_name());
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
     }
 
     virtual void back_propagate_cuda(const vector<float*>&,

@@ -24,7 +24,7 @@ class GrowingNeurons : public NeuronsSelection
 
 public:
 
-    GrowingNeurons(TrainingStrategy* = nullptr);
+    GrowingNeurons(const TrainingStrategy* = nullptr);
 
     const Index& get_neurons_increment() const;
 
@@ -40,14 +40,14 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
     
-    void from_XML(const XMLDocument&);
+    void from_XML(const XMLDocument&) override;
 
-    void to_XML(XMLPrinter&) const;    
+    void to_XML(XMLPrinter&) const override;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    string get_name() const
+    string get_name() const override
     {
         return "GrowingNeurons";
     }

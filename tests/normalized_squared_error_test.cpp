@@ -11,7 +11,7 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
     NormalizedSquaredError normalized_squared_error;
 
     EXPECT_EQ(normalized_squared_error.has_neural_network(), false);
-    EXPECT_EQ(normalized_squared_error.has_data_set(), false);
+    EXPECT_EQ(normalized_squared_error.has_dataset(), false);
 }
 
 
@@ -23,7 +23,7 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
 
     EXPECT_EQ(normalized_squared_error.has_neural_network(), true);
-    EXPECT_EQ(normalized_squared_error.has_data_set(), true);
+    EXPECT_EQ(normalized_squared_error.has_dataset(), true);
 }
 
 
@@ -41,7 +41,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     Batch batch(samples_number, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
-               dataset.get_variable_indices("Decoder"),
+               // dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
@@ -87,7 +87,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
     Batch batch(samples_number, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
-               dataset.get_variable_indices("Decoder"),
+               // dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
