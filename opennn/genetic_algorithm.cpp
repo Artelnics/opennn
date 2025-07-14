@@ -9,11 +9,10 @@
 #include "registry.h"
 #include "tensors.h"
 #include "correlations.h"
-#include "genetic_algorithm.h"
 #include "tinyxml2.h"
 #include "scaling_layer_2d.h"
-#include "optimization_algorithm.h"
 #include "training_strategy.h"
+#include "genetic_algorithm.h"
 
 namespace opennn
 {

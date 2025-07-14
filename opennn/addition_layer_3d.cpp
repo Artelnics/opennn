@@ -16,7 +16,6 @@ namespace opennn
 Addition3d::Addition3d(const dimensions& new_input_dimensions,
                        const string& new_name) : Layer()
 {
-
     set(new_input_dimensions[0], new_input_dimensions[1], new_name);
 }
 
@@ -310,9 +309,6 @@ REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
 REGISTER(Layer, Addition3d, "Addition3d")
 REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
 REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
-
-//REGISTER_FORWARD_PROPAGATION("Addition3d", Addition3dForwardPropagation);
-//REGISTER_BACK_PROPAGATION("Addition3d", Addition3dBackPropagation);
 
 }
 

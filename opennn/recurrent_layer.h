@@ -46,10 +46,6 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
 
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index& ,
-                        Tensor<type, 1>&) const override;
-
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
                        unique_ptr<LayerForwardPropagation>&,

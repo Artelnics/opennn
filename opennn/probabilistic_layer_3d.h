@@ -49,6 +49,9 @@ public:
    void set_inputs_number(const Index);
    void set_input_dimensions(const dimensions&) override;
 
+   void set_biases(const string&) override;
+   void set_weights(const string&) override;
+
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
@@ -79,10 +82,6 @@ public:
                                                  const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
-
-   void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        Index&, 
-                        Tensor<type, 1>&) const override;
 
    // Serialization
 

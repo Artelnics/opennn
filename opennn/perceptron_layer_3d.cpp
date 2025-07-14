@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "tensors.h"
-#include "strings_utilities.h"
 #include "perceptron_layer_3d.h"
 
 namespace opennn
@@ -178,18 +177,6 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
     weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
 
     input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
-}
-
-
-void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                              Index& index,
-                              Tensor<type, 1>& gradient) const
-{
-    Dense3dBackPropagation* dense3d_back_propagation =
-        static_cast<Dense3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, dense3d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, dense3d_back_propagation->bias_deltas, index);
 }
 
 

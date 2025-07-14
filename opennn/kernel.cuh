@@ -82,8 +82,13 @@ void divide_subtract(const size_t&, type*, const type*, const type*);
 
 // ADAM
 
-__global__ void update_parameters_kernel(const int, float*, float*, float*, const float*, const float, const float, const float, const float);
- void update_parameters_device(const size_t&, float*, float*, float*, const float*, const float, const float, const float, const float);
+__global__ void adam_update_kernel(const int, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
+void adam_update_device(const size_t, float*, float*, float*, const float*, const float, const float, const float, const float, const float, const float);
+
+// SGD
+
+__global__ void sgd_update_kernel(const int, float*, float*, const float*, const float, const float, const bool);
+void sgd_update_device(const size_t, float*, float*, const float*, const float, const float, const bool);
 
  // Errors
 

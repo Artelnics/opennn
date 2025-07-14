@@ -55,7 +55,7 @@ void Layer::set_parameters_random()
 {
     const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
 
-    for(Index i = 0; i < parameter_pairs.size(); i++)
+    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
     {
         TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
 
@@ -73,7 +73,7 @@ void Layer::set_parameters_glorot()
 
     const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
 
-    for(Index i = 0; i < parameter_pairs.size(); i++)
+    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
     {
         TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
 
@@ -90,7 +90,7 @@ Index Layer::get_parameters_number() const
 
 #pragma omp parallel for reduction(+:parameters_number)
 
-    for(Index i = 0; i < parameter_pairs.size(); i++)
+    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
         parameters_number += parameter_pairs[i].second;
 
     return parameters_number;
@@ -191,6 +191,18 @@ void Layer::set_input_dimensions(const dimensions&)
 
 
 void Layer::set_output_dimensions(const dimensions&)
+{
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+}
+
+
+void Layer::set_biases(const string&)
+{
+    throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
+}
+
+
+void Layer::set_weights(const string&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
@@ -377,6 +389,12 @@ void Layer::destroy_cuda()
 cudnnHandle_t Layer::get_cudnn_handle()
 {
     return cudnn_handle;
+}
+
+
+vector<pair<float*, Index>> Layer::get_parameter_pair_device() const
+{
+    return vector<pair<float*, Index>>();
 }
 
 #endif

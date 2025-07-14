@@ -89,7 +89,7 @@ private:
 
 public:
 
-    TrainingResults perform_training_cuda();
+    TrainingResults perform_training_cuda() override;
 
     void update_parameters_cuda(BackPropagationCuda&, SGDOptimizationDataCuda&) const;
 
@@ -119,6 +119,8 @@ struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 {
     SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
 
+    ~SGDOptimizationDataCuda() { free(); }
+
     void set(StochasticGradientDescent* = nullptr);
 
     void free();
@@ -129,8 +131,7 @@ struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 
     Index iteration = 0;
 
-    float* parameters_increment = nullptr;
-    float* last_parameters_increment = nullptr;
+    vector<vector<float*>> velocity;
 };
 
 #endif

@@ -10,11 +10,10 @@
 #define LOSSINDEX_H
 
 #include "dataset.h"
+#include "neural_network.h"
 #include "tinyxml2.h"
 
 using namespace tinyxml2;
-
-#include "neural_network.h"
 
 namespace opennn
 {
@@ -38,7 +37,15 @@ public:
 
    LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-   //enum class RegularizationMethod{L1, L2, NoRegularization};
+    ~LossIndex()
+    {
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
+    }
+
+   enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
    {
@@ -94,7 +101,7 @@ public:
                                         ForwardPropagation&,
                                         BackPropagation&) const;
 
-   void assemble_layers_error_gradient(BackPropagation&) const;
+   void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
    void back_propagate(const Batch&,
                        ForwardPropagation&,
@@ -138,6 +145,10 @@ public:
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
+
+   void apply_regularization_gradient(const TensorMap<Tensor<type, 1>>&,
+                                      TensorMap<Tensor<type, 1>>&,
+                                      type) const;
 
    // Serialization
 
@@ -191,8 +202,6 @@ public:
                              BackPropagationCuda&);
 
     void add_regularization_cuda(BackPropagationCuda&) const;
-
-    void assemble_layers_error_gradient_cuda(BackPropagationCuda&) const;
 
     float calculate_regularization_cuda(Index, float*);
 
@@ -365,15 +374,6 @@ struct BackPropagationCuda
 
     float* output_deltas = nullptr;
     dimensions output_deltas_dimensions;
-
-    float* parameters = nullptr;
-    float* parameters_square = nullptr;
-    cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
-    Tensor<type, 1> parameters_host;
-
-    float* gradient = nullptr;
-    cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
-    //float* regularization_gradient = nullptr;
 
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;

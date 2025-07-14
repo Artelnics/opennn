@@ -216,10 +216,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     set_scaling();
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, dataset);
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
@@ -538,6 +540,7 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
 
     // Neural network data
 
+    //parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
     parameters_difference.resize(parameters_number);

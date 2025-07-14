@@ -171,7 +171,11 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           BackPropagation& back_propagation,
                                           QuasiNewtonMethodData& optimization_data) const
 {
+    NeuralNetwork* neural_network = forward_propagation.neural_network;
+
     Tensor<type, 1>& parameters = optimization_data.parameters;
+    neural_network->get_parameters(parameters);
+
     const Tensor<type, 1>& gradient = optimization_data.gradient;
 
     Tensor<type, 1>& old_parameters = optimization_data.old_parameters;
@@ -259,8 +263,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     // Set parameters
 
-    NeuralNetwork* neural_network = forward_propagation.neural_network;
-
     neural_network->set_parameters(parameters);
 }
 
@@ -312,10 +314,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
     // Batch
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, dataset);
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     // Loss index
 
@@ -530,6 +534,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Neural network data
 
+    parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
     parameters_difference.resize(parameters_number);
@@ -539,6 +544,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     // Loss index data
 
+    gradient.resize(parameters_number);
     old_gradient.resize(parameters_number);
     old_gradient.setZero();
 
@@ -833,6 +839,12 @@ Triplet::Triplet()
     A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
     U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
     B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+}
+
+
+bool Triplet::operator ==(const Triplet &other_triplet) const
+{
+    return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
 }
 
 

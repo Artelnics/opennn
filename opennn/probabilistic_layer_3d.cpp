@@ -278,18 +278,6 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
 }
 
 
-void Probabilistic3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                           Index& index,
-                                           Tensor<type, 1>& gradient) const
-{
-    const Probabilistic3dBackPropagation* probabilistic_3d_back_propagation =
-        static_cast<Probabilistic3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->weight_deltas, index);
-    copy_to_vector(gradient, probabilistic_3d_back_propagation->bias_deltas, index);
-}
-
-
 void Probabilistic3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic3d");
@@ -305,9 +293,8 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
 
     set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
-
-    //Index index = 0;
-    //set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
+    set_biases(read_xml_string(probabilistic_layer_element, "Biases"));
+    set_weights(read_xml_string(probabilistic_layer_element, "Weights"));
 }
 
 
@@ -320,13 +307,38 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "Activation", get_activation_function_string());
-
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
-
-    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string(biases));
+    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();
+}
+
+
+void Probabilistic3d::set_biases(const string& new_biases)
+{
+    stringstream biases_strings = stringstream(new_biases);
+    type number;
+    vector<type> values;
+
+    while(biases_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        biases(i) = values[i];
+}
+
+
+void Probabilistic3d::set_weights(const string& new_weights)
+{
+    stringstream weights_strings = stringstream(new_weights);
+    type number;
+    vector<type> values;
+
+    while(weights_strings >> number)
+        values.push_back(number);
+
+    for (size_t i = 0; i < values.size(); ++i)
+        weights(i) = values[i];
 }
 
 

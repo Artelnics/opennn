@@ -14,7 +14,6 @@
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
-#include "scaling_layer_4d.h"
 
 namespace opennn
 {
@@ -300,7 +299,7 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    if(this->has("Embedding"))
+    if(has("Embedding"))
         return input_names.size();
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
@@ -1405,15 +1404,6 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
         layers[i]->forward_propagate_cuda(layer_input_device[i],
             forward_propagation_cuda.layers[i],
             is_training);
-}
-
-
-void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
-{
-    Index index = 0;
-
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters_cuda(new_parameters, index);
 }
 
 

@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "tensors.h"
-#include "strings_utilities.h"
 #include "normalization_layer_3d.h"
 
 namespace opennn
@@ -181,18 +180,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                 .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
 */
     //substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
-}
-
-
-void Normalization3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                      Index& index,
-                                      Tensor<type, 1>& gradient) const
-{
-    Normalization3dBackPropagation* this_back_propagation =
-        static_cast<Normalization3dBackPropagation*>(back_propagation.get());
-
-    copy_to_vector(gradient, this_back_propagation->gamma_derivatives, index);
-    copy_to_vector(gradient, this_back_propagation->beta_derivatives, index);
 }
 
 

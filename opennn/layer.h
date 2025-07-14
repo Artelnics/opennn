@@ -10,7 +10,6 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
-#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -39,6 +38,9 @@ public:
 
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
+
+    virtual void set_biases(const string&);
+    virtual void set_weights(const string&);
 
     void set_label(const string&);
 
@@ -69,9 +71,7 @@ public:
 
         }
     }
-*/
 
-/*
     void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
     {
         //copy_from_vector(weights, new_parameters, index);
@@ -108,10 +108,6 @@ public:
                                    const vector<pair<type*, dimensions>>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
-
-    virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                                 Index&,
-                                 Tensor<type, 1>&) const {}
 
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
                                                       unique_ptr<LayerForwardPropagation>&,
@@ -305,7 +301,7 @@ public:
                                         unique_ptr<LayerForwardPropagationCuda>&,
                                         const bool&) 
     {
-        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_name());
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
     }
 
     virtual void back_propagate_cuda(const vector<float*>&,
@@ -313,11 +309,7 @@ public:
                                      unique_ptr<LayerForwardPropagationCuda>&,
                                      unique_ptr<LayerBackPropagationCuda>&) const {}
 
-    virtual void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
-                                      Index&,
-                                      float*) const {}
-
-    virtual void set_parameters_cuda(const float*, Index&) {}
+    virtual vector<pair<float*, Index>> get_parameter_pair_device() const;
 
     virtual void copy_parameters_host() {}
 
@@ -442,6 +434,11 @@ struct LayerBackPropagationCuda
     virtual void free() {}
 
     virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
+
+    virtual vector<pair<float*, Index>> get_parameter_delta_pair_device() const
+    {
+        return vector<pair<float*, Index>>();
+    }
 
     Index batch_size = 0;
 
