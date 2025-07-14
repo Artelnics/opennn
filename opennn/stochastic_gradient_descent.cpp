@@ -211,7 +211,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    // const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
     const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
@@ -307,7 +307,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
-                                decoder_variable_indices,
+                                // decoder_variable_indices,
                                 target_variable_indices);
 
             // Neural network
@@ -354,7 +354,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
-                                     decoder_variable_indices,
+                                     // decoder_variable_indices,
                                      target_variable_indices);
 
                 // Neural network

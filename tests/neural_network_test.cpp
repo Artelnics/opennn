@@ -155,7 +155,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     Batch batch(batch_size, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
-               dataset.get_variable_indices("Decoder"),
+               // dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
 
     // Test Logistic

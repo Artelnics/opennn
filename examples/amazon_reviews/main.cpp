@@ -19,13 +19,16 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 
+#include "../../opennn/adaptive_moment_estimation.h"
+#include "mean_squared_error.h"
+
 using namespace opennn;
 
 int main()
 {
     try
     {
-        /*
+
         cout << "OpenNN. Amazon reviews example." << endl;
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
@@ -43,83 +46,38 @@ int main()
         dimensions complexity_dimensions = {neurons_number};
         dimensions output_dimensions = {targets_number};
 
+        TextClassificationNetwork text_classification_network(
+            input_dimensions,
+            complexity_dimensions,
+            output_dimensions
+            );
 
-        // std::cout << "embedding_dimension = " << embedding_dimension << std::endl;
-        // std::cout << "neurons_number = " << neurons_number << std::endl;
+        TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
-        // std::cout << "input_vocabulary_size = " << input_vocabulary_size << std::endl;
-        // std::cout << "target_vocabulary_size = " << target_vocabulary_size << std::endl;
+        AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(1000);
+        // adam->set_batch_size(32);
 
-        // std::cout << "input_sequence_length = " << input_sequence_length << std::endl;
-        // std::cout << "targets_number = " << targets_number << std::endl;
+        training_strategy.perform_training();
 
-        // cout << "input_dimensions" << endl;
-        // print_vector(input_dimensions);
+        // // calculate_outputs
+        // const Index batch_size = 1;
+        // Tensor<type, 2> input(batch_size, input_sequence_length);
+        // input.setRandom();
+        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<2, 2>(input);
 
-        // cout << "complexity_dimensions" << endl;
-        // print_vector(complexity_dimensions);
+        const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
 
-        // cout << "output_dimensions" << endl;
-        // print_vector(output_dimensions);
+        cout << "Confusion matrix:\n"
+             << testing_analysis.calculate_confusion() << endl;
 
-        // TextClassificationNetwork text_classification_network(
-        //     input_dimensions,
-        //     complexity_dimensions,
-        //     output_dimensions
-        //     );
+        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
-        NeuralNetwork neural_network;
+        cout << "perform_roc_analysis:\n"
+             << "  AUC: " << roc_analysis.area_under_curve << "\n"
+             << "  Confidence Limit: " << roc_analysis.confidence_limit << "\n"
+             << "  Optimal Threshold: " << roc_analysis.optimal_threshold << "\n";
 
-        neural_network.add_layer(make_unique<Embedding>(dimensions({input_vocabulary_size, input_sequence_length}),
-                                         embedding_dimension,
-                                         "embedding_layer"
-                                         ));
-
-        cout << "neural_network " << endl;
-        print_vector(neural_network.get_output_dimensions());
-
-        // TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
-
-        // AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        // adam->set_maximum_epochs_number(50);
-
-        // training_strategy.perform_training();
-
-        const Index batch_size = 1;
-        Tensor<type, 2> input(batch_size, input_sequence_length);
-        input.setRandom();
-
-        const Tensor<type, 3> outputs = neural_network.calculate_outputs<2,3>(input);
-        // const Tensor<type, 3> outputs = text_classification_network.calculate_outputs<2, 3>(input);
-
-        cout << "Outputs:\n" << outputs << endl;
-
-        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<3, 2>(input);
-
-        // cout << "Outputs:\n" << outputs << endl;
-
-
-        // const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
-
-
-        // cout << "Confusion matrix:\n"
-        //      << testing_analysis.calculate_confusion() << endl;
-
-        // MeanSquaredError mean_squared_error(&text_classification_network, &language_dataset);
-        // cout << mean_squared_error.calculate_numerical_error() << endl;
-        // cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
-
-
-        // const Tensor<type, 2> inputs = language_dataset.get_data("Input");
-
-        // cout << "inputs_dataset: " << inputs.dimensions() << endl;
-
-        // const Eigen::array<Index, 3> new_dims = {1, inputs.dimension(0), inputs.dimension(1)};
-        // const Tensor<type, 3> input = inputs.reshape(new_dims);
-
-        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<3, 2>(input);
-
-*/
         cout << "Good bye!" << endl;
         return 0;
     }

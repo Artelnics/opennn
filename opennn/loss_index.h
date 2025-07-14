@@ -37,6 +37,16 @@ public:
 
    LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
+    ~LossIndex()
+    {
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
+    }
+
+   enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
+
    inline NeuralNetwork* get_neural_network() const 
    {
       return neural_network;
@@ -135,6 +145,10 @@ public:
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
+
+   void apply_regularization_gradient(const TensorMap<Tensor<type, 1>>&,
+                                      TensorMap<Tensor<type, 1>>&,
+                                      type) const;
 
    // Serialization
 

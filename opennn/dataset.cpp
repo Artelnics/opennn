@@ -697,8 +697,8 @@ dimensions Dataset::get_dimensions(const string& variable_use) const
         return input_dimensions;
     else if (variable_use == "Target")
         return target_dimensions;
-    else if (variable_use == "Decoder")
-        return decoder_dimensions;
+    // else if (variable_use == "Decoder")
+    //     return decoder_dimensions;
     else
         throw invalid_argument("get_dimensions: Invalid variable use string: " + variable_use);
 }
@@ -710,8 +710,8 @@ void Dataset::set_dimensions(const string& variable_use, const dimensions& new_d
         input_dimensions = new_dimensions;
     else if (variable_use == "Target")
         target_dimensions = new_dimensions;
-    else if (variable_use == "Decoder")
-        decoder_dimensions = new_dimensions;
+    // else if (variable_use == "Decoder")
+    //     decoder_dimensions = new_dimensions;
     else
         throw invalid_argument("set_dimensions: Invalid variable use string: " + variable_use);
 }
@@ -4016,10 +4016,10 @@ void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, c
 }
 
 
-void Dataset::fill_decoder_tensor(const vector<Index>& sample_indices, const vector<Index>& decoder_indices, type* decoder_tensor_data) const
-{
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor_data);
-}
+// void Dataset::fill_decoder_tensor(const vector<Index>& sample_indices, const vector<Index>& decoder_indices, type* decoder_tensor_data) const
+// {
+//     fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor_data);
+// }
 
 
 void Dataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_tensor_data) const
@@ -4269,7 +4269,7 @@ void Dataset::decode(string&) const
 
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
-                 const vector<Index>& decoder_indices,
+                 // const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
@@ -4284,7 +4284,7 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 
-    dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
+    // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
 }
 
 
@@ -4306,7 +4306,7 @@ void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
     dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
-    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
+    // const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
     const dimensions& data_set_target_dimensions = dataset->get_dimensions("Target");
 
     if (!data_set_input_dimensions.empty())
@@ -4315,11 +4315,11 @@ void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
         input_tensor.resize(get_size(input_dimensions));
     }
 
-    if (!data_set_decoder_dimensions.empty())
-    {
-        decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
-        decoder_tensor.resize(get_size(decoder_dimensions));
-    }
+    // if (!data_set_decoder_dimensions.empty())
+    // {
+    //     decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
+    //     decoder_tensor.resize(get_size(decoder_dimensions));
+    // }
 
     if (!data_set_target_dimensions.empty())
     {
@@ -4337,35 +4337,35 @@ Index Batch::get_samples_number() const
 
 void Batch::print() const
 {
-    cout << "Batch" << endl
-         << "Inputs:" << endl
-         << "Input dimensions:" << endl;
+    // cout << "Batch" << endl
+    //      << "Inputs:" << endl
+    //      << "Input dimensions:" << endl;
 
-    print_vector(input_dimensions);
+    // print_vector(input_dimensions);
 
-    input_dimensions.size() == 4
-        ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
-                                             input_dimensions[0],
-                                             input_dimensions[1],
-                                             input_dimensions[2],
-                                             input_dimensions[3]) << endl
-        : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
-                                             input_dimensions[0],
-                                             input_dimensions[1]) << endl;
+    // input_dimensions.size() == 4
+    //     ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
+    //                                          input_dimensions[0],
+    //                                          input_dimensions[1],
+    //                                          input_dimensions[2],
+    //                                          input_dimensions[3]) << endl
+    //     : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
+    //                                          input_dimensions[0],
+    //                                          input_dimensions[1]) << endl;
 
-    cout << "Decoder:" << endl
-         << "Decoder dimensions:" << endl;
+    // cout << "Decoder:" << endl
+    //      << "Decoder dimensions:" << endl;
 
-    print_vector(decoder_dimensions);
+    // print_vector(decoder_dimensions);
 
-    cout << "Targets:" << endl
-         << "Target dimensions:" << endl;
+    // cout << "Targets:" << endl
+    //      << "Target dimensions:" << endl;
 
-    print_vector(target_dimensions);
+    // print_vector(target_dimensions);
 
-    cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
-                                       target_dimensions[0],
-                                       target_dimensions[1]) << endl;
+    // cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
+    //                                    target_dimensions[0],
+    //                                    target_dimensions[1]) << endl;
 }
 
 
@@ -4375,12 +4375,14 @@ bool Batch::is_empty() const
 }
 
 
+
 vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
     vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
 
-    if (!decoder_dimensions.empty())
-        input_pairs.insert(input_pairs.begin(), {(type*)decoder_tensor.data(), decoder_dimensions});
+    // @todo DECODER VARIABLES
+    // if (!decoder_dimensions.empty())
+    //     input_pairs.insert(input_pairs.begin(), {(type*)decoder_tensor.data(), decoder_dimensions});
 
     return input_pairs;
 }

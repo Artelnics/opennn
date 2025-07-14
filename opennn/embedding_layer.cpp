@@ -114,8 +114,11 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
     const Index batch_size = inputs.dimension(0);
     const type coefficient = sqrt(type(get_embedding_dimension()));
 
-    // #pragma omp parallel for
+    if (outputs.dimension(0) != batch_size)
+        throw runtime_error("Batch size mismatch between inputs and outputs: inputs.dimension(0) = "
+                            + to_string(batch_size) + ", outputs.dimension(0) = " + to_string(outputs.dimension(0)));
 
+    #pragma omp parallel for
     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_output = outputs.chip(sample_index, 0);
@@ -153,7 +156,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -162,11 +165,11 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     embedding_lookup(inputs, outputs);
 
-    if(positional_encoding_xxx)
-        add_positional_encodings(outputs);
+    // if(positional_encoding_xxx)
+    //     add_positional_encodings(outputs);
 
-    if(is_training && dropout_rate > 0)
-        dropout(outputs, dropout_rate);
+    // if(is_training && dropout_rate > 0)
+    //     dropout(outputs, dropout_rate);
 }
 
 
