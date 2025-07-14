@@ -6,25 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-#include "loss_index.h"
-
-//#include "mean_squared_error.h"
-//#include "normalized_squared_error.h"
-//#include "minkowski_error.h"
-//#include "cross_entropy_error.h"
-//#include "cross_entropy_error_3d.h"
-//#include "weighted_squared_error.h"
-
-#include "quasi_newton_method.h"
-//#include "levenberg_marquardt_algorithm.h"
-//#include "stochastic_gradient_descent.h"
-//#include "adaptive_moment_estimation.h"
-
-
 #include "registry.h"
-#include "recurrent_layer.h"
+#include "loss_index.h"
 #include "optimization_algorithm.h"
+#include "quasi_newton_method.h"
 #include "training_strategy.h"
 
 namespace opennn
@@ -197,23 +182,23 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LossIndex");
 
-    add_xml_element(printer, "LossMethod", this->loss_index->get_name());
+    add_xml_element(printer, "LossMethod", loss_index->get_name());
 
-    this->loss_index->to_XML(printer);
+    loss_index->to_XML(printer);
 
-    this->loss_index->write_regularization_XML(printer);
+    loss_index->write_regularization_XML(printer);
 
     printer.CloseElement();
 
     printer.OpenElement("OptimizationAlgorithm");
 
-    add_xml_element(printer, "OptimizationMethod", this->optimization_algorithm->get_name());
+    add_xml_element(printer, "OptimizationMethod", optimization_algorithm->get_name());
 
-    this->optimization_algorithm->to_XML(printer);
+    optimization_algorithm->to_XML(printer);
 
     printer.CloseElement();
 
-    add_xml_element(printer, "Display", to_string(this->optimization_algorithm->get_display()));
+    add_xml_element(printer, "Display", to_string(optimization_algorithm->get_display()));
 
     printer.CloseElement();
 }

@@ -10,11 +10,10 @@
 #define LOSSINDEX_H
 
 #include "dataset.h"
+#include "neural_network.h"
 #include "tinyxml2.h"
 
 using namespace tinyxml2;
-
-#include "neural_network.h"
 
 namespace opennn
 {

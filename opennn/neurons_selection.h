@@ -11,6 +11,10 @@
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
+
 using type = float;
 using namespace std;
 using namespace Eigen;
@@ -71,6 +75,10 @@ public:
     string write_time(const type&) const;
 
     virtual string get_name() const = 0;
+
+    virtual void from_XML(const XMLDocument&) = 0;
+
+    virtual void to_XML(XMLPrinter&) const = 0;
 
     virtual void print(){}
 
