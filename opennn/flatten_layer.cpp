@@ -179,9 +179,9 @@ void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
     input_deltas.resize(batch_size,
-                             input_dimensions[0],
-                             input_dimensions[1],
-                             input_dimensions[2]);
+                        input_dimensions[0],
+                        input_dimensions[1],
+                        input_dimensions[2]);
 }
 
 

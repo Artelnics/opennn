@@ -342,28 +342,17 @@ void LossIndex::apply_regularization_gradient(const TensorMap<Tensor<type, 1>>& 
                                               TensorMap<Tensor<type, 1>>& delta,
                                               type weight) const
 {
-
-    const type mix_factor = 0.5;
-
-    switch (regularization_method)
-    {
-    case RegularizationMethod::NoRegularization:
+    if(regularization_method == "NoRegularization")
         return;
-
-    case RegularizationMethod::L1:
+    else if(regularization_method == "L1")
         delta += weight * parameters.sign();
-        break;
-
-    case RegularizationMethod::L2:
+    else if(regularization_method == "L2")
         delta += weight * parameters;
-        break;
+    else if(regularization_method == "ElasticNet")
+    {
+        const type mix_factor = 0.5;
 
-    case RegularizationMethod::ElasticNet:
         delta += weight * (mix_factor * parameters.sign() + (type(1) - mix_factor) * parameters);
-        break;
-
-    default:
-        return;
     }
 }
 
@@ -654,7 +643,7 @@ Tensor<type, 1> LossIndex::calculate_gradient()
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
-
+/*
     batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -668,7 +657,7 @@ Tensor<type, 1> LossIndex::calculate_gradient()
                                       forward_propagation);
 
     back_propagate(batch, forward_propagation, back_propagation);
-/*
+
     return back_propagation.gradient;
 */
     return Tensor<type, 1>();

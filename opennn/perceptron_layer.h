@@ -48,8 +48,7 @@ public:
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
-    void calculate_combinations(const Tensor<type, 2>&,
-                                Tensor<type, 2>&) const;
+    void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
