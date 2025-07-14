@@ -273,7 +273,9 @@ string Recurrent::get_expression(const vector<string>& input_names,
 void Recurrent::print() const
 {
     cout << "Recurrent layer" << endl
-         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Time steps: " << get_input_dimensions()[0] << endl
+         << "Batch size: " << batch_size << endl
+         << "Input dimensions: " << get_input_dimensions()[1] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Input weights dimensions: " << input_weights.dimensions() << endl
@@ -285,8 +287,8 @@ void Recurrent::print() const
     cout << input_weights << endl;
     cout << "Recurrent weights:" << endl;
     cout << recurrent_weights << endl;
-    cout << "Activation function:" << endl;
-    cout << activation_function << endl;
+    cout << "Activation function: " << activation_function << endl;
+    cout << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
 }
 
 
@@ -349,8 +351,8 @@ void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_la
         throw std::runtime_error("recurrrent layer is nullptr");
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index time_steps = layer->get_input_dimensions()[1];
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index time_steps = layer->get_input_dimensions()[0];
 
     current_inputs.resize(batch_size, time_steps, inputs_number);
 
@@ -380,8 +382,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index time_steps = layer->get_input_dimensions()[1];
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index time_steps = layer->get_input_dimensions()[0];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);

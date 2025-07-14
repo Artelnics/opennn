@@ -96,11 +96,8 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
     BackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-<<<<<<< HEAD
     if(loss_index == nullptr)
         return pair<type, type>();
-=======
->>>>>>> 36b0e6a96ba088d7a49801211ab910ebc5b0a507
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 

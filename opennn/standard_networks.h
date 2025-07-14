@@ -99,7 +99,12 @@ public:
         add_layer(make_unique<Scaling2d>(input_dimensions));
 
         add_layer(make_unique<Recurrent>(get_output_dimensions(),
-                                         output_dimensions));
+                                         complexity_dimensions));
+
+        add_layer(make_unique<Dense2d>(get_output_dimensions(),
+                                       output_dimensions,
+                                       "Linear",
+                                       "recurrent_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
 

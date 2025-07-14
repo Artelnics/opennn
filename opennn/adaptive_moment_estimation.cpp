@@ -231,11 +231,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
     optimization_data.iteration = 1;
 
-    //adri71 - eliminar
-    maximum_epochs_number = 4;
-    display_period = 2;
-
-
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
@@ -503,6 +498,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
             parameters.device(*thread_pool_device)
                 -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+
         }
     }
 }
