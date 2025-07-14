@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
-#include "perceptron_layer.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_dataset.h"

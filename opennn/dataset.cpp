@@ -3954,7 +3954,7 @@ void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 
     data_file_preview.clear();
 
-    for (Index i = 0; i < std::min((size_t)num_first_rows_to_show, all_rows.size()); ++i)
+    for (Index i = 0; i < min((size_t)num_first_rows_to_show, all_rows.size()); ++i)
         data_file_preview.push_back(all_rows[i]);
 
     if (all_rows.size() > num_first_rows_to_show)

@@ -9,12 +9,8 @@
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
-#include "dataset.h"
-#include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
-
-//#include "learning_rate_algorithm.h"
 
 namespace opennn
 {
@@ -26,7 +22,6 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
 public:
-
 
    QuasiNewtonMethod(LossIndex* = nullptr);
 
@@ -130,10 +125,7 @@ struct Triplet
 {
     Triplet();
 
-    bool operator == (const Triplet& other_triplet) const
-    {
-        return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
-    }
+    bool operator == (const Triplet& other_triplet) const;
 
     type get_length() const;
 
@@ -145,11 +137,7 @@ struct Triplet
 
     void check() const;
 
-    pair<type, type> A;
-
-    pair<type, type> U;
-
-    pair<type, type> B;
+    pair<type, type> A, U, B;
 };
 
 

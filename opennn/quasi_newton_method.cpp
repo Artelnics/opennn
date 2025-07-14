@@ -842,6 +842,12 @@ Triplet::Triplet()
 }
 
 
+bool Triplet::operator ==(const Triplet &other_triplet) const
+{
+    return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
+}
+
+
 type Triplet::get_length() const
 {
     return abs(B.first - A.first);

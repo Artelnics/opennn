@@ -477,7 +477,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
         const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        for(Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        for(Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
         {
             type* parameter_data = parameter_pairs[parameter_index].first;
             const Index parameter_size = parameter_pairs[parameter_index].second;
@@ -1044,6 +1044,7 @@ void ADAMOptimizationDataCuda::print() const
             cout << vector_from_device(v_device_ptr, param_size) << endl;
         }
     }
+
     cout << "-----------------------------------" << endl;
 }
 

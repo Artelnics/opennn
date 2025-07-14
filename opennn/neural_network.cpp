@@ -14,7 +14,6 @@
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
-#include "scaling_layer_4d.h"
 
 namespace opennn
 {
@@ -300,7 +299,7 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    if(this->has("Embedding"))
+    if(has("Embedding"))
         return input_names.size();
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();

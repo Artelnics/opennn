@@ -426,7 +426,7 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
     return true;
 }
 
-
+/*
 template <int Rank>
 void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) 
 {
@@ -443,7 +443,7 @@ void copy_to_vector(Tensor<type, 1>& destination, const Tensor<type, Rank>& sour
 
     index += source.size();
 }
-
+*/
 }
 
 #endif

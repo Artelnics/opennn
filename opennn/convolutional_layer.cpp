@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
 #include "tensors.h"
 #include "convolutional_layer.h"
 

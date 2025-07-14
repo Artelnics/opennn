@@ -80,11 +80,11 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    void from_XML(const XMLDocument&);
+    void from_XML(const XMLDocument&) override;
 
-    void to_XML(XMLPrinter&) const;
+    void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
     
     void save(const filesystem::path&) const;
 
