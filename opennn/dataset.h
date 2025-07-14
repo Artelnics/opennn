@@ -512,9 +512,9 @@ public:
                                     const vector<Index>&,
                                     type*) const;
 
-    virtual void fill_decoder_tensor(const vector<Index>&,
-                                     const vector<Index>&,
-                                     type*) const;
+    // virtual void fill_decoder_tensor(const vector<Index>&,
+    //                                  const vector<Index>&,
+    //                                  type*) const;
 
 
 protected:
@@ -603,7 +603,7 @@ struct Batch
 
     void fill(const vector<Index>&,
               const vector<Index>&,
-              const vector<Index>&,
+              // const vector<Index>&,
               const vector<Index>& = vector<Index>());
 
     Tensor<type, 2> perform_augmentation(const Tensor<type, 2>&);

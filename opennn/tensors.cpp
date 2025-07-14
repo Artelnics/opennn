@@ -465,6 +465,7 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
 {
     const type norm = l2_norm(thread_pool_device, vector);
+
     if(norm < NUMERIC_LIMITS_MIN)
     {
         gradient.setZero();

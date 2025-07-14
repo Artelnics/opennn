@@ -46,7 +46,7 @@ public:
             thread_pool_device.reset();
     }
 
-   enum class RegularizationMethod{L1, L2, NoRegularization};
+   enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
    {
@@ -145,6 +145,10 @@ public:
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
+
+   void apply_regularization_gradient(const TensorMap<Tensor<type, 1>>&,
+                                      TensorMap<Tensor<type, 1>>&,
+                                      type) const;
 
    // Serialization
 

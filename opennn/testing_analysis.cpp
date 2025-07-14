@@ -936,59 +936,112 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_thres
 
 Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_confusion() const
 {
-    Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
+    // Transformer* transformer = static_cast<Transformer*>(neural_network);
+    // LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> inputs = language_dataset->get_data("Testing", "Input");
-    const Tensor<type, 2> context = language_dataset->get_data("Testing", "Decoder");
-    const Tensor<type, 2> targets = language_dataset->get_data("Testing", "Target");
+    // const Tensor<type, 2> inputs = language_dataset->get_data("Testing", "Input");
+    // const Tensor<type, 2> context = language_dataset->get_data("Testing", "Decoder");
+    // const Tensor<type, 2> targets = language_dataset->get_data("Testing", "Target");
 
-    const dimensions input_dimensions = dataset->get_dimensions("Input");
+    // const dimensions input_dimensions = dataset->get_dimensions("Input");
 
-    const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
+    // const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
 
-    Tensor<type, 2> testing_input(testing_batch_size, inputs.dimension(1));
-    Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
-    Tensor<type, 2> testing_target(testing_batch_size, targets.dimension(1));
+    // Tensor<type, 2> testing_input(testing_batch_size, inputs.dimension(1));    // Transformer* transformer = static_cast<Transformer*>(neural_network);
+    // LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    for(Index i = 0; i < testing_batch_size; i++)
-    {
-        testing_input.chip(i, 0) = inputs.chip(i, 0);
-        testing_context.chip(i, 0) = context.chip(i, 0);
-        testing_target.chip(i, 0) = targets.chip(i, 0);
-    }
+    // const Tensor<type, 2> inputs = language_dataset->get_data("Testing", "Input");
+    // const Tensor<type, 2> context = language_dataset->get_data("Testing", "Decoder");
+    // const Tensor<type, 2> targets = language_dataset->get_data("Testing", "Target");
 
-    if(input_dimensions.size() == 1)
-    {
-        const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+    // const dimensions input_dimensions = dataset->get_dimensions("Input");
 
-        Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
+    // const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
 
-        for (Index i = 0; i < outputs.dimension(0); i++) 
-        {
-            reduced_outputs(i,0) = outputs(i,1,9);
-            reduced_outputs(i,1) = outputs(i,1,10);
-        }
+    // Tensor<type, 2> testing_input(testing_batch_size, inputs.dimension(1));
+    // Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
+    // Tensor<type, 2> testing_target(testing_batch_size, targets.dimension(1));
 
-        // Tensor<type, 2> reduced_outputs(outputs.dimension(0), outputs.dimension(1));
-        // type index;
-        // type max;
+    // for(Index i = 0; i < testing_batch_size; i++)
+    // {
+    //     testing_input.chip(i, 0) = inputs.chip(i, 0);
+    //     testing_context.chip(i, 0) = context.chip(i, 0);
+    //     testing_target.chip(i, 0) = targets.chip(i, 0);
+    // }
 
-        // for (Index i = 0; i < outputs.dimension(0); i++) {
-        //     for (Index j = 0; j < outputs.dimension(1); j++) {
-        //         index = 0;
-        //         max = outputs(i,j,0);
-        //         for(Index k = 1; k < outputs.dimension(2); k++)
-        //             if(max < outputs(i,j,k)){
-        //                 index = type(k);
-        //                 max = outputs(i,j,k);
-        //             }
-        //         reduced_outputs(i,j) = index;
-        //     }
-        // }
+    // if(input_dimensions.size() == 1)
+    // {
+    //     const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
-        return calculate_confusion(reduced_outputs, testing_target);
-    }
+    //     Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
+
+    //     for (Index i = 0; i < outputs.dimension(0); i++)
+    //     {
+    //         reduced_outputs(i,0) = outputs(i,1,9);
+    //         reduced_outputs(i,1) = outputs(i,1,10);
+    //     }
+
+    //     // Tensor<type, 2> reduced_outputs(outputs.dimension(0), outputs.dimension(1));
+    //     // type index;
+    //     // type max;
+
+    //     // for (Index i = 0; i < outputs.dimension(0); i++) {
+    //     //     for (Index j = 0; j < outputs.dimension(1); j++) {
+    //     //         index = 0;
+    //     //         max = outputs(i,j,0);
+    //     //         for(Index k = 1; k < outputs.dimension(2); k++)
+    //     //             if(max < outputs(i,j,k)){
+    //     //                 index = type(k);
+    //     //                 max = outputs(i,j,k);
+    //     //             }
+    //     //         reduced_outputs(i,j) = index;
+    //     //     }
+    //     // }
+
+    //     return calculate_confusion(reduced_outputs, testing_target);
+    // }
+
+    // Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
+    // Tensor<type, 2> testing_target(testing_batch_size, targets.dimension(1));
+
+    // for(Index i = 0; i < testing_batch_size; i++)
+    // {
+    //     testing_input.chip(i, 0) = inputs.chip(i, 0);
+    //     testing_context.chip(i, 0) = context.chip(i, 0);
+    //     testing_target.chip(i, 0) = targets.chip(i, 0);
+    // }
+
+    // if(input_dimensions.size() == 1)
+    // {
+    //     const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+
+    //     Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
+
+    //     for (Index i = 0; i < outputs.dimension(0); i++)
+    //     {
+    //         reduced_outputs(i,0) = outputs(i,1,9);
+    //         reduced_outputs(i,1) = outputs(i,1,10);
+    //     }
+
+    //     // Tensor<type, 2> reduced_outputs(outputs.dimension(0), outputs.dimension(1));
+    //     // type index;
+    //     // type max;
+
+    //     // for (Index i = 0; i < outputs.dimension(0); i++) {
+    //     //     for (Index j = 0; j < outputs.dimension(1); j++) {
+    //     //         index = 0;
+    //     //         max = outputs(i,j,0);
+    //     //         for(Index k = 1; k < outputs.dimension(2); k++)
+    //     //             if(max < outputs(i,j,k)){
+    //     //                 index = type(k);
+    //     //                 max = outputs(i,j,k);
+    //     //             }
+    //     //         reduced_outputs(i,j) = index;
+    //     //     }
+    //     // }
+
+    //     return calculate_confusion(reduced_outputs, testing_target);
+    // }
 
     return Tensor<Index, 2>();
 }
