@@ -639,12 +639,12 @@ Tensor<type, 1> LossIndex::calculate_gradient()
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
-/*
-    batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+
+    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
@@ -658,8 +658,8 @@ Tensor<type, 1> LossIndex::calculate_gradient()
 
     back_propagate(batch, forward_propagation, back_propagation);
 
-    return back_propagation.gradient;
-*/
+    // return back_propagation.gradient;
+
     return Tensor<type, 1>();
 }
 

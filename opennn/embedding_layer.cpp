@@ -256,7 +256,6 @@ void Embedding::from_XML(const XMLDocument& document)
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    set_biases(read_xml_string(embedding_layer_element, "Biases"));
     set_weights(read_xml_string(embedding_layer_element, "Weights"));
 }
 
@@ -269,24 +268,9 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
     add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();  
-}
-
-
-void Embedding::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
 }
 
 

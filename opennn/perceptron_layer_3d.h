@@ -45,6 +45,9 @@ public:
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
+   void set_biases(const string&) override;
+   void set_weights(const string&) override;
+
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
 
