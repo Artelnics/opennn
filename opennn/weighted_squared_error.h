@@ -39,7 +39,7 @@ public:
 
    void set_normalization_coefficient() override;
 
-   void set_data_set(Dataset*) override;
+   void set_dataset(const Dataset*) override;
 
    string get_name() const override;
 

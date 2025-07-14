@@ -27,7 +27,7 @@ public:
 
     void set_default();
 
-    void set_data_set(Dataset* new_data_set) override;
+    void set_dataset(const Dataset* new_dataset) override;
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 

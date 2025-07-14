@@ -36,7 +36,7 @@ public:
     };
 
 
-    InputsSelection(TrainingStrategy* = nullptr);
+    InputsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -52,7 +52,7 @@ public:
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
 
-    void set(TrainingStrategy* = nullptr);
+    void set(const TrainingStrategy* = nullptr);
 
     void set_trials_number(const Index&);
 

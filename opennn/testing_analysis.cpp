@@ -17,10 +17,10 @@
 namespace opennn
 {
 
-TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+TestingAnalysis::TestingAnalysis(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
-    dataset = new_data_set;
+    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
+    dataset = const_cast<Dataset*>(new_dataset);
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
@@ -35,7 +35,7 @@ NeuralNetwork* TestingAnalysis::get_neural_network() const
 }
 
 
-Dataset* TestingAnalysis::get_data_set() const
+Dataset* TestingAnalysis::get_dataset() const
 {
     return dataset;
 }
@@ -62,9 +62,9 @@ void TestingAnalysis::set_neural_network(NeuralNetwork* new_neural_network)
 }
 
 
-void TestingAnalysis::set_data_set(Dataset* new_data_set)
+void TestingAnalysis::set_dataset(Dataset* new_dataset)
 {
-    dataset = new_data_set;
+    dataset = new_dataset;
 }
 
 
@@ -706,13 +706,11 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    const Tensor<bool, 2> if_sentence = elements_are_equal(targets, targets.constant(type(1)));
-    const Tensor<bool, 2> else_sentence = elements_are_equal(targets, targets.constant(type(0)));
+    const Tensor<bool, 2> if_sentence = (targets == targets.constant(type(1))).cast<bool>();
+    const Tensor<bool, 2> else_sentence = (targets == targets.constant(type(0))).cast<bool>();
 
     Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
-
     Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
-
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
     f_1.device(*thread_pool_device) = (targets - outputs).square() * positives_weight;
@@ -810,24 +808,19 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     Index false_positive = 0;
     Index true_negative = 0;
 
-    type target = type(0);
-    type output = type(0);
-
     for(Index i = 0; i < testing_samples_number; i++)
     {
-        target = targets(i, 0);
-        output = outputs(i, 0);
+        const bool is_target_positive = targets(i, 0) >= decision_threshold;
+        const bool is_output_positive = outputs(i, 0) >= decision_threshold;
 
-        if(target >= decision_threshold && output >= decision_threshold)
+        if (is_target_positive && is_output_positive)
             true_positive++;
-        else if(target >= decision_threshold && output < decision_threshold)
+        else if (is_target_positive && !is_output_positive)
             false_negative++;
-        else if(target < decision_threshold && output >= decision_threshold)
+        else if (!is_target_positive && is_output_positive)
             false_positive++;
-        else if(target < decision_threshold && output < decision_threshold)
+        else  // !is_target_positive && !is_output_positive
             true_negative++;
-        else
-            throw runtime_error("calculate_confusion_binary_classification Unknown case.\n");
     }
 
     confusion(0,0) = true_positive;
@@ -1120,7 +1113,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
 
 type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curve) const
-{
+{        
     type area_under_curve = type(0);        
 
     for(Index i = 1; i < roc_curve.dimension(0); i++)

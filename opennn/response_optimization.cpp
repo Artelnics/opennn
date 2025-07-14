@@ -17,17 +17,17 @@
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_data_set)
-    : dataset(new_data_set)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+    : dataset(new_dataset)
 {
-    set(new_neural_network, new_data_set);
+    set(new_neural_network, new_dataset);
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {   
     neural_network = new_neural_network;
-    dataset = new_data_set;
+    dataset = new_dataset;
 
     if(!neural_network) return;
 

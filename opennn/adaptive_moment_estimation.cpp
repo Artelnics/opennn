@@ -127,7 +127,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -138,7 +138,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("Data set is null.");
@@ -599,7 +599,7 @@ void AdaptiveMomentEstimationData::print() const
 
 TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -610,7 +610,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if (!dataset)
         throw runtime_error("Data set is null.");

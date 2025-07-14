@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
+ModelSelection::ModelSelection(const TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -69,9 +69,9 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 }
 
 
-void ModelSelection::set(TrainingStrategy* new_training_strategy)
+void ModelSelection::set(const TrainingStrategy* new_training_strategy)
 {
-    training_strategy = new_training_strategy;
+    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
 }
 
 
@@ -101,7 +101,7 @@ void ModelSelection::check() const
 
     // Data set
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("Pointer to data set is nullptr.\n");

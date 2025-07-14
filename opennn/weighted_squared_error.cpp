@@ -15,17 +15,17 @@
 namespace opennn
 {
 
-WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
-    : LossIndex(new_neural_network, new_data_set)
+WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+    : LossIndex(new_neural_network, new_dataset)
 {
     set_default();
 }
 
 
-void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     set_neural_network(new_neural_network);
-    set_data_set(new_data_set);
+    set_dataset(new_dataset);
 }
 
 
@@ -55,7 +55,7 @@ void WeightedSquaredError::set_default()
 
     normalization_coefficient = type(-1.0);
 
-    if(!has_data_set())
+    if(!has_dataset())
         return;
 
     if(dataset->get_samples_number() == 0)
@@ -141,9 +141,9 @@ void WeightedSquaredError::set_normalization_coefficient()
 }
 
 
-void WeightedSquaredError::set_data_set(Dataset* new_data_set)
+void WeightedSquaredError::set_dataset(const Dataset* new_dataset)
 {
-    dataset = new_data_set;
+    dataset = const_cast<Dataset*>(new_dataset);
 
     set_weights();
 

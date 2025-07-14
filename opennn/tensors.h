@@ -122,9 +122,6 @@ bool is_constant(const Tensor<type, Rank>& tensor)
     return true;
 }
 
-
-Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
 void save_csv(const Tensor<type,2>&, const filesystem::path&);
 
 template<int rank>
@@ -143,7 +140,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 vector<Index> get_elements_greater_than(const vector<Index>&, const Index&);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, const Index&);
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
+Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>&, const Index&, const type&, const type&);
 
 type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
@@ -151,7 +148,7 @@ void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 
 type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
-void l2_norm_hessian(const ThreadPoolDevice*, Tensor<type, 1>&, Tensor<type, 2>&);
+void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
 type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -283,8 +280,8 @@ TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>&, const Index&);
 TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>&, const Index&);
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>&, const Index&, const Index&);
 
-TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>&, const Index&);
-TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>&, const Index&);
+TensorMap<Tensor<type, 3>> tensor_map_(const TensorMap<Tensor<type, 4>>&, const Index&);
+TensorMap<Tensor<type, 1>> tensor_map_(const TensorMap<Tensor<type, 2>>&, const Index&);
 
 
 template <Index rank>

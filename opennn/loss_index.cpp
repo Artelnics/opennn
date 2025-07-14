@@ -14,9 +14,9 @@
 namespace opennn
 {
 
-LossIndex::LossIndex(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+LossIndex::LossIndex(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    set(new_neural_network, new_data_set);
+    set(new_neural_network, new_dataset);
 }
 
 
@@ -38,7 +38,7 @@ bool LossIndex::has_neural_network() const
 }
 
 
-bool LossIndex::has_data_set() const
+bool LossIndex::has_dataset() const
 {
     return dataset;
 }
@@ -50,11 +50,10 @@ string LossIndex::get_regularization_method() const
 }
 
 
-void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+void LossIndex::set(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
-
-    dataset = new_data_set;
+    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
+    dataset = const_cast<Dataset*>(new_dataset);
 
     thread_pool.reset();
     thread_pool_device.reset();
@@ -79,15 +78,15 @@ void LossIndex::set_threads_number(const int& new_threads_number)
 }
 
 
-void LossIndex::set_neural_network(NeuralNetwork* new_neural_network)
+void LossIndex::set_neural_network(const NeuralNetwork* new_neural_network)
 {
-    neural_network = new_neural_network;
+    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
 }
 
 
-void LossIndex::set_data_set(Dataset* new_data_set)
+void LossIndex::set_dataset(const Dataset* new_dataset)
 {
-    dataset = new_data_set;
+    dataset = const_cast<Dataset*>(new_dataset);
 }
 
 

@@ -12,7 +12,7 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
     MinkowskiError minkowski_error;
 
     EXPECT_EQ(minkowski_error.has_neural_network(), false);
-    EXPECT_EQ(minkowski_error.has_data_set(), false);
+    EXPECT_EQ(minkowski_error.has_dataset(), false);
 }
 
 
@@ -24,7 +24,7 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
     MinkowskiError minkowski_error(&neural_network, &dataset);
 
     EXPECT_EQ(minkowski_error.has_neural_network(), true);
-    EXPECT_EQ(minkowski_error.has_data_set(), true);
+    EXPECT_EQ(minkowski_error.has_dataset(), true);
 }
 
 

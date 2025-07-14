@@ -35,14 +35,14 @@ class LossIndex
 
 public:
 
-   LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    inline NeuralNetwork* get_neural_network() const 
    {
       return neural_network;
    }
 
-   inline Dataset* get_data_set() const 
+   inline Dataset* get_dataset() const
    {
       return dataset;
    }
@@ -53,17 +53,17 @@ public:
 
    bool has_neural_network() const;
 
-   bool has_data_set() const;
+   bool has_dataset() const;
 
    string get_regularization_method() const;
 
-   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    void set_threads_number(const int&);
 
-   void set_neural_network(NeuralNetwork*);
+   void set_neural_network(const NeuralNetwork*);
 
-   virtual void set_data_set(Dataset*);
+   virtual void set_dataset(const Dataset*);
 
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);

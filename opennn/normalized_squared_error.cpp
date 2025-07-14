@@ -14,16 +14,16 @@
 namespace opennn
 {
 
-NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
-    : LossIndex(new_neural_network, new_data_set)
+NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+    : LossIndex(new_neural_network, new_dataset)
 {
     set_normalization_coefficient();
 }
 
 
-void NormalizedSquaredError::set_data_set(Dataset* new_data_set)
+void NormalizedSquaredError::set_dataset(const Dataset* new_dataset)
 {
-    dataset = new_data_set;
+    dataset = const_cast<Dataset*>(new_dataset);
 
     neural_network->has("Recurrent")
         ? set_time_series_normalization_coefficient()
@@ -33,7 +33,7 @@ void NormalizedSquaredError::set_data_set(Dataset* new_data_set)
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    if (!has_data_set() || dataset->get_samples_number() <= 1)
+    if (!has_dataset() || dataset->get_samples_number() <= 1)
     {
         normalization_coefficient = type(1);
         return;
@@ -91,7 +91,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
 void NormalizedSquaredError::set_default()
 {
-    if(has_neural_network() && has_data_set() && dataset->get_samples_number() != 0)
+    if(has_neural_network() && has_dataset() && dataset->get_samples_number() != 0)
         set_normalization_coefficient();
     else
         normalization_coefficient = type(NAN);

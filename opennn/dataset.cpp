@@ -4288,22 +4288,22 @@ void Batch::fill(const vector<Index>& sample_indices,
 }
 
 
-Batch::Batch(const Index& new_samples_number, Dataset* new_data_set)
+Batch::Batch(const Index& new_samples_number, Dataset* new_dataset)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
-    set(new_samples_number, new_data_set);
+    set(new_samples_number, new_dataset);
 }
 
 
-void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
+void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
 {
-    if (!new_data_set) return;
+    if (!new_dataset) return;
 
     samples_number = new_samples_number;
-    dataset = new_data_set;
+    dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
     const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
@@ -4409,18 +4409,18 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 }
 
 
-BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_data_set)
+BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_dataset)
 {
-    set(new_samples_number, new_data_set);
+    set(new_samples_number, new_dataset);
 }
 
 
-void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
+void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
 {
-    if (!new_data_set) return;
+    if (!new_dataset) return;
 
     samples_number = new_samples_number;
-    dataset = new_data_set;
+    dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
     const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
