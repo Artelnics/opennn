@@ -395,24 +395,6 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
     return true;
 }
 
-/*
-template <int Rank>
-void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) 
-{
-    memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
-
-    index += destination.size();
-}
-
-
-template <int Rank>
-void copy_to_vector(Tensor<type, 1>& destination, const Tensor<type, Rank>& source, Index& index)
-{
-    memcpy(destination.data() + index, source.data(), source.size() * sizeof(type));
-
-    index += source.size();
-}
-*/
 }
 
 #endif
