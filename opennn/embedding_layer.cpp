@@ -256,7 +256,7 @@ void Embedding::from_XML(const XMLDocument& document)
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    set_weights(read_xml_string(embedding_layer_element, "Weights"));
+    string_to_tensor<type, 2>(read_xml_string(embedding_layer_element, "Weights"), weights);
 }
 
 
@@ -268,23 +268,9 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
+    add_xml_element(printer, "Weights", tensor_to_string<type, 2>(weights));
 
     printer.CloseElement();  
-}
-
-
-void Embedding::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> values;
-
-    while(weights_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        weights(i) = values[i];
 }
 
 

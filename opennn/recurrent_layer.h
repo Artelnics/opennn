@@ -35,9 +35,6 @@ public:
    void set_input_dimensions(const dimensions&) override;
    void set_output_dimensions(const dimensions&) override;
 
-   void set_biases(const string&) override;
-   void set_weights(const string&) override;
-
    void set_timesteps(const Index&);
 
    void set_activation_function(const string&);

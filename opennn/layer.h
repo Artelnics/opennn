@@ -39,9 +39,6 @@ public:
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
 
-    virtual void set_biases(const string&);
-    virtual void set_weights(const string&);
-
     void set_label(const string&);
 
     void set_display(const bool&);

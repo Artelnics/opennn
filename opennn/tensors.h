@@ -199,7 +199,6 @@ void push_back(Tensor<T, 1>& tensor, const T& value)
 
 string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
-Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
 dimensions prepend(const Index& x, const dimensions& d);
 
@@ -221,54 +220,27 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 }
 
 
-template <typename T>
-string tensor_to_string(const Tensor<T, 1>& x, const string& separator = " ")
+template <typename T, size_t Rank>
+string tensor_to_string(const Tensor<T, Rank>& x, const string& separator = " ")
 {
-    const Index size = x.size();
-
     ostringstream buffer;
 
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
+    for(Index i = 0; i < x.size(); i++)
+        buffer << x(i) << separator;
 
     return buffer.str();
 }
 
 
-template <typename T>
-string tensor_2_to_string(const Tensor<T, 2>& x, const string& separator = " ")
+template <typename T, size_t Rank>
+void string_to_tensor(const string& input, Tensor<T, Rank>& x)
 {
-    ostringstream buffer;
+    istringstream stream(input);
+    T value;
+    Index i = 0;
 
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < x.dimension(0); i++)
-        for(Index j = 0; j < x.dimension(1); j++)
-            buffer << x(i,j) << separator;
-
-    return buffer.str();
-}
-
-
-template <typename T>
-string tensor_4_to_string(const Tensor<T, 4>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < x.dimension(0); i++)
-        for(Index j = 0; j < x.dimension(1); j++)
-            for(Index k = 0; k < x.dimension(2); k++)
-                for(Index l = 0; l < x.dimension(3); l++)
-                    buffer << x(i,j,k,l) << separator;
-
-    return buffer.str();
+    while (stream >> value)
+        x(i++) = value;
 }
 
 

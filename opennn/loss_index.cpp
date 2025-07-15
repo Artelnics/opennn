@@ -673,18 +673,9 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
     const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
-    Batch batch(samples_number, dataset);
-
     // @todo decoder variables
-    // if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
-    // {
-    //     const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
-    //     batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
-    // }
-    // else
-    //     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
-    // batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+    Batch batch(samples_number, dataset);    
     batch.fill(sample_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -705,7 +696,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     Tensor<type, 1> numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));
-
 
     for(Index i = 0; i < parameters_number; i++)
     {

@@ -765,7 +765,8 @@ dimensions string_to_dimensions(const string& x, const string& separator)
 
     while (getline(ss, token, separator[0]))
     {
-        try {
+        try
+        {
             if (!token.empty())
                 result.push_back(stoi(token));
         }
@@ -776,100 +777,6 @@ dimensions string_to_dimensions(const string& x, const string& separator)
     }
 
     return result;
-/*
-    size_t start = 0;
-    size_t end = x.find(separator);
-
-    while (end != string::npos)
-    {
-        const string token = x.substr(start, end - start);
-
-        try
-        {
-            result.push_back(stoi(token));
-        }
-        catch (const invalid_argument&)
-        {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-
-        start = end + separator.length();
-        end = x.find(separator, start);
-    }
-
-    if (start < x.size())
-    {
-        const string token = x.substr(start);
-
-        try
-        {
-            result.push_back(stoi(token));
-        }
-        catch (const invalid_argument&)
-        {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-    }
-
-    return result;
-*/
-}
-
-
-Tensor<type, 1> string_to_tensor(const string& x, const string& separator)
-{
-    if (x.empty())
-        throw runtime_error("Error: Input string must not be empty.\n");
-
-    dimensions temp_dimensions;
-    size_t start = 0;
-    size_t end = x.find(separator);
-
-    while (end != string::npos) {
-        string token = x.substr(start, end - start);
-
-        try {
-            temp_dimensions.push_back(std::stoi(token));
-        }
-        catch (const invalid_argument&) {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-
-        start = end + separator.length();
-        end = x.find(separator, start);
-    }
-
-    if (start < x.size()) {
-        string token = x.substr(start);
-        try {
-            temp_dimensions.push_back(stoi(token));
-        }
-        catch (const invalid_argument&) {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-    }
-
-    Tensor<type, 1> tensor(temp_dimensions.size());
-    for (size_t i = 0; i < temp_dimensions.size(); ++i)
-        tensor(i) = temp_dimensions[i];
-
-    return tensor;
-}
-
-
-string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
-{
-    const Index size = x.size();
-
-    ostringstream buffer;
-
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
-
-    return buffer.str();
 }
 
 
