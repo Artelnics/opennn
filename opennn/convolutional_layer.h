@@ -137,6 +137,8 @@ public:
 
     void free_parameters_device();
 
+    bool use_convolutions = true;
+
 protected:
 
     float* biases_device = nullptr;

@@ -50,13 +50,13 @@ void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.
 {
     random_device rd;
     mt19937 gen(rd());
+    //mt19937 gen(12345);
 
     uniform_real_distribution<type> distribution(minimum, maximum);
 
     for (Index i = 0; i < tensor.size(); ++i)
         tensor(i) = distribution(gen);
 }
-
 
 
 type bound(const type& value, const type& minimum, const type& maximum);

@@ -95,16 +95,41 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
         cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
-        if(activation_function == "Linear")
+        if (activation_function == "Linear")
+        {
             activation = CUDNN_ACTIVATION_IDENTITY;
-        else if(activation_function == "Logistic")
+            use_combinations = false;
+        }
+        else if (activation_function == "Logistic")
+        {
             activation = CUDNN_ACTIVATION_SIGMOID;
-        else if(activation_function == "HyperbolicTangent")
+            use_combinations = false;
+        }
+        else if (activation_function == "HyperbolicTangent")
+        {
             activation = CUDNN_ACTIVATION_TANH;
-        else if(activation_function == "RectifiedLinear")
+            use_combinations = false;
+        }
+        else if (activation_function == "RectifiedLinear")
+        {
             activation = CUDNN_ACTIVATION_RELU;
-        else if(activation_function == "ExponentialLinear")
+            use_combinations = false;
+        }
+        else if (activation_function == "ExponentialLinear")
+        {
             activation = CUDNN_ACTIVATION_ELU;
+            use_combinations = true;
+        }
+        else if (activation_function == "ClippedRelu")
+        {
+            activation = CUDNN_ACTIVATION_CLIPPED_RELU;
+            use_combinations = true;
+        }
+        else if (activation_function == "Swish")
+        {
+            activation = CUDNN_ACTIVATION_SWISH;
+            use_combinations = true;
+        }
 
         cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
@@ -624,6 +649,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
+    type* outputs_buffer = use_combinations ? combinations : outputs;
+
     // Combinations
 
     cublasSgemm(cublas_handle,
@@ -635,7 +662,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         weights_device,
         inputs_number,
         &beta,
-        combinations,
+        outputs_buffer,
         batch_size);
 
     cudnnStatus_t status = cudnnAddTensor(cudnn_handle,
@@ -644,7 +671,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         biases_device,
         &beta_add,
         output_tensor_descriptor,
-        combinations);
+        outputs_buffer);
 
     if (status != CUDNN_STATUS_SUCCESS)
         cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(status) << endl;
@@ -668,7 +695,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             activation_descriptor,
             &alpha,
             output_tensor_descriptor,
-            combinations,
+            outputs_buffer,
             &beta,
             output_tensor_descriptor,
             outputs);
@@ -748,21 +775,42 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     if (dense2d_layer->get_activation_function() != "Linear" && dense2d_layer->get_activation_function() != "Softmax")
     {
-        cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
-            activation_descriptor,
-            &alpha,
-            deltas_tensor_descriptor,
-            outputs,
-            deltas_tensor_descriptor,
-            deltas_device[0],
-            deltas_tensor_descriptor,
-            combinations,
-            &beta,
-            deltas_tensor_descriptor,
-            deltas_device[0]);
+        if (use_combinations)
+        {
+            cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
+                activation_descriptor,
+                &alpha,
+                deltas_tensor_descriptor,
+                outputs,
+                deltas_tensor_descriptor,
+                deltas_device[0],
+                deltas_tensor_descriptor,
+                combinations,
+                &beta,
+                deltas_tensor_descriptor,
+                deltas_device[0]);
 
-        if (status != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+            if (status != CUDNN_STATUS_SUCCESS)
+                cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+        }
+        else
+        {
+            cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
+                activation_descriptor,
+                &alpha,
+                deltas_tensor_descriptor,
+                outputs,
+                deltas_tensor_descriptor,
+                deltas_device[0],
+                deltas_tensor_descriptor,
+                outputs,
+                &beta,
+                deltas_tensor_descriptor,
+                deltas_device[0]);
+
+            if (status != CUDNN_STATUS_SUCCESS)
+                cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+        }
     }
 
     // Bias derivatives
@@ -899,8 +947,11 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    //CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(combinations, batch_size * outputs_number * sizeof(float));
+    if (dense2d_layer->use_combinations)
+    {
+        //CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(combinations, batch_size * outputs_number * sizeof(float));
+    }
     //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 
@@ -954,7 +1005,8 @@ void Dense2dForwardPropagationCuda::print() const
 
 void Dense2dForwardPropagationCuda::free()
 {
-    cudaFree(combinations);
+    if (combinations != nullptr)
+        cudaFree(combinations);
     cudaFree(outputs);
 
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);

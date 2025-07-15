@@ -101,6 +101,8 @@ public:
 
     void free_parameters_device();
 
+    bool use_combinations = true;
+
 private:
 
     float* biases_device = nullptr;
@@ -193,7 +195,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    type* combinations = nullptr;
+    float* combinations = nullptr;
 
     cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
 
