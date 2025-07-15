@@ -35,7 +35,6 @@ public:
         CorrelationGoal
     };
 
-
     InputsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
@@ -51,6 +50,8 @@ public:
     const type& get_maximum_time() const;
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
+
+    virtual const Index& get_minimum_inputs_number() const { return 1; }
 
     void set(const TrainingStrategy* = nullptr);
 
@@ -75,6 +76,8 @@ public:
     virtual string get_name() const = 0;
 
     string write_time(const type&) const;
+
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
     virtual void from_XML(const XMLDocument&) = 0;
 
