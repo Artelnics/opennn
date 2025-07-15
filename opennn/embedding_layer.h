@@ -41,7 +41,6 @@ public:
 
     void set_parameters_random() override;
 
-    void set_biases(const string&) override;
     void set_weights(const string&) override;
 
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
