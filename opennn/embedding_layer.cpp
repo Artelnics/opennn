@@ -470,9 +470,6 @@ void EmbeddingBackPropagationCuda::print() const
 REGISTER(LayerForwardPropagationCuda, EmbeddingForwardPropagationCuda, "Embedding")
 REGISTER(LayerBackPropagationCuda, EmbeddingBackPropagationCuda, "Embedding")
 
-//REGISTER_FORWARD_CUDA("Embedding", EmbeddingForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Embedding", EmbeddingBackPropagationCuda);
-
 #endif
 
 REGISTER(Layer, Embedding, "Embedding")

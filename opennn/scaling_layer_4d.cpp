@@ -217,10 +217,7 @@ void Scaling4dForwardPropagationCuda::free()
 
 REGISTER(LayerForwardPropagationCuda, Scaling4dForwardPropagationCuda, "Scaling4d")
 
-//REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
-
 #endif
-
 
 REGISTER(Layer, Scaling4d, "Scaling4d")
 REGISTER(LayerForwardPropagation, Scaling4dForwardPropagation, "Scaling4d")

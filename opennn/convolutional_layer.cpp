@@ -1462,9 +1462,6 @@ void ConvolutionalBackPropagationCuda::free()
 REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")
 REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutional")
 
-//REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
-
 #endif
 
 REGISTER(Layer, Convolutional, "Convolutional")

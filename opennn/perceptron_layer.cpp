@@ -1080,9 +1080,6 @@ void Dense2dBackPropagationCuda::free()
 REGISTER(LayerForwardPropagationCuda, Dense2dForwardPropagationCuda, "Dense2d")
 REGISTER(LayerBackPropagationCuda, Dense2dBackPropagationCuda, "Dense2d")
 
-//REGISTER_FORWARD_CUDA("Dense2d", Dense2dForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Dense2d", Dense2dBackPropagationCuda);
-
 #endif
 
 REGISTER(Layer, Dense2d, "Dense2d")
