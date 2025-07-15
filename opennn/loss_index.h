@@ -10,11 +10,10 @@
 #define LOSSINDEX_H
 
 #include "dataset.h"
+#include "neural_network.h"
 #include "tinyxml2.h"
 
 using namespace tinyxml2;
-
-#include "neural_network.h"
 
 namespace opennn
 {
@@ -36,14 +35,24 @@ class LossIndex
 
 public:
 
-   LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+
+    ~LossIndex()
+    {
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
+    }
+
+   enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
    {
       return neural_network;
    }
 
-   inline Dataset* get_data_set() const 
+   inline Dataset* get_dataset() const
    {
       return dataset;
    }
@@ -54,17 +63,17 @@ public:
 
    bool has_neural_network() const;
 
-   bool has_data_set() const;
+   bool has_dataset() const;
 
    string get_regularization_method() const;
 
-   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    void set_threads_number(const int&);
 
-   void set_neural_network(NeuralNetwork*);
+   void set_neural_network(const NeuralNetwork*);
 
-   virtual void set_data_set(Dataset*);
+   virtual void set_dataset(const Dataset*);
 
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);
@@ -136,6 +145,10 @@ public:
 
    void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
    void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
+
+   void apply_regularization_gradient(const TensorMap<Tensor<type, 1>>&,
+                                      TensorMap<Tensor<type, 1>>&,
+                                      type) const;
 
    // Serialization
 

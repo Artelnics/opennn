@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
+AdaptiveMomentEstimation::AdaptiveMomentEstimation(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
@@ -127,7 +127,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -138,7 +138,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("Data set is null.");
@@ -149,7 +149,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    // const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
     const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
@@ -249,7 +249,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
-                                decoder_variable_indices,
+                                // decoder_variable_indices,
                                 target_variable_indices);
 
             // Neural network
@@ -292,7 +292,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 selection_batch->fill(selection_batches[iteration],
                                       input_variable_indices,
-                                      decoder_variable_indices,
+                                      // decoder_variable_indices,
                                       target_variable_indices);
 
                 // Neural network
@@ -477,7 +477,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
         const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        for(Index parameter_index = 0; parameter_index < parameter_pairs.size(); parameter_index++)
+        for(Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
         {
             type* parameter_data = parameter_pairs[parameter_index].first;
             const Index parameter_size = parameter_pairs[parameter_index].second;
@@ -599,7 +599,7 @@ void AdaptiveMomentEstimationData::print() const
 
 TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -610,7 +610,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if (!dataset)
         throw runtime_error("Data set is null.");
@@ -1044,6 +1044,7 @@ void ADAMOptimizationDataCuda::print() const
             cout << vector_from_device(v_device_ptr, param_size) << endl;
         }
     }
+
     cout << "-----------------------------------" << endl;
 }
 

@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
+GrowingInputs::GrowingInputs(const TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
     set_default();
@@ -51,14 +51,14 @@ void GrowingInputs::set_default()
     maximum_time = type(3600);
 
     training_strategy && training_strategy->has_neural_network()
-        ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number("Input")
+        ? maximum_inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input")
         : maximum_inputs_number = 100;
 }
 
 
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-    const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number("Input");
+    const Index inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
     maximum_inputs_number = min(new_maximum_inputs_number, inputs_number);
 }
@@ -91,7 +91,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if(dataset->has_nan())
         dataset->scrub_missing_values();

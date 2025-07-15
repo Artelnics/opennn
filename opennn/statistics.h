@@ -14,7 +14,6 @@
 namespace opennn
 {
 
-
 struct Descriptives
 {
     Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));

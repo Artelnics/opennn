@@ -9,7 +9,9 @@
 #ifndef INPUTSSELECTIONALGORITHM_H
 #define INPUTSSELECTIONALGORITHM_H
 
-#include "dataset.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
@@ -34,7 +36,7 @@ public:
     };
 
 
-    InputsSelection(TrainingStrategy* = nullptr);
+    InputsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -50,7 +52,7 @@ public:
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
 
-    void set(TrainingStrategy* = nullptr);
+    void set(const TrainingStrategy* = nullptr);
 
     void set_trials_number(const Index&);
 
@@ -74,7 +76,13 @@ public:
 
     string write_time(const type&) const;
 
-    virtual void print(){}
+    virtual void from_XML(const XMLDocument&) = 0;
+
+    virtual void to_XML(XMLPrinter&) const = 0;
+
+    virtual void print() const {}
+
+
 
 protected:
 

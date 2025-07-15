@@ -11,6 +11,10 @@
 
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
+
 using type = float;
 using namespace std;
 using namespace Eigen;
@@ -28,7 +32,7 @@ public:
 
     enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
-    NeuronsSelection(TrainingStrategy* = nullptr);
+    NeuronsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -44,7 +48,7 @@ public:
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
 
-    void set(TrainingStrategy* = nullptr);
+    void set(const TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 
@@ -71,6 +75,10 @@ public:
     string write_time(const type&) const;
 
     virtual string get_name() const = 0;
+
+    virtual void from_XML(const XMLDocument&) = 0;
+
+    virtual void to_XML(XMLPrinter&) const = 0;
 
     virtual void print(){}
 

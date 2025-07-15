@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "tensors.h"
-#include "strings_utilities.h"
 #include "embedding_layer.h"
 
 namespace opennn
@@ -115,8 +114,11 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
     const Index batch_size = inputs.dimension(0);
     const type coefficient = sqrt(type(get_embedding_dimension()));
 
-    // #pragma omp parallel for
+    if (outputs.dimension(0) != batch_size)
+        throw runtime_error("Batch size mismatch between inputs and outputs: inputs.dimension(0) = "
+                            + to_string(batch_size) + ", outputs.dimension(0) = " + to_string(outputs.dimension(0)));
 
+    #pragma omp parallel for
     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_output = outputs.chip(sample_index, 0);
@@ -154,7 +156,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[1]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -163,11 +165,11 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     embedding_lookup(inputs, outputs);
 
-    if(positional_encoding_xxx)
-        add_positional_encodings(outputs);
+    // if(positional_encoding_xxx)
+    //     add_positional_encodings(outputs);
 
-    if(is_training && dropout_rate > 0)
-        dropout(outputs, dropout_rate);
+    // if(is_training && dropout_rate > 0)
+    //     dropout(outputs, dropout_rate);
 }
 
 
@@ -254,7 +256,6 @@ void Embedding::from_XML(const XMLDocument& document)
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    set_biases(read_xml_string(embedding_layer_element, "Biases"));
     set_weights(read_xml_string(embedding_layer_element, "Weights"));
 }
 
@@ -267,24 +268,9 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
     add_xml_element(printer, "Weights", tensor_2_to_string(weights));
 
     printer.CloseElement();  
-}
-
-
-void Embedding::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
 }
 
 

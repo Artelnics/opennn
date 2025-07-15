@@ -6,37 +6,22 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-#include "loss_index.h"
-
-//#include "mean_squared_error.h"
-//#include "normalized_squared_error.h"
-//#include "minkowski_error.h"
-//#include "cross_entropy_error.h"
-//#include "cross_entropy_error_3d.h"
-//#include "weighted_squared_error.h"
-
-#include "quasi_newton_method.h"
-//#include "levenberg_marquardt_algorithm.h"
-//#include "stochastic_gradient_descent.h"
-//#include "adaptive_moment_estimation.h"
-
-
 #include "registry.h"
-#include "recurrent_layer.h"
+#include "loss_index.h"
 #include "optimization_algorithm.h"
+#include "quasi_newton_method.h"
 #include "training_strategy.h"
 
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+TrainingStrategy::TrainingStrategy(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    set(new_neural_network, new_data_set);
+    set(new_neural_network, new_dataset);
 }
 
 
-Dataset* TrainingStrategy::get_data_set()
+Dataset* TrainingStrategy::get_dataset()
 {
     return dataset;
 }
@@ -66,16 +51,16 @@ bool TrainingStrategy::has_neural_network() const
 }
 
 
-bool TrainingStrategy::has_data_set() const
+bool TrainingStrategy::has_dataset() const
 {
     return dataset;
 }
 
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+void TrainingStrategy::set(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
-    dataset = new_data_set;
+    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
+    dataset = const_cast<Dataset*>(new_dataset);
 
     set_default();
 }
@@ -104,15 +89,15 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 }
 
 
-void TrainingStrategy::set_data_set(Dataset* new_data_set)
+void TrainingStrategy::set_dataset(const Dataset* new_dataset)
 {
-    dataset = new_data_set;
+    dataset = const_cast<Dataset*>(new_dataset);
 }
 
 
-void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
+void TrainingStrategy::set_neural_network(const NeuralNetwork* new_neural_network)
 {
-    neural_network = new_neural_network;
+    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
 }
 
 
@@ -130,10 +115,10 @@ TrainingResults TrainingStrategy::perform_training()
     if(!has_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if(!has_data_set())
+    if(!has_dataset())
         throw runtime_error("Data set is null.");
 
-    if(!loss_index->has_neural_network() || !loss_index->has_data_set())
+    if(!loss_index->has_neural_network() || !loss_index->has_dataset())
         throw runtime_error("Loss index is wrong.");
 
     if(!optimization_algorithm->has_loss_index())
@@ -197,23 +182,23 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LossIndex");
 
-    add_xml_element(printer, "LossMethod", this->loss_index->get_name());
+    add_xml_element(printer, "LossMethod", loss_index->get_name());
 
-    this->loss_index->to_XML(printer);
+    loss_index->to_XML(printer);
 
-    this->loss_index->write_regularization_XML(printer);
+    loss_index->write_regularization_XML(printer);
 
     printer.CloseElement();
 
     printer.OpenElement("OptimizationAlgorithm");
 
-    add_xml_element(printer, "OptimizationMethod", this->optimization_algorithm->get_name());
+    add_xml_element(printer, "OptimizationMethod", optimization_algorithm->get_name());
 
-    this->optimization_algorithm->to_XML(printer);
+    optimization_algorithm->to_XML(printer);
 
     printer.CloseElement();
 
-    add_xml_element(printer, "Display", to_string(this->optimization_algorithm->get_display()));
+    add_xml_element(printer, "Display", to_string(optimization_algorithm->get_display()));
 
     printer.CloseElement();
 }
@@ -326,7 +311,7 @@ TrainingResults TrainingStrategy::perform_training_cuda()
     if (!has_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if (!has_data_set())
+    if (!has_dataset())
         throw runtime_error("Data set is null.");
             
     if(!optimization_algorithm->has_loss_index())

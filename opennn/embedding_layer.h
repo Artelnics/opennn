@@ -99,8 +99,6 @@ private:
 
     Index sequence_length = 0;
 
-    Tensor<type, 1> biases;
-
     Tensor<type, 2> weights;
 
     Tensor<type, 2> positional_encoding;

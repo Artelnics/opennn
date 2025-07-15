@@ -9,9 +9,8 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-#include "growing_neurons.h"
-#include "growing_inputs.h"
-#include "genetic_algorithm.h"
+#include "inputs_selection.h"
+#include "neurons_selection.h"
 
 namespace opennn
 {
@@ -25,7 +24,7 @@ public:
 
     // Constructors
 
-    ModelSelection(TrainingStrategy* = nullptr);
+    ModelSelection(const TrainingStrategy* = nullptr);
 
     // Get
 
@@ -37,7 +36,7 @@ public:
 
     // Set
 
-    void set(TrainingStrategy* = nullptr);
+    void set(const TrainingStrategy* = nullptr);
 
     void set_default();
 

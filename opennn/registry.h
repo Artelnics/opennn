@@ -14,8 +14,6 @@
 #include <memory>
 #include <stdexcept>
 
-//#include "layer.h"
-
 using namespace std;
 
 namespace opennn

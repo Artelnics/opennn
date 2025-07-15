@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
@@ -162,7 +162,7 @@ void LevenbergMarquardtAlgorithm::check() const
     if(!loss_index)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("The loss funcional has no data set.");
@@ -176,7 +176,7 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     if(loss_index->get_name() == "MINKOWSKI_ERROR")
@@ -194,7 +194,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     const bool has_selection = dataset->has_selection();
 
@@ -216,10 +216,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     set_scaling();
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, dataset);
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    // selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);

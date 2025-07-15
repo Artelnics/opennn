@@ -20,9 +20,9 @@ class NeuralNetwork;
 class TestingAnalysis
 {
 
-public: 
+public:
 
-    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    TestingAnalysis(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {
@@ -77,14 +77,14 @@ public:
     // Get
 
     NeuralNetwork* get_neural_network() const;
-    Dataset* get_data_set() const;
+    Dataset* get_dataset() const;
 
     const bool& get_display() const;
 
     // Set
 
     void set_neural_network(NeuralNetwork*);
-    void set_data_set(Dataset*);
+    void set_dataset(Dataset*);
 
     void set_display(const bool&);
 
