@@ -638,10 +638,10 @@ void display_progress_bar(const int& completed, const int& total)
 
 void print_tokens(const vector<vector<string>>& tokens)
 {
-    for(size_t i = 0; i < tokens.size(); i++)
+    for (const auto& row : tokens)
     {
-        for(size_t j = 0; j < tokens[i].size(); j++)
-            cout << tokens[i][j] << " - ";
+        for (const auto& token : row)
+            cout << token << " - ";
 
         cout << endl;
     }

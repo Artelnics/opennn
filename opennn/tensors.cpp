@@ -301,14 +301,9 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 Index count_greater_than(const vector<Index>& data, const Index& bound)
 {
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < Index(data.size()); i++)
-        if(data[i] > bound)
-            count++;
-
-    return count;
+    return count_if(data.begin(), data.end(), [&](const Index& value) {
+        return value > bound;
+    });
 }
 
 
@@ -660,6 +655,7 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
         }
     }
 }
+
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
