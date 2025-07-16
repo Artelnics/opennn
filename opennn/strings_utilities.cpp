@@ -559,7 +559,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-vector<string> sort_string_vector(vector<string>& string_vector)
+void sort_string_vector(vector<string>& string_vector)
 {
     auto compare_string_length = [](const string& a, const string& b)
     {
@@ -567,8 +567,6 @@ vector<string> sort_string_vector(vector<string>& string_vector)
     };
     
     sort(string_vector.begin(), string_vector.end(), compare_string_length);
-
-    return string_vector;
 }
 
 

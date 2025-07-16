@@ -49,8 +49,6 @@ public:
    void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
 
-   bool is_empty() const;
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;

@@ -51,12 +51,6 @@ const type& AdaptiveMomentEstimation::get_loss_goal() const
 }
 
 
-const type& AdaptiveMomentEstimation::get_maximum_time() const
-{
-    return maximum_time;
-}
-
-
 void AdaptiveMomentEstimation::set_batch_size(const Index& new_batch_size)
 {
     batch_size = new_batch_size;
@@ -89,15 +83,7 @@ void AdaptiveMomentEstimation::set_display(const bool& new_display)
 
 void AdaptiveMomentEstimation::set_learning_rate(const type& new_learning_rate)
 {
-    learning_rate= new_learning_rate;
-}
-
-
-void AdaptiveMomentEstimation::set_custom_learning_rate(const type& parameter)
-{
-    use_custom_learning_rate = true;
-
-    learning_rate = pow(parameter, -0.5);
+    learning_rate = new_learning_rate;
 }
 
 
@@ -394,11 +380,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(9, 2);
+    Tensor<string, 2> string_matrix(8, 2);
 
     string_matrix.setValues({
     {"Learning rate", to_string(double(learning_rate))},
-    {"Initial decay", to_string(double(initial_decay))},
     {"Beta 1", to_string(double(beta_1))},
     {"Beta 2", to_string(double(beta_2))},
     {"Epsilon", to_string(double(epsilon))},

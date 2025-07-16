@@ -40,18 +40,6 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_failures() const
 }
 
 
-const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
-{
-    return maximum_time;
-}
-
-
 const type& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 {
     return damping_parameter;

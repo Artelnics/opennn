@@ -9,11 +9,6 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-//using type = float;
-
-//using namespace std;
-//using namespace Eigen;
-
 namespace opennn
 {
 
@@ -71,7 +66,6 @@ private:
 
     Tensor<Condition, 1> input_conditions;
     Tensor<Condition, 1> output_conditions;
-    //Tensor<Condition, 1> conditions;
 
     Tensor<type, 1> input_minimums;
     Tensor<type, 1> input_maximums;

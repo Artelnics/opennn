@@ -36,7 +36,6 @@ public:
    // Stopping criteria
 
    const type& get_loss_goal() const;
-   const type& get_maximum_time() const;
 
    // Set
 
@@ -53,7 +52,6 @@ public:
    // Training operators
 
    void set_learning_rate(const type&);
-   void set_custom_learning_rate(const type&);
    void set_beta_1(const type&);
    void set_beta_2(const type&);
 
@@ -89,10 +87,6 @@ private:
 
    type learning_rate = type(0.001);
 
-   bool use_custom_learning_rate = false;
-
-   type initial_decay = type(0);
-
    type beta_1 = type(0.9);
 
    type beta_2 = type(0.999);
@@ -105,11 +99,7 @@ private:
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_epochs_number = 1000;
-
    Index maximum_selection_failures = numeric_limits<Index>::max();
-
-   type maximum_time = type(360000);
 
    Index batch_size = 1000;
 

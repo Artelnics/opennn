@@ -63,9 +63,9 @@ type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
-void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
+//void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
-Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
+//Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
 void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
@@ -152,9 +152,9 @@ void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 
 type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-type l2_distance(const type&, const type&);
-type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
-Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
+//type l2_distance(const type&, const type&);
+//type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
+//Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 

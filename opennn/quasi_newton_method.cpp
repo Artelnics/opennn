@@ -23,12 +23,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(const LossIndex* new_loss_index)
 }
 
 
-const Index& QuasiNewtonMethod::get_epochs_number() const
-{
-    return epochs_number;
-}
-
-
 const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
@@ -44,18 +38,6 @@ const type& QuasiNewtonMethod::get_loss_goal() const
 const Index& QuasiNewtonMethod::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
-}
-
-
-const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-const type& QuasiNewtonMethod::get_maximum_time() const
-{
-    return maximum_time;
 }
 
 

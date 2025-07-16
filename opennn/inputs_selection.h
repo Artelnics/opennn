@@ -31,8 +31,7 @@ public:
         MaximumInputs,
         MinimumInputs,
         MaximumEpochs,
-        MaximumSelectionFailures,
-        CorrelationGoal
+        MaximumSelectionFailures
     };
 
     InputsSelection(const TrainingStrategy* = nullptr);
@@ -69,7 +68,7 @@ public:
 
     void check() const;
 
-    Index get_input_index(const Tensor<string, 1>&, const Index&) const;
+    //Index get_input_index(const Tensor<string, 1>&, const Index&) const;
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 

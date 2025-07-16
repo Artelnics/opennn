@@ -278,12 +278,6 @@ void Unscaling::set_scalers(const Scaler& new_unscaling_method)
 }
 
 
-bool Unscaling::is_empty() const
-{
-    return get_output_dimensions()[0] == 0;
-}
-
-
 void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)

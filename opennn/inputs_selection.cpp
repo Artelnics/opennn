@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
 #include "optimization_algorithm.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
@@ -210,12 +211,11 @@ string InputsSelectionResults::write_stopping_condition() const
     case InputsSelection::StoppingCondition::MaximumSelectionFailures:
         return "MaximumSelectionFailures";
 
-    case InputsSelection::StoppingCondition::CorrelationGoal:
-        return "CorrelationGoal";
     default:
         return string();
     }
 }
+
 
 void InputsSelectionResults::resize_history(const Index& new_size)
 {
@@ -273,26 +273,26 @@ string InputsSelection::write_time(const type& time) const
 }
 
 
-Index InputsSelection::get_input_index(const Tensor<string, 1>& uses, const Index& inputs_number) const
-{
-    Index i = 0;
-    Index j = 0;
+// Index InputsSelection::get_input_index(const Tensor<string, 1>& uses, const Index& inputs_number) const
+// {
+//     Index i = 0;
+//     Index j = 0;
 
-    while(i < uses.size())
-    {
-        if (uses[i] == "Input")
-        {
-            if (j == inputs_number)
-                break;
+//     while(i < uses.size())
+//     {
+//         if (uses[i] == "Input")
+//         {
+//             if (j == inputs_number)
+//                 break;
 
-            j++;
-        }
+//             j++;
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    return i;
-}
+//     return i;
+// }
 
 }
 

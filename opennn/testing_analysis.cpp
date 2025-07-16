@@ -1865,11 +1865,12 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
         misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
 
     ofstream classification_statistics_file(statistics_file_name);
-    classification_statistics_file << "minimum,maximum,mean,std" << endl;
-    classification_statistics_file << misclassified_numerical_probabilities.minimum() << ",";
-    classification_statistics_file << misclassified_numerical_probabilities.maximum() << ",";
-    classification_statistics_file << misclassified_numerical_probabilities.mean() << ",";
-    classification_statistics_file << standard_deviation(misclassified_numerical_probabilities);
+
+    classification_statistics_file << "minimum,maximum,mean,std" << endl
+                                   << misclassified_numerical_probabilities.minimum() << ","
+                                   << misclassified_numerical_probabilities.maximum() << ","
+                                   << misclassified_numerical_probabilities.mean() << ","
+                                   << standard_deviation(misclassified_numerical_probabilities);
 }
 
 
@@ -2262,23 +2263,23 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 }
 
 
-type TestingAnalysis::calculate_logloss() const
-{
-    const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
+// type TestingAnalysis::calculate_logloss() const
+// {
+//     const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
-    const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
+//     const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
 
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
+//     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    const Index testing_samples_number = dataset->get_samples_number("Testing");
+//     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
-    type logloss = type(0);
+//     type logloss = type(0);
 
-    for(Index i = 0; i < testing_samples_number; i++)
-        logloss += targets(i,0)*log(outputs(i,0)) + (type(1) - targets(i,0))*log(type(1) - outputs(i,0));
+//     for(Index i = 0; i < testing_samples_number; i++)
+//         logloss += targets(i,0)*log(outputs(i,0)) + (type(1) - targets(i,0))*log(type(1) - outputs(i,0));
 
-    return -logloss/type(testing_samples_number);
-}
+//     return -logloss/type(testing_samples_number);
+// }
 
 
 void TestingAnalysis::to_XML(XMLPrinter& printer) const

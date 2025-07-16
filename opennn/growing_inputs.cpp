@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "dataset.h"
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer_2d.h"

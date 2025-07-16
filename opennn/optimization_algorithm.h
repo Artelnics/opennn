@@ -101,7 +101,9 @@ protected:
 
    LossIndex* loss_index = nullptr;
 
-   Index epochs_number = 1000;
+   Index maximum_epochs_number = 1000;
+
+   type maximum_time = type(360000);
 
    BoxPlot auto_association_box_plot;
 

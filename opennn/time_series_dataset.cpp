@@ -622,14 +622,10 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
         }
     }
 
-    Index new_lags_number;
-
-    if((samples_number == lags_number || samples_number < lags_number) && lags_number > 2)
-        new_lags_number = lags_number - 2;
-    else if(samples_number == lags_number + 1 && lags_number > 1)
-        new_lags_number = lags_number - 1;
-    else
-        new_lags_number = lags_number;
+    const Index new_lags_number =
+        ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
+         (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :
+         lags_number;
 
     Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);

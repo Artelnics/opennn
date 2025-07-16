@@ -8,10 +8,8 @@
 
 #include "model_expression.h"
 #include "registry.h"
-#include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
-#include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
 

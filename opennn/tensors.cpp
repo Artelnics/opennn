@@ -366,12 +366,12 @@ void set_row(Tensor<type,2>& matrix, const Tensor<type, 1>& new_row, const Index
 }
 
 
-void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
-{
-    const Index columns_number = vector.size();
+// void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
+// {
+//     const Index columns_number = vector.size();
 
-    memcpy(matrix.data() + row_index * columns_number, vector.data(), columns_number*sizeof(type));
-}
+//     memcpy(matrix.data() + row_index * columns_number, vector.data(), columns_number*sizeof(type));
+// }
 
 
 Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>& matrix,
@@ -492,33 +492,33 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 }
 
 
-type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
-{
-    Tensor<type, 0> distance;
+// type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+// {
+//     Tensor<type, 0> distance;
 
-    distance = (x-y).square().sum().sqrt();
+//     distance = (x-y).square().sum().sqrt();
 
-    return distance(0);
-}
-
-
-type l2_distance(const type& x, const type& y)
-{
-    return type(fabs(x - y));
-}
+//     return distance(0);
+// }
 
 
-Tensor<type, 1> l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const Index& size)
-{
-    Tensor<type, 1> distance(size);
+// type l2_distance(const type& x, const type& y)
+// {
+//     return type(fabs(x - y));
+// }
 
-    const Tensor<type, 2> difference = x - y;
 
-    for(Index i = 0; i < difference.dimension(1); i++)
-        distance(i) = abs(difference(i));
+// Tensor<type, 1> l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const Index& size)
+// {
+//     Tensor<type, 1> distance(size);
 
-    return distance;
-}
+//     const Tensor<type, 2> difference = x - y;
+
+//     for(Index i = 0; i < difference.dimension(1); i++)
+//         distance(i) = abs(difference(i));
+
+//     return distance;
+// }
 
 
 void set_identity(Tensor<type, 2>& matrix)
@@ -776,25 +776,25 @@ dimensions string_to_dimensions(const string& x, const string& separator)
 }
 
 
-Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
-{
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
+// Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
+// {
+//     const Index rows_number = tensor.dimension(0);
+//     const Index columns_number = tensor.dimension(1);
 
-    Tensor<type, 2> new_matrix(rows_number-1, columns_number);
+//     Tensor<type, 2> new_matrix(rows_number-1, columns_number);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < row_index; i++)
-        for(Index j = 0; j < columns_number; j++)
-            new_matrix(i, j) = tensor(i, j);
+//     #pragma omp parallel for
+//     for(Index i = 0; i < row_index; i++)
+//         for(Index j = 0; j < columns_number; j++)
+//             new_matrix(i, j) = tensor(i, j);
 
-    #pragma omp parallel for
-    for(Index i = row_index + 1; i < rows_number; i++)
-        for(Index j = 0; j < columns_number; j++)
-            new_matrix(i-1,j) = tensor(i, j);
+//     #pragma omp parallel for
+//     for(Index i = row_index + 1; i < rows_number; i++)
+//         for(Index j = 0; j < columns_number; j++)
+//             new_matrix(i-1,j) = tensor(i, j);
 
-    return new_matrix;
-}
+//     return new_matrix;
+// }
 
 
 bool contains(const vector<string>& data, const string& value)

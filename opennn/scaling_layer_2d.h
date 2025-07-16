@@ -53,7 +53,7 @@ public:
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 
-   bool is_empty() const;
+//   bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,

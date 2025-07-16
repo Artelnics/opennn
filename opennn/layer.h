@@ -80,9 +80,9 @@ public:
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-                                                      unique_ptr<LayerForwardPropagation>&,
-                                                      unique_ptr<LayerBackPropagationLM>&) {}
+    // virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
+    //                                                   unique_ptr<LayerForwardPropagation>&,
+    //                                                   unique_ptr<LayerBackPropagationLM>&) {}
 
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    const Index&,
