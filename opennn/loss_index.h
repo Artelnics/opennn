@@ -202,30 +202,6 @@ public:
                              BackPropagationCuda&);
 
     void add_regularization_cuda(BackPropagationCuda&) const;
-
-    float calculate_regularization_cuda(Index, float*);
-
-    void calculate_regularization_gradient_cuda(const Index parameters_number,
-                                                float regularization,
-                                                float* parameters,
-                                                float* aux_vector,
-                                                float* gradient);
-
-    float l1_norm_cuda(Index, float*);
-
-    float l2_norm_cuda(Index, float*);
-
-    void l1_norm_gradient_cuda(const Index parameters_number,
-                               float regularization,
-                               float* parameters,
-                               float* aux_vector,
-                               float* gradient);
-
-    void l2_norm_gradient_cuda(const Index parameters_number,
-                               float regularization,
-                               float* parameters,
-                               float* aux_vector,
-                               float* gradient);
     
 protected:
 

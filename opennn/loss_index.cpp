@@ -159,7 +159,6 @@ void LossIndex::back_propagate(const Batch& batch,
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
-
     if(regularization_method == "NoRegularization")
         return;
 
@@ -671,7 +670,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     Batch batch(samples_number, dataset);
 
@@ -1371,7 +1370,7 @@ void LossIndex::back_propagate_cuda(const BatchCuda& batch_cuda,
 
     // Regularization
 
-    //add_regularization_cuda(back_propagation_cuda); @todo
+    add_regularization_cuda(back_propagation_cuda);
 }
 
 
@@ -1406,185 +1405,90 @@ void LossIndex::calculate_layers_error_gradient_cuda(const BatchCuda& batch_cuda
 
 void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cuda) const
 {
-    /*
-    // Regularization
-
-    if (regularization_method == RegularizationMethod::NoRegularization) return;
-
-    const Index parameters_number = back_propagation_cuda.loss_index->get_neural_network()->get_parameters_number();
-
-    const type& error = back_propagation_cuda.error;
-    type& regularization = back_propagation_cuda.regularization;
-    type& loss = back_propagation_cuda.loss;
-
-    type* parameters = back_propagation_cuda.parameters;
-    type* gradient = back_propagation_cuda.gradient;
-    type* regularization_gradient = back_propagation_cuda.regularization_gradient;
-
-    float alpha = 1.0f;
-    const float beta = 0.0f;
-
-    if (regularization_method == RegularizationMethod::L1)
+    if (regularization_method == "NoRegularization")
     {
-        // L1 normalization
-
-        cublasSasum(cublas_handle, parameters_number, parameters, 1, &regularization);
-    }
-    else
-    {
-        // L2 normalization
-
-        const cudnnTensorDescriptor_t& parameters_tensor_descriptor = back_propagation_cuda.parameters_tensor_descriptor;
-        const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
-
-        type* parameters_square = back_propagation_cuda.parameters_square;
-
-        cudnnOpTensor(cudnn_handle,
-            operator_multiplication_descriptor,
-            &alpha,
-            parameters_tensor_descriptor,
-            parameters,
-            &alpha,
-            parameters_tensor_descriptor,
-            parameters,
-            &beta,
-            parameters_tensor_descriptor,
-            parameters_square);
-
-        cublasSasum(cublas_handle, parameters_number, parameters_square, 1, &regularization);
-
-        regularization = sqrt(regularization);
+        back_propagation_cuda.regularization = 0.0f;
+        return;
     }
 
-    loss += regularization_weight * regularization;
+    NeuralNetwork* neural_network = back_propagation_cuda.loss_index->get_neural_network();
 
-    if (regularization_method == RegularizationMethod::L1)
+    const Index layers_number = neural_network->get_layers_number();
+
+    type total_regularization_value = 0.0f;
+
+    for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
     {
-        // L1 normalization
+        Layer* layer = neural_network->get_layer(layer_index).get();
 
-        sign_cuda(parameters_number, parameters, regularization_gradient);
-    }
-    else
-    {
-        // L2 normalization
+        if (!layer->get_is_trainable())
+            continue;
 
-        if (regularization >= type(NUMERIC_LIMITS_MIN))
+        LayerBackPropagationCuda* layer_back_prop_cuda = back_propagation_cuda.neural_network.layers[layer_index].get();
+
+        const vector<pair<type*, Index>>& parameter_device_pairs = layer->get_parameter_pair_device();
+        const vector<pair<type*, Index>>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_pair_device();
+
+        for (Index param_index = 0; param_index < parameter_device_pairs.size(); ++param_index)
         {
-            alpha = 1.0f / regularization;
+            type* param_device_ptr = parameter_device_pairs[param_index].first;
+            const Index param_size = parameter_device_pairs[param_index].second;
 
-            cudaMemcpy(regularization_gradient, parameters, parameters_number * sizeof(type), cudaMemcpyDeviceToDevice);
+            if (param_size == 0) continue;
 
-            cublasSscal(cublas_handle, parameters_number, &alpha, regularization_gradient, 1);
+            // Regularization
+
+            type current_param_regularization = 0.0f;
+
+            cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
+
+            if (regularization_method == "L1")
+            {
+                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &current_param_regularization);
+                total_regularization_value += current_param_regularization;
+            }
+            else if (regularization_method == "L2")
+            {
+                cublasSnrm2(cublas_handle, param_size, param_device_ptr, 1, &current_param_regularization);
+                total_regularization_value += 0.5f * current_param_regularization * current_param_regularization;
+            }
+            else if (regularization_method == "ElasticNet")
+            {
+                const type mix_factor = 0.5;
+                type l1_norm = 0.0f;
+                type l2_norm = 0.0f;
+
+                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_norm);
+                cublasSnrm2(cublas_handle, param_size, param_device_ptr, 1, &l2_norm);
+
+                current_param_regularization = mix_factor * l1_norm + (1.0f - mix_factor) * 0.5f * (l2_norm * l2_norm);
+                total_regularization_value += current_param_regularization;
+            }
+
+            // Regularization Gradient
+
+            type* delta_device_ptr = delta_device_pairs[param_index].first;
+
+            if (regularization_method == "L1")
+            {
+                apply_l1_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight);
+            }
+            else if (regularization_method == "L2")
+            {
+                cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_DEVICE);
+                cublasSaxpy(cublas_handle, param_size, &regularization_weight, param_device_ptr, 1, delta_device_ptr, 1);
+                cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
+            }
+            else if (regularization_method == "ElasticNet")
+            {
+                const type mix_factor = 0.5;
+                apply_elastic_net_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight, mix_factor);
+            }
         }
     }
 
-    cublasSaxpy(cublas_handle, parameters_number, &regularization_weight, regularization_gradient, 1, gradient, 1);
-    */
-}
-
-
-float LossIndex::calculate_regularization_cuda(Index parameters_number, float* parameters)
-{
-    if (regularization_method == "NoRegularization")
-        return 0.0f;
-    else if (regularization_method == "L1")
-        return l1_norm_cuda(parameters_number, parameters);
-    else if (regularization_method == "L2")
-        return l2_norm_cuda(parameters_number, parameters);
-    else
-        throw runtime_error("Unknown CUDA regularization method: " + regularization_method);
-}
-
-
-void LossIndex::calculate_regularization_gradient_cuda(const Index parameters_number,
-                                                       const float regularization_weight,
-                                                       float* parameters,
-                                                       float* aux_vector,
-                                                       float* gradient)
-{
-    if (regularization_method == "NoRegularization" || regularization_weight == 0.0f)
-        return;
-    else if (regularization_method == "L1")
-        l1_norm_gradient_cuda(parameters_number,
-            regularization_weight,
-            parameters,
-            aux_vector,
-            gradient);
-    else if (regularization_method == "L2")
-        l2_norm_gradient_cuda(parameters_number,
-            regularization_weight,
-            parameters,
-            aux_vector,
-            gradient);
-    else
-        throw runtime_error("Unknown CUDA regularization method: " + regularization_method);
-}
-
-
-float LossIndex::l1_norm_cuda(Index parameters_number, float* parameters)
-{
-    float alpha = 0;
-
-    cublasSasum(cublas_handle, int(parameters_number), parameters, 1, &alpha);
-
-    return alpha;
-}
-
-
-float LossIndex::l2_norm_cuda(Index parameters_number, float* parameters)
-{
-    float alpha = 0;
-
-    cublasSnrm2(cublas_handle, int(parameters_number), parameters, 1, &alpha);
-
-    return alpha;
-}
-
-
-void LossIndex::l1_norm_gradient_cuda(const Index parameters_number,
-    float regularization,
-    float* parameters,
-    float* aux_vector,
-    float* gradient)
-{
-    float alpha = 1.0;
-
-    //sign_cuda(parameters_number, parameters, aux_vector);
-
-    cublasSscal(cublas_handle, int(parameters_number), &regularization, aux_vector, 1);
-
-    cublasSaxpy(cublas_handle,
-        int(parameters_number),
-        &alpha, aux_vector, 1,
-        gradient, 1);
-
-}
-
-
-void LossIndex::l2_norm_gradient_cuda(const Index parameters_number,
-    float regularization,
-    float* parameters,
-    float* aux_vector,
-    float* gradient)
-{
-    const float norm = l2_norm_cuda(parameters_number, parameters);
-
-    if (norm < numeric_limits<float>::min())
-    {
-        cudaMemset(gradient, 0, size_t(parameters_number) * sizeof(float));
-    }
-
-    CHECK_CUDA(cudaMemcpy(aux_vector, parameters, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice));
-
-    float alpha = regularization / norm;
-
-    cublasSscal(cublas_handle, int(parameters_number), &alpha, aux_vector, 1);
-
-    float beta = 1.0;
-
-    cublasSaxpy(cublas_handle, int(parameters_number),
-        &beta, aux_vector, 1,
-        gradient, 1);
+    back_propagation_cuda.regularization = total_regularization_value;
+    back_propagation_cuda.loss += regularization_weight * total_regularization_value;
 }
 
 

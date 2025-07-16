@@ -79,12 +79,12 @@ int main()
 
         // Neural network
 
-        //ImageClassificationNetwork neural_network(
-        //    input_dimensions,
-        //    { 64, 64, 128, 128, 32 },
-        //    output_dimensions);
+        ImageClassificationNetwork neural_network(
+            input_dimensions,
+            { 64, 64, 128, 128, 32 },
+            output_dimensions);
         
-        VGG16 neural_network(input_dimensions, output_dimensions);
+        //VGG16 neural_network(input_dimensions, output_dimensions);
 
         // Training strategy
 

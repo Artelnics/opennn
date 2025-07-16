@@ -4425,7 +4425,7 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
     dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
-    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
+    //const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
     const dimensions& data_set_target_dimensions = dataset->get_dimensions("Target");
 
     if (!data_set_input_dimensions.empty())
@@ -4439,7 +4439,7 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
         //CHECK_CUDA(cudaMalloc(&inputs_device, input_size * sizeof(float)));
         CUDA_MALLOC_AND_REPORT(inputs_device, input_size * sizeof(float));
     }
-
+    /*
     if (!data_set_decoder_dimensions.empty())
     {
         decoder_dimensions = { samples_number };
@@ -4450,7 +4450,7 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
         CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
         CHECK_CUDA(cudaMalloc(&decoder_device, decoder_size * sizeof(float)));
     }
-
+    */
     if (!data_set_target_dimensions.empty())
     {
         target_dimensions = { samples_number };
