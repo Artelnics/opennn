@@ -50,7 +50,7 @@ public:
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
 
-    virtual const Index& get_minimum_inputs_number() const { return 1; }
+    virtual const Index& get_minimum_inputs_number() const { static const Index r(1); return r; }
 
     void set(const TrainingStrategy* = nullptr);
 
