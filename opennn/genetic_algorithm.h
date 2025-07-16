@@ -101,9 +101,6 @@ private:
 
     vector<bool> original_input_raw_variables;
 
-    vector<Index> original_input_raw_variable_indices;
-    vector<Index> original_target_raw_variable_indices;
-
     vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> fitness_correlations;
