@@ -272,28 +272,6 @@ string InputsSelection::write_time(const type& time) const
     return elapsed_time.str();
 }
 
-
-// Index InputsSelection::get_input_index(const Tensor<string, 1>& uses, const Index& inputs_number) const
-// {
-//     Index i = 0;
-//     Index j = 0;
-
-//     while(i < uses.size())
-//     {
-//         if (uses[i] == "Input")
-//         {
-//             if (j == inputs_number)
-//                 break;
-
-//             j++;
-//         }
-
-//         i++;
-//     }
-
-//     return i;
-// }
-
 }
 
 

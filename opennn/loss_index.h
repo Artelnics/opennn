@@ -9,7 +9,6 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-//#include "dataset.h"
 #include "neural_network.h"
 #include "tinyxml2.h"
 
@@ -19,8 +18,6 @@ namespace opennn
 {
 
 class Dataset;
-//class NeuralNetwork;
-
 
 struct Batch;
 struct ForwardPropagation;
