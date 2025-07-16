@@ -9,13 +9,19 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "dataset.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
 
+class Dataset;
 class NeuralNetwork;
 
+struct Descriptives;
+struct Histogram;
+struct Correlation;
 
 class TestingAnalysis
 {

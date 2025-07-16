@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "model_expression.h"
 #include "registry.h"
 #include "images.h"
 #include "neural_network.h"
