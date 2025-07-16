@@ -47,8 +47,6 @@ public:
     const type& get_selection_error_goal() const;
     const Index& get_maximum_iterations_number() const;
     const type& get_maximum_time() const;
-    const type& get_maximum_correlation() const;
-    const type& get_minimum_correlation() const;
 
     virtual const Index& get_minimum_inputs_number() const { return 1; }
 
@@ -61,8 +59,6 @@ public:
     void set_selection_error_goal(const type&);
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
-    void set_maximum_correlation(const type&);
-    void set_minimum_correlation(const type&);
 
     string write_stopping_condition(const TrainingResults&) const;
 
@@ -100,10 +96,6 @@ protected:
     type selection_error_goal;
 
     Index maximum_epochs_number;
-
-    type maximum_correlation;
-
-    type minimum_correlation;
 
     type maximum_time;
 };
