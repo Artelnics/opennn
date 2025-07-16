@@ -150,8 +150,6 @@ public:
 
     void print_binary_classification_tests() const;
 
-    //type calculate_logloss() const;
-
     // Confusion
 
     Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;

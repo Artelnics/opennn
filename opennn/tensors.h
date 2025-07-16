@@ -50,7 +50,6 @@ void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.
 {
     random_device rd;
     mt19937 gen(rd());
-    //mt19937 gen(12345);
 
     uniform_real_distribution<type> distribution(minimum, maximum);
 
@@ -63,13 +62,7 @@ type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
-//void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
-
-//Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
-
 void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
-
-//void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
@@ -84,7 +77,6 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
@@ -152,9 +144,6 @@ void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 
 type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-//type l2_distance(const type&, const type&);
-//type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
-//Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
@@ -353,18 +342,12 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
     const Index size = tensor.size();
 
     for (Index i = 0; i < size; i++)
-    {
         if constexpr (is_same_v<Type, bool>)
-        {
             if (tensor(i) != value)
                 return false;
-        }
         else
-        {
             if (abs(tensor(i) - value) > tolerance)
                 return false;
-        }
-    }
 
     return true;
 }
@@ -380,17 +363,13 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
 
     const Index size = tensor_1.size();
 
-    for (Index i = 0; i < size; i++) 
-        if constexpr (std::is_same_v<Type, bool>)
-        {
+    for (Index i = 0; i < size; i++)
+        if constexpr (is_same_v<Type, bool>)
             if (tensor_1(i) != tensor_2(i))
                 return false;
-        }
         else
-        {
             if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
                 return false;
-        }
 
     return true;
 }

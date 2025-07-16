@@ -66,8 +66,6 @@ public:
     void set_save_period(const Index&);
     void set_neural_network_file_name(const string&);
 
-    //   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
-
     // Training
 
     virtual void check() const;

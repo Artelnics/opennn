@@ -240,12 +240,6 @@ void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-// bool Scaling2d::is_empty() const
-// {
-//     return get_output_dimensions()[0] == 0;
-// }
-
-
 void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
