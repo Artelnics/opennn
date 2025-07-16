@@ -302,7 +302,7 @@ void GeneticAlgorithm::initialize_population_correlations()
                                    ? 1 + rand() % 100
                                    : 1 + rand() % input_raw_variables_number;
 
-        while(count(individual_raw_variables.data(), individual_raw_variables.data() + static_cast<size_t>(individual_raw_variables.size()), 1) < raw_variables_active)
+        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = distribution(gen);
 
