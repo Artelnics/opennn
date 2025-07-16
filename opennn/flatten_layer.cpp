@@ -355,9 +355,6 @@ void FlattenBackPropagationCuda::free()
 REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
 REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
 
-//REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
-
 #endif
 
 REGISTER(Layer, Flatten, "Flatten")

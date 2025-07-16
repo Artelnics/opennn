@@ -38,7 +38,7 @@ public:
 
     NeuronsSelectionResults perform_neurons_selection() override;
 
-    Tensor<string, 2> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const override;
     
     void from_XML(const XMLDocument&) override;
 

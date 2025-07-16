@@ -506,7 +506,7 @@ void Scaling2d::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("ScalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scaling_methods_string[i]);
 
         printer.CloseElement();  

@@ -617,38 +617,10 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
-    add_xml_element(printer, "Weights", tensor_4_to_string(weights));
+    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
+    add_xml_element(printer, "Weights", tensor_to_string<type, 4>(weights));
 
     printer.CloseElement();
-}
-
-
-void Convolutional::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
-}
-
-
-void Convolutional::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> values;
-
-    while(weights_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        weights(i) = values[i];
 }
 
 
@@ -680,8 +652,8 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
-    set_biases(read_xml_string(convolutional_layer_element, "Biases"));
-    set_weights(read_xml_string(convolutional_layer_element, "Weights"));
+    string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Biases"), biases);
+    string_to_tensor<type, 4>(read_xml_string(convolutional_layer_element, "Weights"), weights);
 }
 
 
@@ -1489,9 +1461,6 @@ void ConvolutionalBackPropagationCuda::free()
 
 REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")
 REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutional")
-
-//REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 

@@ -288,8 +288,9 @@ void Recurrent::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
-    set_biases(read_xml_string(recurrent_layer_element, "Biases"));
-    set_weights(read_xml_string(recurrent_layer_element, "Weights"));
+    string_to_tensor<type, 1>(read_xml_string(recurrent_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "InputWeights"), input_weights);
+    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
 }
 
 
@@ -301,59 +302,11 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
-
-    Tensor<type, 1> combined_weights(input_weights.size() + recurrent_weights.size());
-
-    copy(input_weights.data(),
-         input_weights.data() + input_weights.size(),
-         combined_weights.data());
-
-    copy(recurrent_weights.data(),
-         recurrent_weights.data() + recurrent_weights.size(),
-         combined_weights.data() + input_weights.size());
-
-    add_xml_element(printer, "Weights", tensor_to_string(combined_weights));
+    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
+    add_xml_element(printer, "InputWeights", tensor_to_string<type, 2>(input_weights));
+    add_xml_element(printer, "RecurrentWeights", tensor_to_string<type, 2>(recurrent_weights));
 
     printer.CloseElement();
-}
-
-
-void Recurrent::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
-}
-
-
-void Recurrent::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> all_weights_vec;
-    while(weights_strings >> number)
-        all_weights_vec.push_back(number);
-
-    const Index input_weights_size = input_weights.size();
-    const Index recurrent_weights_size = recurrent_weights.size();
-
-    if (all_weights_vec.size() != (input_weights_size + recurrent_weights_size))
-        throw runtime_error("Recurrent layer: Expected " + to_string(input_weights_size) + " + " + to_string(recurrent_weights_size) + " weights, got " + to_string(all_weights_vec.size()));
-
-    copy(all_weights_vec.begin(),
-         all_weights_vec.begin() + input_weights_size,
-         input_weights.data());
-
-    copy(all_weights_vec.begin() + input_weights_size,
-         all_weights_vec.end(),
-         recurrent_weights.data());
 }
 
 

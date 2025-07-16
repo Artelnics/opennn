@@ -196,36 +196,8 @@ void Normalization3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    set_biases(read_xml_string(normalization_layer_element, "Biases"));
-    set_weights(read_xml_string(normalization_layer_element, "Weights"));
-}
-
-
-void Normalization3d::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        betas(i) = values[i];
-}
-
-
-void Normalization3d::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> values;
-
-    while(weights_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        gammas(i) = values[i];
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Betas"), betas);
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Gammas"), gammas);
 }
 
 
@@ -235,8 +207,8 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "Biases", tensor_to_string(betas));
-    add_xml_element(printer, "Weights", tensor_to_string(gammas));
+    add_xml_element(printer, "Betas", tensor_to_string<type, 1>(betas));
+    add_xml_element(printer, "Gammas", tensor_to_string<type, 1>(gammas));
 
     printer.CloseElement();
 }
