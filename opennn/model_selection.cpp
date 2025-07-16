@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "dataset.h"
 #include "loss_index.h"
 #include "model_selection.h"
 #include "training_strategy.h"
@@ -129,6 +130,22 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ModelSelection");
 
+    printer.OpenElement("NeuronsSelection");
+
+    add_xml_element(printer, "NeuronsSelectionMethod", neurons_selection->get_name());
+
+    neurons_selection->to_XML(printer);
+
+    printer.CloseElement();
+
+    printer.OpenElement("InputsSelection");
+
+    add_xml_element(printer, "InputsSelectionMethod", inputs_selection->get_name());
+
+    inputs_selection->to_XML(printer);
+
+    printer.CloseElement();
+
     printer.CloseElement();
 }
 
@@ -136,7 +153,7 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 void ModelSelection::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("ModelSelection");
-    
+
     if (!root_element) 
         throw runtime_error("Model Selection element is nullptr.\n");
 
@@ -145,19 +162,18 @@ void ModelSelection::from_XML(const XMLDocument& document)
     const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
     if (!neurons_selection_element) throw runtime_error("Neurons selection element is nullptr.\n");
 
-    const string selection_method = read_xml_string(root_element, "NeuronsSelectionMethod");
+    const string selection_method = read_xml_string(neurons_selection_element, "NeuronsSelectionMethod");
     
-    const XMLElement* neurons_selection_method_element = root_element->FirstChildElement(selection_method.c_str());
+    const XMLElement* neurons_selection_method_element = neurons_selection_element->FirstChildElement(selection_method.c_str());
 
     if (neurons_selection_method_element)
     {
+        set_neurons_selection(selection_method);
+
         XMLDocument selection_method_document;
-        XMLElement* neurons_selection_element_copy = selection_method_document.NewElement(selection_method.c_str());
+        XMLNode* neurons_selection_method_element_copy = neurons_selection_method_element->DeepClone(&selection_method_document);
+        selection_method_document.InsertEndChild(neurons_selection_method_element_copy);
 
-        for (const XMLNode* node = neurons_selection_element->FirstChild(); node; node = node->NextSibling())
-            neurons_selection_element_copy->InsertEndChild(node->DeepClone(&selection_method_document));
-
-        selection_method_document.InsertEndChild(neurons_selection_element_copy);
         neurons_selection->from_XML(selection_method_document);
     }
     else throw runtime_error(selection_method + " element is nullptr.\n");
@@ -167,20 +183,19 @@ void ModelSelection::from_XML(const XMLDocument& document)
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
     if (!inputs_selection_element) throw runtime_error("Inputs selection element is nullptr.\n");
 
-    const string inputs_method = read_xml_string(root_element, "InputsSelectionMethod");
+    const string inputs_method = read_xml_string(inputs_selection_element, "InputsSelectionMethod");
 
-    const XMLElement* inputs_selection_method_element = root_element->FirstChildElement(inputs_method.c_str());
+    const XMLElement* inputs_selection_method_element = inputs_selection_element->FirstChildElement(inputs_method.c_str());
 
     if (inputs_selection_method_element)
     {
+        set_inputs_selection(inputs_method);
+
         XMLDocument inputs_method_document;
-        XMLElement* inputs_selection_element_copy = inputs_method_document.NewElement(inputs_method.c_str());
+        XMLNode* inputs_selection_method_element_copy = inputs_selection_method_element->DeepClone(&inputs_method_document);
+        inputs_method_document.InsertEndChild(inputs_selection_method_element_copy);
 
-        for (const XMLNode* node = inputs_selection_element->FirstChild(); node; node = node->NextSibling())
-            inputs_selection_element_copy->InsertEndChild(node->DeepClone(&inputs_method_document));
-
-        inputs_method_document.InsertEndChild(inputs_selection_element_copy);
-        neurons_selection->from_XML(inputs_method_document);
+        inputs_selection->from_XML(inputs_method_document);
     }
     else throw runtime_error(inputs_method + " element is nullptr.\n");
 }

@@ -437,15 +437,40 @@ void Convolutional::set(const dimensions& new_input_dimensions,
     cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
     if(activation_function == "Linear")
+    {
         activation = CUDNN_ACTIVATION_IDENTITY;
+        use_convolutions = false;
+    }
     else if(activation_function == "Logistic")
+    {
         activation = CUDNN_ACTIVATION_SIGMOID;
-    else if(activation_function == "HyperbolicTangent")
+        use_convolutions = false;
+    }
+    else if (activation_function == "HyperbolicTangent")
+    {
         activation = CUDNN_ACTIVATION_TANH;
+        use_convolutions = false;
+    }
     else if(activation_function == "RectifiedLinear")
+    {
         activation = CUDNN_ACTIVATION_RELU;
+        use_convolutions = false;
+    }
     else if(activation_function == "ExponentialLinear")
+    {
         activation = CUDNN_ACTIVATION_ELU;
+        use_convolutions = true;
+    }
+    else if (activation_function == "ClippedRelu")
+    {
+        activation = CUDNN_ACTIVATION_CLIPPED_RELU;
+        use_convolutions = true;
+    }
+    else if (activation_function == "Swish")
+    {
+        activation = CUDNN_ACTIVATION_SWISH;
+        use_convolutions = true;
+    }
 
     cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
 
@@ -592,38 +617,10 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", write_convolution_type());
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
-    add_xml_element(printer, "Weights", tensor_4_to_string(weights));
+    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
+    add_xml_element(printer, "Weights", tensor_to_string<type, 4>(weights));
 
     printer.CloseElement();
-}
-
-
-void Convolutional::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
-}
-
-
-void Convolutional::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> values;
-
-    while(weights_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        weights(i) = values[i];
 }
 
 
@@ -655,8 +652,8 @@ void Convolutional::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
-    set_biases(read_xml_string(convolutional_layer_element, "Biases"));
-    set_weights(read_xml_string(convolutional_layer_element, "Weights"));
+    string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Biases"), biases);
+    string_to_tensor<type, 4>(read_xml_string(convolutional_layer_element, "Weights"), weights);
 }
 
 
@@ -837,6 +834,8 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
     float* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
     float* outputs = convolutional_layer_forward_propagation_cuda->outputs;
 
+    float* outputs_buffer = use_convolutions ? convolutions : outputs;
+
     void* workspace = convolutional_layer_forward_propagation_cuda->workspace;
     size_t workspace_bytes = convolutional_layer_forward_propagation_cuda->workspace_bytes;
 
@@ -868,7 +867,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
         workspace, workspace_bytes,
         &beta,
         output_tensor_descriptor,
-        convolutions);
+        outputs_buffer);
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnConvolutionForward failed: " << cudnnGetErrorString(status) << endl;
@@ -881,7 +880,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
         biases_device,
         &alpha,
         output_tensor_descriptor,
-        convolutions);
+        outputs_buffer);
 
     // Activations
 
@@ -891,7 +890,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
             activation_descriptor,
             &alpha,
             output_tensor_descriptor,
-            convolutions,
+            outputs_buffer,
             &beta,
             output_tensor_descriptor,
             outputs);
@@ -951,18 +950,42 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 
     if (convolutional_layer->get_activation_function() != "Linear")
     {
-        cudnnActivationBackward(cudnn_handle,
-            activation_descriptor,
-            &alpha,
-            deltas_tensor_descriptor,
-            outputs,
-            deltas_tensor_descriptor,
-            deltas_device[0],
-            deltas_tensor_descriptor,
-            convolutions,
-            &beta,
-            deltas_tensor_descriptor,
-            deltas_device[0]);
+        if (use_convolutions && convolutions != nullptr)
+        { 
+            cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
+                activation_descriptor,
+                &alpha,
+                deltas_tensor_descriptor,
+                outputs,
+                deltas_tensor_descriptor,
+                deltas_device[0],
+                deltas_tensor_descriptor,
+                convolutions,
+                &beta,
+                deltas_tensor_descriptor,
+                deltas_device[0]);
+
+            if (status != CUDNN_STATUS_SUCCESS)
+                cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+        } 
+        else 
+        { 
+            cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
+                activation_descriptor,
+                &alpha,
+                deltas_tensor_descriptor,
+                outputs,
+                deltas_tensor_descriptor,
+                deltas_device[0],
+                deltas_tensor_descriptor,
+                outputs,
+                &beta,
+                deltas_tensor_descriptor,
+                deltas_device[0]);
+
+            if (status != CUDNN_STATUS_SUCCESS)
+                cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
+        }
     }
 
     // Convolution backwards for weights derivatives
@@ -1121,6 +1144,8 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
 
     Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
+    const bool use_convolutions = convolutional_layer->use_convolutions;
+
     const Index input_height = convolutional_layer->get_input_height();
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
@@ -1197,8 +1222,12 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
 
     //CHECK_CUDA(cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float));
+
+    if (use_convolutions)
+    {
+        //CHECK_CUDA(cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float));
+    }
 
     // Workspace
 
@@ -1230,7 +1259,8 @@ void ConvolutionalForwardPropagationCuda::print() const
 void ConvolutionalForwardPropagationCuda::free()
 {
     cudaFree(outputs);
-    cudaFree(convolutions);
+    if (convolutions != nullptr)
+        cudaFree(convolutions);
     cudaFree(workspace);
     cudaFree(reordered_inputs_device);
 
@@ -1431,9 +1461,6 @@ void ConvolutionalBackPropagationCuda::free()
 
 REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")
 REGISTER(LayerBackPropagationCuda, ConvolutionalBackPropagationCuda, "Convolutional")
-
-//REGISTER_FORWARD_CUDA("Convolutional", ConvolutionalForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Convolutional", ConvolutionalBackPropagationCuda);
 
 #endif
 

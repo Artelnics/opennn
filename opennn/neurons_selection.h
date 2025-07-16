@@ -76,6 +76,8 @@ public:
 
     virtual string get_name() const = 0;
 
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
+
     virtual void from_XML(const XMLDocument&) = 0;
 
     virtual void to_XML(XMLPrinter&) const = 0;

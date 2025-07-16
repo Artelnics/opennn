@@ -78,7 +78,7 @@ public:
 
     InputsSelectionResults perform_input_selection() override;
 
-    Tensor<string, 2> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const override;
 
     void from_XML(const XMLDocument&) override;
 
@@ -100,9 +100,6 @@ private:
     Tensor<Tensor<type, 1>, 1> parameters;
 
     vector<bool> original_input_raw_variables;
-
-    vector<Index> original_input_raw_variable_indices;
-    vector<Index> original_target_raw_variable_indices;
 
     vector<bool> original_unused_raw_variables;
     

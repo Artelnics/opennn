@@ -118,7 +118,7 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
                          const bool& new_use_causal_mask,
                          const string& new_label)
 {
-    name = "MultiheadAttention";
+    name = "MultiHeadAttention";
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     heads_number = new_heads_number;
@@ -256,6 +256,7 @@ void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& valu
 void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outputs,
                                        Tensor<type, 3>& concatenated_attention_outputs) const
 {
+/*
     const Index batch_size = attention_outputs.dimension(2);
     const Index hidden_depth = attention_outputs.dimension(1);
 
@@ -273,6 +274,27 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
                                 array<Index,2>{query_sequence_length, hidden_depth}) = head_output;
         }
     }
+*/
+    // @todo check This gives the AI
+
+    // Original dimensions of attention_outputs: (query_sequence_length, hidden_depth, batch_size, heads_number)
+    // We want to merge dimensions 1 (hidden_depth) and 3 (heads_number) to form the new embedding_dimension.
+    // The desired output shape is (batch_size, query_sequence_length, embedding_dimension)
+
+    // Define the shuffling pattern: map old dimensions to new ones.
+    // Old: 0(seq), 1(depth), 2(batch), 3(heads)
+    // New: 2(batch), 0(seq), 3(heads), 1(depth)
+
+    const array<int, 4> shuffling_pattern = {2, 0, 3, 1};
+
+    concatenated_attention_outputs.device(*thread_pool_device) =
+        attention_outputs.shuffle(shuffling_pattern)
+            .reshape(array<Index, 3>{
+                attention_outputs.dimension(2), // batch_size
+                query_sequence_length,
+                heads_number * get_hidden_depth() // embedding_dimension
+            });
+
 }
 
 
@@ -560,10 +582,10 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 {
     // @todo update notation
 
-    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
+    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiHeadAttention");
 
     if(!multihead_attention_layer_element)
-        throw runtime_error("MultiheadAttention element is nullptr.\n");
+        throw runtime_error("MultiHeadAttention element is nullptr.\n");
 
     const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
     const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
@@ -574,8 +596,14 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
 
-    //Index index = 0;
-    //set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "), index);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "QueryBiases"), query_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "QueryWeights"), query_weights);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "KeyBiases"), key_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "KeyWeights"), key_weights);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ValueBiases"), value_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "ValueWeights"), value_weights);
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
 }
 
 
@@ -594,7 +622,7 @@ void MultiHeadAttention::print() const
 
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("MultiheadAttention");
+    printer.OpenElement("MultiHeadAttention");
 
     add_xml_element(printer, "Label", label);
     add_xml_element(printer, "InputSize", to_string(get_query_sequence_length()));
@@ -603,10 +631,14 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "HiddenDepth", to_string(get_hidden_depth()));
     add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
     add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
-
-    //Tensor<type, 1> parameters;
-    //get_parameters(parameters);
-    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "QueryBiases", tensor_to_string<type, 2>(query_biases));
+    add_xml_element(printer, "QueryWeights", tensor_to_string<type, 3>(query_weights));
+    add_xml_element(printer, "KeyBiases", tensor_to_string<type, 2>(key_biases));
+    add_xml_element(printer, "KeyWeights", tensor_to_string<type, 3>(key_weights));
+    add_xml_element(printer, "ValueBiases", tensor_to_string<type, 2>(value_biases));
+    add_xml_element(printer, "ValueWeights", tensor_to_string<type, 3>(value_weights));
+    add_xml_element(printer, "ProjectionBiases", tensor_to_string<type, 1>(projection_biases));
+    add_xml_element(printer, "ProjectionWeights", tensor_to_string<type, 2>(projection_weights));
 
     printer.CloseElement();
 }

@@ -28,8 +28,6 @@ public:
 
    void set_min_max_range(const type& min, const type& max);
 
-   bool is_empty() const;
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;

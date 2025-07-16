@@ -82,28 +82,27 @@ string ModelExpression::write_exponential_linear_c() const
 }
 
 
-string ModelExpression::write_selu_c() const
-{
-    return
-        "float SELU(float x) {\n"
-        "float z;\n"
-        "float alpha  = 1.67326;\n"
-        "float lambda = 1.05070;\n"
-        "if(x > 0){\n"
-        "z = lambda*x;\n"
-        "}else{\n"
-        "z = lambda*alpha*(exp(x)-1);\n"
-        "}\n"
-        "return z;\n"
-        "}\n"
-        "\n";
-}
+// string ModelExpression::write_selu_c() const
+// {
+//     return
+//         "float SELU(float x) {\n"
+//         "float z;\n"
+//         "float alpha  = 1.67326;\n"
+//         "float lambda = 1.05070;\n"
+//         "if(x > 0){\n"
+//         "z = lambda*x;\n"
+//         "}else{\n"
+//         "z = lambda*alpha*(exp(x)-1);\n"
+//         "}\n"
+//         "return z;\n"
+//         "}\n"
+//         "\n";
+// }
 
-
+/*
 void ModelExpression::auto_association_c() const
 
 {
-    /*
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     string expression;
@@ -119,8 +118,8 @@ void ModelExpression::auto_association_c() const
 
     if (index != string::npos)
         expression.erase(index, string::npos);
-*/
 }
+*/
 
 
 string ModelExpression::get_expression_c() const
@@ -502,7 +501,7 @@ string ModelExpression::get_expression_api() const
     string new_word;
 
     vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
-    found_tokens_and_input_names = sort_string_vector(found_tokens_and_input_names);
+    sort_string_vector(found_tokens_and_input_names);
 
     for(size_t i = 0; i < lines.size(); i++)
     {
@@ -607,24 +606,24 @@ string ModelExpression::get_expression_api() const
 }
 
 
-string ModelExpression::autoassociaton_javascript() const
-{
-    string expression;
+// string ModelExpression::autoassociaton_javascript() const
+// {
+//     string expression;
 
-    size_t index = 0;
+//     size_t index = 0;
 
-    index = expression.find("sample_autoassociation_distance =");
+//     index = expression.find("sample_autoassociation_distance =");
 
-    if (index != string::npos)
-        expression.erase(index, string::npos);
+//     if (index != string::npos)
+//         expression.erase(index, string::npos);
 
-    index = expression.find("sample_autoassociation_variables_distance =");
+//     index = expression.find("sample_autoassociation_variables_distance =");
 
-    if (index != string::npos)
-        expression.erase(index, string::npos);
+//     if (index != string::npos)
+//         expression.erase(index, string::npos);
 
-    return expression;
-}
+//     return expression;
+// }
 
 
 string ModelExpression::logistic_javascript() const

@@ -7,9 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
 #include "correlations.h"
-#include "tinyxml2.h"
+#include "dataset.h"
 #include "scaling_layer_2d.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
@@ -397,14 +396,11 @@ void GeneticAlgorithm::evaluate_population()
     const Tensor<type, 0> sum_training_errors = training_errors.sum();
     const Tensor<type, 0> sum_selection_errors = selection_errors.sum();
 
-    type sum_inputs_number = type(0);
-
-    for(Index i = 0; i < individuals_number; i++)
-        sum_inputs_number += type(raw_inputs_number(i));
-
     mean_training_error = type(sum_training_errors(0)) / type(individuals_number);
 
     mean_selection_error = type(sum_selection_errors(0)) / type(individuals_number);
+
+    const type sum_inputs_number = accumulate(raw_inputs_number.data(), raw_inputs_number.data() + raw_inputs_number.size(), type(0));
 
     mean_raw_inputs_number = type(sum_inputs_number) / type(individuals_number);
 }

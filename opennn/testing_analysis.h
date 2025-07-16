@@ -150,7 +150,7 @@ public:
 
     void print_binary_classification_tests() const;
 
-    type calculate_logloss() const;
+    //type calculate_logloss() const;
 
     // Confusion
 

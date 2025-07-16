@@ -873,10 +873,6 @@ void PoolingBackPropagationCuda::free()
 REGISTER(LayerForwardPropagationCuda, PoolingForwardPropagationCuda, "Pooling")
 REGISTER(LayerBackPropagationCuda, PoolingBackPropagationCuda, "Pooling")
 
-//REGISTER_FORWARD_CUDA("Pooling", PoolingForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Pooling", PoolingBackPropagationCuda);
-
-
 #endif
 
 REGISTER(Layer, Pooling, "Pooling")

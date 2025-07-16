@@ -313,7 +313,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 }
 
 
-Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2> &input_tensor)
+Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2>& input_tensor)
 {
 /*
     const dimensions input_dimensions = get_dimensions("Input");
@@ -504,6 +504,7 @@ vector<Descriptives> ImageDataset::scale_variables(const string&)
     return vector<Descriptives>();
 }
 
+
 void ImageDataset::unscale_variables(const string&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
@@ -643,7 +644,6 @@ void ImageDataset::read_bmp(const dimensions& new_input_dimensions)
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;
     }
-
 
     // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
     // scale_variables("Input");

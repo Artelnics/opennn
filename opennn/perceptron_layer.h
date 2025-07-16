@@ -41,9 +41,6 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
-
-    void set_biases(const string&) override;
-    void set_weights(const string&) override;
     
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
@@ -99,6 +96,8 @@ public:
     void allocate_parameters_device();
 
     void free_parameters_device();
+
+    bool use_combinations = true;
 
 private:
 
@@ -192,7 +191,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    type* combinations = nullptr;
+    float* combinations = nullptr;
 
     cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
 

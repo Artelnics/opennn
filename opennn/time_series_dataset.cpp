@@ -186,7 +186,7 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     if(missing_values_number > 0)
     {
         add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string<Index, 1>(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
@@ -622,14 +622,10 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
         }
     }
 
-    Index new_lags_number;
-
-    if((samples_number == lags_number || samples_number < lags_number) && lags_number > 2)
-        new_lags_number = lags_number - 2;
-    else if(samples_number == lags_number + 1 && lags_number > 1)
-        new_lags_number = lags_number - 1;
-    else
-        new_lags_number = lags_number;
+    const Index new_lags_number =
+        ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
+         (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :
+         lags_number;
 
     Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_lags_number);
     Tensor<type, 1> autocorrelations_vector(new_lags_number);

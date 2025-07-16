@@ -31,10 +31,8 @@ public:
         MaximumInputs,
         MinimumInputs,
         MaximumEpochs,
-        MaximumSelectionFailures,
-        CorrelationGoal
+        MaximumSelectionFailures
     };
-
 
     InputsSelection(const TrainingStrategy* = nullptr);
 
@@ -52,6 +50,8 @@ public:
     const type& get_maximum_correlation() const;
     const type& get_minimum_correlation() const;
 
+    virtual const Index& get_minimum_inputs_number() const { return 1; }
+
     void set(const TrainingStrategy* = nullptr);
 
     void set_trials_number(const Index&);
@@ -68,13 +68,15 @@ public:
 
     void check() const;
 
-    Index get_input_index(const Tensor<string, 1>&, const Index&) const;
+    //Index get_input_index(const Tensor<string, 1>&, const Index&) const;
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 
     virtual string get_name() const = 0;
 
     string write_time(const type&) const;
+
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
     virtual void from_XML(const XMLDocument&) = 0;
 
