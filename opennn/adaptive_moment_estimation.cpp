@@ -216,7 +216,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -443,6 +442,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
             parameters.device(*thread_pool_device)
                 -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+
         }
     }
 }
