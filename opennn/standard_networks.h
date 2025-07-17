@@ -22,6 +22,7 @@
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "neural_network.h"
+#include "multihead_attention_layer.h"
 
 namespace opennn
 {
@@ -210,10 +211,19 @@ public:
         const Index sequence_length = input_dimensions[1];
         const Index embedding_dimension = input_dimensions[2];
 
+        const Index heads_number = complexity_dimensions[0];
+        const bool use_causal_mask = false;
+
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"
                                          ));
+
+        add_layer(make_unique<MultiHeadAttention>(
+            dimensions({sequence_length, embedding_dimension}),
+            heads_number,
+            "multihead_attention_layer"
+            ));
 
         // add_layer(make_unique<Pooling3d>(
         //     get_output_dimensions()

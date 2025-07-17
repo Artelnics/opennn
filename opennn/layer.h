@@ -342,8 +342,6 @@ struct LayerForwardPropagation
 {
     LayerForwardPropagation() {}
 
-    //virtual ~LayerForwardPropagation() {}
-
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
     virtual pair<type*, dimensions> get_output_pair() const = 0;
