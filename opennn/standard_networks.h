@@ -97,19 +97,19 @@ public:
                        const dimensions& complexity_dimensions,
                        const dimensions& output_dimensions) : NeuralNetwork()
     {
-        add_layer(make_unique<Scaling2d>(input_dimensions));
+        //add_layer(make_unique<Scaling2d>(input_dimensions));
 
-        add_layer(make_unique<Recurrent>(get_output_dimensions(),
-                                         complexity_dimensions));
+        add_layer(make_unique<Recurrent>(input_dimensions,
+                                         output_dimensions));
 
-        add_layer(make_unique<Dense2d>(complexity_dimensions,
-                                       output_dimensions,
-                                       "Linear",
-                                       "recurrent_layer"));
+        // add_layer(make_unique<Dense2d>(complexity_dimensions,
+        //                                output_dimensions,
+        //                                "Linear",
+        //                                "recurrent_layer"));
 
-        add_layer(make_unique<Unscaling>(output_dimensions));
+        //add_layer(make_unique<Unscaling>(output_dimensions));
 
-        add_layer(make_unique<Bounding>(output_dimensions));
+        //add_layer(make_unique<Bounding>(output_dimensions));
 
     }
 };

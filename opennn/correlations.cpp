@@ -952,11 +952,7 @@ void register_layers()
 void register_loss_indices()
 {
     CrossEntropyError2d cross_entropy_error_2d;//cross_entropy_error_2d.print();
-    CrossEntropyError3d cross_entropy_error_3d;//cross_entropy_error_3d.print();
     MeanSquaredError mean_squared_error;//mean_squared_error.print();
-    MinkowskiError minkowski_error;//minkowski_error.print();
-    NormalizedSquaredError normalized_squared_error;//normalized_squared_error.print();
-    WeightedSquaredError weighted_squared_error;//weighted_squared_error.print();
 
 }
 
@@ -966,7 +962,6 @@ void register_optimization_algorithms()
     StochasticGradientDescent stochastic_gradient_descent; //stochastic_gradient_descent.print();
     QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
-
 }
 
 }
