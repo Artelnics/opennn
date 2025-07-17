@@ -23,6 +23,7 @@
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "neural_network.h"
+#include "multihead_attention_layer.h"
 
 namespace opennn
 {
@@ -43,11 +44,13 @@ public:
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{ complexity_dimensions[i] },
                                            "RectifiedLinear",
+                                           false,
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Linear",
+                                       false,
                                        "approximation_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
@@ -79,11 +82,13 @@ public:
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{complexity_dimensions[i]},
                                            "HyperbolicTangent",
+                                           false,
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Logistic",
+                                       false,
                                        "classification_layer"));
     }
 };
@@ -131,21 +136,25 @@ public:
         add_layer(make_unique<Dense2d>(input_dimensions,
                                        dimensions{mapping_neurons_number},
                                        "HyperbolicTangent",
+                                       false,
                                        "mapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ bottle_neck_neurons_number },
                                        "Linear",
+                                       false,
                                        "bottleneck_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ bottle_neck_neurons_number },
                                        dimensions{ mapping_neurons_number },
                                        "HyperbolicTangent",
+                                       false,
                                        "demapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ output_dimensions },
                                        "Linear",
+                                       false,
                                        "output_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
@@ -198,6 +207,7 @@ public:
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Softmax",
+                                       false,
                                        "dense_2d_layer"));
     }
 };
@@ -217,10 +227,19 @@ public:
         const Index sequence_length = input_dimensions[1];
         const Index embedding_dimension = input_dimensions[2];
 
+        const Index heads_number = complexity_dimensions[0];
+        const bool use_causal_mask = false;
+
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"
                                          ));
+
+        add_layer(make_unique<MultiHeadAttention>(
+            dimensions({sequence_length, embedding_dimension}),
+            heads_number,
+            "multihead_attention_layer"
+            ));
 
         // add_layer(make_unique<Pooling3d>(
         //     get_output_dimensions()

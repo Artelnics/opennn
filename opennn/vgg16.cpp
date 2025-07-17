@@ -181,6 +181,7 @@ namespace opennn
                 get_output_dimensions(),
                 dimensions{ 4096 },
                 "RectifiedLinear",
+                false,
                 "fc1");
             //fc1->set_dropout_rate(0.5f);
             add_layer(move(fc1));
@@ -190,6 +191,7 @@ namespace opennn
                 get_output_dimensions(),
                 dimensions{ 4096 },
                 "RectifiedLinear",
+                false,
                 "fc2");
             //fc2->set_dropout_rate(0.5f);
             add_layer(move(fc2));
@@ -199,6 +201,7 @@ namespace opennn
                 get_output_dimensions(),
                 new_target_dimensions,
                 "Softmax",
+                false,
                 "softmax_output"));
         }
     }

@@ -15,6 +15,10 @@
 #include "standard_networks.h"
 #include "mean_squared_error.h"
 #include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
+#include "minkowski_error.h"
+#include "normalized_squared_error.h"
+#include "weighted_squared_error.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
@@ -943,9 +947,14 @@ void Correlation::print() const
 
 void register_layers()
 {
+<<<<<<< HEAD
+    Bounding bounding_layer;bounding_layer.print();
+    MultiHeadAttention multi_head_attention; multi_head_attention.print();
+=======
     Bounding bounding_layer;//bounding_layer.print();
     Recurrent recurrent_layer; // recurrent_layer.print();
     MultiHeadAttention multihead_layer;
+>>>>>>> 790e1c37e373d0d1029136cecd6e2d6e543271c5
 }
 
 

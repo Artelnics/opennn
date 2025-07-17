@@ -23,6 +23,7 @@ public:
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},
             const string& = "HyperbolicTangent",
+            const bool& = false,
             const string& = "dense2d_layer");
 
     dimensions get_input_dimensions() const override;
@@ -32,11 +33,16 @@ public:
 
     type get_dropout_rate() const;
 
+    bool get_batch_normalization() const;
+    Tensor<type, 1> get_scales() const;
+    Tensor<type, 1> get_offsets() const;
+
     const string& get_activation_function() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
              const string& = "HyperbolicTangent",
+             const bool& = false,
              const string& = "dense2d_layer");
 
     void set_input_dimensions(const dimensions&) override;
@@ -48,6 +54,9 @@ public:
     void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    
+    void set_batch_normalization(const bool&);
+    void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -105,6 +114,13 @@ private:
     float* weights_device = nullptr;
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
+    // Batch Normalization
+    float* bn_scale_device = nullptr;
+    float* bn_offset_device = nullptr;
+    float* bn_running_mean_device = nullptr;
+    float* bn_running_variance_device = nullptr;
+    cudnnTensorDescriptor_t bn_tensor_descriptor = nullptr;
+
 #endif
 
 private:
@@ -113,8 +129,16 @@ private:
 
     Tensor<type, 2> weights;
 
+    bool batch_normalization = false;
+
     Tensor<type, 1> scales;
-    Tensor<type, 1> shifts;
+    Tensor<type, 1> offsets;
+
+    Tensor<type, 1> moving_means;
+    Tensor<type, 1> moving_standard_deviations;
+
+    type momentum = type(0.9);
+    const type epsilon = 1e-5;
 
     string activation_function = "HyperbolicTangent";
 
@@ -158,8 +182,8 @@ struct Dense2dBackPropagation : LayerBackPropagation
     Tensor<type, 1> bias_deltas;
     Tensor<type, 2> weight_deltas;
 
-    Tensor<type, 1> scale_derivatives;
-    Tensor<type, 1> shift_derivatives;
+    Tensor<type, 1> bn_scale_deltas;
+    Tensor<type, 1> bn_offset_deltas;
 };
 
 
@@ -204,6 +228,9 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void* dropout_reserve_space = nullptr;
     size_t dropout_reserve_space_size = 0;  
+
+    float* bn_saved_mean = nullptr;
+    float* bn_saved_inv_variance = nullptr;
 };
 
 
@@ -225,6 +252,9 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
     float* ones = nullptr;
 
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
+
+    float* bn_scale_deltas_device = nullptr;
+    float* bn_offset_deltas_device = nullptr;
 };
 
 #endif
