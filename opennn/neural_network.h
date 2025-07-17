@@ -201,9 +201,6 @@ public:
        for (Index i = 0; i < input_rank; ++i)
            input_dimensions.push_back(inputs.dimension(i));
 
-       cout << "calculate outputs input_dimensions" << endl;
-       print_vector(input_dimensions);
-
        const pair<type*, dimensions> input_pair((type*)inputs.data(), input_dimensions);
 
        forward_propagate({input_pair}, forward_propagation, false);
@@ -217,10 +214,11 @@ public:
        else if constexpr (output_rank == 4)
            return tensor_map<4>(outputs_pair);
        else
-           static_assert(output_rank >= 2 && output_rank <= 4, "Rango de salida no soportado.");
+           static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
 
        return Tensor<type, output_rank>();
    }
+
 
    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
    {
