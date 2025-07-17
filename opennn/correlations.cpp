@@ -953,6 +953,7 @@ void register_layers()
 {
     Bounding bounding_layer;//bounding_layer.print();
     Recurrent recurrent_layer; // recurrent_layer.print();
+    MultiHeadAttention multihead_layer;
 }
 
 

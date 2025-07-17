@@ -1575,6 +1575,7 @@ void Dataset::set(const filesystem::path& new_data_path,
     set_default_raw_variables_uses();
 
     missing_values_method = MissingValuesMethod::Mean;
+
     if(has_nan())
         scrub_missing_values();
 
@@ -4277,10 +4278,10 @@ void Batch::fill(const vector<Index>& sample_indices,
     {
         input_dimensions.clear();
         input_dimensions.push_back(sample_indices.size());
+        //input_dimensions.push_back(input_indices.size());
         input_dimensions.push_back(input_indices.size());
-        input_dimensions.push_back(input_indices.size());
-    }
 
+    }
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 
     // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());

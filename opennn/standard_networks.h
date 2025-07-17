@@ -9,6 +9,7 @@
 #ifndef STANDARDNETWORKS_H
 #define STANDARDNETWORKS_H
 
+#include "multihead_attention_layer.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
@@ -101,7 +102,7 @@ public:
         add_layer(make_unique<Recurrent>(get_output_dimensions(),
                                          complexity_dimensions));
 
-        add_layer(make_unique<Dense2d>(get_output_dimensions(),
+        add_layer(make_unique<Dense2d>(complexity_dimensions,
                                        output_dimensions,
                                        "Linear",
                                        "recurrent_layer"));
