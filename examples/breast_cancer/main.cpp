@@ -32,12 +32,13 @@ int main()
         const Index neurons_number = 3;
 
         ClassificationNetwork classification_network(dataset.get_input_dimensions(), { neurons_number}, dataset.get_target_dimensions());
+        classification_network.print();
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
         training_strategy.perform_training();
 
-        TestingAnalysis testing_analysis(&classification_network, &dataset);
-        testing_analysis.print_binary_classification_tests();
+        // TestingAnalysis testing_analysis(&classification_network, &dataset);
+        // testing_analysis.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;
 

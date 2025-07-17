@@ -159,7 +159,6 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& y,
                                    const Index& maximum_lags_number)
 {
-    cout << "a" << endl;
     if(y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
@@ -942,6 +941,24 @@ void Correlation::print() const
          << "Upper confidence: " << upper_confidence << endl;
 }
 
+void register_layers()
+{
+    Bounding bounding_layer;//bounding_layer.print();
+    Recurrent recurrent_layer; // recurrent_layer.print();
+    MultiHeadAttention multihead_layer;
+}
+
+
+void register_loss_indices()
+{
+    CrossEntropyError2d cross_entropy_error_2d;//cross_entropy_error_2d.print();
+    CrossEntropyError3d cross_entropy_error_3d;//cross_entropy_error_3d.print();
+    MeanSquaredError mean_squared_error;//mean_squared_error.print();
+    MinkowskiError minkowski_error;//minkowski_error.print();
+    NormalizedSquaredError normalized_squared_error;//normalized_squared_error.print();
+    WeightedSquaredError weighted_squared_error;//weighted_squared_error.print();
+
+}
 
 void register_optimization_algorithms()
 {

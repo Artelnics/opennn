@@ -21,6 +21,7 @@
 
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "mean_squared_error.h"
+#include "multihead_attention_layer.h"
 
 using namespace opennn;
 
@@ -28,7 +29,6 @@ int main()
 {
     try
     {
-
         cout << "OpenNN. Amazon reviews example." << endl;
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
@@ -58,7 +58,7 @@ int main()
         adam->set_maximum_epochs_number(1000);
         // adam->set_batch_size(32);
 
-        training_strategy.perform_training();
+        //training_strategy.perform_training();
 
         // // calculate_outputs
         // const Index batch_size = 1;
