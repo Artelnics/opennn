@@ -52,12 +52,6 @@ const type& StochasticGradientDescent::get_loss_goal() const
 }
 
 
-const type& StochasticGradientDescent::get_maximum_time() const
-{
-    return maximum_time;
-}
-
-
 void StochasticGradientDescent::set_default()
 {
     // TRAINING OPERATORS

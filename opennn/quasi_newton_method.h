@@ -25,17 +25,12 @@ public:
 
    QuasiNewtonMethod(const LossIndex* = nullptr);
 
-   const Index& get_epochs_number() const;
-
    // Stopping criteria
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
 
    const Index& get_maximum_selection_failures() const;
-
-   const Index& get_maximum_epochs_number() const;
-   const type& get_maximum_time() const;
 
    // Set
 
@@ -106,10 +101,6 @@ private:
    type training_loss_goal;
 
    Index maximum_selection_failures;
-
-   Index maximum_epochs_number;
-
-   type maximum_time = type(360000);
 
    const type epsilon = numeric_limits<type>::epsilon();
 

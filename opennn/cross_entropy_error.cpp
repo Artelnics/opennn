@@ -7,10 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
 #include "dataset.h"
 #include "neural_network.h"
-#include "loss_index.h"
 #include "cross_entropy_error.h"
 
 namespace opennn

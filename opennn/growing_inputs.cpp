@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "dataset.h"
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer_2d.h"
@@ -45,7 +46,6 @@ void GrowingInputs::set_default()
 {
     maximum_selection_failures = 100;
     minimum_inputs_number = 1;
-    minimum_correlation = type(0);
     trials_number = 3;
     maximum_epochs_number = 1000;
     maximum_time = type(3600);
@@ -53,6 +53,12 @@ void GrowingInputs::set_default()
     training_strategy && training_strategy->has_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input")
         : maximum_inputs_number = 100;
+}
+
+
+void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
+{
+    minimum_inputs_number = new_minimum_inputs_number;
 }
 
 
@@ -64,9 +70,15 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 }
 
 
-void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
+void GrowingInputs::set_minimum_correlation(const type& new_minimum_correlation)
 {
-    minimum_inputs_number = new_minimum_inputs_number;
+    minimum_correlation = new_minimum_correlation;
+}
+
+
+void GrowingInputs::set_maximum_correlation(const type& new_maximum_correlation)
+{
+    maximum_correlation = new_maximum_correlation;
 }
 
 

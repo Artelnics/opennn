@@ -240,12 +240,6 @@ void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-bool Scaling2d::is_empty() const
-{
-    return get_output_dimensions()[0] == 0;
-}
-
-
 void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
@@ -259,16 +253,6 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
-
-    // for(Index i = 0; i < outputs_number; i++){
-    //     type mean = opennn::mean(outputs,i);
-    //     Tensor<type,1> col(outputs.dimension(0));
-    //     for(Index j=0;j<outputs.dimension(0);j++){
-    //         col(j)=outputs(j,i);
-    //     }
-    //     type std_dev = opennn::standard_deviation(col);
-    //     descriptives[i]={min_range, max_range,mean,std_dev};
-    // }
 
     for(Index i = 0; i < outputs_number; i++)
     {
@@ -298,7 +282,6 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
             throw runtime_error("Unknown scaling method.\n");
         }
     }
-
 }
 
 

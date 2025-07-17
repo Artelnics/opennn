@@ -35,7 +35,6 @@ public:
    const bool& get_nesterov() const;
 
    const type& get_loss_goal() const;
-   const type& get_maximum_time() const;
 
    void set_default();
 
@@ -80,10 +79,6 @@ private:
    type training_loss_goal = type(0);
 
    Index maximum_selection_failures = numeric_limits<Index>::max();
-
-   Index maximum_epochs_number = 10000;
-
-   type maximum_time = type(3600000);
 
 #ifdef OPENNN_CUDA
 

@@ -183,7 +183,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
     Tensor<type, 1> type_vector(tokens_size);
 
     for(Index i = 0; i < tokens_size; i++)
-    {
         try
         {
             type_vector(i) = type(stof(tokens[i]));
@@ -192,7 +191,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
         {
             type_vector(i) = type(nan(""));
         }
-    }
 
     return type_vector;
 }
@@ -203,7 +201,8 @@ bool is_numeric_string(const string& text)
     try
     {
         size_t index;
-        [[maybe_unused]] double value = stod(text, &index);
+        //[[maybe_unused]]
+        double value = stod(text, &index);
 
         return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
@@ -367,16 +366,9 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
 
         buffer.append(text, previous_position, position - previous_position);
 
-        if(buffer.back() == '_')
-        {
-            buffer += to_replace;
-            position += to_replace.size();
-        }
-        else
-        {
-            buffer += replace_with;
-            position += to_replace.size();
-        }
+        buffer += (buffer.back() == '_') ? to_replace : replace_with;
+
+        position += to_replace.size();
     }
 
     buffer.append(text, previous_position, text.size() - previous_position);
@@ -559,7 +551,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-vector<string> sort_string_vector(vector<string>& string_vector)
+void sort_string_vector(vector<string>& string_vector)
 {
     auto compare_string_length = [](const string& a, const string& b)
     {
@@ -567,8 +559,6 @@ vector<string> sort_string_vector(vector<string>& string_vector)
     };
     
     sort(string_vector.begin(), string_vector.end(), compare_string_length);
-
-    return string_vector;
 }
 
 

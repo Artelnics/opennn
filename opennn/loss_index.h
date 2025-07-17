@@ -9,7 +9,6 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#include "dataset.h"
 #include "neural_network.h"
 #include "tinyxml2.h"
 
@@ -24,6 +23,7 @@ struct Batch;
 struct ForwardPropagation;
 struct BackPropagation;
 struct BackPropagationLM;
+//struct NeuralNetworkBackPropagationLM;
 
 #ifdef OPENNN_CUDA
 struct BackPropagationCuda;
@@ -81,8 +81,6 @@ public:
    void set_display(const bool&);
 
    virtual void set_normalization_coefficient() {}
-
-   virtual type get_Minkowski_parameter() const { return 1.5; }
 
    // Back propagation
 

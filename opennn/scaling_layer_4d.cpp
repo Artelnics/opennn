@@ -52,12 +52,12 @@ void Scaling4d::set_min_max_range(const type& min, const type& max)
 }
 
 
-bool Scaling4d::is_empty() const
-{
-    const Index inputs_number = get_output_dimensions()[0];
+// bool Scaling4d::is_empty() const
+// {
+//     const Index inputs_number = get_output_dimensions()[0];
 
-    return inputs_number == 0;
-}
+//     return inputs_number == 0;
+// }
 
 
 void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,

@@ -66,8 +66,6 @@ public:
     void set_save_period(const Index&);
     void set_neural_network_file_name(const string&);
 
-    //   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
-
     // Training
 
     virtual void check() const;
@@ -101,7 +99,9 @@ protected:
 
    LossIndex* loss_index = nullptr;
 
-   Index epochs_number = 1000;
+   Index maximum_epochs_number = 1000;
+
+   type maximum_time = type(360000);
 
    BoxPlot auto_association_box_plot;
 
