@@ -26,6 +26,7 @@ struct BackPropagationLM;
 //struct NeuralNetworkBackPropagationLM;
 
 #ifdef OPENNN_CUDA
+struct BatchCuda;
 struct BackPropagationCuda;
 #endif
 

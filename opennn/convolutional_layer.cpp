@@ -462,7 +462,6 @@ void Convolutional::set(const dimensions& new_input_dimensions,
             CUDNN_TENSOR_NCHW,
             CUDNN_DATA_FLOAT,
             1, kernels_number, 1, 1);
-        cout << "bn_tensor_descriptor se crea" << endl;
     }
 
     cudnnCreateActivationDescriptor(&activation_descriptor);

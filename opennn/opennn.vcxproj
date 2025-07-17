@@ -290,8 +290,6 @@
     <ClInclude Include="layer.h" />
     <ClCompile Include="language_dataset.cpp" />
     <ClCompile Include="layer.cpp" />
-    <ClInclude Include="learning_rate_algorithm.h" />
-    <ClCompile Include="learning_rate_algorithm.cpp" />
     <ClInclude Include="levenberg_marquardt_algorithm.h" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
     <ClInclude Include="loss_index.h" />
