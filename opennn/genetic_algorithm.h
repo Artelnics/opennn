@@ -47,7 +47,7 @@ public:
 
     void set_population(const Tensor<bool, 2>&);
 
-    void set_individuals_number(const Index& new_individuals_number=4);
+    void set_individuals_number(const Index& new_individuals_number = 4);
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
@@ -90,10 +90,7 @@ public:
 
     void load(const filesystem::path&);
 
-    string get_name() const override
-    {
-        return "GeneticAlgorithm";
-    }
+    string get_name() const override;
 
 private:
 
