@@ -72,8 +72,8 @@ public:
 
     void print() const override;
 
-    void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
 
     #ifdef OPENNN_CUDA
        // @todo

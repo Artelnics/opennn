@@ -58,18 +58,11 @@ void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.
 }
 
 
-
 type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
-void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
-
-Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
-
 void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
-
-//void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
@@ -84,7 +77,6 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
@@ -122,9 +114,6 @@ bool is_constant(const Tensor<type, Rank>& tensor)
     return true;
 }
 
-
-Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
 void save_csv(const Tensor<type,2>&, const filesystem::path&);
 
 template<int rank>
@@ -143,7 +132,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 vector<Index> get_elements_greater_than(const vector<Index>&, const Index&);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, const Index&);
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>&, const Index&, const type&, const type&);
+Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>&, const Index&, const type&, const type&);
 
 type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
@@ -151,13 +140,10 @@ void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 
 type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
 void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
-void l2_norm_hessian(const ThreadPoolDevice*, Tensor<type, 1>&, Tensor<type, 2>&);
+void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 
 type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-type l2_distance(const type&, const type&);
-type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
-Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
@@ -202,7 +188,6 @@ void push_back(Tensor<T, 1>& tensor, const T& value)
 
 string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
-Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
 dimensions prepend(const Index& x, const dimensions& d);
 
@@ -224,54 +209,27 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 }
 
 
-template <typename T>
-string tensor_to_string(const Tensor<T, 1>& x, const string& separator = " ")
+template <typename T, size_t Rank>
+string tensor_to_string(const Tensor<T, Rank>& x, const string& separator = " ")
 {
-    const Index size = x.size();
-
     ostringstream buffer;
 
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
+    for(Index i = 0; i < x.size(); i++)
+        buffer << x(i) << separator;
 
     return buffer.str();
 }
 
 
-template <typename T>
-string tensor_2_to_string(const Tensor<T, 2>& x, const string& separator = " ")
+template <typename T, size_t Rank>
+void string_to_tensor(const string& input, Tensor<T, Rank>& x)
 {
-    ostringstream buffer;
+    istringstream stream(input);
+    T value;
+    Index i = 0;
 
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < x.dimension(0); i++)
-        for(Index j = 0; j < x.dimension(1); j++)
-            buffer << x(i,j) << separator;
-
-    return buffer.str();
-}
-
-
-template <typename T>
-string tensor_4_to_string(const Tensor<T, 4>& x, const string& separator = " ")
-{
-    ostringstream buffer;
-
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < x.dimension(0); i++)
-        for(Index j = 0; j < x.dimension(1); j++)
-            for(Index k = 0; k < x.dimension(2); k++)
-                for(Index l = 0; l < x.dimension(3); l++)
-                    buffer << x(i,j,k,l) << separator;
-
-    return buffer.str();
+    while (stream >> value)
+        x(i++) = value;
 }
 
 
@@ -283,8 +241,8 @@ TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>&, const Index&);
 TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>&, const Index&);
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>&, const Index&, const Index&);
 
-TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>&, const Index&);
-TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>&, const Index&);
+TensorMap<Tensor<type, 3>> tensor_map_(const TensorMap<Tensor<type, 4>>&, const Index&);
+TensorMap<Tensor<type, 1>> tensor_map_(const TensorMap<Tensor<type, 2>>&, const Index&);
 
 
 template <Index rank>
@@ -384,18 +342,12 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
     const Index size = tensor.size();
 
     for (Index i = 0; i < size; i++)
-    {
         if constexpr (is_same_v<Type, bool>)
-        {
             if (tensor(i) != value)
                 return false;
-        }
         else
-        {
             if (abs(tensor(i) - value) > tolerance)
                 return false;
-        }
-    }
 
     return true;
 }
@@ -411,39 +363,17 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
 
     const Index size = tensor_1.size();
 
-    for (Index i = 0; i < size; i++) 
-        if constexpr (std::is_same_v<Type, bool>)
-        {
+    for (Index i = 0; i < size; i++)
+        if constexpr (is_same_v<Type, bool>)
             if (tensor_1(i) != tensor_2(i))
                 return false;
-        }
         else
-        {
             if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
                 return false;
-        }
 
     return true;
 }
 
-/*
-template <int Rank>
-void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) 
-{
-    memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
-
-    index += destination.size();
-}
-
-
-template <int Rank>
-void copy_to_vector(Tensor<type, 1>& destination, const Tensor<type, Rank>& source, Index& index)
-{
-    memcpy(destination.data() + index, source.data(), source.size() * sizeof(type));
-
-    index += source.size();
-}
-*/
 }
 
 #endif

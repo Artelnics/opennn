@@ -52,12 +52,12 @@ void Scaling4d::set_min_max_range(const type& min, const type& max)
 }
 
 
-bool Scaling4d::is_empty() const
-{
-    const Index inputs_number = get_output_dimensions()[0];
+// bool Scaling4d::is_empty() const
+// {
+//     const Index inputs_number = get_output_dimensions()[0];
 
-    return inputs_number == 0;
-}
+//     return inputs_number == 0;
+// }
 
 
 void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
@@ -217,10 +217,7 @@ void Scaling4dForwardPropagationCuda::free()
 
 REGISTER(LayerForwardPropagationCuda, Scaling4dForwardPropagationCuda, "Scaling4d")
 
-//REGISTER_FORWARD_CUDA("Scaling4d", Scaling4dForwardPropagationCuda);
-
 #endif
-
 
 REGISTER(Layer, Scaling4d, "Scaling4d")
 REGISTER(LayerForwardPropagation, Scaling4dForwardPropagation, "Scaling4d")

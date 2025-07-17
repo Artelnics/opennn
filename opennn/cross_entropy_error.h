@@ -19,7 +19,7 @@ class CrossEntropyError2d : public LossIndex
 
 public:
 
-   CrossEntropyError2d(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   CrossEntropyError2d(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    // Error
 
@@ -28,12 +28,12 @@ public:
                         BackPropagation&) const override;
 
    void calculate_binary_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const;
+                               const ForwardPropagation&,
+                               BackPropagation&) const;
 
    void calculate_multiple_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const;
+                                 const ForwardPropagation&,
+                                 BackPropagation&) const;
 
    // Gradient
 

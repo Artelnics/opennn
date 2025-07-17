@@ -41,15 +41,11 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
-
-    void set_biases(const string&) override;
-    void set_weights(const string&) override;
     
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
-    void calculate_combinations(const Tensor<type, 2>&,
-                                Tensor<type, 2>&) const;
+    void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
@@ -100,6 +96,8 @@ public:
     void allocate_parameters_device();
 
     void free_parameters_device();
+
+    bool use_combinations = true;
 
 private:
 
@@ -193,7 +191,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    type* combinations = nullptr;
+    float* combinations = nullptr;
 
     cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
 
@@ -202,7 +200,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
     cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
     void* dropout_states = nullptr;
     size_t dropout_states_size = 0;
-    unsigned long long dropout_seed = 1337ULL; // @todo random
+    unsigned long long dropout_seed;
 
     void* dropout_reserve_space = nullptr;
     size_t dropout_reserve_space_size = 0;  

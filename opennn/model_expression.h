@@ -29,8 +29,8 @@ public:
     string write_logistic_c() const;
     string write_relu_c() const;
     string write_exponential_linear_c() const;
-    string write_selu_c() const;
-    void auto_association_c() const;
+    //string write_selu_c() const;
+    //void auto_association_c() const;
     string get_expression_c() const;
 
     // python
@@ -49,7 +49,7 @@ public:
     string get_expression_api() const;
 
     // javascript
-    string autoassociaton_javascript() const;
+    //string autoassociaton_javascript() const;
     string logistic_javascript() const;
     string relu_javascript() const;
     string exponential_linear_javascript() const;

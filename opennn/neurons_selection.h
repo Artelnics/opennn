@@ -32,7 +32,7 @@ public:
 
     enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
-    NeuronsSelection(TrainingStrategy* = nullptr);
+    NeuronsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -48,7 +48,7 @@ public:
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
 
-    void set(TrainingStrategy* = nullptr);
+    void set(const TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 
@@ -75,6 +75,8 @@ public:
     string write_time(const type&) const;
 
     virtual string get_name() const = 0;
+
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
     virtual void from_XML(const XMLDocument&) = 0;
 

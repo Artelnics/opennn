@@ -9,24 +9,16 @@
 #include "tensors.h"
 #include "correlations.h"
 #include "dataset.h"
-#include "bounding_layer.h"
 #include "scaling_layer_2d.h"
 #include "perceptron_layer.h"
 #include "neural_network.h"
 #include "standard_networks.h"
 #include "mean_squared_error.h"
-#include "normalized_squared_error.h"
-#include "weighted_squared_error.h"
 #include "cross_entropy_error.h"
-#include "cross_entropy_error_3d.h"
-#include "minkowski_error.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
-#include "growing_neurons.h"
-#include "growing_inputs.h"
-#include "genetic_algorithm.h"
 
 namespace opennn
 {
@@ -975,27 +967,6 @@ void register_optimization_algorithms()
     QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
 
-}
-
-void register_neurons_selection()
-{
-    GrowingNeurons growing_neurons; growing_neurons.print();
-}
-
-
-void register_inputs_selection()
-{
-    GrowingInputs growing_inputs; growing_inputs.print();
-    GeneticAlgorithm genetic_algorithm; genetic_algorithm.print();
-}
-
-
-void register_layer_forward_propagation()
-{
-    Dense2dForwardPropagation dense_2d_forward_propagation; dense_2d_forward_propagation.print();
-    Dense2dBackPropagation dense_2d_back_propagation; dense_2d_back_propagation.print();
-
-    //Dense2d dense_2d; dense_2d.print();
 }
 
 }

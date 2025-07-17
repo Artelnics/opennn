@@ -31,12 +31,10 @@ public:
         MaximumInputs,
         MinimumInputs,
         MaximumEpochs,
-        MaximumSelectionFailures,
-        CorrelationGoal
+        MaximumSelectionFailures
     };
 
-
-    InputsSelection(TrainingStrategy* = nullptr);
+    InputsSelection(const TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -49,10 +47,10 @@ public:
     const type& get_selection_error_goal() const;
     const Index& get_maximum_iterations_number() const;
     const type& get_maximum_time() const;
-    const type& get_maximum_correlation() const;
-    const type& get_minimum_correlation() const;
 
-    void set(TrainingStrategy* = nullptr);
+    virtual const Index& get_minimum_inputs_number() const { return 1; };
+
+    void set(const TrainingStrategy* = nullptr);
 
     void set_trials_number(const Index&);
 
@@ -61,20 +59,18 @@ public:
     void set_selection_error_goal(const type&);
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
-    void set_maximum_correlation(const type&);
-    void set_minimum_correlation(const type&);
 
     string write_stopping_condition(const TrainingResults&) const;
 
     void check() const;
-
-    Index get_input_index(const Tensor<string, 1>&, const Index&) const;
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 
     virtual string get_name() const = 0;
 
     string write_time(const type&) const;
+
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
     virtual void from_XML(const XMLDocument&) = 0;
 
@@ -100,10 +96,6 @@ protected:
     type selection_error_goal;
 
     Index maximum_epochs_number;
-
-    type maximum_correlation;
-
-    type minimum_correlation;
 
     type maximum_time;
 };

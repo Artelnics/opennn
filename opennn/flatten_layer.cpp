@@ -179,9 +179,9 @@ void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
     input_deltas.resize(batch_size,
-                             input_dimensions[0],
-                             input_dimensions[1],
-                             input_dimensions[2]);
+                        input_dimensions[0],
+                        input_dimensions[1],
+                        input_dimensions[2]);
 }
 
 
@@ -234,9 +234,10 @@ void Flatten::forward_propagate_cuda(const vector<float*>& inputs_device,
     type* reordered_inputs = flatten_layer_forward_propagation_cuda->reordered_inputs;
     type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
 
-    invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width); // @todo only if neural_network has conv layer
+    //invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width); // @todo only if neural_network has conv layer
 
-    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
+    //reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
+    reorganize_inputs_cuda(inputs_device[0], outputs_device, batch_size, outputs_number);
 }
 
 
@@ -353,9 +354,6 @@ void FlattenBackPropagationCuda::free()
 
 REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
 REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
-
-//REGISTER_FORWARD_CUDA("Flatten", FlattenForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Flatten", FlattenBackPropagationCuda);
 
 #endif
 

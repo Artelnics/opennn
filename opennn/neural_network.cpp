@@ -6,12 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "model_expression.h"
 #include "registry.h"
-#include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
-#include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
 
@@ -280,9 +277,7 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
 void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
                                              const initializer_list<string>& new_layer_input_labels_list)
 {
-    const vector<string> new_layer_input_labels = new_layer_input_labels_list;
-
-    set_layer_inputs_indices(layer_label, new_layer_input_labels);
+    set_layer_inputs_indices(layer_label, vector<string>(new_layer_input_labels_list));
 }
 
 

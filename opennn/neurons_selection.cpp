@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
+NeuronsSelection::NeuronsSelection(const TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -75,9 +75,9 @@ const type& NeuronsSelection::get_maximum_time() const
 }
 
 
-void NeuronsSelection::set(TrainingStrategy* new_training_strategy)
+void NeuronsSelection::set(const TrainingStrategy* new_training_strategy)
 {
-    training_strategy = new_training_strategy;
+    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
 
     set_default();
 }
@@ -194,7 +194,7 @@ void NeuronsSelection::check() const
 
     // Data set
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("Pointer to data set is nullptr.\n");

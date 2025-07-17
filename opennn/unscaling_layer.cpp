@@ -278,12 +278,6 @@ void Unscaling::set_scalers(const Scaler& new_unscaling_method)
 }
 
 
-bool Unscaling::is_empty() const
-{
-    return get_output_dimensions()[0] == 0;
-}
-
-
 void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
@@ -399,7 +393,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();

@@ -196,8 +196,8 @@ void Dense3d::from_XML(const XMLDocument& document)
     set_label(read_xml_string(dense2d_layer_element, "Label"));
     set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    //Index index = 0;
-    //set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
+    string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(dense2d_layer_element, "Weights"), weights);
 }
 
 
@@ -210,11 +210,8 @@ void Dense3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_input_embedding()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_embedding()));
     add_xml_element(printer, "Activation", activation_function);
-
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
-
-    // add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
+    add_xml_element(printer, "Weights", tensor_to_string<type, 2>(weights));
 
     printer.CloseElement();
 }

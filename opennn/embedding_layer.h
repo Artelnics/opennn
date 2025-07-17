@@ -41,9 +41,6 @@ public:
 
     void set_parameters_random() override;
 
-    void set_biases(const string&) override;
-    void set_weights(const string&) override;
-
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
 
@@ -98,8 +95,6 @@ private:
 private:
 
     Index sequence_length = 0;
-
-    Tensor<type, 1> biases;
 
     Tensor<type, 2> weights;
 

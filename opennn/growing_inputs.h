@@ -19,25 +19,27 @@ class GrowingInputs : public InputsSelection
 
 public:
 
-    GrowingInputs(TrainingStrategy* = nullptr);
+    GrowingInputs(const TrainingStrategy* = nullptr);
 
     const Index& get_maximum_inputs_number() const;
 
-    const Index& get_minimum_inputs_number() const;
+    const Index& get_minimum_inputs_number() const override;
 
     const Index& get_maximum_selection_failures() const;
 
     void set_default();
 
     void set_maximum_inputs_number(const Index&);
-
     void set_minimum_inputs_number(const Index&);
+
+    void set_maximum_correlation(const type&);
+    void set_minimum_correlation(const type&);
 
     void set_maximum_selection_failures(const Index&);
 
     InputsSelectionResults perform_input_selection() override;
 
-    Tensor<string, 2> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const override;
 
     void from_XML(const XMLDocument&) override;
 
@@ -54,8 +56,10 @@ public:
 private:
 
     Index maximum_inputs_number = 1;
-
     Index minimum_inputs_number = 1;
+
+    type minimum_correlation = 0;
+    type maximum_correlation = 0;
 
     Index maximum_selection_failures = 100;
 };

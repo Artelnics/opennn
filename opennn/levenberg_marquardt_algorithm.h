@@ -24,15 +24,12 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
-   LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
+   LevenbergMarquardtAlgorithm(const LossIndex* = nullptr);
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
 
    const Index& get_maximum_selection_failures() const;
-
-   const Index& get_maximum_epochs_number() const;
-   const type& get_maximum_time() const;
 
    const type& get_damping_parameter() const;
 
@@ -110,10 +107,6 @@ private:
    type training_loss_goal = type(0);
 
    Index maximum_selection_failures = 0;
-
-   Index maximum_epochs_number = 0;
-
-   type maximum_time = type(360000);
 };
 
 

@@ -196,8 +196,8 @@ void Normalization3d::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    //Index index = 0;
-    //set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Betas"), betas);
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Gammas"), gammas);
 }
 
 
@@ -207,10 +207,8 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Label", label);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
-
-    //Tensor<type, 1> parameters;
-    //get_parameters(parameters);
-    //add_xml_element(printer, "Parameters", tensor_to_string(parameters));
+    add_xml_element(printer, "Betas", tensor_to_string<type, 1>(betas));
+    add_xml_element(printer, "Gammas", tensor_to_string<type, 1>(gammas));
 
     printer.CloseElement();
 }

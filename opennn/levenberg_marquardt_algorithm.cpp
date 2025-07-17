@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
@@ -37,18 +37,6 @@ const type& LevenbergMarquardtAlgorithm::get_loss_goal() const
 const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
-}
-
-
-const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
-{
-    return maximum_time;
 }
 
 
@@ -162,7 +150,7 @@ void LevenbergMarquardtAlgorithm::check() const
     if(!loss_index)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
         throw runtime_error("The loss funcional has no data set.");
@@ -176,7 +164,7 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     if(loss_index->get_name() == "MINKOWSKI_ERROR")
@@ -194,7 +182,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     const bool has_selection = dataset->has_selection();
 

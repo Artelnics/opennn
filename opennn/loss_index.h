@@ -9,7 +9,6 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#include "dataset.h"
 #include "neural_network.h"
 #include "tinyxml2.h"
 
@@ -24,8 +23,10 @@ struct Batch;
 struct ForwardPropagation;
 struct BackPropagation;
 struct BackPropagationLM;
+//struct NeuralNetworkBackPropagationLM;
 
 #ifdef OPENNN_CUDA
+struct BatchCuda;
 struct BackPropagationCuda;
 #endif
 
@@ -35,7 +36,7 @@ class LossIndex
 
 public:
 
-   LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
     ~LossIndex()
     {
@@ -52,7 +53,7 @@ public:
       return neural_network;
    }
 
-   inline Dataset* get_data_set() const 
+   inline Dataset* get_dataset() const
    {
       return dataset;
    }
@@ -63,17 +64,17 @@ public:
 
    bool has_neural_network() const;
 
-   bool has_data_set() const;
+   bool has_dataset() const;
 
    string get_regularization_method() const;
 
-   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    void set_threads_number(const int&);
 
-   void set_neural_network(NeuralNetwork*);
+   void set_neural_network(const NeuralNetwork*);
 
-   virtual void set_data_set(Dataset*);
+   virtual void set_dataset(const Dataset*);
 
    void set_regularization_method(const string&);
    void set_regularization_weight(const type&);
@@ -81,8 +82,6 @@ public:
    void set_display(const bool&);
 
    virtual void set_normalization_coefficient() {}
-
-   virtual type get_Minkowski_parameter() const { return 1.5; }
 
    // Back propagation
 
@@ -202,30 +201,6 @@ public:
                              BackPropagationCuda&);
 
     void add_regularization_cuda(BackPropagationCuda&) const;
-
-    float calculate_regularization_cuda(Index, float*);
-
-    void calculate_regularization_gradient_cuda(const Index parameters_number,
-                                                float regularization,
-                                                float* parameters,
-                                                float* aux_vector,
-                                                float* gradient);
-
-    float l1_norm_cuda(Index, float*);
-
-    float l2_norm_cuda(Index, float*);
-
-    void l1_norm_gradient_cuda(const Index parameters_number,
-                               float regularization,
-                               float* parameters,
-                               float* aux_vector,
-                               float* gradient);
-
-    void l2_norm_gradient_cuda(const Index parameters_number,
-                               float regularization,
-                               float* parameters,
-                               float* aux_vector,
-                               float* gradient);
     
 protected:
 

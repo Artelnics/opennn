@@ -17,12 +17,12 @@ namespace opennn
 Descriptives::Descriptives(const type& new_minimum,
                            const type& new_maximum,
                            const type& new_mean,
-                           const type& new_standard_deviation)
+                           const type& new_standard_deviation) :
+    minimum(new_minimum),
+    maximum(new_maximum),
+    mean(new_mean),
+    standard_deviation(new_standard_deviation)
 {
-    minimum = new_minimum;
-    maximum = new_maximum;
-    mean = new_mean;
-    standard_deviation = new_standard_deviation;
 }
 
 
@@ -235,21 +235,10 @@ Index Histogram::calculate_most_populated_bin() const
     if (frequencies.size() == 0) 
         return 0;
 
-    Index max_element=frequencies(0);
-    for (Index j = 1; j < frequencies.size(); j++) {
-        if (frequencies(j - 1) < frequencies(j)) {
-            max_element = frequencies(j);
-        }
-    }
-    
-    for (Index i = 0; i < frequencies.size(); i++) {
-        if (frequencies(i) == max_element) {
-            return i;
-        }
-    }
+    auto max_it = max_element(frequencies.data(), frequencies.data() + frequencies.size());
 
-    return 0;
-} 
+    return distance(frequencies.data(), max_it);
+}
 
 
 Tensor<type, 1> Histogram::calculate_minimal_centers() const

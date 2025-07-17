@@ -12,7 +12,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "time_series_dataset.h"
-#include <iterator>
 
 namespace opennn
 {
@@ -205,82 +204,81 @@ Tensor<Index, 1> Dataset::get_sample_use_numbers() const
 }
 
 
-Tensor<type, 1> Dataset::get_sample_use_percentages() const
-{
-    const Index samples_number = get_samples_number();
+// Tensor<type, 1> Dataset::get_sample_use_percentages() const
+// {
+//     const Index samples_number = get_samples_number();
 
-    return (get_sample_use_numbers().cast<type>()) * (100 / type(samples_number));
-}
-
-
-string Dataset::get_sample_string(const Index& sample_index) const
-{
-    const Tensor<type, 1> sample = data.chip(sample_index, 0);
-
-    string sample_string;
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index variable_index = 0;
-
-    for (Index i = 0; i < raw_variables_number; i++)
-    {
-        const RawVariable& raw_variable = raw_variables[i];
-
-        switch (raw_variable.type)
-        {
-        case RawVariableType::Numeric:
-        case RawVariableType::DateTime:
-        case RawVariableType::Constant:
-            sample_string += isnan(data(sample_index, variable_index))
-                                 ? missing_values_label
-                                 : to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-            break;
-
-        case RawVariableType::Binary:
-            sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : raw_variable.categories[Index(data(sample_index, variable_index))];
-
-            variable_index++;
-            break;
+//     return (get_sample_use_numbers().cast<type>()) * (100 / type(samples_number));
+// }
 
 
-        case RawVariableType::Categorical:
-            if (isnan(data(sample_index, variable_index)))
-            {
-                sample_string += missing_values_label;
-            }
-            else
-            {
-                const Index categories_number = raw_variable.get_categories_number();
+// string Dataset::get_sample_string(const Index& sample_index) const
+// {
+//     const Tensor<type, 1> sample = data.chip(sample_index, 0);
 
-                for (Index j = 0; j < categories_number; j++)
-                {
-                    if (abs(data(sample_index, variable_index + j) - type(1)) < NUMERIC_LIMITS_MIN)
-                    {
-                        sample_string += raw_variable.categories[j];
-                        break;
-                    }
-                }
+//     string sample_string;
 
-                variable_index += categories_number;
-            }
-            break;
+//     const Index raw_variables_number = get_raw_variables_number();
+
+//     Index variable_index = 0;
+
+//     for (Index i = 0; i < raw_variables_number; i++)
+//     {
+//         const RawVariable& raw_variable = raw_variables[i];
+
+//         switch (raw_variable.type)
+//         {
+//         case RawVariableType::Numeric:
+//         case RawVariableType::DateTime:
+//         case RawVariableType::Constant:
+//             sample_string += isnan(data(sample_index, variable_index))
+//                                  ? missing_values_label
+//                                  : to_string(double(data(sample_index, variable_index)));
+
+//             variable_index++;
+//             break;
+
+//         case RawVariableType::Binary:
+//             sample_string += isnan(data(sample_index, variable_index))
+//                 ? missing_values_label
+//                 : raw_variable.categories[Index(data(sample_index, variable_index))];
+
+//             variable_index++;
+//             break;
+
+//         case RawVariableType::Categorical:
+//             if (isnan(data(sample_index, variable_index)))
+//             {
+//                 sample_string += missing_values_label;
+//             }
+//             else
+//             {
+//                 const Index categories_number = raw_variable.get_categories_number();
+
+//                 for (Index j = 0; j < categories_number; j++)
+//                 {
+//                     if (abs(data(sample_index, variable_index + j) - type(1)) < NUMERIC_LIMITS_MIN)
+//                     {
+//                         sample_string += raw_variable.categories[j];
+//                         break;
+//                     }
+//                 }
+
+//                 variable_index += categories_number;
+//             }
+//             break;
 
 
-        default:
-            break;
-        }
+//         default:
+//             break;
+//         }
 
-        if (i != raw_variables_number - 1)
-            sample_string += get_separator_string() + string(" ");
-    }
+//         if (i != raw_variables_number - 1)
+//             sample_string += get_separator_string() + string(" ");
+//     }
 
-    return sample_string;
-}
+//     return sample_string;
+// }
 
 
 vector<Index> Dataset::get_sample_indices(const string& sample_use) const
@@ -1785,35 +1783,35 @@ void Dataset::set_threads_number(const int& new_threads_number)
 }
 
 
-Tensor<Index, 1> Dataset::unuse_repeated_samples()
-{
-    const Index samples_number = get_samples_number();
+// Tensor<Index, 1> Dataset::unuse_repeated_samples()
+// {
+//     const Index samples_number = get_samples_number();
 
-    Tensor<Index, 1> repeated_samples;
+//     Tensor<Index, 1> repeated_samples;
 
-    Tensor<type, 1> sample_i;
-    Tensor<type, 1> sample_j;
+//     Tensor<type, 1> sample_i;
+//     Tensor<type, 1> sample_j;
 
-    for (Index i = 0; i < samples_number; i++)
-    {
-        sample_i = get_sample_data(i);
+//     for (Index i = 0; i < samples_number; i++)
+//     {
+//         sample_i = get_sample_data(i);
 
-        for (Index j = Index(i + 1); j < samples_number; j++)
-        {
-            sample_j = get_sample_data(j);
+//         for (Index j = Index(i + 1); j < samples_number; j++)
+//         {
+//             sample_j = get_sample_data(j);
 
-            if (get_sample_use(j) != "None"
-                && equal(sample_i.data(), sample_i.data() + sample_i.size(), sample_j.data()))
-            {
-                set_sample_use(j, "None");
+//             if (get_sample_use(j) != "None"
+//                 && equal(sample_i.data(), sample_i.data() + sample_i.size(), sample_j.data()))
+//             {
+//                 set_sample_use(j, "None");
 
-                push_back(repeated_samples, j);
-            }
-        }
-    }
+//                 push_back(repeated_samples, j);
+//             }
+//         }
+//     }
 
-    return repeated_samples;
-}
+//     return repeated_samples;
+// }
 
 
 vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_correlation)
@@ -2247,10 +2245,10 @@ vector<Descriptives> Dataset::calculate_testing_target_variable_descriptives() c
 }
 
 
-Tensor<type, 1> Dataset::calculate_used_variables_minimums() const
-{
-    return column_minimums(data, get_used_sample_indices(), get_used_variable_indices());
-}
+// Tensor<type, 1> Dataset::calculate_used_variables_minimums() const
+// {
+//     return column_minimums(data, get_used_sample_indices(), get_used_variable_indices());
+// }
 
 
 Tensor<type, 1> Dataset::calculate_means(const string& sample_use,
@@ -2715,23 +2713,6 @@ void Dataset::set_data_constant(const type& new_value)
 }
 
 
-void Dataset::set_data_ascending()
-{
-    const vector<Index> input_indices = get_variable_indices("Input");
-
-    const Index samples_number = get_samples_number();
-
-    type new_value = 1;
-
-    for (Index i = 0; i < samples_number; ++i)
-        for (Index index : input_indices)
-        {
-            data(i, index) = new_value;
-            new_value++;
-        }
-}
-
-
 void Dataset::set_data_random()
 {
     set_random(data);
@@ -2785,7 +2766,7 @@ void Dataset::to_XML(XMLPrinter& printer) const
     if (missing_values_number > 0)
     {
         add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string<Index, 1>(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
@@ -4042,6 +4023,7 @@ bool Dataset::has_categorical_raw_variables() const
         [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Categorical; });
 }
 
+
 bool Dataset::has_binary_or_categorical_raw_variables() const
 {
     for (const Dataset::RawVariable& raw_variable : raw_variables)
@@ -4288,22 +4270,22 @@ void Batch::fill(const vector<Index>& sample_indices,
 }
 
 
-Batch::Batch(const Index& new_samples_number, Dataset* new_data_set)
+Batch::Batch(const Index& new_samples_number, Dataset* new_dataset)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
-    set(new_samples_number, new_data_set);
+    set(new_samples_number, new_dataset);
 }
 
 
-void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
+void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
 {
-    if (!new_data_set) return;
+    if (!new_dataset) return;
 
     samples_number = new_samples_number;
-    dataset = new_data_set;
+    dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
     // const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
@@ -4403,7 +4385,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 {
     dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
 
-    dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
+    //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
     dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
 
@@ -4411,21 +4393,21 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 }
 
 
-BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_data_set)
+BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_dataset)
 {
-    set(new_samples_number, new_data_set);
+    set(new_samples_number, new_dataset);
 }
 
 
-void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
+void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
 {
-    if (!new_data_set) return;
+    if (!new_dataset) return;
 
     samples_number = new_samples_number;
-    dataset = new_data_set;
+    dataset = new_dataset;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
-    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
+    //const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
     const dimensions& data_set_target_dimensions = dataset->get_dimensions("Target");
 
     if (!data_set_input_dimensions.empty())
@@ -4439,7 +4421,7 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
         //CHECK_CUDA(cudaMalloc(&inputs_device, input_size * sizeof(float)));
         CUDA_MALLOC_AND_REPORT(inputs_device, input_size * sizeof(float));
     }
-
+    /*
     if (!data_set_decoder_dimensions.empty())
     {
         decoder_dimensions = { samples_number };
@@ -4450,7 +4432,7 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
         CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
         CHECK_CUDA(cudaMalloc(&decoder_device, decoder_size * sizeof(float)));
     }
-
+    */
     if (!data_set_target_dimensions.empty())
     {
         target_dimensions = { samples_number };

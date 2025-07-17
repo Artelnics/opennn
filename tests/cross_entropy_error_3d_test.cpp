@@ -16,7 +16,7 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
     CrossEntropyError3d cross_entropy_error_3d;
 
     EXPECT_EQ(cross_entropy_error_3d.has_neural_network(), false);
-    EXPECT_EQ(cross_entropy_error_3d.has_data_set(), false);
+    EXPECT_EQ(cross_entropy_error_3d.has_dataset(), false);
 }
 
 

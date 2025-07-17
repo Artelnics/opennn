@@ -11,7 +11,7 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
     NormalizedSquaredError normalized_squared_error;
 
     EXPECT_EQ(normalized_squared_error.has_neural_network(), false);
-    EXPECT_EQ(normalized_squared_error.has_data_set(), false);
+    EXPECT_EQ(normalized_squared_error.has_dataset(), false);
 }
 
 
@@ -23,7 +23,7 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
 
     EXPECT_EQ(normalized_squared_error.has_neural_network(), true);
-    EXPECT_EQ(normalized_squared_error.has_data_set(), true);
+    EXPECT_EQ(normalized_squared_error.has_dataset(), true);
 }
 
 

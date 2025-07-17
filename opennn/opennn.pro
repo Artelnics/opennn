@@ -145,7 +145,6 @@ HEADERS += \
     weighted_squared_error.h\
     cross_entropy_error_2d.h \
     training_strategy.h \
-    learning_rate_algorithm.h \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h\
     stochastic_gradient_descent.h\
@@ -212,7 +211,6 @@ SOURCES += \
     registry.cpp \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
-    learning_rate_algorithm.cpp \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
     adaptive_moment_estimation.cpp\

@@ -300,10 +300,6 @@ void Addition3dBackPropagationCuda::print() const
 REGISTER(LayerForwardPropagationCuda, Addition3dForwardPropagationCuda, "Addition3d")
 REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
 
-
-//REGISTER_FORWARD_CUDA("Addition3d", Addition3dForwardPropagationCuda);
-//REGISTER_BACK_CUDA("Addition3d", Addition3dBackPropagationCuda);
-
 #endif
 
 REGISTER(Layer, Addition3d, "Addition3d")

@@ -19,7 +19,7 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   WeightedSquaredError(NeuralNetwork* = nullptr, Dataset* = nullptr);
+   WeightedSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
    type get_positives_weight() const;
    type get_negatives_weight() const;
@@ -39,7 +39,7 @@ public:
 
    void set_normalization_coefficient() override;
 
-   void set_data_set(Dataset*) override;
+   void set_dataset(const Dataset*) override;
 
    string get_name() const override;
 

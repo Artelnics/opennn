@@ -178,7 +178,8 @@ public:
                                                  "RectifiedLinear",
                                                  stride_dimensions,
                                                  Convolutional::Convolution::Same,
-                                                 "convolutional_layer_" + to_string(i+1)));
+                                                 true, // Batch normalization
+                                                 "convolutional_layer_" + to_string(i + 1)));
             
             const dimensions pool_dimensions = { 2, 2 };
             const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -191,7 +192,7 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-
+        
         add_layer(make_unique<Flatten>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),

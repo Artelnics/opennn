@@ -11,7 +11,7 @@ TEST(TrainingStrategy, DefaultConstructor)
     TrainingStrategy training_strategy;
 
     EXPECT_EQ(training_strategy.has_neural_network(), false);
-    EXPECT_EQ(training_strategy.has_data_set(), false);
+    EXPECT_EQ(training_strategy.has_dataset(), false);
 }
 
 
@@ -23,7 +23,7 @@ TEST(TrainingStrategy, GeneralConstructor)
     TrainingStrategy training_strategy_1(&neural_network, &dataset);
 
     EXPECT_EQ(training_strategy_1.get_neural_network(), &neural_network);
-    EXPECT_EQ(training_strategy_1.get_data_set(), &dataset);
+    EXPECT_EQ(training_strategy_1.get_dataset(), &dataset);
 }
 
 

@@ -11,7 +11,7 @@ TEST(CrossEntropyErrorTest, DefaultConstructor)
 
     CrossEntropyError2d cross_entropy_error;
 
-    EXPECT_TRUE(!cross_entropy_error.has_data_set());
+    EXPECT_TRUE(!cross_entropy_error.has_dataset());
     EXPECT_TRUE(!cross_entropy_error.has_neural_network());
 }
 

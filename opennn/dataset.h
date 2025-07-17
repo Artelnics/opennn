@@ -73,8 +73,6 @@ public:
 
         Scaler scaler = Scaler::None;
 
-        bool has_raw_variable_names = false;
-
         // Methods
 
         string get_use() const;
@@ -115,9 +113,9 @@ public:
     vector<Index> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
-    Tensor<type, 1> get_sample_use_percentages() const;
+    //Tensor<type, 1> get_sample_use_percentages() const;
 
-    string get_sample_string(const Index&) const;
+    //string get_sample_string(const Index&) const;
 
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const string&) const;
@@ -329,7 +327,7 @@ public:
 
     // Unusing
 
-    Tensor<Index, 1> unuse_repeated_samples();
+    //Tensor<Index, 1> unuse_repeated_samples();
 
     vector<string> unuse_uncorrelated_raw_variables(const type& = type(0.25));
     vector<string> unuse_collinear_raw_variables(const type& = type(0.95));
@@ -337,7 +335,6 @@ public:
     // Initialization
 
     void set_data_constant(const type&);
-    void set_data_ascending();
 
     // Descriptives
 
@@ -352,7 +349,7 @@ public:
  
     vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
-    Tensor<type, 1> calculate_used_variables_minimums() const;
+    //Tensor<type, 1> calculate_used_variables_minimums() const;
 
     Tensor<type, 1> calculate_means(const string& , const string&) const;
 

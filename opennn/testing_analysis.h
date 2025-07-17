@@ -9,20 +9,26 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "dataset.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
 
+class Dataset;
 class NeuralNetwork;
 
+struct Descriptives;
+struct Histogram;
+struct Correlation;
 
 class TestingAnalysis
 {
 
-public: 
+public:
 
-    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    TestingAnalysis(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {
@@ -77,14 +83,14 @@ public:
     // Get
 
     NeuralNetwork* get_neural_network() const;
-    Dataset* get_data_set() const;
+    Dataset* get_dataset() const;
 
     const bool& get_display() const;
 
     // Set
 
     void set_neural_network(NeuralNetwork*);
-    void set_data_set(Dataset*);
+    void set_dataset(Dataset*);
 
     void set_display(const bool&);
 
@@ -149,8 +155,6 @@ public:
     Tensor<type, 1> calculate_binary_classification_tests() const;
 
     void print_binary_classification_tests() const;
-
-    type calculate_logloss() const;
 
     // Confusion
 

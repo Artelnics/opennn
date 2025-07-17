@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <vector>
@@ -46,7 +47,7 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-//#define OPENNN_CUDA // Comment this line to disable cuda files
+#define OPENNN_CUDA // Comment this line to disable cuda files
 
 #ifdef OPENNN_CUDA
 

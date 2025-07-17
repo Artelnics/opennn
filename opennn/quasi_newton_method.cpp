@@ -15,16 +15,10 @@
 namespace opennn
 {
 
-QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index)
+QuasiNewtonMethod::QuasiNewtonMethod(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
     set_default();
-}
-
-
-const Index& QuasiNewtonMethod::get_epochs_number() const
-{
-    return epochs_number;
 }
 
 
@@ -43,18 +37,6 @@ const type& QuasiNewtonMethod::get_loss_goal() const
 const Index& QuasiNewtonMethod::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
-}
-
-
-const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-const type& QuasiNewtonMethod::get_maximum_time() const
-{
-    return maximum_time;
 }
 
 
@@ -269,7 +251,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
@@ -280,7 +262,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_dataset();
 
     if (!dataset)
         throw runtime_error("Data set is null.");
