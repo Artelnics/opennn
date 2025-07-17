@@ -9,13 +9,19 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "dataset.h"
+#include "tinyxml2.h"
+
+using namespace tinyxml2;
 
 namespace opennn
 {
 
+class Dataset;
 class NeuralNetwork;
 
+struct Descriptives;
+struct Histogram;
+struct Correlation;
 
 class TestingAnalysis
 {
@@ -149,8 +155,6 @@ public:
     Tensor<type, 1> calculate_binary_classification_tests() const;
 
     void print_binary_classification_tests() const;
-
-    //type calculate_logloss() const;
 
     // Confusion
 

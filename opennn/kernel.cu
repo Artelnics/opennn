@@ -544,3 +544,49 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
 
     calculate_multiple_cross_entropy_delta_kernel << <blocks_per_grid, threads_per_block >> > (n, deltas, targets, outputs, scaling_factor);
 }
+
+
+// Regularization
+
+__global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const float param_val = params[i];
+        const float sign = (param_val > 0.0f) ? 1.0f : ((param_val < 0.0f) ? -1.0f : 0.0f);
+        deltas[i] += weight * sign;
+    }
+}
+
+void apply_l1_gradient_cuda(const size_t n, float* deltas, const float* params, const float weight)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    apply_l1_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight);
+}
+
+
+__global__ void apply_elastic_net_gradient_kernel(const int n, float* deltas, const float* params, const float weight, const float mix_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const float param_val = params[i];
+        const float sign = (param_val > 0.0f) ? 1.0f : ((param_val < 0.0f) ? -1.0f : 0.0f);
+
+        const float l1_grad = mix_factor * sign;
+        const float l2_grad = (1.0f - mix_factor) * param_val;
+
+        deltas[i] += weight * (l1_grad + l2_grad);
+    }
+}
+
+void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float* params, const float weight, const float mix_factor)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    apply_elastic_net_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight, mix_factor);
+}

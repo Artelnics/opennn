@@ -34,8 +34,6 @@ namespace opennn
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    //vector<vector<string>> fix_input_output_variables(vector<string>&, vector<string>&, ostringstream&);
-
     void trim(string&);
     void erase(string&, const char&);
 

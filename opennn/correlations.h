@@ -101,12 +101,7 @@ pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_vector_matrix(const
 pair<Tensor<type, 1>, Tensor<type, 2>> filter_missing_values_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
 pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-//void register_layers();
-//void register_loss_indices();
 void register_optimization_algorithms();
-//void register_neurons_selection();
-//void register_inputs_selection();
-//void register_layer_forward_propagation();
 
 }
 

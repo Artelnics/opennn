@@ -26,9 +26,13 @@ public:
                   const string& = "Linear",
                   const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
                   const Convolution& = Convolution::Valid,          // Convolution type (Valid || Same)
+                  const bool& = false,                              // Batch Normalization)
                   const string = "convolutional_layer");
 
     bool get_batch_normalization() const;
+
+    Tensor<type, 1> get_scales() const;
+    Tensor<type, 1> get_offsets() const;
 
     const string& get_activation_function() const;
 
@@ -70,6 +74,7 @@ public:
              const string& = "Linear",
              const dimensions& = {1, 1},
              const Convolution& = Convolution::Valid,
+             const bool& = false,
              const string = "convolutional_layer");
 
     void set_activation_function(const string&);
@@ -143,6 +148,17 @@ protected:
 
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
 
+    // Batch Normalization
+
+    float* bn_scale_device = nullptr;
+    float* bn_offset_device = nullptr;
+    float* bn_running_mean_device = nullptr;
+    float* bn_running_variance_device = nullptr;
+
+    cudnnTensorDescriptor_t bn_tensor_descriptor = nullptr;
+
+    // Activations
+
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
 #endif
@@ -172,7 +188,7 @@ private:
 
    type momentum = type(0.9);
 
-   const type epsilon = numeric_limits<type>::epsilon();
+   const type epsilon = 1e-5;
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
@@ -181,7 +197,6 @@ private:
 
 struct ConvolutionalForwardPropagation : LayerForwardPropagation
 {
-
    ConvolutionalForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_output_pair() const override;
@@ -219,6 +234,9 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
    Tensor<type, 4> rotated_weights;
 
+   Tensor<type, 1> bn_scale_deltas;
+   Tensor<type, 1> bn_offset_deltas;
+
 };
 
 
@@ -253,6 +271,10 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
     bool is_first_layer = false;
 
     float* reordered_inputs_device = nullptr;
+
+    // Batch Normalizarion
+    float* bn_saved_mean = nullptr;
+    float* bn_saved_inv_variance = nullptr;
 };
 
 
@@ -283,6 +305,10 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     cudnnFilterDescriptor_t weight_deltas_tensor_descriptor = nullptr;
 
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+
+    // Batch Normalizarion
+    float* bn_scale_deltas_device = nullptr;
+    float* bn_offset_deltas_device = nullptr;
 };
 
 #endif

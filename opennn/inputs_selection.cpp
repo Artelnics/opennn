@@ -62,18 +62,6 @@ const type& InputsSelection::get_maximum_time() const
 }
 
 
-const type& InputsSelection::get_maximum_correlation() const
-{
-    return maximum_correlation;
-}
-
-
-const type& InputsSelection::get_minimum_correlation() const
-{
-    return minimum_correlation;
-}
-
-
 void InputsSelection::set(const TrainingStrategy* new_training_strategy)
 {
     training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
@@ -108,18 +96,6 @@ void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_
 void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
     maximum_time = new_maximum_time;
-}
-
-
-void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
-{
-    maximum_correlation = new_maximum_correlation;
-}
-
-
-void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
-{
-    minimum_correlation = new_minimum_correlation;
 }
 
 
@@ -271,28 +247,6 @@ string InputsSelection::write_time(const type& time) const
 
     return elapsed_time.str();
 }
-
-
-// Index InputsSelection::get_input_index(const Tensor<string, 1>& uses, const Index& inputs_number) const
-// {
-//     Index i = 0;
-//     Index j = 0;
-
-//     while(i < uses.size())
-//     {
-//         if (uses[i] == "Input")
-//         {
-//             if (j == inputs_number)
-//                 break;
-
-//             j++;
-//         }
-
-//         i++;
-//     }
-
-//     return i;
-// }
 
 }
 

@@ -880,6 +880,13 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
     from_XML(document);
 }
 
+
+string GeneticAlgorithm::get_name() const
+{
+    return "GeneticAlgorithm";
+}
+
+
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
 
 }

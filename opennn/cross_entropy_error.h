@@ -28,12 +28,12 @@ public:
                         BackPropagation&) const override;
 
    void calculate_binary_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const;
+                               const ForwardPropagation&,
+                               BackPropagation&) const;
 
    void calculate_multiple_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const;
+                                 const ForwardPropagation&,
+                                 BackPropagation&) const;
 
    // Gradient
 

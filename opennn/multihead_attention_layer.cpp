@@ -793,9 +793,9 @@ vector<pair<type*, Index>> MultiheadAttentionBackPropagation::get_parameter_delt
     };
 }
 
-REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
-REGISTER(LayerForwardPropagation, MultiheadAttentionForwardPropagation, "MultiHeadAttention")
-REGISTER(LayerBackPropagation, MultiheadAttentionBackPropagation, "MultiHeadAttention")
+REGISTER(Layer, MultiHeadAttention, "MultiheadAttention")
+REGISTER(LayerForwardPropagation, MultiheadAttentionForwardPropagation, "MultiheadAttention")
+REGISTER(LayerBackPropagation, MultiheadAttentionBackPropagation, "MultiheadAttention")
 
 }
 

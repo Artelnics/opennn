@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
-#include "tensors.h"
 #include "correlations.h"
 #include "language_dataset.h"
 #include "transformer.h"
@@ -2261,25 +2260,6 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
     return multiple_classification_tests;
 }
-
-
-// type TestingAnalysis::calculate_logloss() const
-// {
-//     const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
-
-//     const Tensor<type, 2> targets = dataset->get_data("Testing", "Target");
-
-//     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
-
-//     const Index testing_samples_number = dataset->get_samples_number("Testing");
-
-//     type logloss = type(0);
-
-//     for(Index i = 0; i < testing_samples_number; i++)
-//         logloss += targets(i,0)*log(outputs(i,0)) + (type(1) - targets(i,0))*log(type(1) - outputs(i,0));
-
-//     return -logloss/type(testing_samples_number);
-// }
 
 
 void TestingAnalysis::to_XML(XMLPrinter& printer) const

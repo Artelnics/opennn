@@ -9,6 +9,7 @@
 #ifndef STANDARDNETWORKS_H
 #define STANDARDNETWORKS_H
 
+#include "multihead_attention_layer.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
@@ -42,11 +43,13 @@ public:
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{ complexity_dimensions[i] },
                                            "RectifiedLinear",
+                                           false,
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Linear",
+                                       false,
                                        "approximation_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
@@ -78,11 +81,13 @@ public:
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{complexity_dimensions[i]},
                                            "HyperbolicTangent",
+                                           false,
                                            "dense2d_layer_" + to_string(i + 1)));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Logistic",
+                                       false,
                                        "classification_layer"));
     }
 };
@@ -99,7 +104,12 @@ public:
         add_layer(make_unique<Scaling2d>(input_dimensions));
 
         add_layer(make_unique<Recurrent>(get_output_dimensions(),
-                                         output_dimensions));
+                                         complexity_dimensions));
+
+        add_layer(make_unique<Dense2d>(complexity_dimensions,
+                                       output_dimensions,
+                                       "Linear",
+                                       "recurrent_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
 
@@ -125,21 +135,25 @@ public:
         add_layer(make_unique<Dense2d>(input_dimensions,
                                        dimensions{mapping_neurons_number},
                                        "HyperbolicTangent",
+                                       false,
                                        "mapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ bottle_neck_neurons_number },
                                        "Linear",
+                                       false,
                                        "bottleneck_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ bottle_neck_neurons_number },
                                        dimensions{ mapping_neurons_number },
                                        "HyperbolicTangent",
+                                       false,
                                        "demapping_layer"));
 
         add_layer(make_unique<Dense2d>(dimensions{ mapping_neurons_number },
                                        dimensions{ output_dimensions },
                                        "Linear",
+                                       false,
                                        "output_layer"));
 
         add_layer(make_unique<Unscaling>(output_dimensions));
@@ -172,7 +186,8 @@ public:
                                                  "RectifiedLinear",
                                                  stride_dimensions,
                                                  Convolutional::Convolution::Same,
-                                                 "convolutional_layer_" + to_string(i+1)));
+                                                 true, // Batch normalization
+                                                 "convolutional_layer_" + to_string(i + 1)));
             
             const dimensions pool_dimensions = { 2, 2 };
             const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -191,6 +206,7 @@ public:
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Softmax",
+                                       false,
                                        "dense_2d_layer"));
     }
 };
