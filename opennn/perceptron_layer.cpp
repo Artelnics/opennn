@@ -673,7 +673,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Droput
 
-    if (is_training && get_dropout_rate() > type(0))
+    if (is_training && activation_function != "Softmax" && get_dropout_rate() > type(0))
     {
         status = cudnnDropoutForward(cudnn_handle,
             dense2d_layer_forward_propagation_cuda->dropout_descriptor,
@@ -727,7 +727,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Dropout
 
-    if (get_dropout_rate() > type(0))
+    if (get_dropout_rate() > type(0) && activation_function != "Softmax")
     {
         cudnnStatus_t status = cudnnDropoutBackward(cudnn_handle,
             dense2d_layer_forward_propagation_cuda->dropout_descriptor,
@@ -950,6 +950,12 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     if (dense2d_layer->get_dropout_rate() > type(0))
     {
+        {
+            random_device rd;
+            auto now = chrono::high_resolution_clock::now().time_since_epoch().count();
+
+            dropout_seed = (static_cast<unsigned long long>(rd()) << 1) ^ static_cast<unsigned long long>(now);
+        }
         cudnnCreateDropoutDescriptor(&dropout_descriptor);
 
         cudnnDropoutGetStatesSize(dense2d_layer->get_cudnn_handle(), &dropout_states_size);
@@ -1036,7 +1042,7 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     cudnnCreateTensorDescriptor(&deltas_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(deltas_tensor_descriptor,
-        CUDNN_TENSOR_NHWC,
+        CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
         outputs_number,
