@@ -7,9 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
 #include "correlations.h"
-#include "tinyxml2.h"
+#include "dataset.h"
 #include "scaling_layer_2d.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
@@ -880,6 +879,13 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
 
     from_XML(document);
 }
+
+
+string GeneticAlgorithm::get_name() const
+{
+    return "GeneticAlgorithm";
+}
+
 
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
 

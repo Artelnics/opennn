@@ -172,19 +172,6 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
 }
 
 
-//void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
-//{
-//    const Index depth = tensor.dimension(2);
-
-//    for(Index i = 0; i < depth; i++)
-//    {
-//        TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
-
-//        slice.device(*thread_pool_device) = slice - matrix;
-//    }
-//}
-
-
 void save_csv(const Tensor<type,2>& data, const filesystem::path& path)
 {
     ofstream file(path);
@@ -248,14 +235,9 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 Index count_greater_than(const vector<Index>& data, const Index& bound)
 {
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < Index(data.size()); i++)
-        if(data[i] > bound)
-            count++;
-
-    return count;
+    return count_if(data.begin(), data.end(), [&](const Index& value) {
+        return value > bound;
+    });
 }
 
 
@@ -315,14 +297,6 @@ void set_row(Tensor<type,2>& matrix, const Tensor<type, 1>& new_row, const Index
 
     for(Index i = 0; i < columns_number; i++)
         matrix(row_index, i) = new_row(i);
-}
-
-
-void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, const Index& row_index)
-{
-    const Index columns_number = vector.size();
-
-    memcpy(matrix.data() + row_index * columns_number, vector.data(), columns_number*sizeof(type));
 }
 
 
@@ -441,35 +415,6 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
     distance = (x-y).square().sum().sqrt();
 
     return distance(0);
-}
-
-
-type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
-{
-    Tensor<type, 0> distance;
-
-    distance = (x-y).square().sum().sqrt();
-
-    return distance(0);
-}
-
-
-type l2_distance(const type& x, const type& y)
-{
-    return type(fabs(x - y));
-}
-
-
-Tensor<type, 1> l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const Index& size)
-{
-    Tensor<type, 1> distance(size);
-
-    const Tensor<type, 2> difference = x - y;
-
-    for(Index i = 0; i < difference.dimension(1); i++)
-        distance(i) = abs(difference(i));
-
-    return distance;
 }
 
 
@@ -608,6 +553,7 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
     }
 }
 
+
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
     const Index size = x.size() + y.size();
@@ -712,7 +658,8 @@ dimensions string_to_dimensions(const string& x, const string& separator)
 
     while (getline(ss, token, separator[0]))
     {
-        try {
+        try
+        {
             if (!token.empty())
                 result.push_back(stoi(token));
         }
@@ -723,121 +670,6 @@ dimensions string_to_dimensions(const string& x, const string& separator)
     }
 
     return result;
-/*
-    size_t start = 0;
-    size_t end = x.find(separator);
-
-    while (end != string::npos)
-    {
-        const string token = x.substr(start, end - start);
-
-        try
-        {
-            result.push_back(stoi(token));
-        }
-        catch (const invalid_argument&)
-        {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-
-        start = end + separator.length();
-        end = x.find(separator, start);
-    }
-
-    if (start < x.size())
-    {
-        const string token = x.substr(start);
-
-        try
-        {
-            result.push_back(stoi(token));
-        }
-        catch (const invalid_argument&)
-        {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-    }
-
-    return result;
-*/
-}
-
-
-Tensor<type, 1> string_to_tensor(const string& x, const string& separator)
-{
-    if (x.empty())
-        throw runtime_error("Error: Input string must not be empty.\n");
-
-    dimensions temp_dimensions;
-    size_t start = 0;
-    size_t end = x.find(separator);
-
-    while (end != string::npos) {
-        string token = x.substr(start, end - start);
-
-        try {
-            temp_dimensions.push_back(std::stoi(token));
-        }
-        catch (const invalid_argument&) {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-
-        start = end + separator.length();
-        end = x.find(separator, start);
-    }
-
-    if (start < x.size()) {
-        string token = x.substr(start);
-        try {
-            temp_dimensions.push_back(stoi(token));
-        }
-        catch (const invalid_argument&) {
-            throw runtime_error("Error: Input string contains non-numeric elements.\n");
-        }
-    }
-
-    Tensor<type, 1> tensor(temp_dimensions.size());
-    for (size_t i = 0; i < temp_dimensions.size(); ++i)
-        tensor(i) = temp_dimensions[i];
-
-    return tensor;
-}
-
-
-string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
-{
-    const Index size = x.size();
-
-    ostringstream buffer;
-
-    if(x.size() == 0)
-        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
-
-    return buffer.str();
-}
-
-
-Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
-{
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
-
-    Tensor<type, 2> new_matrix(rows_number-1, columns_number);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < row_index; i++)
-        for(Index j = 0; j < columns_number; j++)
-            new_matrix(i, j) = tensor(i, j);
-
-    #pragma omp parallel for
-    for(Index i = row_index + 1; i < rows_number; i++)
-        for(Index j = 0; j < columns_number; j++)
-            new_matrix(i-1,j) = tensor(i, j);
-
-    return new_matrix;
 }
 
 

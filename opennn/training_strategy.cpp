@@ -9,8 +9,8 @@
 #include "registry.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
-#include "quasi_newton_method.h"
 #include "training_strategy.h"
+#include "quasi_newton_method.h"
 
 namespace opennn
 {

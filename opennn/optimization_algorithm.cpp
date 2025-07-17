@@ -122,33 +122,6 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 }
 
 
-// BoxPlot OptimizationAlgorithm::calculate_distances_box_plot(type* & new_inputs_data, Tensor<Index,1>& input_dimensions,
-//                                                             type* & new_outputs_data, Tensor<Index,1>& output_dimensions)
-// {
-//     const Index samples_number = input_dimensions(0);
-//     const Index inputs_number = input_dimensions(1);
-
-//     TensorMap<Tensor<type, 2>> inputs(new_inputs_data, samples_number, inputs_number);
-//     TensorMap<Tensor<type, 2>> outputs(new_outputs_data, output_dimensions[0], output_dimensions(1));
-
-//     Tensor<type, 1> distances(samples_number);
-//     Index distance_index = 0;
-
-//     for(Index i = 0; i < samples_number; i++)
-//     {
-//         Tensor<type, 1> input_row = inputs.chip(i, 0);
-//         Tensor<type, 1> output_row = outputs.chip(i, 0);
-
-//         const type distance = l2_distance(input_row, output_row)/inputs_number;
-
-//         if(!isnan(distance))
-//             distances(distance_index++) = l2_distance(input_row, output_row)/inputs_number;
-//     }
-
-//     return box_plot(distances);
-// }
-
-
 void OptimizationAlgorithm::check() const
 {
     if (!loss_index)
@@ -251,6 +224,7 @@ void OptimizationAlgorithm::set_names()
 
     neural_network->set_input_names(input_names);
     neural_network->set_output_names(target_names);
+
 }
 
 

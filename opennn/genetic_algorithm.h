@@ -47,7 +47,7 @@ public:
 
     void set_population(const Tensor<bool, 2>&);
 
-    void set_individuals_number(const Index& new_individuals_number=4);
+    void set_individuals_number(const Index& new_individuals_number = 4);
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
@@ -78,7 +78,7 @@ public:
 
     InputsSelectionResults perform_input_selection() override;
 
-    Tensor<string, 2> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const override;
 
     void from_XML(const XMLDocument&) override;
 
@@ -90,19 +90,13 @@ public:
 
     void load(const filesystem::path&);
 
-    string get_name() const override
-    {
-        return "GeneticAlgorithm";
-    }
+    string get_name() const override;
 
 private:
 
     Tensor<Tensor<type, 1>, 1> parameters;
 
     vector<bool> original_input_raw_variables;
-
-    vector<Index> original_input_raw_variable_indices;
-    vector<Index> original_target_raw_variable_indices;
 
     vector<bool> original_unused_raw_variables;
     

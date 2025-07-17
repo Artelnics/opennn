@@ -45,6 +45,7 @@ public:
             throw runtime_error("Component not found: " + name);
 
         return it->second();
+
     }
 
     vector<string> registered_names() const

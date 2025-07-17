@@ -34,8 +34,6 @@ namespace opennn
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    //vector<vector<string>> fix_input_output_variables(vector<string>&, vector<string>&, ostringstream&);
-
     void trim(string&);
     void erase(string&, const char&);
 
@@ -55,7 +53,7 @@ namespace opennn
     bool contains(vector<string>&, const string&);
     string get_first_word(string&);
 
-    vector<string> sort_string_vector(vector<string>&);
+    void sort_string_vector(vector<string>&);
     vector<string> concatenate_string_vectors (const vector<string>&, const vector<string>&);
 
     enum Language {ENG, SPA};

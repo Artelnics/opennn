@@ -56,7 +56,7 @@ int main()
         dataset.set_data_random();
         dataset.set_data_ascending();
 
-        dataset.set(Dataset::SampleUse::Training);
+        dataset.set_sample_uses("Training");
 
         dataset.print_data();
         */
@@ -99,7 +99,7 @@ int main()
         training_strategy.perform_training_cuda();
         
         cudaDeviceSynchronize();
-
+        
         // Testing analysis
         
         TestingAnalysis testing_analysis(&neural_network, &dataset);

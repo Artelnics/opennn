@@ -707,70 +707,14 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
 
-    set_biases(read_xml_string(multihead_attention_layer_element, "Biases"));
-    set_weights(read_xml_string(multihead_attention_layer_element, "Weights"));
-}
-
-
-void MultiHeadAttention::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> all_biases_vec;
-    while(biases_strings >> number)
-        all_biases_vec.push_back(number);
-
-    const Index query_biases_size = query_biases.size();
-    const Index key_biases_size = key_biases.size();
-    const Index value_biases_size = value_biases.size();
-    const Index projection_biases_size = projection_biases.size();
-    const Index total_size = query_biases_size + key_biases_size + value_biases_size + projection_biases_size;
-
-    if (all_biases_vec.size() != total_size)
-        throw runtime_error("MultiHeadAttention layer: Expected " + to_string(total_size) + " biases, got " + to_string(all_biases_vec.size()));
-
-    Index current_pos = 0;
-    copy(all_biases_vec.begin() + current_pos, all_biases_vec.begin() + current_pos + query_biases_size, query_biases.data());
-    current_pos += query_biases_size;
-
-    copy(all_biases_vec.begin() + current_pos, all_biases_vec.begin() + current_pos + key_biases_size, key_biases.data());
-    current_pos += key_biases_size;
-
-    copy(all_biases_vec.begin() + current_pos, all_biases_vec.begin() + current_pos + value_biases_size, value_biases.data());
-    current_pos += value_biases_size;
-
-    copy(all_biases_vec.begin() + current_pos, all_biases_vec.end(), projection_biases.data());
-}
-
-
-void MultiHeadAttention::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> all_weights_vec;
-    while(weights_strings >> number)
-        all_weights_vec.push_back(number);
-
-    const Index query_weights_size = query_weights.size();
-    const Index key_weights_size = key_weights.size();
-    const Index value_weights_size = value_weights.size();
-    const Index projection_weights_size = projection_weights.size();
-    const Index total_size = query_weights_size + key_weights_size + value_weights_size + projection_weights_size;
-
-    if (all_weights_vec.size() != total_size)
-        throw runtime_error("Recurrent layer: Expected " + to_string(total_size) + " weights, got " + to_string(all_weights_vec.size()));
-
-    Index current_pos = 0;
-    copy(all_weights_vec.begin() + current_pos, all_weights_vec.begin() + current_pos + query_weights_size, query_weights.data());
-    current_pos += query_weights_size;
-
-    copy(all_weights_vec.begin() + current_pos, all_weights_vec.begin() + current_pos + key_weights_size, key_weights.data());
-    current_pos += key_weights_size;
-
-    copy(all_weights_vec.begin() + current_pos, all_weights_vec.begin() + current_pos + value_weights_size, value_weights.data());
-    current_pos += value_weights_size;
-
-    copy(all_weights_vec.begin() + current_pos, all_weights_vec.end(), projection_weights.data());
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "QueryBiases"), query_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "QueryWeights"), query_weights);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "KeyBiases"), key_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "KeyWeights"), key_weights);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ValueBiases"), value_biases);
+    string_to_tensor<type, 3>(read_xml_string(multihead_attention_layer_element, "ValueWeights"), value_weights);
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
 }
 
 
@@ -798,40 +742,14 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "HiddenDepth", to_string(get_hidden_depth()));
     add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
     add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
-
-    const Index biases_size = query_biases.size() + key_biases.size() + value_biases.size() + projection_biases.size();
-    Tensor<type, 1> combined_biases(biases_size);
-    Index current_pos = 0;
-
-    copy(query_biases.data(), query_biases.data() + query_biases.size(), combined_biases.data() + current_pos);
-    current_pos += query_biases.size();
-
-    copy(key_biases.data(), key_biases.data() + key_biases.size(), combined_biases.data() + current_pos);
-    current_pos += key_biases.size();
-
-    copy(value_biases.data(), value_biases.data() + value_biases.size(), combined_biases.data() + current_pos);
-    current_pos += value_biases.size();
-
-    copy(projection_biases.data(), projection_biases.data() + projection_biases.size(), combined_biases.data() + current_pos);
-
-    add_xml_element(printer, "Biases", tensor_to_string(combined_biases));
-
-    const Index weights_size = query_weights.size() + key_weights.size() + value_weights.size() + projection_weights.size();
-    Tensor<type, 1> combined_weights(weights_size);
-    current_pos = 0;
-
-    copy(query_weights.data(), query_weights.data() + query_weights.size(), combined_weights.data() + current_pos);
-    current_pos += query_weights.size();
-
-    copy(key_weights.data(), key_weights.data() + key_weights.size(), combined_weights.data() + current_pos);
-    current_pos += key_weights.size();
-
-    copy(value_weights.data(), value_weights.data() + value_weights.size(), combined_weights.data() + current_pos);
-    current_pos += value_weights.size();
-
-    copy(projection_weights.data(), projection_weights.data() + projection_weights.size(), combined_weights.data() + current_pos);
-
-    add_xml_element(printer, "Weights", tensor_to_string(combined_weights));
+    add_xml_element(printer, "QueryBiases", tensor_to_string<type, 2>(query_biases));
+    add_xml_element(printer, "QueryWeights", tensor_to_string<type, 3>(query_weights));
+    add_xml_element(printer, "KeyBiases", tensor_to_string<type, 2>(key_biases));
+    add_xml_element(printer, "KeyWeights", tensor_to_string<type, 3>(key_weights));
+    add_xml_element(printer, "ValueBiases", tensor_to_string<type, 2>(value_biases));
+    add_xml_element(printer, "ValueWeights", tensor_to_string<type, 3>(value_weights));
+    add_xml_element(printer, "ProjectionBiases", tensor_to_string<type, 1>(projection_biases));
+    add_xml_element(printer, "ProjectionWeights", tensor_to_string<type, 2>(projection_weights));
 
     printer.CloseElement();
 }

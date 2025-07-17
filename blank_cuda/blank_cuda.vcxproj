@@ -116,7 +116,6 @@
     <ClCompile Include="..\opennn\kmeans.cpp" />
     <ClCompile Include="..\opennn\language_dataset.cpp" />
     <ClCompile Include="..\opennn\layer.cpp" />
-    <ClCompile Include="..\opennn\learning_rate_algorithm.cpp" />
     <ClCompile Include="..\opennn\levenberg_marquardt_algorithm.cpp" />
     <ClCompile Include="..\opennn\loss_index.cpp" />
     <ClCompile Include="..\opennn\mean_squared_error.cpp" />
@@ -193,7 +192,6 @@
     <ClInclude Include="..\opennn\layer_back_propagation.h" />
     <ClInclude Include="..\opennn\layer_back_propagation_lm.h" />
     <ClInclude Include="..\opennn\layer_forward_propagation.h" />
-    <ClInclude Include="..\opennn\learning_rate_algorithm.h" />
     <ClInclude Include="..\opennn\levenberg_marquardt_algorithm.h" />
     <ClInclude Include="..\opennn\loss_index.h" />
     <ClInclude Include="..\opennn\mean_squared_error.h" />

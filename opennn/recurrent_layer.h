@@ -35,14 +35,12 @@ public:
    void set_input_dimensions(const dimensions&) override;
    void set_output_dimensions(const dimensions&) override;
 
-   void set_biases(const string&) override;
-   void set_weights(const string&) override;
-
    void set_timesteps(const Index&);
 
    void set_activation_function(const string&);
 
    void calculate_combinations(const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -63,7 +61,7 @@ public:
 
 private:
 
-    Index time_steps = type(0);
+    Index time_steps = type(2);
 
     Index batch_size = type(0);
 
@@ -73,7 +71,7 @@ private:
 
     Tensor<type, 2> recurrent_weights;
 
-    Tensor<type, 2> previous_hidden_states;
+    //Tensor<type, 2> previous_hidden_states;
 
     string activation_function = "Linear";
 

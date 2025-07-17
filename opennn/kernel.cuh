@@ -92,16 +92,24 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
 
  // Errors
 
- __global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon);
- void calculate_binary_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon);
+ __global__ void calculate_binary_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
+ void calculate_binary_cross_entropy_cuda(const size_t&, type*, const type*, const type*, const type);
 
- __global__ void calculate_binary_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor);
- void calculate_binary_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type epsilon, const type scaling_factor);
+ __global__ void calculate_binary_cross_entropy_delta_kernel(const int, type*, const type*, const type*, const type, const type);
+ void calculate_binary_cross_entropy_delta_cuda(const size_t&, type*, const type*, const type*, const type, const type);
 
- __global__ void calculate_multiple_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon);
- void calculate_multiple_cross_entropy_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type epsilon);
+ __global__ void calculate_multiple_cross_entropy_kernel(const int, type*, const type*, const type*, const type);
+ void calculate_multiple_cross_entropy_cuda(const size_t&, type*, const type*, const type*, const type);
 
- __global__ void calculate_multiple_cross_entropy_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type scaling_factor);
- void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type scaling_factor);
+ __global__ void calculate_multiple_cross_entropy_delta_kernel(const int, type*, const type*, const type*, const type);
+ void calculate_multiple_cross_entropy_delta_cuda(const size_t&, type*, const type*, const type*, const type);
+
+ // Regularization
+
+ __global__ void apply_l1_gradient_kernel(const int, float*, const float*, const float);
+ void apply_l1_gradient_cuda(const size_t, float*, const float*, const float);
+
+ __global__ void apply_elastic_net_gradient_kernel(const int, float*, const float*, const float, const float);
+ void apply_elastic_net_gradient_cuda(const size_t, float*, const float*, const float, const float);
 
 #endif // KERNEL_CUH

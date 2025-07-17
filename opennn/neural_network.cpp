@@ -6,12 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "model_expression.h"
 #include "registry.h"
-#include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
-#include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
 
@@ -280,9 +277,7 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
 void NeuralNetwork::set_layer_inputs_indices(const string& layer_label,
                                              const initializer_list<string>& new_layer_input_labels_list)
 {
-    const vector<string> new_layer_input_labels = new_layer_input_labels_list;
-
-    set_layer_inputs_indices(layer_label, new_layer_input_labels);
+    set_layer_inputs_indices(layer_label, vector<string>(new_layer_input_labels_list));
 }
 
 
@@ -993,6 +988,8 @@ void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
 
+    cout << "Inputs number: " << get_inputs_number() << endl;
+
     print_vector(get_input_names());
 
     const Index layers_number = get_layers_number();       
@@ -1005,6 +1002,8 @@ void NeuralNetwork::print() const
              << "Layer " << i << ": " << endl;
         layers[i]->print();
     }
+
+    cout << "Outputs number: " << get_outputs_number() << endl;
 
     cout << "Outputs:" << endl;
     print_vector(get_output_names());
@@ -1228,6 +1227,7 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
+
 }
 
 

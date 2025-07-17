@@ -54,9 +54,6 @@ public:
 
     void set_dropout_rate(const type&);
 
-    void set_biases(const string&) override;
-    void set_weights(const string&) override;
-
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -78,8 +75,8 @@ public:
 
     void print() const override;
 
-    void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
 
 #ifdef OPENNN_CUDA
         // @todo

@@ -18,14 +18,7 @@ namespace opennn
 QuasiNewtonMethod::QuasiNewtonMethod(const LossIndex* new_loss_index)
     : OptimizationAlgorithm(new_loss_index)
 {
-
     set_default();
-}
-
-
-const Index& QuasiNewtonMethod::get_epochs_number() const
-{
-    return epochs_number;
 }
 
 
@@ -44,18 +37,6 @@ const type& QuasiNewtonMethod::get_loss_goal() const
 const Index& QuasiNewtonMethod::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
-}
-
-
-const Index& QuasiNewtonMethod::get_maximum_epochs_number() const
-{
-    return maximum_epochs_number;
-}
-
-
-const type& QuasiNewtonMethod::get_maximum_time() const
-{
-    return maximum_time;
 }
 
 
@@ -210,7 +191,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     if(training_slope(0) >= type(0))
         training_direction.device(*thread_pool_device) = -gradient;
- 
+
     // Get learning rate
 
     optimization_data.epoch == 0
@@ -256,7 +237,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     }
 
     // Update stuff
-
     old_gradient = gradient;
 
     optimization_data.old_inverse_hessian = inverse_hessian;
@@ -306,6 +286,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
+
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
     set_names();
@@ -352,7 +333,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         optimization_data.epoch = epoch;
-
         // Neural network
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 

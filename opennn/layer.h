@@ -39,9 +39,6 @@ public:
     virtual void set_input_dimensions(const dimensions&);
     virtual void set_output_dimensions(const dimensions&);
 
-    virtual void set_biases(const string&);
-    virtual void set_weights(const string&);
-
     void set_label(const string&);
 
     void set_display(const bool&);
@@ -51,33 +48,7 @@ public:
     virtual void set_parameters_glorot();
 
     Index get_parameters_number() const;
-    /*
 
-    virtual void get_parameters(Tensor<type, 1>& parameters) const
-    {
-        const Index parameters_number = get_parameters_number();
-
-        parameters.resize(parameters_number);
-
-        const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
-
-        Index index = 0;
-
-        for(Index i = 0; i < parameter_pairs.size(); i++)
-        {
-            TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
-
-            //copy_to_vector(parameters, this_parameters, index);
-
-        }
-    }
-
-    void set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
-    {
-        //copy_from_vector(weights, new_parameters, index);
-        //copy_from_vector(biases, new_parameters, index);
-    }
-*/
     virtual vector<pair<type*, Index>> get_parameter_pairs() const;
 
     //virtual pair
@@ -109,9 +80,9 @@ public:
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-                                                      unique_ptr<LayerForwardPropagation>&,
-                                                      unique_ptr<LayerBackPropagationLM>&) {}
+    // virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
+    //                                                   unique_ptr<LayerForwardPropagation>&,
+    //                                                   unique_ptr<LayerBackPropagationLM>&) {}
 
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    const Index&,

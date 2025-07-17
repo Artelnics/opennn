@@ -293,8 +293,8 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
 
     set_label(read_xml_string(probabilistic_layer_element, "Label"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
-    set_biases(read_xml_string(probabilistic_layer_element, "Biases"));
-    set_weights(read_xml_string(probabilistic_layer_element, "Weights"));
+    string_to_tensor<type, 1>(read_xml_string(probabilistic_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(probabilistic_layer_element, "Weights"), weights);
 }
 
 
@@ -307,38 +307,10 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "Activation", get_activation_function_string());
-    add_xml_element(printer, "Biases", tensor_to_string(biases));
-    add_xml_element(printer, "Weights", tensor_2_to_string(weights));
+    add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
+    add_xml_element(printer, "Weights", tensor_to_string<type, 2>(weights));
 
     printer.CloseElement();
-}
-
-
-void Probabilistic3d::set_biases(const string& new_biases)
-{
-    stringstream biases_strings = stringstream(new_biases);
-    type number;
-    vector<type> values;
-
-    while(biases_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        biases(i) = values[i];
-}
-
-
-void Probabilistic3d::set_weights(const string& new_weights)
-{
-    stringstream weights_strings = stringstream(new_weights);
-    type number;
-    vector<type> values;
-
-    while(weights_strings >> number)
-        values.push_back(number);
-
-    for (size_t i = 0; i < values.size(); ++i)
-        weights(i) = values[i];
 }
 
 

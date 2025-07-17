@@ -41,9 +41,12 @@ public:
 
     void set_parameters_random() override;
 
+<<<<<<< HEAD
     // void set_biases(const string&) override;
-    void set_weights(const string&) override;
+    void set_weights(const string&) ;
 
+=======
+>>>>>>> 790e1c37e373d0d1029136cecd6e2d6e543271c5
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
 

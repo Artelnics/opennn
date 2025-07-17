@@ -32,9 +32,6 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
-    void set_biases(const string&) override;
-    void set_weights(const string&) override;
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;

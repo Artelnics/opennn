@@ -51,12 +51,6 @@ const type& AdaptiveMomentEstimation::get_loss_goal() const
 }
 
 
-const type& AdaptiveMomentEstimation::get_maximum_time() const
-{
-    return maximum_time;
-}
-
-
 void AdaptiveMomentEstimation::set_batch_size(const Index& new_batch_size)
 {
     batch_size = new_batch_size;
@@ -89,15 +83,7 @@ void AdaptiveMomentEstimation::set_display(const bool& new_display)
 
 void AdaptiveMomentEstimation::set_learning_rate(const type& new_learning_rate)
 {
-    learning_rate= new_learning_rate;
-}
-
-
-void AdaptiveMomentEstimation::set_custom_learning_rate(const type& parameter)
-{
-    use_custom_learning_rate = true;
-
-    learning_rate = pow(parameter, -0.5);
+    learning_rate = new_learning_rate;
 }
 
 
@@ -230,7 +216,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -394,11 +379,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(9, 2);
+    Tensor<string, 2> string_matrix(8, 2);
 
     string_matrix.setValues({
     {"Learning rate", to_string(double(learning_rate))},
-    {"Initial decay", to_string(double(initial_decay))},
     {"Beta 1", to_string(double(beta_1))},
     {"Beta 2", to_string(double(beta_2))},
     {"Epsilon", to_string(double(epsilon))},
@@ -414,48 +398,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-/*
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
-
-    Index& iteration = optimization_data.iteration;
-    
-    const type bias_correction =
-            sqrt(type(1) - pow(beta_2, type(iteration))) /
-            (type(1) - pow(beta_1, type(iteration)));
-
-    const Tensor<type, 1>& gradient = back_propagation.gradient;
-
-    Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
-
-    Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
-
-    Tensor<type, 1>& parameters = back_propagation.parameters;
-
-    gradient_exponential_decay.device(*thread_pool_device)
-        = gradient * (type(1) - beta_1) + gradient_exponential_decay * beta_1;
-
-    square_gradient_exponential_decay.device(*thread_pool_device)
-        = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-
-    type effective_learning_rate = type(learning_rate * bias_correction);
-
-    if(use_custom_learning_rate)
-    {
-        const type warmup_steps = 4000;
-        type& step = optimization_data.step;
-        effective_learning_rate *= learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
-        step++;
-    }
-
-    parameters.device(*thread_pool_device)
-        -= effective_learning_rate*gradient_exponential_decay / (square_gradient_exponential_decay.sqrt() + epsilon);
-
-    optimization_data.iteration++;
-
-    // Update parameters
-    neural_network->set_parameters(parameters);
-*/
-
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
     const Index layers_number = neural_network->get_layers_number();
 
@@ -500,6 +442,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
             parameters.device(*thread_pool_device)
                 -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+
         }
     }
 }
