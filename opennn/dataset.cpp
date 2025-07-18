@@ -4256,21 +4256,21 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
 
-    if (dynamic_cast<opennn::TimeSeriesDataset*>(dataset))
+    if (dynamic_cast<TimeSeriesDataset*>(dataset))
     {
         input_dimensions.clear();
         input_dimensions.push_back(sample_indices.size());
         //input_dimensions.push_back(input_indices.size());
         input_dimensions.push_back(input_indices.size());
-
     }
+
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 
     // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
 }
 
 
-Batch::Batch(const Index& new_samples_number, Dataset* new_dataset)
+Batch::Batch(const Index& new_samples_number, const Dataset* new_dataset)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -4280,16 +4280,17 @@ Batch::Batch(const Index& new_samples_number, Dataset* new_dataset)
 }
 
 
-void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
+void Batch::set(const Index& new_samples_number, const Dataset* new_dataset)
 {
     if (!new_dataset) return;
 
     samples_number = new_samples_number;
-    dataset = new_dataset;
+
+    dataset = const_cast<Dataset*>(new_dataset);
+
+    // Inputs
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions("Input");
-    // const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
-    const dimensions& data_set_target_dimensions = dataset->get_dimensions("Target");
 
     if (!data_set_input_dimensions.empty())
     {
@@ -4297,17 +4298,26 @@ void Batch::set(const Index& new_samples_number, Dataset* new_dataset)
         input_tensor.resize(get_size(input_dimensions));
     }
 
-    // if (!data_set_decoder_dimensions.empty())
-    // {
-    //     decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
-    //     decoder_tensor.resize(get_size(decoder_dimensions));
-    // }
+    // Targets
+
+    const dimensions& data_set_target_dimensions = dataset->get_dimensions("Target");
 
     if (!data_set_target_dimensions.empty())
     {
         target_dimensions = prepend(samples_number, data_set_target_dimensions);
         target_tensor.resize(get_size(target_dimensions));
     }
+
+    // Decoder
+
+    // const dimensions& data_set_decoder_dimensions = dataset->get_dimensions("Decoder");
+
+    // if (!data_set_decoder_dimensions.empty())
+    // {
+    //     decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
+    //     decoder_tensor.resize(get_size(decoder_dimensions));
+    // }
+
 }
 
 
@@ -4319,35 +4329,35 @@ Index Batch::get_samples_number() const
 
 void Batch::print() const
 {
-    // cout << "Batch" << endl
-    //      << "Inputs:" << endl
-    //      << "Input dimensions:" << endl;
+    cout << "Batch" << endl
+         << "Inputs:" << endl
+         << "Input dimensions:" << endl;
 
-    // print_vector(input_dimensions);
+    print_vector(input_dimensions);
 
-    // input_dimensions.size() == 4
-    //     ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
-    //                                          input_dimensions[0],
-    //                                          input_dimensions[1],
-    //                                          input_dimensions[2],
-    //                                          input_dimensions[3]) << endl
-    //     : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
-    //                                          input_dimensions[0],
-    //                                          input_dimensions[1]) << endl;
+    input_dimensions.size() == 4
+        ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
+                                             input_dimensions[0],
+                                             input_dimensions[1],
+                                             input_dimensions[2],
+                                             input_dimensions[3]) << endl
+        : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
+                                             input_dimensions[0],
+                                             input_dimensions[1]) << endl;
 
-    // cout << "Decoder:" << endl
-    //      << "Decoder dimensions:" << endl;
+    cout << "Decoder:" << endl
+         << "Decoder dimensions:" << endl;
 
-    // print_vector(decoder_dimensions);
+    print_vector(decoder_dimensions);
 
-    // cout << "Targets:" << endl
-    //      << "Target dimensions:" << endl;
+    cout << "Targets:" << endl
+         << "Target dimensions:" << endl;
 
-    // print_vector(target_dimensions);
+    print_vector(target_dimensions);
 
-    // cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
-    //                                    target_dimensions[0],
-    //                                    target_dimensions[1]) << endl;
+    cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
+                                       target_dimensions[0],
+                                       target_dimensions[1]) << endl;
 }
 
 

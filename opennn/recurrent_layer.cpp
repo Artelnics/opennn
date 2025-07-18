@@ -131,14 +131,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index batch_size = input_pairs[0].second[0];
     const Index input_size = input_pairs[0].second[1];
 
-    // if (input_pairs[0].second[1] != time_steps || input_pairs[0].second[2] != input_size)
-    //     throw runtime_error("Input dimensions do not match layer configuration.");
-
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
-
-    // cout << "adri71 - for -> " << input_pairs[0].second.size() << " - " << input_pairs[0].second[0] << "-" << input_pairs[0].second[1] << " -> batch: " << batch_size << "; input: " << input_size << "; time_s: " << time_steps << endl;
-    // std::cout << "--- TensorMap<Tensor<type, 3>> mostrado con std::cout: ---" << std::endl;
-    // std::cout << inputs << std::endl;
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
@@ -279,7 +272,6 @@ void Recurrent::print() const
 {
     cout << "Recurrent layer" << endl
          << "Time steps: " << get_input_dimensions()[0] << endl
-         << "Batch size: " << batch_size << endl
          << "Input dimensions: " << get_input_dimensions()[1] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl

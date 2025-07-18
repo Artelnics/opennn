@@ -166,7 +166,7 @@ public:
 
    static type calculate_h(const type&);
 
-   type calculate_numerical_error();
+   type calculate_numerical_error() const;
 
    Tensor<type, 1> calculate_gradient();
 
@@ -271,9 +271,9 @@ struct BackPropagationLM
 
 struct BackPropagation
 {
-    BackPropagation(const Index& = 0, LossIndex* = nullptr);
+    BackPropagation(const Index& = 0, const LossIndex* = nullptr);
 
-    void set(const Index& = 0, LossIndex* = nullptr);
+    void set(const Index& = 0, const LossIndex* = nullptr);
 
     vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 

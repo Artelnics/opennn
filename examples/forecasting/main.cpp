@@ -24,6 +24,7 @@
 #include "../../opennn/training_strategy.h"
 #include "adaptive_moment_estimation.h"
 #include "testing_analysis.h"
+#include "recurrent_layer.h"
 
 using namespace opennn;
 
@@ -39,6 +40,12 @@ int main()
         //TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
         //TimeSeriesDataset time_series_dataset("../data/funcion_seno.csv", ";", false, false);
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
+
+        time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.4));
+
+
+        print_vector(time_series_dataset.get_dimensions("Input"));
+/*
 
         //time_series_dataset.print();
 
@@ -56,11 +63,28 @@ int main()
                                           {},
                                           {1});
 
-        forecasting_network.print();
+        //forecasting_network.print();
+
+        // for(Index i = 0; i < 10; i++)
+        // {
+        //     Tensor<type, 2> inputs(1,2);
+        //     inputs.setValues({{0}, {0.0998334166468282}});
+        //     cout << "Inputs" << endl;
+        //     cout << inputs << endl;
+
+        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<2,2>(inputs);
+
+        //     cout << outputs << endl;
+        // }
+
 
         cout << "======================================" << endl;
         NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
+//        for(Index i = 0; i < 10; i++)
+        cout << normalized_squared_error.calculate_numerical_error() << endl;
+
+/*
         const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
         const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
@@ -84,16 +108,7 @@ int main()
         // cout << "Error" << endl;
         // cout << normalized_squared_error.calculate_numerical_error() << endl;
 
-        // Tensor<type, 2> inputs(1,2);
-        // inputs.setValues({{0}, {0.0998334166468282}});
-        // cout << "Inputs" << endl;
-        // cout << inputs << endl;
-
-        // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<2,2>(inputs);
-
-        // cout << "Outputs" << endl;
-        // cout << outputs << endl;
-        //0.198669330795061 - 0.29552020666134 - 0.38941834230865
+*/
 
         cout << "Good bye!" << endl;
 

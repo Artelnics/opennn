@@ -143,46 +143,6 @@ public:
 
    // Output
 
-   // template <Index input_rank, Index output_rank>
-   // Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
-   // {
-   //     const Index layers_number = get_layers_number();
-
-   //     if (layers_number == 0)
-   //         return Tensor<type, output_rank>();
-
-   //     const Index batch_size = inputs.dimension(0);
-
-   //     ForwardPropagation forward_propagation(batch_size, this);
-
-   //     dimensions input_dimensions;
-   //     input_dimensions.reserve(input_rank);
-   //     input_dimensions.push_back(batch_size);
-
-   //     if constexpr (input_rank >= 2) input_dimensions.push_back(inputs.dimension(1));
-   //     if constexpr (input_rank >= 3) input_dimensions.push_back(inputs.dimension(2));
-   //     if constexpr (input_rank >= 4) input_dimensions.push_back(inputs.dimension(3));
-   //     static_assert(input_rank >= 2 && input_rank <= 4, "Unsupported input rank");
-
-   //     const pair<type*, dimensions> input_pair((type*)inputs.data(), input_dimensions);
-
-   //     forward_propagate({input_pair}, forward_propagation, false);
-
-   //     const pair<type*, dimensions> outputs_pair
-   //         = forward_propagation.layers[layers_number - 1]->get_output_pair();
-
-   //     if constexpr (output_rank == 2)
-   //         return tensor_map<2>(outputs_pair);
-   //     else if constexpr (output_rank == 3)
-   //         return tensor_map<3>(outputs_pair);
-   //     else if constexpr (output_rank == 4)
-   //         return tensor_map<4>(outputs_pair);
-   //     else
-   //         static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank");
-
-   //     return Tensor<type, output_rank>();
-   // }
-
    template <Index input_rank, Index output_rank>
    Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
    {

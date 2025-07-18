@@ -495,17 +495,17 @@ void LossIndex::from_XML(const XMLDocument& document)
 }
 
 
-BackPropagation::BackPropagation(const Index& new_batch_size, LossIndex* new_loss_index)
+BackPropagation::BackPropagation(const Index& new_batch_size, const LossIndex* new_loss_index)
 {
     set(new_batch_size, new_loss_index);
 }
 
 
-void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_index)
+void BackPropagation::set(const Index& new_samples_number, const LossIndex* new_loss_index)
 {
     samples_number = new_samples_number;
 
-    loss_index = new_loss_index;
+    loss_index = const_cast<LossIndex*>(new_loss_index);
 
     if(!loss_index) return;
 
@@ -606,33 +606,35 @@ void BackPropagation::print() const
 }
 
 
-type LossIndex::calculate_numerical_error()
+type LossIndex::calculate_numerical_error() const
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> training_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_indices = dataset->get_variable_indices("Input");
     // const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
-    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+    const vector<Index> target_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
 
     // batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
-    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
+    batch.fill(training_indices, input_indices, target_indices);
 
+    batch.print();
+
+/*
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
-    // alvaros
     neural_network->forward_propagate(batch.get_input_pairs(),
                                       forward_propagation);
-
-    // return 0;
 
     BackPropagation back_propagation(samples_number, this);
 
     calculate_error(batch, forward_propagation, back_propagation);
 
     return back_propagation.error();
+*/
+    return 0;
 }
 
 
