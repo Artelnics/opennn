@@ -391,7 +391,7 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
             if (tensor(i) != value)
                 return false;
         else
-            if (abs(tensor(i) - value) > tolerance)
+            if (static_cast<Type>(abs(tensor(i) - value)) > tolerance)
                 return false;
 
     return true;
