@@ -47,8 +47,6 @@ public:
     const type& get_selection_error_goal() const;
     const Index& get_maximum_iterations_number() const;
     const type& get_maximum_time() const;
-    const type& get_maximum_correlation() const;
-    const type& get_minimum_correlation() const;
 
     virtual const Index& get_minimum_inputs_number() const { static const Index r(1); return r; }
 
@@ -67,8 +65,6 @@ public:
     string write_stopping_condition(const TrainingResults&) const;
 
     void check() const;
-
-    //Index get_input_index(const Tensor<string, 1>&, const Index&) const;
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 
@@ -102,10 +98,6 @@ protected:
     type selection_error_goal;
 
     Index maximum_epochs_number;
-
-    type maximum_correlation;
-
-    type minimum_correlation;
 
     type maximum_time;
 };
