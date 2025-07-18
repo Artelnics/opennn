@@ -21,7 +21,7 @@ public:
 
    MinkowskiError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   type get_Minkowski_parameter() const;
+   type get_Minkowski_parameter() const override;
 
    void set_default();
 

@@ -83,6 +83,8 @@ public:
 
    virtual void set_normalization_coefficient() {}
 
+   virtual type get_Minkowski_parameter() const { return 1.5; }
+
    // Back propagation
 
    virtual void calculate_error(const Batch&,

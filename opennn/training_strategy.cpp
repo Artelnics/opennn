@@ -225,12 +225,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         set_loss_index(loss_method);
 
         XMLDocument loss_method_document;
-        XMLElement* loss_index_element_copy = loss_method_document.NewElement(loss_method.c_str());
-
-        for (const XMLNode* node = loss_index_element->FirstChild(); node; node = node->NextSibling())
-            loss_index_element_copy->InsertEndChild(node->DeepClone(&loss_method_document));
-
-        loss_method_document.InsertEndChild(loss_index_element_copy);
+        loss_method_document.InsertFirstChild(loss_method_element->DeepClone(&loss_method_document));
         loss_index->from_XML(loss_method_document);
     }
     else throw runtime_error(loss_method + " element is nullptr.\n");
@@ -251,12 +246,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         set_optimization_algorithm(optimization_method);
 
         XMLDocument optimization_method_document;
-        XMLElement* optimization_method_element_copy = optimization_method_document.NewElement(optimization_method.c_str());
-
-        for (const XMLNode* node = optimization_method_element->FirstChild(); node; node = node->NextSibling())
-            optimization_method_element_copy->InsertEndChild(node->DeepClone(&optimization_method_document));
-
-        optimization_method_document.InsertEndChild(optimization_method_element_copy);
+        optimization_method_document.InsertFirstChild(optimization_method_element->DeepClone(&optimization_method_document));
         optimization_algorithm->from_XML(optimization_method_document);
     }
     else throw runtime_error(optimization_method + " element is nullptr.\n");
