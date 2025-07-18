@@ -61,8 +61,8 @@ int main()
         cout << "======================================" << endl;
         NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
-        Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
-        Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+        const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
+        const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
         cout << "Gradient" << endl;
         cout << gradient << endl;

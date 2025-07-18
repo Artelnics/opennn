@@ -338,8 +338,8 @@ Index NeuralNetwork::get_parameters_number() const
 {
     Index parameters_number = 0;
 
-    for (Index i = 0; i < (Index)layers.size(); i++)
-        parameters_number += layers[i]->get_parameters_number();
+    for (const auto& layer : layers)
+        parameters_number += layer->get_parameters_number();
 
     return parameters_number;
 }
