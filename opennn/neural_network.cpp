@@ -992,7 +992,7 @@ void NeuralNetwork::print() const
 
     print_vector(get_input_names());
 
-    const Index layers_number = get_layers_number();       
+    const Index layers_number = get_layers_number();
 
     cout << "Layers number: " << layers_number << endl;
 
