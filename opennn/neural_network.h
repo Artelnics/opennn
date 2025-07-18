@@ -134,12 +134,12 @@ public:
 
    vector<Index> get_layer_parameter_numbers() const;
 
-   void set_parameters(const Tensor<type, 1>&) const;
+   void set_parameters(const Tensor<type, 1>&);
 
    // Parameters initialization
 
-   void set_parameters_random() const;
-   void set_parameters_glorot() const;
+   void set_parameters_random();
+   void set_parameters_glorot();
 
    // Output
 
@@ -280,8 +280,8 @@ public:
                           const bool& = false) const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          const Tensor<type, 1>&, 
-                          ForwardPropagation&) const;
+                          const Tensor<type, 1>&,
+                          ForwardPropagation&);
 
    string get_expression() const;
 

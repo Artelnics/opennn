@@ -945,10 +945,16 @@ void Correlation::print() const
          << "Upper confidence: " << upper_confidence << endl;
 }
 
+
 void register_layers()
 {
+<<<<<<< HEAD
 
     Bounding bounding_layer;//bounding_layer.print();
+=======
+    Bounding bounding_layer;bounding_layer.print();
+    MultiHeadAttention multi_head_attention; multi_head_attention.print();
+>>>>>>> 19a758faa721d9bff5d8e9f8e147ff8e4ba560fb
     Recurrent recurrent_layer; // recurrent_layer.print();
     MultiHeadAttention multihead_layer;
 }

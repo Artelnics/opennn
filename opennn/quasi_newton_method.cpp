@@ -135,13 +135,13 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
-    inverse_hessian.device(*thread_pool_device) 
+    inverse_hessian.device(*thread_pool_device)
         += self_kronecker_product(thread_pool_device.get(), parameters_difference)
-        / parameters_difference_dot_gradient_difference(0); 
+        / parameters_difference_dot_gradient_difference(0);
 
     inverse_hessian.device(*thread_pool_device)
         -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
-        / gradient_dot_hessian_dot_gradient(0); 
+        / gradient_dot_hessian_dot_gradient(0);
 
     inverse_hessian.device(*thread_pool_device)
         += self_kronecker_product(thread_pool_device.get(), BFGS)*(gradient_dot_hessian_dot_gradient(0));
@@ -151,7 +151,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           ForwardPropagation& forward_propagation,
                                           BackPropagation& back_propagation,
-                                          QuasiNewtonMethodData& optimization_data) const
+                                          QuasiNewtonMethodData& optimization_data)
 {
     NeuralNetwork* neural_network = forward_propagation.neural_network;
 
@@ -198,11 +198,13 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
             ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
+    const type current_loss = back_propagation.loss;
     const pair<type, type> directional_point = calculate_directional_point(
              batch,
              forward_propagation,
              back_propagation,
-             optimization_data);
+             optimization_data,
+             current_loss);
 
     optimization_data.learning_rate = directional_point.first;
     back_propagation.loss = directional_point.second;
@@ -326,6 +328,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     QuasiNewtonMethodData optimization_data(this);
 
+    const Index parameters_number = neural_network->get_parameters_number();
+    optimization_data.gradient.resize(parameters_number);
+
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -342,6 +347,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
         loss_index->back_propagate(training_batch, 
                                    training_forward_propagation, 
                                    training_back_propagation);
+
+        loss_index->assemble_layers_error_gradient(training_back_propagation,
+                                                   optimization_data.gradient);
 
         results.training_error_history(epoch) = training_back_propagation.error();
 
@@ -561,11 +569,11 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
-    QuasiNewtonMethodData& optimization_data) const
+    QuasiNewtonMethodData& optimization_data)
 {
     Triplet triplet;
 
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     const type regularization_weight = loss_index->get_regularization_weight();
 
@@ -716,103 +724,38 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
-    QuasiNewtonMethodData& optimization_data) const
+    QuasiNewtonMethodData& optimization_data,
+    const type& current_loss)
 {
-
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    const Tensor<type, 1>& parameters = optimization_data.parameters;
-
-    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
-
-    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
-
-    Triplet triplet = calculate_bracketing_triplet(batch,
-                                                   forward_propagation,
-                                                   back_propagation,
-                                                   optimization_data);
-    try
-    {
-        triplet.check();
-    }
-    catch(const exception& error)
-    {
-        return triplet.minimum();
-    }
-
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
     const type regularization_weight = loss_index->get_regularization_weight();
 
-    pair<type, type> V;
+    type alpha = 1.0;
+    const type rho = 0.5;
+    const type c = 1e-4;
 
-    // Reduce the interval
+    const Tensor<type, 1>& parameters = optimization_data.parameters;
+    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
 
-    while(abs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
-       || abs(triplet.A.second - triplet.B.second) > loss_tolerance)
+    const type slope = optimization_data.training_slope(0);
+
+    for (int i = 0; i < 20; ++i)
     {
-        try
-        {
-            V.first = calculate_learning_rate(triplet);
-        }
-        catch(const exception& error)
-        {
-            cout << error.what() << endl;
-
-            return triplet.minimum();
-        }
-
-        // Calculate loss for V
-
-        potential_parameters.device(*thread_pool_device)
-                = parameters + training_direction*V.first;
+        potential_parameters.device(*thread_pool_device) = parameters + training_direction * alpha;
 
         neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
-
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
-
         const type regularization = loss_index->calculate_regularization(potential_parameters);
+        const type new_loss = back_propagation.error() + regularization_weight * regularization;
 
-        V.second = back_propagation.error() + regularization_weight * regularization;
+        if (new_loss <= current_loss + c * alpha * slope)
+            return {alpha, new_loss};
 
-        // Update points
-
-        if(V.first <= triplet.U.first)
-        {
-            if(V.second >= triplet.U.second)
-            {
-                triplet.A = V;
-            }
-            else
-            {
-                triplet.B = triplet.U;
-                triplet.U = V;
-            }
-        }
-        else
-        {
-            if(V.second >= triplet.U.second)
-            {
-                triplet.B = V;
-            }
-            else
-            {
-                triplet.A = triplet.U;
-                triplet.U = V;
-            }
-        }
-
-        // Check triplet
-
-        try
-        {
-            triplet.check();
-        }
-        catch(const exception& error)
-        {
-            return triplet.minimum();
-        }
+        alpha *= rho;
     }
 
-    return triplet.U;
+    return {0.0, current_loss};
 }
 
 

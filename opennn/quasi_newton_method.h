@@ -54,7 +54,7 @@ public:
 
    void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
 
-   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&) const;
+   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
 
    TrainingResults perform_training() override;
 
@@ -73,12 +73,13 @@ public:
    Triplet calculate_bracketing_triplet(const Batch&,
                                         ForwardPropagation&,
                                         BackPropagation&,
-                                        QuasiNewtonMethodData&) const;
+                                        QuasiNewtonMethodData&);
 
    pair<type, type> calculate_directional_point(const Batch&,
                                                 ForwardPropagation&,
                                                 BackPropagation&,
-                                                QuasiNewtonMethodData&) const;
+                                                QuasiNewtonMethodData&,
+                                                const type&);
 
 #ifdef OPENNN_CUDA
 

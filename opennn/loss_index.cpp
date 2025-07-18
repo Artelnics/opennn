@@ -403,11 +403,12 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
 void LossIndex::assemble_layers_error_gradient(const BackPropagation& back_propagation, Tensor<type, 1>& gradient) const
 {
-    const Index layers_number = neural_network->get_layers_number();
-
     Index index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
+    const Index first_trainable_layer = neural_network->get_first_trainable_layer_index();
+    const Index last_trainable_layer = neural_network->get_last_trainable_layer_index();
+
+    for(Index i = first_trainable_layer; i <= last_trainable_layer; i++)
     {
         if (!back_propagation.neural_network.layers[i].get()) continue;
 
