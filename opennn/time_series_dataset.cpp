@@ -36,7 +36,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     if(raw_variables_number == 1)
         raw_variables[0].set_use("Input");
 
-    input_dimensions = { get_variables_number("Input") };
+    input_dimensions = { get_variables_number("Input"), lags_number};
     target_dimensions = { get_variables_number("Target") };
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));

@@ -338,8 +338,8 @@ Index NeuralNetwork::get_parameters_number() const
 {
     Index parameters_number = 0;
 
-    for (Index i = 0; i < (Index)layers.size(); i++)
-        parameters_number += layers[i]->get_parameters_number();
+    for (const auto& layer : layers)
+        parameters_number += layer->get_parameters_number();
 
     return parameters_number;
 }
@@ -381,7 +381,7 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 }
 
 
-void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
+void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 {
     if (new_parameters.size() != get_parameters_number())
         throw runtime_error("New parameters size is not equal to parameters size.");
@@ -444,7 +444,7 @@ Index NeuralNetwork::get_layers_number(const string& name) const
 }
 
 
-void NeuralNetwork::set_parameters_random() const
+void NeuralNetwork::set_parameters_random()
 {
     const Index layers_number = get_layers_number();
 
@@ -454,7 +454,7 @@ void NeuralNetwork::set_parameters_random() const
 }
 
 
-void NeuralNetwork::set_parameters_glorot() const
+void NeuralNetwork::set_parameters_glorot()
 {
     const Index layers_number = get_layers_number();
 
@@ -491,7 +491,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
 void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
                                       const Tensor<type, 1>& new_parameters,
-                                      ForwardPropagation& forward_propagation) const
+                                      ForwardPropagation& forward_propagation)
 {
     Tensor<type, 1> original_parameters;
     get_parameters(original_parameters);
@@ -992,7 +992,7 @@ void NeuralNetwork::print() const
 
     print_vector(get_input_names());
 
-    const Index layers_number = get_layers_number();       
+    const Index layers_number = get_layers_number();
 
     cout << "Layers number: " << layers_number << endl;
 

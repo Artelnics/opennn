@@ -573,14 +573,14 @@ protected:
 
 struct Batch
 {
-    Batch(const Index& = 0, Dataset* = nullptr);
+    Batch(const Index& = 0, const Dataset* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;
 
     Index get_samples_number() const;
 
-    void set(const Index& = 0, Dataset* = nullptr);
+    void set(const Index& = 0, const Dataset* = nullptr);
 
     void fill(const vector<Index>&,
               const vector<Index>&,

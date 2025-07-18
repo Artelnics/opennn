@@ -23,7 +23,7 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return {input_weights.dimension(0), time_steps};
+    return {time_steps, input_weights.dimension(0)};
 }
 
 
@@ -129,10 +129,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index input_size = input_weights.dimension(0);
-
-    if (input_pairs[0].second[1] != time_steps || input_pairs[0].second[2] != input_size)
-        throw runtime_error("Input dimensions do not match layer configuration.");
+    const Index input_size = input_pairs[0].second[1];
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
@@ -159,7 +156,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
 
-        current_activation_derivatives = activation_derivatives.chip(time_step, 1);
+        current_activation_derivatives.device(*thread_pool_device) =
+            activation_derivatives.chip(time_step, 1);
 
         calculate_activations(activation_function, outputs, current_activation_derivatives);
 
@@ -274,7 +272,6 @@ void Recurrent::print() const
 {
     cout << "Recurrent layer" << endl
          << "Time steps: " << get_input_dimensions()[0] << endl
-         << "Batch size: " << batch_size << endl
          << "Input dimensions: " << get_input_dimensions()[1] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl

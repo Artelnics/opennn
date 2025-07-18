@@ -63,8 +63,6 @@ private:
 
     Index time_steps = 2;
 
-    Index batch_size = 0;
-
     Tensor<type, 1> biases;
 
     Tensor<type, 2> input_weights;
