@@ -49,7 +49,7 @@ TEST(StochasticGradientDescentTest, Train)
     stochastic_gradient_descent.set_maximum_epochs_number(1);
     stochastic_gradient_descent.set_display(false);
 
-    TrainingResults training_results = stochastic_gradient_descent.perform_training();
+    TrainingResults training_results = stochastic_gradient_descent.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
@@ -59,7 +59,7 @@ TEST(StochasticGradientDescentTest, Train)
 
     neural_network.set_parameters_random();
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
     error = training_results.get_training_error();
 
     EXPECT_LE(error, old_error);
@@ -74,7 +74,7 @@ TEST(StochasticGradientDescentTest, Train)
 
     neural_network.set_parameters_random();
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
     error = training_results.get_training_error();
 
     EXPECT_LE(error, old_error);
@@ -87,7 +87,7 @@ TEST(StochasticGradientDescentTest, Train)
     stochastic_gradient_descent.set_maximum_epochs_number(1000);
     stochastic_gradient_descent.set_maximum_time(1000);
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
 
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
@@ -141,7 +141,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     stochastic_gradient_descent.set_maximum_epochs_number(1);
     stochastic_gradient_descent.set_display(false);
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
 
 //    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
@@ -151,7 +151,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
     error = training_results.get_training_error();
 
 //    EXPECT_EQ(error < old_error);
@@ -166,7 +166,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     stochastic_gradient_descent.set_display(true);
     stochastic_gradient_descent.set_display_period(1000);
 
-    training_results = stochastic_gradient_descent.perform_training();
+    training_results = stochastic_gradient_descent.train();
     error = training_results.get_training_error();
 
 //    EXPECT_EQ(error <= old_error);

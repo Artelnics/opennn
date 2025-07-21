@@ -42,9 +42,9 @@ int main()
         {
             data(i, 0) = dataset(i, 1);
         }
-
-        time_series_data_set.set_lags_number(2);
-        time_series_data_set.set_steps_ahead_number(1);
+/*
+        time_series_data_set.set_past_time_steps(2);
+        time_series_data_set.set_future_time_steps(1);
 
         const Index N = data.dimension(0);
         Index lags_number=time_series_data_set.get_lags_number();
@@ -88,7 +88,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &time_series_data_set);
 
-        training_strategy.perform_training();
+        training_strategy.train();
 
         TestingAnalysis testing_analysis(&neural_network, &time_series_data_set);
         TestingAnalysis::GoodnessOfFitAnalysis perform_goodness_of_fit_analysis{};
@@ -96,7 +96,7 @@ int main()
 
         TestingAnalysis::RocAnalysis roc_curve = testing_analysis.perform_roc_analysis();
         roc_curve.print();
-
+*/
         cout << "Completed." << endl;
 
         return 0;
