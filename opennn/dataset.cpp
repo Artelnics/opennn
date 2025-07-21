@@ -40,15 +40,25 @@ const bool& Dataset::get_display() const
 }
 
 
+bool Dataset::is_empty()
+{
+    return data.size() == 0;
+}
+
+
 dimensions Dataset::get_input_dimensions() const
 {
-    return dimensions({get_variables_number("Input")});
+//    return dimensions({get_variables_number("Input")});
+
+    return input_dimensions;
 }
 
 
 dimensions Dataset::get_target_dimensions() const
 {
-    return dimensions({get_variables_number("Target")});
+//    return dimensions({get_variables_number("Target")});
+
+    return target_dimensions;
 }
 
 
@@ -4259,10 +4269,10 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     if (dynamic_cast<TimeSeriesDataset*>(dataset))
     {
-        input_dimensions.clear();
-        input_dimensions.push_back(sample_indices.size());
-        input_dimensions.push_back(input_indices.size());
-        input_dimensions.push_back(input_indices.size());
+//        input_dimensions.clear();
+//        input_dimensions.push_back(sample_indices.size());
+//        input_dimensions.push_back(input_indices.size());
+//        input_dimensions.push_back(input_indices.size());
     }
 
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());

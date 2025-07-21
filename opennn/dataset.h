@@ -202,15 +202,10 @@ public:
 
     const bool& get_display() const;
 
-    bool is_empty()
-    {
-        return data.size() == 0;
-    }
+    bool is_empty();
 
-    virtual dimensions get_input_dimensions() const;
-    virtual dimensions get_target_dimensions() const;
-
-    //bool get_augmentation() const;
+    dimensions get_input_dimensions() const;
+    dimensions get_target_dimensions() const;
 
     // Set
 
