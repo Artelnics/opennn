@@ -186,7 +186,7 @@ public:
                                                  "RectifiedLinear",
                                                  stride_dimensions,
                                                  Convolutional::Convolution::Same,
-                                                 true, // Batch normalization
+                                                 false, // Batch normalization
                                                  "convolutional_layer_" + to_string(i + 1)));
             
             const dimensions pool_dimensions = { 2, 2 };
@@ -206,7 +206,7 @@ public:
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Softmax",
-                                       false,
+                                       false, // Batch normalization
                                        "dense_2d_layer"));
     }
 };
