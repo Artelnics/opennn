@@ -41,14 +41,12 @@ int main()
         //TimeSeriesDataset time_series_dataset("../data/funcion_seno.csv", ";", false, false);
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
 
-        time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.4));
-
-
+        time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.49));
         print_vector(time_series_dataset.get_dimensions("Input"));
-/*
+        print_vector(time_series_dataset.get_dimensions("Target"));
 
-        //time_series_dataset.print();
-
+        time_series_dataset.print();
+        cout << "------------------------------------------" << endl;
 
         // ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
         //                                   {},
@@ -63,37 +61,37 @@ int main()
                                           {},
                                           {1});
 
-        //forecasting_network.print();
+        forecasting_network.print();
 
+        cout << "------------------------------------------" << endl;
         // for(Index i = 0; i < 10; i++)
         // {
-        //     Tensor<type, 2> inputs(1,2);
-        //     inputs.setValues({{0}, {0.0998334166468282}});
+        //     Tensor<type, 3> inputs(1,1,2);
+        //     inputs.setValues({{{0}, {0.0998334166468282}}});
         //     cout << "Inputs" << endl;
         //     cout << inputs << endl;
 
-        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<2,2>(inputs);
+        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
         //     cout << outputs << endl;
         // }
 
 
-        cout << "======================================" << endl;
         NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
-//        for(Index i = 0; i < 10; i++)
+        // for(Index i = 0; i < 10; i++)
         cout << normalized_squared_error.calculate_numerical_error() << endl;
 
-/*
-        const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
-        const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        cout << "Gradient" << endl;
-        cout << gradient << endl;
-        cout << "Numerical Gradient" << endl;
-        cout << numerical_gradient << endl;
-        cout << "diferencia" << endl;
-        cout << gradient.abs() - numerical_gradient.abs() << endl;
+        // const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
+        // const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+
+        // cout << "Gradient" << endl;
+        // cout << gradient << endl;
+        // cout << "Numerical Gradient" << endl;
+        // cout << numerical_gradient << endl;
+        // cout << "diferencia" << endl;
+        // cout << gradient.abs() - numerical_gradient.abs() << endl;
 
         // cout << "Error" << endl;
         // cout << normalized_squared_error.calculate_numerical_error() << endl;
@@ -104,11 +102,9 @@ int main()
 
         // training_strategy.perform_training();
 
-
         // cout << "Error" << endl;
         // cout << normalized_squared_error.calculate_numerical_error() << endl;
 
-*/
 
         cout << "Good bye!" << endl;
 

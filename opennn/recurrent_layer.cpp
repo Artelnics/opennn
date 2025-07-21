@@ -129,7 +129,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index input_size = input_pairs[0].second[1];
+    const Index time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
@@ -176,7 +177,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index input_size = input_pairs[0].second[1];
+    const Index time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
 
     Tensor<type, 2> initial_hidden_states(batch_size, output_size);

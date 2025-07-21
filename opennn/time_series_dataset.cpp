@@ -31,10 +31,10 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :Dataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    const Index raw_variables_number = raw_variables.size();
+    // const Index raw_variables_number = raw_variables.size();
 
-    if(raw_variables_number == 1)
-        raw_variables[0].set_use("Input");
+    // if(raw_variables_number == 1)
+    //     raw_variables[0].set_use("Input");
 
     input_dimensions = { get_variables_number("Input"), lags_number};
     target_dimensions = { get_variables_number("Target") };
