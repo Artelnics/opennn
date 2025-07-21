@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/dataset.h"
 #include "../opennn/weighted_squared_error.h"
 
 using namespace opennn;

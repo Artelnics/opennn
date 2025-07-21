@@ -69,8 +69,8 @@ int main()
         time_series_data_set.print();
         //time_series_data_set.print_data();
 
-        const Index input_variables_number = time_series_data_set.get_variables_number(Dataset::VariableUse::Input);
-        const Index target_variables_number = time_series_data_set.get_variables_number(Dataset::VariableUse::Target);
+        const Index input_variables_number = time_series_data_set.get_variables_number("Input");
+        const Index target_variables_number = time_series_data_set.get_variables_number("Target");
         const vector<string>& variable_names = time_series_data_set.get_variable_names();
         const Index time_steps=time_series_data_set.get_lags_number();
 
