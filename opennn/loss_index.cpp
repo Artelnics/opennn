@@ -620,9 +620,9 @@ type LossIndex::calculate_numerical_error() const
     // batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
     batch.fill(training_indices, input_indices, target_indices);
 
+    cout << "info del batch" << endl;
     batch.print();
 
-/*
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
     neural_network->forward_propagate(batch.get_input_pairs(),
@@ -633,8 +633,8 @@ type LossIndex::calculate_numerical_error() const
     calculate_error(batch, forward_propagation, back_propagation);
 
     return back_propagation.error();
-*/
-    return 0;
+
+    //return 0;
 }
 
 

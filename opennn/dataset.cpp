@@ -4254,13 +4254,14 @@ void Batch::fill(const vector<Index>& sample_indices,
                  // const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
+
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
 
     if (dynamic_cast<TimeSeriesDataset*>(dataset))
     {
         input_dimensions.clear();
         input_dimensions.push_back(sample_indices.size());
-        //input_dimensions.push_back(input_indices.size());
+        input_dimensions.push_back(input_indices.size());
         input_dimensions.push_back(input_indices.size());
     }
 
@@ -4345,10 +4346,10 @@ void Batch::print() const
                                              input_dimensions[0],
                                              input_dimensions[1]) << endl;
 
-    cout << "Decoder:" << endl
-         << "Decoder dimensions:" << endl;
+    // cout << "Decoder:" << endl
+    //      << "Decoder dimensions:" << endl;
 
-    print_vector(decoder_dimensions);
+    // print_vector(decoder_dimensions);
 
     cout << "Targets:" << endl
          << "Target dimensions:" << endl;
