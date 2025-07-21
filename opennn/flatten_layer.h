@@ -64,11 +64,6 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void allocate_parameters_device() {}
-    void free_parameters_device() {}
-    void copy_parameters_device() {}
-    void copy_parameters_host() {}
-
 #endif
 
 private:

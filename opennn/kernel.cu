@@ -274,6 +274,26 @@ Tensor<type, 4> matrix_4d_from_device(const type* pointer, const size_t& new_bat
 
 // Operation kernel
 
+__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        output[i] = input1[i] + input2[i];
+    }
+}
+
+void addition_cuda(const size_t n, const float* input1, const float* input2, float* output)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
+}
+
 
 __global__
 void log_kernel(const int n, const type* x, type* y)

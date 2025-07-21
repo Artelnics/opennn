@@ -97,24 +97,28 @@ struct Addition3dBackPropagation : LayerBackPropagation
 
     struct Addition3dForwardPropagationCuda : public LayerForwardPropagationCuda
     {
-        Addition3dForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+        Addition3dForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-        void set(const Index& = 0, Layer* = nullptr) override;
+        void set(const Index & = 0, Layer* = nullptr) override;
 
         void print() const override;
+
+        void free() override;
     };
 
 
     struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
     {
-        Addition3dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+        Addition3dBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-        void set(const Index& = 0, Layer* = nullptr) override;
+        void set(const Index & = 0, Layer* = nullptr) override;
 
         void print() const override;
 
-        type* inputs_1_derivatives = nullptr;
-        type* inputs_2_derivatives = nullptr;
+        void free() override;
+
+        float* inputs_1_derivatives = nullptr;
+        float* inputs_2_derivatives = nullptr;
     };
 
 #endif

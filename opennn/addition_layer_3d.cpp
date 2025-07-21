@@ -161,6 +161,8 @@ void Addition3dForwardPropagation::set(const Index& new_batch_size, Layer* new_l
 
 void Addition3dForwardPropagation::print() const
 {
+    cout << "Addition3dForwardPropagation:" << endl;
+
     cout << "Outputs:" << endl
          << outputs << endl;
 }
@@ -186,6 +188,12 @@ void Addition3dBackPropagation::set(const Index& new_batch_size, Layer* new_laye
 
 void Addition3dBackPropagation::print() const
 {
+    cout << "Addition3dBackPropagation:" << endl;
+
+    cout << "input_1_derivatives:" << endl
+        << input_1_derivatives << endl;
+    cout << "input_2_derivatives:" << endl
+        << input_2_derivatives << endl;
 }
 
 
@@ -214,13 +222,6 @@ void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                         const bool& is_training)
 {
-    // Inputs
-
-    type* positional_encodings = inputs_device[0];
-    type* input_embeddings = inputs_device[1];
-
-    // Forward propagation
-
     Addition3dForwardPropagationCuda* addition_layer_3d_forward_propagation_cuda
         = static_cast<Addition3dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
@@ -228,21 +229,17 @@ void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     type* outputs = addition_layer_3d_forward_propagation_cuda->outputs;
 
-    // @todo in cuda
-    //outputs = positional_encodings + input_embeddings;
+    const size_t total_elements = batch_size * sequence_length * embedding_dimension;
+
+    addition_cuda(total_elements, inputs_device[0], inputs_device[1], outputs);
 }
 
 
-void Addition3d::back_propagate_cuda(const vector<float*>& inputs_device,
+void Addition3d::back_propagate_cuda(const vector<float*>&,
                                      const vector<float*>& deltas_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
-    const Index inputs_number = get_inputs_number();
-    const Index inputs_depth = get_embedding_dimension();
-
-    // Back propagation
-
     Addition3dBackPropagationCuda* addition_layer_3d_back_propagation =
         static_cast<Addition3dBackPropagationCuda*>(back_propagation_cuda.get());
 
@@ -251,10 +248,10 @@ void Addition3d::back_propagate_cuda(const vector<float*>& inputs_device,
     type* inputs_1_derivatives = addition_layer_3d_back_propagation->inputs_1_derivatives;
     type* inputs_2_derivatives = addition_layer_3d_back_propagation->inputs_2_derivatives;
 
-    Index elements_number = batch_size * inputs_number * inputs_depth;
+    const size_t total_elements = batch_size * sequence_length * embedding_dimension;
 
-    cudaMemcpy(inputs_1_derivatives, deltas_device[0], elements_number * sizeof(type), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(inputs_2_derivatives, deltas_device[0], elements_number * sizeof(type), cudaMemcpyDeviceToDevice);
+    CHECK_CUDA(cudaMemcpy(inputs_1_derivatives, deltas_device[0], total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+    CHECK_CUDA(cudaMemcpy(inputs_2_derivatives, deltas_device[0], total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
 }
 
 
@@ -270,12 +267,34 @@ Addition3dForwardPropagationCuda::Addition3dForwardPropagationCuda(const Index& 
 void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
+
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    const size_t total_elements = static_cast<size_t>(batch_size) *
+        addition_layer->get_sequence_length() *
+        addition_layer->get_embedding_dimension();
+
+    // Outputs
+
+    //CHECK_CUDA(cudaMalloc(&outputs, total_elements * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, total_elements * sizeof(float));
 }
 
 
 void Addition3dForwardPropagationCuda::print() const
 {
+    // @todo
+}
 
+
+void Addition3dForwardPropagationCuda::free()
+{
+    if (outputs) cudaFree(outputs);
+    outputs = nullptr;
 }
 
 
@@ -289,13 +308,38 @@ Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_ba
 void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
+
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    const size_t total_elements = static_cast<size_t>(batch_size) *
+        addition_layer->get_sequence_length() *
+        addition_layer->get_embedding_dimension();
+
+    // Input derivatives
+
+    //CHECK_CUDA(cudaMalloc(&inputs_1_derivatives, total_elements * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(inputs_1_derivatives, total_elements * sizeof(float));
+    //CHECK_CUDA(cudaMalloc(&inputs_2_derivatives, total_elements * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(inputs_2_derivatives, total_elements * sizeof(float));
 }
 
 
 void Addition3dBackPropagationCuda::print() const
 {
- 
+    //@todo
 }
+
+
+void Addition3dBackPropagationCuda::free()
+{
+    if (inputs_1_derivatives) cudaFree(inputs_1_derivatives);
+    if (inputs_2_derivatives) cudaFree(inputs_2_derivatives);
+}
+
 
 REGISTER(LayerForwardPropagationCuda, Addition3dForwardPropagationCuda, "Addition3d")
 REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
