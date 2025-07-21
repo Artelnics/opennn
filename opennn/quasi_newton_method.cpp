@@ -251,7 +251,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 }
 
 
-TrainingResults QuasiNewtonMethod::perform_training()
+TrainingResults QuasiNewtonMethod::train()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();

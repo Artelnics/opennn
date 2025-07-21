@@ -65,7 +65,7 @@ void StochasticGradientDescent::set_default()
 
     training_loss_goal = type(0);
     maximum_time = type(3600);
-    maximum_epochs_number = 10000;
+    maximum_epochs_number = 1000;
 
     // UTILITIES
 
@@ -184,7 +184,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 }
 
 
-TrainingResults StochasticGradientDescent::perform_training()
+TrainingResults StochasticGradientDescent::train()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();

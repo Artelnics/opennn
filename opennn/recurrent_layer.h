@@ -61,7 +61,7 @@ public:
 
 private:
 
-    Index time_steps = 2;
+    Index past_time_steps = 2;
 
     Tensor<type, 1> biases;
 

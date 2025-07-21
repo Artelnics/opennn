@@ -70,7 +70,7 @@ public:
 
     virtual void check() const;
 
-    virtual TrainingResults perform_training() = 0;
+    virtual TrainingResults train() = 0;
 
     virtual string get_name() const;
 

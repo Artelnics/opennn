@@ -29,12 +29,12 @@ namespace opennn
 
 Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 1>& x,
-                                 const Index& lags_number)
+                                 const Index& past_time_steps)
 {
-    Tensor<type, 1> autocorrelation(lags_number);
+    Tensor<type, 1> autocorrelation(past_time_steps);
 
     const Index this_size = x.size();
-    for(Index i = 0; i < lags_number; i++)
+    for(Index i = 0; i < past_time_steps; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -161,16 +161,16 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& x,
                                    const Tensor<type, 1>& y,
-                                   const Index& maximum_lags_number)
+                                   const Index& maximum_past_time_steps)
 {
     if(y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
-    Tensor<type, 1> cross_correlation(maximum_lags_number);
+    Tensor<type, 1> cross_correlation(maximum_past_time_steps);
 
     const Index this_size = x.size();
 
-    for(Index i = 0; i < maximum_lags_number; i++)
+    for(Index i = 0; i < maximum_past_time_steps; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -558,11 +558,11 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.set_parameters_random();
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method("NoRegularization");
+    mean_squared_error.set_regularization_method("None");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
-    levenberg_marquardt_algorithm.perform_training();
+    levenberg_marquardt_algorithm.train();
 
     const Tensor<type, 2> inputs = dataset.get_data_variables("Input");
     const Tensor<type, 2> targets = dataset.get_data_variables("Target");
@@ -632,11 +632,11 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, "Logistic"));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method("NoRegularization");
+    mean_squared_error.set_regularization_method("None");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
-    levenberg_marquardt_algorithm.perform_training();
+    levenberg_marquardt_algorithm.train();
 
     const Tensor<type, 2> inputs = dataset.get_data_variables("Input");
     const Tensor<type, 2> targets = dataset.get_data_variables("Target");
@@ -734,12 +734,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     scaling_layer_2d->set_display(false);
 
     CrossEntropyError2d cross_entropy_error_2d(&neural_network, &dataset);
-    cross_entropy_error_2d.set_regularization_method("NoRegularization");
+    cross_entropy_error_2d.set_regularization_method("None");
 
     QuasiNewtonMethod quasi_newton_method(&cross_entropy_error_2d);
     quasi_newton_method.set_display(false);
     quasi_newton_method.set_display_period(1000);
-    quasi_newton_method.perform_training();
+    quasi_newton_method.train();
 
     // Logistic correlation
 
@@ -847,12 +847,12 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     scaling_layer_2d->set_display(false);
 
     MeanSquaredError mean_squared_error(&neural_network, &Dataset);
-    mean_squared_error.set_regularization_method("NoRegularization");
+    mean_squared_error.set_regularization_method("None");
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
     quasi_newton_method.set_maximum_epochs_number(500);
     quasi_newton_method.set_display(false);
-    quasi_newton_method.perform_training();
+    quasi_newton_method.train();
 
     // Logistic correlation
 

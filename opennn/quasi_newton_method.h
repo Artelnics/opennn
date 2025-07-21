@@ -56,7 +56,7 @@ public:
 
    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
 
-   TrainingResults perform_training() override;
+   TrainingResults train() override;
 
    string get_name() const override;
 

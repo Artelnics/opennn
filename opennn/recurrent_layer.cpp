@@ -23,7 +23,7 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return {time_steps, input_weights.dimension(0)};
+    return {input_weights.dimension(0), past_time_steps,};
 }
 
 
@@ -35,7 +35,7 @@ dimensions Recurrent::get_output_dimensions() const
 
 Index Recurrent::get_timesteps() const
 {
-    return time_steps;
+    return past_time_steps;
 }
 
 
@@ -81,7 +81,7 @@ void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
 
 void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index inputs_number = get_inputs_number() - time_steps + 1;
+    const Index inputs_number = get_inputs_number() - past_time_steps + 1;
 
     biases.resize(new_output_dimensions[0]);
 
@@ -93,7 +93,7 @@ void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
 
 void Recurrent::set_timesteps(const Index& new_timesteps)
 {
-    time_steps = new_timesteps;
+    past_time_steps = new_timesteps;
 }
 
 
@@ -129,9 +129,10 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index input_size = input_pairs[0].second[1];
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
 
-    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
+    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
@@ -146,7 +147,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
     previous_hidden_states.setZero();
 
-    for(Index time_step = 0; time_step < time_steps; time_step++)
+    for(Index time_step = 0; time_step < past_time_steps; time_step++)
     {
         // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
         outputs.device(*thread_pool_device)
@@ -176,7 +177,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index input_size = input_pairs[0].second[1];
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
 
     Tensor<type, 2> initial_hidden_states(batch_size, output_size);
@@ -184,7 +186,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
 
-    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
+    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
     TensorMap<Tensor<type, 2>> deltas(delta_pairs[0].first, batch_size, output_size);
 
     RecurrentForwardPropagation* recurrent_forward =
@@ -210,9 +212,9 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     bias_deltas.setZero();
     current_combination_deltas.setZero();
 
-    for(Index time_step = time_steps - 1; time_step >= 0; --time_step)
+    for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
     {
-        if (time_step == time_steps - 1)
+        if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
             current_deltas = current_combination_deltas;
@@ -349,18 +351,18 @@ void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index past_time_steps = layer->get_input_dimensions()[0];
 
-    current_inputs.resize(batch_size, time_steps, inputs_number);
+    current_inputs.resize(batch_size, past_time_steps, inputs_number);
 
     current_activation_derivatives.resize(batch_size, outputs_number);
 
-    activation_derivatives.resize(batch_size, time_steps, outputs_number);
+    activation_derivatives.resize(batch_size, past_time_steps, outputs_number);
 
     outputs.resize(batch_size, outputs_number);
     outputs.setZero();
 
-    hidden_states.resize(batch_size, time_steps, outputs_number);
+    hidden_states.resize(batch_size, past_time_steps, outputs_number);
     hidden_states.setZero();
 }
 
@@ -380,7 +382,7 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index time_steps = layer->get_input_dimensions()[0];
+    const Index past_time_steps = layer->get_input_dimensions()[0];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);
@@ -390,7 +392,7 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     bias_deltas.resize(outputs_number);
     input_weight_deltas.resize(inputs_number, outputs_number);
     recurrent_weight_deltas.resize(outputs_number, outputs_number);
-    input_deltas.resize(batch_size, time_steps, inputs_number);
+    input_deltas.resize(batch_size, past_time_steps, inputs_number);
 
     input_weight_deltas.setZero();
     recurrent_weight_deltas.setZero();

@@ -525,6 +525,7 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 void fill_tensor_sequence(const Tensor<type, 2>& matrix,
                           const vector<Index>& rows_indices,
                           const vector<Index>& columns_indices,
+                          const Index& past_time_steps,
                           type* tensor_data)
 {
     if (rows_indices.empty() || columns_indices.empty())
@@ -534,16 +535,15 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
     const Index columns_number = columns_indices.size();
 
     const Index batch_size = rows_indices.size();
-    const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
-    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, sequence_length, input_size);
+    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, past_time_steps, input_size);
 
     //#pragma omp parallel for collapse(3)
 
     for (Index i = 0; i < batch_size; i++)
     {
-        for (Index j = 0; j < sequence_length; j++)
+        for (Index j = 0; j < past_time_steps; j++)
         {
             const Index actual_row = i + j * batch_size;
 

@@ -110,7 +110,7 @@ void TrainingStrategy::set_default()
 }
 
 
-TrainingResults TrainingStrategy::perform_training()
+TrainingResults TrainingStrategy::train()
 {
     if(!has_neural_network())
         throw runtime_error("Neural network is null.");
@@ -129,17 +129,17 @@ TrainingResults TrainingStrategy::perform_training()
 
     optimization_algorithm->set_display(true);
 
-    return optimization_algorithm->perform_training();
+    return optimization_algorithm->train();
 }
 
 
 void TrainingStrategy::fix_forecasting()
 {
 /*
-    Index time_steps = 0;
+    Index past_time_steps = 0;
 
     if(neural_network->has(Recurrent))
-        time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
+        past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
     else
         return;
 
@@ -152,17 +152,17 @@ void TrainingStrategy::fix_forecasting()
     else
         return;
 
-    if(batch_size%time_steps == 0)
+    if(batch_size%past_time_steps == 0)
         return;
 
-    const Index constant = time_steps > batch_size
+    const Index constant = past_time_steps > batch_size
         ? 1
-        : Index(batch_size/time_steps);
+        : Index(batch_size/past_time_steps);
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        adaptive_moment_estimation.set_batch_size(constant*time_steps);
+        adaptive_moment_estimation.set_batch_size(constant*past_time_steps);
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        stochastic_gradient_descent.set_batch_size(constant*time_steps);
+        stochastic_gradient_descent.set_batch_size(constant*past_time_steps);
 */
 }
 

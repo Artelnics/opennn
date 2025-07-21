@@ -58,7 +58,7 @@ int main()
         adam->set_maximum_epochs_number(100);
         adam->set_batch_size(32);
 
-        //training_strategy.perform_training();
+        //training_strategy.train();
 
         // NormalizedSquaredError normalized_squared_error(&text_classification_network, &language_dataset);
 

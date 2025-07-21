@@ -253,14 +253,13 @@ struct BackPropagationLM
     type regularization = type(0);
     type loss = type(0);
 
-    Tensor<type, 1> parameters;
-
     NeuralNetworkBackPropagationLM neural_network;
 
     Tensor<type, 2> errors;
     Tensor<type, 1> squared_errors;
     Tensor<type, 2> squared_errors_jacobian;
 
+    Tensor<type, 1> parameters;
     Tensor<type, 1> gradient;
     Tensor<type, 2> hessian;
 
@@ -296,11 +295,6 @@ struct BackPropagation
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;
-
-    //Tensor<type, 1> parameters;
-
-    //Tensor<type, 1> gradient;
-    //Tensor<type, 1> regularization_gradient;
 
     Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;

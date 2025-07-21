@@ -118,7 +118,7 @@ HEADERS += \
     correlations.h \
     tinyxml2.h \
     dataset.h \
-    time_seriesdataset.h \
+    time_series_dataset.h \
     image_dataset.h \
     language_dataset.h \
     layer.h \
