@@ -93,6 +93,8 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
+    bool is_inputs_3D();
+
     const type& get_decision_threshold() const;
 
     const ActivationFunction& get_activation_function() const;
@@ -107,6 +109,8 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
+
+    void set_inputs_3D(const bool&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
     void set_decision_threshold(const type&);
@@ -171,6 +175,10 @@ private:
     Tensor<type, 2> empty;
 
     const Eigen::array<Index, 1> sum_dimensions = {0};
+
+    bool inputs_3D = false;
+
+    Index tokens_number = 0;
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"

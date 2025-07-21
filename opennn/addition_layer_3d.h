@@ -46,6 +46,8 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
+    void add_deltas(const vector<pair<type*, dimensions>>&) const;
+
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 

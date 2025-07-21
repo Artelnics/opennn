@@ -26,7 +26,7 @@ void CrossEntropyError::calculate_error(const Batch& batch,
                                         BackPropagation& back_propagation) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
-
+    
     (outputs_number == 1)
         ? calculate_binary_error(batch, forward_propagation, back_propagation)
         : calculate_multiple_error(batch, forward_propagation, back_propagation);
@@ -57,7 +57,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 
     error.device(*thread_pool_device) 
         = ((targets * outputs.log() + (type(1) - targets) * ((type(1) - outputs).log())).sum()) / type(-batch_samples_number);
-
+    //cout << "binary error: " << error << endl;
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
@@ -69,7 +69,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     // Batch
 
     const Index batch_samples_number = batch.get_samples_number();
-
+    
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
@@ -79,13 +79,14 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
     
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
-
+    
     // Back propagation
 
     Tensor<type, 0>& error = back_propagation.error;
+    
+    error.device(*thread_pool_device) = -(targets * (outputs + type(1e-5)).log()).sum() / type(batch_samples_number);
 
-    error.device(*thread_pool_device) = (targets*(outputs + type(1e-5)).log()).sum() / type(-batch_samples_number);
-
+    
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
@@ -155,6 +156,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = (outputs - targets) / type(batch_samples_number);
+
 }
 
 

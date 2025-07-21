@@ -55,6 +55,7 @@ dimensions NormalizationLayer3D::get_output_dimensions() const
 
 Index NormalizationLayer3D::get_parameters_number() const
 {
+    //cout << "Normalization parameters size : " << gammas.size() + betas.size() << endl;
     return gammas.size() + betas.size();
 }
 
@@ -154,13 +155,13 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     Tensor<type, 3>& means = normalization_layer_3d_forward_propagation->means;
     Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
     const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
-
+    
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 }};
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
-       
+    
     means.device(*thread_pool_device) = inputs.mean(normalization_axis)
                                             .reshape(range_3).broadcast(expand_normalization_axis);
-
+    
     standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt()
                                            .reshape(range_3).broadcast(expand_normalization_axis);
 
@@ -168,6 +169,10 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     multiply_matrices(thread_pool_device.get(), outputs, gammas);
     sum_matrices(thread_pool_device.get(), betas, outputs);
+
+    //cout << "Normalization3D layer outputs dimensions: " << outputs.dimensions() << endl;
+    //cout << "Normalization3D layer outputs:" << endl;
+    //cout << outputs << endl;
 }
 
 
@@ -184,7 +189,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
         add_deltas(delta_pairs);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
+    
     // Forward propagation
 
     const NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
@@ -239,6 +244,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
+
 }
 
 
@@ -285,7 +291,8 @@ void NormalizationLayer3D::from_XML(const XMLDocument& document)
 
     set_name(read_xml_string(normalization_layer_element, "Name"));
     set_sequence_length(read_xml_index(normalization_layer_element, "SequenceLength"));
-    set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
+    //set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
+    set_inputs_depth(read_xml_index(normalization_layer_element, "EmbeddingDimension"));
     set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "));
 }
 
@@ -391,7 +398,7 @@ vector<pair<type*, dimensions>> NormalizationLayer3DBackPropagation::get_input_d
 
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
-
+    
     return { {(type*)(input_derivatives.data()), {batch_samples_number, sequence_length, embedding_dimension}} };
 }
 

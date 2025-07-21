@@ -30,6 +30,9 @@
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
 #include "long_short_term_memory_layer.h"
+#include "vit_embedding_layer.h"
+#include "vit_multihead_attention_layer.h"
+#include "vit_feed_forward_network_layer_3d.h"
 
 namespace opennn
 {
@@ -256,7 +259,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& output_dimensions)
 {
     set_default();
-
+    
     layers.resize(0);
 
     model_type = new_model_type;
@@ -265,9 +268,9 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                            input_dimensions.end(), 
                                            1, 
                                            multiplies<Index>());
-
+    
     input_names.resize(inputs_number);
-
+    //cout << inputs_number << endl;
     for(Index i = 0; i < inputs_number; i++)
         input_names[i] = "input_" + to_string(i+1);
 
@@ -305,6 +308,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     default:
         break;
+        
 
     }
 
@@ -751,8 +755,9 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name,
 void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_input_names)
 {
     const Index layer_index = get_layer_index(layer_name);
-
+    
     layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
+
 }
 
 
@@ -773,9 +778,9 @@ Index NeuralNetwork::get_outputs_number() const
         return 0;
 
     const Layer* last_layer = layers[layers.size() - 1].get();
-
+    
     const dimensions output_dimensions = last_layer->get_output_dimensions();
-
+    
     return accumulate(output_dimensions.begin(), output_dimensions.end(), Index(1), multiplies<Index>());
 }
 
@@ -945,11 +950,13 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
-    
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
+
+    for (Index i = first_layer_index; i <= last_layer_index; i++) {
         layers[i]->forward_propagate(layer_input_pairs[i],
             forward_propagation.layers[i],
             is_training);
+    }
+    
 }
 
 
@@ -1063,21 +1070,19 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
     const Index layers_number = get_layers_number();
-
+    
     if (layers_number == 0) 
         return Tensor<type, 2>();
-
+    
     const Index batch_samples_number = inputs.dimension(0);
-
     ForwardPropagation forward_propagation(batch_samples_number, this);
-
     const pair<type*, dimensions> input_pair((type*)inputs.data(), { {batch_samples_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
 
     forward_propagate({input_pair}, forward_propagation);
-
+    
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
+    
     return tensor_map_2(outputs_pair);
 }
 
@@ -1287,9 +1292,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
     set();
-
+    
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
-
+    
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
@@ -1355,10 +1360,13 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiheadAttentionLayer>(); }},
      {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<AdditionLayer3D>(); }},
      {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<NormalizationLayer3D>(); }},
+     {"VitEmbedding", []() -> unique_ptr<Layer> { return make_unique<VitEmbeddingLayer>(); }},
+     {"VitMultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<VitMultiheadAttentionLayer>(); }},
+     {"VitFeedForwardNetwork3D", []() -> unique_ptr<Layer> { return make_unique<VitFeedForwardNetworkLayer3D>(); }},
     };
 
     const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
-
+    
     for (Index i = 0; i < layers_number; i++)
     {
         const XMLElement* layer_element = start_element->NextSiblingElement();
@@ -1372,7 +1380,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 
         if (it == layer_factories.end())
             throw runtime_error("Unknown layer type: " + layer_type_string);
-
+        
         unique_ptr<Layer> layer = it->second();
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
@@ -1384,7 +1392,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
     }
 
     // Layers inputs indices
-    /* @todo Not needed?
+
     const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
     if (!layer_input_indices_element)
         throw runtime_error("LayerInputIndices element is nullptr.\n");
@@ -1404,10 +1412,14 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
             throw runtime_error("Text is nullptr for LayerInputsIndices element.");
 
         const vector<Index> input_index = string_to_dimensions(string(text), " ");
+
+        layer_input_indices[layer_index].resize(input_index.size());   //new
+        for (Index j = 0; j < input_index.size(); j++)                 //new 
+            layer_input_indices[layer_index][j] = input_index[j];      //new  
+
         if (layer_index >= layer_input_indices.size())
             layer_input_indices.push_back(input_index);
     }
-    */
 }
 
 
@@ -1626,7 +1638,7 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
     neural_network = new_neural_network;
 
     if(!neural_network) return;
-
+    
     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
     const Index layers_number = neural_network_layers.size();
@@ -1688,6 +1700,18 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_samples_number, Ne
         case Layer::Type::Normalization3D:
             layers[i] = make_unique < NormalizationLayer3DBackPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
+
+        case Layer::Type::VitEmbedding:
+            layers[i] = make_unique < VitEmbeddingLayerBackPropagation>(batch_samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::VitMultiheadAttention:
+            layers[i] = make_unique < VitMultiheadAttentionLayerBackPropagation>(batch_samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::VitFeedForwardNetwork3D:
+            layers[i] = make_unique < VitFeedForwardNetworkLayer3DBackPropagation>(batch_samples_number, neural_network_layers[i].get());
+            break;
 
         default: break;
         }
@@ -1818,6 +1842,18 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
             layers[i] = make_unique<NormalizationLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
+        case Layer::Type::VitEmbedding:
+            layers[i] = make_unique<VitEmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+        break;
+
+        case Layer::Type::VitMultiheadAttention:
+            layers[i] = make_unique<VitMultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+        break;
+
+        case Layer::Type::VitFeedForwardNetwork3D:
+            layers[i] = make_unique<VitFeedForwardNetworkLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+        break;
+
         default: cout << "Default" << endl; break;
         }
     }
@@ -1855,11 +1891,11 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
         layer_input_pairs[i].resize(1);
 
-        // if (i == first_trainable_layer_index)
-        // {
-        //     layer_input_pairs[i] = batch_input_pairs;
-        //     continue;
-        // }
+        if (i == first_trainable_layer_index)
+        {
+            layer_input_pairs[i] = batch_input_pairs;
+            continue;
+        }
 
         if(neural_network->get_model_type_string() == "TextClassification"){
 
@@ -1896,7 +1932,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
         }
     }
-
+    
     return layer_input_pairs;
 }
 

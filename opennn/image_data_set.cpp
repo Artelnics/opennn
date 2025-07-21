@@ -133,7 +133,7 @@ void ImageDataSet::set_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = arc4random() % 255;
+                data(i, j) = 1/*arc4random() % 255*/; //arc4random: identifier not found
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -436,7 +436,6 @@ void ImageDataSet::read_bmp()
 
     Tensor<Index, 1> images_number(folders_number + 1);
     images_number.setZero();
-    
     Index samples_number = 0;
 
     for(Index i = 0; i < folders_number; i++)
@@ -454,7 +453,7 @@ void ImageDataSet::read_bmp()
     }
 
     Index height, width, image_channels;
-
+    
     const Tensor<type, 3> image_data = read_bmp_image(image_path[0]);
 
     height = image_data.dimension(0);
@@ -469,7 +468,7 @@ void ImageDataSet::read_bmp()
     const Index targets_number = (folders_number == 2) 
         ? folders_number -1 
         : folders_number;
-
+    
     set(samples_number, { height, width, image_channels }, { targets_number });
 
     vector<string> categories(targets_number);

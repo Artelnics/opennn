@@ -23,13 +23,23 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
 
 dimensions ProbabilisticLayer::get_input_dimensions() const
 {
-    return { synaptic_weights.dimension(0) };
+    //Made for Vision Transformers:
+    if (inputs_3D)
+        return { tokens_number , synaptic_weights.dimension(0) };
+    else
+        return { synaptic_weights.dimension(0) };
 }
 
 
 dimensions ProbabilisticLayer::get_output_dimensions() const
 {
     return { biases.size() };
+}
+
+
+bool ProbabilisticLayer::is_inputs_3D()
+{
+    return inputs_3D;
 }
 
 
@@ -73,9 +83,9 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 
     Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
 
-    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number*sizeof(type));
+    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number * sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number*sizeof(type));
+    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number * sizeof(type));
 
     return parameters;
 }
@@ -94,7 +104,7 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
 
     synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
-
+    
     set_parameters_random();
 
     layer_type = Layer::Type::Probabilistic;
@@ -116,7 +126,9 @@ void ProbabilisticLayer::set_input_dimensions(const dimensions& new_input_dimens
 
     biases.resize(output_dimensions[0]);
 
-    synaptic_weights.resize(new_input_dimensions[0], output_dimensions[0]);
+    new_input_dimensions.size() == 2
+        ? synaptic_weights.resize(new_input_dimensions[1], output_dimensions[0])
+        : synaptic_weights.resize(new_input_dimensions[0], output_dimensions[0]);
 }
 
 
@@ -126,7 +138,17 @@ void ProbabilisticLayer::set_output_dimensions(const dimensions& new_output_dime
 
     biases.resize(new_output_dimensions[0]);
 
-    synaptic_weights.resize(input_dimensions[0], new_output_dimensions[0]);
+    synaptic_weights.resize(
+        inputs_3D ? input_dimensions[0] : input_dimensions[1],
+        new_output_dimensions[0]
+    );
+
+}
+
+
+void ProbabilisticLayer::set_inputs_3D(const bool& new_inputs_3D)
+{
+    inputs_3D = new_inputs_3D;
 }
 
 
@@ -170,8 +192,8 @@ void ProbabilisticLayer::set_activation_function(const string& new_activation_fu
 
 void ProbabilisticLayer::set_parameters_constant(const type& value)
 {
-    biases.setConstant(value);
-
+    //biases.setConstant(value);
+    biases.setZero();
     synaptic_weights.setConstant(value);
 }
 
@@ -179,6 +201,7 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 void ProbabilisticLayer::set_parameters_random()
 {
     set_random(biases);
+    //biases.setZero();
 
     set_random(synaptic_weights);
 }
@@ -214,8 +237,21 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            const bool& is_training)
 {
+    Tensor<type, 2> inputs;
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+    if (input_pairs[0].second.size() == 3) {
+        TensorMap<Tensor<type, 3>> total_inputs = tensor_map_3(input_pairs[0]);
+        //cout << "probabilistic inputs dimension : " << total_inputs.dimensions() << endl;
+        //cout << "probabilistic inputs : " << total_inputs << endl;
+        tokens_number = total_inputs.dimension(1);
+        inputs = total_inputs.chip(0, 1);
+        set_inputs_3D (true);
+    }
+    else
+        TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+
+    //cout << "probabilistic inputs dimension : " << inputs.dimensions() << endl;
+    //cout << "probabilistic inputs : " << inputs << endl;
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
         static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
@@ -224,15 +260,12 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     calculate_combinations(inputs, outputs);
 
-    if(is_training)
-    {
-        Tensor<type, 2> activation_derivatives(outputs.dimensions());
-        calculate_activations(outputs,activation_derivatives);
-    }
-    else
-    {
-        throw runtime_error("Unknown case in forward propagation.\n");
-    }
+    Tensor<type, 2> activation_derivatives(outputs.dimensions());
+    calculate_activations(outputs,activation_derivatives);
+
+    //cout << "Probabilistic layer outputs dimensions: " << outputs.dimensions() << endl;
+    //cout << "Probabilistic layer outputs:" << endl;
+    //cout << outputs << endl;
 }
 
 
@@ -243,9 +276,17 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 {
     const Index outputs_number = get_outputs_number();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    Tensor<type, 2> inputs;
 
+    if (input_pairs[0].second.size() == 3) {
+        TensorMap<Tensor<type, 3>> total_inputs = tensor_map_3(input_pairs[0]);
+        inputs = total_inputs.chip(0, 1);
+    }
+    else
+        TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    
     // Forward propagation
 
     ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
@@ -280,6 +321,13 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     bias_derivatives.device(*thread_pool_device) = combination_derivatives.sum(sum_dimensions);
 
     input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(synaptic_weights, A_BT);
+
+    
+    //cout << "synaptic_weight_derivatives size probabilistic_layer: " << synaptic_weight_derivatives.size() << endl;
+    //cout << "synaptic_weight_derivatives probabilistic_layer: " << synaptic_weight_derivatives << endl;
+    
+    //cout << "bias_derivatives probabilistic_layer: " << bias_derivatives << endl;
+    
 }
 
 
@@ -423,7 +471,7 @@ void ProbabilisticLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic");
 
-    add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
+    add_xml_element(printer, "InputsNumber", inputs_3D ? to_string(get_input_dimensions()[1]) : to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
@@ -608,7 +656,7 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
     layer = new_layer;
 
     batch_samples_number = new_batch_samples_number;
-
+    
     const Index outputs_number = layer->get_outputs_number();
 
     outputs.resize(batch_samples_number, outputs_number);
@@ -648,23 +696,36 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     batch_samples_number = new_batch_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
+
+    Index inputs_number;
+
+    if (layer->get_input_dimensions().size() == 2)
+        inputs_number = layer->get_input_dimensions()[1];
+    else
+        inputs_number = layer->get_input_dimensions()[0];
 
     bias_derivatives.resize(outputs_number);
 
     synaptic_weight_derivatives.resize(inputs_number, outputs_number);
 
     combination_derivatives.resize(batch_samples_number, outputs_number);
-
+    
     input_derivatives.resize(batch_samples_number, inputs_number);
 }
 
 
 vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_input_dimensions()[0];
-
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
+    Index inputs_number;
+    
+    if (layer->get_input_dimensions().size() == 2) {
+        inputs_number = layer->get_input_dimensions()[1];
+        return { {(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
+    }
+    else {
+        inputs_number = layer->get_input_dimensions()[0];
+        return { {(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
+    }
 }
 
 

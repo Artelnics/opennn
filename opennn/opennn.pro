@@ -121,7 +121,7 @@ HEADERS += \
     growing_neurons.h \
     inputs_selection.h \
     growing_inputs.h \
-    genetic_algorithm.h \
+    # genetic_algorithm.h \
     testing_analysis.h \
     response_optimization.h \
     tensors.h \
@@ -131,7 +131,12 @@ HEADERS += \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
     addition_layer_3d.h \
-    normalization_layer_3d.h
+    normalization_layer_3d.h \
+    vit_embedding_layer.h \
+    vit_feed_forward_network_layer_3d.h \
+    vit_multihead_attention_layer.h \
+    vision_transformer.h \
+    vit_transformed_input_layer.h
 
 SOURCES += \
     auto_associative_data_set.cpp \
@@ -187,9 +192,14 @@ SOURCES += \
     growing_neurons.cpp \
     inputs_selection.cpp \
     growing_inputs.cpp \
-    genetic_algorithm.cpp \
+    # genetic_algorithm.cpp \
     testing_analysis.cpp \
     response_optimization.cpp \
     flatten_layer.cpp \
     addition_layer_3d.cpp \
-    normalization_layer_3d.cpp
+    normalization_layer_3d.cpp \
+    vit_embedding_layer.cpp \
+    vit_feed_forward_network_layer_3d.cpp \
+    vit_multihead_attention_layer.cpp \
+    vision_transformer.cpp \
+    vit_transformed_input_layer.cpp

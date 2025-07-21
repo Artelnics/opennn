@@ -42,6 +42,11 @@
 #include "auto_associative_neural_network.h"
 #include "transformer.h"
 #include "forward_propagation.h"
+#include "vit_embedding_layer.h"
+#include "vit_feed_forward_network_layer_3d.h"
+#include "vit_multihead_attention_layer.h"
+#include "vision_transformer.h"
+#include "vit_transformed_input_layer.h"
 
 // Training strategy
 

@@ -75,9 +75,9 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         const bool&)
 {
     const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map_3(input_pairs[0]);
-
+    
     const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map_3(input_pairs[1]);
-
+    
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
         static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
@@ -85,16 +85,46 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     outputs.device(*thread_pool_device) = positional_encodings + input_embeddings;
 
+    //cout << "Addition3D layer outputs dimensions: " << outputs.dimensions() << endl;
+    //cout << "Addition3D layer outputs:" << endl;
+    //cout << outputs << endl;
 }
 
 
 void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>&,
-                                     const vector<pair<type*, dimensions>>& delta_pairs,
-                                     unique_ptr<LayerForwardPropagation>&,
-                                     unique_ptr<LayerBackPropagation>& back_propagation) const
+    const vector<pair<type*, dimensions>>& delta_pairs,
+    unique_ptr<LayerForwardPropagation>&,
+    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    Tensor<type, 3 > deltas;
+    if (delta_pairs[0].second.size() == 2) {
+        TensorMap<Tensor<type, 2>> small_deltas = tensor_map_2(delta_pairs[0]);
+        TensorMap<Tensor<type, 3>> small_deltas_copy(small_deltas.data(), small_deltas.dimension(0), 1, small_deltas.dimension(1));
+        deltas.resize(small_deltas_copy.dimension(0), get_sequence_length(), small_deltas_copy.dimension(2));
+        deltas.setZero();
+        deltas.slice(Eigen::array<Index, 3>{0, 0, 0}, Eigen::array<Index, 3>{Index(small_deltas_copy.dimension(0)) - 1, 0, Index(small_deltas_copy.dimension(2)) - 1}) = small_deltas_copy;
+    }
+    else {
+        
+        if (delta_pairs.size() == 1)
+            TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
+        else if (delta_pairs.size() > 1) {
+            TensorMap<Tensor<type, 3>> deltas_sum = tensor_map_3(delta_pairs[0]);
+            for (size_t i = 1; i < delta_pairs.size(); ++i) {
+                deltas_sum += tensor_map_3(delta_pairs[i]);
+            }
+            deltas = deltas_sum;
+        }
+        
+        /*
+        if (delta_pairs.size() > 1)
+            add_deltas(delta_pairs);
+
+        const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+        */
+    }
+    
     // Back propagation
 
     AdditionLayer3DBackPropagation* addition_layer_3d_back_propagation =
@@ -106,6 +136,15 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>&,
 
     input_1_derivatives.device(*thread_pool_device) = deltas;
     input_2_derivatives.device(*thread_pool_device) = deltas;
+}
+
+
+void AdditionLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
+{
+    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+
+    for (Index i = 1; i < Index(delta_pairs.size()); i++)
+        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 
@@ -188,6 +227,7 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     input_1_derivatives.resize(batch_samples_number, sequence_length, embedding_length);
     input_2_derivatives.resize(batch_samples_number, sequence_length, embedding_length);
+
 }
 
 

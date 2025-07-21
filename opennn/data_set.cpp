@@ -335,9 +335,9 @@ namespace opennn
     vector<Index> DataSet::get_sample_indices(const SampleUse& sample_use) const
     {
         const Index samples_number = get_samples_number();
-
+        
         const Index count = get_samples_number(sample_use);
-
+        
         vector<Index> indices(count);
 
         Index index = 0;
@@ -406,11 +406,11 @@ namespace opennn
         mt19937 urng(rng());
 
         const Index samples_number = sample_indices.size();
-
+        
         Index batches_number;
 
         const Index batch_size = min(batch_samples_number, samples_number);
-
+        
         samples_number < batch_size
             ? batches_number = 1
             : batches_number = samples_number / batch_size;
@@ -428,10 +428,13 @@ namespace opennn
         {
             batches[i].resize(batch_size);
 
-            const Index offset = i * batches_number;
+            //const Index offset = i * batches_number;
+            const Index offset = i * batch_size;
 
-            for (Index j = 0; j < batch_size; j++)
+            for (Index j = 0; j < batch_size; j++) {
                 batches[i][j] = samples_copy[offset + j];
+                //cout << "samples_copy[offset + j]: " << samples_copy[offset + j] << endl;
+            }
         }
 
         return batches;

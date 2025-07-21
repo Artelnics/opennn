@@ -821,6 +821,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 
     const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
+    type correct_predictions = true_positive + true_negative;
+
+    type accuracy = (correct_predictions / testing_samples_number) * type(100);
+
+    cout << "Accuracy: " << accuracy << "%" << endl;
+
     if(confusion_sum != testing_samples_number)
         throw runtime_error("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
                             "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
@@ -834,7 +840,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
 {
     const Index samples_number = targets.dimension(0);
     const Index targets_number = targets.dimension(1);
-
+    
     if(targets_number != outputs.dimension(1))
         throw runtime_error("Number of targets (" + to_string(targets_number) + ") "
                             "must be equal to number of outputs (" + to_string(outputs.dimension(1)) + ").\n");
@@ -856,6 +862,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
         confusion(targets_number, output_index)++;
     }
 
+    type correct_predictions = 0;
+
+    for (Index class_number = 0; class_number < targets_number; class_number++) 
+        correct_predictions += confusion(class_number, class_number);
+
+    type accuracy = (correct_predictions / samples_number) * type(100);
+
+    cout << "Accuracy: " << accuracy << "%" << endl;
+
     return confusion;
 }
 
@@ -876,13 +891,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     check();
 
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Index samples_number = targets.dimension(0);
-
+    
     const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
-
+    
     if(input_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
@@ -897,11 +911,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
                                   input_dimensions[0],
                                   input_dimensions[1],
                                   input_dimensions[2]);
-        
+
         memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
-
+        
         return calculate_confusion(outputs, targets);
     }
 

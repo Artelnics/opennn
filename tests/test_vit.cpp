@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M N I S T    A P P L I C A T I O N
+//   V I T   A P P L I C A T I O N
 //
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
@@ -18,26 +18,23 @@ using namespace opennn;
 int main()
 {
     try
-    {   
-        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
+    {
+        cout << "OpenNN. National Institute of Standards and Techonology (ViT) Example." << endl;
 
         // Data set
-        
-        /*
+
         const Index samples_number = 1;
 
-        const Index image_height = 3;
-        const Index image_width = 3;
+        const Index image_height = 32;
+        const Index image_width = 32;
         const Index channels = 3;
         const Index targets = 1;
 
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
-        image_data_set.set_data_random();
-        */
-        ImageDataSet image_data_set(0,{0,0,0},{0});
+        // image_data_set.set_data_random();
+        
 
-        // image_data_set.set_data_path("C:/binary_mnist");
         image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
         image_data_set.read_bmp();
@@ -72,11 +69,11 @@ int main()
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-        
+
         // Testing analysis
-        
+        /*
         neural_network.save("C:/xmltest/outputs.xml");
-        
+
         NeuralNetwork imported_neural_network;
         imported_neural_network.load("C:/xmltest/outputs.xml");
 
@@ -84,19 +81,19 @@ int main()
         cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
-        
+        */
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
-        
+
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+
         cout << "Bye!" << endl;
-        
+
         return 0;
     }
-    catch(exception& e)
+    catch (exception& e)
     {
         cerr << e.what() << endl;
 

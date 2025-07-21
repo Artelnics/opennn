@@ -47,7 +47,10 @@ public:
                     Flatten,
                     NonMaxSuppression,
                     MultiheadAttention,
-                    Embedding};
+                    Embedding,
+                    VitEmbedding,
+                    VitMultiheadAttention,
+                    VitFeedForwardNetwork3D};
 
     Layer();
 

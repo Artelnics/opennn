@@ -85,6 +85,15 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::MultiheadAttention:
         return "MultiheadAttention";
 
+    case Type::VitEmbedding:
+        return "VitEmbedding";
+
+    case Type::VitMultiheadAttention:
+        return "VitMultiheadAttention";
+
+    case Type::VitFeedForwardNetwork3D:
+        return "VitFeedForwardNetwork3D";
+
     default:
         throw runtime_error("Unknown layer type.");
     }
@@ -147,6 +156,15 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 
     if(this_layer_type == "MultiheadAttention")
         return Type::MultiheadAttention;
+
+    if (this_layer_type == "VitEmbedding")
+        return Type::VitEmbedding;
+
+    if (this_layer_type == "VitMultiheadAttention")
+        return Type::VitMultiheadAttention;
+
+    if (this_layer_type == "VitFeedForwardNetwork3D")
+        return Type::VitFeedForwardNetwork3D;
 
     throw runtime_error("Unknown layer type.");
 }
@@ -221,6 +239,15 @@ string Layer::get_type_string() const
 
     case Type::MultiheadAttention:
         return "MultiheadAttention";
+
+    case Type::VitEmbedding:
+        return "VitEmbedding";
+
+    case Type::VitMultiheadAttention:
+        return "VitMultiheadAttention";
+
+    case Type::VitFeedForwardNetwork3D:
+        return "VitFeedForwardNetwork3D";
 
     default:
         return "Unkown type";

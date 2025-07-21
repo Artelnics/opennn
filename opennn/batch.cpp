@@ -20,10 +20,12 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
+    
     const Tensor<type, 2>& data = data_set->get_data();
 
     if(is_instance_of<ImageDataSet>(data_set))
     {
+        
         ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
         if (image_data_set->get_augmentation())
@@ -36,7 +38,14 @@ void Batch::fill(const vector<Index>& sample_indices,
         }
         else
         {
-            fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+            /*
+            cout << "sample_indices size: " << sample_indices.size() << endl;
+            cout << "sample_indices size[0]: " << sample_indices[0] << endl;
+            cout << "sample_indices size[1]: " << sample_indices[1] << endl;
+            cout << "sample_indices size[2]: " << sample_indices[2] << endl;
+            */
+
+            fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());    
         }
     }
     else

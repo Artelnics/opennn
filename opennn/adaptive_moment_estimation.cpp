@@ -135,7 +135,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
-
+    
     TrainingResults results(maximum_epochs_number + 1);
 
     check();
@@ -183,21 +183,21 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     vector<vector<Index>> selection_batches(selection_batches_number);
 
     // Neural network
-
+    
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-
+    
     set_names();
-
+    
     set_scaling();
-
+    
     set_vocabularies();
-
+    
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
-
+    
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -238,9 +238,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {  
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
-
+        
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
-
+        
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
@@ -255,39 +255,39 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 input_variable_indices,
                                 decoder_variable_indices,
                                 target_variable_indices);
-
+            
             // Neural network
             
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
-
+            
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+            
+            //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
-
-            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // cout << "numerical gradient:\n" << numerical_gradient<< endl;
-            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
-
+            //cout << "gradient:\n" << training_back_propagation.gradient.dimensions() << endl;
+            //cout << "numerical gradient:\n" << numerical_gradient.dimensions() << endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
             
-            // throw runtime_error("Checking the gradient and numerical gradient.");
-            //system("pause");
-
+            //throw runtime_error("Checking the gradient and numerical gradient.");
+            
             training_error += training_back_propagation.error();
 
-            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
+            if (is_classification_model)
+                training_accuracy += training_back_propagation.accuracy(0);
 
             update_parameters(training_back_propagation, optimization_data);
+            
         }
         
         // Loss
-
+        
         training_error /= type(training_batches_number);
 
         if(is_classification_model)   
@@ -457,10 +457,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     type effective_learning_rate = learning_rate * bias_correction;
 
     if(use_custom_learning_rate)
-    {
+    {        
         const type warmup_steps = 4000;
+
         type& step = optimization_data.step;
+
         effective_learning_rate *= learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5));
+
         step++;
     }
 

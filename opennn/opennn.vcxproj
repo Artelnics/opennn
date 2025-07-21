@@ -375,6 +375,16 @@
     <ClCompile Include="transformer.cpp" />
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
+	<ClCompile Include="vision_transformer.h" />
+	<ClCompile Include="vision_transformer.cpp" />
+	<ClCompile Include="vit_embedding_layer.h" />
+	<ClCompile Include="vit_embedding_layer.cpp" />
+	<ClCompile Include="vit_feed_forward_network_layer_3d.h" />
+	<ClCompile Include="vit_feed_forward_network_layer_3d.cpp" />
+	<ClCompile Include="vit_multihead_attention_layer.h" />
+	<ClCompile Include="vit_multihead_attention_layer.cpp" />
+	<ClCompile Include="vit_transformed_input_layer.h" />
+	<ClCompile Include="vit_transformed_input_layer.cpp" />
     <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>

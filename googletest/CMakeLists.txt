@@ -10,6 +10,8 @@
 
 # When other libraries are using a shared version of runtime libraries,
 # Google Test also has to use one.
+
+
 option(
   gtest_force_shared_crt
   "Use shared (DLL) run-time lib even when Google Test is built as static lib."
@@ -85,9 +87,9 @@ if (gtest_hide_internal_symbols)
 endif()
 
 # Define helper functions and macros used by Google Test.
-include(cmake/internal_utils.cmake)
+# include(cmake/internal_utils.cmake)
 
-config_compiler_and_linker()  # Defined in internal_utils.cmake.
+# config_compiler_and_linker()  # Defined in internal_utils.cmake.
 
 # Needed to set the namespace for both the export targets and the
 # alias libraries.
@@ -127,8 +129,8 @@ include_directories(${gtest_build_include_dirs})
 # Google Test libraries. We build them using more strict warnings than what
 # are used for other targets, to ensure that gtest can be compiled by a user
 # aggressive about warnings.
-cxx_library(gtest "${cxx_strict}" src/gtest-all.cc)
-set_target_properties(gtest PROPERTIES VERSION ${GOOGLETEST_VERSION})
+# cxx_library(gtest "${cxx_strict}" src/gtest-all.cc)
+#set_target_properties(gtest PROPERTIES VERSION ${GOOGLETEST_VERSION})
 if(GTEST_HAS_ABSL)
   target_compile_definitions(gtest PUBLIC GTEST_HAS_ABSL=1)
   target_link_libraries(gtest PUBLIC
@@ -145,24 +147,24 @@ if(GTEST_HAS_ABSL)
     re2::re2
   )
 endif()
-cxx_library(gtest_main "${cxx_strict}" src/gtest_main.cc)
-set_target_properties(gtest_main PROPERTIES VERSION ${GOOGLETEST_VERSION})
+#cxx_library(gtest_main "${cxx_strict}" src/gtest_main.cc)
+#set_target_properties(gtest_main PROPERTIES VERSION ${GOOGLETEST_VERSION})
 string(REPLACE ";" "$<SEMICOLON>" dirs "${gtest_build_include_dirs}")
-target_include_directories(gtest SYSTEM INTERFACE
-  "$<BUILD_INTERFACE:${dirs}>"
-  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
-target_include_directories(gtest_main SYSTEM INTERFACE
-  "$<BUILD_INTERFACE:${dirs}>"
-  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+#target_include_directories(gtest SYSTEM INTERFACE
+#  "$<BUILD_INTERFACE:${dirs}>"
+#  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+#target_include_directories(gtest_main SYSTEM INTERFACE
+#  "$<BUILD_INTERFACE:${dirs}>"
+#  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 if(CMAKE_SYSTEM_NAME MATCHES "QNX" AND CMAKE_SYSTEM_VERSION VERSION_GREATER_EQUAL 7.1)
   target_link_libraries(gtest PUBLIC regex)
 endif()
-target_link_libraries(gtest_main PUBLIC gtest)
+#target_link_libraries(gtest_main PUBLIC gtest)
 
 ########################################################################
 #
 # Install rules.
-install_project(gtest gtest_main)
+# install_project(gtest gtest_main)
 
 ########################################################################
 #
