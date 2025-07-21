@@ -99,7 +99,7 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_maximum_epochs_number(1);
     quasi_newton_method.set_display(false);
 
-    TrainingResults training_results = quasi_newton_method.perform_training();
+    TrainingResults training_results = quasi_newton_method.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
@@ -112,7 +112,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     neural_network.set_parameters_random();
 
-    training_results = quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.train();
     error = training_results.get_training_error();
 
     EXPECT_LT(error, old_error);
@@ -123,7 +123,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     quasi_newton_method.set_maximum_epochs_number(2);
 
-    training_results = quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.train();
     error = training_results.get_training_error();
 
     EXPECT_LE(error, old_error);
@@ -139,7 +139,7 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_maximum_epochs_number(1000);
     quasi_newton_method.set_maximum_time(1000.0);
 
-    training_results = quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.train();
 /*
     EXPECT_LE(training_results.get_loss(), training_loss_goal);
 
@@ -154,7 +154,7 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_maximum_epochs_number(1000);
     quasi_newton_method.set_maximum_time(1000.0);
 
-    training_results = quasi_newton_method.perform_training();
+    training_results = quasi_newton_method.train();
 
     EXPECT_LE(training_results.get_loss_decrease(), minimum_loss_decrease);
 */
