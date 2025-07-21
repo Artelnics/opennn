@@ -22,9 +22,9 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
-#include "adaptive_moment_estimation.h"
-#include "testing_analysis.h"
-#include "recurrent_layer.h"
+#include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/testing_analysis.h"
+#include "../../opennn/recurrent_layer.h"
 
 using namespace opennn;
 

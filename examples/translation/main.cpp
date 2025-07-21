@@ -51,7 +51,7 @@ int main()
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
-        training_strategy.perform_training();
+        training_strategy.train();
 
         cout << "Bye!" << endl;
 
