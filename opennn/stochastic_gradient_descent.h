@@ -54,7 +54,7 @@ public:
 
    void update_parameters(BackPropagation& , StochasticGradientDescentData&) const;
 
-   TrainingResults perform_training() override;
+   TrainingResults train() override;
 
    string get_name() const override;
 

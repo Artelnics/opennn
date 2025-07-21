@@ -127,9 +127,9 @@ int main()
 
         // TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
         // training_strategy.set_loss_index("MeanSquaredError");
-        // training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
+        // training_strategy.get_loss_index()->set_regularization_method("None");
 
-        // training_strategy.perform_training();
+        // training_strategy.train();
 
         // cout << "Error" << endl;
         // cout << normalized_squared_error.calculate_numerical_error() << endl;

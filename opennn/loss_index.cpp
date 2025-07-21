@@ -143,31 +143,29 @@ void LossIndex::back_propagate(const Batch& batch,
 {
     if(batch.is_empty()) return;
 
-    // Loss index
-
     calculate_error(batch, forward_propagation, back_propagation);
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    // Loss
     back_propagation.loss = back_propagation.error();
 
-    // Regularization
     add_regularization(back_propagation);
 }
 
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
-    if(regularization_method == "NoRegularization")
+    if(regularization_method == "None")
         return;
 
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+
     const Index layers_number = neural_network->get_layers_number();
 
     type regularization_value = 0;
 
-#pragma omp parallel for schedule(dynamic) // @todo check this pragma vs thread_pool
+    #pragma omp parallel for schedule(dynamic) // @todo check this pragma vs thread_pool
+
     for (Index layer_index = 0; layer_index < layers_number; layer_index++)
     {
         Layer* layer = neural_network->get_layer(layer_index).get();
@@ -188,7 +186,6 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
             regularization_value += calculate_regularization(parameters_map);
 
-
             type* delta_data = delta_pairs[parameter_index].first;
             TensorMap<Tensor<type, 1>> delta_map(delta_data, parameter_size);
 
@@ -204,7 +201,7 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
 void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
 {
-    if(regularization_method == "NoRegularization")
+    if(regularization_method == "None")
         return;
 
     const type regularization = calculate_regularization(back_propagation_lm.parameters);
@@ -313,7 +310,7 @@ string LossIndex::get_name() const
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
-    if(regularization_method == "NoRegularization")
+    if(regularization_method == "None")
         return type(0);
     else if(regularization_method == "L1")
         return l1_norm(thread_pool_device.get(), parameters);
@@ -323,10 +320,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
         throw runtime_error("Unknown regularization method: " + regularization_method);
 }
 
+
 // @todo is it deprecated?
 void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters, Tensor<type, 1>& regularization_gradient) const
 {
-    if(regularization_method == "NoRegularization")
+    if(regularization_method == "None")
         regularization_gradient.setZero();
     else if(regularization_method == "L1")
         l1_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient);
@@ -342,12 +340,12 @@ void LossIndex::apply_regularization_gradient(const TensorMap<Tensor<type, 1>>& 
                                               type weight) const
 {
 
-    if(regularization_method == "NoRegularization")
+    if(regularization_method == "None")
         return;
     else if(regularization_method == "L1")
-        delta += weight * parameters.sign();
+        delta.device(*thread_pool_device) += weight * parameters.sign();
     else if(regularization_method == "L2")
-        delta += weight * parameters;
+        delta.device(*thread_pool_device) += weight * parameters;
     else if(regularization_method == "ElasticNet")
     {
         const type mix_factor = 0.5;
@@ -361,8 +359,8 @@ void LossIndex::apply_regularization_gradient(const TensorMap<Tensor<type, 1>>& 
 void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters,
                                                  Tensor<type, 2>& regularization_hessian) const
 {
-    if(regularization_method == "NoRegularization")
-        ;// do nothing
+    if(regularization_method == "None")
+        return;
     else if(regularization_method == "L1")
         l1_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
     else if(regularization_method == "L2")
@@ -751,7 +749,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
     Batch batch(samples_number, dataset);
-    // batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
     batch.fill(sample_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -1310,6 +1307,8 @@ void BackPropagationLM::set(const Index& new_samples_number,
 
     neural_network.set(samples_number, neural_network_ptr);
 
+    parameters.resize(parameters_number);
+
     neural_network_ptr->get_parameters(parameters);
 
     loss = type(0);
@@ -1407,7 +1406,7 @@ void LossIndex::calculate_layers_error_gradient_cuda(const BatchCuda& batch_cuda
 
 void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cuda) const
 {
-    if (regularization_method == "NoRegularization")
+    if (regularization_method == "None")
     {
         back_propagation_cuda.regularization = 0.0f;
         return;
