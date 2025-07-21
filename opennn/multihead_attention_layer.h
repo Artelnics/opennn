@@ -1,13 +1,16 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
+//  OpenNN: Open Neural Networks Library
+//  www.opennn.net
 //
-//   M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S   H E A D E R
+//  M U L T I H E A D   A T T E N T I O N   L A Y E R   C L A S S   H E A D E R
 //
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+//  Artificial Intelligence Techniques SL
+//  artelnics@artelnics.com
 
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
+
+#include "registry.h"
+#include "tensors.h"
 
 #include "layer.h"
 
@@ -75,9 +78,9 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    #ifdef OPENNN_CUDA
-       // @todo
-    #endif
+#ifdef OPENNN_CUDA
+        // @todo
+#endif
 
     void apply_key_padding_mask(const Tensor<bool, 2>&,Tensor<type, 4>&) const;
 
@@ -104,7 +107,7 @@ private:
     bool use_causal_mask = false;
 
     Tensor<type, 2> causal_mask;
-    Tensor<bool,2> key_mask;            //Starting to implement (should be used before softmax so that the probability of the padding is zero)
+    Tensor<bool,2> key_mask;             //Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
 
@@ -112,9 +115,9 @@ private:
 };
 
 
-struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
+struct MultiHeadAttentionForwardPropagation : LayerForwardPropagation
 {
-    MultiheadAttentionForwardPropagation(const Index& new_batch_size = 0,
+    MultiHeadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                          Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_output_pair() const override;
@@ -140,9 +143,9 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 };
 
 
-struct MultiheadAttentionBackPropagation : LayerBackPropagation
+struct MultiHeadAttentionBackPropagation : LayerBackPropagation
 {
-    MultiheadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
+    MultiHeadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -181,7 +184,8 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     // @todo
 #endif
 
-}
+} // namespace opennn
+
 
 #endif // MULTIHEAD_ATTENTION_LAYER_H
 

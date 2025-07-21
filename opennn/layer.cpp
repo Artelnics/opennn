@@ -88,8 +88,6 @@ Index Layer::get_parameters_number() const
 
     Index parameters_number = 0;
 
-#pragma omp parallel for reduction(+:parameters_number)
-
     for(Index i = 0; i < Index(parameter_pairs.size()); i++)
         parameters_number += parameter_pairs[i].second;
 

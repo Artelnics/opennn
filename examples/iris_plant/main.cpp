@@ -17,6 +17,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/optimization_algorithm.h"
 
 using namespace opennn;
@@ -49,6 +50,17 @@ int main()
 
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;
+
+        NormalizedSquaredError normalized_squared_error(&classification_network, &dataset);
+
+        Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
+        Tensor<type, 1> numerical_gradient  = normalized_squared_error.calculate_numerical_gradient();
+
+        Tensor<type, 1> difference = gradient - numerical_gradient;
+        Tensor<type, 1> abs_difference = difference.abs();
+        cout << abs_difference.maximum();
+
+        cout << "Bye!" << endl;
 
         return 0;
     }

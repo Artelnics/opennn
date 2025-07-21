@@ -40,6 +40,8 @@ public:
     void set_dropout_rate(const type&);
 
     void set_parameters_random() override;
+    // void set_biases(const string&) override;
+    // void set_weights(const string&) ;
 
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;

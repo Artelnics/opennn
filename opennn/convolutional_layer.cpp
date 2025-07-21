@@ -140,12 +140,87 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
         : calculate_activations(activation_function, outputs, empty_4);
 }
 
+/*
+void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                   const vector<pair<type*, dimensions>>& delta_pairs,
+                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                   unique_ptr<LayerBackPropagation>& back_propagation) const
+{
+    // --- 1. SETUP ---
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
+
+    const ConvolutionalForwardPropagation* this_forward_propagation =
+        static_cast<const ConvolutionalForwardPropagation*>(forward_propagation.get());
+
+    ConvolutionalBackPropagation* convolutional_back_propagation =
+        static_cast<ConvolutionalBackPropagation*>(back_propagation.get());
+
+    const Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
+    const Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
+
+    Tensor<type, 1>& bias_deltas = convolutional_back_propagation->bias_deltas;
+    Tensor<type, 4>& weight_deltas = convolutional_back_propagation->weight_deltas;
+    Tensor<type, 4>& input_deltas = convolutional_back_propagation->input_deltas;
+
+    const Index batch_size = inputs.dimension(0);
+
+    // --- 2. APPLY ACTIVATION DERIVATIVE ---
+    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+
+    // --- 3. CALCULATE BIAS GRADIENTS ---
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 3>({0, 1, 2}));
+
+    // --- 4. CALCULATE WEIGHT GRADIENTS (REFACTORED) ---
+    const array<Index, 2> deltas_matrix_dims = {
+        batch_size * get_output_height() * get_output_width(),
+        get_kernels_number()
+    };
+    Tensor<type, 2> deltas_as_matrix = deltas.reshape(deltas_matrix_dims);
+
+    Tensor<type, 2> patches_as_matrix = preprocessed_inputs.extract_image_patches(
+                                                               get_kernel_height(), get_kernel_width(),
+                                                               row_stride, column_stride,
+                                                               1, 1,
+                                                               Eigen::PADDING_VALID
+                                                               ).reshape(
+                                                array<Index, 2>{
+                                                    batch_size * get_output_height() * get_output_width(),
+                                                    get_kernel_height() * get_kernel_width() * get_input_channels()
+                                                }
+                                                );
+
+    const array<IndexPair<Index>, 1> contract_axes = { IndexPair<Index>(0, 0) };
+    Tensor<type, 2> weight_deltas_matrix = patches_as_matrix.contract(deltas_as_matrix, contract_axes);
+
+    convolutional_back_propagation->weight_deltas = weight_deltas_matrix.reshape(
+        array<Index, 4>{get_kernel_height(), get_kernel_width(), get_input_channels(), get_kernels_number()}
+        );
+
+    // --- 5. CALCULATE INPUT GRADIENTS (REFACTORED) ---
+    const array<bool, 4> reverse_spatial_dims = {true, true, false, false};
+    const array<int, 4>  shuffle_channel_dims = {0, 1, 3, 2};
+    Tensor<type, 4> weights_transformed = weights.reverse(reverse_spatial_dims).shuffle(shuffle_channel_dims);
+
+    const array<pair<Index, Index>, 4> full_paddings = {
+        make_pair(0, 0),
+        make_pair(get_kernel_height() - 1, get_kernel_height() - 1),
+        make_pair(get_kernel_width() - 1, get_kernel_width() - 1),
+        make_pair(0, 0)
+    };
+    Tensor<type, 4> padded_deltas = deltas.pad(full_paddings);
+
+    const array<Index, 3> convolution_axes = {1, 2, 3};
+    input_deltas.device(*thread_pool_device) = padded_deltas.convolve(weights_transformed, convolution_axes);
+}
+*/
 
 void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                    const vector<pair<type*, dimensions>>& delta_pairs,
                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+
     // Convolutional layer
 
     const Index batch_size = back_propagation->batch_size;

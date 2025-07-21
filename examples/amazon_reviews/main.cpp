@@ -16,6 +16,7 @@
 #include "../../opennn/language_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/neural_network.h"
+#include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 
@@ -33,8 +34,8 @@ int main()
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        const Index embedding_dimension = 32;
-        const Index neurons_number = 1;
+        const Index embedding_dimension = 64;
+        const Index neurons_number = 16;
 
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
@@ -53,12 +54,25 @@ int main()
             );
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
-
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(1000);
-        // adam->set_batch_size(32);
+        adam->set_maximum_epochs_number(100);
+        adam->set_batch_size(32);
 
         //training_strategy.perform_training();
+
+        // NormalizedSquaredError normalized_squared_error(&text_classification_network, &language_dataset);
+
+        // Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
+        // Tensor<type, 1> numerical_gradient  = normalized_squared_error.calculate_numerical_gradient();
+
+        // Tensor<type, 1> difference = gradient - numerical_gradient;
+        // Tensor<type, 1> abs_difference = difference.abs();
+        // cout << abs_difference.maximum();
+
+        // cout << normalized_squared_error.calculate_numerical_error() << endl;
+
+        // cout << normalized_squared_error.calculate_gradient().abs() - normalized_squared_error.calculate_numerical_gradient().abs()  << endl;
+
 
         // // calculate_outputs
         // const Index batch_size = 1;

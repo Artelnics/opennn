@@ -61,17 +61,12 @@ public:
 
 private:
 
-    Index time_steps = type(2);
-
-    Index batch_size = type(0);
+    Index time_steps = 2;
 
     Tensor<type, 1> biases;
 
     Tensor<type, 2> input_weights;
-
     Tensor<type, 2> recurrent_weights;
-
-    //Tensor<type, 2> previous_hidden_states;
 
     string activation_function = "Linear";
 
@@ -95,7 +90,7 @@ struct RecurrentForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> outputs;
 
     Tensor<type, 3> current_inputs;
-    Tensor<type, 2> current_activations_derivatives;
+    Tensor<type, 2> current_activation_derivatives;
 
     Tensor<type, 3> activation_derivatives;
 
@@ -119,7 +114,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
     Tensor<type, 2> current_targets;
 
     Tensor<type, 2> combination_deltas;
-    Tensor<type, 2> current_combinations_derivatives;
+    Tensor<type, 2> current_combination_deltas;
 
     Tensor<type, 2> combinations_bias_deltas;
     Tensor<type, 3> combinations_input_weight_deltas;
