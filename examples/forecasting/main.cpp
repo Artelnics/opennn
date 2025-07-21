@@ -67,8 +67,9 @@ int main()
         targets.setValues({{0.198669331},
                            {0.295520207},
                            {0.389418342}});
-
+        cout << "inputs" << endl;
         cout << inputs << endl;
+        cout << "target" << endl;
         cout << targets << endl;
 
 /*
