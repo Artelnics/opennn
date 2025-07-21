@@ -113,9 +113,6 @@ public:
     vector<Index> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
-    //Tensor<type, 1> get_sample_use_percentages() const;
-
-    //string get_sample_string(const Index&) const;
 
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const string&) const;
@@ -153,7 +150,7 @@ public:
 
     vector<Scaler> get_variable_scalers(const string&) const;
 
-    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const;
+    virtual vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const;
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();

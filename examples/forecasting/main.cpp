@@ -39,6 +39,9 @@ int main()
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
 
         time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.49));
+
+        time_series_dataset.set_raw_variable_use(0, "InputTarget");
+
 //        print_vector(time_series_dataset.get_dimensions("Input"));
 //        print_vector(time_series_dataset.get_dimensions("Target"));
 
@@ -50,29 +53,28 @@ int main()
 
         const vector<Index> input_indices = {0};
 
-        const vector<Index> target_indices =  {1};
+        const vector<Index> target_indices =  {0};
 
         batch.fill(sample_indices, input_indices, target_indices);
 
         batch.print();
-
-        cout << "#############" << endl;
-
-        Tensor<type, 3> inputs(3, 1, 2);
-        inputs.setValues({{{0.0,0.099833417} },
-                         {{0.099833417, 0.198669331} },
-                         {{0.198669331, 0.295520207}}});
-
-        Tensor<type, 2> targets(3, 1);
-        targets.setValues({{0.198669331},
-                           {0.295520207},
-                           {0.389418342}});
-        cout << "inputs" << endl;
-        cout << inputs << endl;
-        cout << "target" << endl;
-        cout << targets << endl;
-
 /*
+        // cout << "#############" << endl;
+
+        // Tensor<type, 3> inputs(3, 1, 2);
+        // inputs.setValues({{{0.0,0.099833417} },
+        //                  {{0.099833417, 0.198669331} },
+        //                  {{0.198669331, 0.295520207}}});
+
+        // Tensor<type, 2> targets(3, 1);
+        // targets.setValues({{0.198669331},
+        //                    {0.295520207},
+        //                    {0.389418342}});
+        // cout << "inputs" << endl;
+        // cout << inputs << endl;
+        // cout << "target" << endl;
+        // cout << targets << endl;
+
         cout << "------------------------------------------" << endl;
 
         // ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},

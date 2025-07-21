@@ -745,7 +745,7 @@ vector<Index> Dataset::get_variable_indices(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use != variable_use)
+        if (raw_variable.use.find(variable_use) == string::npos)
         {
             raw_variable.type == RawVariableType::Categorical
                 ? variable_index += raw_variable.get_categories_number()
@@ -755,16 +755,10 @@ vector<Index> Dataset::get_variable_indices(const string& variable_use) const
         }
 
         if (raw_variable.type == RawVariableType::Categorical)
-        {
-            const Index categories_number = raw_variable.get_categories_number();
-
-            for (Index j = 0; j < categories_number; j++)
+            for (Index j = 0; j < raw_variable.get_categories_number(); j++)
                 this_variable_indices[this_variable_index++] = variable_index++;
-        }
         else
-        {
             this_variable_indices[this_variable_index++] = variable_index++;
-        }
     }
 
     return this_variable_indices;
@@ -1024,6 +1018,12 @@ void Dataset::set_input_raw_variables_unused()
 
 void Dataset::set_raw_variable_use(const Index& index, const string& new_use)
 {
+    static const unordered_set<string> valid_strings
+        = {"Id", "Input", "Target", "InputTarget", "Time", "None", "Decoder"};
+
+    if(valid_strings.count(new_use) <= 0)
+        throw runtime_error("Invalid raw variable use: " + new_use);
+
     raw_variables[index].use = new_use;
 }
 
@@ -4227,15 +4227,17 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
         batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<vector<Index>> batches(batches_number);
+
 #pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
     {
         const Index start_index = i * batch_size;
-        const Index end_index = std::min(start_index + batch_size, samples_number);
+        const Index end_index = min(start_index + batch_size, samples_number);
 
         batches[i].assign(sample_indices.begin() + start_index,
             sample_indices.begin() + end_index);
     }
+
     return batches;
 }
 

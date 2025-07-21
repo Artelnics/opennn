@@ -29,12 +29,12 @@ namespace opennn
 
 Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 1>& x,
-                                 const Index& lags_number)
+                                 const Index& past_time_steps)
 {
-    Tensor<type, 1> autocorrelation(lags_number);
+    Tensor<type, 1> autocorrelation(past_time_steps);
 
     const Index this_size = x.size();
-    for(Index i = 0; i < lags_number; i++)
+    for(Index i = 0; i < past_time_steps; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);
@@ -161,16 +161,16 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
 Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& x,
                                    const Tensor<type, 1>& y,
-                                   const Index& maximum_lags_number)
+                                   const Index& maximum_past_time_steps)
 {
     if(y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
-    Tensor<type, 1> cross_correlation(maximum_lags_number);
+    Tensor<type, 1> cross_correlation(maximum_past_time_steps);
 
     const Index this_size = x.size();
 
-    for(Index i = 0; i < maximum_lags_number; i++)
+    for(Index i = 0; i < maximum_past_time_steps; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
         Tensor<type, 1> column_y(this_size-i);

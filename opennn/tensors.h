@@ -193,7 +193,8 @@ type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
 void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
-void fill_tensor_sequence(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
+
+void fill_tensor_sequence(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, const Index&, type*);
 
 template <typename Type, int Rank>
 bool contains(const Tensor<Type, Rank>& vector, const Type& value)

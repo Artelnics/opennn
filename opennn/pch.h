@@ -27,6 +27,7 @@
 #include <numeric>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <exception>
 #include <memory>
 #include <random>

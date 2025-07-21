@@ -1941,7 +1941,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 }
 
 
-Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_lags_number) const
+Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(const Index& maximum_past_time_steps) const
 {
     const Tensor<type, 2> inputs = dataset->get_data("Testing", "Input");
 
@@ -1956,13 +1956,13 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_past_time_steps);
 
     return error_autocorrelations;
 }
 
 
-Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& lags_number) const
+Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index& past_time_steps) const
 {
     const Index targets_number = dataset->get_variables_number("Target");
 
@@ -1978,7 +1978,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
 
     for(Index i = 0; i < targets_number; i++)
         inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(), 
-            inputs.chip(i,1), errors.chip(i,1), lags_number);
+            inputs.chip(i,1), errors.chip(i,1), past_time_steps);
 
     return inputs_errors_cross_correlation;
 }

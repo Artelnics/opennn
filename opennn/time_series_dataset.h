@@ -31,13 +31,13 @@ public:
 
     void fill_gaps();
 
-    const Index& get_lags_number() const;
-    const Index& get_steps_ahead() const;
+    const Index& get_past_time_steps() const;
+    const Index& get_future_time_steps() const;
 
     const Index& get_time_raw_variable_index() const;
 
-    void set_lags_number(const Index&);
-    void set_steps_ahead_number(const Index&);
+    void set_past_time_steps(const Index&);
+    void set_future_time_steps(const Index&);
     void set_time_raw_variable_index(const Index&);
 
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
@@ -58,11 +58,14 @@ public:
                             const vector<Index>&,
                             type*) const override;
 
+    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const override;
+
+
 private:
 
-    Index lags_number = 2;
+    Index past_time_steps = 2;
 
-    Index steps_ahead = 1;
+    Index future_time_steps = 1;
 
     Index time_raw_variable_index = 0;
 };

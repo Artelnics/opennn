@@ -31,16 +31,10 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :Dataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    // const Index raw_variables_number = raw_variables.size();
-
-    // if(raw_variables_number == 1)
-    //     raw_variables[0].set_use("Input");
-
-    input_dimensions = { get_variables_number("Input"), lags_number};
+    input_dimensions = { get_variables_number("Input"), past_time_steps};
     target_dimensions = { get_variables_number("Target") };
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
-
 }
 
 
@@ -50,27 +44,27 @@ const Index& TimeSeriesDataset::get_time_raw_variable_index() const
 }
 
 
-const Index& TimeSeriesDataset::get_lags_number() const
+const Index& TimeSeriesDataset::get_past_time_steps() const
 {
-    return lags_number;
+    return past_time_steps;
 }
 
 
-const Index& TimeSeriesDataset::get_steps_ahead() const
+const Index& TimeSeriesDataset::get_future_time_steps() const
 {
-    return steps_ahead;
+    return future_time_steps;
 }
 
 
-void TimeSeriesDataset::set_lags_number(const Index& new_lags_number)
+void TimeSeriesDataset::set_past_time_steps(const Index& new_past_time_steps)
 {
-    lags_number = new_lags_number;
+    past_time_steps = new_past_time_steps;
 }
 
 
-void TimeSeriesDataset::set_steps_ahead_number(const Index& new_steps_ahead_number)
+void TimeSeriesDataset::set_future_time_steps(const Index& new_future_time_steps)
 {
-    steps_ahead = new_steps_ahead_number;
+    future_time_steps = new_future_time_steps;
 }
 
 
@@ -102,9 +96,8 @@ void TimeSeriesDataset::print() const
 
     print_vector(get_dimensions("Target"));
 
-    cout << "Lags number: " << get_lags_number() << endl;
-    cout << "Steps ahead: " << get_steps_ahead() << endl;
-
+    cout << "Past time steps: " << get_past_time_steps() << endl;
+    cout << "Future time steps: " << get_future_time_steps() << endl;
 }
 
 
@@ -119,24 +112,11 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
-    add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
+    add_xml_element(printer, "PastTimeSteps", to_string(get_past_time_steps()));
+    add_xml_element(printer, "FutureTimeSteps", to_string(get_future_time_steps()));
 //    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
-    add_xml_element(printer, "GroupByRawVariable", "");
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
-
-    // Group by raw_variable
-    // {
-    //     file_stream.OpenElement("GroupByRawVariable");
-
-    //     buffer.str("");
-    //     buffer << get_time_raw_variable();
-
-    //     file_stream.PushText(buffer.str().c_str());
-
-    //     file_stream.CloseElement();
-    // }
 
     // Raw variables
 
@@ -154,26 +134,6 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     }
 
     printer.CloseElement();
-
-    // Time series raw_variables
-    //const Index time_series_raw_variables_number = get_time_series_raw_variables_number();
-    // const Index time_series_raw_variables_number = get_time_raw_variable_index();
-
-    // if(time_series_raw_variables_number > 0) - descomentar
-    // {
-    //     printer.OpenElement("TimeSeriesRawVariables");
-    //     add_xml_element(printer, "TimeSeriesRawVariablesNumber", to_string(get_time_raw_variable_index()));
-
-
-    //     for(Index i = 0; i < time_series_raw_variables_number; i++)
-    //     {
-    //         printer.OpenElement("TimeSeriesRawVariable");
-    //         printer.PushAttribute("Item", to_string(i+1).c_str());
-    //         raw_variables[i].to_XML(printer);
-    //         printer.CloseElement();
-    //     }
-    //     printer.CloseElement();
-    // }
 
     // Samples
 
@@ -220,14 +180,9 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    // Display
-
     add_xml_element(printer, "Display", to_string(display));
 
-    // Close data set
-
     printer.CloseElement();
-
 }
 
 
@@ -252,10 +207,9 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_lags_number(stoi(read_xml_string(data_source_element, "LagsNumber")));
-    set_steps_ahead_number(stoi(read_xml_string(data_source_element, "StepsAhead")));
+    set_past_time_steps(stoi(read_xml_string(data_source_element, "PastTimeSteps")));
+    set_future_time_steps(stoi(read_xml_string(data_source_element, "FutureTimeSteps")));
     //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
-    //set_group_by_raw_variable(read_xml_string(data_source_element, "GroupByRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
 
@@ -297,48 +251,6 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
         }
     }
 
-    // Time series raw_variables
-
-    // const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
-
-    // if(!time_series_raw_variables_element)
-    //     throw runtime_error("time series raw variable element is nullptr");
-
-    // set_time_raw_variable_index(stoi(read_xml_string(time_series_raw_variables_element, "TimeSeriesRawVariablesNumber")));
-
-    // const XMLElement* time_series_start_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
-
-    // if(time_raw_variable_index > 0)
-    // {
-    //     for(Index i = 0; i < time_raw_variable_index; i++)
-    //     {
-    //         RawVariable& time_raw_variable = time_series_raw_variables[i];
-    //         const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
-    //         time_series_start_element = time_series_raw_variable_element;
-
-    //         if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
-    //             throw runtime_error("Time series raw_variable item number (" + to_string(i+1) + ") "
-    //                                 "does not match (" + time_series_raw_variable_element->Attribute("Item") + ").\n");
-
-    //         time_raw_variable.name = read_xml_string(time_series_raw_variable_element, "Name");
-    //         time_raw_variable.set_scaler(read_xml_string(time_series_raw_variable_element, "Scaler"));
-    //         time_raw_variable.set_use(read_xml_string(time_series_raw_variable_element, "Use"));
-    //         time_raw_variable.set_type(read_xml_string(time_series_raw_variable_element, "Type"));
-
-    //         if (time_raw_variable.type == RawVariableType::Categorical || time_raw_variable.type == RawVariableType::Binary)
-    //         {
-    //             const XMLElement* categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
-
-    //             if (categories_element)
-    //                 time_raw_variable.categories = get_tokens(read_xml_string(time_series_raw_variable_element, "Categories"), ";");
-    //             else if (time_raw_variable.type == RawVariableType::Binary)
-    //                 time_raw_variable.categories = { "0", "1" };
-    //             else
-    //                 throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
-    //         }
-    //     }
-    // }
-
     // Samples
 
     const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
@@ -365,6 +277,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
         data.resize(0, 0);
 
     // Missing values
+
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
@@ -416,13 +329,10 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
         }
     }
 
-    // Display
-
     set_display(read_xml_bool(data_set_element, "Display"));
 
-    input_dimensions = { get_variables_number("Input") };
+    input_dimensions = { get_variables_number("Input"), past_time_steps };
     target_dimensions = { get_variables_number("Target") };
-
 }
 
 
@@ -436,99 +346,51 @@ void TimeSeriesDataset::impute_missing_values_mean()
     const Tensor<type, 1> means = mean(data, used_sample_indices, used_variable_indices);
 
     const Index used_samples_number = used_sample_indices.size();
-    const Index used_variables_number = used_variable_indices.size();
-    const Index target_variables_number = target_variable_indices.size();
 
-    //Index current_variable_index;
-    //Index current_sample_index;
+    #pragma omp parallel for
 
-    if(lags_number == 0 && steps_ahead == 0)
+    for(Index j = 0; j < get_variables_number(); j++)
     {
-        #pragma omp parallel for 
+        const Index current_variable_index = j;
 
-        for(Index j = 0; j < used_variables_number - target_variables_number; j++)
+        for(Index i = 0; i < used_samples_number; i++)
         {
-            const Index current_variable_index = input_variable_indices[j];
+            const Index current_sample_index = used_sample_indices[i];
 
-            for(Index i = 0; i < used_samples_number; i++)
+            if(isnan(data(current_sample_index, current_variable_index)))
             {
-                const Index current_sample_index = used_sample_indices[i];
-
-                if(isnan(data(current_sample_index, current_variable_index)))
-                    data(current_sample_index, current_variable_index) = means(j);
-            }
-        }
-
-        #pragma omp parallel for 
-
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            const Index current_variable_index = target_variable_indices[j];
-
-            for(Index i = 0; i < used_samples_number; i++)
-            {
-                const Index current_sample_index = used_sample_indices[i];
-
-                if(isnan(data(current_sample_index, current_variable_index)))
-                    set_sample_use(i, "None");
-            }
-        }
-    }
-    else
-    {
-        #pragma omp parallel for 
-
-        for(Index j = 0; j < get_variables_number(); j++)
-        {
-            const Index current_variable_index = j;
-
-            for(Index i = 0; i < used_samples_number; i++)
-            {
-                const Index current_sample_index = used_sample_indices[i];
-
-                if(isnan(data(current_sample_index, current_variable_index)))
+                if(i < past_time_steps || i > used_samples_number - future_time_steps)
                 {
-                    if(i < lags_number || i > used_samples_number - steps_ahead)
+                    data(current_sample_index, current_variable_index) = means(j);
+                }
+                else
+                {
+                    Index k = i;
+                    type previous_value = NAN, next_value = NAN;
+
+                    while(isnan(previous_value) && k > 0)
                     {
-                        data(current_sample_index, current_variable_index) = means(j);
+                        k--;
+                        previous_value = data(used_sample_indices[k], current_variable_index);
                     }
+
+                    k = i;
+
+                    while(isnan(next_value) && k < used_samples_number)
+                    {
+                        k++;
+                        next_value = data(used_sample_indices[k], current_variable_index);
+                    }
+
+                    if(isnan(previous_value) && isnan(next_value))
+                        throw runtime_error("The last " + to_string(used_samples_number-i+1) + " samples are all missing, delete them.\n");
+
+                    if(isnan(previous_value))
+                        data(current_sample_index, current_variable_index) = type(next_value);
+                    else if(isnan(next_value))
+                        data(current_sample_index, current_variable_index) = type(previous_value);
                     else
-                    {
-                        Index k = i;
-                        double previous_value = NAN, next_value = NAN;
-
-                        while(isnan(previous_value) && k > 0)
-                        {
-                            k--;
-                            previous_value = data(used_sample_indices[k], current_variable_index);
-                        }
-
-                        k = i;
-
-                        while(isnan(next_value) && k < used_samples_number)
-                        {
-                            k++;
-                            next_value = data(used_sample_indices[k], current_variable_index);
-                        }
-
-                        if(isnan(previous_value) && isnan(next_value))
-                        {
-                            ostringstream buffer;
-
-                            buffer << "OpenNN Exception: Dataset class.\n"
-                                   << "void Dataset::impute_missing_values_mean() const.\n"
-                                   << "The last " << (used_samples_number - i) + 1 << " samples are all missing, delete them.\n";
-
-                            throw runtime_error(buffer.str());
-                        }
-
-                        if(isnan(previous_value))
-                            data(current_sample_index, current_variable_index) = type(next_value);
-                        else if(isnan(next_value))
-                            data(current_sample_index, current_variable_index) = type(previous_value);
-                        else
-                            data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
-                    }
+                        data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
                 }
             }
         }
@@ -536,15 +398,48 @@ void TimeSeriesDataset::impute_missing_values_mean()
 }
 
 
-void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_tensor_data) const
+void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
+                                          const vector<Index>& input_indices,
+                                          type* input_tensor_data) const
 {
-    fill_tensor_sequence(data, sample_indices, input_indices, input_tensor_data);
+    cout << "hello time series input" << endl;
+
+//    fill_tensor_sequence(data, sample_indices, input_indices, past_time_steps, input_tensor_data);
+/*
+    if (rows_indices.empty() || columns_indices.empty())
+        return;
+
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const Index batch_size = rows_indices.size();
+    const Index input_size = columns_number;
+
+    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, past_time_steps, input_size);
+
+    //#pragma omp parallel for collapse(3)
+
+    for (Index i = 0; i < batch_size; i++)
+    {
+        for (Index j = 0; j < past_time_steps; j++)
+        {
+            const Index actual_row = i + j * batch_size;
+
+            for (Index k = 0; k < input_size; k++)
+                batch(i, j, k) = matrix(actual_row, columns_indices[k]);
+        }
+    }
+*/
 }
 
 
-void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_tensor_data) const
+void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
+                                           const vector<Index>& target_indices,
+                                           type* target_tensor_data) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
+    cout << "hello time series target" << endl;
+
+//    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
 }
 
 
@@ -586,12 +481,12 @@ void TimeSeriesDataset::fill_gaps()
 }
 
 
-Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_number) const
+Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& past_time_steps) const
 {
     const Index samples_number = get_samples_number();
 
-    if(lags_number > samples_number)
-        throw runtime_error("Lags number (" + to_string(lags_number) + ") "
+    if(past_time_steps > samples_number)
+        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") "
                             "is greater than samples number (" + to_string(samples_number) + ") \n");
 
     const Index raw_variables_number = get_raw_variables_number();
@@ -632,13 +527,13 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
         }
     }
 
-    const Index new_lags_number =
-        ((samples_number <= lags_number) && lags_number > 2) ? lags_number - 2 :
-         (samples_number == lags_number + 1 && lags_number > 1) ? lags_number - 1 :
-         lags_number;
+    const Index new_past_time_steps =
+        ((samples_number <= past_time_steps) && past_time_steps > 2) ? past_time_steps - 2 :
+         (samples_number == past_time_steps + 1 && past_time_steps > 1) ? past_time_steps - 1 :
+         past_time_steps;
 
-    Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_lags_number);
-    Tensor<type, 1> autocorrelations_vector(new_lags_number);
+    Tensor<type, 2> autocorrelations(input_target_numeric_raw_variables_number, new_past_time_steps);
+    Tensor<type, 1> autocorrelations_vector(new_past_time_steps);
     Tensor<type, 2> input_i;
     Index counter_i = 0;
 
@@ -657,9 +552,9 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
 
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
         
-        autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
+        autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_past_time_steps);
 
-        for(Index j = 0; j < new_lags_number; j++)
+        for(Index j = 0; j < new_past_time_steps; j++)
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
 
         counter_i++;
@@ -669,12 +564,12 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_
 }
 
 
-Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lags_number) const
+Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& past_time_steps) const
 {
     const Index samples_number = get_samples_number();
 
-    if(lags_number > samples_number)
-        throw runtime_error("Lags number(" + to_string(lags_number) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
+    if(past_time_steps > samples_number)
+        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -713,15 +608,15 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
         }
     }
 
-    const Index new_lags_number = (samples_number == lags_number) ? (lags_number - 2)
-                                : (samples_number == lags_number + 1) ? (lags_number - 1)
-                                : lags_number;
+    const Index new_past_time_steps = (samples_number == past_time_steps) ? (past_time_steps - 2)
+                                : (samples_number == past_time_steps + 1) ? (past_time_steps - 1)
+                                : past_time_steps;
 
     Tensor<type, 3> cross_correlations(input_target_numeric_raw_variables_number,
                                        input_target_numeric_raw_variables_number,
-                                       new_lags_number);
+                                       new_past_time_steps);
 
-    Tensor<type, 1> cross_correlations_vector(new_lags_number);
+    Tensor<type, 1> cross_correlations_vector(new_past_time_steps);
 
     Tensor<type, 2> input_i;
     Tensor<type, 2> input_j;
@@ -755,9 +650,9 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
             cross_correlations_vector = opennn::cross_correlations(thread_pool_device.get(), 
-                current_input_i, current_input_j, new_lags_number);
+                current_input_i, current_input_j, new_past_time_steps);
 
-            for(Index k = 0; k < new_lags_number; k++)
+            for(Index k = 0; k < new_past_time_steps; k++)
                 cross_correlations(counter_i, counter_j, k) = cross_correlations_vector(k) ;
 
             counter_j++;
@@ -768,6 +663,43 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lag
 
     return cross_correlations;
 }
+
+
+vector<vector<Index>> TimeSeriesDataset::get_batches(const vector<Index>& sample_indices,
+                                                     const Index& batch_size,
+                                                     const bool& shuffle) const
+{
+    // @todo copied from dataset
+
+    if (!shuffle) return split_samples(sample_indices, batch_size);
+
+    random_device rng;
+    mt19937 urng(rng());
+
+    const Index samples_number = sample_indices.size();
+
+    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
+
+    vector<vector<Index>> batches(batches_number);
+
+    vector<Index> samples_copy(sample_indices);
+
+    std::shuffle(samples_copy.begin(), samples_copy.end(), urng);
+
+#pragma omp parallel for
+    for (Index i = 0; i < batches_number; i++)
+    {
+        const Index start_index = i * batch_size;
+
+        const Index end_index = min(start_index + batch_size, samples_number);
+
+        batches[i].assign(samples_copy.begin() + start_index,
+                          samples_copy.begin() + end_index);
+    }
+
+    return batches;
+}
+
 
 }
 
