@@ -61,6 +61,8 @@ void print_device_data(const type*, const size_t);
 
 // Operation kernel
 
+__global__ void addition_kernel(const int, const float*, const float*, float*);
+
 __global__ void division_kernel(const int, const type*, const type*, type*);
 
 __global__ void log_kernel(int, const type*, type*);
@@ -71,6 +73,8 @@ __global__ void divide_subtract_kernel(int, type*, const type*, const type*);
 
 
 // Wrappers operations
+
+void addition_cuda(const size_t, const float*, const float*, float*);
 
 void division(const size_t&, const type*, const type*, type*);
 
