@@ -144,13 +144,6 @@ public:
 
    type calculate_regularization(const Tensor<type, 1>&) const;
 
-   void calculate_regularization_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void calculate_regularization_hessian(Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-   void apply_regularization_gradient(const TensorMap<Tensor<type, 1>>&,
-                                      TensorMap<Tensor<type, 1>>&,
-                                      type) const;
-
    // Serialization
 
    virtual void from_XML(const XMLDocument&) = 0;
@@ -287,7 +280,7 @@ struct BackPropagation
     NeuralNetworkBackPropagation neural_network;
 
     Tensor<type, 0> error;
-    type regularization = type(0);
+//    type regularization = type(0);
     type loss = type(0);
 
     Tensor<type, 2> errors;

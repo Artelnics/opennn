@@ -179,15 +179,7 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>&, const Inde
 
 Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>&, const Index&, const type&, const type&);
 
-type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
-void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
-void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-
-type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
-void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
-void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-
-type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
+//type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);

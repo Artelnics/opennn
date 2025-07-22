@@ -406,7 +406,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         try
         {
-            new_loss = error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
+            new_loss = error + loss_index->calculate_regularization(potential_parameters);
 
         }catch(exception)
         {
