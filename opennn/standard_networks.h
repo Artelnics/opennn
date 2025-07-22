@@ -22,6 +22,8 @@
 #include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
+#include "addition_layer_3d.h"
+#include "addition_layer_4d.h"
 #include "neural_network.h"
 #include "multihead_attention_layer.h"
 
@@ -209,6 +211,155 @@ public:
                                        "Softmax",
                                        false, // Batch normalization
                                        "dense_2d_layer"));
+    }
+};
+
+
+class DualPathNetwork : public NeuralNetwork // @todo testing, delete after
+{
+public:
+
+    DualPathNetwork(const dimensions& input_dimensions,
+                    const dimensions& complexity_dimensions,
+                    const dimensions& output_dimensions) : NeuralNetwork()
+    {
+        if (input_dimensions.size() != 3)
+            throw runtime_error("Input dimensions size is not 3.");
+
+        add_layer(make_unique<Scaling4d>(input_dimensions));
+        const Index input_layer_index = 0;
+
+        // --- BLOCK A ---
+
+        Index last_layer_in_branch_A = input_layer_index;
+
+        for (Index i = 0; i < complexity_dimensions.size(); i++)
+        {
+            const dimensions current_input_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
+            const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
+
+            auto conv_layer = make_unique<Convolutional>(current_input_dims, 
+                                                         kernel_dimensions, 
+                                                         "RectifiedLinear",
+                                                         dimensions{ 1, 1 }, 
+                                                         Convolutional::Convolution::Same, 
+                                                         false,
+                                                         "branch_A_conv_" + to_string(i + 1));
+
+            add_layer(move(conv_layer), { last_layer_in_branch_A });
+            last_layer_in_branch_A = get_layers_number() - 1;
+
+            const dimensions pool_input_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
+
+            auto pool_layer = make_unique<Pooling>(pool_input_dims, 
+                                                   dimensions{ 2, 2 }, 
+                                                   dimensions{ 2, 2 },
+                                                   dimensions{ 0, 0 }, 
+                                                   Pooling::PoolingMethod::MaxPooling,
+                                                   "branch_A_pool_" + to_string(i + 1));
+
+            add_layer(move(pool_layer), { last_layer_in_branch_A });
+            last_layer_in_branch_A = get_layers_number() - 1;
+        }
+
+        // BLOCK B
+
+        Index last_layer_in_branch_B = input_layer_index;
+
+        for (Index i = 0; i < complexity_dimensions.size(); i++)
+        {
+            const dimensions current_input_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
+            const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
+
+            auto conv_layer = make_unique<Convolutional>(current_input_dims,
+                                                         kernel_dimensions, 
+                                                         "RectifiedLinear",
+                                                         dimensions{ 1, 1 }, 
+                                                         Convolutional::Convolution::Same, 
+                                                         false,
+                                                         "branch_B_conv_" + to_string(i + 1));
+
+            add_layer(move(conv_layer), { last_layer_in_branch_B });
+            last_layer_in_branch_B = get_layers_number() - 1;
+
+            const dimensions pool_input_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
+
+            auto pool_layer = make_unique<Pooling>(pool_input_dims, 
+                                                   dimensions{ 2, 2 },
+                                                   dimensions{ 2, 2 },
+                                                   dimensions{ 0, 0 }, 
+                                                   Pooling::PoolingMethod::MaxPooling,
+                                                   "branch_B_pool_" + to_string(i + 1));
+
+            add_layer(move(pool_layer), { last_layer_in_branch_B });
+            last_layer_in_branch_B = get_layers_number() - 1;
+        }
+
+        // Addition
+        const dimensions branch_A_output_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
+        const dimensions branch_B_output_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
+
+        if (branch_A_output_dims != branch_B_output_dims) {
+            throw runtime_error("Output dimensions of parallel branches must match for Addition layer.");
+        }
+
+        auto addition_layer = make_unique<Addition4d>(branch_A_output_dims, "addition_layer");
+
+        add_layer(move(addition_layer), { last_layer_in_branch_A, last_layer_in_branch_B });
+
+        Index last_layer_index = get_layers_number() - 1;
+
+        // Flatten
+        const dimensions flatten_input_dims = get_layer(last_layer_index)->get_output_dimensions();
+
+        auto flatten_layer = make_unique<Flatten>(flatten_input_dims);
+
+        add_layer(move(flatten_layer), { last_layer_index });
+
+        last_layer_index = get_layers_number() - 1;
+
+        // Dense
+        const dimensions dense_input_dims = get_layer(last_layer_index)->get_output_dimensions();
+
+        auto dense_layer = make_unique<Dense2d>(dense_input_dims, 
+                                                output_dimensions, 
+                                                "Softmax", 
+                                                false, 
+                                                "dense_layer");
+
+        add_layer(move(dense_layer), { last_layer_index });
+
+        // DEBUG
+        cout << "========================================" << endl;
+
+        const auto& all_input_indices = get_layer_input_indices();
+
+        for (size_t i = 0; i < get_layers_number(); ++i)
+        {
+            cout << "Capa " << i << ": " << get_layer(i)->get_name()
+                << " (" << get_layer(i)->get_label() << ")" << endl;
+
+            cout << "  -> Entradas desde capa(s): [ ";
+
+            const auto& inputs_for_this_layer = all_input_indices[i];
+
+            for (size_t j = 0; j < inputs_for_this_layer.size(); ++j)
+            {
+                Index input_idx = inputs_for_this_layer[j];
+                if (input_idx == -1) {
+                    cout << "Entrada de Red";
+                }
+                else {
+                    cout << input_idx;
+                }
+
+                if (j < inputs_for_this_layer.size() - 1) {
+                    cout << ", ";
+                }
+            }
+            cout << " ]" << endl;
+            cout << "----------------------------------------" << endl;
+        }
     }
 };
 
