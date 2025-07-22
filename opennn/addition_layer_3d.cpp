@@ -268,6 +268,8 @@ void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* n
 {
     if (!new_layer) return;
 
+    cout << "Addition3dForwardPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -309,6 +311,8 @@ void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
+    cout << "Addition3dBackPropagationCuda set:" << endl;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -338,6 +342,9 @@ void Addition3dBackPropagationCuda::free()
 {
     if (inputs_1_derivatives) cudaFree(inputs_1_derivatives);
     if (inputs_2_derivatives) cudaFree(inputs_2_derivatives);
+
+    inputs_1_derivatives = nullptr;
+    inputs_2_derivatives = nullptr;
 }
 
 

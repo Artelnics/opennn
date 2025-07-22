@@ -247,7 +247,9 @@
     </ClCompile>
     <ClInclude Include="addition_layer_3d.h" />
     <ClCompile Include="addition_layer_3d.cpp" />
+    <ClInclude Include="addition_layer_4d.h" />
     <ClInclude Include="bounding_layer.h" />
+    <ClCompile Include="addition_layer_4d.cpp" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
     <ClInclude Include="dataset.h" />
