@@ -127,8 +127,6 @@ TrainingResults TrainingStrategy::train()
     if(neural_network->has("Recurrent"))
         fix_forecasting();
 
-    optimization_algorithm->set_display(true);
-
     return optimization_algorithm->train();
 }
 
