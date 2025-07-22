@@ -95,31 +95,31 @@ struct Addition3dBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-    struct Addition3dForwardPropagationCuda : public LayerForwardPropagationCuda
-    {
-        Addition3dForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+struct Addition3dForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    Addition3dForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-        void set(const Index & = 0, Layer* = nullptr) override;
+    void set(const Index & = 0, Layer* = nullptr) override;
 
-        void print() const override;
+    void print() const override;
+    
+    void free() override;
+};
 
-        void free() override;
-    };
 
+struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
+{
+    Addition3dBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
-    {
-        Addition3dBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    void set(const Index & = 0, Layer* = nullptr) override;
+    
+    void print() const override;
 
-        void set(const Index & = 0, Layer* = nullptr) override;
-
-        void print() const override;
-
-        void free() override;
-
-        float* inputs_1_derivatives = nullptr;
-        float* inputs_2_derivatives = nullptr;
-    };
+    void free() override;
+    
+    float* inputs_1_derivatives = nullptr;
+    float* inputs_2_derivatives = nullptr;
+};
 
 #endif
 }

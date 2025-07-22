@@ -53,11 +53,10 @@ int main()
         //cout << loss.calculate_numerical_hessian() << endl;
         //cout << loss.calculate_numerical_hessian_lm() << endl;
 
-        loss.set_regularization_method("L2");
+        loss.set_regularization_method("L1");
         loss.set_regularization_weight(0.0);
 
-
-        QuasiNewtonMethod optimizer(&loss);
+        LevenbergMarquardtAlgorithm optimizer(&loss);
 
         optimizer.train();
 /*

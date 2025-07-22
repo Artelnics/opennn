@@ -484,8 +484,8 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-            forward_propagation.layers[i],
-            is_training);
+                                     forward_propagation.layers[i],
+                                     is_training);
 }
 
 
@@ -1397,8 +1397,8 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate_cuda(layer_input_device[i],
-            forward_propagation_cuda.layers[i],
-            is_training);
+                                          forward_propagation_cuda.layers[i],
+                                          is_training);
 }
 
 

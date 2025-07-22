@@ -411,6 +411,7 @@ public:
     virtual void set_data_random();
     void set_data_rosenbrock();
     void set_data_binary_classification();
+    void set_data_ascending();
 
     // Serialization
 
