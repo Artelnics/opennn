@@ -67,7 +67,7 @@ public:
 
    // Training
 
-   TrainingResults perform_training() override;
+   TrainingResults train() override;
 
    string get_name() const override;
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/tensors.h"
+#include "../opennn/dataset.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/normalized_squared_error.h"
 

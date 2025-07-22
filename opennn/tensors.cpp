@@ -341,70 +341,6 @@ Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>& matrix,
 }
 
 
-type l1_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
-{
-    Tensor<type, 0> norm;
-
-    norm.device(*thread_pool_device) = vector.abs().sum();
-
-    return norm(0);
-}
-
-
-void l1_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
-{
-    gradient.device(*thread_pool_device) = vector.sign();
-}
-
-
-void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>& hessian)
-{
-    hessian.setZero();
-}
-
-
-type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
-{
-    Tensor<type, 0> norm;
-    norm.device(*thread_pool_device) = vector.square().sum().sqrt();
-
-    if(isnan(norm(0)))
-        throw runtime_error("OpenNN Exception: l2 norm of vector is not a number.\n");
-
-    return norm(0);
-}
-
-
-void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
-{
-    const type norm = l2_norm(thread_pool_device, vector);
-
-    if(norm < NUMERIC_LIMITS_MIN)
-    {
-        gradient.setZero();
-
-        return;
-    }
-
-    gradient.device(*thread_pool_device) = vector/norm;
-}
-
-
-void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
-{
-    const type norm = l2_norm(thread_pool_device, vector);
-
-    if(norm < NUMERIC_LIMITS_MIN)
-    {
-        hessian.setZero();
-
-        return;
-    }
-
-    hessian = self_kronecker_product(thread_pool_device, vector)/(norm*norm*norm);
-}
-
-
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
     if(x.size() != y.size())
@@ -525,6 +461,7 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 void fill_tensor_sequence(const Tensor<type, 2>& matrix,
                           const vector<Index>& rows_indices,
                           const vector<Index>& columns_indices,
+                          const Index& past_time_steps,
                           type* tensor_data)
 {
     if (rows_indices.empty() || columns_indices.empty())
@@ -534,16 +471,15 @@ void fill_tensor_sequence(const Tensor<type, 2>& matrix,
     const Index columns_number = columns_indices.size();
 
     const Index batch_size = rows_indices.size();
-    const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
-    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, sequence_length, input_size);
+    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, past_time_steps, input_size);
 
     //#pragma omp parallel for collapse(3)
 
     for (Index i = 0; i < batch_size; i++)
     {
-        for (Index j = 0; j < sequence_length; j++)
+        for (Index j = 0; j < past_time_steps; j++)
         {
             const Index actual_row = i + j * batch_size;
 

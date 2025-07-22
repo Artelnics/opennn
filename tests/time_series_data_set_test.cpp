@@ -45,8 +45,8 @@ TEST(TimeSeriesDataset, Autocorrelations)
 
     dataset.set(samples_number, inputs_number, targets_number);
 
-    dataset.set_lags_number(lags_number);
-    dataset.set_steps_ahead_number(steps_ahead_number);
+    dataset.set_past_time_steps(lags_number);
+    dataset.set_future_time_steps(steps_ahead_number);
 
     //dataset.transform_time_series();
 
@@ -86,8 +86,8 @@ TEST(TimeSeriesDataset, CrossCorrelations)
                     {type(6),type(3),type(4)} });
 
     dataset.set_data(data);
-    dataset.set_lags_number(lags_number);
-    dataset.set_steps_ahead_number(1);
+    dataset.set_past_time_steps(lags_number);
+    dataset.set_future_time_steps(1);
 
     //dataset.transform_time_series();
 
@@ -125,8 +125,8 @@ TEST(TimeSeriesDataset, test_transform_time_series)
 
     dataset.set_variable_names(variable_names);
 
-    dataset.set_lags_number(2);
-    dataset.set_steps_ahead_number(1);
+    dataset.set_past_time_steps(2);
+    dataset.set_future_time_steps(1);
 
     //dataset.transform_time_series();
 
@@ -165,11 +165,11 @@ TEST(TimeSeriesDataset, test_set_steps_ahead_number)
                     {type(3),type(30)} });
 
     dataset.set_data(data);
-    dataset.set_lags_number(2);
-    dataset.set_steps_ahead_number(2);
+    dataset.set_past_time_steps(2);
+    dataset.set_future_time_steps(2);
     //dataset.transform_time_series();
 
-    EXPECT_EQ(dataset.get_lags_number(), 2);
+    EXPECT_EQ(dataset.get_past_time_steps(), 2);
 
 }
 
@@ -192,11 +192,11 @@ TEST(TimeSeriesDataset, test_set_lags_number)
                     {type(3),type(30)} });
 
     dataset.set_data(data);
-    dataset.set_lags_number(2);
-    dataset.set_steps_ahead_number(2);
+    dataset.set_past_time_steps(2);
+    dataset.set_future_time_steps(2);
     //dataset.transform_time_series();
 
-    EXPECT_EQ(dataset.get_steps_ahead(), 2);
+    EXPECT_EQ(dataset.get_future_time_steps(), 2);
 
 }
 

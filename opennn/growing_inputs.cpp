@@ -198,7 +198,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             if(dataset->has_nan())
                 dataset->scrub_missing_values();
 
-            training_results = training_strategy->perform_training();
+            training_results = training_strategy->train();
 
             if(training_results.get_selection_error() < minimum_selection_error)
             {

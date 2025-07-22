@@ -34,18 +34,47 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
+        const Index batch_size = 3;
 
-        //TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
-        //TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
-        //TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
-        //TimeSeriesDataset time_series_dataset("../data/funcion_seno.csv", ";", false, false);
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
 
         time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.49));
-        print_vector(time_series_dataset.get_dimensions("Input"));
-        print_vector(time_series_dataset.get_dimensions("Target"));
 
-        time_series_dataset.print();
+        time_series_dataset.set_raw_variable_use(0, "InputTarget");
+
+//        print_vector(time_series_dataset.get_dimensions("Input"));
+//        print_vector(time_series_dataset.get_dimensions("Target"));
+
+//        time_series_dataset.print();
+
+        Batch batch(batch_size, &time_series_dataset);
+
+        const vector<Index> sample_indices = {0, 1, 2};
+
+        const vector<Index> input_indices = {0};
+
+        const vector<Index> target_indices =  {0};
+
+        batch.fill(sample_indices, input_indices, target_indices);
+
+        batch.print();
+/*
+        // cout << "#############" << endl;
+
+        // Tensor<type, 3> inputs(3, 1, 2);
+        // inputs.setValues({{{0.0,0.099833417} },
+        //                  {{0.099833417, 0.198669331} },
+        //                  {{0.198669331, 0.295520207}}});
+
+        // Tensor<type, 2> targets(3, 1);
+        // targets.setValues({{0.198669331},
+        //                    {0.295520207},
+        //                    {0.389418342}});
+        // cout << "inputs" << endl;
+        // cout << inputs << endl;
+        // cout << "target" << endl;
+        // cout << targets << endl;
+
         cout << "------------------------------------------" << endl;
 
         // ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
@@ -98,13 +127,13 @@ int main()
 
         // TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
         // training_strategy.set_loss_index("MeanSquaredError");
-        // training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
+        // training_strategy.get_loss_index()->set_regularization_method("None");
 
-        // training_strategy.perform_training();
+        // training_strategy.train();
 
         // cout << "Error" << endl;
         // cout << normalized_squared_error.calculate_numerical_error() << endl;
-
+*/
 
         cout << "Good bye!" << endl;
 

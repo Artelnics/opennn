@@ -21,6 +21,12 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_expression.h"
 #include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/normalized_squared_error.h"
+#include "../../opennn/mean_squared_error.h"
+#include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/quasi_newton_method.h"
+#include "../../opennn/levenberg_marquardt_algorithm.h"
+#include "../../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;
 
@@ -34,16 +40,37 @@ int main()
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
-        approximation_network.print();
+        dataset.scale_data();
 
-        TrainingStrategy training_strategy(&approximation_network, &dataset);
-        TrainingResults training_results = training_strategy.perform_training();
+        dataset.set_sample_uses("Training");
+
+        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
+        //approximation_network.print();
+
+        NormalizedSquaredError loss(&approximation_network, &dataset);
+
+        //cout << loss.calculate_gradient() << endl;
+        //cout << loss.calculate_numerical_hessian() << endl;
+        //cout << loss.calculate_numerical_hessian_lm() << endl;
+
+        loss.set_regularization_method("L1");
+        //loss.set_regularization_weight(0.0);
+
+
+        QuasiNewtonMethod optimizer(&loss);
+
+        optimizer.train();
+/*
+        // TrainingStrategy training_strategy(&approximation_network, &dataset);
+
+        // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
+
+        //TrainingResults training_results = training_strategy.train();
 
         // TestingAnalysis testing_analysis(&approximation_network, &dataset);
         // cout << "Goodness of fit analysis:\n" << endl;
         // testing_analysis.print_goodness_of_fit_analysis();
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

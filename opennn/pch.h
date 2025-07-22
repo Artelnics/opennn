@@ -27,6 +27,7 @@
 #include <numeric>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <exception>
 #include <memory>
 #include <random>
@@ -47,7 +48,7 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-#define OPENNN_CUDA // Comment this line to disable cuda files
+//#define OPENNN_CUDA // Comment this line to disable cuda files
 
 #ifdef OPENNN_CUDA
 

@@ -111,7 +111,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 }
 
 
-TrainingResults AdaptiveMomentEstimation::perform_training()
+TrainingResults AdaptiveMomentEstimation::train()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();

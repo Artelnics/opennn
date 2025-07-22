@@ -51,7 +51,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
     levenberg_marquardt_algorithm.set_display(false);
 
-    TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
+    TrainingResults training_results = levenberg_marquardt_algorithm.train();
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
@@ -65,7 +65,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
 
-    training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.train();
     error = training_results.get_training_error();
 
     EXPECT_EQ(error < old_error);
@@ -77,7 +77,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_maximum_epochs_number(2);
     neural_network.set_parameters_constant(-1);
 
-    training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.train();
     error = training_results.get_training_error();
 
     EXPECT_EQ(error <= old_error);
@@ -93,7 +93,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-    training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.train();
 
     EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
 
@@ -108,7 +108,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
 
-    training_results = levenberg_marquardt_algorithm.perform_training();
+    training_results = levenberg_marquardt_algorithm.train();
 
     EXPECT_EQ(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease);
 
