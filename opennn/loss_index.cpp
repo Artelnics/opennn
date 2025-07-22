@@ -344,6 +344,9 @@ string LossIndex::get_name() const
 }
 
 
+
+// @todo parallelize
+
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
     if(regularization_method == "None")
