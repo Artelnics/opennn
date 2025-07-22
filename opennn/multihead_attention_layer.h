@@ -56,8 +56,6 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;

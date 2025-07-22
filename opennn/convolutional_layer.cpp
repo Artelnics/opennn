@@ -70,7 +70,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
         kernel_convolutions.device(*thread_pool_device) =
-            (inputs.convolve(kernel_weights, std::array<Index, 3>({ 1, 2, 3 })))
+            (inputs.convolve(kernel_weights, array<Index, 3>({ 1, 2, 3 })))
             .reshape(kernel_convolutions.dimensions()) + biases(kernel_index);
     }
 }

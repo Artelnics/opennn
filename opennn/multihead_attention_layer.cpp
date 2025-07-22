@@ -216,33 +216,6 @@ void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_paddi
 }
 
 
-void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& query,
-                                                     const Tensor<type, 4>& key,
-                                                     Tensor<type, 4>& attention_weights) const
-{
-    batch_matrix_multiplication<type, 4>(thread_pool_device.get(), key, query, attention_weights, axes<Index>(1, 1));
-
-    const type scaling_factor = get_scaling_factor();
-
-    attention_weights.device(*thread_pool_device) = attention_weights * scaling_factor;
-
-    if(use_causal_mask)
-        apply_causal_mask(attention_weights);
-
-    // @Todo (The key mask is hardcoded to function on a self-attention)
-    // Tensor<bool,2> key_mask(key.dimension(2), source_sequence_length);
-
-    // #pragma omp parallel for
-    // for(Index i = 0; i < key_mask.dimension(0); i++)
-    //     for(Index j = 0; j < key_mask.dimension(1);j++)
-    //         key_mask(i,j)=(attention_weights(j,j,i,0)==0);
-
-    // apply_key_padding_mask(key_mask, attention_weights);
-
-    softmax(attention_weights);
-}
-
-
 void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& value,
                                                      const Tensor<type, 4>& attention_weights,
                                                      Tensor<type, 4>& attention_outputs) const
@@ -358,41 +331,49 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     const Index head_dimension = get_head_dimension();
 
-    const array<IndexPair<int>, 1> contract_dims = { IndexPair<int>(2, 0) };
+    //const array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+    //const array<Index, 3> bias_reshape_dims = {1, 1, embedding_dimension};
+    //const array<Index, 3> bias_broadcast_dims_query = {batch_size, query_sequence_length, 1}; // @todo for key and value is not the same
+    //const array<Index, 3> bias_broadcast_dims_source = {batch_size, source_sequence_length, 1}; // @todo for key and value is not the same
+    //const array<Index, 4> final_reshape_dims_query = {batch_size, query_sequence_length, heads_number, head_dimension};
+    //const array<Index, 4> final_reshape_dims_source = {batch_size, source_sequence_length, heads_number, head_dimension};
+    //const array<Index, 4> shuffle_order = {0, 2, 1, 3};
+    //const array<int, 4> key_transpose_order = {0, 1, 3, 2};
+    //array<IndexPair<Index>, 1> contract_dims_attention_scores = { IndexPair<Index>(3, 2) };
 
-    const array<Index, 3> bias_reshape_dims = {1, 1, embedding_dimension};
-    const array<Index, 3> bias_broadcast_dims_query = {batch_size, query_sequence_length, 1}; // @todo for key and value is not the same
-    const array<Index, 3> bias_broadcast_dims_source = {batch_size, source_sequence_length, 1}; // @todo for key and value is not the same
+    query.device(*thread_pool_device) = (query_input.contract(query_weights, axes(2,0))
+        + query_biases.reshape(array_3(1, 1, embedding_dimension))
+                      .broadcast(array_3(batch_size, query_sequence_length, 1)))
+        .reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
+        .shuffle(array_4(0, 2, 1, 3));
 
-    const array<Index, 4> final_reshape_dims_query = {batch_size, query_sequence_length, heads_number, head_dimension};
-    const array<Index, 4> final_reshape_dims_source = {batch_size, source_sequence_length, heads_number, head_dimension};
-    const array<int, 4> shuffle_order = {0, 2, 1, 3};
+    key.device(*thread_pool_device) = (source_input.contract(key_weights, axes(2,0))
+        + key_biases.reshape(array_3(1, 1, embedding_dimension))
+                    .broadcast(array_3(batch_size, source_sequence_length, 1)))
+        .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
+        .shuffle(array_4(0, 2, 1, 3));
 
-    query.device(*thread_pool_device) = (query_input.contract(query_weights, contract_dims)
-             + query_biases.reshape(bias_reshape_dims).broadcast(bias_broadcast_dims_query))
-            .reshape(final_reshape_dims_query)
-            .shuffle(shuffle_order);
-
-    key.device(*thread_pool_device) = (source_input.contract(key_weights, contract_dims)
-           + key_biases.reshape(bias_reshape_dims).broadcast(bias_broadcast_dims_source))
-           .reshape(final_reshape_dims_source)
-           .shuffle(shuffle_order);
-
-    value.device(*thread_pool_device) = (source_input.contract(value_weights, contract_dims)
-            + value_biases.reshape(bias_reshape_dims).broadcast(bias_broadcast_dims_source))
-            .reshape(final_reshape_dims_source)
-            .shuffle(shuffle_order);
-
-    const array<int, 4> key_transpose_order = {0, 1, 3, 2};
-
-    array<IndexPair<int>, 1> contract_dims_attention_scores = { IndexPair<int>(3, 2) };
+    value.device(*thread_pool_device) = (source_input.contract(value_weights, axes(2,0))
+        + value_biases.reshape(array_3(1, 1, embedding_dimension))
+                      .broadcast(array_3(batch_size, source_sequence_length, 1)))
+        .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
+        .shuffle(array_4(0, 2, 1, 3));
 
     attention_weights.device(*thread_pool_device) =
-        query.contract(key.shuffle(key_transpose_order), contract_dims_attention_scores) / sqrt(type(head_dimension));
+        query.contract(key.shuffle(array_4(0, 1, 3, 2)), axes(3,2)) / sqrt(type(head_dimension));
 
     softmax(attention_weights);
 
+    attention_outputs.device(*thread_pool_device) = attention_weights.contract(value, axes(3, 2));
+
 /*
+    Tensor<float, 3> final_mha_output =
+        (attention_outputs.shuffle(array_4(0, 2, 1, 3))
+             .reshape(array_3(batch_size, sequence_length, embedding_dimension)))
+            .contract(output_weights, axes(2, 0)) +
+        output_bias.reshape(make_shape(1, 1, embedding_dimension))
+            .broadcast(make_shape(batch_size, sequence_length, 1));
+
     // batch_matrix_multiplication<type, 4>(thread_pool_device.get(), key, query, attention_weights, axes<Index>(1,1));
 
     // const type scaling_factor = get_scaling_factor();
@@ -416,14 +397,12 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     ////////////////////
 
-    calculate_attention_weights(query, key, attention_weights);
-
     // @todo fix the dropout implementation
     // if(is_training && dropout_rate > type(0)) {
     //     dropout(attention_weights, dropout_rate);
     //     cout << "Dropout aplicado" << endl;
     // }
-
+/*
     calculate_attention_outputs(value, attention_weights, attention_outputs);
 
     concatenate_heads(attention_outputs, concatenated_attention_outputs);
