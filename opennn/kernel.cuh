@@ -1,7 +1,7 @@
 #ifndef KERNEL_CUH
 #define KERNEL_CUH
 
-#include "../opennn/eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #include <device_launch_parameters.h>
 #include <cuda.h>

@@ -233,7 +233,7 @@ public:
 
         Index last_layer_in_branch_A = input_layer_index;
 
-        for (Index i = 0; i < complexity_dimensions.size(); i++)
+        for (Index i = 0; i < static_cast<Index>(complexity_dimensions.size()); i++)
         {
             const dimensions current_input_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
             const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
@@ -266,7 +266,7 @@ public:
 
         Index last_layer_in_branch_B = input_layer_index;
 
-        for (Index i = 0; i < complexity_dimensions.size(); i++)
+        for (Index i = 0; i < static_cast<Index>(complexity_dimensions.size()); i++)
         {
             const dimensions current_input_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
             const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
@@ -334,7 +334,7 @@ public:
 
         const auto& all_input_indices = get_layer_input_indices();
 
-        for (size_t i = 0; i < get_layers_number(); ++i)
+        for (Index i = 0; i < get_layers_number(); ++i)
         {
             cout << "Capa " << i << ": " << get_layer(i)->get_name()
                 << " (" << get_layer(i)->get_label() << ")" << endl;
