@@ -1240,7 +1240,22 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Dense2dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dForwardPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Outputs Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+    cout << "  Combinations Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization States:" << endl;
+        cout << "    - bn_saved_mean size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_saved_inv_variance size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
@@ -1354,7 +1369,24 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
 
 void Dense2dBackPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dBackPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions input_dims = dense_layer->get_input_dimensions();
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Input Deltas Dimensions: { " << batch_size << ", " << input_dims[0] << " }" << endl;
+    cout << "  Weight Deltas Dimensions: { " << input_dims[0] << ", " << output_dims[0] << " }" << endl;
+    cout << "  Bias Deltas Dimensions: { " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization Deltas:" << endl;
+        cout << "    - bn_scale_deltas size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_offset_deltas size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
