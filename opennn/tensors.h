@@ -23,25 +23,25 @@ array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a
 }
 
 
-array<Index, 1> array_1(const Index& a)
+inline array<Index, 1> array_1(const Index& a)
 {
     return array<Index, 1>({a});
 }
 
 
-array<Index, 2> array_2(const Index& a, const Index& b)
+inline array<Index, 2> array_2(const Index& a, const Index& b)
 {
     return array<Index, 2>({a, b});
 }
 
 
-array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
+inline array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
 {
     return array<Index, 3>({a, b, c});
 }
 
 
-array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
+inline array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
 {
     return array<Index, 4>({a, b, c, d});
 }
