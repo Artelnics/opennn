@@ -61,21 +61,13 @@ Index Pooling::get_channels_number() const
 
 Index Pooling::get_output_height() const
 {
-    const type padding = type(0);
-
-    const Index input_height = get_input_height();
-
-    return (input_height - pool_height + 2*padding)/row_stride + 1;
+    return (get_input_height() - pool_height + 2 * padding_height) / row_stride + 1;
 }
 
 
 Index Pooling::get_output_width() const
 {
-    const type padding = type(0);
-
-    const Index input_width = get_input_width();
-
-    return (input_width - pool_width + 2*padding)/column_stride + 1;
+    return (get_input_width() - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
 

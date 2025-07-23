@@ -344,25 +344,19 @@ const string& Convolutional::get_activation_function() const
 
 Index Convolutional::get_output_height() const
 {
-    const Index input_height = get_input_height();
-    const Index kernel_height = get_kernel_height();
-    const Index strides = get_row_stride();
-
-    const pair<Index, Index> padding = get_padding();
-
-    return floor((input_height - kernel_height + padding.first*2)/strides) + 1;
+    if (convolution_type == Convolution::Same)
+        return (get_input_height() + get_row_stride() - 1) / get_row_stride();
+    else
+        return (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
 }
 
 
 Index Convolutional::get_output_width() const
 {
-    const Index input_width = get_input_width();
-    const Index kernel_width = get_kernel_width();
-    const Index strides = get_column_stride();
-
-    const pair<Index, Index> padding = get_padding();
-
-    return floor((input_width - kernel_width + padding.second*2)/strides) + 1;
+    if (convolution_type == Convolution::Same)
+        return (get_input_width() + get_column_stride() - 1) / get_column_stride();
+    else
+        return (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
 }
 
 

@@ -215,150 +215,206 @@ public:
 };
 
 
-class DualPathNetwork : public NeuralNetwork // @todo testing, delete after
+class SimpleResNet : public NeuralNetwork
 {
 public:
 
-    DualPathNetwork(const dimensions& input_dimensions,
-                    const dimensions& complexity_dimensions,
-                    const dimensions& output_dimensions) : NeuralNetwork()
+    void print_dim(const dimensions& dims) const
+    {
+        cout << "{ ";
+        for (size_t i = 0; i < dims.size(); ++i)
+        {
+            cout << dims[i] << (i == dims.size() - 1 ? " " : ", ");
+        }
+        cout << "}";
+    }
+
+    SimpleResNet(const dimensions& input_dimensions,
+                 const vector<Index>& blocks_per_stage, // e.g., {2, 2, 2, 2} for a ResNet-18 like structure
+                 const dimensions& initial_filters,    // e.g., {64, 128, 256, 512}
+                 const dimensions& output_dimensions) : NeuralNetwork()
     {
         if (input_dimensions.size() != 3)
-            throw runtime_error("Input dimensions size is not 3.");
+            throw runtime_error("Input dimensions size must be 3.");
+        if (blocks_per_stage.size() != initial_filters.size())
+            throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
 
         add_layer(make_unique<Scaling4d>(input_dimensions));
-        const Index input_layer_index = 0;
 
-        // --- BLOCK A ---
+        Index last_layer_index = 0;
 
-        Index last_layer_in_branch_A = input_layer_index;
+        auto stem_conv = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_dimensions(),
+                                                    dimensions{ 7, 7, input_dimensions[2], initial_filters[0] }, 
+                                                    "RectifiedLinear",
+                                                    dimensions{ 2, 2 }, 
+                                                    Convolutional::Convolution::Same, 
+                                                    false, 
+                                                    "stem_conv_1");
 
-        for (Index i = 0; i < complexity_dimensions.size(); i++)
+        add_layer(move(stem_conv), { last_layer_index });
+
+        last_layer_index = get_layers_number() - 1;
+
+        auto stem_pool = make_unique<Pooling>(get_layer(last_layer_index)->get_output_dimensions(),
+                                              dimensions{ 3, 3 }, 
+                                              dimensions{ 2, 2 }, 
+                                              dimensions{ 1, 1 },
+                                              Pooling::PoolingMethod::MaxPooling, 
+                                              "stem_pool");
+
+        add_layer(move(stem_pool), { last_layer_index });
+
+        last_layer_index = get_layers_number() - 1;
+
+        for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
         {
-            const dimensions current_input_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
-            const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
+            for (size_t block = 0; block < blocks_per_stage[stage]; ++block)
+            {
+                Index block_input_index = last_layer_index;
 
-            auto conv_layer = make_unique<Convolutional>(current_input_dims, 
-                                                         kernel_dimensions, 
-                                                         "RectifiedLinear",
-                                                         dimensions{ 1, 1 }, 
-                                                         Convolutional::Convolution::Same, 
-                                                         false,
-                                                         "branch_A_conv_" + to_string(i + 1));
+                dimensions current_input_dims = get_layer(block_input_index)->get_output_dimensions();
 
-            add_layer(move(conv_layer), { last_layer_in_branch_A });
-            last_layer_in_branch_A = get_layers_number() - 1;
+                Index filters = initial_filters[stage];
 
-            const dimensions pool_input_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
+                Index stride = (stage > 0 && block == 0) ? 2 : 1;
 
-            auto pool_layer = make_unique<Pooling>(pool_input_dims, 
-                                                   dimensions{ 2, 2 }, 
-                                                   dimensions{ 2, 2 },
-                                                   dimensions{ 0, 0 }, 
-                                                   Pooling::PoolingMethod::MaxPooling,
-                                                   "branch_A_pool_" + to_string(i + 1));
+                // Main
+                auto conv1 = make_unique<Convolutional>(current_input_dims,
+                                                        dimensions{ 3, 3, current_input_dims[2], filters }, 
+                                                        "RectifiedLinear",
+                                                        dimensions{ stride, stride }, 
+                                                        Convolutional::Convolution::Same, 
+                                                        false,
+                                                        "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-            add_layer(move(pool_layer), { last_layer_in_branch_A });
-            last_layer_in_branch_A = get_layers_number() - 1;
+                add_layer(move(conv1), { block_input_index });
+
+                Index main_path_index = get_layers_number() - 1;
+
+                auto conv2 = make_unique<Convolutional>(get_layer(main_path_index)->get_output_dimensions(),
+                                                        dimensions{ 3, 3, filters, filters }, 
+                                                        "Linear",
+                                                        dimensions{ 1, 1 }, 
+                                                        Convolutional::Convolution::Same, 
+                                                        false,
+                                                        "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
+
+                add_layer(move(conv2), { main_path_index });
+
+                main_path_index = get_layers_number() - 1;
+
+                // Skip Connection
+                Index skip_path_index = block_input_index;
+
+                if (stride != 1 || current_input_dims[2] != filters)
+                {
+                    auto skip_conv = make_unique<Convolutional>(current_input_dims,
+                                                                dimensions{ 1, 1, current_input_dims[2], filters }, 
+                                                                "Linear",
+                                                                dimensions{ stride, stride }, 
+                                                                Convolutional::Convolution::Same, 
+                                                                false,
+                                                                "s" + to_string(stage) + "b" + to_string(block) + "_skip");
+
+                    add_layer(move(skip_conv), { block_input_index });
+
+                    skip_path_index = get_layers_number() - 1;
+                }
+
+                const dimensions main_out_dims = get_layer(main_path_index)->get_output_dimensions();
+
+                auto addition_layer = make_unique<Addition4d>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+
+                add_layer(move(addition_layer), { main_path_index, skip_path_index });
+
+                last_layer_index = get_layers_number() - 1;
+
+                auto activation_layer = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_dimensions(),
+                                                                   dimensions{ 1, 1, filters, filters }, 
+                                                                   "RectifiedLinear",
+                                                                   dimensions{ 1, 1 }, 
+                                                                   Convolutional::Convolution::Same, 
+                                                                   false,
+                                                                   "s" + to_string(stage) + "b" + to_string(block) + "_relu");
+
+                add_layer(move(activation_layer), { last_layer_index });
+
+                last_layer_index = get_layers_number() - 1;
+            }
         }
 
-        // BLOCK B
+        const dimensions pre_pool_dims = get_layer(last_layer_index)->get_output_dimensions();
 
-        Index last_layer_in_branch_B = input_layer_index;
+        auto global_pool = make_unique<Pooling>(pre_pool_dims,
+                                                dimensions{ pre_pool_dims[0], pre_pool_dims[1] },
+                                                dimensions{ 1, 1 }, 
+                                                dimensions{ 0, 0 },
+                                                Pooling::PoolingMethod::AveragePooling, 
+                                                "global_avg_pool");
 
-        for (Index i = 0; i < complexity_dimensions.size(); i++)
-        {
-            const dimensions current_input_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
-            const dimensions kernel_dimensions = { 3, 3, current_input_dims[2], complexity_dimensions[i] };
+        add_layer(move(global_pool), { last_layer_index });
 
-            auto conv_layer = make_unique<Convolutional>(current_input_dims,
-                                                         kernel_dimensions, 
-                                                         "RectifiedLinear",
-                                                         dimensions{ 1, 1 }, 
-                                                         Convolutional::Convolution::Same, 
-                                                         false,
-                                                         "branch_B_conv_" + to_string(i + 1));
+        last_layer_index = get_layers_number() - 1;
 
-            add_layer(move(conv_layer), { last_layer_in_branch_B });
-            last_layer_in_branch_B = get_layers_number() - 1;
-
-            const dimensions pool_input_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
-
-            auto pool_layer = make_unique<Pooling>(pool_input_dims, 
-                                                   dimensions{ 2, 2 },
-                                                   dimensions{ 2, 2 },
-                                                   dimensions{ 0, 0 }, 
-                                                   Pooling::PoolingMethod::MaxPooling,
-                                                   "branch_B_pool_" + to_string(i + 1));
-
-            add_layer(move(pool_layer), { last_layer_in_branch_B });
-            last_layer_in_branch_B = get_layers_number() - 1;
-        }
-
-        // Addition
-        const dimensions branch_A_output_dims = get_layer(last_layer_in_branch_A)->get_output_dimensions();
-        const dimensions branch_B_output_dims = get_layer(last_layer_in_branch_B)->get_output_dimensions();
-
-        if (branch_A_output_dims != branch_B_output_dims) {
-            throw runtime_error("Output dimensions of parallel branches must match for Addition layer.");
-        }
-
-        auto addition_layer = make_unique<Addition4d>(branch_A_output_dims, "addition_layer");
-
-        add_layer(move(addition_layer), { last_layer_in_branch_A, last_layer_in_branch_B });
-
-        Index last_layer_index = get_layers_number() - 1;
-
-        // Flatten
-        const dimensions flatten_input_dims = get_layer(last_layer_index)->get_output_dimensions();
-
-        auto flatten_layer = make_unique<Flatten>(flatten_input_dims);
+        auto flatten_layer = make_unique<Flatten>(get_layer(last_layer_index)->get_output_dimensions());
 
         add_layer(move(flatten_layer), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
-        // Dense
-        const dimensions dense_input_dims = get_layer(last_layer_index)->get_output_dimensions();
-
-        auto dense_layer = make_unique<Dense2d>(dense_input_dims, 
-                                                output_dimensions, 
-                                                "Softmax", 
-                                                false, 
-                                                "dense_layer");
+        auto dense_layer = make_unique<Dense2d>(get_layer(last_layer_index)->get_output_dimensions(),
+                                                output_dimensions,
+                                                "Softmax",
+                                                false,
+                                                "dense_classifier");
 
         add_layer(move(dense_layer), { last_layer_index });
 
-        // DEBUG
-        cout << "========================================" << endl;
+        cout << "\n=======================================================================" << endl;
+        cout << "          Análisis de la Arquitectura y Flujo de Dimensiones" << endl;
+        cout << "=======================================================================" << endl;
 
         const auto& all_input_indices = get_layer_input_indices();
 
         for (size_t i = 0; i < get_layers_number(); ++i)
         {
-            cout << "Capa " << i << ": " << get_layer(i)->get_name()
-                << " (" << get_layer(i)->get_label() << ")" << endl;
-
-            cout << "  -> Entradas desde capa(s): [ ";
-
+            const auto& layer = get_layer(i);
             const auto& inputs_for_this_layer = all_input_indices[i];
 
+            // --- Información de la Capa ---
+            cout << "Capa " << i << ": " << layer->get_name()
+                << " (" << layer->get_label() << ")" << endl;
+
+            // --- Conexiones de Entrada ---
+            cout << "  |- Conexiones: [ ";
             for (size_t j = 0; j < inputs_for_this_layer.size(); ++j)
             {
-                Index input_idx = inputs_for_this_layer[j];
-                if (input_idx == -1) {
-                    cout << "Entrada de Red";
-                }
-                else {
-                    cout << input_idx;
-                }
-
-                if (j < inputs_for_this_layer.size() - 1) {
-                    cout << ", ";
-                }
+                cout << (inputs_for_this_layer[j] == -1 ? "Red" : to_string(inputs_for_this_layer[j]));
+                if (j < inputs_for_this_layer.size() - 1) cout << ", ";
             }
             cout << " ]" << endl;
-            cout << "----------------------------------------" << endl;
+
+            // --- Dimensiones de Entrada ---
+            cout << "  |- Dim Entrada : ";
+            // Para capas con múltiples entradas, las mostramos todas
+            if (inputs_for_this_layer.size() > 1) {
+                cout << endl;
+                for (const auto& input_idx : inputs_for_this_layer) {
+                    cout << "    - Desde capa " << input_idx << ": ";
+                    print_dim(get_layer(input_idx)->get_output_dimensions());
+                    cout << endl;
+                }
+            }
+            else {
+                // Para capas con una sola entrada
+                print_dim(layer->get_input_dimensions());
+                cout << endl;
+            }
+
+            // --- Dimensiones de Salida ---
+            cout << "  '- Dim Salida  : ";
+            print_dim(layer->get_output_dimensions());
+            cout << "\n-----------------------------------------------------------------------" << endl;
         }
     }
 };
