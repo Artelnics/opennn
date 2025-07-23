@@ -9,8 +9,8 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-#include "registry.h"
-#include "tensors.h"
+//#include "registry.h"
+//#include "tensors.h"
 
 #include "layer.h"
 
@@ -35,7 +35,7 @@ public:
     Index get_source_sequence_length() const;
     Index get_embedding_dimension() const;
     Index get_heads_number() const;
-    Index get_hidden_depth() const;
+    Index get_head_dimension() const;
 
     type get_scaling_factor() const;
 
@@ -55,8 +55,6 @@ public:
     void set_dropout_rate(const type&);
 
     void apply_causal_mask(Tensor<type, 4>&) const;
-
-    void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -92,14 +90,14 @@ private:
     Index heads_number = 0;
     Index embedding_dimension = 0;
 
-    Tensor<type, 3> query_weights;
-    Tensor<type, 2> query_biases;
+    Tensor<type, 2> query_weights;
+    Tensor<type, 1> query_biases;
 
-    Tensor<type, 3> key_weights;
-    Tensor<type, 2> key_biases;
+    Tensor<type, 2> key_weights;
+    Tensor<type, 1> key_biases;
 
-    Tensor<type, 3> value_weights;
-    Tensor<type, 2> value_biases;
+    Tensor<type, 2> value_weights;
+    Tensor<type, 1> value_biases;
 
     Tensor<type, 2> projection_weights;
     Tensor<type, 1> projection_biases;

@@ -240,17 +240,17 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({0}))
+    y.device(*thread_pool_device) = y - y.maximum(array_1(0))
                                          .eval()
-                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
-                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
+                                         .reshape(array_4(1, columns_number, channels, blocks_number))
+                                         .broadcast(array_4(rows_number, 1, 1, 1));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({0}))
+    y.device(*thread_pool_device) = y / y.sum(array_1(0))
                                          .eval()
-                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
-                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
+                                         .reshape(array_4(1, columns_number, channels, blocks_number))
+                                         .broadcast(array_4(rows_number, 1, 1, 1 ));
 }
 
 

@@ -98,6 +98,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
+    training_strategy->get_optimization_algorithm()->set_display(false);
+
     type previus_selection_error = numeric_limits< type>::max();
     type previus_training_error = numeric_limits< type>::max();
 

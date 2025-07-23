@@ -374,13 +374,13 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
             TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
                 = tensor_map(squared_errors_Jacobian, weight_index++);
 
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) 
+            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device)
                 = combination_delta_neuron * input;
         }
 
         const Index bias_index = weights_number + neuron_index;
 
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias 
+        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias
             = tensor_map(squared_errors_Jacobian, bias_index);
 
         squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
@@ -507,7 +507,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
-    add_xml_element(printer, "BatchNormalization", to_string(batch_normalization));
+    add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
     if (batch_normalization)
     {
         add_xml_element(printer, "Scales", tensor_to_string<type, 1>(scales));

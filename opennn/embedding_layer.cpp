@@ -307,8 +307,6 @@ void EmbeddingForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
 
-    // Outputs
-
     outputs.resize(batch_size, sequence_length, embedding_dimension);
 }
 
