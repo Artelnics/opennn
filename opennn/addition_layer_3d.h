@@ -14,32 +14,107 @@
 namespace opennn
 {
 
+template<int Rank> struct Addition3dForwardPropagation;
+template<int Rank> struct Addition3dBackPropagation;
+
+template<int Rank>
 class Addition3d : public Layer
 {
 
 public:
 
-    Addition3d(const dimensions& = dimensions({0,0}), const string& = "addition_layer_3d");
+    Addition3d(const dimensions& new_input_dimensions = dimensions({}), const string& new_name = "")
+    {
+        set(new_input_dimensions, new_name);
+    }
 
-    Index get_sequence_length() const;
-    Index get_embedding_dimension() const;
+    dimensions get_input_dimensions() const override
+    {
+        return input_dimensions;
+    }
 
-    dimensions get_input_dimensions() const override;
-    dimensions get_output_dimensions() const override;
+    dimensions get_output_dimensions() const override
+    {
+        return input_dimensions;
+    }
 
-    void set(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
+    void set(const dimensions& new_input_dimensions, const string& new_name )
+    {
+        if (!new_input_dimensions.empty() && new_input_dimensions.size() != Rank)
+            throw runtime_error("Input dimensions rank for AdditionLayer<" + to_string(Rank) + "> must be " + to_string(Rank));
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           const bool&) override;
+        input_dimensions = new_input_dimensions;
+
+        label = new_name;
+//        name = get_xml_element_name();
+
+    }
+
+    void forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                           const bool&) override
+    {
+
+        if (input_pairs.size() != 2)
+            throw runtime_error(name + " layer requires exactly two inputs.");
+
+        if (input_pairs[0].second != input_pairs[1].second)
+            throw runtime_error("Input dimensions for " + name + " must be identical.");
+/*
+        const TensorMap<Tensor<type, Rank>> input_1 = tensor_map(input_pairs[0]);
+        const TensorMap<Tensor<type, Rank>> input_2 = tensor_map(input_pairs[1]);
+
+        Addition3dForwardPropagation<Rank>* this_forward_propagation =
+            static_cast<Addition3dForwardPropagation<Rank>*>(layer_forward_propagation.get());
+
+        Tensor<type, Rank>& outputs = this_forward_propagation->outputs;
+        outputs.device(*thread_pool_device) = input_1 + input_2;
+*/
+    }
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>& delta_pairs,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+                        unique_ptr<LayerBackPropagation>& back_propagation) const override
+    {
+        if (delta_pairs.size() != 1)
+            throw runtime_error(name + " backpropagation requires exactly one delta input.");
+/*
+        const TensorMap<Tensor<type, Rank + 1>> deltas = tensor_map<Rank + 1>(delta_pairs[0]);
 
-    void from_XML(const XMLDocument&) override;
-    void to_XML(XMLPrinter&) const override;
+        Addition3dForwardPropagation<Rank>* this_back_propagation =
+            static_cast<Addition3dForwardPropagation<Rank>*>(back_propagation.get());
+
+        // The gradient of an addition is 1, so the incoming delta is passed back to both inputs.
+        this_back_propagation->input_1_derivatives.device(*thread_pool_device) = deltas;
+        this_back_propagation->input_2_derivatives.device(*thread_pool_device) = deltas;
+*/
+    }
+
+    void from_XML(const XMLDocument& document) override
+    {
+/*
+        const XMLElement* element = document.FirstChildElement(get_xml_element_name().c_str());
+
+        if (!element) throw runtime_error(name + " element is nullptr.");
+
+        const string new_label = read_xml_string(element, "Label");
+        const dimensions new_input_dimensions = string_to_dimensions(read_xml_string(element, "InputDimensions"));
+
+        set(new_input_dimensions, new_label);
+*/
+    }
+
+
+    void to_XML(XMLPrinter& printer) const override
+    {
+/*
+        printer.OpenElement(get_xml_element_name().c_str());
+        add_xml_element(printer, "Label", label);
+        add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
+        printer.CloseElement();
+*/
+    }
 
 #ifdef OPENNN_CUDA
 
@@ -58,38 +133,102 @@ public:
 
 private:
 
-    Index sequence_length = 0;
-
-    Index embedding_dimension = 0;
+    dimensions input_dimensions;
 };
 
 
+template<int Rank>
 struct Addition3dForwardPropagation : LayerForwardPropagation
 {
-    Addition3dForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
+    Addition3dForwardPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+        : LayerForwardPropagation()
+    {
+        set(new_batch_size, new_layer);
+    }
 
-    pair<type*, dimensions> get_output_pair() const override;
+    pair<type*, dimensions> get_output_pair() const override
+    {
+        const dimensions output_dims = layer->get_output_dimensions();
+        dimensions full_dims = {batch_size};
+        full_dims.insert(full_dims.end(), output_dims.begin(), output_dims.end());
+        return {(type*)outputs.data(), full_dims};
+    }
 
-    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const override;
+    void set(const Index& new_batch_size, Layer* new_layer) override
+    {
+        if (!new_layer) return;
+        layer = new_layer;
+        batch_size = new_batch_size;
+        const dimensions output_dims = layer->get_output_dimensions();
 
-    Tensor<type, 3> outputs;
+        // Create the full dimensions including the batch size
+        std::array<Index, Rank + 1> full_dims;
+        full_dims[0] = batch_size;
+
+        for(int i = 0; i < Rank; ++i)
+            full_dims[i+1] = output_dims[i];
+/*
+        outputs.resize(DSizes<Index, Rank + 1>(full_dims));
+*/
+    }
+
+    void print() const override
+    {
+
+    }
+
+    Tensor<type, Rank> outputs;
 };
 
 
+template<int Rank>
 struct Addition3dBackPropagation : LayerBackPropagation
 {
-    Addition3dBackPropagation(const Index& = 0, Layer* = nullptr);
+    Addition3dBackPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+        : LayerBackPropagation()
+    {
+        set(new_batch_size, new_layer);
+    }
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override
+    {
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+        const dimensions input_dims = layer->get_input_dimensions();
+        dimensions full_dims = {batch_size};
+        full_dims.insert(full_dims.end(), input_dims.begin(), input_dims.end());
 
-    void print() const override;
+        return {{(type*)input_1_derivatives.data(), full_dims},
+                {(type*)input_2_derivatives.data(), full_dims}};
+    }
 
-    Tensor<type, 3> input_1_derivatives;
-    Tensor<type, 3> input_2_derivatives;
+
+    void set(const Index& new_batch_size, Layer* new_layer) override
+    {
+        if (!new_layer) return;
+        layer = new_layer;
+        batch_size = new_batch_size;
+        const dimensions input_dims = layer->get_input_dimensions();
+
+        std::array<Index, Rank + 1> full_dims;
+        full_dims[0] = batch_size;
+
+        for(int i = 0; i < Rank; ++i)
+            full_dims[i+1] = input_dims[i];
+
+        auto d_sizes = DSizes<Index, Rank + 1>(full_dims);
+        input_1_derivatives.resize(d_sizes);
+        input_2_derivatives.resize(d_sizes);
+
+    }
+
+    void print() const override
+    {
+
+    }
+
+    Tensor<type, Rank> input_1_derivatives;
+    Tensor<type, Rank> input_2_derivatives;
 };
 
 

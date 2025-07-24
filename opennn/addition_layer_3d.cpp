@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+/*
 Addition3d::Addition3d(const dimensions& new_input_dimensions,
                        const string& new_name) : Layer()
 {
@@ -215,7 +215,7 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
     {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_dimension}},
      {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_dimension}}};
 }
-
+*/
 #ifdef OPENNN_CUDA
 
 void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
@@ -372,9 +372,9 @@ REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
 
 #endif
 
-REGISTER(Layer, Addition3d, "Addition3d")
-REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
-REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+//REGISTER(Layer, Addition3d, "Addition3d")
+//REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
+//REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
 
 }
 
