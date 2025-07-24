@@ -35,29 +35,12 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
-    set_min_max_range(type(0), type(255));
-
     name = "Scaling4d";
 
     label = "scaling_layer_4d";
 
     is_trainable = false;
 }
-
-
-void Scaling4d::set_min_max_range(const type& min, const type& max)
-{
-    min_range = min;
-    max_range = max;
-}
-
-
-// bool Scaling4d::is_empty() const
-// {
-//     const Index inputs_number = get_output_dimensions()[0];
-
-//     return inputs_number == 0;
-// }
 
 
 void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
@@ -212,6 +195,9 @@ void Scaling4dForwardPropagationCuda::free()
 {
     cudaFree(scalar_device);
     cudaFree(outputs);
+
+    scalar_device = nullptr;
+    outputs = nullptr;
 }
 
 

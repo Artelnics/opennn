@@ -48,7 +48,7 @@ public:
     void set_loss_index(const string&);
     void set_optimization_algorithm(const string&);
 
-    TrainingResults perform_training();
+    TrainingResults train();
 
 #ifdef OPENNN_CUDA
     TrainingResults perform_training_cuda();

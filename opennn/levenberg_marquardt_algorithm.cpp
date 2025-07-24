@@ -162,16 +162,16 @@ void LevenbergMarquardtAlgorithm::check() const
 }
 
 
-TrainingResults LevenbergMarquardtAlgorithm::perform_training()
+TrainingResults LevenbergMarquardtAlgorithm::train()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
 
-    if(loss_index->get_name() == "MINKOWSKI_ERROR")
+    if(loss_index->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss_index->get_name() == "CROSS_ENTROPY_ERROR_2D")
+    else if(loss_index->get_name() == "CrossEntropyError2d")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    else if(loss_index->get_name() == "WEIGHTED_SQUARED_ERROR")
+    else if(loss_index->get_name() == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
@@ -361,7 +361,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-
     const type regularization_weight = loss_index->get_regularization_weight();
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -403,7 +402,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         try
         {
-            new_loss = error + regularization_weight*loss_index->calculate_regularization(potential_parameters);
+            new_loss = error + loss_index->calculate_regularization(potential_parameters);
 
         }catch(exception)
         {
@@ -434,7 +433,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     {
         constexpr type epsilon = numeric_limits<type>::epsilon();
 
-        #pragma omp parallel for
+#pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
@@ -445,8 +444,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             else
             {
                 parameters_increment(i) = gradient(i) > type(0)
-                    ? -epsilon
-                    : epsilon;
+                ? -epsilon
+                : epsilon;
 
                 parameters(i) += parameters_increment(i);
             }

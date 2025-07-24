@@ -358,19 +358,17 @@ void TimeSeriesDataset::impute_missing_values_mean()
 
     #pragma omp parallel for
 
-    for(Index j = 0; j < get_variables_number(); j++)
+    for(Index variable_index = 0; variable_index < get_variables_number(); variable_index++)
     {
-        const Index current_variable_index = j;
-
         for(Index i = 0; i < used_samples_number; i++)
         {
             const Index current_sample_index = used_sample_indices[i];
 
-            if(isnan(data(current_sample_index, current_variable_index)))
+            if(isnan(data(current_sample_index, variable_index)))
             {
                 if(i < past_time_steps || i > used_samples_number - future_time_steps)
                 {
-                    data(current_sample_index, current_variable_index) = means(j);
+                    data(current_sample_index, variable_index) = means(variable_index);
                 }
                 else
                 {
@@ -380,7 +378,7 @@ void TimeSeriesDataset::impute_missing_values_mean()
                     while(isnan(previous_value) && k > 0)
                     {
                         k--;
-                        previous_value = data(used_sample_indices[k], current_variable_index);
+                        previous_value = data(used_sample_indices[k], variable_index);
                     }
 
                     k = i;
@@ -388,18 +386,18 @@ void TimeSeriesDataset::impute_missing_values_mean()
                     while(isnan(next_value) && k < used_samples_number)
                     {
                         k++;
-                        next_value = data(used_sample_indices[k], current_variable_index);
+                        next_value = data(used_sample_indices[k], variable_index);
                     }
 
                     if(isnan(previous_value) && isnan(next_value))
                         throw runtime_error("The last " + to_string(used_samples_number-i+1) + " samples are all missing, delete them.\n");
 
                     if(isnan(previous_value))
-                        data(current_sample_index, current_variable_index) = type(next_value);
+                        data(current_sample_index, variable_index) = type(next_value);
                     else if(isnan(next_value))
-                        data(current_sample_index, current_variable_index) = type(previous_value);
+                        data(current_sample_index, variable_index) = type(previous_value);
                     else
-                        data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
+                        data(current_sample_index, variable_index) = type((previous_value + next_value)/2);
                 }
             }
         }
@@ -518,8 +516,6 @@ void TimeSeriesDataset::fill_gaps()
     Index row_index = 0;
     Index column_index = 0;
 
-    Tensor<type, 1> sample;
-
     for(Index i = 0; i < new_samples_number; i++)
     {
         new_timestamp = start_time + i*period;
@@ -593,16 +589,11 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& past_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use != "None"
-        && raw_variables[i].type == RawVariableType::Numeric)
-        {
-            input_i = get_raw_variable_data(i);
-            cout << "Calculating " << raw_variables[i].name << " autocorrelations" << endl;
-        }
-        else
-        {
+        if(raw_variables[i].use == "None" || raw_variables[i].type != RawVariableType::Numeric)
             continue;
-        }
+
+        input_i = get_raw_variable_data(i);
+        cout << "Calculating " << raw_variables[i].name << " autocorrelations" << endl;
 
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
         
@@ -680,8 +671,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use == "None"
-        || raw_variables[i].type != RawVariableType::Numeric)
+        if(raw_variables[i].use == "None" || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
         input_i = get_raw_variable_data(i);

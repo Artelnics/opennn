@@ -95,7 +95,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         // Addition
 
-        add_layer(make_unique<Addition3d>(dimensions({new_input_length, new_embedding_dimension}),
+        add_layer(make_unique<Addition3d<3>>(dimensions({new_input_length, new_embedding_dimension}),
                                           "input_self_attention_addition_" + to_string(i+1)));
 
         i == 0
@@ -133,7 +133,7 @@ void Transformer::set(const Index& new_decoder_length,
 
 //        encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
 
-        add_layer(make_unique<Addition3d>(dimensions({new_input_length, new_embedding_dimension}),
+        add_layer(make_unique<Addition3d<3>>(dimensions({new_input_length, new_embedding_dimension}),
                                           "encoder_perceptron_addition_" + to_string(i+1)));
         
         set_layer_inputs_indices("encoder_perceptron_addition_" + to_string(i+1),
@@ -164,7 +164,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         //decoder_self_attention_layer->set_dropout_rate(dropout_rate);
 
-        add_layer(make_unique<Addition3d>(dimensions({new_decoder_length, new_embedding_dimension}),
+        add_layer(make_unique<Addition3d<3>>(dimensions({new_decoder_length, new_embedding_dimension}),
                                           "decoder_self_attention_addition_" + to_string(i+1)));
         i == 0
             ? set_layer_inputs_indices("decoder_self_attention_addition_" + to_string(i+1),
@@ -187,7 +187,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         //cross_attention_layer->set_dropout_rate(dropout_rate);
 
-        add_layer(make_unique<Addition3d>(dimensions({new_decoder_length, new_embedding_dimension}),
+        add_layer(make_unique<Addition3d<3>>(dimensions({new_decoder_length, new_embedding_dimension}),
                                           "cross_attention_addition_" + to_string(i+1)));
         
         set_layer_inputs_indices("cross_attention_addition_" + to_string(i+1), { "decoder_self_attention_normalization_" + to_string(i+1), "cross_attention_" + to_string(i+1) });
@@ -213,7 +213,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));
 
-        add_layer(make_unique<Addition3d>(dimensions({new_decoder_length, new_embedding_dimension}),
+        add_layer(make_unique<Addition3d<3>>(dimensions({new_decoder_length, new_embedding_dimension}),
                                                "decoder_perceptron_addition_" + to_string(i+1)));
 
         set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i+1), { "cross_attention_normalization_" + to_string(i+1), "decoder_external_perceptron_" + to_string(i+1) });

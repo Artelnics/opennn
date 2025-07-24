@@ -79,12 +79,17 @@ int main()
 
         // Neural network
 
-        ImageClassificationNetwork neural_network(
-            input_dimensions,
-            { 64, 64, 128, 128, 32 },
-            output_dimensions);
+        //ImageClassificationNetwork neural_network(
+        //    input_dimensions,
+        //    { 64,64,128,128,32 },
+        //    output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
+
+        const vector<Index> blocks_per_stage = { 1, 1};
+        const dimensions initial_filters = { 128, 128 };
+
+        SimpleResNet neural_network(input_dimensions, blocks_per_stage, initial_filters, output_dimensions);
 
         // Training strategy
 
@@ -93,8 +98,8 @@ int main()
         training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(16);
-        adam->set_maximum_epochs_number(5);
+        adam->set_batch_size(32);
+        adam->set_maximum_epochs_number(15);
 
         training_strategy.perform_training_cuda();
         

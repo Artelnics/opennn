@@ -98,6 +98,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
+    training_strategy->get_optimization_algorithm()->set_display(false);
+
     type previus_selection_error = numeric_limits< type>::max();
     type previus_training_error = numeric_limits< type>::max();
 
@@ -198,7 +200,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             if(dataset->has_nan())
                 dataset->scrub_missing_values();
 
-            training_results = training_strategy->perform_training();
+            training_results = training_strategy->train();
 
             if(training_results.get_selection_error() < minimum_selection_error)
             {

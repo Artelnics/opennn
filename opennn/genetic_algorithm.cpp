@@ -376,7 +376,7 @@ void GeneticAlgorithm::evaluate_population()
 
         //Training
 
-        training_results = training_strategy->perform_training();
+        training_results = training_strategy->train();
 
         neural_network->get_parameters(parameters(i));
 

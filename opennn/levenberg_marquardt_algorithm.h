@@ -63,7 +63,7 @@ public:
 
    void check() const override;
 
-   TrainingResults perform_training() override;
+   TrainingResults train() override;
 
    void update_parameters(
            const Batch&,

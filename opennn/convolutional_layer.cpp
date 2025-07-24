@@ -70,7 +70,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
         kernel_convolutions.device(*thread_pool_device) =
-            (inputs.convolve(kernel_weights, std::array<Index, 3>({ 1, 2, 3 })))
+            (inputs.convolve(kernel_weights, array_3( 1, 2, 3)))
             .reshape(kernel_convolutions.dimensions()) + biases(kernel_index);
     }
 }
@@ -344,25 +344,19 @@ const string& Convolutional::get_activation_function() const
 
 Index Convolutional::get_output_height() const
 {
-    const Index input_height = get_input_height();
-    const Index kernel_height = get_kernel_height();
-    const Index strides = get_row_stride();
-
-    const pair<Index, Index> padding = get_padding();
-
-    return floor((input_height - kernel_height + padding.first*2)/strides) + 1;
+    if (convolution_type == Convolution::Same)
+        return (get_input_height() + get_row_stride() - 1) / get_row_stride();
+    else
+        return (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
 }
 
 
 Index Convolutional::get_output_width() const
 {
-    const Index input_width = get_input_width();
-    const Index kernel_width = get_kernel_width();
-    const Index strides = get_column_stride();
-
-    const pair<Index, Index> padding = get_padding();
-
-    return floor((input_width - kernel_width + padding.second*2)/strides) + 1;
+    if (convolution_type == Convolution::Same)
+        return (get_input_width() + get_column_stride() - 1) / get_column_stride();
+    else
+        return (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
 }
 
 
@@ -1564,6 +1558,11 @@ void ConvolutionalForwardPropagationCuda::free()
     cudaFree(workspace);
     cudaFree(reordered_inputs_device);
 
+    outputs = nullptr;
+    convolutions = nullptr;
+    workspace = nullptr;
+    reordered_inputs_device = nullptr;
+
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
@@ -1572,6 +1571,9 @@ void ConvolutionalForwardPropagationCuda::free()
 
     if (bn_saved_mean) cudaFree(bn_saved_mean);
     if (bn_saved_inv_variance) cudaFree(bn_saved_inv_variance);
+
+    bn_saved_mean = nullptr;
+    bn_saved_inv_variance = nullptr;
 }
 
 
@@ -1773,6 +1775,12 @@ void ConvolutionalBackPropagationCuda::free()
     cudaFree(backward_data_workspace);
     cudaFree(backward_filter_workspace);
 
+    input_deltas = nullptr;
+    bias_deltas_device = nullptr;
+    weight_deltas_device = nullptr;
+    backward_data_workspace = nullptr;
+    backward_filter_workspace = nullptr;
+
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyFilterDescriptor(kernel_descriptor);
@@ -1781,6 +1789,9 @@ void ConvolutionalBackPropagationCuda::free()
 
     if (bn_scale_deltas_device) cudaFree(bn_scale_deltas_device);
     if (bn_offset_deltas_device) cudaFree(bn_offset_deltas_device);
+
+    bn_scale_deltas_device = nullptr;
+    bn_offset_deltas_device = nullptr;
 }
 
 REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")

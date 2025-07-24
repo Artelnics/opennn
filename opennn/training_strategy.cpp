@@ -110,7 +110,7 @@ void TrainingStrategy::set_default()
 }
 
 
-TrainingResults TrainingStrategy::perform_training()
+TrainingResults TrainingStrategy::train()
 {
     if(!has_neural_network())
         throw runtime_error("Neural network is null.");
@@ -127,9 +127,7 @@ TrainingResults TrainingStrategy::perform_training()
     if(neural_network->has("Recurrent"))
         fix_forecasting();
 
-    optimization_algorithm->set_display(true);
-
-    return optimization_algorithm->perform_training();
+    return optimization_algorithm->train();
 }
 
 

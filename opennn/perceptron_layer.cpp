@@ -38,10 +38,8 @@ dimensions Dense2d::get_output_dimensions() const
 vector<pair<type*, Index>> Dense2d::get_parameter_pairs() const
 {
     vector<pair<type*, Index>> parameter_pairs =
-    {
-        {(type*)(biases.data()), biases.size()},
-        {(type*)(weights.data()), weights.size()}
-    };
+    {{(type*)(biases.data()), biases.size()},
+     {(type*)(weights.data()), weights.size()}};
 
     if (batch_normalization)
     {
@@ -248,8 +246,8 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
 
     combinations.device(*thread_pool_device)
         = inputs.contract(weights, axes(1,0))
-        + biases.reshape(array<Index, 2>({1, outputs_number}))
-                .broadcast(array<Index, 2>({batch_size, 1}));
+        + biases.reshape(array_2(1, outputs_number))
+                .broadcast(array_2(batch_size, 1));
 }
 
 
@@ -318,7 +316,7 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     //if (batch_normalization) // @todo cpu batch normalization backward
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array_1(0));
 
     weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
@@ -374,13 +372,13 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
             TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
                 = tensor_map(squared_errors_Jacobian, weight_index++);
 
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) 
+            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device)
                 = combination_delta_neuron * input;
         }
 
         const Index bias_index = weights_number + neuron_index;
 
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias 
+        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias
             = tensor_map(squared_errors_Jacobian, bias_index);
 
         squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
@@ -449,11 +447,6 @@ void Dense2d::print() const
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Weights dimensions: " << weights.dimensions() << endl;
 
-    //cout << "Biases:" << endl;
-    //cout << biases << endl;
-    //cout << "Weights:" << endl;
-    //cout << weights << endl;
-
     cout << "Activation function:" << endl;
     cout << activation_function << endl;
 }
@@ -507,7 +500,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
-    add_xml_element(printer, "BatchNormalization", to_string(batch_normalization));
+    add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
     if (batch_normalization)
     {
         add_xml_element(printer, "Scales", tensor_to_string<type, 1>(scales));
@@ -624,10 +617,8 @@ vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() c
     const auto* dense_layer = static_cast<const Dense2d*>(layer);
 
     vector<pair<type*, Index>> delta_pairs =
-    {
-        { const_cast<type*>(bias_deltas.data()), bias_deltas.size() },
-        { const_cast<type*>(weight_deltas.data()), weight_deltas.size() }
-    };
+    {{const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
+     {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}};
 
     if (dense_layer->get_batch_normalization())
     {
@@ -649,7 +640,7 @@ void Dense2dBackPropagation::print() const
 
 
 Dense2dLayerBackPropagationLM::Dense2dLayerBackPropagationLM(const Index& new_batch_size,
-                                                                   Layer *new_layer)
+                                                             Layer* new_layer)
     : LayerBackPropagationLM()
 {
     set(new_batch_size, new_layer);
@@ -693,7 +684,6 @@ void Dense2d::normalization(Tensor<type, 1> &means,
                             const Tensor<type, 2> &inputs,
                             Tensor<type, 2> &outputs) const
 {
-
     const array<Index, 2> rows({outputs.dimension(0), 1});
 
     const array<int, 1> axis_x({0});
@@ -786,8 +776,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                 bn_running_variance_device,
                 epsilon,
                 dense2d_layer_forward_propagation_cuda->bn_saved_mean,
-                dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance
-            );
+                dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance);
+
             if (bn_status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnBatchNormalizationForwardTraining failed: " << cudnnGetErrorString(bn_status) << endl;
         }
@@ -806,8 +796,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                 bn_offset_device,
                 bn_running_mean_device,
                 bn_running_variance_device,
-                epsilon
-            );
+                epsilon);
+
             if (bn_status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnBatchNormalizationForwardInference failed: " << cudnnGetErrorString(bn_status) << endl;
         }
@@ -971,8 +961,8 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
             dense2d_layer_back_propagation->bn_offset_deltas_device,
             epsilon,
             dense2d_layer_forward_propagation_cuda->bn_saved_mean,
-            dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance
-        );
+            dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance);
+
         if (bn_status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnBatchNormalizationBackward failed: " << cudnnGetErrorString(bn_status) << endl;
     }
@@ -1240,7 +1230,22 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Dense2dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dForwardPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Outputs Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+    cout << "  Combinations Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization States:" << endl;
+        cout << "    - bn_saved_mean size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_saved_inv_variance size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
@@ -1249,6 +1254,9 @@ void Dense2dForwardPropagationCuda::free()
     if (combinations != nullptr)
         cudaFree(combinations);
     cudaFree(outputs);
+
+    combinations = nullptr;
+    outputs = nullptr;
 
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
@@ -1261,8 +1269,15 @@ void Dense2dForwardPropagationCuda::free()
     if (dropout_states)
         cudaFree(dropout_states);
 
+    dropout_reserve_space = nullptr;
+    dropout_descriptor = nullptr;
+    dropout_states = nullptr;
+
     if (bn_saved_mean) cudaFree(bn_saved_mean);
     if (bn_saved_inv_variance) cudaFree(bn_saved_inv_variance);
+
+    bn_saved_mean = nullptr;
+    bn_saved_inv_variance = nullptr;
 }
 
 
@@ -1354,7 +1369,24 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
 
 void Dense2dBackPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dBackPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions input_dims = dense_layer->get_input_dimensions();
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Input Deltas Dimensions: { " << batch_size << ", " << input_dims[0] << " }" << endl;
+    cout << "  Weight Deltas Dimensions: { " << input_dims[0] << ", " << output_dims[0] << " }" << endl;
+    cout << "  Bias Deltas Dimensions: { " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization Deltas:" << endl;
+        cout << "    - bn_scale_deltas size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_offset_deltas size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
@@ -1364,8 +1396,17 @@ void Dense2dBackPropagationCuda::free()
     cudaFree(weight_deltas_device);
     cudaFree(input_deltas);
     cudaFree(ones);
+
+    bias_deltas_device = nullptr;
+    weight_deltas_device = nullptr;
+    input_deltas = nullptr;
+    ones = nullptr;
+
     if (bn_scale_deltas_device) cudaFree(bn_scale_deltas_device);
     if (bn_offset_deltas_device) cudaFree(bn_offset_deltas_device);
+
+    bn_scale_deltas_device = nullptr;
+    bn_offset_deltas_device = nullptr;
 
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }

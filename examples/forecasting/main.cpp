@@ -115,15 +115,13 @@ int main()
         /// Entrenamiento
         // TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
         // training_strategy.set_loss_index("MeanSquaredError");
-        // training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
         // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         // AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         // adam->set_batch_size(800);
         // adam->set_maximum_epochs_number(1000);
-
-        // training_strategy.perform_training();
+        // training_strategy.train();
 
         // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
