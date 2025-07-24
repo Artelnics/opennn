@@ -807,6 +807,8 @@ void PoolingForwardPropagationCuda::free()
 {
     cudaFree(outputs);
 
+    outputs = nullptr;
+
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
 }
@@ -859,6 +861,8 @@ void PoolingBackPropagationCuda::print() const
 void PoolingBackPropagationCuda::free()
 {
     cudaFree(input_deltas);
+
+    input_deltas = nullptr;
 }
 
 

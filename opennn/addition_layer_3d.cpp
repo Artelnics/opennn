@@ -289,7 +289,15 @@ void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* n
 
 void Addition3dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Addition3dForwardPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "Outputs dimensions:" << endl
+        << "[ " << batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
+
+    cout << "Outputs:" << endl
+        << matrix_3d_from_device(outputs, batch_size, addition_layer->get_sequence_length(), addition_layer->get_embedding_dimension()) << endl;
 }
 
 
@@ -304,6 +312,12 @@ Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_ba
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
+}
+
+
+vector<float*> Addition3dBackPropagationCuda::get_input_derivatives_device()
+{
+    return { inputs_1_derivatives, inputs_2_derivatives };
 }
 
 
@@ -334,7 +348,12 @@ void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Addition3dBackPropagationCuda::print() const
 {
-    //@todo
+    cout << "Addition3dBackPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "input derivatives dimensions:" << endl
+        << "[ "<< batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
 }
 
 

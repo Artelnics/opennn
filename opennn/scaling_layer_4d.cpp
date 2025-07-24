@@ -195,6 +195,9 @@ void Scaling4dForwardPropagationCuda::free()
 {
     cudaFree(scalar_device);
     cudaFree(outputs);
+
+    scalar_device = nullptr;
+    outputs = nullptr;
 }
 
 

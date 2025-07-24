@@ -111,6 +111,8 @@ struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
 {
     Addition3dBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
+    vector<float*> get_input_derivatives_device() override;
+
     void set(const Index & = 0, Layer* = nullptr) override;
     
     void print() const override;
