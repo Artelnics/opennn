@@ -34,48 +34,53 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
-        const Index batch_size = 3;
 
-        TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
+        //TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
+        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", false, false);
+         TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
-        time_series_dataset.split_samples_sequential(type(0.01), type(0.5), type(0.49));
+        cout << "dataset leido" << endl;
+        time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
 
-        time_series_dataset.set_raw_variable_use(0, "InputTarget");
+        print_vector(time_series_dataset.get_dimensions("Input"));
+        print_vector(time_series_dataset.get_dimensions("Target"));
 
-//        print_vector(time_series_dataset.get_dimensions("Input"));
-//        print_vector(time_series_dataset.get_dimensions("Target"));
+        time_series_dataset.print();
 
-//        time_series_dataset.print();
+        //time_series_dataset.scale_data();
+        cout << "-----------------------------------" << endl;
 
-        Batch batch(batch_size, &time_series_dataset);
+        // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        // const vector<Index> input_indices = {0};
+        // const vector<Index> target_indices =  {0};
 
-        const vector<Index> sample_indices = {0, 1, 2};
+        // const vector<Index> samples_indices = time_series_dataset.get_sample_indices("Training");
+        // const Index samples_number = time_series_dataset.get_samples_number("Training");
+        // const vector<Index> input_variable_indices = time_series_dataset.get_variable_indices("Input");
+        // const vector<Index> target_variable_indices = time_series_dataset.get_variable_indices("Target");
 
-        const vector<Index> input_indices = {0};
+        // const Index batch_size = 50;
 
-        const vector<Index> target_indices =  {0};
+        // const Index batch_samples_number = min(samples_number, batch_size);
+        // const Index batches_number = std::ceil(static_cast<double>(samples_number) / batch_size);
 
-        batch.fill(sample_indices, input_indices, target_indices);
+        // vector<vector<Index>> batches(batches_number);
 
-        batch.print();
-/*
-        // cout << "#############" << endl;
+        // Batch batch(batch_samples_number, &time_series_dataset);
 
-        // Tensor<type, 3> inputs(3, 1, 2);
-        // inputs.setValues({{{0.0,0.099833417} },
-        //                  {{0.099833417, 0.198669331} },
-        //                  {{0.198669331, 0.295520207}}});
+        // for (int i = 0; i < batches_number; ++i) {
+        //     batches = time_series_dataset.get_batches(samples_indices, batch_samples_number, false);
+        //     cout << "iteracion: " << i << endl;
+        //     for (const auto& element : batches[i])
+        //         std::cout << element << " ";  // Imprimir el elemento de cada fila
+        //     cout << endl;
+        //     batch.fill(batches[i], input_variable_indices, target_variable_indices);
+        //     batch.print();
+        // }
 
-        // Tensor<type, 2> targets(3, 1);
-        // targets.setValues({{0.198669331},
-        //                    {0.295520207},
-        //                    {0.389418342}});
-        // cout << "inputs" << endl;
-        // cout << inputs << endl;
-        // cout << "target" << endl;
-        // cout << targets << endl;
-
-        cout << "------------------------------------------" << endl;
+        // cout << "------------------------------------------" << endl;
 
         // ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
         //                                   {},
@@ -86,31 +91,16 @@ int main()
         // recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
-        ForecastingNetwork forecasting_network({1},
-                                          {},
-                                          {1});
+        // ForecastingNetwork forecasting_network({1},
+        //                                   {},
+        //                                   {1});
 
-        forecasting_network.print();
+        // forecasting_network.print();
 
-        cout << "------------------------------------------" << endl;
-        // for(Index i = 0; i < 10; i++)
-        // {
-        //     Tensor<type, 3> inputs(1,1,2);
-        //     inputs.setValues({{{0}, {0.0998334166468282}}});
-        //     cout << "Inputs" << endl;
-        //     cout << inputs << endl;
+        // cout << "------------------------------------------" << endl;
 
-        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
-
-        //     cout << outputs << endl;
-        // }
-
-
-        NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
-
-        // for(Index i = 0; i < 10; i++)
-        cout << normalized_squared_error.calculate_numerical_error() << endl;
-
+        /// Calcular gradiente
+        // NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
         // const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
         // const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
@@ -122,18 +112,58 @@ int main()
         // cout << "diferencia" << endl;
         // cout << gradient.abs() - numerical_gradient.abs() << endl;
 
-        // cout << "Error" << endl;
-        // cout << normalized_squared_error.calculate_numerical_error() << endl;
-
+        /// Entrenamiento
         // TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
         // training_strategy.set_loss_index("MeanSquaredError");
         // training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
+        // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
+        // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+
+        // AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        // adam->set_batch_size(800);
+        // adam->set_maximum_epochs_number(1000);
 
         // training_strategy.perform_training();
 
-        // cout << "Error" << endl;
-        // cout << normalized_squared_error.calculate_numerical_error() << endl;
-*/
+        // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+
+        //Tensor<type, 3> inputs(1,1,2);
+        // inputs.setValues({{{0}, {0.0998334166468282}}});
+        // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+        // cout << "outputs" << outputs << endl;
+
+        /// Pruebas output funcion seno
+        // const std::vector<std::pair<type, type>> input_pairs = {
+        //     {0.0,          0.0998334166},
+        //     {0.0998334166, 0.1986693308},
+        //     {0.198669331,  0.295520207},
+        //     {0.295520207,  0.389418342},
+        //     {0.389418342,  0.479425539},
+        //     {0.479425539,  0.564642473},
+        //     {0.564642473,  0.644217687},
+        //     {0.644217687,  0.717356091},
+        //     {0.717356091,  0.78332691},
+        //     {0.78332691,   0.841470985},
+        //     {0.841470985,  0.89120736}
+        // };
+
+        // for (size_t i = 0; i < input_pairs.size() - 1; ++i)
+        // {
+        //     const auto& current_pair = input_pairs[i];
+        //     const type input_val_1 = current_pair.first;
+        //     const type input_val_2 = current_pair.second;
+
+        //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
+        //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
+
+        //     Tensor<type, 3> inputs(1, 1, 2);
+        //     inputs.setValues({{{input_val_1, input_val_2}}});
+        //     cout << "as" << endl;
+        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+
+        //     cout << "Output: " << outputs(0, 0) << endl;
+        //     cout << "Target: " << input_pairs[i+1].second << endl;
+        // }
 
         cout << "Good bye!" << endl;
 
