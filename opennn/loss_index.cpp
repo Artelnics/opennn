@@ -133,7 +133,7 @@ void LossIndex::calculate_squared_errors_lm(const Batch&,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*thread_pool_device) = errors.square().sum(array<int, 1>({1})).sqrt();
+    squared_errors.device(*thread_pool_device) = errors.square().sum(array_1(1)).sqrt();
 }
 
 

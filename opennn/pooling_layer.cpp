@@ -309,8 +309,8 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     );
 
     outputs.device(*thread_pool_device) = image_patches
-        .mean(array<Index, 2>({1, 2}))
-        .reshape(array<Index, 4>({outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)}));
+        .mean(array_2(1, 2))
+        .reshape(array_4(outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)));
 }
 
 
@@ -339,8 +339,8 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         type(padding_width));
 
     outputs.device(*thread_pool_device) = image_patches
-        .maximum(array<Index, 2>({1, 2}))
-        .reshape(array<Index, 4>({batch_size, output_width, output_height, channels}));
+        .maximum(array_2(1, 2))
+        .reshape(array_4(batch_size, output_width, output_height, channels));
 
     if (!is_training) return;
 
@@ -485,7 +485,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
                 input_deltas.slice(offsets, extents) += deltas_by_pool_size
                     .slice(grad_offsets, grad_extents)
-                    .broadcast(array<Index, 4>({1, height_end - height_start, width_end - width_start, 1}));
+                    .broadcast(array_4(1, height_end - height_start, width_end - width_start, 1));
             }
         }
 }

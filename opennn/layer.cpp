@@ -199,7 +199,7 @@ void Layer::softmax(Tensor<type, 2>& y) const
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     
-    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({1}))
+    y.device(*thread_pool_device) = y - y.maximum(array_1(1))
                                          .eval()
                                          .reshape(array<Index, 2>({rows_number, 1}))
                                          .broadcast(array<Index, 2>({1, columns_number}));

@@ -248,8 +248,8 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
 
     combinations.device(*thread_pool_device)
         = inputs.contract(weights, axes(1,0))
-        + biases.reshape(array<Index, 2>({1, outputs_number}))
-                .broadcast(array<Index, 2>({batch_size, 1}));
+        + biases.reshape(array_2(1, outputs_number))
+                .broadcast(array_2(batch_size, 1));
 }
 
 
@@ -318,7 +318,7 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     //if (batch_normalization) // @todo cpu batch normalization backward
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array_1(0));
 
     weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 

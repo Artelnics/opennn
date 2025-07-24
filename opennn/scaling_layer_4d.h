@@ -26,8 +26,6 @@ public:
 
    void set(const dimensions& = { 0, 0, 0, 0 });
 
-   void set_min_max_range(const type& min, const type& max);
-
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
