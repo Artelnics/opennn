@@ -1265,6 +1265,9 @@ void Dense2dForwardPropagationCuda::free()
         cudaFree(combinations);
     cudaFree(outputs);
 
+    combinations = nullptr;
+    outputs = nullptr;
+
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
@@ -1276,8 +1279,15 @@ void Dense2dForwardPropagationCuda::free()
     if (dropout_states)
         cudaFree(dropout_states);
 
+    dropout_reserve_space = nullptr;
+    dropout_descriptor = nullptr;
+    dropout_states = nullptr;
+
     if (bn_saved_mean) cudaFree(bn_saved_mean);
     if (bn_saved_inv_variance) cudaFree(bn_saved_inv_variance);
+
+    bn_saved_mean = nullptr;
+    bn_saved_inv_variance = nullptr;
 }
 
 
@@ -1396,8 +1406,17 @@ void Dense2dBackPropagationCuda::free()
     cudaFree(weight_deltas_device);
     cudaFree(input_deltas);
     cudaFree(ones);
+
+    bias_deltas_device = nullptr;
+    weight_deltas_device = nullptr;
+    input_deltas = nullptr;
+    ones = nullptr;
+
     if (bn_scale_deltas_device) cudaFree(bn_scale_deltas_device);
     if (bn_offset_deltas_device) cudaFree(bn_offset_deltas_device);
+
+    bn_scale_deltas_device = nullptr;
+    bn_offset_deltas_device = nullptr;
 
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }

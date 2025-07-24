@@ -99,7 +99,7 @@ int main()
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_batch_size(32);
-        adam->set_maximum_epochs_number(5);
+        adam->set_maximum_epochs_number(15);
 
         training_strategy.perform_training_cuda();
         

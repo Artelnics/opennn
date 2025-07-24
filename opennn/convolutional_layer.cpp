@@ -1558,6 +1558,11 @@ void ConvolutionalForwardPropagationCuda::free()
     cudaFree(workspace);
     cudaFree(reordered_inputs_device);
 
+    outputs = nullptr;
+    convolutions = nullptr;
+    workspace = nullptr;
+    reordered_inputs_device = nullptr;
+
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
@@ -1566,6 +1571,9 @@ void ConvolutionalForwardPropagationCuda::free()
 
     if (bn_saved_mean) cudaFree(bn_saved_mean);
     if (bn_saved_inv_variance) cudaFree(bn_saved_inv_variance);
+
+    bn_saved_mean = nullptr;
+    bn_saved_inv_variance = nullptr;
 }
 
 
@@ -1767,6 +1775,12 @@ void ConvolutionalBackPropagationCuda::free()
     cudaFree(backward_data_workspace);
     cudaFree(backward_filter_workspace);
 
+    input_deltas = nullptr;
+    bias_deltas_device = nullptr;
+    weight_deltas_device = nullptr;
+    backward_data_workspace = nullptr;
+    backward_filter_workspace = nullptr;
+
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyFilterDescriptor(kernel_descriptor);
@@ -1775,6 +1789,9 @@ void ConvolutionalBackPropagationCuda::free()
 
     if (bn_scale_deltas_device) cudaFree(bn_scale_deltas_device);
     if (bn_offset_deltas_device) cudaFree(bn_offset_deltas_device);
+
+    bn_scale_deltas_device = nullptr;
+    bn_offset_deltas_device = nullptr;
 }
 
 REGISTER(LayerForwardPropagationCuda, ConvolutionalForwardPropagationCuda, "Convolutional")

@@ -307,6 +307,9 @@ void FlattenForwardPropagationCuda::free()
 {
     cudaFree(reordered_inputs);
     cudaFree(outputs);
+
+    reordered_inputs = nullptr;
+    outputs = nullptr;
 }
 
 
@@ -350,6 +353,8 @@ void FlattenBackPropagationCuda::print() const
 void FlattenBackPropagationCuda::free()
 {
     cudaFree(input_deltas);
+
+    input_deltas = nullptr;
 }
 
 REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
