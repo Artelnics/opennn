@@ -182,7 +182,7 @@ namespace opennn
             "global_avg_pool"));
 
         // Flatten
-        add_layer(make_unique<Flatten>(get_output_dimensions()));
+        add_layer(make_unique<Flatten<2>>(get_output_dimensions()));
 
         //Classifier
         add_layer(make_unique<Dense2d>(get_output_dimensions(),

@@ -204,7 +204,7 @@ public:
                                            "pooling_layer_" + to_string(i + 1)));
         }
         
-        add_layer(make_unique<Flatten>(get_output_dimensions()));
+        add_layer(make_unique<Flatten<2>>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
@@ -356,7 +356,7 @@ public:
 
         last_layer_index = get_layers_number() - 1;
 
-        auto flatten_layer = make_unique<Flatten>(get_layer(last_layer_index)->get_output_dimensions());
+        auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_dimensions());
 
         add_layer(move(flatten_layer), { last_layer_index });
 
@@ -452,7 +452,7 @@ public:
         //     get_output_dimensions()
         //     ));
 
-        add_layer(make_unique<Flatten3d>(
+        add_layer(make_unique<Flatten<3>>(
             get_output_dimensions()
             ));
 

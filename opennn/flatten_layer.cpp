@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+/*
 Flatten::Flatten(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -208,7 +208,7 @@ vector<pair<type*, dimensions>> FlattenBackPropagation::get_input_derivative_pai
     return {{(type*)(input_deltas.data()),
             {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
 }
-
+*/
 
 #ifdef OPENNN_CUDA
 
@@ -362,9 +362,23 @@ REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
 
 #endif
 
-REGISTER(Layer, Flatten, "Flatten")
-REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
-REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
+using Flatten3d = Flatten<3>;
+using Flatten2d = Flatten<2>;
+
+using FlattenForwardPropagation3d = FlattenForwardPropagation<3>;
+using FlattenForwardPropagation2d = FlattenForwardPropagation<2>;
+
+using FlattenBackPropagation3d = FlattenBackPropagation<3>;
+using FlattenBackPropagation2d = FlattenBackPropagation<2>;
+
+REGISTER(Layer, Flatten2d, "Flatten2d")
+REGISTER(LayerForwardPropagation, FlattenForwardPropagation2d, "FlattenForwardPropagation2d")
+REGISTER(LayerBackPropagation, FlattenBackPropagation2d, "FlattenBackPropagation2d")
+
+REGISTER(Layer, Flatten3d, "Flatten3d")
+REGISTER(LayerForwardPropagation, FlattenForwardPropagation3d, "FlattenForwardPropagation3d")
+REGISTER(LayerBackPropagation, FlattenBackPropagation3d, "FlattenBackPropagation3d")
+
 
 }
 

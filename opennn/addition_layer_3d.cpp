@@ -372,9 +372,21 @@ REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
 
 #endif
 
-//REGISTER(Layer, Addition3d, "Addition3d")
-//REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
-//REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+using Addition3d = opennn::Addition<3>;
+using Addition4d = opennn::Addition<4>;
+
+using AdditionForwardPropagation3d = AdditionForwardPropagation<3>;
+using AdditionForwardPropagation4d = AdditionForwardPropagation<4>;
+
+using AdditionBackPropagation3d = AdditionBackPropagation<3>;
+using AdditionBackPropagation4d = AdditionBackPropagation<4>;
+
+REGISTER(Layer, Addition3d, "Addition3d")
+REGISTER(Layer, Addition4d, "Addition4d")
+REGISTER(LayerForwardPropagation, AdditionForwardPropagation3d, "AdditionForwardPropagation3d")
+REGISTER(LayerBackPropagation, AdditionBackPropagation3d, "AdditionBackPropagation3d")
+REGISTER(LayerForwardPropagation, AdditionForwardPropagation4d, "AdditionForwardPropagation4d")
+REGISTER(LayerBackPropagation, AdditionBackPropagation4d, "AdditionBackPropagation4d")
 
 }
 
