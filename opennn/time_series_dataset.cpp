@@ -475,7 +475,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     const bool is_last_fill = last_index_used >= total_rows_in_data;
 
     // #pragma omp parallel for
-    for (Index i = 0; i < sample_indices.size(); ++i)
+    for (size_t i = 0; i < sample_indices.size(); ++i)
     {
         const Index sample_row = sample_indices[i];
         const bool skip = is_last_fill && i >= sample_indices.size() - past_time_steps;

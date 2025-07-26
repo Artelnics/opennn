@@ -268,7 +268,7 @@ public:
 
         for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
         {
-            for (size_t block = 0; block < blocks_per_stage[stage]; ++block)
+            for (Index block = 0; block < blocks_per_stage[stage]; ++block)
             {
                 Index block_input_index = last_layer_index;
 
@@ -376,7 +376,7 @@ public:
 
         const auto& all_input_indices = get_layer_input_indices();
 
-        for (size_t i = 0; i < get_layers_number(); ++i)
+        for (Index i = 0; i < get_layers_number(); ++i)
         {
             const auto& layer = get_layer(i);
             const auto& inputs_for_this_layer = all_input_indices[i];
