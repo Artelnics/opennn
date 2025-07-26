@@ -99,7 +99,7 @@ protected:
 
    LossIndex* loss_index = nullptr;
 
-   Index maximum_epochs_number = 1000;
+   Index maximum_epochs_number = 10000;
 
    type maximum_time = type(360000);
 

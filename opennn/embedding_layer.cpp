@@ -147,8 +147,8 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index embedding_dimension = embeddings.dimension(2);
 
     embeddings.device(*thread_pool_device) += positional_encoding
-        .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
-        .broadcast(array<Index, 3>({batch_size, 1, 1}));
+        .reshape(array_3(1, sequence_length, embedding_dimension))
+        .broadcast(array_3(batch_size, 1, 1));
 }
 
 

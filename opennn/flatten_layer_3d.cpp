@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+/*
 Flatten3d::Flatten3d(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -202,10 +202,11 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
              {batch_size, input_dimensions[0], input_dimensions[1]}}};
 }
 
+
 REGISTER(Layer, Flatten3d, "Flatten3d")
 REGISTER(LayerForwardPropagation, Flatten3dForwardPropagation, "Flatten3d")
 REGISTER(LayerBackPropagation, Flatten3dBackPropagation, "Flatten3d")
-
+*/
 }
 
 

@@ -367,15 +367,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;
 
-//    cout << parameters << endl << endl;
-
     type& error = back_propagation_lm.error();
     type& loss = back_propagation_lm.loss;
 
     const Tensor<type, 1>& gradient = back_propagation_lm.gradient;
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
-
-    //cout << hessian << endl << endl<< endl<< endl;
 
     Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
     Tensor<type, 1>& parameters_increment = optimization_data.parameters_increment;
@@ -437,7 +433,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     {
         constexpr type epsilon = numeric_limits<type>::epsilon();
 
-        #pragma omp parallel for
+#pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
@@ -448,8 +444,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             else
             {
                 parameters_increment(i) = gradient(i) > type(0)
-                    ? -epsilon
-                    : epsilon;
+                ? -epsilon
+                : epsilon;
 
                 parameters(i) += parameters_increment(i);
             }

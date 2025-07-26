@@ -103,13 +103,16 @@ LIBS += -L$$CUDA_LIB_DIR -lcudart_static
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    flatten_layer.h \
     flatten_layer_3d.h \
     pch.h \
     codification.h \
+    cross_entropy_error_2d.h \
     cross_entropy_error_3d.h \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
+    pooling_layer.h \
     pooling_layer_3d.h \
     strings_utilities.h \
     images.h \
@@ -127,9 +130,9 @@ HEADERS += \
     transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
+    perceptron_layer_3d.h \
     dense_3d.h \
     probabilistic_layer_3d.h \
-    pooling_layer.h \
     convolutional_layer.h \
     bounding_layer.h \
     recurrent_layer.h \
@@ -143,7 +146,6 @@ HEADERS += \
     vgg16.h \
     registry.h \
     weighted_squared_error.h\
-    cross_entropy_error_2d.h \
     training_strategy.h \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h\
@@ -158,13 +160,12 @@ HEADERS += \
     testing_analysis.h \
     response_optimization.h \
     tensors.h \
-    flatten_layer.h \
     bounding_box_regressor_layer.h \
     bounding_box.h \
     word_bag.h \
     addition_layer_3d.h \
+    addition_layer_4d.h \
     normalization_layer_3d.h \
-    flatten_layer_3d.h \
     standard_networks.h \
     opennn.h
 
@@ -224,5 +225,6 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     addition_layer_3d.cpp \
+    addition_layer_4d.cpp \
     normalization_layer_3d.cpp \
     flatten_layer_3d.cpp \

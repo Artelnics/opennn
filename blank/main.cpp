@@ -32,7 +32,7 @@ int main()
     try
     {
         cout << "Recurrent layer OpenNN" << endl;
-
+/*
         TimeSeriesDataset time_series_data_set("C:/Users/Artelnics/Downloads/load_transformer_measures.csv", ",", true, false);
 
         auto dataset = time_series_data_set.get_data();
@@ -42,7 +42,7 @@ int main()
         {
             data(i, 0) = dataset(i, 1);
         }
-/*
+
         time_series_data_set.set_past_time_steps(2);
         time_series_data_set.set_future_time_steps(1);
 

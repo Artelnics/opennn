@@ -1022,6 +1022,14 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         buffer << "}\n" << endl;
     }
 
+    buffer << "function Linear(x) { return x; }\n";
+
+    if (expression.find("Logistic") != string::npos) buffer << logistic_javascript();
+    if (expression.find("ReLU") != string::npos) buffer << relu_javascript();
+    if (expression.find("ExponentialLinear") != string::npos) buffer << exponential_linear_javascript();
+    if (expression.find("SELU") != string::npos) buffer << selu_javascript();
+    buffer << "\n";
+
     buffer << "function neuralNetwork()" << endl
            << "{" << endl
            << "\t" << "var inputs = [];" << endl;

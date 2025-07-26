@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+/*
 Addition4d::Addition4d(const dimensions& new_input_dimensions, 
                        const string& new_name) : Layer()
 {
@@ -221,7 +221,7 @@ void Addition4dBackPropagation::print() const
     cout << "input_1_derivatives dimensions: " << input_1_derivatives.dimensions() << endl;
     cout << "input_2_derivatives dimensions: " << input_2_derivatives.dimensions() << endl;
 }
-
+*/
 
 #ifdef OPENNN_CUDA
 

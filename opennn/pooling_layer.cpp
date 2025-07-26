@@ -61,21 +61,13 @@ Index Pooling::get_channels_number() const
 
 Index Pooling::get_output_height() const
 {
-    const type padding = type(0);
-
-    const Index input_height = get_input_height();
-
-    return (input_height - pool_height + 2*padding)/row_stride + 1;
+    return (get_input_height() - pool_height + 2 * padding_height) / row_stride + 1;
 }
 
 
 Index Pooling::get_output_width() const
 {
-    const type padding = type(0);
-
-    const Index input_width = get_input_width();
-
-    return (input_width - pool_width + 2*padding)/column_stride + 1;
+    return (get_input_width() - pool_width + 2 * padding_width) / column_stride + 1;
 }
 
 
@@ -317,8 +309,8 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     );
 
     outputs.device(*thread_pool_device) = image_patches
-        .mean(array<Index, 2>({1, 2}))
-        .reshape(array<Index, 4>({outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)}));
+        .mean(array_2(1, 2))
+        .reshape(array_4(outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)));
 }
 
 
@@ -347,8 +339,8 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         type(padding_width));
 
     outputs.device(*thread_pool_device) = image_patches
-        .maximum(array<Index, 2>({1, 2}))
-        .reshape(array<Index, 4>({batch_size, output_width, output_height, channels}));
+        .maximum(array_2(1, 2))
+        .reshape(array_4(batch_size, output_width, output_height, channels));
 
     if (!is_training) return;
 
@@ -493,7 +485,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
                 input_deltas.slice(offsets, extents) += deltas_by_pool_size
                     .slice(grad_offsets, grad_extents)
-                    .broadcast(array<Index, 4>({1, height_end - height_start, width_end - width_start, 1}));
+                    .broadcast(array_4(1, height_end - height_start, width_end - width_start, 1));
             }
         }
 }
@@ -815,6 +807,8 @@ void PoolingForwardPropagationCuda::free()
 {
     cudaFree(outputs);
 
+    outputs = nullptr;
+
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
 }
@@ -867,6 +861,8 @@ void PoolingBackPropagationCuda::print() const
 void PoolingBackPropagationCuda::free()
 {
     cudaFree(input_deltas);
+
+    input_deltas = nullptr;
 }
 
 

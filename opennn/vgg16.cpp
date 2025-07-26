@@ -171,39 +171,25 @@ namespace opennn
                 Pooling::PoolingMethod::MaxPooling, "pool5"));
         }
 
-        // --- Flatten ---
-        add_layer(make_unique<Flatten>(get_output_dimensions()));
+        const dimensions pre_pool_dims = get_output_dimensions();
 
-        // --- Dense layers (FC) ---
-        {
-            // FC1: 4096 neurons, ReLU, Dropout 50%
-            auto fc1 = make_unique<Dense2d>(
-                get_output_dimensions(),
-                dimensions{ 4096 },
-                "RectifiedLinear",
-                false,
-                "fc1");
-            //fc1->set_dropout_rate(0.5f);
-            add_layer(move(fc1));
+        add_layer(make_unique<Pooling>(
+            pre_pool_dims,
+            dimensions{ pre_pool_dims[0], pre_pool_dims[1] },
+            dimensions{ 1, 1 },
+            dimensions{ 0, 0 },
+            Pooling::PoolingMethod::AveragePooling,
+            "global_avg_pool"));
 
-            // FC2: 4096 neurons, ReLU, Dropout 50%
-            auto fc2 = make_unique<Dense2d>(
-                get_output_dimensions(),
-                dimensions{ 4096 },
-                "RectifiedLinear",
-                false,
-                "fc2");
-            //fc2->set_dropout_rate(0.5f);
-            add_layer(move(fc2));
+        // Flatten
+        add_layer(make_unique<Flatten<2>>(get_output_dimensions()));
 
-            // FC3 : Softmax
-            add_layer(make_unique<Dense2d>(
-                get_output_dimensions(),
-                new_target_dimensions,
-                "Softmax",
-                false,
-                "softmax_output"));
-        }
+        //Classifier
+        add_layer(make_unique<Dense2d>(get_output_dimensions(),
+            new_target_dimensions,
+            "Softmax",
+            false,
+            "dense_classifier"));
     }
 
 

@@ -112,8 +112,8 @@ void Pooling3d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     else // AveragePooling
     {
         outputs.device(*thread_pool_device) =
-            inputs.mean(array<Index, 1>({1}))
-                  .reshape(array<Index, 2>({batch_size, features}));
+            inputs.mean(array_1(1))
+                  .reshape(array_2(batch_size, features));
     }
 }
 
@@ -143,24 +143,19 @@ void Pooling3d::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         {
             for (Index feature_index = 0; feature_index < number_of_features; ++feature_index)
             {
-                const Index maximum_index =
+                const Index maximal_index =
                     forward_layer->maximal_indices(batch_index, feature_index);
 
-                backward_layer->input_derivatives(batch_index,
-                                                  maximum_index,
-                                                  feature_index) +=
-                    delta_tensor_map(batch_index, feature_index);
+                backward_layer->input_derivatives(batch_index, maximal_index, feature_index)
+                    += delta_tensor_map(batch_index, feature_index);
             }
         }
     }
     else // AveragePooling
     {
-        const array<Index, 3> broadcast_shape = {1, sequence_length, 1};
-        const array<Index, 3> reshape_dimensions = {batch_size, 1, number_of_features};
-
         backward_layer->input_derivatives.device(*thread_pool_device) +=
-            delta_tensor_map.reshape(reshape_dimensions)
-                            .broadcast(broadcast_shape)
+            delta_tensor_map.reshape(array_3(batch_size, 1, number_of_features))
+                            .broadcast(array_3(1, sequence_length, 1))
                             / static_cast<type>(sequence_length);
     }
 }
@@ -180,9 +175,7 @@ void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_la
     outputs.resize(batch_size, features);
 
     if (pooling_layer->get_pooling_method() == Pooling3d::PoolingMethod::MaxPooling)
-    {
         maximal_indices.resize(batch_size, features);
-    }
 }
 
 
@@ -253,10 +246,10 @@ void Pooling3d::from_XML(const XMLDocument& document)
 
 void Pooling3d::print() const
 {
-    cout << "Pooling3d layer" << endl;
-    cout << "Input dimensions: " << dimensions_to_string(input_dimensions) << endl;
-    cout << "Output dimensions: " << dimensions_to_string(get_output_dimensions()) << endl;
-    cout << "Pooling Method: " << write_pooling_method() << endl;
+    cout << "Pooling3d layer" << endl
+         << "Input dimensions: " << dimensions_to_string(input_dimensions) << endl
+         << "Output dimensions: " << dimensions_to_string(get_output_dimensions()) << endl
+         << "Pooling Method: " << write_pooling_method() << endl;
 }
 
 REGISTER(Layer, Pooling3d, "Pooling3d")

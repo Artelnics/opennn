@@ -12,7 +12,7 @@
 
 namespace opennn
 {
-
+/*
 Addition3d::Addition3d(const dimensions& new_input_dimensions,
                        const string& new_name) : Layer()
 {
@@ -215,7 +215,7 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
     {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_dimension}},
      {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_dimension}}};
 }
-
+*/
 #ifdef OPENNN_CUDA
 
 void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
@@ -289,7 +289,15 @@ void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* n
 
 void Addition3dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Addition3dForwardPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "Outputs dimensions:" << endl
+        << "[ " << batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
+
+    cout << "Outputs:" << endl
+        << matrix_3d_from_device(outputs, batch_size, addition_layer->get_sequence_length(), addition_layer->get_embedding_dimension()) << endl;
 }
 
 
@@ -304,6 +312,12 @@ Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_ba
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
+}
+
+
+vector<float*> Addition3dBackPropagationCuda::get_input_derivatives_device()
+{
+    return { inputs_1_derivatives, inputs_2_derivatives };
 }
 
 
@@ -334,7 +348,12 @@ void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Addition3dBackPropagationCuda::print() const
 {
-    //@todo
+    cout << "Addition3dBackPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "input derivatives dimensions:" << endl
+        << "[ "<< batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
 }
 
 
@@ -353,9 +372,21 @@ REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
 
 #endif
 
+using Addition3d = opennn::Addition<3>;
+using Addition4d = opennn::Addition<4>;
+
+using AdditionForwardPropagation3d = AdditionForwardPropagation<3>;
+using AdditionForwardPropagation4d = AdditionForwardPropagation<4>;
+
+using AdditionBackPropagation3d = AdditionBackPropagation<3>;
+using AdditionBackPropagation4d = AdditionBackPropagation<4>;
+
 REGISTER(Layer, Addition3d, "Addition3d")
-REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
-REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+REGISTER(Layer, Addition4d, "Addition4d")
+REGISTER(LayerForwardPropagation, AdditionForwardPropagation3d, "AdditionForwardPropagation3d")
+REGISTER(LayerBackPropagation, AdditionBackPropagation3d, "AdditionBackPropagation3d")
+REGISTER(LayerForwardPropagation, AdditionForwardPropagation4d, "AdditionForwardPropagation4d")
+REGISTER(LayerBackPropagation, AdditionBackPropagation4d, "AdditionBackPropagation4d")
 
 }
 

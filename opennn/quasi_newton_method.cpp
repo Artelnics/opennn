@@ -240,6 +240,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     }
 
     // Update stuff
+
     old_gradient = gradient;
 
     optimization_data.old_inverse_hessian = inverse_hessian;
@@ -339,12 +340,15 @@ TrainingResults QuasiNewtonMethod::train()
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         optimization_data.epoch = epoch;
+
         // Neural network
+
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
 
         // Loss index
+
         loss_index->back_propagate(training_batch, 
                                    training_forward_propagation, 
                                    training_back_propagation);
