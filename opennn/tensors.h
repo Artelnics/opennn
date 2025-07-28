@@ -10,40 +10,40 @@ template<typename T, std::size_t N>
 using array = Eigen::array<T, N>;
 
 template <typename Index>
-array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
+Eigen::array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
 {
-    return array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
+    return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
 }
 
 
 template <typename Index>
-array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a2, const Index& b2)
+Eigen::array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a2, const Index& b2)
 {
-    return array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2)});
+    return Eigen::array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2)});
 }
 
 
-inline array<Index, 1> array_1(const Index& a)
+inline Eigen::array<Index, 1> array_1(const Index& a)
 {
-    return array<Index, 1>({a});
+    return Eigen::array<Index, 1>({a});
 }
 
 
-inline array<Index, 2> array_2(const Index& a, const Index& b)
+inline Eigen::array<Index, 2> array_2(const Index& a, const Index& b)
 {
-    return array<Index, 2>({a, b});
+    return Eigen::array<Index, 2>({a, b});
 }
 
 
-inline array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
+inline Eigen::array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
 {
-    return array<Index, 3>({a, b, c});
+    return Eigen::array<Index, 3>({a, b, c});
 }
 
 
-inline array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
+inline Eigen::array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
 {
-    return array<Index, 4>({a, b, c, d});
+    return Eigen::array<Index, 4>({a, b, c, d});
 }
 
 

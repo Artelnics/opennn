@@ -776,7 +776,7 @@ vector<Index> Dataset::get_raw_variable_indices(const string& variable_use) cons
     Index index = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use == variable_use)
+        if (raw_variables[i].use.find(variable_use) == string::npos)
             indices[index++] = i;
 
     return indices;
@@ -863,7 +863,7 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use == variable_use)
+        if (raw_variable.use.find(variable_use) == string::npos)
             count++;
 
     return count;
@@ -896,7 +896,7 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
     Index index = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use == variable_use)
+        if (raw_variable.use.find(variable_use) == string::npos)
             this_raw_variables[index++] = raw_variable;
 
     return this_raw_variables;
@@ -921,14 +921,10 @@ Index Dataset::get_variables_number(const string& variable_use) const
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-    {
-        if (raw_variable.use != variable_use)
-            continue;
-
-        count += (raw_variable.type == RawVariableType::Categorical)
-            ? raw_variable.get_categories_number()
-            : 1;
-    }
+        if (raw_variable.use.find(variable_use) != string::npos)
+            count += (raw_variable.type == RawVariableType::Categorical)
+                ? raw_variable.get_categories_number()
+                : 1;
 
     return count;
 }
@@ -4283,16 +4279,15 @@ void Batch::fill(const vector<Index>& sample_indices,
                  // const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-
     dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
 
-    if (dynamic_cast<TimeSeriesDataset*>(dataset))
-    {
-//        input_dimensions.clear();
-//        input_dimensions.push_back(sample_indices.size());
-//        input_dimensions.push_back(input_indices.size());
-//        input_dimensions.push_back(input_indices.size());
-    }
+    // if (dynamic_cast<TimeSeriesDataset*>(dataset))
+    // {
+    //    input_dimensions.clear();
+    //    input_dimensions.push_back(sample_indices.size());
+    //    input_dimensions.push_back(input_indices.size());
+    //    input_dimensions.push_back(input_indices.size());
+    // }
 
     dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
 
@@ -4365,15 +4360,23 @@ void Batch::print() const
 
     print_vector(input_dimensions);
 
-    input_dimensions.size() == 4
-        ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
-                                             input_dimensions[0],
-                                             input_dimensions[1],
-                                             input_dimensions[2],
-                                             input_dimensions[3]) << endl
-        : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
-                                             input_dimensions[0],
-                                             input_dimensions[1]) << endl;
+    if (input_dimensions.size() == 4)
+        cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2],
+                                           input_dimensions[3]);
+    else if (input_dimensions.size() == 3)
+        cout << TensorMap<Tensor<type, 3>>((type*)input_tensor.data(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
+    else if (input_dimensions.size() == 2)
+        cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
+                                           input_dimensions[0],
+                                           input_dimensions[1]);
+
+    cout << endl;
 
     // cout << "Decoder:" << endl
     //      << "Decoder dimensions:" << endl;

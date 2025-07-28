@@ -84,7 +84,7 @@ win32 {
 INCLUDEPATH += $$CUDA_PATH/include
 DEPENDPATH += $$CUDA_PATH/include
 
-LIBS += -L$$CUDA_LIB_DIR -lcudart_static
+# LIBS += -L$$CUDA_LIB_DIR -lcudart_static
 
 # OpenNN library
 

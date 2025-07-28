@@ -31,6 +31,15 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const Codification& data_codification)
     :Dataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
+    const Index variables_number = get_variables_number();
+
+    if(variables_number == 1)
+        set_raw_variable_use(0, "InputTarget");
+    else{
+        const vector<Index> target_index = get_variable_indices("Target");
+        set_raw_variable_use(target_index[0], "InputTarget");
+    }
+
     input_dimensions = { get_variables_number("Input"), past_time_steps};
     target_dimensions = { get_variables_number("Target") };
 
@@ -400,34 +409,50 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
                                           const vector<Index>& input_indices,
                                           type* input_tensor_data) const
 {
-    cout << "hello time series input" << endl;
+    // fill_tensor_sequence(data, sample_indices, input_indices, past_time_steps, input_tensor_data);
 
-//    fill_tensor_sequence(data, sample_indices, input_indices, past_time_steps, input_tensor_data);
-/*
-    if (rows_indices.empty() || columns_indices.empty())
+    if (sample_indices.empty() || input_indices.empty())
         return;
 
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
+    const Index rows_number = sample_indices.size();
+    const Index columns_number = input_indices.size();
 
-    const Index batch_size = rows_indices.size();
+    Index batch_size = sample_indices.size();
     const Index input_size = columns_number;
 
-    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, past_time_steps, input_size);
+    const Index matrix_rows = data.dimension(0);
+    const Index* sample_rows = sample_indices.data();
 
-    //#pragma omp parallel for collapse(3)
+    const Index last_row_index = sample_rows[rows_number - 1];
+    const Index last_index_used = last_row_index + past_time_steps;
+    const bool is_last_fill = last_index_used >= matrix_rows;
 
-    for (Index i = 0; i < batch_size; i++)
+    const bool skip_last = is_last_fill && batch_size > past_time_steps;
+    const Index safe_batch_size = skip_last ? batch_size - past_time_steps : batch_size;
+
+    TensorMap<Tensor<type, 3>> batch(input_tensor_data, batch_size, input_size, past_time_steps);
+
+    const type* matrix_data = data.data();
+
+    for (Index k = 0; k < input_size; ++k)
     {
-        for (Index j = 0; j < past_time_steps; j++)
-        {
-            const Index actual_row = i + j * batch_size;
+        const Index col_index = input_indices[k];
+        const type* matrix_col = matrix_data + matrix_rows * col_index;
 
-            for (Index k = 0; k < input_size; k++)
-                batch(i, j, k) = matrix(actual_row, columns_indices[k]);
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            const bool skip = skip_last && i >= safe_batch_size;
+
+            for (Index j = 0; j < past_time_steps; ++j)
+            {
+                const Index actual_row = sample_rows[i] + j;
+                if (skip)
+                    batch(i, k, j) = static_cast<type>(0);
+                else
+                    batch(i, k, j) = matrix_col[actual_row];
+            }
         }
     }
-*/
 }
 
 
@@ -435,9 +460,38 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
                                            type* target_tensor_data) const
 {
-    cout << "hello time series target" << endl;
+    //fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
 
-//    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
+    if(sample_indices.empty() || target_indices.empty())
+        return;
+
+    const Index rows_number = sample_indices.size();
+    const Index columns_number = target_indices.size();
+    const Index total_rows_in_data = data.dimension(0);
+
+    const type* matrix_data = data.data();
+
+    const Index last_index_used = sample_indices.back() + past_time_steps;
+    const bool is_last_fill = last_index_used >= total_rows_in_data;
+
+    // #pragma omp parallel for
+    for (Index i = 0; i < sample_indices.size(); ++i)
+    {
+        const Index sample_row = sample_indices[i];
+        const bool skip = is_last_fill && i >= sample_indices.size() - past_time_steps;
+
+        for (Index j = 0; j < columns_number; ++j)
+        {
+            const Index col_index = target_indices[j];
+            const type* matrix_column = matrix_data + data.dimension(0) * col_index + past_time_steps;
+            type* tensor_value = target_tensor_data + i + sample_indices.size() * j;
+
+            if (skip)
+                *tensor_value = static_cast<type>(0);
+            else
+                *tensor_value = matrix_column[sample_row];
+        }
+    }
 }
 
 

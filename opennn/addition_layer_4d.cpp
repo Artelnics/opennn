@@ -5,7 +5,7 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
+/*
 #include "registry.h"
 #include "tensors.h"
 #include "addition_layer_4d.h"
@@ -379,7 +379,7 @@ void Addition4dBackPropagationCuda::free()
     REGISTER(LayerBackPropagation, Addition4dBackPropagation, "Addition4d")
 
 } // namespace opennn
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

@@ -1723,8 +1723,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         number_of_well_classified++;
     }
 
-    return well_lassified_samples.slice(array<Index, 2>({0, 0}),
-                                        array<Index, 2>({number_of_well_classified, 4}));
+    return well_lassified_samples.slice(array_2(0, 0),
+                                        array_2(number_of_well_classified, 4));
 }
 
 

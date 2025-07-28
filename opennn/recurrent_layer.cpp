@@ -23,7 +23,7 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return {input_weights.dimension(0), past_time_steps,};
+    return {input_weights.dimension(0), past_time_steps};
 }
 
 
@@ -129,8 +129,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[1];
-    const Index input_size = input_pairs[0].second[2];
+    const Index past_time_steps = input_pairs[0].second[2];
+    const Index input_size = input_pairs[0].second[1];
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
 
@@ -151,9 +151,9 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     {
         // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
         outputs.device(*thread_pool_device)
-        = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
-        + previous_hidden_states.contract(recurrent_weights, axes(1,0))
-        + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
+                = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
+                + previous_hidden_states.contract(recurrent_weights, axes(1,0))
+                + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
 
         //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
 
@@ -177,8 +177,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[1];
-    const Index input_size = input_pairs[0].second[2];
+    const Index past_time_steps = input_pairs[0].second[2];
+    const Index input_size = input_pairs[0].second[1];
     const Index output_size = get_outputs_number();
 
     Tensor<type, 2> initial_hidden_states(batch_size, output_size);
@@ -273,8 +273,8 @@ string Recurrent::get_expression(const vector<string>& input_names,
 void Recurrent::print() const
 {
     cout << "Recurrent layer" << endl
-         << "Time steps: " << get_input_dimensions()[0] << endl
-         << "Input dimensions: " << get_input_dimensions()[1] << endl
+         << "Time steps: " << get_input_dimensions()[1] << endl
+         << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Input weights dimensions: " << input_weights.dimensions() << endl
@@ -350,8 +350,8 @@ void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_la
         throw std::runtime_error("recurrrent layer is nullptr");
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index past_time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index past_time_steps = layer->get_input_dimensions()[1];
 
     current_inputs.resize(batch_size, past_time_steps, inputs_number);
 
@@ -381,8 +381,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[1];
-    const Index past_time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index past_time_steps = layer->get_input_dimensions()[1];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);

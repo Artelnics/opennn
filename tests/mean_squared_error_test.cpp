@@ -118,7 +118,7 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Embedding>(language_dataset.get_input_dimensions(), embedding_dimension));
     neural_network.add_layer(make_unique<MultiHeadAttention>(neural_network.get_output_dimensions(), heads_number), {0,0});
-    neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+    neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_dimensions()));
     neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), language_dataset.get_target_dimensions(), "Logistic"));
 */
 }
