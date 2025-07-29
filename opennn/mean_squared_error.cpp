@@ -35,13 +35,13 @@ void MeanSquaredError::calculate_error(const Batch& batch,
         throw runtime_error("MeanSquaredError: outputs_number or samples_number is zero.");
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(batch.get_target_pair());
-    
+
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
 
     // Back propagation
-    
+
     Tensor<type, 2>& errors = back_propagation.errors;
 
     Tensor<type, 0>& error = back_propagation.error;
@@ -53,7 +53,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
         throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
     errors.device(*thread_pool_device) = outputs - targets;
-    
+
     error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
@@ -164,13 +164,6 @@ void MeanSquaredError::from_XML(const XMLDocument& document)
 
     if(!root_element)
         throw runtime_error("Mean squared element is nullptr.\n");
-
-    // Regularization
-
-    XMLDocument regularization_document;
-    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-    regularization_from_XML(regularization_document);
 }
 
 

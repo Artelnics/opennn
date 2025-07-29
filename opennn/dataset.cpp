@@ -745,7 +745,7 @@ vector<Index> Dataset::get_variable_indices(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
         {
             raw_variable.type == RawVariableType::Categorical
                 ? variable_index += raw_variable.get_categories_number()
@@ -776,7 +776,7 @@ vector<Index> Dataset::get_raw_variable_indices(const string& variable_use) cons
     Index index = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use.find(variable_use) == string::npos)
+        if (raw_variables[i].use.find(variable_use) != string::npos)
             indices[index++] = i;
 
     return indices;
@@ -863,7 +863,7 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             count++;
 
     return count;
@@ -896,7 +896,7 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
     Index index = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             this_raw_variables[index++] = raw_variable;
 
     return this_raw_variables;
@@ -3754,16 +3754,20 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
             if (token_idx >= sample_rows[row_idx].size()) continue;
 
             const string& token = sample_rows[row_idx][token_idx];
+
             if (token.empty() || token == missing_values_label) continue;
 
             if (raw_variable.type == RawVariableType::Categorical) break;
 
             if (is_numeric_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::Numeric;
-            } else if (is_date_time_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::DateTime;
-                else raw_variable.type = RawVariableType::Categorical;
-            } else {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::Numeric;
+            }
+            else if (is_date_time_string(token)) {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::DateTime;
+            }
+            else {
                 raw_variable.type = RawVariableType::Categorical;
             }
         }
