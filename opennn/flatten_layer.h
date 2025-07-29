@@ -32,7 +32,7 @@ class Flatten : public Layer
 
 public:
 
-    Flatten(const dimensions& new_input_dimensions = {})
+    Flatten(const dimensions& new_input_dimensions = {} )
     {
         set(new_input_dimensions);
     }
@@ -80,12 +80,13 @@ public:
         return input_dimensions[2];
     }
 
+
     void set(const dimensions& new_input_dimensions)
     {
-        if (new_input_dimensions.size() != Rank)
+        if (new_input_dimensions.size() != Rank - 1)
             throw runtime_error("Error: Input dimensions size must match layer Rank in FlattenLayer::set().");
 
-        name = "Flatten2d";
+        name = "Flatten" + to_string(Rank) + "d";
 
         set_label("flatten_layer");
 
