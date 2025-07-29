@@ -3754,16 +3754,20 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
             if (token_idx >= sample_rows[row_idx].size()) continue;
 
             const string& token = sample_rows[row_idx][token_idx];
+
             if (token.empty() || token == missing_values_label) continue;
 
             if (raw_variable.type == RawVariableType::Categorical) break;
 
             if (is_numeric_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::Numeric;
-            } else if (is_date_time_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::DateTime;
-                else raw_variable.type = RawVariableType::Categorical;
-            } else {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::Numeric;
+            }
+            else if (is_date_time_string(token)) {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::DateTime;
+            }
+            else {
                 raw_variable.type = RawVariableType::Categorical;
             }
         }

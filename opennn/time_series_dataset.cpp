@@ -44,6 +44,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     target_dimensions = { get_variables_number("Target") };
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
+
 }
 
 
