@@ -4427,7 +4427,7 @@ pair<type*, dimensions> Batch::get_target_pair() const
 
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,
-                     const vector<Index>& decoder_indices,
+                     //const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);

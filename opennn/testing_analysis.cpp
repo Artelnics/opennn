@@ -2375,7 +2375,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -2405,7 +2405,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_cuda(const type& decision_
 
         testing_batch_cuda.fill(current_batch_indices,
                                 input_variable_indices,
-                                decoder_variable_indices,
+                                //decoder_variable_indices,
                                 target_variable_indices);
 
         neural_network->forward_propagate_cuda(testing_batch_cuda.get_input_device(),
