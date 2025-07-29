@@ -5,14 +5,14 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
+/*
 #include "registry.h"
 #include "tensors.h"
 #include "flatten_layer_3d.h"
 
 namespace opennn
 {
-/*
+
 Flatten3d::Flatten3d(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
@@ -206,9 +206,9 @@ vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_p
 REGISTER(Layer, Flatten3d, "Flatten3d")
 REGISTER(LayerForwardPropagation, Flatten3dForwardPropagation, "Flatten3d")
 REGISTER(LayerBackPropagation, Flatten3dBackPropagation, "Flatten3d")
-*/
-}
 
+}
+*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

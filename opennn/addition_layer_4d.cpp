@@ -5,14 +5,14 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
+/*
 #include "registry.h"
 #include "tensors.h"
 #include "addition_layer_4d.h"
 
 namespace opennn
 {
-/*
+
 Addition4d::Addition4d(const dimensions& new_input_dimensions, 
                        const string& new_name) : Layer()
 {
@@ -221,7 +221,7 @@ void Addition4dBackPropagation::print() const
     cout << "input_1_derivatives dimensions: " << input_1_derivatives.dimensions() << endl;
     cout << "input_2_derivatives dimensions: " << input_2_derivatives.dimensions() << endl;
 }
-*/
+
 
 #ifdef OPENNN_CUDA
 
@@ -379,7 +379,7 @@ void Addition4dBackPropagationCuda::free()
     REGISTER(LayerBackPropagation, Addition4dBackPropagation, "Addition4d")
 
 } // namespace opennn
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

@@ -176,7 +176,7 @@ public:
             throw runtime_error("Input dimensions size is not 3.");
 
         add_layer(make_unique<Scaling4d>(input_dimensions));
-        
+
         const Index complexity_size = complexity_dimensions.size();
 
         for (Index i = 0; i < complexity_size; i++)
@@ -203,8 +203,8 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-        
-        add_layer(make_unique<Flatten<2>>(get_output_dimensions()));
+    
+        add_layer(make_unique<Flatten<4>>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
@@ -323,7 +323,7 @@ public:
 
                 const dimensions main_out_dims = get_layer(main_path_index)->get_output_dimensions();
 
-                auto addition_layer = make_unique<Addition4d>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+                auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
                 add_layer(move(addition_layer), { main_path_index, skip_path_index });
 
