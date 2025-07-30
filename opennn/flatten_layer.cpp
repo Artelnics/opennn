@@ -59,4 +59,31 @@ namespace opennn
 
 #endif // OPENNN_CUDA
 
+	template class Flatten<2>;
+	template class Flatten<3>;
+	template class Flatten<4>;
+
+	template struct FlattenForwardPropagation<2>;
+	template struct FlattenForwardPropagation<3>;
+	template struct FlattenForwardPropagation<4>;
+
+	template struct FlattenBackPropagation<2>;
+	template struct FlattenBackPropagation<3>;
+	template struct FlattenBackPropagation<4>;
+
+#ifdef OPENNN_CUDA
+
+	template struct FlattenForwardPropagationCuda<2>;
+	template struct FlattenForwardPropagationCuda<3>;
+	template struct FlattenForwardPropagationCuda<4>;
+
+	template struct FlattenBackPropagationCuda<2>;
+	template struct FlattenBackPropagationCuda<3>;
+	template struct FlattenBackPropagationCuda<4>;
+
+#endif // OPENNN_CUDA
+
+	// Linker fix: Ensures the static registration macros in this file are run.
+	void reference_flatten_layer() { }
+
 } // namespace opennn

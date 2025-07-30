@@ -540,7 +540,7 @@ void AdaptiveMomentEstimationData::print() const
 
 #ifdef OPENNN_CUDA
 
-TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
+TrainingResults AdaptiveMomentEstimation::train_cuda()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();

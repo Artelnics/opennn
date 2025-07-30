@@ -549,7 +549,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 #ifdef OPENNN_CUDA
 
-TrainingResults StochasticGradientDescent::perform_training_cuda()
+TrainingResults StochasticGradientDescent::train_cuda()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();

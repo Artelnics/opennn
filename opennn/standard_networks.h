@@ -203,7 +203,7 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-    
+
         add_layer(make_unique<Flatten<4>>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
