@@ -451,6 +451,7 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
                     batch(i, k, j) = static_cast<type>(0);
                 else
                     batch(i, k, j) = matrix_col[actual_row];
+
             }
         }
     }

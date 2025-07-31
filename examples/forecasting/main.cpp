@@ -23,6 +23,7 @@
 #include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
 #include "adaptive_moment_estimation.h"
+#include "quasi_newton_method.h"
 #include "testing_analysis.h"
 #include "recurrent_layer.h"
 
@@ -35,11 +36,13 @@ int main()
         cout << "OpenNN. Forecasting Example." << endl;
 
 
-        //TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
+        TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
-        TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/pruebas1.csv", ",", true, false);
+        // TimeSeriesDataset time_series_dataset("../data/pruebas2.csv", ",", true, false);
 
         cout << "dataset leido" << endl;
         time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
@@ -49,7 +52,7 @@ int main()
 
         time_series_dataset.print();
 
-        time_series_dataset.scale_data();
+        // time_series_dataset.scale_data();
         cout << "-----------------------------------" << endl;
 
         // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -61,7 +64,7 @@ int main()
         // const vector<Index> input_variable_indices = time_series_dataset.get_variable_indices("Input");
         // const vector<Index> target_variable_indices = time_series_dataset.get_variable_indices("Target");
 
-        // const Index batch_size = 50;
+        // const Index batch_size = 20;
 
         // const Index batch_samples_number = min(samples_number, batch_size);
         // const Index batches_number = std::ceil(static_cast<double>(samples_number) / batch_size);
@@ -70,8 +73,9 @@ int main()
 
         // Batch batch(batch_samples_number, &time_series_dataset);
 
+        // batches = time_series_dataset.get_batches(samples_indices, batch_samples_number, false);
+
         // for (int i = 0; i < batches_number; ++i) {
-        //     batches = time_series_dataset.get_batches(samples_indices, batch_samples_number, false);
         //     cout << "iteracion: " << i << endl;
         //     for (const auto& element : batches[i])
         //         std::cout << element << " ";  // Imprimir el elemento de cada fila
@@ -80,14 +84,16 @@ int main()
         //     batch.print();
         // }
 
+        // batch.fill(batches[0], input_variable_indices, target_variable_indices);
+        // batch.print();
         // cout << "------------------------------------------" << endl;
 
         ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
                                           {},
                                           {time_series_dataset.get_variables_number("Target")});
 
-        Layer* layer_ptr = forecasting_network.get_first("Recurrent");
-        Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
+        // Layer* layer_ptr = forecasting_network.get_first("Recurrent");
+        // Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
         // recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
@@ -121,50 +127,56 @@ int main()
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(800);
-        adam->set_maximum_epochs_number(1000);
+        adam->set_batch_size(100);
+        adam->set_maximum_epochs_number(10000);
+
+        // QuasiNewtonMethod* quasi = static_cast<QuasiNewtonMethod*>(training_strategy.get_optimization_algorithm());
+        // quasi->set_loss_goal(0.001);
 
         training_strategy.train();
 
         cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
-        //Tensor<type, 3> inputs(1,1,2);
-        // inputs.setValues({{{0}, {0.0998334166468282}}});
+        // Tensor<type, 3> inputs(1,1,2);
+        // inputs.setValues({{{6}, {7}}});
         // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
-        // cout << "outputs" << outputs << endl;
+        // cout << "outputs: " << outputs << endl;
+
+        // TestingAnalysis testing_analysis(&forecasting_network, &time_series_dataset);
+        // cout << "Goodness of fit analysis: " << endl;
+        // testing_analysis.print_goodness_of_fit_analysis();
 
         /// Pruebas output funcion seno
-        // const std::vector<std::pair<type, type>> input_pairs = {
-        //     {0.0,          0.0998334166},
-        //     {0.0998334166, 0.1986693308},
-        //     {0.198669331,  0.295520207},
-        //     {0.295520207,  0.389418342},
-        //     {0.389418342,  0.479425539},
-        //     {0.479425539,  0.564642473},
-        //     {0.564642473,  0.644217687},
-        //     {0.644217687,  0.717356091},
-        //     {0.717356091,  0.78332691},
-        //     {0.78332691,   0.841470985},
-        //     {0.841470985,  0.89120736}
-        // };
+        const std::vector<std::pair<type, type>> input_pairs = {
+            {0.0,          0.0998334166},
+            {0.0998334166, 0.1986693308},
+            {0.198669331,  0.295520207},
+            {0.295520207,  0.389418342},
+            {0.389418342,  0.479425539},
+            {0.479425539,  0.564642473},
+            {0.564642473,  0.644217687},
+            {0.644217687,  0.717356091},
+            {0.717356091,  0.78332691},
+            {0.78332691,   0.841470985},
+            {0.841470985,  0.89120736}
+        };
 
-        // for (size_t i = 0; i < input_pairs.size() - 1; ++i)
-        // {
-        //     const auto& current_pair = input_pairs[i];
-        //     const type input_val_1 = current_pair.first;
-        //     const type input_val_2 = current_pair.second;
+        for (size_t i = 0; i < input_pairs.size() - 1; ++i)
+        {
+            const auto& current_pair = input_pairs[i];
+            const type input_val_1 = current_pair.first;
+            const type input_val_2 = current_pair.second;
 
-        //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
-        //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
+            cout << "\n--- Prueba " << i + 1 << " ---" << endl;
+            cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
 
-        //     Tensor<type, 3> inputs(1, 1, 2);
-        //     inputs.setValues({{{input_val_1, input_val_2}}});
-        //     cout << "as" << endl;
-        //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+            Tensor<type, 3> inputs(1, 1, 2);
+            inputs.setValues({{{input_val_1, input_val_2}}});
+            const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
-        //     cout << "Output: " << outputs(0, 0) << endl;
-        //     cout << "Target: " << input_pairs[i+1].second << endl;
-        // }
+            cout << "Output: " << outputs << endl;
+            cout << "Target: " << input_pairs[i+1].second << endl;
+        }
 
         cout << "Good bye!" << endl;
 
