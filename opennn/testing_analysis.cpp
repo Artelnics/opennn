@@ -20,11 +20,6 @@ TestingAnalysis::TestingAnalysis(const NeuralNetwork* new_neural_network, const 
 {
     neural_network = const_cast<NeuralNetwork*>(new_neural_network);
     dataset = const_cast<Dataset*>(new_dataset);
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
@@ -43,15 +38,6 @@ Dataset* TestingAnalysis::get_dataset() const
 const bool& TestingAnalysis::get_display() const
 {
     return display;
-}
-
-void TestingAnalysis::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -102,7 +88,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        linear_correlation(i) = opennn::linear_correlation(thread_pool_device.get(), output.chip(i,1), target.chip(i,1));
+        linear_correlation(i) = opennn::linear_correlation(output.chip(i,1), target.chip(i,1));
 
     return linear_correlation;
 }
@@ -505,12 +491,22 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 {
     const Index batch_size = outputs.dimension(0);
 
+    const Index total_elements = outputs.size();
+
     Tensor<type, 1> errors(4);
 
-    Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+    type sum_of_squares = type(0);
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    errors(0) = mean_squared_error(0);
+    #pragma omp parallel for reduction(+:sum_of_squares)
+    for (Index i = 0; i < total_elements; ++i)
+    {
+        const type diff = outputs_data[i] - targets_data[i];
+        sum_of_squares += diff * diff;
+    }
+
+    errors(0) = sqrt(sum_of_squares);
     errors(1) = errors(0)/type(batch_size);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -549,10 +545,18 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const st
 
     // Results
 
-    Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    type sum_of_squares = type(0);
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    errors(0) = mean_squared_error(0);
+    #pragma omp parallel for reduction(+:sum_of_squares)
+    for (Index i = 0; i < outputs.size(); ++i)
+    {
+        const type diff = outputs_data[i] - targets_data[i];
+        sum_of_squares += diff * diff;
+    }
+
+    errors(0) = sqrt(sum_of_squares);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -581,10 +585,18 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 
     // Results
 
-    Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    type sum_of_squares = type(0);
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    errors(0) = mean_squared_error(0);
+    #pragma omp parallel for reduction(+:sum_of_squares)
+    for (Index i = 0; i < outputs.size(); ++i)
+    {
+        const type diff = outputs_data[i] - targets_data[i];
+        sum_of_squares += diff * diff;
+    }
+
+    errors(0) = sqrt(sum_of_squares);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -597,24 +609,41 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Index samples_number = targets.dimension(0);
+    const Index targets_number = targets.dimension(1);
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    // Mean squared error
+
+    type mean_squared_error = type(0);
+    const Index total_size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+
+    #pragma omp parallel for reduction(+:mean_squared_error)
+    for (Index i = 0; i < total_size; ++i)
+    {
+        const type diff = outputs_data[i] - targets_data[i];
+        mean_squared_error += diff * diff;
+    }
+
+    // Normalization coefficient
 
     type normalization_coefficient = type(0);
 
-    Tensor<type, 0> norm;
-
-    for(Index i = 0; i < samples_number; i++)
+    #pragma omp parallel for reduction(+:normalization_coefficient)
+    for (Index i = 0; i < samples_number; ++i)
     {
-        norm.device(*thread_pool_device) = (targets.chip(i, 0) - targets_mean).square().sum();
-
-        normalization_coefficient += norm(0);
+        type row_sum_of_squares = type(0);
+        for (Index j = 0; j < targets_number; ++j)
+        {
+            const type diff = targets(i, j) - targets_mean(j);
+            row_sum_of_squares += diff * diff;
+        }
+        normalization_coefficient += row_sum_of_squares;
     }
 
-    return mean_squared_error()/normalization_coefficient;
+    return mean_squared_error / normalization_coefficient;
 }
 
 
@@ -629,8 +658,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
     type cross_entropy_error_2d = type(0);
 
-#pragma omp parallel for reduction(+:cross_entropy_error_2d)
-
+    #pragma omp parallel for reduction(+:cross_entropy_error_2d)
     for(Index i = 0; i < testing_samples_number; i++)
     {
         outputs_row = outputs.chip(i, 0);
@@ -681,6 +709,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
                                                        const Tensor<type, 2>& outputs,
                                                        const Tensor<type, 1>& weights) const
 {
+    // Weights
+
     type negatives_weight;
     type positives_weight;
 
@@ -705,21 +735,23 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    const Tensor<bool, 2> if_sentence = (targets == targets.constant(type(1))).cast<bool>();
-    const Tensor<bool, 2> else_sentence = (targets == targets.constant(type(0))).cast<bool>();
+    // Mean squared error
 
-    Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
-    Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
-    Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
+    const Index size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
 
-    f_1.device(*thread_pool_device) = (targets - outputs).square() * positives_weight;
+    type mean_squared_error = type(0);
 
-    f_2.device(*thread_pool_device) = (targets - outputs).square()*negatives_weight;
+    #pragma omp parallel for reduction(+:mean_squared_error)
+    for (Index i = 0; i < size; ++i)
+    {
+        const type diff = targets_data[i] - outputs_data[i];
+        const type weight = (targets_data[i] == type(1)) ? positives_weight : negatives_weight;
+        mean_squared_error += (diff * diff) * weight;
+    }
 
-    f_3.device(*thread_pool_device) = targets.constant(type(0));
-
-    Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    // Normalization coefficient
 
     Index negatives = 0;
 
@@ -731,7 +763,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
 
-    return mean_squared_error(0)/normalization_coefficient;
+    return mean_squared_error / normalization_coefficient;
 }
 
 
@@ -739,10 +771,15 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
                                                 const Tensor<type, 2>& outputs,
                                                 const type minkowski_parameter) const
 {
-    Tensor<type, 0> minkowski_error;
-    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter);
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+    type error_sum = type(0);
 
-    return minkowski_error();
+    #pragma omp parallel for reduction(+:error_sum)
+    for (Index i = 0; i < targets.size(); ++i)
+        error_sum += pow(std::abs(outputs_data[i] - targets_data[i]), minkowski_parameter);
+
+    return pow(error_sum, type(1.0) / minkowski_parameter);
 }
 
 
@@ -775,22 +812,36 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 
 type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
 {
-    Tensor<type, 0> targets_mean;
-    targets_mean.device(*thread_pool_device) = targets.mean();
+    const Index n = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
 
-    Tensor<type, 0> outputs_mean;
-    outputs_mean.device(*thread_pool_device) = outputs.mean();
+    const Tensor<type, 0> targets_sum_tensor = targets.sum();
+    const type targets_mean = targets_sum_tensor(0) / type(n);
 
-    Tensor<type,0> numerator;
-    numerator.device(*thread_pool_device) = ((-targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
+    const Tensor<type, 0> outputs_sum_tensor = outputs.sum();
+    const type outputs_mean = outputs_sum_tensor(0) / type(n);
 
-    Tensor<type,0> denominator;
-    denominator.device(*thread_pool_device) = ((-targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
+    type numerator = type(0);
+    type denominator_targets = type(0);
+    type denominator_outputs = type(0);
 
-    if(denominator(0) == type(0))
-        denominator(0) = 1;
+    #pragma omp parallel for reduction(+:numerator, denominator_targets, denominator_outputs)
+    for (Index i = 0; i < n; ++i)
+    {
+        const type t_diff = targets_data[i] - targets_mean;
+        const type o_diff = outputs_data[i] - outputs_mean;
+        numerator += t_diff * o_diff;
+        denominator_targets += t_diff * t_diff;
+        denominator_outputs += o_diff * o_diff;
+    }
 
-    return (numerator(0)*numerator(0))/(denominator(0)*denominator(0));
+    const type denominator = sqrt(denominator_targets * denominator_outputs);
+
+    if(denominator == type(0))
+        return (numerator * numerator);
+
+    return (numerator * numerator) / (denominator * denominator);
 }
 
 
@@ -1956,7 +2007,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_past_time_steps);
+        error_autocorrelations[i] = autocorrelations(error.chip(i,1), maximum_past_time_steps);
 
     return error_autocorrelations;
 }
@@ -1977,8 +2028,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(), 
-            inputs.chip(i,1), errors.chip(i,1), past_time_steps);
+        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), past_time_steps);
 
     return inputs_errors_cross_correlation;
 }

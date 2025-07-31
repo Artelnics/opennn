@@ -162,8 +162,13 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        //outputs = inputs.eval();
-        outputs.device(*thread_pool_device) = inputs;
+        const type* inputs_data = inputs.data();
+        type* outputs_data = outputs.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < inputs.size(); ++i)
+            outputs_data[i] = inputs_data[i];
+
         return;
     }
 
@@ -171,13 +176,14 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
     const Index columns_number = inputs.dimension(1);
 
     #pragma omp parallel for
-    for (Index j = 0; j < columns_number; j++)
+    for (Index i = 0; i < rows_number; i++)
     {
-        const type& lower_bound = lower_bounds(j);
-        const type& upper_bound = upper_bounds(j);
-
-        for (Index i = 0; i < rows_number; i++)
+        for (Index j = 0; j < columns_number; j++)
+        {
+            const type& lower_bound = lower_bounds(j);
+            const type& upper_bound = upper_bounds(j);
             outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
+        }
     }
 }
 

@@ -232,13 +232,6 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_threads_number(const int& new_threads_number)
-{
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->set_threads_number(new_threads_number);
-}
-
-
 void NeuralNetwork::set_layers_number(const Index& new_layers_number)
 {
     layers.resize(new_layers_number);
