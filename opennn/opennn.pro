@@ -27,7 +27,7 @@ DEFINES += __Cpp17__
 win32-msvc* {
     QMAKE_CXXFLAGS += /std:c++17 /openmp /EHsc
     QMAKE_CXXFLAGS += /bigobj
-    DEFINES += "EIGEN_THREAD_LOCAL=thread_local"
+    #DEFINES += "EIGEN_THREAD_LOCAL=thread_local"
 }
 else:macx {
     QMAKE_CXXFLAGS += -std=c++17

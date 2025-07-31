@@ -54,8 +54,21 @@ void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device)
-        = ((targets * (outputs + epsilon).log() + (type(1) - targets) * ((type(1) - outputs + epsilon).log())).sum()) / type(-samples_number);
+    const Index size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+
+    type cross_entropy_sum = type(0);
+
+    #pragma omp parallel for reduction(+:cross_entropy_sum)
+    for (Index i = 0; i < size; ++i)
+    {
+        const type target = targets_data[i];
+        const type output = outputs_data[i];
+        cross_entropy_sum += target * log(output + epsilon) + (type(1) - target) * log(type(1) - output + epsilon);
+    }
+
+    error() = cross_entropy_sum / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -83,7 +96,17 @@ void CrossEntropyError2d::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*(outputs + epsilon).log()).sum() / type(-samples_number);
+    const Index size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+
+    type cross_entropy_sum = type(0);
+
+    #pragma omp parallel for reduction(+:cross_entropy_sum)
+    for (Index i = 0; i < size; ++i)
+        cross_entropy_sum += targets_data[i] * log(outputs_data[i] + epsilon);
+
+    error() = cross_entropy_sum / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -93,11 +116,11 @@ void CrossEntropyError2d::calculate_output_delta(const Batch& batch,
                                                  ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
-     const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
-     outputs_number == 1
-         ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
-         : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
+    outputs_number == 1
+        ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
+        : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
 }
 
 
@@ -125,8 +148,18 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device)
-        = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);
+    const Index size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+    type* deltas_data = output_deltas.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+    {
+        const type target = targets_data[i];
+        const type output = outputs_data[i];
+        deltas_data[i] = (-target / (output + epsilon) + (type(1) - target) / (type(1) - output + epsilon)) / type(samples_number);
+    }
 }
 
 
@@ -154,7 +187,14 @@ void CrossEntropyError2d::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = (outputs - targets) / type(samples_number);
+    const Index size = targets.size();
+    const type* targets_data = targets.data();
+    const type* outputs_data = outputs.data();
+    type* deltas_data = output_deltas.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = (outputs_data[i] - targets_data[i]) / type(samples_number);
 }
 
 

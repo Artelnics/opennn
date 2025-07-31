@@ -42,7 +42,7 @@
 
 #include <omp.h>
 
-#define EIGEN_USE_THREADS
+//#define EIGEN_USE_THREADS
 
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"

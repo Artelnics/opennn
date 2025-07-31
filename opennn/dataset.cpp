@@ -1653,10 +1653,6 @@ void Dataset::set_display(const bool& new_display)
 
 void Dataset::set_default()
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     has_header = false;
 
     has_sample_ids = false;
@@ -1776,16 +1772,6 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
         missing_values_method = MissingValuesMethod::Interpolation;
     else
         throw runtime_error("Unknown method type.\n");
-}
-
-
-void Dataset::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -2311,7 +2297,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
             const Tensor<type, 2> target_raw_variable_data
                 = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
 
-            correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2346,7 +2332,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_sample_indices);
 
-            correlations(i, j) = correlation_spearman(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation_spearman(input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2464,7 +2450,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-            correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
+            correlations_pearson(i, j) = correlation(input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_pearson(i, j).r = type(1);
@@ -2506,7 +2492,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
             const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
 
-            correlations_spearman(i, j) = correlation_spearman(thread_pool_device.get(), input_i, input_j);
+            correlations_spearman(i, j) = correlation_spearman(input_i, input_j);
 
             if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_spearman(i, j).r = type(1);
@@ -4301,10 +4287,6 @@ void Batch::fill(const vector<Index>& sample_indices,
 
 Batch::Batch(const Index& new_samples_number, const Dataset* new_dataset)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     set(new_samples_number, new_dataset);
 }
 

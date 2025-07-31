@@ -271,22 +271,19 @@ Tensor<type, 3> resize_image(const Tensor<float, 3>& input_image,
 }
 
 
-void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
-                     Tensor<type, 3>& image)
+void reflect_image_x(Tensor<type, 3>& image)
 {
-    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({false, true, false}));
+    image = image.reverse(array<bool, 3>({false, true, false}));
 }
 
 
-void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
-                     Tensor<type, 3>& image)
+void reflect_image_y(Tensor<type, 3>& image)
 {
-    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({true, false, false}));
+    image = image.reverse(array<bool, 3>({true, false, false}));
 }
 
 
-void rotate_image(const ThreadPoolDevice* thread_pool_device,
-                  const Tensor<type, 3>& input,
+void rotate_image(const Tensor<type, 3>& input,
                   Tensor<type, 3>& output,
                   const type& angle_degree)
 {
@@ -311,6 +308,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
 
+    #pragma omp parallel for collapse(2)
     for(Index x = 0; x < width; x++)
     {
         for(Index y = 0; y < height; y++)
@@ -337,65 +335,57 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-void translate_image_x(const ThreadPoolDevice* thread_pool_device,
-                       const Tensor<type, 3>& input,
+void translate_image_x(const Tensor<type, 3>& input,
                        Tensor<type, 3>& output,
                        const Index& shift)
 {
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
+    assert(input.dimensions() == output.dimensions());
     output.setZero();
 
     const Index height = input.dimension(0);
     const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
-    const Index input_size = height*width;
 
-    const Index limit_column = width - shift;
-
-    for(Index i = 0; i < limit_column * channels; i++)
+    if (shift == 0)
     {
-        const Index channel = i % channels;
-        const Index raw_variable = i / channels;
-
-        const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + raw_variable*height + channel*input_size,
-                                                                height,
-                                                                1);
-
-        TensorMap<Tensor<type, 2>> output_column_map(output.data() + (raw_variable + shift)*height + channel*input_size,
-                                                     height,
-                                                     1);
-
-        output_column_map = input_column_map;
+        output = input;
+        return;
     }
+
+    #pragma omp parallel for
+    for (Index i = 0; i < height; ++i)
+        for (Index j = 0; j < width; ++j)
+        {
+            const Index src_j = j - shift;
+
+            if (src_j >= 0 && src_j < width)
+                for (Index k = 0; k < channels; ++k)
+                    output(i, j, k) = input(i, src_j, k);
+        }
 }
 
 
-void translate_image_y(const ThreadPoolDevice* thread_pool_device,
-                       const Tensor<type, 3>& input,
+void translate_image_y(const Tensor<type, 3>& input,
                        Tensor<type, 3>& output,
                        const Index& shift)
 {
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
+    assert(input.dimensions() == output.dimensions());
     output.setZero();
 
     const Index height = input.dimension(0);
 
-    const Index limit_src_rows = height - shift;
+    if (shift == 0)
+    {
+        output = input;
+        return;
+    }
 
-    if (limit_src_rows <= 0)
-        return; 
-
-    for (Index r_src = 0; r_src < limit_src_rows; ++r_src)
+    #pragma omp parallel for
+    for (Index r_src = 0; r_src < height; ++r_src)
     {
         const Index r_dest = r_src + shift;
-
-        output.template chip<0>(r_dest) = input.template chip<0>(r_src);
+        if (r_dest >= 0 && r_dest < height)
+            output.template chip<0>(r_dest) = input.template chip<0>(r_src);
     }
 }
 

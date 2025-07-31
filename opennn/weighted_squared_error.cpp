@@ -163,14 +163,11 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const Index samples_number = batch.get_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
-
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(batch.get_target_pair());
 
     // Forward propagation
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(forward_propagation.get_last_trainable_layer_outputs_pair());
 
     // Back propagation
 
@@ -178,17 +175,28 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = (outputs - targets);
+    const Index size = errors.size();
+    type* errors_data = errors.data();
+    type* weights_data = errors_weights.data();
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    errors_weights = targets;
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+    {
+        errors_data[i] = outputs_data[i] - targets_data[i];
+        weights_data[i] = (targets_data[i] == type(0)) ? negatives_weight : positives_weight;
+    }
 
-    for(Index i = 0; i < targets.size(); i++)
-        errors_weights(i) = (targets(i) == type(0)) ?negatives_weight : positives_weight;
+    type weighted_sum_of_squares = type(0);
+
+    #pragma omp parallel for reduction(+:weighted_sum_of_squares)
+    for (Index i = 0; i < size; ++i)
+        weighted_sum_of_squares += (errors_data[i] * errors_data[i]) * weights_data[i];
 
     const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
-    error.device(*thread_pool_device)
-        = (errors.square() * errors_weights).sum()*coefficient;
+    error() = weighted_sum_of_squares * coefficient;
 }
 
 
@@ -210,13 +218,17 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
 
-    const pair<type*, dimensions> delta_pairs = back_propagation.get_output_deltas_pair();
-
-    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(back_propagation.get_output_deltas_pair());
 
     const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 
-    deltas.device(*thread_pool_device) = coefficient * (errors_weights * errors);
+    const type* errors_data = errors.data();
+    const type* weights_data = errors_weights.data();
+    type* deltas_data = deltas.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < errors.size(); ++i)
+        deltas_data[i] = coefficient * weights_data[i] * errors_data[i];
 }
 
 

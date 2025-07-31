@@ -218,8 +218,6 @@ public:
 
     void set_default();
 
-    void set_threads_number(const int&);
-
     // Samples set
 
     void set_sample_uses(const string&);
@@ -501,9 +499,6 @@ public:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
-
     // DATA
 
     Tensor<type, 2> data;
@@ -598,9 +593,6 @@ struct Batch
 
     dimensions target_dimensions;
     Tensor<type, 1> target_tensor;
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 };
 
 #ifdef OPENNN_CUDA
