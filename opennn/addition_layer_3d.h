@@ -362,6 +362,8 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
 
 #endif // OPENNN_CUDA
 
+void reference_addition_layer();
+
 } // namespace opennn
 
 #endif // ADDITIONLAYER_H

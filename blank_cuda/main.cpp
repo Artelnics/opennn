@@ -40,6 +40,9 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
+        reference_flatten_layer();
+        reference_addition_layer();
+
         #ifdef OPENNN_CUDA
 
         // Data set
@@ -81,7 +84,7 @@ int main()
 
         ImageClassificationNetwork neural_network(
             input_dimensions,
-            { 64,64,128,128,32 },
+            { 64, 64, 128, 128, 32 },
             output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
@@ -101,7 +104,7 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
-        training_strategy.perform_training_cuda();
+        training_strategy.train_cuda();
         
         cudaDeviceSynchronize();
         

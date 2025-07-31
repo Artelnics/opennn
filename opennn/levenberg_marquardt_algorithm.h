@@ -83,9 +83,9 @@ public:
 
 #ifdef OPENNN_CUDA
 
-   TrainingResults perform_training_cuda() override 
+   TrainingResults train_cuda() override 
    {
-       throw runtime_error("CUDA perform_training_cuda is not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
+       throw runtime_error("CUDA train_cuda is not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
    }
 
 #endif

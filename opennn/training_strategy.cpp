@@ -294,7 +294,7 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 
 #ifdef OPENNN_CUDA
 
-TrainingResults TrainingStrategy::perform_training_cuda()
+TrainingResults TrainingStrategy::train_cuda()
 {
     if (!has_neural_network())
         throw runtime_error("Neural network is null.");
@@ -314,7 +314,7 @@ TrainingResults TrainingStrategy::perform_training_cuda()
     if (neural_network->has("Recurrent"))
         fix_forecasting();
 
-    return optimization_algorithm->perform_training_cuda();
+    return optimization_algorithm->train_cuda();
 }
 
 #endif

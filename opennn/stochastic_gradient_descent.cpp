@@ -549,7 +549,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 #ifdef OPENNN_CUDA
 
-TrainingResults StochasticGradientDescent::perform_training_cuda()
+TrainingResults StochasticGradientDescent::train_cuda()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
@@ -570,7 +570,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
     const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
@@ -676,7 +676,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
             training_batch_cuda.fill(training_batches[iteration],
                 input_variable_indices,
-                decoder_variable_indices,
+                //decoder_variable_indices,
                 target_variable_indices);
 
             // Neural network
@@ -723,7 +723,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
                 selection_batch_cuda->fill(selection_batches[iteration],
                                            input_variable_indices,
-                                           decoder_variable_indices,
+                                           //decoder_variable_indices,
                                            target_variable_indices);
 
                 // Neural network

@@ -32,7 +32,7 @@ class Flatten : public Layer
 
 public:
 
-    Flatten(const dimensions& new_input_dimensions = {})
+    Flatten(const dimensions& new_input_dimensions = {} )
     {
         set(new_input_dimensions);
     }
@@ -80,12 +80,13 @@ public:
         return input_dimensions[2];
     }
 
+
     void set(const dimensions& new_input_dimensions)
     {
-        if (new_input_dimensions.size() != Rank)
+        if (new_input_dimensions.size() != Rank - 1)
             throw runtime_error("Error: Input dimensions size must match layer Rank in FlattenLayer::set().");
 
-        name = "Flatten2d";
+        name = "Flatten" + to_string(Rank) + "d";
 
         set_label("flatten_layer");
 
@@ -182,9 +183,23 @@ public:
         const Index batch_size = fp_cuda->batch_size;
         const Index outputs_number = get_outputs_number();
 
-        CHECK_CUDA(cudaMemcpy(fp_cuda->outputs, inputs_device[0], batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
-    }
+        if constexpr (Rank == 4)
+        {
+            const Index height = get_input_height();
+            const Index width = get_input_width();
+            const Index channels = get_input_channels();
 
+            type* reordered_inputs = fp_cuda->reordered_inputs;
+            type* outputs_device = fp_cuda->outputs;
+
+            invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width);
+
+            reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
+            //reorganize_inputs_cuda(inputs_device[0], outputs_device, batch_size, outputs_number);
+        }
+        else
+            CHECK_CUDA(cudaMemcpy(fp_cuda->outputs, inputs_device[0], batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
+    }
 
 
     void back_propagate_cuda(const vector<float*>&,
@@ -192,13 +207,15 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
     {
-        FlattenBackPropagationCuda<Rank>* bp_cuda =
+        FlattenBackPropagationCuda<Rank>* flatten_layer_back_propagation_cuda =
             static_cast<FlattenBackPropagationCuda<Rank>*>(back_propagation_cuda.get());
 
-        const Index batch_size = bp_cuda->batch_size;
-        const Index inputs_number = get_inputs_number();
+        const Index batch_size = flatten_layer_back_propagation_cuda->batch_size;
+        const Index outputs_number = get_outputs_number();
 
-        CHECK_CUDA(cudaMemcpy(bp_cuda->input_deltas, deltas_device[0], batch_size * inputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
+        type* input_deltas = flatten_layer_back_propagation_cuda->input_deltas;
+
+        reorganize_deltas_cuda(deltas_device[0], input_deltas, batch_size, outputs_number);
     }
 
 #endif
@@ -335,12 +352,21 @@ void FlattenForwardPropagationCuda<Rank>::set(const Index& new_batch_size, Layer
 {
     if (!new_layer) return;
 
+    cout << "FlattenForwardPropagationCuda set:" << endl;
+
     layer = new_layer;
     batch_size = new_batch_size;
 
-    const size_t outputs_number = layer->get_outputs_number();
+    const Index inputs_number = layer->get_inputs_number();
+    const Index outputs_number = layer->get_outputs_number();
 
-    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(type));
+    if constexpr (Rank == 4)
+    {
+        //CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
+    }
+    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 }
 
 
@@ -367,6 +393,8 @@ void FlattenBackPropagationCuda<Rank>::set(const Index& new_batch_size, Layer* n
 {
     if (!new_layer) return;
 
+    cout << "FlattenBackPropagationCuda set:" << endl;
+
     layer = new_layer;
     batch_size = new_batch_size;
 
@@ -384,6 +412,8 @@ void FlattenBackPropagationCuda<Rank>::free()
 }
 
 #endif
+
+void reference_flatten_layer();
 
 }
 

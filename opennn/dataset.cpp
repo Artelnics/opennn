@@ -863,7 +863,7 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             count++;
 
     return count;
@@ -896,7 +896,7 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
     Index index = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             this_raw_variables[index++] = raw_variable;
 
     return this_raw_variables;
@@ -4427,7 +4427,7 @@ pair<type*, dimensions> Batch::get_target_pair() const
 
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,
-                     const vector<Index>& decoder_indices,
+                     //const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);

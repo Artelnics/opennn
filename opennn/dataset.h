@@ -628,7 +628,7 @@ struct BatchCuda
 
     void fill(const vector<Index>&,
               const vector<Index>&,
-              const vector<Index>&,
+              //const vector<Index>&,
               const vector<Index> & = vector<Index>());
 
     void print() const;
