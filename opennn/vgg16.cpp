@@ -25,6 +25,8 @@ namespace opennn
 
     void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     {
+        reference_all_layers();
+
         // Scaling 4D
         add_layer(make_unique<Scaling4d>(new_input_dimensions));
 

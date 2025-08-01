@@ -11,12 +11,15 @@
 #include "neural_network.h"
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
+#include "flatten_layer.h"
+#include "addition_layer_3d.h"
 
 namespace opennn
 {
 
 NeuralNetwork::NeuralNetwork()
 {
+    set_default();
 }
 
 
@@ -50,6 +53,14 @@ bool NeuralNetwork::validate_name(const string& name) const
         throw runtime_error("No layers can be added after a bounding layer.\n");
 
     return true;
+}
+
+
+void NeuralNetwork::reference_all_layers()
+{
+    reference_flatten_layer();
+    reference_addition_layer();
+    // Add more template layers
 }
 
 
@@ -226,6 +237,8 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 
 void NeuralNetwork::set_default()
 {
+    reference_all_layers();
+
     display = true;
 
     layer_input_indices.clear();
