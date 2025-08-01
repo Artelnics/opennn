@@ -175,6 +175,8 @@ public:
         if (input_dimensions.size() != 3)
             throw runtime_error("Input dimensions size is not 3.");
 
+        reference_all_layers();
+
         add_layer(make_unique<Scaling4d>(input_dimensions));
 
         const Index complexity_size = complexity_dimensions.size();
@@ -238,6 +240,8 @@ public:
             throw runtime_error("Input dimensions size must be 3.");
         if (blocks_per_stage.size() != initial_filters.size())
             throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
+
+        reference_all_layers();
 
         add_layer(make_unique<Scaling4d>(input_dimensions));
 
@@ -429,6 +433,8 @@ public:
                               const dimensions& output_dimensions) : NeuralNetwork()
     {
         layers.clear();
+
+        reference_all_layers();
 
         const Index vocabulary_size = input_dimensions[0];
         const Index sequence_length = input_dimensions[1];
