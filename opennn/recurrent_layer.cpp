@@ -131,6 +131,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index batch_size = input_pairs[0].second[0];
     const Index past_time_steps = input_pairs[0].second[2];
     const Index input_size = input_pairs[0].second[1];
+    const Index output_size = get_outputs_number();
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
 
@@ -139,33 +140,33 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
-    Tensor<type, 2>& current_activation_derivatives = recurrent_forward->current_activation_derivatives;
     Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
-
-    const Index output_size = input_weights.dimension(1);
 
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
     previous_hidden_states.setZero();
 
-    for(Index time_step = 0; time_step < past_time_steps; time_step++)
+    for (Index time_step = 0; time_step < past_time_steps; time_step++)
     {
-        // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-        outputs.device(*thread_pool_device)
-                = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
-                + previous_hidden_states.contract(recurrent_weights, axes(1,0))
-                + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
+        #pragma omp parallel for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < output_size; ++j)
+            {
+                type sum = biases(j);
 
-        //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
+                for (Index k = 0; k < input_size; ++k)
+                    sum += inputs(i, time_step, k) * input_weights(k, j);
 
-        current_activation_derivatives.device(*thread_pool_device) =
-            activation_derivatives.chip(time_step, 1);
+                for (Index k = 0; k < output_size; ++k)
+                    sum += previous_hidden_states(i, k) * recurrent_weights(k, j);
+
+                outputs(i, j) = sum;
+            }
+
+        Tensor<type, 2> current_activation_derivatives = activation_derivatives.chip(time_step, 1);
 
         calculate_activations(activation_function, outputs, current_activation_derivatives);
 
-        activation_derivatives.chip(time_step, 1) = current_activation_derivatives;
-
         hidden_states.chip(time_step, 1) = outputs;
-
         previous_hidden_states = outputs;
     }
 }
@@ -180,11 +181,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     const Index past_time_steps = input_pairs[0].second[2];
     const Index input_size = input_pairs[0].second[1];
     const Index output_size = get_outputs_number();
-
-    Tensor<type, 2> initial_hidden_states(batch_size, output_size);
-    initial_hidden_states.setZero();
-
-    Tensor<type, 2> previous_hidden_states(batch_size, output_size);
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
     TensorMap<Tensor<type, 2>> deltas(delta_pairs[0].first, batch_size, output_size);
@@ -202,49 +198,105 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
     Tensor<type, 1>& bias_deltas = recurrent_backward->bias_deltas;
-    Tensor<type, 2>& combination_deltas = recurrent_backward->combination_deltas;
-    Tensor<type, 2>& current_combination_deltas = recurrent_backward->current_combination_deltas;
 
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
 
     input_weight_deltas.setZero();
     recurrent_weight_deltas.setZero();
     bias_deltas.setZero();
-    current_combination_deltas.setZero();
 
-    for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
+    Tensor<type, 2> next_hidden_state_delta(batch_size, output_size);
+    next_hidden_state_delta.setZero();
+
+    for (Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
     {
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
-            current_deltas = current_combination_deltas;
+            current_deltas = next_hidden_state_delta;
 
-        combination_deltas.device(*thread_pool_device) =
-            current_deltas * activation_derivatives.chip(time_step, 1);
+        TensorMap<Tensor<type, 2>> current_act_derivs(activation_derivatives.data() + time_step * batch_size * output_size,
+                                                      batch_size, output_size);
 
-        // Need
+        #pragma omp parallel for
+        for (Index i = 0; i < current_deltas.size(); ++i)
+            current_deltas.data()[i] *= current_act_derivs.data()[i];
 
-        input_weight_deltas.device(*thread_pool_device) +=
-            inputs.chip(time_step, 1).contract(combination_deltas, axes(0,0));
+        TensorMap<Tensor<type, 2>> current_input(inputs.data() + time_step * batch_size * input_size,
+                                                 batch_size, input_size);
 
-        previous_hidden_states.device(*thread_pool_device) = (time_step == 0)
-            ? initial_hidden_states
-            : hidden_states.chip(time_step - 1, 1);
+        TensorMap<Tensor<type, 2>> prev_hidden((time_step == 0)
+                                                   ? Tensor<type, 2>(batch_size, output_size).setZero().data()
+                                                   : hidden_states.data() + (time_step - 1) * batch_size * output_size,
+                                               batch_size, output_size);
 
-        recurrent_weight_deltas.device(*thread_pool_device) +=
-            previous_hidden_states.contract(combination_deltas, axes(0,0));
+        #pragma omp parallel for
+        for (Index i = 0; i < input_size; ++i)
+            for (Index j = 0; j < output_size; ++j)
+            {
+                type sum = 0;
 
-        bias_deltas.device(*thread_pool_device) +=
-            combination_deltas.sum(array<Index, 1>({ 0 }));
+                for (Index k = 0; k < batch_size; ++k)
+                    sum += current_input(k, i) * current_deltas(k, j);
 
-        if(time_step == 0)
-            current_combination_deltas.setZero();
-        else
-            current_combination_deltas.device(*thread_pool_device)
-            = combination_deltas.contract(recurrent_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
+                #pragma omp atomic
+                input_weight_deltas(i, j) += sum;
+            }
 
-        input_deltas.chip(time_step, 1).device(*thread_pool_device)
-            = combination_deltas.contract(input_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
+        #pragma omp parallel for
+        for (Index i = 0; i < output_size; ++i)
+            for (Index j = 0; j < output_size; ++j)
+            {
+                type sum = 0;
+
+                for (Index k = 0; k < batch_size; ++k)
+                    sum += prev_hidden(k, i) * current_deltas(k, j);
+
+                #pragma omp atomic
+                recurrent_weight_deltas(i, j) += sum;
+            }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < output_size; ++j)
+        {
+            type sum = 0;
+
+            for (Index i = 0; i < batch_size; ++i)
+                sum += current_deltas(i, j);
+
+            #pragma omp atomic
+            bias_deltas(j) += sum;
+        }
+
+        if (time_step > 0)
+        {
+            #pragma omp parallel for
+            for (Index i = 0; i < batch_size; ++i)
+                for (Index j = 0; j < output_size; ++j)
+                {
+                    type sum = 0;
+
+                    for (Index k = 0; k < output_size; ++k)
+                        sum += current_deltas(i, k) * recurrent_weights(j, k);
+
+                    next_hidden_state_delta(i, j) = sum;
+                }
+        }
+
+        TensorMap<Tensor<type, 2>> current_input_delta(input_deltas.data() + time_step * batch_size * input_size,
+                                                       batch_size, input_size);
+
+        #pragma omp parallel for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < input_size; ++j)
+            {
+                type sum = 0;
+
+                for (Index k = 0; k < output_size; ++k)
+                    sum += current_deltas(i, k) * input_weights(j, k);
+
+                current_input_delta(i, j) = sum;
+            }
     }
 }
 

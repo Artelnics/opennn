@@ -407,6 +407,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
     const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
 
+    #pragma omp parallel for
     for(Index layer_index = 0; layer_index < layers_number; layer_index++)
     {
         Layer* layer = neural_network->get_layer(layer_index).get();
@@ -431,18 +432,18 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay[layer_index][parameter_index];
             Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay[layer_index][parameter_index];
 
-            gradient_exponential_decay.device(*thread_pool_device)
-                = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
+            for (Index i = 0; i < parameter_size; ++i)
+                gradient_exponential_decay(i) = gradient_exponential_decay(i) * beta_1 + gradient(i) * (type(1) - beta_1);
 
-            square_gradient_exponential_decay.device(*thread_pool_device)
-                = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
+            for (Index i = 0; i < parameter_size; ++i)
+                square_gradient_exponential_decay(i) = square_gradient_exponential_decay(i) * beta_2 + (gradient(i) * gradient(i)) * (type(1) - beta_2);
 
-            Tensor<type, 1> corrected_gradient_exponential_decay = gradient_exponential_decay / bias_correction_1;
-            Tensor<type, 1> corrected_square_gradient_exponential_decay = square_gradient_exponential_decay / bias_correction_2;
-
-            parameters.device(*thread_pool_device)
-                -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
-
+            for (Index i = 0; i < parameter_size; ++i)
+            {
+                const type corrected_gradient_exponential_decay  = gradient_exponential_decay(i) / bias_correction_1;
+                const type corrected_square_gradient_exponential_decay  = square_gradient_exponential_decay(i) / bias_correction_2;
+                parameters(i) -= learning_rate * corrected_gradient_exponential_decay / (sqrt(corrected_square_gradient_exponential_decay) + epsilon);
+            }
         }
     }
 }

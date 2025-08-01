@@ -243,11 +243,19 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
+    const Index inputs_number = weights.dimension(0);
 
-    combinations.device(*thread_pool_device)
-        = inputs.contract(weights, axes(1,0))
-        + biases.reshape(array_2(1, outputs_number))
-                .broadcast(array_2(batch_size, 1));
+    #pragma omp parallel for
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type sum = biases(j);
+
+            for (Index k = 0; k < inputs_number; ++k)
+                sum += inputs(i, k) * weights(k, j);
+
+            combinations(i, j) = sum;
+        }
 }
 
 
@@ -264,37 +272,69 @@ void Dense2d::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& lay
     Tensor<type, 1>& means = dense2d_forward_propagation->means;
     Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
 
-    const array<int, 1> reduction_axes = { 0 };
-    const array<Index, 2> reshape_dims = { 1, outputs_number };
-    const array<Index, 2> broadcast_dims = { batch_size, 1 };
-
     if (is_training)
     {
-        means.device(*thread_pool_device) = outputs.mean(reduction_axes);
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type mean_sum = 0;
 
-        standard_deviations.device(*thread_pool_device) = (
-                (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
-                .square()
-                .mean(reduction_axes) + epsilon
-                ).sqrt();
+            for (Index i = 0; i < batch_size; ++i)
+                mean_sum += outputs(i, j);
 
-        normalized_outputs.device(*thread_pool_device) =
-            (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
-            standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
+            means(j) = mean_sum / type(batch_size);
 
-        moving_means.device(*thread_pool_device) = moving_means * momentum + means * (type(1) - momentum);
-        moving_standard_deviations.device(*thread_pool_device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
+            type variance_sum = 0;
+            const type current_mean = means(j);
+
+            for (Index i = 0; i < batch_size; ++i)
+            {
+                type diff = outputs(i, j) - current_mean;
+                variance_sum += diff * diff;
+            }
+
+            standard_deviations(j) = sqrt(variance_sum / type(batch_size) + epsilon);
+        }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            const type mean_val = means(j);
+            const type std_dev_val = standard_deviations(j);
+
+            for (Index i = 0; i < batch_size; ++i)
+                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
+        }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            moving_means(j) = moving_means(j) * momentum + means(j) * (type(1) - momentum);
+            moving_standard_deviations(j) = moving_standard_deviations(j) * momentum + standard_deviations(j) * (type(1) - momentum);
+        }
     }
     else
     {
-        normalized_outputs.device(*thread_pool_device) =
-            (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
-            (moving_standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            const type mean_val = moving_means(j);
+            const type std_dev_val = moving_standard_deviations(j) + epsilon;
+
+            for (Index i = 0; i < batch_size; ++i)
+                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
+        }
     }
-    
-    outputs.device(*thread_pool_device) =
-        normalized_outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
-        offsets.reshape(reshape_dims).broadcast(broadcast_dims);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type scale_val = scales(j);
+        const type offset_val = offsets(j);
+
+        for (Index i = 0; i < batch_size; ++i)
+            outputs(i, j) = normalized_outputs(i, j) * scale_val + offset_val;
+    }
 }
 
 
@@ -306,6 +346,7 @@ void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& del
         static_cast<const Dense2dForwardPropagation*>(layer_forward_propagation.get());
 
     const Index batch_size = dense2d_forward_propagation->batch_size;
+    const Index outputs_number = get_outputs_number();
 
     const Tensor<type, 2>& normalized_outputs = dense2d_forward_propagation->normalized_outputs;
     const Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
@@ -316,23 +357,38 @@ void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& del
     Tensor<type, 1>& bn_scale_deltas = dense2d_back_propagation->bn_scale_deltas;
     Tensor<type, 1>& bn_offset_deltas = dense2d_back_propagation->bn_offset_deltas;
 
-    const array<int, 1> reduction_axes = { 0 };
-    const array<Index, 2> reshape_dims = { 1, get_outputs_number() };
-    const array<Index, 2> broadcast_dims = { batch_size, 1 };
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type offset_sum = 0;
+        type scale_sum = 0;
 
-    bn_offset_deltas.device(*thread_pool_device) = deltas.sum(reduction_axes);
-    bn_scale_deltas.device(*thread_pool_device) = (deltas * normalized_outputs).sum(reduction_axes);
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            offset_sum += deltas(i, j);
+            scale_sum += deltas(i, j) * normalized_outputs(i, j);
+        }
 
-    const auto inv_m = type(1) / batch_size;
+        bn_offset_deltas(j) = offset_sum;
+        bn_scale_deltas(j) = scale_sum;
+    }
 
-    deltas.device(*thread_pool_device) =
-        ((deltas * type(batch_size))
-            - bn_offset_deltas.reshape(reshape_dims).broadcast(broadcast_dims)
-            - normalized_outputs *
-            bn_scale_deltas.reshape(reshape_dims).broadcast(broadcast_dims)
-            ) * inv_m
-        / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims)
-        * scales.reshape(reshape_dims).broadcast(broadcast_dims);
+    const type inv_m = type(1) / type(batch_size);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type inv_std_dev = type(1) / standard_deviations(j);
+        const type scale_val = scales(j);
+        const type offset_delta = bn_offset_deltas(j);
+        const type scale_delta = bn_scale_deltas(j);
+
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            deltas(i, j) = ( (deltas(i, j) * type(batch_size)) - offset_delta - (normalized_outputs(i, j) * scale_delta) )
+            * inv_m * inv_std_dev * scale_val;
+        }
+    }
 }
 
 
@@ -382,25 +438,61 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
     
     Tensor<type, 2>& weight_deltas = dense2d_back_propagation->weight_deltas;
-
     Tensor<type, 1>& bias_deltas = dense2d_back_propagation->bias_deltas;
-
     const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
-
     Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
-    if(activation_function != "Softmax")
-        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    const Index batch_size = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
+    const Index outputs_number = deltas.dimension(1);
+
+    if (activation_function != "Softmax")
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            deltas.data()[i] *= activation_derivatives.data()[i];
+    }
 
     if (batch_normalization)
         apply_batch_normalization_backward(deltas, forward_propagation, back_propagation);
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array_1(0));
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type sum = 0;
 
-    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
+        for (Index i = 0; i < batch_size; ++i)
+            sum += deltas(i, j);
+
+        bias_deltas(j) = sum;
+    }
+
+    #pragma omp parallel for
+    for (Index i = 0; i < inputs_number; ++i)
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type sum = 0;
+
+            for (Index k = 0; k < batch_size; ++k)
+                sum += inputs(k, i) * deltas(k, j);
+
+            weight_deltas(i, j) = sum;
+        }
 
     if (!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < inputs_number; ++j)
+            {
+                type sum = 0;
+
+                for (Index k = 0; k < outputs_number; ++k)
+                    sum += deltas(i, k) * weights(j, k);
+
+                input_deltas(i, j) = sum;
+            }
+    }
 }
 
 
@@ -412,9 +504,9 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
     TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
     
+    const Index batch_size = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
-
     const Index weights_number = weights.size();
 
     // Forward propagation
@@ -436,35 +528,42 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    #pragma omp parallel for
+    for(Index i = 0; i < deltas.size(); ++i)
+        deltas.data()[i] *= activation_derivatives.data()[i];
 
-    Index weight_index = 0;
-
-    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
+    #pragma omp parallel for
+    for (Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
     {
-        const Tensor<type, 1> combination_delta_neuron = tensor_map_(deltas, neuron_index);
+        auto combination_delta_neuron = deltas.chip(neuron_index, 1);
 
-        for(Index input_index = 0; input_index < inputs_number; input_index++)
+        for (Index input_index = 0; input_index < inputs_number; ++input_index)
         {
-            const Tensor<type, 1> input = inputs.chip(input_index,1);
-
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
-                = tensor_map(squared_errors_Jacobian, weight_index++);
-
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device)
-                = combination_delta_neuron * input;
+            auto input_col = inputs.chip(input_index, 1);
+            Index weight_param_index = neuron_index * inputs_number + input_index;
+            auto jacobian_col_for_weight = squared_errors_Jacobian.chip(weight_param_index, 1);
+            jacobian_col_for_weight = combination_delta_neuron * input_col;
         }
 
-        const Index bias_index = weights_number + neuron_index;
-
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias
-            = tensor_map(squared_errors_Jacobian, bias_index);
-
-        squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
+        Index bias_param_index = weights_number + neuron_index;
+        auto jacobian_col_for_bias = squared_errors_Jacobian.chip(bias_param_index, 1);
+        jacobian_col_for_bias = combination_delta_neuron;
     }
 
-    if(!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+    if (!is_first_layer)
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < inputs_number; ++j)
+            {
+                type sum = 0;
+
+                for (Index k = 0; k < outputs_number; ++k)
+                    sum += deltas(i, k) * weights(j, k);
+
+                input_deltas(i, j) = sum;
+            }
+    }
 }
 
 
@@ -761,21 +860,43 @@ void Dense2dLayerBackPropagationLM::print() const
 
 void Dense2d::normalization(Tensor<type, 1> &means,
                             Tensor<type, 1> &standard_deviations,
-                            const Tensor<type, 2> &inputs,
                             Tensor<type, 2> &outputs) const
 {
-    const array<Index, 2> rows({outputs.dimension(0), 1});
+    const Index batch_size = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
 
-    const array<int, 1> axis_x({0});
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type mean_sum = 0;
 
-    means.device(*thread_pool_device) = outputs.mean(axis_x);
+        for (Index i = 0; i < batch_size; ++i)
+            mean_sum += outputs(i, j);
 
-    standard_deviations.device(*thread_pool_device)
-        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+        means(j) = mean_sum / type(batch_size);
 
-    outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
-        //shifts.broadcast(rows);
-        //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
+        type variance_sum = 0;
+        const type current_mean = means(j);
+
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            type diff = outputs(i, j) - current_mean;
+            variance_sum += diff * diff;
+        }
+
+        standard_deviations(j) = sqrt(variance_sum / type(batch_size));
+    }
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type current_mean = means(j);
+        const type current_std_dev = standard_deviations(j);
+
+        if (std::abs(current_std_dev) > static_cast<type>(1.0e-9))
+            for (Index i = 0; i < batch_size; ++i)
+                outputs(i, j) = (outputs(i, j) - current_mean) / current_std_dev;
+    }
 }
 
 

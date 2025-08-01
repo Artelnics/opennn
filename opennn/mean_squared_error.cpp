@@ -52,9 +52,22 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     if(outputs.dimension(1) != targets.dimension(1))
         throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    const Index size = errors.size();
+    type* errors_data = errors.data();
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        errors_data[i] = outputs_data[i] - targets_data[i];
+
+    type sum_of_squares = type(0);
+
+    #pragma omp parallel for reduction(+:sum_of_squares)
+    for (Index i = 0; i < size; ++i)
+        sum_of_squares += errors_data[i] * errors_data[i];
+
+    error() = sum_of_squares / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -72,7 +85,15 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() / type(samples_number * outputs_number);
+    const Index size = squared_errors.size();
+    const type* squared_errors_data = squared_errors.data();
+    type sum_result = type(0);
+
+    #pragma omp parallel for reduction(+:sum_result)
+    for (Index i = 0; i < size; ++i)
+        sum_result += squared_errors_data[i] * squared_errors_data[i];
+
+    error() = sum_result / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -96,7 +117,13 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * samples_number);
+    const Index size = errors.size();
+    const type* errors_data = errors.data();
+    type* deltas_data = output_deltas.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = errors_data[i] / type(0.5 * outputs_number * samples_number);
 }
 
 
@@ -111,8 +138,15 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    const Index size = errors.size();
+    const type* errors_data = errors.data();
+    type* deltas_data = output_deltas.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = errors_data[i];
+
+    divide_columns(output_deltas, squared_errors);
 }
 
 
@@ -130,7 +164,18 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0))*coefficient;
+    const Index rows_number = squared_errors_jacobian.dimension(0);
+    const Index cols_number = squared_errors_jacobian.dimension(1);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < cols_number; ++j)
+    {
+        type sum = type(0);
+        for (Index i = 0; i < rows_number; ++i)
+            sum += squared_errors_jacobian(i, j) * squared_errors(i);
+
+        gradient(j) = sum * coefficient;
+    }
 }
 
 
@@ -148,7 +193,23 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
+    const Index rows = squared_errors_jacobian.dimension(0);
+    const Index cols = squared_errors_jacobian.dimension(1);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < cols; ++i)
+    {
+        for (Index j = i; j < cols; ++j)
+        {
+            type sum = type(0);
+            for (Index k = 0; k < rows; ++k)
+                sum += squared_errors_jacobian(k, i) * squared_errors_jacobian(k, j);
+
+            hessian(i, j) = sum * coefficient;
+            if (i != j)
+                hessian(j, i) = hessian(i, j);
+        }
+    }
 }
 
 

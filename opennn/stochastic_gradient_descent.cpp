@@ -133,6 +133,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     const Index layers_number = neural_network->get_layers_number();
 
+    const type learning_rate = initial_learning_rate / (type(1) + type(optimization_data.iteration) * initial_decay);
+
+    #pragma omp parallel for
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
@@ -145,7 +148,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
         const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        // #pragma omp parallel for #@todo check pragma vs thread_pool_device
         for(Index j = 0; j < layer_parameter_pairs.size(); j++)
         {
             type* parameter_data = layer_parameter_pairs[j].first;
@@ -162,22 +164,30 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
             if (momentum <= type(0))
             {
-                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
-                parameters.device(*thread_pool_device) += parameters_increment;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    parameters_increment(k) = gradient(k) * (-learning_rate);
+                    parameters(k) += parameters_increment(k);
+                }
             }
             else if (momentum > type(0) && !nesterov)
             {
-                parameters_increment.device(*thread_pool_device) =
-                    gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    parameters_increment(k) = gradient(k) * (-learning_rate) + momentum * last_parameters_increment(k);
+                    last_parameters_increment(k) = parameters_increment(k);
+                    parameters(k) += parameters_increment(k);
+                }
             }
             else if (momentum > type(0) && nesterov)
             {
-                parameters_increment.device(*thread_pool_device)
-                = gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    const type last_increment = last_parameters_increment(k);
+                    parameters_increment(k) = gradient(k) * (-learning_rate) + momentum * last_increment;
+                    last_parameters_increment(k) = parameters_increment(k);
+                    parameters(k) += momentum * parameters_increment(k) - (type(1) + momentum) * last_increment;
+                }
             }
         }
     }

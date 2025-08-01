@@ -62,7 +62,6 @@ public:
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            const bool&) override
     {
-
         if (input_pairs.size() != 2)
             throw runtime_error(name + " layer requires exactly two inputs.");
 
@@ -76,8 +75,14 @@ public:
             static_cast<AdditionForwardPropagation<Rank>*>(layer_forward_propagation.get());
 
         Tensor<type, Rank>& outputs = this_forward_propagation->outputs;
-        outputs.device(*thread_pool_device) = input_1 + input_2;
 
+        type* outputs_data = outputs.data();
+        const type* input_1_data = input_1.data();
+        const type* input_2_data = input_2.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < outputs.size(); ++i)
+            outputs_data[i] = input_1_data[i] + input_2_data[i];
     }
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
@@ -93,8 +98,17 @@ public:
         AdditionBackPropagation<Rank>* this_back_propagation =
             static_cast<AdditionBackPropagation<Rank>*>(back_propagation.get());
 
-        this_back_propagation->input_1_derivatives.device(*thread_pool_device) = deltas;
-        this_back_propagation->input_2_derivatives.device(*thread_pool_device) = deltas;
+        const type* deltas_data = deltas.data();
+        type* derivatives_1_data = this_back_propagation->input_1_derivatives.data();
+        type* derivatives_2_data = this_back_propagation->input_2_derivatives.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            derivatives_1_data[i] = deltas_data[i];
+
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            derivatives_2_data[i] = deltas_data[i];
     }
 
     void from_XML(const XMLDocument& document) override
