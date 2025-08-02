@@ -37,8 +37,8 @@ int main()
 
         //TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
-        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", false, false);
-         TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
+        TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
         cout << "dataset leido" << endl;
@@ -49,7 +49,7 @@ int main()
 
         time_series_dataset.print();
 
-        //time_series_dataset.scale_data();
+        time_series_dataset.scale_data();
         cout << "-----------------------------------" << endl;
 
         // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -82,12 +82,12 @@ int main()
 
         // cout << "------------------------------------------" << endl;
 
-        // ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
-        //                                   {},
-        //                                   {time_series_dataset.get_variables_number("Target")});
+        ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
+                                          {},
+                                          {time_series_dataset.get_variables_number("Target")});
 
-        // Layer* layer_ptr = forecasting_network.get_first("Recurrent");
-        // Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
+        Layer* layer_ptr = forecasting_network.get_first("Recurrent");
+        Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
         // recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
@@ -95,12 +95,12 @@ int main()
         //                                   {},
         //                                   {1});
 
-        // forecasting_network.print();
+        forecasting_network.print();
 
-        // cout << "------------------------------------------" << endl;
+        cout << "------------------------------------------" << endl;
 
         /// Calcular gradiente
-        // NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
+        NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
         // const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
         // const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
@@ -112,18 +112,21 @@ int main()
         // cout << "diferencia" << endl;
         // cout << gradient.abs() - numerical_gradient.abs() << endl;
 
+        // cout << "------------------------------------------" << endl;
+
         /// Entrenamiento
-        // TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
-        // training_strategy.set_loss_index("MeanSquaredError");
+        TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
+        training_strategy.set_loss_index("MeanSquaredError");
         // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
-        // AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        // adam->set_batch_size(800);
-        // adam->set_maximum_epochs_number(1000);
-        // training_strategy.train();
+        AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_batch_size(800);
+        adam->set_maximum_epochs_number(1000);
 
-        // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+        training_strategy.train();
+
+        cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
         //Tensor<type, 3> inputs(1,1,2);
         // inputs.setValues({{{0}, {0.0998334166468282}}});

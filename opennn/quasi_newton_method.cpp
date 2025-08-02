@@ -115,36 +115,52 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 
     Tensor<type, 1>& BFGS = optimization_data.BFGS;
 
-    Tensor<type, 0> parameters_difference_dot_gradient_difference;
-    Tensor<type, 0> gradient_dot_hessian_dot_gradient;
+    const Index n = parameters_difference.size();
 
-    parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = parameters_difference.contract(gradient_difference, axes(0,0));
+    type parameters_difference_dot_gradient_difference = 0.0;
 
-    old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, axes(0,0));
+    #pragma omp parallel for reduction(+:parameters_difference_dot_gradient_difference)
+    for (Index i = 0; i < n; ++i)
+        parameters_difference_dot_gradient_difference += parameters_difference(i) * gradient_difference(i);
 
-    gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        type sum = 0.0;
+        for (Index j = 0; j < n; ++j)
+            sum += old_inverse_hessian(i, j) * gradient_difference(j);
 
-    BFGS.device(*thread_pool_device)
-            = parameters_difference/parameters_difference_dot_gradient_difference(0)
-            - old_inverse_hessian_dot_gradient_difference/gradient_dot_hessian_dot_gradient(0);
+        old_inverse_hessian_dot_gradient_difference(i) = sum;
+    }
+
+    type gradient_dot_hessian_dot_gradient = 0.0;
+
+    #pragma omp parallel for reduction(+:gradient_dot_hessian_dot_gradient)
+    for (Index i = 0; i < n; ++i)
+        gradient_dot_hessian_dot_gradient += gradient_difference(i) * old_inverse_hessian_dot_gradient_difference(i);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+        BFGS(i) = (parameters_difference(i) / parameters_difference_dot_gradient_difference)
+                  - (old_inverse_hessian_dot_gradient_difference(i) / gradient_dot_hessian_dot_gradient);
 
     // Calculate approximation
 
-    inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
+    const Tensor<type, 2> parameters_difference_kron = self_kronecker_product(parameters_difference);
+    const Tensor<type, 2> old_inverse_hessian_dot_gradient_difference_kron = self_kronecker_product(old_inverse_hessian_dot_gradient_difference);
+    const Tensor<type, 2> BFGS_kron = self_kronecker_product(BFGS);
 
-    inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device.get(), parameters_difference)
-        / parameters_difference_dot_gradient_difference(0);
-
-    inverse_hessian.device(*thread_pool_device)
-        -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
-        / gradient_dot_hessian_dot_gradient(0);
-
-    inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device.get(), BFGS)*(gradient_dot_hessian_dot_gradient(0));
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < n; ++i)
+    {
+        for (Index j = 0; j < n; ++j)
+        {
+            inverse_hessian(i, j) = old_inverse_hessian(i, j)
+                + (parameters_difference_kron(i, j) / parameters_difference_dot_gradient_difference)
+                - (old_inverse_hessian_dot_gradient_difference_kron(i, j) / gradient_dot_hessian_dot_gradient)
+                + (BFGS_kron(i, j) * gradient_dot_hessian_dot_gradient);
+        }
+    }
 }
 
 
@@ -171,13 +187,15 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     Tensor<type, 2>& inverse_hessian = optimization_data.inverse_hessian;
 
-    Tensor<type, 0>& training_slope = optimization_data.training_slope;
+    const Index n = parameters.size();
 
-    parameters_difference.device(*thread_pool_device) = parameters - old_parameters;
-
-    gradient_difference.device(*thread_pool_device) = gradient - old_gradient;
-
-    old_parameters.device(*thread_pool_device) = parameters; // do not move above
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        parameters_difference(i) = parameters(i) - old_parameters(i);
+        gradient_difference(i) = gradient(i) - old_gradient(i);
+        old_parameters(i) = parameters(i);
+    }
 
     // Get training direction
 
@@ -185,12 +203,30 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         ? set_identity(inverse_hessian)
         : calculate_inverse_hessian(optimization_data);
 
-    training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, axes(1,0));
+    #pragma omp parallel for
+    for (Index i = 0; i < n; ++i)
+    {
+        type sum = 0.0;
+        for (Index j = 0; j < n; ++j)
+            sum += inverse_hessian(i, j) * gradient(j);
 
-    training_slope.device(*thread_pool_device) = gradient.contract(training_direction, axes(0,0));
+        training_direction(i) = -sum;
+    }
 
-    if(training_slope(0) >= type(0))
-        training_direction.device(*thread_pool_device) = -gradient;
+    type training_slope_local = 0.0;
+
+    #pragma omp parallel for reduction(+:training_slope_local)
+    for (Index i = 0; i < n; ++i)
+        training_slope_local += gradient(i) * training_direction(i);
+
+    optimization_data.training_slope() = training_slope_local;
+
+    if (optimization_data.training_slope() >= type(0))
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+            training_direction(i) = -gradient(i);
+    }
 
     // Get learning rate
 
@@ -212,10 +248,14 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     if(abs(optimization_data.learning_rate) > type(0))
     {
-        optimization_data.parameters_increment.device(*thread_pool_device)
-                = optimization_data.training_direction*optimization_data.learning_rate;
+        const type lr = optimization_data.learning_rate;
 
-        parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+        {
+            parameters_increment(i) = training_direction(i) * lr;
+            parameters(i) += parameters_increment(i);
+        }
     }
     else
     {
@@ -588,6 +628,15 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
     const Tensor<type, 1>& training_direction = optimization_data.training_direction;
 
+    const Index n = parameters.size();
+
+    auto calculate_potential_parameters = [&](type alpha)
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < n; ++i)
+            potential_parameters(i) = parameters(i) + training_direction(i) * alpha;
+    };
+
     // Left point
 
     triplet.A = { type(0), back_propagation.loss };
@@ -602,9 +651,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
         triplet.B.first = optimization_data.initial_learning_rate*type(count);
 
-        potential_parameters.device(*thread_pool_device)
-                = parameters + training_direction * triplet.B.first;
-
+        calculate_potential_parameters(triplet.B.first);
 
         neural_network->forward_propagate(batch.get_input_pairs(),
             potential_parameters, forward_propagation);
@@ -621,8 +668,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
         triplet.B.first *= golden_ratio;
 
-        potential_parameters.device(*thread_pool_device)
-                = parameters + training_direction*triplet.B.first;
+        calculate_potential_parameters(triplet.B.first);
 
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters,
@@ -639,8 +685,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
             triplet.B.first *= golden_ratio;
 
-            potential_parameters.device(*thread_pool_device)
-                    = parameters + training_direction*triplet.B.first;
+            calculate_potential_parameters(triplet.B.first);
 
             neural_network->forward_propagate(batch.get_input_pairs(),
                                               potential_parameters,
@@ -655,8 +700,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
     {
         triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
 
-        potential_parameters.device(*thread_pool_device)
-                = parameters + training_direction*triplet.U.first;
+        calculate_potential_parameters(triplet.U.first);
 
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters,
@@ -672,8 +716,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
             triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
 
-            potential_parameters.device(*thread_pool_device)
-                    = parameters + training_direction*triplet.U.first;
+            calculate_potential_parameters(triplet.U.first);
 
             neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
 
@@ -736,7 +779,9 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
 
     for (int i = 0; i < 20; ++i)
     {
-        potential_parameters.device(*thread_pool_device) = parameters + training_direction * alpha;
+        #pragma omp parallel for
+        for (Index j = 0; j < parameters.size(); ++j)
+            potential_parameters(j) = parameters(j) + training_direction(j) * alpha;
 
         neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
         loss_index->calculate_error(batch, forward_propagation, back_propagation);

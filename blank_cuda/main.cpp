@@ -44,11 +44,11 @@ int main()
 
         // Data set
         /*
-        const Index samples_number = 6;
+        const Index samples_number = 2;
 
         const Index image_height = 3;
         const Index image_width = 3;
-        const Index channels = 3;
+        const Index channels = 1;
         const Index targets = 2;
 
         ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
@@ -79,29 +79,29 @@ int main()
 
         // Neural network
 
-        //ImageClassificationNetwork neural_network(
-        //    input_dimensions,
-        //    { 64,64,128,128,32 },
-        //    output_dimensions);
+        ImageClassificationNetwork neural_network(
+            input_dimensions,
+            { 64, 64, 128, 128, 32 },
+            output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);
 
-        const vector<Index> blocks_per_stage = { 1, 1};
-        const dimensions initial_filters = { 128, 128 };
+        //const vector<Index> blocks_per_stage = { 1, 1};
+        //const dimensions initial_filters = { 128, 128 };
 
-        SimpleResNet neural_network(input_dimensions, blocks_per_stage, initial_filters, output_dimensions);
+        //SimpleResNet neural_network(input_dimensions, blocks_per_stage, initial_filters, output_dimensions);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.set_loss_index("CrossEntropyError2d");
-        training_strategy.get_loss_index()->set_regularization_method("NoRegularization");
+        training_strategy.get_loss_index()->set_regularization_method("None");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(32);
-        adam->set_maximum_epochs_number(15);
+        adam->set_batch_size(16);
+        adam->set_maximum_epochs_number(5);
 
-        training_strategy.perform_training_cuda();
+        training_strategy.train_cuda();
         
         cudaDeviceSynchronize();
         

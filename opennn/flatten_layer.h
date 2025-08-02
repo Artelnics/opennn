@@ -18,13 +18,21 @@ namespace opennn
 template<int Rank> struct FlattenForwardPropagation;
 template<int Rank> struct FlattenBackPropagation;
 
+#ifdef OPENNN_CUDA
+
+template<int Rank> struct FlattenForwardPropagationCuda;
+template<int Rank> struct FlattenBackPropagationCuda;
+
+#endif // OPENNN_CUDA
+
+
 template<int Rank>
 class Flatten : public Layer
 {
 
 public:
 
-    Flatten(const dimensions& new_input_dimensions = {})
+    Flatten(const dimensions& new_input_dimensions = {} )
     {
         set(new_input_dimensions);
     }
@@ -72,12 +80,14 @@ public:
         return input_dimensions[2];
     }
 
+
     void set(const dimensions& new_input_dimensions)
     {
-        if (new_input_dimensions.size() != Rank)
+        if (new_input_dimensions.size() != Rank - 1)
             throw runtime_error("Error: Input dimensions size must match layer Rank in FlattenLayer::set().");
 
-        name = "Flatten2d";
+        name = "Flatten" + to_string(Rank) + "d";
+
         set_label("flatten_layer");
 
         input_dimensions = new_input_dimensions;
@@ -163,14 +173,50 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<float*>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                const bool&) override;
+    void forward_propagate_cuda(const vector<float*>& inputs_device,
+                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                const bool&)
+    {
+        FlattenForwardPropagationCuda<Rank>* fp_cuda =
+            static_cast<FlattenForwardPropagationCuda<Rank>*>(forward_propagation_cuda.get());
+
+        const Index batch_size = fp_cuda->batch_size;
+        const Index outputs_number = get_outputs_number();
+
+        if constexpr (Rank == 4)
+        {
+            const Index height = get_input_height();
+            const Index width = get_input_width();
+            const Index channels = get_input_channels();
+
+            type* reordered_inputs = fp_cuda->reordered_inputs;
+            type* outputs_device = fp_cuda->outputs;
+
+            invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width);
+
+            reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
+            //reorganize_inputs_cuda(inputs_device[0], outputs_device, batch_size, outputs_number);
+        }
+        else
+            CHECK_CUDA(cudaMemcpy(fp_cuda->outputs, inputs_device[0], batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
+    }
+
 
     void back_propagate_cuda(const vector<float*>&,
-                             const vector<float*>&,
+                             const vector<float*>& deltas_device,
                              unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+                             unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
+    {
+        FlattenBackPropagationCuda<Rank>* flatten_layer_back_propagation_cuda =
+            static_cast<FlattenBackPropagationCuda<Rank>*>(back_propagation_cuda.get());
+
+        const Index batch_size = flatten_layer_back_propagation_cuda->batch_size;
+        const Index outputs_number = get_outputs_number();
+
+        type* input_deltas = flatten_layer_back_propagation_cuda->input_deltas;
+
+        reorganize_deltas_cuda(deltas_device[0], input_deltas, batch_size, outputs_number);
+    }
 
 #endif
 
@@ -258,6 +304,7 @@ struct FlattenBackPropagation : LayerBackPropagation
         input_deltas.resize(resize_dimensions);
     }
 
+
     void print() const override
     {
         cout << "Flatten Input derivatives:" << endl << input_deltas.dimensions() << endl;
@@ -269,13 +316,12 @@ struct FlattenBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
+template<int Rank>
 struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    FlattenForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    FlattenForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr) override;
-
-    void print() const override;
+    void set(const Index & = 0, Layer* = nullptr) override;
 
     void free() override;
 
@@ -283,19 +329,91 @@ struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
+template<int Rank>
 struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
 {
-    FlattenBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    FlattenBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    void set(const Index& = 0, Layer* = nullptr) override;
-
-    void print() const override;
+    void set(const Index & = 0, Layer* = nullptr) override;
 
     void free() override;
 };
 
+
+template<int Rank>
+FlattenForwardPropagationCuda<Rank>::FlattenForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+{
+    set(new_batch_size, new_layer);
+}
+
+
+template<int Rank>
+void FlattenForwardPropagationCuda<Rank>::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (!new_layer) return;
+
+    cout << "FlattenForwardPropagationCuda set:" << endl;
+
+    layer = new_layer;
+    batch_size = new_batch_size;
+
+    const Index inputs_number = layer->get_inputs_number();
+    const Index outputs_number = layer->get_outputs_number();
+
+    if constexpr (Rank == 4)
+    {
+        //CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
+        CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
+    }
+    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
+}
+
+
+template<int Rank>
+void FlattenForwardPropagationCuda<Rank>::free()
+{
+    if (outputs) cudaFree(outputs);
+    outputs = nullptr;
+
+    if (reordered_inputs) cudaFree(reordered_inputs);
+    reordered_inputs = nullptr;
+}
+
+
+template<int Rank>
+FlattenBackPropagationCuda<Rank>::FlattenBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+{
+    set(new_batch_size, new_layer);
+}
+
+
+template<int Rank>
+void FlattenBackPropagationCuda<Rank>::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (!new_layer) return;
+
+    cout << "FlattenBackPropagationCuda set:" << endl;
+
+    layer = new_layer;
+    batch_size = new_batch_size;
+
+    const size_t inputs_number = layer->get_inputs_number();
+
+    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(type));
+}
+
+
+template<int Rank>
+void FlattenBackPropagationCuda<Rank>::free()
+{
+    if (input_deltas) cudaFree(input_deltas);
+    input_deltas = nullptr;
+}
+
 #endif
 
+void reference_flatten_layer();
 
 }
 

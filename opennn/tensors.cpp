@@ -45,31 +45,41 @@ bool get_random_bool()
 }
 
 
-void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
-                       Tensor<type, 3>& tensor,
-                       const Tensor<type, 1>& vector)
+void multiply_matrices(Tensor<type, 3>& tensor, const Tensor<type, 1>& vector)
 {
+    const Index d0 = tensor.dimension(0);
+    const Index d1 = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < depth; i++)
+    #pragma omp parallel for
+    for (Index k = 0; k < depth; ++k)
     {
-        TensorMap<Tensor<type, 2>> matrix = tensor_map(tensor, i);
-
-        matrix.device(*thread_pool_device) = matrix * vector(i);
+        const type multiplier = vector(k);
+        for (Index i = 0; i < d0; ++i)
+            for (Index j = 0; j < d1; ++j)
+                tensor(i, j, k) *= multiplier;
     }
 }
 
 
-void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
+void multiply_matrices(Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 {
+    const Index d0 = tensor.dimension(0);
     const Index depth = tensor.dimension(2);
+    const Index m_columns = matrix.dimension(1);
 
-    for(Index i = 0; i < depth; i++)
+    Tensor<type, 3> result(d0, m_columns, depth);
+
+    #pragma omp parallel for
+    for (Index k = 0; k < depth; ++k)
     {
-        TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
+        auto input_slice = tensor.chip(k, 2);
+        auto result_slice = result.chip(k, 2);
 
-        slice.device(*thread_pool_device) = slice * matrix;
+        result_slice = input_slice.contract(matrix, axes(1, 0));
     }
+
+    tensor = result;
 }
 
 
@@ -122,52 +132,58 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 
 // }
 
 
-Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+Tensor<type, 2> self_kronecker_product(const Tensor<type, 1>& vector)
 {
     const Index columns_number = vector.size();
 
     Tensor<type, 2> matrix(columns_number, columns_number);
 
+    #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = vector * vector(i);
+        column = vector * vector(i);
     }
 
     return matrix;
 }
 
 
-void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+void divide_columns(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
-    const Index columns_number = matrix.dimension(1);
-    Tensor<type, 1> corrected_vector = vector;
+    const Index rows = matrix.dimension(0);
+    const Index cols = matrix.dimension(1);
 
-    for(Index i = 0; i < columns_number; i++)
+    #pragma omp parallel for
+    for (Index i = 0; i < rows; ++i)
     {
-        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
-        auto column = matrix.chip(i, 1);  // chip slices along dimension 1
+        type divisor = vector(i);
 
-        for(Index j = 0; j < vector.size(); j++)
-            if(vector(j) == 0)
-                corrected_vector(j) = 1;
+        if (abs(divisor) < static_cast<type>(1.0e-9))
+            divisor = type(1);
 
-        column.device(*thread_pool_device) = column / corrected_vector;
+        for (Index j = 0; j < cols; ++j)
+            matrix(i, j) /= divisor;
     }
 }
 
 
-void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
+void sum_matrices(const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
+    const Index d0 = tensor.dimension(0);
+    const Index d1 = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
-    for(Index i = 0; i < depth; i++)
+    #pragma omp parallel for
+    for (Index k = 0; k < depth; ++k)
     {
-        TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
+        const type value_to_add = vector(k);
 
-        matrix.device(*thread_pool_device) = matrix + vector(i);
+        for (Index i = 0; i < d0; ++i)
+            for (Index j = 0; j < d1; ++j)
+                tensor(i, j, k) += value_to_add;
     }
 }
 

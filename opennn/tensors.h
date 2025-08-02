@@ -83,10 +83,10 @@ type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
-void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
+void sum_matrices(const Tensor<type, 1>&, Tensor<type, 3>&);
 
-void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
-void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
+void multiply_matrices(Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(Tensor<type, 3>&, const Tensor<type, 2>&);
 
 void set_identity(Tensor<type, 2>&);
 
@@ -94,8 +94,7 @@ void sum_diagonal(Tensor<type, 2>&, const type&);
 
 
 template <typename T, Index Rank, typename CTensor>
-void batch_matrix_multiplication(const ThreadPoolDevice* device,
-                                 const Tensor<T, Rank>& A,
+void batch_matrix_multiplication(const Tensor<T, Rank>& A,
                                  const Tensor<T, Rank>& B,
                                  CTensor& C,
                                  const Eigen::array<IndexPair<Index>, 1>& contraction_axes)
@@ -104,7 +103,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* device,
 
     if constexpr (Rank == 2)
     {
-        C.device(*device) = A.contract(B, contraction_axes);
+        C = A.contract(B, contraction_axes);
         return;
     }
 
@@ -141,9 +140,9 @@ void batch_matrix_multiplication(const ThreadPoolDevice* device,
     }
 }
 
-Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
+Tensor<type, 2> self_kronecker_product(const Tensor<type, 1>&);
 
-void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
+void divide_columns(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
 bool is_binary(const Tensor<type, Rank>& tensor)

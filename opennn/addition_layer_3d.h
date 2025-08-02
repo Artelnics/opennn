@@ -18,6 +18,11 @@ namespace opennn
 template<int Rank> struct AdditionForwardPropagation;
 template<int Rank> struct AdditionBackPropagation;
 
+#ifdef OPENNN_CUDA
+template<int Rank> struct AdditionForwardPropagationCuda;
+template<int Rank> struct AdditionBackPropagationCuda;
+#endif
+
 template<int Rank>
 class Addition : public Layer
 {
@@ -57,7 +62,6 @@ public:
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            const bool&) override
     {
-
         if (input_pairs.size() != 2)
             throw runtime_error(name + " layer requires exactly two inputs.");
 
@@ -71,8 +75,14 @@ public:
             static_cast<AdditionForwardPropagation<Rank>*>(layer_forward_propagation.get());
 
         Tensor<type, Rank>& outputs = this_forward_propagation->outputs;
-        outputs.device(*thread_pool_device) = input_1 + input_2;
 
+        type* outputs_data = outputs.data();
+        const type* input_1_data = input_1.data();
+        const type* input_2_data = input_2.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < outputs.size(); ++i)
+            outputs_data[i] = input_1_data[i] + input_2_data[i];
     }
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
@@ -88,10 +98,17 @@ public:
         AdditionBackPropagation<Rank>* this_back_propagation =
             static_cast<AdditionBackPropagation<Rank>*>(back_propagation.get());
 
-        // The gradient of an addition is 1, so the incoming delta is passed back to both inputs.
-        this_back_propagation->input_1_derivatives.device(*thread_pool_device) = deltas;
-        this_back_propagation->input_2_derivatives.device(*thread_pool_device) = deltas;
+        const type* deltas_data = deltas.data();
+        type* derivatives_1_data = this_back_propagation->input_1_derivatives.data();
+        type* derivatives_2_data = this_back_propagation->input_2_derivatives.data();
 
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            derivatives_1_data[i] = deltas_data[i];
+
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            derivatives_2_data[i] = deltas_data[i];
     }
 
     void from_XML(const XMLDocument& document) override
@@ -120,14 +137,41 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<float*>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                const bool&) override;
+    void forward_propagate_cuda(const vector<float*>& inputs_device,
+                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                const bool&) override
+    {
+        if (inputs_device.size() != 2)
+            throw runtime_error(name + " layer requires exactly two inputs for CUDA propagation.");
+
+        AdditionForwardPropagationCuda<Rank>* this_forward_propagation =
+            static_cast<AdditionForwardPropagationCuda<Rank>*>(forward_propagation_cuda.get());
+
+        const dimensions input_dims = get_input_dimensions();
+        const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
+        const size_t total_elements = static_cast<size_t>(this_forward_propagation->batch_size) * layer_elements;
+
+        addition_cuda(total_elements, inputs_device[0], inputs_device[1], this_forward_propagation->outputs);
+    }
 
     void back_propagate_cuda(const vector<float*>&,
-                             const vector<float*>&,
+                             const vector<float*>& deltas_device,
                              unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+                             unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const override
+    {
+        if (deltas_device.size() != 1)
+            throw runtime_error(name + " backpropagation requires exactly one delta input for CUDA.");
+
+        AdditionBackPropagationCuda<Rank>* this_back_propagation =
+            static_cast<AdditionBackPropagationCuda<Rank>*>(back_propagation_cuda.get());
+
+        const dimensions input_dims = get_input_dimensions();
+        const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
+        const size_t total_elements = static_cast<size_t>(this_back_propagation->batch_size) * layer_elements;
+
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->inputs_1_derivatives, deltas_device[0], total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->inputs_2_derivatives, deltas_device[0], total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+    }
 
 #endif
 
@@ -145,6 +189,7 @@ struct AdditionForwardPropagation : LayerForwardPropagation
     {
         set(new_batch_size, new_layer);
     }
+
 
     pair<type*, dimensions> get_output_pair() const override
     {
@@ -175,9 +220,10 @@ struct AdditionForwardPropagation : LayerForwardPropagation
         outputs.resize(DSizes<Index, Rank>(full_dimensions));
     }
 
+
     void print() const override
     {
-
+        // @todo
     }
 
     Tensor<type, Rank> outputs;
@@ -192,6 +238,7 @@ struct AdditionBackPropagation : LayerBackPropagation
     {
         set(new_batch_size, new_layer);
     }
+
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override
     {
@@ -224,6 +271,7 @@ struct AdditionBackPropagation : LayerBackPropagation
         // input_2_derivatives.resize(d_sizes);
     }
 
+
     void print() const override
     {
 
@@ -236,38 +284,103 @@ struct AdditionBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-struct Addition3dForwardPropagationCuda : public LayerForwardPropagationCuda
+template<int Rank>
+struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    Addition3dForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    AdditionForwardPropagationCuda(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+        : LayerForwardPropagationCuda()
+    {
+        set(new_batch_size, new_layer);
+    }
 
-    void set(const Index & = 0, Layer* = nullptr) override;
 
-    void print() const override;
-    
-    void free() override;
+    void set(const Index& new_batch_size, Layer* new_layer) override
+    {
+        if (!new_layer) return;
+
+        layer = new_layer;
+        batch_size = new_batch_size;
+
+        const dimensions input_dims = layer->get_input_dimensions();
+        const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
+        const size_t total_elements = static_cast<size_t>(batch_size) * layer_elements;
+
+        CUDA_MALLOC_AND_REPORT(outputs, total_elements * sizeof(type));
+    }
+
+
+    void print() const override 
+    { 
+        // @todo
+    }
+
+
+    void free() override
+    {
+        if (outputs) cudaFree(outputs);
+        outputs = nullptr;
+    }
 };
 
 
-struct Addition3dBackPropagationCuda : public LayerBackPropagationCuda
+template<int Rank>
+struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
 {
-    Addition3dBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    AdditionBackPropagationCuda(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+        : LayerBackPropagationCuda()
+    {
+        set(new_batch_size, new_layer);
+    }
 
-    vector<float*> get_input_derivatives_device() override;
 
-    void set(const Index & = 0, Layer* = nullptr) override;
-    
-    void print() const override;
+    vector<float*> get_input_derivatives_device() override
+    {
+        return { inputs_1_derivatives, inputs_2_derivatives };
+    }
 
-    void free() override;
-    
+
+    void set(const Index& new_batch_size, Layer* new_layer) override
+    {
+        if (!new_layer) return;
+
+        layer = new_layer;
+        batch_size = new_batch_size;
+
+        const dimensions input_dims = layer->get_input_dimensions();
+        const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
+        const size_t total_elements = static_cast<size_t>(batch_size) * layer_elements;
+
+        CUDA_MALLOC_AND_REPORT(inputs_1_derivatives, total_elements * sizeof(type));
+        CUDA_MALLOC_AND_REPORT(inputs_2_derivatives, total_elements * sizeof(type));
+    }
+
+
+    void print() const override 
+    { 
+        // @todo
+    }
+
+
+    void free() override
+    {
+        if (inputs_1_derivatives) cudaFree(inputs_1_derivatives);
+        if (inputs_2_derivatives) cudaFree(inputs_2_derivatives);
+
+        inputs_1_derivatives = nullptr;
+        inputs_2_derivatives = nullptr;
+    }
+
     float* inputs_1_derivatives = nullptr;
     float* inputs_2_derivatives = nullptr;
 };
 
-#endif
-}
+#endif // OPENNN_CUDA
 
-#endif
+void reference_addition_layer();
+
+} // namespace opennn
+
+#endif // ADDITIONLAYER_H
 
 
 // OpenNN: Open Neural Networks Library.

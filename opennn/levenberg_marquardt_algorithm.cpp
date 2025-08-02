@@ -386,7 +386,9 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         parameters_increment = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
 
-        potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
+        #pragma omp parallel for
+        for (Index i = 0; i < parameters_number; ++i)
+            potential_parameters(i) = parameters(i) + parameters_increment(i);
 
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters,
@@ -433,19 +435,16 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     {
         constexpr type epsilon = numeric_limits<type>::epsilon();
 
-#pragma omp parallel for
-
+        #pragma omp parallel for
         for(Index i = 0; i < parameters_number; i++)
         {
             if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
-            {
                 parameters_increment(i) = type(0);
-            }
             else
             {
                 parameters_increment(i) = gradient(i) > type(0)
-                ? -epsilon
-                : epsilon;
+                    ? -epsilon
+                    : epsilon;
 
                 parameters(i) += parameters_increment(i);
             }

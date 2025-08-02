@@ -51,7 +51,7 @@ public:
     TrainingResults train();
 
 #ifdef OPENNN_CUDA
-    TrainingResults perform_training_cuda();
+    TrainingResults train_cuda();
 #endif
 
     // Check

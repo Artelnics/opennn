@@ -60,8 +60,6 @@ public:
 
     Index get_outputs_number() const;
 
-    void set_threads_number(const int&);
-
     // Forward propagation
 
     virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -104,9 +102,6 @@ public:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
-
     string label = "layer";
 
     string name;
@@ -144,20 +139,20 @@ protected:
     template <int Rank>
     void binary(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type threshold) const
     {
-        y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
+        type* y_data = y.data();
 
-        if (dy_dx.size() == 0) return;
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            y_data[i] = (y_data[i] < threshold) ? type(0) : type(1);
 
-        dy_dx.setConstant(type(0));
+        if (dy_dx.size() > 0) dy_dx.setConstant(type(0));
     }
 
 
     template <int Rank>
     void linear(Tensor<type, Rank>&, Tensor<type, Rank>& dy_dx) const
     {
-        if (dy_dx.size() == 0) return;
-
-        dy_dx.setConstant(type(1));
+        if (dy_dx.size() > 0) dy_dx.setConstant(type(1));
     }
 
 
@@ -165,56 +160,97 @@ protected:
     void exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         const type alpha = type(1);
+        type* y_data = y.data();
 
-        y.device(*thread_pool_device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            if (y_data[i] <= type(0))
+                y_data[i] = alpha * (exp(y_data[i]) - type(1));
 
         if (dy_dx.size() == 0) return;
-        
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
+
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = (y_data[i] > type(0)) ? type(1) : y_data[i] + alpha;
     }
 
 
     template <int Rank>
     void hyperbolic_tangent(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = y.tanh();
+        type* y_data = y.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            y_data[i] = tanh(y_data[i]);
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (type(1) - y.square()).eval();
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = type(1) - (y_data[i] * y_data[i]);
     }
 
 
     template <int Rank>
     void logistic(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = (type(1) + (-y).exp()).inverse();
+        type* y_data = y.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            y_data[i] = type(1) / (type(1) + exp(-y_data[i]));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y * (type(1) - y)).eval();
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = y_data[i] * (type(1) - y_data[i]);
     }
 
 
     template <int Rank>
     void rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = y.cwiseMax(type(0));
+        type* y_data = y.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            y_data[i] = max(type(0), y_data[i]);
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = (y_data[i] > type(0)) ? type(1) : type(0);
     }
 
 
     template <int Rank>
     void leaky_rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type slope) const
     {
-        y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
+        type* y_data = y.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            if (y_data[i] <= type(0))
+                y_data[i] *= slope;
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = (y_data[i] > type(0)) ? type(1) : slope;
     }
 
 
@@ -222,14 +258,25 @@ protected:
     void scaled_exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         const type lambda = type(1.0507);
-
         const type alpha = type(1.6733);
+        type* y_data = y.data();
 
-        y.device(*thread_pool_device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+        {
+            if (y_data[i] > type(0))
+                y_data[i] *= lambda;
+            else
+                y_data[i] = lambda * alpha * (std::exp(y_data[i]) - type(1));
+        }
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
+        type* dydx_data = dy_dx.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < y.size(); ++i)
+            dydx_data[i] = (y_data[i] > type(0)) ? lambda : y_data[i] + alpha * lambda;
     }
 
     void softmax(Tensor<type, 2>&) const;
@@ -237,7 +284,7 @@ protected:
     void softmax(Tensor<type, 4>&) const;
 
     //void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
-    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&) const;
 
     void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const;
 

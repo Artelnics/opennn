@@ -54,7 +54,12 @@ void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = inputs/type(255); 
+    const type* inputs_data = inputs.data();
+    type* outputs_data = outputs.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < inputs.size(); ++i)
+        outputs_data[i] = inputs_data[i] / type(255);
 }
 
 

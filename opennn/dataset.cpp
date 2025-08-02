@@ -863,7 +863,7 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             count++;
 
     return count;
@@ -896,7 +896,7 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
     Index index = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.use.find(variable_use) != string::npos)
             this_raw_variables[index++] = raw_variable;
 
     return this_raw_variables;
@@ -1653,10 +1653,6 @@ void Dataset::set_display(const bool& new_display)
 
 void Dataset::set_default()
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     has_header = false;
 
     has_sample_ids = false;
@@ -1776,16 +1772,6 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
         missing_values_method = MissingValuesMethod::Interpolation;
     else
         throw runtime_error("Unknown method type.\n");
-}
-
-
-void Dataset::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    thread_pool_device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -2311,7 +2297,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
             const Tensor<type, 2> target_raw_variable_data
                 = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
 
-            correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2346,7 +2332,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_sample_indices);
 
-            correlations(i, j) = correlation_spearman(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation_spearman(input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2464,7 +2450,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-            correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
+            correlations_pearson(i, j) = correlation(input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_pearson(i, j).r = type(1);
@@ -2506,7 +2492,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
             const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
 
-            correlations_spearman(i, j) = correlation_spearman(thread_pool_device.get(), input_i, input_j);
+            correlations_spearman(i, j) = correlation_spearman(input_i, input_j);
 
             if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_spearman(i, j).r = type(1);
@@ -3754,16 +3740,20 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
             if (token_idx >= sample_rows[row_idx].size()) continue;
 
             const string& token = sample_rows[row_idx][token_idx];
+
             if (token.empty() || token == missing_values_label) continue;
 
             if (raw_variable.type == RawVariableType::Categorical) break;
 
             if (is_numeric_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::Numeric;
-            } else if (is_date_time_string(token)) {
-                if (raw_variable.type == RawVariableType::None) raw_variable.type = RawVariableType::DateTime;
-                else raw_variable.type = RawVariableType::Categorical;
-            } else {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::Numeric;
+            }
+            else if (is_date_time_string(token)) {
+                if (raw_variable.type == RawVariableType::None)
+                    raw_variable.type = RawVariableType::DateTime;
+            }
+            else {
                 raw_variable.type = RawVariableType::Categorical;
             }
         }
@@ -4297,10 +4287,6 @@ void Batch::fill(const vector<Index>& sample_indices,
 
 Batch::Batch(const Index& new_samples_number, const Dataset* new_dataset)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     set(new_samples_number, new_dataset);
 }
 
@@ -4423,7 +4409,7 @@ pair<type*, dimensions> Batch::get_target_pair() const
 
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,
-                     const vector<Index>& decoder_indices,
+                     //const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
     dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);

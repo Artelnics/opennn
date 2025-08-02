@@ -175,8 +175,10 @@ public:
         if (input_dimensions.size() != 3)
             throw runtime_error("Input dimensions size is not 3.");
 
+        reference_all_layers();
+
         add_layer(make_unique<Scaling4d>(input_dimensions));
-        
+
         const Index complexity_size = complexity_dimensions.size();
 
         for (Index i = 0; i < complexity_size; i++)
@@ -203,8 +205,8 @@ public:
                                            Pooling::PoolingMethod::MaxPooling,
                                            "pooling_layer_" + to_string(i + 1)));
         }
-        
-        add_layer(make_unique<Flatten<2>>(get_output_dimensions()));
+
+        add_layer(make_unique<Flatten<4>>(get_output_dimensions()));
 
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
@@ -238,6 +240,8 @@ public:
             throw runtime_error("Input dimensions size must be 3.");
         if (blocks_per_stage.size() != initial_filters.size())
             throw runtime_error("blocks_per_stage and initial_filters must have the same size.");
+
+        reference_all_layers();
 
         add_layer(make_unique<Scaling4d>(input_dimensions));
 
@@ -323,7 +327,7 @@ public:
 
                 const dimensions main_out_dims = get_layer(main_path_index)->get_output_dimensions();
 
-                auto addition_layer = make_unique<Addition4d>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+                auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
                 add_layer(move(addition_layer), { main_path_index, skip_path_index });
 
@@ -429,6 +433,8 @@ public:
                               const dimensions& output_dimensions) : NeuralNetwork()
     {
         layers.clear();
+
+        reference_all_layers();
 
         const Index vocabulary_size = input_dimensions[0];
         const Index sequence_length = input_dimensions[1];

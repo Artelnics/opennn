@@ -55,8 +55,6 @@ public:
 
     void set(const LossIndex* = nullptr);
 
-    virtual void set_threads_number(const int&);
-
     virtual void set_loss_index(LossIndex*);
 
     virtual void set_display(const bool&);
@@ -93,9 +91,6 @@ public:
     void set_vocabularies();
 
 protected:
-
-   unique_ptr<ThreadPool> thread_pool = nullptr;
-   unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
    LossIndex* loss_index = nullptr;
 
@@ -136,7 +131,7 @@ public:
         cudnnDestroy(cudnn_handle);
     }
 
-    virtual TrainingResults perform_training_cuda() = 0;
+    virtual TrainingResults train_cuda() = 0;
 
 #endif
 

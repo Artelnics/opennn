@@ -110,11 +110,23 @@ void Dense3d::set_activation_function(const string& new_activation_function)
 void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                      Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
-        + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
-         .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index input_features = inputs.dimension(2);
+    const Index output_features = combinations.dimension(2);
 
-//    sum_matrices(thread_pool_device.get(), biases, combinations);
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < sequence_length; ++j)
+            for (Index k = 0; k < output_features; ++k)
+            {
+                type sum = biases(k);
+
+                for (Index l = 0; l < input_features; ++l)
+                    sum += inputs(i, j, l) * weights(l, k);
+
+                combinations(i, j, k) = sum;
+            }
 }
 
 
@@ -167,16 +179,60 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     Tensor<type, 1>& bias_deltas = dense3d_back_propagation->bias_deltas;
     Tensor<type, 2>& weight_deltas = dense3d_back_propagation->weight_deltas;
-
     Tensor<type, 3>& input_deltas = dense3d_back_propagation->input_deltas;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index input_features = inputs.dimension(2);
+    const Index output_features = deltas.dimension(2);
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
+    #pragma omp parallel for
+    for (Index i = 0; i < deltas.size(); ++i)
+        deltas.data()[i] *= activation_derivatives.data()[i];
 
-    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
+    bias_deltas.setZero();
 
-    input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
+    #pragma omp parallel
+    {
+        Tensor<type, 1> private_bias_deltas(output_features);
+        private_bias_deltas.setZero();
+        #pragma omp for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < sequence_length; ++j)
+                for (Index k = 0; k < output_features; ++k)
+                    private_bias_deltas(k) += deltas(i, j, k);
+
+        #pragma omp critical
+        {
+            bias_deltas += private_bias_deltas;
+        }
+    }
+
+    #pragma omp parallel for
+    for (Index i = 0; i < input_features; ++i)
+        for (Index j = 0; j < output_features; ++j)
+        {
+            type sum = 0;
+
+            for (Index k = 0; k < batch_size; ++k)
+                for (Index l = 0; l < sequence_length; ++l)
+                    sum += inputs(k, l, i) * deltas(k, l, j);
+
+            weight_deltas(i, j) = sum;
+        }
+
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < sequence_length; ++j)
+            for (Index k = 0; k < input_features; ++k)
+            {
+                type sum = 0;
+
+                for (Index l = 0; l < output_features; ++l)
+                    sum += deltas(i, j, l) * weights(k, l);
+
+                input_deltas(i, j, k) = sum;
+            }
 }
 
 

@@ -60,6 +60,8 @@ public:
 
    bool validate_name(const string&) const;
 
+   void reference_all_layers();
+
    // Get
 
    bool has(const string&) const;
@@ -106,8 +108,6 @@ public:
    void set_input_dimensions(const dimensions&);
 
    void set_default();
-
-   void set_threads_number(const int&);
 
    void set_display(const bool&);
 

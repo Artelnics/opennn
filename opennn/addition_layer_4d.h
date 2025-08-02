@@ -5,7 +5,7 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
+/*
 #ifndef ADDITIONLAYER4D_H
 #define ADDITIONLAYER4D_H
 
@@ -128,7 +128,7 @@ namespace opennn
 } // namespace opennn
 
 #endif // ADDITIONLAYER4D_H
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
