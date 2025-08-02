@@ -214,7 +214,7 @@ struct AdditionForwardPropagation : LayerForwardPropagation
         array<Index, Rank> full_dimensions;
         full_dimensions[0] = batch_size;
 
-        for(int i = 0; i < Rank; ++i)
+        for(int i = 0; i < Rank - 1; ++i)
             full_dimensions[i+1] = output_dimensions[i];
 
         outputs.resize(DSizes<Index, Rank>(full_dimensions));
