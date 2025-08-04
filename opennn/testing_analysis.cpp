@@ -506,8 +506,8 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
         sum_of_squares += diff * diff;
     }
 
-    errors(0) = sqrt(sum_of_squares);
-    errors(1) = errors(0)/type(batch_size);
+    errors(0) = sum_of_squares;
+    errors(1) = errors(0)/type(total_elements);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -556,8 +556,8 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const st
         sum_of_squares += diff * diff;
     }
 
-    errors(0) = sqrt(sum_of_squares);
-    errors(1) = errors(0)/type(training_samples_number);
+    errors(0) = sum_of_squares;
+    errors(1) = errors(0)/type(outputs.size());
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_cross_entropy_error(targets, outputs);
@@ -596,7 +596,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
         sum_of_squares += diff * diff;
     }
 
-    errors(0) = sqrt(sum_of_squares);
+    errors(0) = sum_of_squares;
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -779,7 +779,7 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
     for (Index i = 0; i < targets.size(); ++i)
         error_sum += pow(std::abs(outputs_data[i] - targets_data[i]), minkowski_parameter);
 
-    return pow(error_sum, type(1.0) / minkowski_parameter);
+    return pow(error_sum / type(targets.size()), type(1.0) / minkowski_parameter);
 }
 
 
