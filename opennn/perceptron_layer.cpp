@@ -507,7 +507,7 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     const Index batch_size = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
-    const Index weights_number = weights.size();
+    const Index biases_number = biases.size();
 
     // Forward propagation
 
@@ -524,44 +524,42 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& squared_errors_Jacobian = dense2d_layer_back_propagation_lm->squared_errors_Jacobian;
 
-    const bool& is_first_layer = dense2d_layer_back_propagation_lm->is_first_layer;
-
-    Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
-
     #pragma omp parallel for
     for(Index i = 0; i < deltas.size(); ++i)
         deltas.data()[i] *= activation_derivatives.data()[i];
 
+    // Biases
+
     #pragma omp parallel for
-    for (Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
+    for (Index j = 0; j < outputs_number; j++)
+        squared_errors_Jacobian.chip(j, 1) = deltas.chip(j, 1);
+
+    // Weights
+
+    #pragma omp parallel for collapse(2)
+    for (Index j = 0; j < outputs_number; j++)
     {
-        auto combination_delta_neuron = deltas.chip(neuron_index, 1);
-
-        for (Index input_index = 0; input_index < inputs_number; ++input_index)
+        for (Index i = 0; i < inputs_number; i++)
         {
-            auto input_col = inputs.chip(input_index, 1);
-            Index weight_param_index = neuron_index * inputs_number + input_index;
-            auto jacobian_col_for_weight = squared_errors_Jacobian.chip(weight_param_index, 1);
-            jacobian_col_for_weight = combination_delta_neuron * input_col;
-        }
+            const Index weight_column_index = biases_number + (j * inputs_number) + i;
 
-        Index bias_param_index = weights_number + neuron_index;
-        auto jacobian_col_for_bias = squared_errors_Jacobian.chip(bias_param_index, 1);
-        jacobian_col_for_bias = combination_delta_neuron;
+            squared_errors_Jacobian.chip(weight_column_index, 1) = deltas.chip(j, 1) * inputs.chip(i, 1);
+        }
     }
 
-    if (!is_first_layer)
+    if (!dense2d_layer_back_propagation_lm->is_first_layer)
     {
-        #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < inputs_number; ++j)
+        Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
+
+        #pragma omp parallel for collapse(2)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index i = 0; i < inputs_number; ++i)
             {
-                type sum = 0;
+                type sum = 0.0;
+                for (Index j = 0; j < outputs_number; ++j)
+                    sum += deltas(b, j) * weights(i, j);
 
-                for (Index k = 0; k < outputs_number; ++k)
-                    sum += deltas(i, k) * weights(j, k);
-
-                input_deltas(i, j) = sum;
+                input_deltas(b, i) = sum;
             }
     }
 }
