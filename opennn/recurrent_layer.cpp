@@ -133,13 +133,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index input_size = input_pairs[0].second[1];
     const Index output_size = get_outputs_number();
 
-    // if(!is_training)
-    //     cout << "adri71 - " << batch_size << " - " << past_time_steps << " - " << input_size << endl;
-
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
-
-    // if(!is_training)
-    //     cout << "---> " << inputs << endl;
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
