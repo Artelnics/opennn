@@ -133,7 +133,13 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     const Index input_size = input_pairs[0].second[1];
     const Index output_size = get_outputs_number();
 
+    // if(!is_training)
+    //     cout << "adri71 - " << batch_size << " - " << past_time_steps << " - " << input_size << endl;
+
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
+
+    // if(!is_training)
+    //     cout << "---> " << inputs << endl;
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
@@ -193,7 +199,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
 
-    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
@@ -208,8 +213,11 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 2> next_hidden_state_delta(batch_size, output_size);
     next_hidden_state_delta.setZero();
 
+    Tensor<type, 2> combination_deltas(batch_size, output_size);
+
     for (Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
     {
+        Tensor<type, 2> current_deltas(batch_size, output_size);
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
@@ -218,15 +226,14 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         TensorMap<Tensor<type, 2>> current_act_derivs(activation_derivatives.data() + time_step * batch_size * output_size,
                                                       batch_size, output_size);
 
-        #pragma omp parallel for
-        for (Index i = 0; i < current_deltas.size(); ++i)
-            current_deltas.data()[i] *= current_act_derivs.data()[i];
+        combination_deltas = current_deltas * current_act_derivs;
 
         TensorMap<Tensor<type, 2>> current_input(inputs.data() + time_step * batch_size * input_size,
                                                  batch_size, input_size);
 
+        Tensor<type, 2> zero_hidden;
         TensorMap<Tensor<type, 2>> prev_hidden((time_step == 0)
-                                                   ? Tensor<type, 2>(batch_size, output_size).setZero().data()
+                                                   ? (zero_hidden.resize(batch_size, output_size), zero_hidden.setZero(), zero_hidden.data())
                                                    : hidden_states.data() + (time_step - 1) * batch_size * output_size,
                                                batch_size, output_size);
 

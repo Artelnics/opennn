@@ -24,6 +24,7 @@
 #include "../../opennn/training_strategy.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
+#include "stochastic_gradient_descent.h"
 #include "testing_analysis.h"
 #include "recurrent_layer.h"
 
@@ -34,7 +35,6 @@ int main()
     try
     {
         cout << "OpenNN. Forecasting Example." << endl;
-
 
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
@@ -92,9 +92,9 @@ int main()
                                           {},
                                           {time_series_dataset.get_variables_number("Target")});
 
-        // Layer* layer_ptr = forecasting_network.get_first("Recurrent");
-        // Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
-        // recurrent_layer->set_activation_function("HyperbolicTangent");
+        Layer* layer_ptr = forecasting_network.get_first("Recurrent");
+        Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
+        recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
         // ForecastingNetwork forecasting_network({1},
@@ -108,15 +108,15 @@ int main()
         /// Calcular gradiente
         NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
-        // const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
-        // const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+        const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
+        const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        // cout << "Gradient" << endl;
-        // cout << gradient << endl;
-        // cout << "Numerical Gradient" << endl;
-        // cout << numerical_gradient << endl;
-        // cout << "diferencia" << endl;
-        // cout << gradient.abs() - numerical_gradient.abs() << endl;
+        cout << "Gradient" << endl;
+        cout << gradient << endl;
+        cout << "Numerical Gradient" << endl;
+        cout << numerical_gradient << endl;
+        cout << "diferencia" << endl;
+        cout << gradient.abs() - numerical_gradient.abs() << endl;
 
         // cout << "------------------------------------------" << endl;
 
@@ -127,18 +127,22 @@ int main()
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(100);
-        adam->set_maximum_epochs_number(10000);
+        adam->set_batch_size(1000);
+        adam->set_maximum_epochs_number(20000);
 
         // QuasiNewtonMethod* quasi = static_cast<QuasiNewtonMethod*>(training_strategy.get_optimization_algorithm());
         // quasi->set_loss_goal(0.001);
 
+        // StochasticGradientDescent* stochastic = static_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        // stochastic->set_batch_size(10000);
+
         training_strategy.train();
 
-        cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+        // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
         // Tensor<type, 3> inputs(1,1,2);
-        // inputs.setValues({{{6}, {7}}});
+        // inputs.setValues({{{0}, {0.0998334166}}});
+        // cout << "Inputs: " << inputs << endl;
         // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
         // cout << "outputs: " << outputs << endl;
 
