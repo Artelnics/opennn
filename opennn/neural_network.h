@@ -158,9 +158,6 @@ public:
        dimensions input_dimensions;
        input_dimensions.reserve(input_rank);
 
-       // for (Index i = 0; i < input_rank; ++i)
-       //     cout << "adri71 - " << inputs.dimension(i) << endl;
-
        for (Index i = 0; i < input_rank; ++i)
            input_dimensions.push_back(inputs.dimension(i));
 

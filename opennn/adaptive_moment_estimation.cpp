@@ -238,7 +238,6 @@ TrainingResults AdaptiveMomentEstimation::train()
                                 target_variable_indices);
 
             // Neural network
-
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
