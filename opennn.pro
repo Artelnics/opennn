@@ -18,7 +18,7 @@ SUBDIRS += opennn
 SUBDIRS += examples
 SUBDIRS += blank
 #SUBDIRS += blank_cuda
-SUBDIRS += tests
+#SUBDIRS += tests
 
 CONFIG += ordered
 

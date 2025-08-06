@@ -776,7 +776,7 @@ vector<Index> Dataset::get_raw_variable_indices(const string& variable_use) cons
     Index index = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use.find(variable_use) == string::npos)
+        if (raw_variables[i].use.find(variable_use) != string::npos)
             indices[index++] = i;
 
     return indices;

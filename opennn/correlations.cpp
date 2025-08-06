@@ -533,7 +533,7 @@ Correlation logistic_correlation_vector_vector(const Tensor<type, 1>& x,
     const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
-    if (x_filtered.size() == 0
+    if (x_filtered.size() < 2
     || is_constant(x_filtered)
     || is_constant(y_filtered))
     {
@@ -568,28 +568,25 @@ Correlation logistic_correlation_vector_vector(const Tensor<type, 1>& x,
     const Tensor<type, 2> outputs = neural_network.calculate_outputs<2,2>(inputs);
 
     // Logistic correlation
+
     const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(outputs.reshape(vector), targets.reshape(vector)).r;
 
+    Correlation directional_correlation = linear_correlation(x_filtered, y_filtered);
+
+    correlation.r = copysign(abs(correlation.r), directional_correlation.r);
+
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.dimensions()[0]);
-
-    correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-    correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-
+    correlation.lower_confidence = bound(z_correlation_to_r_correlation(confidence_interval_z(0)), type(-1), type(1));
+    correlation.upper_confidence = bound(z_correlation_to_r_correlation(confidence_interval_z(1)), type(-1), type(1));
     correlation.form = Correlation::Form::Logistic;
 
     Tensor<type, 1> coefficients;
     neural_network.get_parameters(coefficients);
-
     correlation.a = coefficients(1);
     correlation.b = coefficients(0);
-
-    if(correlation.b < type(0))
-        correlation.r *= type(-1);
 
     return correlation;
 }
@@ -643,26 +640,21 @@ Correlation logistic_correlation_vector_vector_spearman(const Tensor<type, 1>& x
     // Logistic correlation
 
     const array<Index, 1> vector{{x_filtered.size()}};
-
     correlation.r = linear_correlation(outputs.reshape(vector), targets.reshape(vector)).r;
 
+    Correlation directional_correlation = linear_correlation(x_rank, y_filtered);
+
+    correlation.r = copysign(abs(correlation.r), directional_correlation.r);
+
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
     const Tensor<type, 1> confidence_interval_z = confidence_interval_z_correlation(z_correlation, x_rank.size());
-
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-
-    correlation.form = Correlation::Form::Logistic;
 
     Tensor<type, 1> coefficients;
     neural_network.get_parameters(coefficients);
-
     correlation.a = coefficients(1);
     correlation.b = coefficients(0);
-
-    if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }
@@ -748,6 +740,29 @@ Correlation logistic_correlation_vector_matrix(const Tensor<type, 1>& x,
     const array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(outputs.reshape(vector), targets.reshape(vector)).r;
+
+    const Index num_samples = y_filtered.dimension(0);
+    const Index num_categories = y_filtered.dimension(1);
+    Tensor<type, 1> y_ordinal(num_samples);
+
+    for (Index i = 0; i < num_samples; ++i)
+    {
+        bool found = false;
+
+        for (Index j = 0; j < num_categories; ++j)
+            if (y_filtered(i, j) > 0.5)
+            {
+                y_ordinal(i) = static_cast<type>(j);
+                found = true;
+                break;
+            }
+
+        if (!found) y_ordinal(i) = NAN;
+    }
+
+    Correlation directional_correlation = linear_correlation(x_filtered, y_ordinal);
+
+    correlation.r = (directional_correlation.r < 0) ? -abs(correlation.r) : abs(correlation.r);
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 

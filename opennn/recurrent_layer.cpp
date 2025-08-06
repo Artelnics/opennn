@@ -145,6 +145,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
     previous_hidden_states.setZero();
 
+    activation_derivatives.resize(batch_size, past_time_steps, output_size);
+
     for (Index time_step = 0; time_step < past_time_steps; time_step++)
     {
         #pragma omp parallel for
@@ -162,9 +164,11 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                 outputs(i, j) = sum;
             }
 
-        Tensor<type, 2> current_activation_derivatives = activation_derivatives.chip(time_step, 1);
+        Tensor<type, 2> d_act(batch_size, output_size);
 
-        calculate_activations(activation_function, outputs, current_activation_derivatives);
+        calculate_activations(activation_function, outputs, d_act);
+
+        activation_derivatives.chip(time_step, 1) = d_act;
 
         hidden_states.chip(time_step, 1) = outputs;
         previous_hidden_states = outputs;
@@ -193,7 +197,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
 
-    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
@@ -208,27 +211,34 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 2> next_hidden_state_delta(batch_size, output_size);
     next_hidden_state_delta.setZero();
 
+    Tensor<type, 2> combination_deltas(batch_size, output_size);
+
     for (Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
     {
+        Tensor<type, 2> current_deltas(batch_size, output_size);
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
             current_deltas = next_hidden_state_delta;
 
-        TensorMap<Tensor<type, 2>> current_act_derivs(activation_derivatives.data() + time_step * batch_size * output_size,
-                                                      batch_size, output_size);
+        auto current_act_derivs = activation_derivatives.chip(time_step, 1);
 
-        #pragma omp parallel for
-        for (Index i = 0; i < current_deltas.size(); ++i)
-            current_deltas.data()[i] *= current_act_derivs.data()[i];
+        combination_deltas = current_deltas * current_act_derivs;
 
-        TensorMap<Tensor<type, 2>> current_input(inputs.data() + time_step * batch_size * input_size,
-                                                 batch_size, input_size);
+        Tensor<type, 2> current_input = inputs.chip(time_step, 1).eval();
 
-        TensorMap<Tensor<type, 2>> prev_hidden((time_step == 0)
-                                                   ? Tensor<type, 2>(batch_size, output_size).setZero().data()
-                                                   : hidden_states.data() + (time_step - 1) * batch_size * output_size,
-                                               batch_size, output_size);
+        Tensor<type, 2> zero_hidden;
+        Tensor<type, 2> prev_hidden;
+
+        if (time_step == 0)
+        {
+            prev_hidden = Tensor<type, 2>(batch_size, output_size);
+            prev_hidden.setZero();
+        }
+        else
+        {
+            prev_hidden = hidden_states.chip(time_step - 1, 1).eval();
+        }
 
         #pragma omp parallel for
         for (Index i = 0; i < input_size; ++i)
@@ -237,7 +247,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                 type sum = 0;
 
                 for (Index k = 0; k < batch_size; ++k)
-                    sum += current_input(k, i) * current_deltas(k, j);
+                    sum += current_input(k, i) * combination_deltas(k, j);
 
                 #pragma omp atomic
                 input_weight_deltas(i, j) += sum;
@@ -250,7 +260,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                 type sum = 0;
 
                 for (Index k = 0; k < batch_size; ++k)
-                    sum += prev_hidden(k, i) * current_deltas(k, j);
+                    sum += prev_hidden(k, i) * combination_deltas(k, j);
 
                 #pragma omp atomic
                 recurrent_weight_deltas(i, j) += sum;
@@ -262,7 +272,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             type sum = 0;
 
             for (Index i = 0; i < batch_size; ++i)
-                sum += current_deltas(i, j);
+                sum += combination_deltas(i, j);
 
             #pragma omp atomic
             bias_deltas(j) += sum;
@@ -277,7 +287,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                     type sum = 0;
 
                     for (Index k = 0; k < output_size; ++k)
-                        sum += current_deltas(i, k) * recurrent_weights(j, k);
+                        sum += combination_deltas(i, k) * recurrent_weights(j, k);
 
                     next_hidden_state_delta(i, j) = sum;
                 }
@@ -287,16 +297,16 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                                        batch_size, input_size);
 
         #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < input_size; ++j)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index i = 0; i < input_size; ++i)
             {
                 type sum = 0;
-
                 for (Index k = 0; k < output_size; ++k)
-                    sum += current_deltas(i, k) * input_weights(j, k);
+                    sum += combination_deltas(b, k) * input_weights(i, k);
 
-                current_input_delta(i, j) = sum;
+                current_input_delta(b, i) = sum;
             }
+
     }
 }
 

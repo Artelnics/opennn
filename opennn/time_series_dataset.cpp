@@ -431,29 +431,26 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
     const bool skip_last = is_last_fill && batch_size > past_time_steps;
     const Index safe_batch_size = skip_last ? batch_size - past_time_steps : batch_size;
 
-    TensorMap<Tensor<type, 3>> batch(input_tensor_data, batch_size, input_size, past_time_steps);
+    TensorMap<Tensor<type, 3>> batch(input_tensor_data, batch_size, past_time_steps, input_size);
 
     const type* matrix_data = data.data();
 
-    for (Index k = 0; k < input_size; ++k)
-    {
-        const Index col_index = input_indices[k];
-        const type* matrix_col = matrix_data + matrix_rows * col_index;
-
-        for (Index i = 0; i < batch_size; ++i)
+    for (Index j = 0; j < past_time_steps; ++j)
+        for (Index k = 0; k < input_size; ++k)
         {
-            const bool skip = skip_last && i >= safe_batch_size;
+            const Index  col_index   = input_indices[k];
+            const type*  matrix_col  = matrix_data + matrix_rows * col_index;
 
-            for (Index j = 0; j < past_time_steps; ++j)
+            for (Index i = 0; i < batch_size; ++i)
             {
+                const bool skip        = skip_last && i >= safe_batch_size;
                 const Index actual_row = sample_rows[i] + j;
-                if (skip)
-                    batch(i, k, j) = static_cast<type>(0);
-                else
-                    batch(i, k, j) = matrix_col[actual_row];
+
+                batch(i, j, k) = skip ? static_cast<type>(0)
+                                      : matrix_col[actual_row];
             }
         }
-    }
+
 }
 
 
