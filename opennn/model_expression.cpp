@@ -46,22 +46,20 @@ string ModelExpression::write_comments_c() const
 string ModelExpression::write_logistic_c() const
 {
     return
-        "float Logistic (float x) {\n"
-        "float z = 1/(1+exp(-x));\n"
-        "return z;\n"
-        "}\n"
-        "\n";
+        "float Logistic(float x) {\n"
+        "\tfloat z = 1.0f / (1.0f + expf(-x));\n"
+        "\treturn z;\n"
+        "}\n\n";
 }
 
 
 string ModelExpression::write_relu_c() const
 {
     return
-        "float ReLU(float x) {\n"
-        "float z = max(0, x);\n"
-        "return z;\n"
-        "}\n"
-        "\n";
+        "float RectifiedLinear(float x) {\n"
+        "\tfloat z = fmaxf(0.0f, x);\n"
+        "\treturn z;\n"
+        "}\n\n";
 }
 
 
@@ -69,35 +67,33 @@ string ModelExpression::write_exponential_linear_c() const
 {
     return
         "float ExponentialLinear(float x) {\n"
-        "float z;\n"
-        "float alpha = 1.67326;\n"
-        "if(x>0){\n"
-        "z = x;\n"
-        "}else{\n"
-        "z = alpha*(exp(x)-1);\n"
-        "}\n"
-        "return z;\n"
-        "}\n"
-        "\n";
+        "\tfloat z;\n"
+        "\tconst float alpha = 1.67326f;\n"
+        "\tif (x > 0.0f) {\n"
+        "\t\tz = x;\n"
+        "\t} else {\n"
+        "\t\tz = alpha * (expf(x) - 1.0f);\n"
+        "\t}\n"
+        "\treturn z;\n"
+        "}\n\n";
 }
 
 
-// string ModelExpression::write_selu_c() const
-// {
-//     return
-//         "float SELU(float x) {\n"
-//         "float z;\n"
-//         "float alpha  = 1.67326;\n"
-//         "float lambda = 1.05070;\n"
-//         "if(x > 0){\n"
-//         "z = lambda*x;\n"
-//         "}else{\n"
-//         "z = lambda*alpha*(exp(x)-1);\n"
-//         "}\n"
-//         "return z;\n"
-//         "}\n"
-//         "\n";
-// }
+string ModelExpression::write_selu_c() const
+{
+    return
+        "float SELU(float x) {\n"
+        "\tfloat z;\n"
+        "\tconst float alpha = 1.67326f;\n"
+        "\tconst float lambda = 1.05070f;\n"
+        "\tif (x > 0.0f) {\n"
+        "\t\tz = lambda * x;\n"
+        "\t} else {\n"
+        "\t\tz = lambda * alpha * (expf(x) - 1.0f);\n"
+        "\t}\n"
+        "\treturn z;\n"
+        "}\n\n";
+}
 
 /*
 void ModelExpression::auto_association_c() const
@@ -130,10 +126,10 @@ string ModelExpression::get_expression_c() const
 
     vector<string> input_names =  neural_network->get_input_names();
     vector<string> output_names = neural_network->get_output_names();
-    /*
-    fix_input_names(input_names);
-    fix_output_names(output_names);
-*/
+
+    vector<string> fixes_input_names = fix_input_names(input_names);
+    vector<string> fixes_output_names = fix_output_names(output_names);
+
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -147,14 +143,12 @@ string ModelExpression::get_expression_c() const
 
     buffer << write_comments_c();
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
-    buffer << "\n \n \n#include <iostream>\n"
-              "#include <vector>\n"
-              "#include <math.h>\n"
-              "#include <stdio.h>\n \n"
-              "using namespace std; \n \n";
+    buffer << "\n \n \n#include <stdio.h>\n"
+              "#include <stdlib.h>\n"
+              "#include <math.h>\n\n";
 
     string line;
     const string expression = neural_network->get_expression();
@@ -179,7 +173,7 @@ string ModelExpression::get_expression_c() const
 
     const vector<pair<string, bool*>> activation_targets =
         {{"Logistic", &logistic},
-         {"ReLU", &ReLU},
+         {"RectifiedLinear", &ReLU},
          {"ExponentialLinear", &ExpLinear},
          {"SELU", &SExpLinear}};
 
@@ -187,7 +181,7 @@ string ModelExpression::get_expression_c() const
 
     vector<string> variable_names;
 
-    for (Index i = 0; i < lines_number; i++)
+    for (size_t i = 0; i < lines_number; i++)
     {
         const string first_word = get_first_word(lines[i]);
 
@@ -198,20 +192,25 @@ string ModelExpression::get_expression_c() const
             if (line.find(target) != string::npos) *flag = true;
     }
 
-    if(logistic) buffer << write_logistic_c();
-    if(ReLU) buffer << write_relu_c();
-    if(ExpLinear) buffer << write_exponential_linear_c();
-    if (SExpLinear) buffer << write_exponential_linear_c();
+    buffer << "\nfloat Linear (float x) {\n"
+           << "\treturn x;\n"
+           << "}\n\n";
 
-    buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
+    if (expression.find("Logistic") != string::npos) buffer << write_logistic_c();
+    if (expression.find("RectifiedLinear") != string::npos) buffer << write_relu_c();
+    if (expression.find("ExponentialLinear") != string::npos) buffer << write_exponential_linear_c();
+    if (expression.find("SELU") != string::npos) buffer << write_selu_c();
+    buffer << "\n";
+
+    buffer << "float* calculate_outputs(const float* inputs)" << endl
            << "{" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << "const float " << input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
+    for(size_t i = 0; i < inputs_number; i++)
+        buffer << "\t" << "const float " << fixes_input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
-    for(Index i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
         lines[i].size() <= 1
             ? outputs_buffer << endl
             : outputs_buffer << "\t" << lines[i] << endl;
@@ -222,40 +221,58 @@ string ModelExpression::get_expression_c() const
 
     replace_substring_in_string(variable_names, outputs_expression, keyword);
 
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        replace_all_word_appearances(outputs_expression, "scaled_" + input_names[i], "scaled_" + fixes_input_names[i]);
+        replace_all_word_appearances(outputs_expression, input_names[i], fixes_input_names[i]);
+    }
+
     buffer << outputs_expression;
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
 
-    if(fixed_outputs.size() > 0)
-        for(Index i = 0; i < outputs_number; i++)
-            buffer << "\t" << fixed_outputs[i] << endl;
+    for(size_t i = 0; i < outputs_number; i++)
+        buffer << "\t" << fixed_outputs[i] << endl;
 
-    buffer << "\t" << "vector<float> out(" << outputs_number << ");" << endl;
+    buffer << endl;
+    buffer << "\t" << "float* out = (float*)malloc(" << outputs_number << " * sizeof(float));" << endl;
+    buffer << "\t" << "if (out == NULL) {" << endl
+           << "\t\t" << "printf(\"Error: Memory allocation failed in calculate_outputs.\\n\");" << endl
+           << "\t\t" << "return NULL;" << endl
+           << "\t" << "}" << endl << endl;
 
-
-    for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
+    for(size_t i = 0; i < outputs_number; i++)
+        buffer << "\t" << "out[" << to_string(i) << "] = " << fixes_output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}\n"  << endl
-           << "int main(){ \n" << endl
-           << "\tvector<float> inputs(" << to_string(inputs_number) << "); \n" << endl;
+           << "\n" << "int main() { \n" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << "const float " << input_names[i] << " =" << " //enter your value here; " << endl
-               << "\t" << "inputs[" << to_string(i) << "] = " << input_names[i] << ";" << endl;
+    buffer << "\t" << "float* inputs = (float*)malloc(" << to_string(inputs_number) << " * sizeof(float)); \n"
+           << "\t" << "if (inputs == NULL) {\n"
+           << "\t\t" << "printf(\"Error: Memory allocation failed for inputs.\\n\");\n"
+           << "\t\t" << "return 1;\n"
+           << "\t" << "}\n" << endl;
 
-    buffer << endl
-           << "\tvector<float> outputs(" << outputs_number <<");" << endl
-           << "\n\toutputs = calculate_outputs(inputs);" << endl
-           << endl
-           << "\t" << "printf(\"These are your outputs:\\n\");" << endl;
+    buffer << "\t" << "// Please enter your values here:" << endl;
+    for(size_t i = 0; i < inputs_number; i++)
+        buffer << "\t" << "inputs[" << to_string(i) << "] = 0.0f; // " << fixes_input_names[i] << endl;
+    buffer << endl;
 
+    buffer << "\t" << "float* outputs;" << endl
+           << "\n\toutputs = calculate_outputs(inputs);" << endl << endl
+           << "\t" << "if (outputs != NULL) {" << endl
+           << "\t\t" << "printf(\"These are your outputs:\\n\");" << endl;
 
-    for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t" << "printf( \""<< output_names[i] << ":" << " %f \\n\", "<< "outputs[" << to_string(i) << "]" << ");" << endl;
+    for(size_t i = 0; i < outputs_number; i++)
+        buffer << "\t\t" << "printf(\""<< fixes_output_names[i] << ": %f \\n\", outputs[" << to_string(i) << "]);" << endl;
+    buffer << "\t" << "}" << endl << endl;
 
-    buffer << "\n\t" << "return 0;" << endl
+    buffer << "\t" << "// Free the allocated memory" << endl
+           << "\t" << "free(inputs);" << endl
+           << "\t" << "free(outputs);" << endl << endl;
+
+    buffer << "\t" << "return 0;" << endl
            << "} \n" << endl;
 
     string out = buffer.str();
@@ -295,7 +312,7 @@ string ModelExpression::write_subheader_api() const{
         "</head>\n"
         "<style>\n"
         ".btn{\n"
-        "\tbackground-color: #7393B3\n"
+        "\tbackground-color: #7393B3;\n"
         "\tborder: none;\n"
         "\tcolor: white;\n"
         "\tpadding: 15px 32px;\n"
@@ -341,7 +358,7 @@ string ModelExpression::logistic_api() const
 {
     return
         "<?php"
-        "function Logistic(int $x) {"
+        "function Logistic(float $x) {"
         "$z = 1/(1+exp(-$x));"
         "return $z;"
         "}"
@@ -354,7 +371,7 @@ string ModelExpression::relu_api() const
 {
     return
         "<?php"
-        "function ReLU(int $x) {"
+        "function RectifiedLinear(int $x) {"
         "$z = max(0, $x);"
         "return $z;"
         "}"
@@ -405,8 +422,10 @@ string ModelExpression::get_expression_api() const
     ostringstream buffer;
     vector<string> found_tokens;
 
-    vector<string> input_names =  neural_network->get_input_names();
-    vector<string> output_names = neural_network->get_output_names();
+    const vector<string> input_names =  neural_network->get_input_names();
+    const vector<string> output_names = neural_network->get_output_names();
+    const vector<string> fixes_input_names =  fix_input_names(input_names);
+    const vector<string> fixes_output_names = fix_output_names(output_names);
 
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
@@ -418,7 +437,7 @@ string ModelExpression::get_expression_api() const
 
     buffer << write_header_api();
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n\t\t" << i << ")  " << input_names[i];
 
     buffer << write_subheader_api();
@@ -447,7 +466,7 @@ string ModelExpression::get_expression_api() const
 
     string word;
 
-    for(Index i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
     {
         string line = lines[i];
         word = get_first_word(line);
@@ -467,13 +486,13 @@ string ModelExpression::get_expression_api() const
            << "$url_components = parse_url($url);" << endl
            << "parse_str($url_components['query'], $params);\n" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-               << "$" << input_names[i]      << " = intval(" << "$num"  + to_string(i) << ");"  << endl;
+               << "$" << fixes_input_names[i]      << " = floatval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         i != inputs_number - 1
             ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
             : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -489,7 +508,7 @@ string ModelExpression::get_expression_api() const
            << "}\n"   << endl;
 
     string target_string0("Logistic");
-    string target_string1("ReLU");
+    string target_string1("RectifiedLinear");
     string target_string4("ExponentialLinear");
     string target_string5("SELU");
 
@@ -502,6 +521,7 @@ string ModelExpression::get_expression_api() const
 
     vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
     sort_string_vector(found_tokens_and_input_names);
+    vector<string> fixes_tokens = fix_input_names(found_tokens_and_input_names);
 
     for(size_t i = 0; i < lines.size(); i++)
     {
@@ -517,11 +537,10 @@ string ModelExpression::get_expression_api() const
         if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
         if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
 
-        for(size_t i = 0; i < found_tokens_and_input_names.size(); i++)
+        for(size_t j = 0; j < found_tokens_and_input_names.size(); j++)
         {
-            new_word = "$" + found_tokens_and_input_names[i];
-
-            replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
+            new_word = "$" + fixes_tokens[j];
+            replace_all_word_appearances(t, found_tokens_and_input_names[j], new_word);
         }
 
         buffer << t << endl;
@@ -535,8 +554,8 @@ string ModelExpression::get_expression_api() const
     buffer << "if($status === 200){" << endl
            << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
 
-    for(Index i = 0; i < outputs_number; i++)
-        buffer << ", '" << output_names[i] << "' => " << "$" << output_names[i] << endl;
+    for(size_t i = 0; i < outputs_number; i++)
+        buffer << ", '" << fixes_output_names[i] << "' => " << "$" << fixes_output_names[i] << endl;
 
     buffer << "];" << endl
            << "}" << endl
@@ -553,12 +572,18 @@ string ModelExpression::get_expression_api() const
            << "$_SESSION['lastpage'] = __FILE__;" << endl
            << "?>\n" << endl;
 
+    buffer << "<?php" << endl
+           << "function Linear(float $x) {" << endl
+           << "return $x;" << endl
+           << "}" << endl
+           << "?>\n" << endl;
+
     if (logistic)
         buffer << logistic_api();
 
     if(ReLU)
         buffer << "<?php" << endl
-               << "function ReLU(int $x) {" << endl
+               << "function RectifiedLinear(float $x) {" << endl
                << "$z = max(0, $x);" << endl
                << "return $z;" << endl
                << "}" << endl
@@ -566,7 +591,7 @@ string ModelExpression::get_expression_api() const
 
     if(ExpLinear)
         buffer << "<?php" << endl
-               << "function ExponentialLinear(int $x) {" << endl
+               << "function ExponentialLinear(float $x) {" << endl
                << "$alpha = 1.6732632423543772848170429916717;" << endl
                << "if($x>0){" << endl
                << "$z=$x;" << endl
@@ -578,7 +603,7 @@ string ModelExpression::get_expression_api() const
 
     if(SExpLinear)
         buffer << "<?php" << endl
-               << "function SELU(int $x) {" << endl
+               << "function SELU(float $x) {" << endl
                << "$alpha  = 1.67326;" << endl
                << "$lambda = 1.05070;" << endl
                << "if($x>0){" << endl
@@ -638,7 +663,7 @@ string ModelExpression::logistic_javascript() const
 string ModelExpression::relu_javascript() const
 {
     return
-        "function ReLU(x) {\n"
+        "function RectifiedLinear(x) {\n"
         "\tvar z = Math.max(0, x);\n"
         "\treturn z;\n"
         "}\n";
@@ -822,7 +847,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << header_javascript();
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\n\t " << i + 1 << ")  " << input_names[i];
 
     buffer << subheader_javascript();
@@ -940,7 +965,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         }
     }
     else
-        for(Index i = 0; i < inputs_number; i++)
+        for(size_t i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
@@ -958,7 +983,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(Index i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
@@ -979,7 +1004,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "<td>" << endl
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
-        for(Index i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
@@ -993,7 +1018,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "</tr>\n" << endl;
     }
     else
-        for(Index i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
                    << "<td>" << endl
@@ -1014,7 +1039,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "\tvar selectedCategory = document.getElementById(\"category_select\").value;" << endl
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
-        for(Index i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
                    << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
@@ -1025,7 +1050,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     buffer << "function Linear(x) { return x; }\n";
 
     if (expression.find("Logistic") != string::npos) buffer << logistic_javascript();
-    if (expression.find("ReLU") != string::npos) buffer << relu_javascript();
+    if (expression.find("RectifiedLinear") != string::npos) buffer << relu_javascript();
     if (expression.find("ExponentialLinear") != string::npos) buffer << exponential_linear_javascript();
     if (expression.find("SELU") != string::npos) buffer << selu_javascript();
     buffer << "\n";
@@ -1126,7 +1151,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-        for(Index i = 0; i < outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
@@ -1163,7 +1188,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     }
 
     string target_string_0("Logistic");
-    string target_string_1("ReLU");
+    string target_string_1("RectifiedLinear");
     string target_string_4("ExponentialLinear");
     string target_string_5("SELU");
 
@@ -1214,19 +1239,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 }
             }
 
-        for (size_t i = 0; i < output_names.size(); ++i)
-            if(line.find(output_names[i]) != string::npos)
-            {
-                string original_output_name = output_names[i];
-                string fix_output_name = replace_reserved_keywords(original_output_name);
-                int position = 0;
-
-                while((position = line.find(original_output_name, position)) != string::npos){
-                    line.replace(position, original_output_name.length(), fix_output_name);
-                    position += fix_output_name.length();
-                }
-            }
-
         for(size_t i = 0; i < found_mathematical_expressions.size(); i++)
         {
             string key_word = found_mathematical_expressions[i];
@@ -1246,7 +1258,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << "\t" << "var out = [];" << endl;
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_number; i++)
         buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -1261,7 +1273,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
            << "{" << endl
            << "\t"<< "document.getElementById(id).value = val;" << endl
            << "}\n" << endl
-           << "window.onresize = showDiv;\n" << endl
            << "</script>\n" << endl
            << "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << endl
            << "</body>\n" << endl
@@ -1306,9 +1317,10 @@ string ModelExpression::get_expression_python() const
     vector<string> found_tokens;
     vector<string> found_mathematical_expressions;
 
-    vector<string> inputs = neural_network->get_input_names();
     vector<string> original_inputs = neural_network->get_input_names();
-    vector<string> outputs = neural_network->get_output_names();
+    vector<string> inputs = fix_input_names(original_inputs);
+    vector<string> original_outputs = neural_network->get_output_names();
+    vector<string> outputs = fix_input_names(original_outputs);
 
     const Index inputs_number = inputs.size();
     const Index outputs_number = outputs.size();
@@ -1340,15 +1352,23 @@ string ModelExpression::get_expression_python() const
         if(line.size() > 1 && line.back() != ';')
             line += ';';
 
+        for(size_t i = 0; i < inputs_number; i++)
+        {
+            replace_all_appearances(line, "scaled_" + original_inputs[i], "scaled_" + inputs[i]);
+            replace_all_appearances(line, original_inputs[i], inputs[i]);
+        }
+
         lines.push_back(line);
     }
 
     const string target_string0("Logistic");
-    const string target_string1("ReLU");
+    const string target_string1("RectifiedLinear");
     const string target_string4("ExponentialLinear");
     const string target_string5("SELU");
 
-    for(size_t i = 0; i < lines.size(); i++)
+    const Index lines_number = lines.size();
+
+    for(size_t i = 0; i < lines_number; i++)
     {
         string word;
         string line = lines[i];
@@ -1373,56 +1393,62 @@ string ModelExpression::get_expression_python() const
             found_tokens.push_back(word);
     }
 
-    buffer << "import numpy as np\n" << endl;
+    buffer << "import numpy as np" << endl
+           << "import pandas as pd\n" << endl
+           << "class NeuralNetwork:\n" << endl;
 
     string inputs_list;
 
-    for(size_t i = 0; i < original_inputs.size();i++)
+    for(size_t i = 0; i < inputs_number; i++)
     {
-        inputs_list += "'" + original_inputs[i] + "'";
+        inputs_list += "'" + inputs[i] + "'";
 
-        if(i < original_inputs.size() - 1)
+        if(i < inputs_number - 1)
             inputs_list += ", ";
     }
 
-    buffer << "\t" << "def __init__(self):" << endl
-            << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
-            << "\t\t" << "self.input_names = [" << inputs_list << "]" << endl;
+    buffer << "\tdef __init__(self):" << endl
+           << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
+           << "\t\t" << "self.input_names = [" << inputs_list << "]\n" << endl;
 
-    buffer << "\n" << endl;
+    buffer << "\t@staticmethod" << endl
+           << "\tdef Linear(x):" << endl
+           << "\t\t" << "return x\n" << endl;
 
     if(logistic)
-        buffer << "\tdef Logistic (x):" << endl
+        buffer << "\t@staticmethod" << endl
+               << "\tdef Logistic (x):" << endl
                << "\t\t" << "z = 1/(1+np.exp(-x))" << endl
                << "\t\t" << "return z\n" << endl;
 
     if(ReLU)
-        buffer << "\tdef ReLU (x):" << endl
+        buffer << "\t@staticmethod" << endl
+               << "\tdef RectifiedLinear (x):" << endl
                << "\t\t" << "z = max(0, x)" << endl
                << "\t\t" << "return z\n" << endl;
 
     if(ExpLinear)
-        buffer << "\tdef ExponentialLinear (x):" << endl
-               << "\t\t"   << "float alpha = 1.67326" << endl
+        buffer << "\t@staticmethod" << endl
+               << "\tdef ExponentialLinear (x):" << endl
+               << "\t\t"   << "alpha = 1.67326" << endl
                << "\t\t"   << "if(x>0):" << endl
-               << "\t\t\t" << "z = x" << endl
+               << "\t\t\t" << "return x" << endl
                << "\t\t"   << "else:" << endl
-               << "\t\t\t" << "z = alpha*(np.exp(x)-1)" << endl
-               << "\t\t"   << "return z\n" << endl;
+               << "\t\t\t" << "return alpha*(np.exp(x)-1)\n" << endl;
 
     if(SExpLinear)
-        buffer << "\tdef SELU (x):" << endl
-               << "\t\t"   << "float alpha = 1.67326" << endl
-               << "\t\t"   << "float lambda = 1.05070" << endl
+        buffer << "\t@staticmethod" << endl
+               << "\tdef SELU (x):" << endl
+               << "\t\t"   << "alpha = 1.67326" << endl
+               << "\t\t"   << "lambda_val = 1.05070" << endl
                << "\t\t"   << "if(x>0):" << endl
-               << "\t\t\t" << "z = lambda*x" << endl
+               << "\t\t\t" << "return lambda_val*x" << endl
                << "\t\t"   << "else:" << endl
-               << "\t\t\t" << "z = lambda*alpha*(np.exp(x)-1)" << endl
-               << "\t\t"   << "return z\n" << endl;
+               << "\t\t\t" << "return lambda_val*alpha*(np.exp(x)-1)\n" << endl;
 
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
 
     buffer << endl;
@@ -1433,17 +1459,16 @@ string ModelExpression::get_expression_python() const
     found_tokens.push_back("tanh");
 
     found_mathematical_expressions.push_back("Logistic");
-    found_mathematical_expressions.push_back("ReLU");
+    found_mathematical_expressions.push_back("RectifiedLinear");
     found_mathematical_expressions.push_back("ExponentialLinear");
     found_mathematical_expressions.push_back("SELU");
+    found_mathematical_expressions.push_back(" Linear");
 
     string sufix;
     string new_word;
     string key_word ;
 
-    const Index lines_number = lines.size();
-
-    for(Index i = 0; i < lines_number; i++)
+    for(size_t i = 0; i < lines_number; i++)
     {
         string line = lines[i];
 
@@ -1456,12 +1481,15 @@ string ModelExpression::get_expression_python() const
             replace_all_appearances(line, key_word, new_word);
         }
 
-        sufix = "NeuralNetwork.";
+        sufix = "self.";
 
         for(int j = 0; j < found_mathematical_expressions.size(); j++)
         {
             key_word = found_mathematical_expressions[j];
-            new_word = sufix + key_word;
+            if(key_word == " Linear")
+                new_word = " " + sufix + "Linear";
+            else
+                new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
 
@@ -1470,11 +1498,30 @@ string ModelExpression::get_expression_python() const
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, outputs, ProgrammingLanguage::Python);
 
-    buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl
-           << "\t\t\toutput = self.calculate_outputs(inputs)\n" << endl
-           << "\t\t\toutput_batch[i] = output\n"<< endl
-           << "\t\treturn output_batch\n"<<endl
-           << "def main():" << endl
+    for (const string& assignment : fixed_outputs)
+        buffer << "\t\t" << assignment << endl;
+
+    string return_list = "[";
+    for(size_t i = 0; i < outputs.size(); ++i)
+    {
+        return_list += outputs[i];
+        if (i < outputs.size() - 1)
+        {
+            return_list += ", ";
+        }
+    }
+    return_list += "]";
+    buffer << "\t\treturn " << return_list << "\n" << endl;
+
+    buffer << "\tdef calculate_batch_output(self, input_batch):" << endl
+           << "\t\t" << "output_batch = np.zeros((len(input_batch), " << to_string(outputs_number) << "))" << endl
+           << "\t\t" << "for i in range(len(input_batch)):" << endl
+           << "\t\t\t" << "inputs = list(input_batch[i])" << endl
+           << "\t\t\t" << "output = self.calculate_outputs(inputs)" << endl
+           << "\t\t\t" << "output_batch[i] = output" << endl
+           << "\t\t" << "return output_batch\n" << endl;
+
+    buffer << "def main():" << endl
            << "\n\tinputs = []\n" << endl;
 
     for(Index i = 0; i < inputs_number; i++)
@@ -1494,7 +1541,7 @@ string ModelExpression::get_expression_python() const
 }
 
 
-string ModelExpression::replace_reserved_keywords(string& s) const
+string ModelExpression::replace_reserved_keywords(const string& s) const
 {
     string out = "";
 
@@ -1648,6 +1695,9 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
                 break;
             }
 
+            vector<string> fixes_outputs = fix_output_names(outputs);
+            for(size_t i = 0; i < outputs.size(); i++)
+                replace_all_appearances(out_string, outputs[i], fixes_outputs[i]);
             out.push_back(out_string);
         }
     }
@@ -1655,12 +1705,12 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 }
 
 
-vector<string> ModelExpression::fix_input_names(vector<string>& input_names) const
+vector<string> ModelExpression::fix_input_names(const vector<string>& input_names) const
 {
     const Index inputs_number = input_names.size();
     vector<string> fixes_input_names(inputs_number);
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
             fixes_input_names[i] = "input_" + to_string(i);
         else
@@ -1671,14 +1721,14 @@ vector<string> ModelExpression::fix_input_names(vector<string>& input_names) con
 }
 
 
-vector<string> ModelExpression::fix_output_names(vector<string>& output_names) const
+vector<string> ModelExpression::fix_output_names(const vector<string>& output_names) const
 {
 
     const Index outputs_number = output_names.size();
 
     vector<string> fixes_output_names(outputs_number);
 
-    for (Index i = 0; i < outputs_number; i++)
+    for (size_t i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
             fixes_output_names[i] = "output_" + to_string(i);
         else
