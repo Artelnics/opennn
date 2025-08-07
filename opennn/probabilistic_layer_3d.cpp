@@ -164,11 +164,23 @@ vector<pair<type *, Index> > Probabilistic3d::get_parameter_pairs() const
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                              Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
-     + biases.reshape(array<Index, 3>{1, 1, biases.dimension(0)})
-             .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index input_features = inputs.dimension(2);
+    const Index output_features = combinations.dimension(2);
 
-    //sum_matrices(thread_pool_device.get(), biases, combinations);
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < sequence_length; ++j)
+            for (Index k = 0; k < output_features; ++k)
+            {
+                type sum = biases(k);
+
+                for (Index l = 0; l < input_features; ++l)
+                    sum += inputs(i, j, l) * weights(l, k);
+
+                combinations(i, j, k) = sum;
+            }
 }
 
 
@@ -203,12 +215,14 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
 
 void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          const vector<pair<type*, dimensions>>&,
+                                          const vector<pair<type*, dimensions>>& delta_pairs,
                                           unique_ptr<LayerForwardPropagation>& forward_propagation,
                                           unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
     const Index samples_number = inputs.dimension(0);
+
+    if (delta_pairs.size() > 1) add_deltas(delta_pairs);
 
     // Forward propagation
 
@@ -226,35 +240,83 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     Tensor<type, 2>& mask = probabilistic_3d_back_propagation->mask;
 
-    bool& built_mask = probabilistic_3d_back_propagation->built_mask;
-
     Tensor<type, 3>& combination_deltas = probabilistic_3d_back_propagation->combination_deltas;
-
     Tensor<type, 1>& bias_deltas = probabilistic_3d_back_propagation->bias_deltas;
     Tensor<type, 2>& weight_deltas = probabilistic_3d_back_propagation->weight_deltas;
     Tensor<type, 3>& input_deltas = probabilistic_3d_back_propagation->input_deltas;
 
-    // if(!built_mask)
-    // {
-        mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
- 
-        const Tensor<type, 0> mask_sum = mask.sum();
-        
-        mask.device(*thread_pool_device) = mask / type(samples_number)/*mask_sum(0)*/;
-        
-        built_mask = true;
-    // }
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index input_features = inputs.dimension(2);
+    const Index output_features = combination_deltas.dimension(2);
+
+    // Mask
+
+    #pragma omp parallel for
+    for (Index i = 0; i < mask.size(); ++i)
+        mask.data()[i] = (targets.data()[i] != type(0)) ? type(1) : type(0);
+
+    const Tensor<type, 0> mask_sum_tensor = mask.sum();
+    const type mask_sum = mask_sum_tensor(0);
+    const type norm_factor = (mask_sum > 0) ? type(1.0) / mask_sum : type(1.0) / type(samples_number);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < mask.size(); ++i)
+        mask.data()[i] *= norm_factor;
+
+    // Deltas
 
     calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
-    bias_deltas.device(*thread_pool_device)
-        = combination_deltas.sum(array<Index, 2>({0,1}));
+    // Biases
 
-    weight_deltas.device(*thread_pool_device)
-        = inputs.contract(combination_deltas, axes(0,0,1,1));
+    bias_deltas.setZero();
 
-    input_deltas.device(*thread_pool_device)
-        = combination_deltas.contract(weights, axes(2,1));
+    #pragma omp parallel
+    {
+        Tensor<type, 1> private_bias_deltas(output_features); private_bias_deltas.setZero();
+
+        #pragma omp for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < sequence_length; ++j)
+                for (Index k = 0; k < output_features; ++k)
+                    private_bias_deltas(k) += combination_deltas(i, j, k);
+
+        #pragma omp critical
+        {
+            bias_deltas += private_bias_deltas;
+        }
+    }
+
+    // Weights
+
+    #pragma omp parallel for
+    for (Index i = 0; i < input_features; ++i)
+        for (Index j = 0; j < output_features; ++j)
+        {
+            type sum = 0;
+
+            for (Index k = 0; k < batch_size; ++k)
+                for (Index l = 0; l < sequence_length; ++l)
+                    sum += inputs(k, l, i) * combination_deltas(k, l, j);
+
+            weight_deltas(i, j) = sum;
+        }
+
+    // Previous layer
+
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < sequence_length; ++j)
+            for (Index k = 0; k < input_features; ++k)
+            {
+                type sum = 0;
+
+                for (Index l = 0; l < output_features; ++l)
+                    sum += combination_deltas(i, j, l) * weights(k, l);
+
+                input_deltas(i, j, k) = sum;
+            }
 }
 
 
@@ -264,17 +326,30 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
                                                    Tensor<type, 3>& combination_deltas) const
 {
     const Index batch_size = outputs.dimension(0);
-    const Index outputs_number = outputs.dimension(1);
+    const Index seq_len = outputs.dimension(1);
+    const Index features = outputs.dimension(2);
 
     combination_deltas = outputs;
 
     #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < seq_len; ++j)
+        {
+            const Index target_class_index = static_cast<Index>(targets(i, j));
 
-    for(Index i = 0; i < batch_size; i++)
-        for(Index j = 0; j < outputs_number; j++)
-            combination_deltas(i, j, Index(targets(i, j)))--;
+            if (target_class_index >= 0 && target_class_index < features)
+                combination_deltas(i, j, target_class_index) -= type(1);
+        }
 
-    multiply_matrices(thread_pool_device.get(), combination_deltas, mask);
+    #pragma omp parallel for collapse(2)
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < seq_len; ++j)
+        {
+            const type mask_value = mask(i, j);
+
+            for (Index k = 0; k < features; ++k)
+                combination_deltas(i, j, k) *= mask_value;
+        }
 }
 
 

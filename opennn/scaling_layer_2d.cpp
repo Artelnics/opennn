@@ -245,6 +245,7 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                        const bool&)
 {
     const Index outputs_number = get_outputs_number();
+    const Index batch_size = input_pairs[0].second[0];
 
     Scaling2dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
@@ -254,6 +255,7 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
 
+    #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
@@ -276,7 +278,8 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
             scale_logarithmic(outputs, i);
         break;
         case Scaler::ImageMinMax:
-            outputs.chip(i,1).device(*thread_pool_device) =  outputs.chip(i,1) / type(255);
+            for (Index row = 0; row < batch_size; ++row)
+                outputs(row, i) /= type(255);
         break;
         default:
             throw runtime_error("Unknown scaling method.\n");

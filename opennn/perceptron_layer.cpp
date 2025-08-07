@@ -38,10 +38,8 @@ dimensions Dense2d::get_output_dimensions() const
 vector<pair<type*, Index>> Dense2d::get_parameter_pairs() const
 {
     vector<pair<type*, Index>> parameter_pairs =
-    {
-        {(type*)(biases.data()), biases.size()},
-        {(type*)(weights.data()), weights.size()}
-    };
+    {{(type*)(biases.data()), biases.size()},
+     {(type*)(weights.data()), weights.size()}};
 
     if (batch_normalization)
     {
@@ -245,17 +243,152 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
+    const Index inputs_number = weights.dimension(0);
 
-    combinations.device(*thread_pool_device)
-        = inputs.contract(weights, axes(1,0))
-        + biases.reshape(array<Index, 2>({1, outputs_number}))
-                .broadcast(array<Index, 2>({batch_size, 1}));
+    #pragma omp parallel for
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type sum = biases(j);
+
+            for (Index k = 0; k < inputs_number; ++k)
+                sum += inputs(i, k) * weights(k, j);
+
+            combinations(i, j) = sum;
+        }
 }
 
 
 void Dense2d::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& layer_forward_propagation, const bool& is_training)
 {
-    // @todo cpu
+    Dense2dForwardPropagation* dense2d_forward_propagation =
+        static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
+
+    const Index batch_size = dense2d_forward_propagation->batch_size;
+    const Index outputs_number = get_outputs_number();
+
+    Tensor<type, 2>& outputs = dense2d_forward_propagation->outputs;
+    Tensor<type, 2>& normalized_outputs = dense2d_forward_propagation->normalized_outputs;
+    Tensor<type, 1>& means = dense2d_forward_propagation->means;
+    Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
+
+    if (is_training)
+    {
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type mean_sum = 0;
+
+            for (Index i = 0; i < batch_size; ++i)
+                mean_sum += outputs(i, j);
+
+            means(j) = mean_sum / type(batch_size);
+
+            type variance_sum = 0;
+            const type current_mean = means(j);
+
+            for (Index i = 0; i < batch_size; ++i)
+            {
+                type diff = outputs(i, j) - current_mean;
+                variance_sum += diff * diff;
+            }
+
+            standard_deviations(j) = sqrt(variance_sum / type(batch_size) + epsilon);
+        }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            const type mean_val = means(j);
+            const type std_dev_val = standard_deviations(j);
+
+            for (Index i = 0; i < batch_size; ++i)
+                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
+        }
+
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            moving_means(j) = moving_means(j) * momentum + means(j) * (type(1) - momentum);
+            moving_standard_deviations(j) = moving_standard_deviations(j) * momentum + standard_deviations(j) * (type(1) - momentum);
+        }
+    }
+    else
+    {
+        #pragma omp parallel for
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            const type mean_val = moving_means(j);
+            const type std_dev_val = moving_standard_deviations(j) + epsilon;
+
+            for (Index i = 0; i < batch_size; ++i)
+                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
+        }
+    }
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type scale_val = scales(j);
+        const type offset_val = offsets(j);
+
+        for (Index i = 0; i < batch_size; ++i)
+            outputs(i, j) = normalized_outputs(i, j) * scale_val + offset_val;
+    }
+}
+
+
+void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& deltas,
+                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation, 
+                                                 unique_ptr<LayerBackPropagation>& back_propagation) const
+{
+    const Dense2dForwardPropagation* dense2d_forward_propagation =
+        static_cast<const Dense2dForwardPropagation*>(layer_forward_propagation.get());
+
+    const Index batch_size = dense2d_forward_propagation->batch_size;
+    const Index outputs_number = get_outputs_number();
+
+    const Tensor<type, 2>& normalized_outputs = dense2d_forward_propagation->normalized_outputs;
+    const Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
+
+    Dense2dBackPropagation* dense2d_back_propagation =
+        static_cast<Dense2dBackPropagation*>(back_propagation.get());
+
+    Tensor<type, 1>& bn_scale_deltas = dense2d_back_propagation->bn_scale_deltas;
+    Tensor<type, 1>& bn_offset_deltas = dense2d_back_propagation->bn_offset_deltas;
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type offset_sum = 0;
+        type scale_sum = 0;
+
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            offset_sum += deltas(i, j);
+            scale_sum += deltas(i, j) * normalized_outputs(i, j);
+        }
+
+        bn_offset_deltas(j) = offset_sum;
+        bn_scale_deltas(j) = scale_sum;
+    }
+
+    const type inv_m = type(1) / type(batch_size);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type inv_std_dev = type(1) / standard_deviations(j);
+        const type scale_val = scales(j);
+        const type offset_delta = bn_offset_deltas(j);
+        const type scale_delta = bn_scale_deltas(j);
+
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            deltas(i, j) = ( (deltas(i, j) * type(batch_size)) - offset_delta - (normalized_outputs(i, j) * scale_delta) )
+            * inv_m * inv_std_dev * scale_val;
+        }
+    }
 }
 
 
@@ -270,9 +403,8 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& outputs = dense2d_forward_propagation->outputs;
 
-    calculate_combinations(inputs,
-                           outputs);
-
+    calculate_combinations(inputs, outputs);
+    
     if (batch_normalization)
         apply_batch_normalization(layer_forward_propagation, is_training);
 
@@ -306,24 +438,61 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
     
     Tensor<type, 2>& weight_deltas = dense2d_back_propagation->weight_deltas;
-
     Tensor<type, 1>& bias_deltas = dense2d_back_propagation->bias_deltas;
-
     const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
-
     Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
-    if(activation_function != "Softmax")
-        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    const Index batch_size = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
+    const Index outputs_number = deltas.dimension(1);
 
-    //if (batch_normalization) // @todo cpu batch normalization backward
+    if (activation_function != "Softmax")
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            deltas.data()[i] *= activation_derivatives.data()[i];
+    }
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
+    if (batch_normalization)
+        apply_batch_normalization_backward(deltas, forward_propagation, back_propagation);
 
-    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type sum = 0;
+
+        for (Index i = 0; i < batch_size; ++i)
+            sum += deltas(i, j);
+
+        bias_deltas(j) = sum;
+    }
+
+    #pragma omp parallel for
+    for (Index i = 0; i < inputs_number; ++i)
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            type sum = 0;
+
+            for (Index k = 0; k < batch_size; ++k)
+                sum += inputs(k, i) * deltas(k, j);
+
+            weight_deltas(i, j) = sum;
+        }
 
     if (!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+    {
+        #pragma omp parallel for
+        for (Index i = 0; i < batch_size; ++i)
+            for (Index j = 0; j < inputs_number; ++j)
+            {
+                type sum = 0;
+
+                for (Index k = 0; k < outputs_number; ++k)
+                    sum += deltas(i, k) * weights(j, k);
+
+                input_deltas(i, j) = sum;
+            }
+    }
 }
 
 
@@ -335,10 +504,10 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
     TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
     
+    const Index batch_size = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
-
-    const Index weights_number = weights.size();
+    const Index biases_number = biases.size();
 
     // Forward propagation
 
@@ -355,39 +524,44 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& squared_errors_Jacobian = dense2d_layer_back_propagation_lm->squared_errors_Jacobian;
 
-    const bool& is_first_layer = dense2d_layer_back_propagation_lm->is_first_layer;
+    #pragma omp parallel for
+    for(Index i = 0; i < deltas.size(); ++i)
+        deltas.data()[i] *= activation_derivatives.data()[i];
 
-    Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
+    // Biases
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; j++)
+        squared_errors_Jacobian.chip(j, 1) = deltas.chip(j, 1);
 
-    Index weight_index = 0;
+    // Weights
 
-    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
+    #pragma omp parallel for collapse(2)
+    for (Index j = 0; j < outputs_number; j++)
     {
-        const Tensor<type, 1> combination_delta_neuron = tensor_map_(deltas, neuron_index);
-
-        for(Index input_index = 0; input_index < inputs_number; input_index++)
+        for (Index i = 0; i < inputs_number; i++)
         {
-            const Tensor<type, 1> input = inputs.chip(input_index,1);
+            const Index weight_column_index = biases_number + (j * inputs_number) + i;
 
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
-                = tensor_map(squared_errors_Jacobian, weight_index++);
-
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device)
-                = combination_delta_neuron * input;
+            squared_errors_Jacobian.chip(weight_column_index, 1) = deltas.chip(j, 1) * inputs.chip(i, 1);
         }
-
-        const Index bias_index = weights_number + neuron_index;
-
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias
-            = tensor_map(squared_errors_Jacobian, bias_index);
-
-        squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
     }
 
-    if(!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+    if (!dense2d_layer_back_propagation_lm->is_first_layer)
+    {
+        Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
+
+        #pragma omp parallel for collapse(2)
+        for (Index b = 0; b < batch_size; ++b)
+            for (Index i = 0; i < inputs_number; ++i)
+            {
+                type sum = 0.0;
+                for (Index j = 0; j < outputs_number; ++j)
+                    sum += deltas(b, j) * weights(i, j);
+
+                input_deltas(b, i) = sum;
+            }
+    }
 }
 
 
@@ -448,11 +622,6 @@ void Dense2d::print() const
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Weights dimensions: " << weights.dimensions() << endl;
-
-    //cout << "Biases:" << endl;
-    //cout << biases << endl;
-    //cout << "Weights:" << endl;
-    //cout << weights << endl;
 
     cout << "Activation function:" << endl;
     cout << activation_function << endl;
@@ -544,6 +713,7 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
     {
         means.resize(outputs_number);
         standard_deviations.resize(outputs_number);
+        normalized_outputs.resize(batch_size, outputs_number);
     }
 }
 
@@ -624,10 +794,8 @@ vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() c
     const auto* dense_layer = static_cast<const Dense2d*>(layer);
 
     vector<pair<type*, Index>> delta_pairs =
-    {
-        { const_cast<type*>(bias_deltas.data()), bias_deltas.size() },
-        { const_cast<type*>(weight_deltas.data()), weight_deltas.size() }
-    };
+    {{const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
+     {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}};
 
     if (dense_layer->get_batch_normalization())
     {
@@ -649,7 +817,7 @@ void Dense2dBackPropagation::print() const
 
 
 Dense2dLayerBackPropagationLM::Dense2dLayerBackPropagationLM(const Index& new_batch_size,
-                                                                   Layer *new_layer)
+                                                             Layer* new_layer)
     : LayerBackPropagationLM()
 {
     set(new_batch_size, new_layer);
@@ -690,22 +858,43 @@ void Dense2dLayerBackPropagationLM::print() const
 
 void Dense2d::normalization(Tensor<type, 1> &means,
                             Tensor<type, 1> &standard_deviations,
-                            const Tensor<type, 2> &inputs,
                             Tensor<type, 2> &outputs) const
 {
+    const Index batch_size = outputs.dimension(0);
+    const Index outputs_number = outputs.dimension(1);
 
-    const array<Index, 2> rows({outputs.dimension(0), 1});
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        type mean_sum = 0;
 
-    const array<int, 1> axis_x({0});
+        for (Index i = 0; i < batch_size; ++i)
+            mean_sum += outputs(i, j);
 
-    means.device(*thread_pool_device) = outputs.mean(axis_x);
+        means(j) = mean_sum / type(batch_size);
 
-    standard_deviations.device(*thread_pool_device)
-        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+        type variance_sum = 0;
+        const type current_mean = means(j);
 
-    outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
-        //shifts.broadcast(rows);
-        //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
+        for (Index i = 0; i < batch_size; ++i)
+        {
+            type diff = outputs(i, j) - current_mean;
+            variance_sum += diff * diff;
+        }
+
+        standard_deviations(j) = sqrt(variance_sum / type(batch_size));
+    }
+
+    #pragma omp parallel for
+    for (Index j = 0; j < outputs_number; ++j)
+    {
+        const type current_mean = means(j);
+        const type current_std_dev = standard_deviations(j);
+
+        if (std::abs(current_std_dev) > static_cast<type>(1.0e-9))
+            for (Index i = 0; i < batch_size; ++i)
+                outputs(i, j) = (outputs(i, j) - current_mean) / current_std_dev;
+    }
 }
 
 
@@ -786,8 +975,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                 bn_running_variance_device,
                 epsilon,
                 dense2d_layer_forward_propagation_cuda->bn_saved_mean,
-                dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance
-            );
+                dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance);
+
             if (bn_status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnBatchNormalizationForwardTraining failed: " << cudnnGetErrorString(bn_status) << endl;
         }
@@ -806,8 +995,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                 bn_offset_device,
                 bn_running_mean_device,
                 bn_running_variance_device,
-                epsilon
-            );
+                epsilon);
+
             if (bn_status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnBatchNormalizationForwardInference failed: " << cudnnGetErrorString(bn_status) << endl;
         }
@@ -971,8 +1160,8 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
             dense2d_layer_back_propagation->bn_offset_deltas_device,
             epsilon,
             dense2d_layer_forward_propagation_cuda->bn_saved_mean,
-            dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance
-        );
+            dense2d_layer_forward_propagation_cuda->bn_saved_inv_variance);
+
         if (bn_status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnBatchNormalizationBackward failed: " << cudnnGetErrorString(bn_status) << endl;
     }
@@ -1240,7 +1429,22 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Dense2dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dForwardPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Outputs Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+    cout << "  Combinations Tensor Dimensions: { " << batch_size << ", " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization States:" << endl;
+        cout << "    - bn_saved_mean size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_saved_inv_variance size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
@@ -1249,6 +1453,9 @@ void Dense2dForwardPropagationCuda::free()
     if (combinations != nullptr)
         cudaFree(combinations);
     cudaFree(outputs);
+
+    combinations = nullptr;
+    outputs = nullptr;
 
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
@@ -1261,8 +1468,15 @@ void Dense2dForwardPropagationCuda::free()
     if (dropout_states)
         cudaFree(dropout_states);
 
+    dropout_reserve_space = nullptr;
+    dropout_descriptor = nullptr;
+    dropout_states = nullptr;
+
     if (bn_saved_mean) cudaFree(bn_saved_mean);
     if (bn_saved_inv_variance) cudaFree(bn_saved_inv_variance);
+
+    bn_saved_mean = nullptr;
+    bn_saved_inv_variance = nullptr;
 }
 
 
@@ -1354,7 +1568,24 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
 
 void Dense2dBackPropagationCuda::print() const
 {
-    // @todo
+    cout << "Dense2dBackPropagationCuda:" << endl;
+    cout << "  Layer: " << layer->get_label() << " (" << layer->get_name() << ")" << endl;
+    cout << "  Batch Size: " << batch_size << endl;
+
+    const auto* dense_layer = static_cast<const Dense2d*>(layer);
+    const dimensions input_dims = dense_layer->get_input_dimensions();
+    const dimensions output_dims = dense_layer->get_output_dimensions();
+
+    cout << "  Input Deltas Dimensions: { " << batch_size << ", " << input_dims[0] << " }" << endl;
+    cout << "  Weight Deltas Dimensions: { " << input_dims[0] << ", " << output_dims[0] << " }" << endl;
+    cout << "  Bias Deltas Dimensions: { " << output_dims[0] << " }" << endl;
+
+    if (dense_layer->get_batch_normalization())
+    {
+        cout << "  Batch Normalization Deltas:" << endl;
+        cout << "    - bn_scale_deltas size: { " << output_dims[0] << " }" << endl;
+        cout << "    - bn_offset_deltas size: { " << output_dims[0] << " }" << endl;
+    }
 }
 
 
@@ -1364,8 +1595,17 @@ void Dense2dBackPropagationCuda::free()
     cudaFree(weight_deltas_device);
     cudaFree(input_deltas);
     cudaFree(ones);
+
+    bias_deltas_device = nullptr;
+    weight_deltas_device = nullptr;
+    input_deltas = nullptr;
+    ones = nullptr;
+
     if (bn_scale_deltas_device) cudaFree(bn_scale_deltas_device);
     if (bn_offset_deltas_device) cudaFree(bn_offset_deltas_device);
+
+    bn_scale_deltas_device = nullptr;
+    bn_offset_deltas_device = nullptr;
 
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 }

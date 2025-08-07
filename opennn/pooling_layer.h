@@ -83,8 +83,7 @@ public:
                                        const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                                           unique_ptr<LayerForwardPropagation>&,
-                                           const bool&) const;
+                                           unique_ptr<LayerForwardPropagation>&) const;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,

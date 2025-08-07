@@ -7,12 +7,11 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
 #include "addition_layer_3d.h"
 
 namespace opennn
 {
-
+/*
 Addition3d::Addition3d(const dimensions& new_input_dimensions,
                        const string& new_name) : Layer()
 {
@@ -215,9 +214,9 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
     {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_dimension}},
      {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_dimension}}};
 }
-
+*/
 #ifdef OPENNN_CUDA
-
+/*
 void Addition3d::forward_propagate_cuda(const vector<float*>& inputs_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                         const bool& is_training)
@@ -289,7 +288,15 @@ void Addition3dForwardPropagationCuda::set(const Index& new_batch_size, Layer* n
 
 void Addition3dForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Addition3dForwardPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "Outputs dimensions:" << endl
+        << "[ " << batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
+
+    cout << "Outputs:" << endl
+        << matrix_3d_from_device(outputs, batch_size, addition_layer->get_sequence_length(), addition_layer->get_embedding_dimension()) << endl;
 }
 
 
@@ -304,6 +311,12 @@ Addition3dBackPropagationCuda::Addition3dBackPropagationCuda(const Index& new_ba
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
+}
+
+
+vector<float*> Addition3dBackPropagationCuda::get_input_derivatives_device()
+{
+    return { inputs_1_derivatives, inputs_2_derivatives };
 }
 
 
@@ -334,7 +347,12 @@ void Addition3dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
 void Addition3dBackPropagationCuda::print() const
 {
-    //@todo
+    cout << "Addition3dBackPropagationCuda:" << endl;
+
+    const Addition3d* addition_layer = static_cast<const Addition3d*>(layer);
+
+    cout << "input derivatives dimensions:" << endl
+        << "[ "<< batch_size << " , " << addition_layer->get_sequence_length() << " , " << addition_layer->get_embedding_dimension() << " ]" << endl;
 }
 
 
@@ -346,16 +364,64 @@ void Addition3dBackPropagationCuda::free()
     inputs_1_derivatives = nullptr;
     inputs_2_derivatives = nullptr;
 }
-
-
-REGISTER(LayerForwardPropagationCuda, Addition3dForwardPropagationCuda, "Addition3d")
-REGISTER(LayerBackPropagationCuda, Addition3dBackPropagationCuda, "Addition3d")
+*/
 
 #endif
 
-REGISTER(Layer, Addition3d, "Addition3d")
-REGISTER(LayerForwardPropagation, Addition3dForwardPropagation, "Addition3d")
-REGISTER(LayerBackPropagation, Addition3dBackPropagation, "Addition3d")
+    using Addition3d = Addition<3>;
+    using Addition4d = Addition<4>;
+
+    using AdditionForwardPropagation3d = AdditionForwardPropagation<3>;
+    using AdditionForwardPropagation4d = AdditionForwardPropagation<4>;
+
+    using AdditionBackPropagation3d = AdditionBackPropagation<3>;
+    using AdditionBackPropagation4d = AdditionBackPropagation<4>;
+
+    REGISTER(Layer, Addition3d, "Addition3d")
+    REGISTER(LayerForwardPropagation, AdditionForwardPropagation3d, "Addition3d")
+    REGISTER(LayerBackPropagation, AdditionBackPropagation3d, "Addition3d")
+
+    REGISTER(Layer, Addition4d, "Addition4d")
+    REGISTER(LayerForwardPropagation, AdditionForwardPropagation4d, "Addition4d")
+    REGISTER(LayerBackPropagation, AdditionBackPropagation4d, "Addition4d")
+
+#ifdef OPENNN_CUDA
+
+    using AdditionForwardPropagationCuda3d = AdditionForwardPropagationCuda<3>;
+    using AdditionBackPropagationCuda3d = AdditionBackPropagationCuda<3>;
+
+    using AdditionForwardPropagationCuda4d = AdditionForwardPropagationCuda<4>;
+    using AdditionBackPropagationCuda4d = AdditionBackPropagationCuda<4>;
+
+    REGISTER(LayerForwardPropagationCuda, AdditionForwardPropagationCuda3d, "Addition3d")
+    REGISTER(LayerBackPropagationCuda, AdditionBackPropagationCuda3d, "Addition3d")
+
+    REGISTER(LayerForwardPropagationCuda, AdditionForwardPropagationCuda4d, "Addition4d")
+    REGISTER(LayerBackPropagationCuda, AdditionBackPropagationCuda4d, "Addition4d")
+
+#endif
+
+    template class Addition<3>;
+    template class Addition<4>;
+
+    template struct AdditionForwardPropagation<3>;
+    template struct AdditionForwardPropagation<4>;
+
+    template struct AdditionBackPropagation<3>;
+    template struct AdditionBackPropagation<4>;
+
+#ifdef OPENNN_CUDA
+
+    template struct AdditionForwardPropagationCuda<3>;
+    template struct AdditionForwardPropagationCuda<4>;
+
+    template struct AdditionBackPropagationCuda<3>;
+    template struct AdditionBackPropagationCuda<4>;
+
+#endif
+
+    // Linker fix: Ensures the static registration macros in this file are run.
+    void reference_addition_layer() { }
 
 }
 

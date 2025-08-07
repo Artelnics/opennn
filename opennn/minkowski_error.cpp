@@ -53,7 +53,6 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
-
     // Batch
 
     const Index samples_number = batch.get_samples_number();
@@ -72,9 +71,22 @@ void MinkowskiError::calculate_error(const Batch& batch,
     
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets + epsilon;
+    const Index size = errors.size();
+    type* errors_data = errors.data();
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
 
-    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        errors_data[i] = outputs_data[i] - targets_data[i] + epsilon;
+
+    type error_sum = type(0);
+
+    #pragma omp parallel for reduction(+:error_sum)
+    for (Index i = 0; i < size; ++i)
+        error_sum += pow(abs(errors_data[i]), minkowski_parameter);
+
+    error() = error_sum / type(samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -94,9 +106,15 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const type coefficient = type(1.0 / samples_number);
+    const type coefficient = minkowski_parameter / type(samples_number);
 
-    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+    const Index size = deltas.size();
+    type* deltas_data = deltas.data();
+    const type* errors_data = errors.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = errors_data[i] * pow(abs(errors_data[i]), minkowski_parameter - type(2)) * coefficient;
 }
 
 

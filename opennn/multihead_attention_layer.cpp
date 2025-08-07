@@ -198,34 +198,31 @@ void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_paddi
     // @Todo (I don't know if it is building the mask correctly)
     const Index batch_size  = attention_weights.dimension(2);
 
-    Tensor<type, 2> key_padding_mask_type(key_padding_mask.dimension(0),key_padding_mask.dimension(1));
-
-    for(Index h = 0; h < heads_number; ++h)
-    {
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_attention_weights = tensor_map(attention_weights,h,b);
-
-            head_sample_attention_weights.device(*thread_pool_device)
-                += key_padding_mask.chip(b, 0)
-                       .cast<type>()
-                       .reshape(array<Index,2>{source_sequence_length, 1})
-                       .broadcast(array<Index,2>{1, query_sequence_length})
-                   * type(-10e9);
-        }
-    }
+#pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index h = 0; h < heads_number; ++h)
+            for (Index src_idx = 0; src_idx < source_sequence_length; ++src_idx)
+                if (key_padding_mask(b, src_idx))
+                    for (Index q_idx = 0; q_idx < query_sequence_length; ++q_idx)
+                        attention_weights(q_idx, src_idx, b, h) += minus_inf;
 }
 
 
-void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& value,
-                                                     const Tensor<type, 4>& attention_weights,
-                                                     Tensor<type, 4>& attention_outputs) const
+void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& attention_outputs,
+                                                     Tensor<type, 3>& concatenated_attention_outputs) const
 {
-    batch_matrix_multiplication<type, 4>(thread_pool_device.get(),
-                                         attention_weights,
-                                         value,
-                                         attention_outputs,
-                                         axes<Index>(0,0));
+    const Index batch_size = attention_outputs.dimension(2);
+    const Index head_dim = get_head_dimension();
+
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index q = 0; q < query_sequence_length; ++q)
+            for (Index h = 0; h < heads_number; ++h)
+                for (Index d = 0; d < head_dim; ++d)
+                {
+                    const Index target_embedding_idx = h * head_dim + d;
+                    concatenated_attention_outputs(b, q, target_embedding_idx) = attention_outputs(q, d, b, h);
+                }
 }
 
 
@@ -271,17 +268,18 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
     //             heads_number * get_hidden_depth() // embedding_dimension
     //         });
 
-    const array<int, 4> shuffling_pattern = {0, 3, 1, 2};
+    const Index batch_size = attention_outputs.dimension(2);
+    const Index head_dim = get_head_dimension();
 
-    const array<Index, 3> target_shape = {
-        query_sequence_length,
-        heads_number * get_head_dimension(),
-        attention_outputs.dimension(2) // batch_size
-    };
-
-    concatenated_attention_outputs.device(*thread_pool_device) =
-        attention_outputs.shuffle(shuffling_pattern)
-            .reshape(target_shape);
+    #pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index q = 0; q < query_sequence_length; ++q)
+            for (Index h = 0; h < heads_number; ++h)
+                for (Index d = 0; d < head_dim; ++d)
+                {
+                    const Index target_embedding_idx = h * head_dim + d;
+                    concatenated_attention_outputs(b, q, target_embedding_idx) = attention_outputs(q, d, b, h);
+                }
 }
 
 
@@ -289,20 +287,18 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& conc
                                                      Tensor<type, 3>& outputs) const
 {
     const Index batch_size = outputs.dimension(0);
+    const Index q_len = outputs.dimension(1);
+    const Index embed_dim = outputs.dimension(2);
 
-    for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+    #pragma omp parallel for
+    for (Index b = 0; b < batch_size; ++b)
     {
-        const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(concatenated_attention_outputs, sample_index);
+        outputs.chip(b, 0) = concatenated_attention_outputs.chip(b, 0).contract(projection_weights, axes(1, 0));
 
-        outputs.chip(sample_index, 0).device(*thread_pool_device)
-            = sample_attention_output.contract(projection_weights, axes(1,0));
+        for (Index q = 0; q < q_len; ++q)
+            for (Index d = 0; d < embed_dim; ++d)
+                outputs(b, q, d) += projection_biases(d);
     }
-    /*
-    outputs.device(*thread_pool_device) = outputs
-        + projection_biases.reshape(array<Index, 3>{1, 1, projection_biases.dimension(0)})
-                           .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
-    */
-    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
 }
 
 
@@ -319,6 +315,7 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
         static_cast<MultiHeadAttentionForwardPropagation*>(layer_forward_propagation.get());
 
     const Index batch_size = this_forward_propagation->batch_size;
+<<<<<<< HEAD
 
     Tensor<type, 4>& query = this_forward_propagation->query;
     Tensor<type, 4>& key = this_forward_propagation->key;
@@ -353,13 +350,62 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
         (query.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension)).broadcast(array_5(1, 1, 1, source_sequence_length, 1))
          * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
          .sum(array_1(4)) * scaling_factor;
+=======
+    const Index head_dimension = get_head_dimension();
+    const type scale = type(1.0) / sqrt(type(head_dimension));
 
-    softmax(attention_weights);
+    //const array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+    //const array<Index, 3> bias_reshape_dims = {1, 1, embedding_dimension};
+    //const array<Index, 3> bias_broadcast_dims_query = {batch_size, query_sequence_length, 1}; // @todo for key and value is not the same
+    //const array<Index, 3> bias_broadcast_dims_source = {batch_size, source_sequence_length, 1}; // @todo for key and value is not the same
+    //const array<Index, 4> final_reshape_dims_query = {batch_size, query_sequence_length, heads_number, head_dimension};
+    //const array<Index, 4> final_reshape_dims_source = {batch_size, source_sequence_length, heads_number, head_dimension};
+    //const array<Index, 4> shuffle_order = {0, 2, 1, 3};
+    //const array<int, 4> key_transpose_order = {0, 1, 3, 2};
+    //array<IndexPair<Index>, 1> contract_dims_attention_scores = { IndexPair<Index>(3, 2) };
 
+    auto calculate_projection = [&](const auto& input, const auto& weights, const auto& biases, auto& result, Index seq_len) {
+        Tensor<type, 3> projected(batch_size, seq_len, embedding_dimension);
+
+        #pragma omp parallel for
+        for (Index b = 0; b < batch_size; ++b)
+        {
+            projected.chip(b, 0) = input.chip(b, 0).contract(weights, axes(1, 0));
+
+            for (Index i = 0; i < seq_len; ++i)
+                for (Index j = 0; j < embedding_dimension; ++j)
+                    projected(b, i, j) += biases(j);
+        }
+
+        result = projected.reshape(array_4(batch_size, seq_len, heads_number, head_dimension)).shuffle(array_4(0, 2, 1, 3));
+    };
+>>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
+
+    calculate_projection(query_input, query_weights, query_biases, this_forward_propagation->query, query_sequence_length);
+    calculate_projection(source_input, key_weights, key_biases, this_forward_propagation->key, source_sequence_length);
+    calculate_projection(source_input, value_weights, value_biases, this_forward_propagation->value, source_sequence_length);
+
+<<<<<<< HEAD
     attention_outputs.device(*thread_pool_device) =
         (attention_weights.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1)).broadcast(array_5(1, 1, 1, 1, head_dimension))
          * value.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
          .sum(array_1(3));
+=======
+    this_forward_propagation->attention_weights = this_forward_propagation->query.contract(this_forward_propagation->key.shuffle(array_4(0, 1, 3, 2)), axes(3, 2));
+
+    type* aw_data = this_forward_propagation->attention_weights.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < this_forward_propagation->attention_weights.size(); ++i)
+        aw_data[i] *= scale;
+
+    softmax(this_forward_propagation->attention_weights);
+
+    this_forward_propagation->attention_outputs = this_forward_propagation->attention_weights.contract(this_forward_propagation->value, axes(3, 2));
+
+    concatenate_heads(this_forward_propagation->attention_outputs, this_forward_propagation->concatenated_attention_outputs);
+    calculate_output_projection(this_forward_propagation->concatenated_attention_outputs, this_forward_propagation->outputs);
+>>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 
 #pragma omp parallel for
     for(int head_number = 0; head_number < heads_number; ++head_number)

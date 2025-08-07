@@ -94,8 +94,6 @@ public:
 
     void set_display(const bool&);
 
-    void set_threads_number(const int&);
-
     // Checking
 
     void check() const;
@@ -275,14 +273,11 @@ private:
 
 private:
 
-   unique_ptr<ThreadPool> thread_pool = nullptr;
-   unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
-   NeuralNetwork* neural_network = nullptr;
+    Dataset* dataset = nullptr;
 
-   Dataset* dataset = nullptr;
-
-   bool display = true;
+    bool display = true;
 };
 
 }

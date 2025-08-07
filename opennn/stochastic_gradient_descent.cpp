@@ -133,6 +133,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     const Index layers_number = neural_network->get_layers_number();
 
+    const type learning_rate = initial_learning_rate / (type(1) + type(optimization_data.iteration) * initial_decay);
+
+    #pragma omp parallel for
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
@@ -145,7 +148,6 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
         const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
 
-        // #pragma omp parallel for #@todo check pragma vs thread_pool_device
         for(Index j = 0; j < layer_parameter_pairs.size(); j++)
         {
             type* parameter_data = layer_parameter_pairs[j].first;
@@ -162,22 +164,30 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
             if (momentum <= type(0))
             {
-                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
-                parameters.device(*thread_pool_device) += parameters_increment;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    parameters_increment(k) = gradient(k) * (-learning_rate);
+                    parameters(k) += parameters_increment(k);
+                }
             }
             else if (momentum > type(0) && !nesterov)
             {
-                parameters_increment.device(*thread_pool_device) =
-                    gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    parameters_increment(k) = gradient(k) * (-learning_rate) + momentum * last_parameters_increment(k);
+                    last_parameters_increment(k) = parameters_increment(k);
+                    parameters(k) += parameters_increment(k);
+                }
             }
             else if (momentum > type(0) && nesterov)
             {
-                parameters_increment.device(*thread_pool_device)
-                = gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+                for(Index k = 0; k < parameter_size; ++k)
+                {
+                    const type last_increment = last_parameters_increment(k);
+                    parameters_increment(k) = gradient(k) * (-learning_rate) + momentum * last_increment;
+                    last_parameters_increment(k) = parameters_increment(k);
+                    parameters(k) += momentum * parameters_increment(k) - (type(1) + momentum) * last_increment;
+                }
             }
         }
     }
@@ -549,7 +559,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 #ifdef OPENNN_CUDA
 
-TrainingResults StochasticGradientDescent::perform_training_cuda()
+TrainingResults StochasticGradientDescent::train_cuda()
 {
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
         return TrainingResults();
@@ -570,7 +580,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
+    //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
 
     const vector<Index> training_samples_indices = dataset->get_sample_indices("Training");
     const vector<Index> selection_samples_indices = dataset->get_sample_indices("Selection");
@@ -676,7 +686,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
             training_batch_cuda.fill(training_batches[iteration],
                 input_variable_indices,
-                decoder_variable_indices,
+                //decoder_variable_indices,
                 target_variable_indices);
 
             // Neural network
@@ -723,7 +733,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
                 selection_batch_cuda->fill(selection_batches[iteration],
                                            input_variable_indices,
-                                           decoder_variable_indices,
+                                           //decoder_variable_indices,
                                            target_variable_indices);
 
                 // Neural network

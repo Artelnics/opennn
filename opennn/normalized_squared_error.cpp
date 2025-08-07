@@ -102,17 +102,25 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
                                                                  const Tensor<type, 1>& targets_mean) const
 {
     const Index rows_number = targets.dimension(0);
+    const Index cols_number = targets.dimension(1);
 
-    Tensor<type, 0> new_normalization_coefficient;
-    new_normalization_coefficient.setZero();
+    type total_sum_of_squares = type(0);
 
-    for(Index i = 0; i < rows_number; i++)
-        new_normalization_coefficient.device(*thread_pool_device)
-        += (targets.chip(i, 0) - targets_mean).square().sum();
-    
-    return new_normalization_coefficient() < NUMERIC_LIMITS_MIN
-        ? type(1)
-        : new_normalization_coefficient();
+    #pragma omp parallel for reduction(+:total_sum_of_squares)
+    for (Index i = 0; i < rows_number; ++i)
+    {
+        type row_sum_of_squares = type(0);
+        for (Index j = 0; j < cols_number; ++j)
+        {
+            const type diff = targets(i, j) - targets_mean(j);
+            row_sum_of_squares += diff * diff;
+        }
+        total_sum_of_squares += row_sum_of_squares;
+    }
+
+    return total_sum_of_squares < NUMERIC_LIMITS_MIN
+               ? type(1)
+               : total_sum_of_squares;
 }
 
 
@@ -126,15 +134,11 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     const Index samples_number = batch.get_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
-
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(batch.get_target_pair());
 
     // Forward propagation
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(forward_propagation.get_last_trainable_layer_outputs_pair());
 
     // Back propagation
 
@@ -142,11 +146,24 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     Tensor<type,0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    const Index size = errors.size();
+    type* errors_data = errors.data();
+    const type* outputs_data = outputs.data();
+    const type* targets_data = targets.data();
+
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        errors_data[i] = outputs_data[i] - targets_data[i];
+
+    type sum_of_squares = type(0);
+
+    #pragma omp parallel for reduction(+:sum_of_squares)
+    for (Index i = 0; i < size; ++i)
+        sum_of_squares += errors_data[i] * errors_data[i];
 
     const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
-    error.device(*thread_pool_device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
+    error() = sum_of_squares * coefficient;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -168,8 +185,15 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
     Tensor<type, 0>& error = back_propagation.error;
 
     const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
+    const Index size = squared_errors.size();
+    const type* squared_errors_data = squared_errors.data();
+    type sum_result = type(0);
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
+    #pragma omp parallel for reduction(+:sum_result)
+    for (Index i = 0; i < size; ++i)
+        sum_result += squared_errors_data[i] * squared_errors_data[i];
+
+    error() = sum_result * coefficient;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -196,8 +220,13 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs);
 
     const type coefficient = type(2*total_samples_number) / (type(samples_number)*normalization_coefficient);
+    const Index size = errors.size();
+    const type* errors_data = errors.data();
+    type* deltas_data = deltas.data();
 
-    deltas.device(*thread_pool_device) = coefficient*errors;
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = errors_data[i] * coefficient;
 }
 
 
@@ -208,12 +237,17 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(back_propagation.get_output_deltas_pair());
 
-    TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
+    const Index size = errors.size();
+    const type* errors_data = errors.data();
+    type* deltas_data = output_deltas.data();
 
-    output_deltas.device(*thread_pool_device) = errors;
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    #pragma omp parallel for
+    for (Index i = 0; i < size; ++i)
+        deltas_data[i] = errors_data[i];
+
+    divide_columns(output_deltas, squared_errors);
 }
 
 
@@ -235,7 +269,18 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2* total_samples_number)/type(samples_number* normalization_coefficient);
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0))*coefficient;
+    const Index rows_number = squared_errors_jacobian.dimension(0);
+    const Index cols_number = squared_errors_jacobian.dimension(1);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < cols_number; ++j)
+    {
+        type sum = type(0);
+        for (Index i = 0; i < rows_number; ++i)
+            sum += squared_errors_jacobian(i, j) * squared_errors(i);
+
+        gradient(j) = sum * coefficient;
+    }
 }
 
 
@@ -256,7 +301,23 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
+    const Index rows_number = squared_errors_jacobian.dimension(0);
+    const Index cols_number = squared_errors_jacobian.dimension(1);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < cols_number; ++i)
+    {
+        for (Index j = i; j < cols_number; ++j)
+        {
+            type sum = type(0);
+            for (Index k = 0; k < rows_number; ++k)
+                sum += squared_errors_jacobian(k, i) * squared_errors_jacobian(k, j);
+
+            hessian(i, j) = sum * coefficient;
+            if (i != j)
+                hessian(j, i) = hessian(i, j);
+        }
+    }
 }
 
 

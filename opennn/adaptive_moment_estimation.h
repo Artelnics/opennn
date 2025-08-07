@@ -107,7 +107,7 @@ private:
 
     public:
 
-    TrainingResults perform_training_cuda() override;
+    TrainingResults train_cuda() override;
 
     void update_parameters_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 

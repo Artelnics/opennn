@@ -1,381 +1,89 @@
 //   OpenNN: Open Neural Networks Library
-//   www.opennn.net
+//   www.opennnn.net
 //
-//   F L A T T E N   L A Y E R   C L A S S
+//   F L A T TEN   L A Y E R   R E G I S T R A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
 #include "flatten_layer.h"
 
 namespace opennn
 {
+	using Flatten2d = Flatten<2>;
+	using Flatten3d = Flatten<3>;
+	using Flatten4d = Flatten<4>;
 
-Flatten::Flatten(const dimensions& new_input_dimensions) : Layer()
-{
-    set(new_input_dimensions);
-}
 
+	using FlattenForwardPropagation2d = FlattenForwardPropagation<2>;
+	using FlattenBackPropagation2d = FlattenBackPropagation<2>;
 
-dimensions Flatten::get_input_dimensions() const
-{
-    return input_dimensions;
-}
+	using FlattenForwardPropagation3d = FlattenForwardPropagation<3>;
+	using FlattenBackPropagation3d = FlattenBackPropagation<3>;
 
+	using FlattenForwardPropagation4d = FlattenForwardPropagation<4>;
+	using FlattenBackPropagation4d = FlattenBackPropagation<4>;
 
-dimensions Flatten::get_output_dimensions() const
-{
-    return { input_dimensions[0] * input_dimensions[1] * input_dimensions[2] };
-}
+	REGISTER(Layer, Flatten2d, "Flatten2d")
+	REGISTER(LayerForwardPropagation, FlattenForwardPropagation2d, "Flatten2d")
+	REGISTER(LayerBackPropagation, FlattenBackPropagation2d, "Flatten2d")
 
+	REGISTER(Layer, Flatten3d, "Flatten3d")
+	REGISTER(LayerForwardPropagation, FlattenForwardPropagation3d, "Flatten3d")
+	REGISTER(LayerBackPropagation, FlattenBackPropagation3d, "Flatten3d")
 
-Index Flatten::get_input_height() const
-{
-    return input_dimensions[0];
-}
-
-
-Index Flatten::get_input_width() const
-{
-    return input_dimensions[1];
-}
-
-
-Index Flatten::get_input_channels() const
-{
-    return input_dimensions[2];
-}
-
-
-void Flatten::set(const dimensions& new_input_dimensions)
-{
-    name = "Flatten";
-
-    set_label("flatten_layer");
-
-    input_dimensions = new_input_dimensions;
-}
-
-
-void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                const bool&)
-{
-    const Index batch_size = layer_forward_propagation->batch_size;
-    const Index outputs_number = get_outputs_number();
-
-    FlattenForwardPropagation* flatten_layer_forward_propagation =
-            static_cast<FlattenForwardPropagation*>(layer_forward_propagation.get());
-
-    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
-}
-
-
-void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                             const vector<pair<type*, dimensions>>& delta_pairs,
-                             unique_ptr<LayerForwardPropagation>&,
-                             unique_ptr<LayerBackPropagation>& back_propagation) const
-{
-    const Index batch_size = input_pairs[0].second[0];
-    const Index height = input_pairs[0].second[1];
-    const Index width = input_pairs[0].second[2];
-    const Index channels = input_pairs[0].second[3];
-
-    FlattenBackPropagation* flatten_layer_back_propagation =
-        static_cast<FlattenBackPropagation*>(back_propagation.get());
-
-    flatten_layer_back_propagation->input_deltas = TensorMap<Tensor<type, 4>>(delta_pairs[0].first,
-        batch_size, height, width, channels);
-}
-
-
-void Flatten::to_XML(XMLPrinter& printer) const
-{
-    printer.OpenElement("Flatten");
-
-    add_xml_element(printer, "InputHeight", to_string(get_input_height()));
-    add_xml_element(printer, "InputWidth", to_string(get_input_width()));
-    add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
-
-    printer.CloseElement(); 
-}
-
-
-void Flatten::from_XML(const XMLDocument& document)
-{
-    const XMLElement* flatten_layer_element = document.FirstChildElement("Flatten");
-
-    if (!flatten_layer_element) 
-        throw runtime_error("Flatten element is nullptr.\n");
-
-    const Index input_height = read_xml_index(flatten_layer_element, "InputHeight");
-    const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");
-    const Index input_channels = read_xml_index(flatten_layer_element, "InputChannels");
-
-    set({ input_height, input_width, input_channels });
-}
-
-
-void Flatten::print() const
-{
-    cout << "Flatten layer" << endl;
-
-    cout << "Input dimensions: " << endl;
-    print_vector(input_dimensions);
-
-    cout << "Output dimensions: " << endl;
-    print_vector(get_output_dimensions());
-}
-
-
-FlattenForwardPropagation::FlattenForwardPropagation(const Index& new_batch_size, Layer* new_layer)
-    : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-pair<type*, dimensions> FlattenForwardPropagation::get_output_pair() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    return {(type*)outputs.data(), {batch_size, output_dimensions[0]}};
-}
-
-
-void FlattenForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
-{
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    outputs.resize(batch_size, output_dimensions[0]);
-}
-
-
-void FlattenForwardPropagation::print() const
-{
-    cout << "Flatten Outputs dimensions:" << endl
-         << outputs.dimensions() << endl;
-}
-
-
-void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
-{
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
-
-    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
-
-    input_deltas.resize(batch_size,
-                        input_dimensions[0],
-                        input_dimensions[1],
-                        input_dimensions[2]);
-}
-
-
-void FlattenBackPropagation::print() const
-{
-    cout << "Flatten Input derivatives:" << endl
-         << input_deltas.dimensions() << endl;
-}
-
-
-FlattenBackPropagation::FlattenBackPropagation(const Index& new_batch_size, Layer* new_layer)
-    : LayerBackPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-vector<pair<type*, dimensions>> FlattenBackPropagation::get_input_derivative_pairs() const
-{
-    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
-
-    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
-
-    return {{(type*)(input_deltas.data()),
-            {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
-}
-
+	REGISTER(Layer, Flatten4d, "Flatten4d")
+	REGISTER(LayerForwardPropagation, FlattenForwardPropagation4d, "Flatten4d")
+	REGISTER(LayerBackPropagation, FlattenBackPropagation4d, "Flatten4d")
 
 #ifdef OPENNN_CUDA
 
-void Flatten::forward_propagate_cuda(const vector<float*>& inputs_device,
-                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                     const bool&)
-{
-    // Inputs
+	using FlattenForwardPropagationCuda2d = FlattenForwardPropagationCuda<2>;
+	using FlattenBackPropagationCuda2d = FlattenBackPropagationCuda<2>;
 
-    const Index height = get_input_height();
-    const Index width = get_input_width();
-    const Index channels = get_input_channels();
+	using FlattenForwardPropagationCuda3d = FlattenForwardPropagationCuda<3>;
+	using FlattenBackPropagationCuda3d = FlattenBackPropagationCuda<3>;
 
-    const Index outputs_number = get_outputs_number();
+	using FlattenForwardPropagationCuda4d = FlattenForwardPropagationCuda<4>;
+	using FlattenBackPropagationCuda4d = FlattenBackPropagationCuda<4>;
 
-    // Forward propagation
+	REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda2d, "Flatten2d")
+	REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda2d, "Flatten2d")
 
-    FlattenForwardPropagationCuda* flatten_layer_forward_propagation_cuda =
-        static_cast<FlattenForwardPropagationCuda*>(forward_propagation_cuda.get());
+	REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda3d, "Flatten3d")
+	REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda3d, "Flatten3d")
 
-    const Index batch_size = flatten_layer_forward_propagation_cuda->batch_size;
+	REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda4d, "Flatten4d")
+	REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda4d, "Flatten4d")
 
-    type* reordered_inputs = flatten_layer_forward_propagation_cuda->reordered_inputs;
-    type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
+#endif // OPENNN_CUDA
 
-    invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width); // @todo only if neural_network has conv layer
+	template class Flatten<2>;
+	template class Flatten<3>;
+	template class Flatten<4>;
 
-    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
-    //reorganize_inputs_cuda(inputs_device[0], outputs_device, batch_size, outputs_number);
-}
+	template struct FlattenForwardPropagation<2>;
+	template struct FlattenForwardPropagation<3>;
+	template struct FlattenForwardPropagation<4>;
 
+	template struct FlattenBackPropagation<2>;
+	template struct FlattenBackPropagation<3>;
+	template struct FlattenBackPropagation<4>;
 
-void Flatten::back_propagate_cuda(const vector<float*>& inputs_device,
-                                  const vector<float*>& deltas_device,
-                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                  unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
-{
-    // Inputs
+#ifdef OPENNN_CUDA
 
-    const Index outputs_number = get_outputs_number();
+	template struct FlattenForwardPropagationCuda<2>;
+	template struct FlattenForwardPropagationCuda<3>;
+	template struct FlattenForwardPropagationCuda<4>;
 
-    // Back propagation
+	template struct FlattenBackPropagationCuda<2>;
+	template struct FlattenBackPropagationCuda<3>;
+	template struct FlattenBackPropagationCuda<4>;
 
-    FlattenBackPropagationCuda* flatten_layer_back_propagation_cuda =
-        static_cast<FlattenBackPropagationCuda*>(back_propagation_cuda.get());
+#endif // OPENNN_CUDA
 
-    const Index batch_size = flatten_layer_back_propagation_cuda->batch_size;
+	// Linker fix: Ensures the static registration macros in this file are run.
+	void reference_flatten_layer() { }
 
-    type* input_deltas = flatten_layer_back_propagation_cuda->input_deltas;
-
-    reorganize_deltas_cuda(deltas_device[0], input_deltas, batch_size, outputs_number);
-}
-
-
-// CUDA structs
-
-FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
-    : LayerForwardPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
-{
-    if (!new_layer) return;
-
-    cout << "FlattenForwardPropagationCuda set:" << endl;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
-    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
-
-    const Index inputs_number = flatten_layer->get_inputs_number();
-    const Index outputs_number = flatten_layer->get_outputs_number();
-
-    //CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
-}
-
-
-void FlattenForwardPropagationCuda::print() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    cout << "Flatten Outputs:" << endl
-         << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
-}
-
-
-void FlattenForwardPropagationCuda::free()
-{
-    cudaFree(reordered_inputs);
-    cudaFree(outputs);
-}
-
-
-FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
-    : LayerBackPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
-{
-    if (!new_layer) return;
-
-    cout << "FlattenBackPropagationCuda set:" << endl;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
-    const Flatten* flatten_layer = static_cast<Flatten*>(new_layer);
-
-    dimensions input_dimensions = flatten_layer->get_input_dimensions();
-
-    // Input derivatives
-
-    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float));
-}
-
-
-void FlattenBackPropagationCuda::print() const
-{
-    const dimensions input_dimensions = layer->get_input_dimensions();
-
-    cout << "Flatten Input derivatives:" << endl
-        << matrix_4d_from_device(input_deltas, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]) << endl;
-}
-
-
-void FlattenBackPropagationCuda::free()
-{
-    cudaFree(input_deltas);
-}
-
-REGISTER(LayerForwardPropagationCuda, FlattenForwardPropagationCuda, "Flatten")
-REGISTER(LayerBackPropagationCuda, FlattenBackPropagationCuda, "Flatten")
-
-#endif
-
-REGISTER(Layer, Flatten, "Flatten")
-REGISTER(LayerForwardPropagation, FlattenForwardPropagation, "Flatten")
-REGISTER(LayerBackPropagation, FlattenBackPropagation, "Flatten")
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+} // namespace opennn

@@ -53,10 +53,11 @@ public:
 
     void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-    void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void normalization(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 2>&) const;
     
     void set_batch_normalization(const bool&);
     void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
+    void apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>&, unique_ptr<LayerForwardPropagation>&, unique_ptr<LayerBackPropagation>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -158,6 +159,7 @@ struct Dense2dForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 1> means;
     Tensor<type, 1> standard_deviations;
+    Tensor<type, 2> normalized_outputs;
 
     Tensor<type, 2> outputs;
 

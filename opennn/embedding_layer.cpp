@@ -144,11 +144,14 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 { 
     const Index batch_size = embeddings.dimension(0);
+    const Index sequence_len = embeddings.dimension(1);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    embeddings.device(*thread_pool_device) += positional_encoding
-        .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
-        .broadcast(array<Index, 3>({batch_size, 1, 1}));
+    #pragma omp parallel for
+    for (Index i = 0; i < batch_size; ++i)
+        for (Index j = 0; j < sequence_len; ++j)
+            for (Index k = 0; k < embedding_dimension; ++k)
+                embeddings(i, j, k) += positional_encoding(j, k);
 }
 
 
@@ -199,11 +202,17 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     weight_deltas.setZero();
 
-    if(scale_embedding)
-        deltas.device(*thread_pool_device) = deltas*sqrt(type(embedding_dimension));
+    if (scale_embedding)
+    {
+        const type scale_factor = sqrt(type(embedding_dimension));
+        type* deltas_data = deltas.data();
+
+        #pragma omp parallel for
+        for (Index i = 0; i < deltas.size(); ++i)
+            deltas_data[i] *= scale_factor;
+    }
 
     #pragma omp parallel for
-
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_deltas = deltas.chip(sample_index, 0);
