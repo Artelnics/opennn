@@ -131,7 +131,7 @@ void scale_mean_standard_deviation_3d(Tensor<type, 3>& tensor,
 {
     const type mean = feature_descriptives.mean;
     const type standard_deviation = feature_descriptives.standard_deviation;
-    const type epsilon = 1e-7;
+    const type epsilon = 1e-7F;
 
     const Index batch_size = tensor.dimension(0);
     const Index time_steps = tensor.dimension(1);
