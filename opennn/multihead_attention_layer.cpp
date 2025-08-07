@@ -315,42 +315,6 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
         static_cast<MultiHeadAttentionForwardPropagation*>(layer_forward_propagation.get());
 
     const Index batch_size = this_forward_propagation->batch_size;
-<<<<<<< HEAD
-
-    Tensor<type, 4>& query = this_forward_propagation->query;
-    Tensor<type, 4>& key = this_forward_propagation->key;
-    Tensor<type, 4>& value = this_forward_propagation->value;
-
-    Tensor<type, 4>& attention_weights = this_forward_propagation->attention_weights;
-    Tensor<type, 4>& attention_outputs = this_forward_propagation->attention_outputs;
-
-    Tensor<type, 3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
-
-    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
-
-    query.device(*thread_pool_device) = (query_input.contract(query_weights, axes(2,0))
-                                         + query_biases.reshape(array_3(1, 1, embedding_dimension))
-                                         .broadcast(array_3(batch_size, query_sequence_length, 1)))
-                                         .reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
-                                         .shuffle(array_4(0, 2, 1, 3));
-
-    key.device(*thread_pool_device) = (source_input.contract(key_weights, axes(2,0))
-                                       + key_biases.reshape(array_3(1, 1, embedding_dimension))
-                                       .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                       .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                       .shuffle(array_4(0, 2, 1, 3));
-
-    value.device(*thread_pool_device) = (source_input.contract(value_weights, axes(2,0))
-                                         + value_biases.reshape(array_3(1, 1, embedding_dimension))
-                                         .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                         .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                         .shuffle(array_4(0, 2, 1, 3));
-
-    attention_weights.device(*thread_pool_device) =
-        (query.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension)).broadcast(array_5(1, 1, 1, source_sequence_length, 1))
-         * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
-         .sum(array_1(4)) * scaling_factor;
-=======
     const Index head_dimension = get_head_dimension();
     const type scale = type(1.0) / sqrt(type(head_dimension));
 
@@ -379,18 +343,11 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
         result = projected.reshape(array_4(batch_size, seq_len, heads_number, head_dimension)).shuffle(array_4(0, 2, 1, 3));
     };
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 
     calculate_projection(query_input, query_weights, query_biases, this_forward_propagation->query, query_sequence_length);
     calculate_projection(source_input, key_weights, key_biases, this_forward_propagation->key, source_sequence_length);
     calculate_projection(source_input, value_weights, value_biases, this_forward_propagation->value, source_sequence_length);
 
-<<<<<<< HEAD
-    attention_outputs.device(*thread_pool_device) =
-        (attention_weights.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1)).broadcast(array_5(1, 1, 1, 1, head_dimension))
-         * value.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
-         .sum(array_1(3));
-=======
     this_forward_propagation->attention_weights = this_forward_propagation->query.contract(this_forward_propagation->key.shuffle(array_4(0, 1, 3, 2)), axes(3, 2));
 
     type* aw_data = this_forward_propagation->attention_weights.data();
@@ -405,7 +362,6 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     concatenate_heads(this_forward_propagation->attention_outputs, this_forward_propagation->concatenated_attention_outputs);
     calculate_output_projection(this_forward_propagation->concatenated_attention_outputs, this_forward_propagation->outputs);
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 
 #pragma omp parallel for
     for(int head_number = 0; head_number < heads_number; ++head_number)
