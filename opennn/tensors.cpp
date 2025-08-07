@@ -83,6 +83,9 @@ void multiply_matrices(Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 }
 
 
+<<<<<<< HEAD
+Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+=======
 // template <typename T, Index Rank, typename CTensor>
 // void batch_matrix_multiplication(const ThreadPoolDevice* device,
 //                                  const Tensor<T, Rank>& A,
@@ -133,6 +136,7 @@ void multiply_matrices(Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 
 
 Tensor<type, 2> self_kronecker_product(const Tensor<type, 1>& vector)
+>>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 {
     const Index columns_number = vector.size();
 
