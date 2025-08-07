@@ -23,41 +23,25 @@ Eigen::array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const I
 }
 
 
-<<<<<<< HEAD
-inline array<Index, 1> array_1(const Index& a)
-=======
 inline Eigen::array<Index, 1> array_1(const Index& a)
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 {
     return Eigen::array<Index, 1>({a});
 }
 
 
-<<<<<<< HEAD
-inline array<Index, 2> array_2(const Index& a, const Index& b)
-=======
 inline Eigen::array<Index, 2> array_2(const Index& a, const Index& b)
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 {
     return Eigen::array<Index, 2>({a, b});
 }
 
 
-<<<<<<< HEAD
-inline array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
-=======
 inline Eigen::array<Index, 3> array_3(const Index& a, const Index& b, const Index& c)
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 {
     return Eigen::array<Index, 3>({a, b, c});
 }
 
 
-<<<<<<< HEAD
-inline array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
-=======
 inline Eigen::array<Index, 4> array_4(const Index& a, const Index& b, const Index& c, const Index& d)
->>>>>>> afe85afa3e2939a7de7f55f102a5abf26dd10658
 {
     return Eigen::array<Index, 4>({a, b, c, d});
 }
