@@ -29,7 +29,7 @@ public:
     string write_logistic_c() const;
     string write_relu_c() const;
     string write_exponential_linear_c() const;
-    //string write_selu_c() const;
+    string write_selu_c() const;
     //void auto_association_c() const;
     string get_expression_c() const;
 
@@ -59,10 +59,10 @@ public:
     string get_expression_javascript(const vector<Dataset::RawVariable>& ) const;
 
     // other functions
-    string replace_reserved_keywords(string&) const;
+    string replace_reserved_keywords(const string&) const;
     vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&) const;
-    vector<string> fix_input_names(vector<string>&) const;
-    vector<string> fix_output_names(vector<string>& ) const;
+    vector<string> fix_input_names(const vector<string>&) const;
+    vector<string> fix_output_names(const vector<string>& ) const;
 
     void save_python(const filesystem::path&) const;
     void save_c(const filesystem::path&) const;
