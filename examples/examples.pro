@@ -10,8 +10,8 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
-SUBDIRS += airfoil_self_noise
-SUBDIRS += forecasting
+# SUBDIRS += airfoil_self_noise
+# SUBDIRS += forecasting
 SUBDIRS += amazon_reviews
 # SUBDIRS += breast_cancer
 # SUBDIRS += iris_plant
