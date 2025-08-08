@@ -39,15 +39,27 @@ int main()
         // TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
         TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
+        // TimeSeriesDataset time_series_dataset("../data/Dataset_Nans.csv", ",", true, false);
         // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
         cout << "dataset leido" << endl;
-        time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
+        // time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
 
         time_series_dataset.print();
 
         // time_series_dataset.scale_data();
+        cout << "-----------------------------------" << endl;
+
+        if(time_series_dataset.has_nan())
+            time_series_dataset.impute_missing_values_interpolate();
+
+        if(time_series_dataset.has_nan())
+            cout << "sigue habiendo nans" << endl;
+        else
+            cout << "nans arreglados" << endl;
+
+
         cout << "-----------------------------------" << endl;
 
         // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -92,10 +104,6 @@ int main()
         recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
-        // ForecastingNetwork forecasting_network({1},
-        //                                   {},
-        //                                   {1});
-
         forecasting_network.print();
 
         cout << "------------------------------------------" << endl;
@@ -133,11 +141,14 @@ int main()
 
         training_strategy.train();
 
-        cout << "--------------------------------------------------" << endl;
-        forecasting_network.print();
-        cout << "--------------------------------------------------" << endl;
-        //cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+        // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
+        /// Testing analysis
+        // TestingAnalysis testing_analysis(&forecasting_network, &time_series_dataset);
+        // cout << "Goodness of fit analysis: " << endl;
+        // testing_analysis.print_goodness_of_fit_analysis();
+
+        /// Pruebas output
         // Tensor<type, 3> inputs(1,2,2);
         // inputs.setValues({
         //     {
@@ -149,10 +160,6 @@ int main()
         // cout << "Inputs: \n" << inputs << endl;
         // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
         // cout << "outputs: " << outputs << endl;
-
-        // TestingAnalysis testing_analysis(&forecasting_network, &time_series_dataset);
-        // cout << "Goodness of fit analysis: " << endl;
-        // testing_analysis.print_goodness_of_fit_analysis();
 
         /// Pruebas output funcion seno
         // const std::vector<std::pair<type, type>> input_pairs = {

@@ -346,7 +346,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-void TimeSeriesDataset::impute_missing_values_mean()
+void TimeSeriesDataset::impute_missing_values_interpolate()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_variable_indices = get_used_variable_indices();
@@ -358,49 +358,54 @@ void TimeSeriesDataset::impute_missing_values_mean()
     const Index used_samples_number = used_sample_indices.size();
 
     #pragma omp parallel for
-
     for(Index variable_index = 0; variable_index < get_variables_number(); variable_index++)
     {
         for(Index i = 0; i < used_samples_number; i++)
         {
             const Index current_sample_index = used_sample_indices[i];
 
-            if(isnan(data(current_sample_index, variable_index)))
+            if(!isnan(data(current_sample_index, variable_index)))
+                continue;
+
+            Index prev_index = i-1;
+            type prev_value = NAN;
+            while(prev_index >= 0 && isnan(prev_value))
             {
-                if(i < past_time_steps || i > used_samples_number - future_time_steps)
+                prev_value = data(used_sample_indices[prev_index], variable_index);
+                if(isnan(prev_value)) prev_index--;
+            }
+
+            Index start_missing = i;
+            Index end_missing = i;
+            while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], variable_index)))
+            {
+                end_missing++;
+            }
+            Index n_missing = end_missing - start_missing;
+
+            type next_value = NAN;
+            if(end_missing < used_samples_number)
+                next_value = data(used_sample_indices[end_missing], variable_index);
+
+            for(Index k = 0; k < n_missing; ++k)
+            {
+                Index sample_k = used_sample_indices[start_missing + k];
+
+                if(isnan(prev_value))
+                    data(sample_k, variable_index) = type(next_value);
+                else if(isnan(next_value))
+                    data(sample_k, variable_index) = type(prev_value);
+                else if(!isnan(prev_value) && !isnan(next_value))
                 {
-                    data(current_sample_index, variable_index) = means(variable_index);
+                    type fraction = type(k + 1) / type(n_missing + 1);
+                    type value_interpolated = prev_value + (next_value - prev_value) * fraction;
+
+                    data(sample_k, variable_index) = value_interpolated;
                 }
                 else
-                {
-                    Index k = i;
-                    type previous_value = NAN, next_value = NAN;
-
-                    while(isnan(previous_value) && k > 0)
-                    {
-                        k--;
-                        previous_value = data(used_sample_indices[k], variable_index);
-                    }
-
-                    k = i;
-
-                    while(isnan(next_value) && k < used_samples_number)
-                    {
-                        k++;
-                        next_value = data(used_sample_indices[k], variable_index);
-                    }
-
-                    if(isnan(previous_value) && isnan(next_value))
-                        throw runtime_error("The last " + to_string(used_samples_number-i+1) + " samples are all missing, delete them.\n");
-
-                    if(isnan(previous_value))
-                        data(current_sample_index, variable_index) = type(next_value);
-                    else if(isnan(next_value))
-                        data(current_sample_index, variable_index) = type(previous_value);
-                    else
-                        data(current_sample_index, variable_index) = type((previous_value + next_value)/2);
-                }
+                    throw runtime_error("The last " + to_string(sample_k-i+1) + " samples are all missing, delete them.\n");
             }
+            i = end_missing;
         }
     }
 }

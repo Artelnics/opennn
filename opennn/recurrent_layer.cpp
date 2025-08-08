@@ -57,9 +57,6 @@ string Recurrent::get_activation_function() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    cout << "adri71 -  set recurrent -> " << endl;
-    print_vector(new_input_dimensions);
-
     biases.resize(new_output_dimensions[0]);
 
     input_weights.resize(new_input_dimensions[1], new_output_dimensions[0]);

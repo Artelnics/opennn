@@ -1580,9 +1580,6 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     missing_values_method = MissingValuesMethod::Mean;
 
-    if(has_nan())
-        scrub_missing_values();
-
     input_dimensions = { get_variables_number("Input") };
     target_dimensions = { get_variables_number("Target") };
 }
@@ -3697,6 +3694,7 @@ void Dataset::impute_missing_values_interpolate()
 
 void Dataset::scrub_missing_values()
 {
+    cout << "adri71 - liimpiar valores nan" << endl;
     switch (missing_values_method)
     {
     case MissingValuesMethod::Unuse:
