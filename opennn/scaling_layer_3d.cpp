@@ -302,8 +302,7 @@ void Scaling3d::print() const
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Input Feature " << i << endl
-             << "  Scaler: " << scalers_text[i] << endl;
-        cout << "  ";
+             << "Scaler: " << scalers_text[i] << endl;
         descriptives[i].print();
     }
 }

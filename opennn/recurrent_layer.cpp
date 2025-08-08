@@ -57,9 +57,12 @@ string Recurrent::get_activation_function() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
+    cout << "adri71 -  set recurrent -> " << endl;
+    print_vector(new_input_dimensions);
+
     biases.resize(new_output_dimensions[0]);
 
-    input_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
+    input_weights.resize(new_input_dimensions[1], new_output_dimensions[0]);
 
     recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 
@@ -129,8 +132,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[2];
-    const Index input_size = input_pairs[0].second[1];
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
@@ -182,8 +185,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[2];
-    const Index input_size = input_pairs[0].second[1];
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);

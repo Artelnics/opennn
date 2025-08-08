@@ -40,7 +40,7 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
         set_raw_variable_use(target_index[0], "InputTarget");
     }
 
-    input_dimensions = { get_variables_number("Input"), past_time_steps};
+    input_dimensions = {past_time_steps, get_variables_number("Input")};
     target_dimensions = { get_variables_number("Target") };
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
@@ -410,8 +410,6 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
                                           const vector<Index>& input_indices,
                                           type* input_tensor_data) const
 {
-    // fill_tensor_sequence(data, sample_indices, input_indices, past_time_steps, input_tensor_data);
-
     if (sample_indices.empty() || input_indices.empty())
         return;
 

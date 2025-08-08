@@ -38,19 +38,16 @@ int main()
 
         // TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
-        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
+        TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
         // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
-        TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
+        // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
         cout << "dataset leido" << endl;
         time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
 
-        print_vector(time_series_dataset.get_dimensions("Input"));
-        print_vector(time_series_dataset.get_dimensions("Target"));
-
         time_series_dataset.print();
 
-        time_series_dataset.scale_data();
+        // time_series_dataset.scale_data();
         cout << "-----------------------------------" << endl;
 
         // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -86,13 +83,13 @@ int main()
         // batch.print();
         // cout << "------------------------------------------" << endl;
 
-        ForecastingNetwork forecasting_network({time_series_dataset.get_variables_number("Input")},
-                                          {},
-                                          {time_series_dataset.get_variables_number("Target")});
+        ForecastingNetwork forecasting_network({time_series_dataset.get_input_dimensions()},
+                                          {4},
+                                          {time_series_dataset.get_target_dimensions()});
 
         Layer* layer_ptr = forecasting_network.get_first("Recurrent");
         Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
-        // recurrent_layer->set_activation_function("HyperbolicTangent");
+        recurrent_layer->set_activation_function("HyperbolicTangent");
         // recurrent_layer->set_timesteps(1);
 
         // ForecastingNetwork forecasting_network({1},
@@ -136,6 +133,9 @@ int main()
 
         training_strategy.train();
 
+        cout << "--------------------------------------------------" << endl;
+        forecasting_network.print();
+        cout << "--------------------------------------------------" << endl;
         //cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
 
         // Tensor<type, 3> inputs(1,2,2);
@@ -178,8 +178,8 @@ int main()
         //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
         //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
 
-        //     Tensor<type, 3> inputs(1, 1, 2);
-        //     inputs.setValues({{{input_val_1, input_val_2}}});
+        //     Tensor<type, 3> inputs(1, 2, 1); //batch, time, input
+        //     inputs.setValues({{{input_val_1}, {input_val_2}}});
         //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
         //     cout << "Output: " << outputs << endl;
