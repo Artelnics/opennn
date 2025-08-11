@@ -201,6 +201,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
     Tensor<type, 1>& bias_deltas = recurrent_backward->bias_deltas;
+    Tensor<type, 2>& current_combination_deltas = recurrent_backward->current_combination_deltas;
 
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
 
@@ -213,9 +214,9 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2> combination_deltas(batch_size, output_size);
 
-    for (Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
+    for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
     {
-        Tensor<type, 2> current_deltas(batch_size, output_size);
+        Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else

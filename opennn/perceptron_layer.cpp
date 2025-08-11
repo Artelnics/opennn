@@ -507,6 +507,7 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     const Index batch_size = inputs.dimension(0);
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
+
     const Index biases_number = biases.size();
 
     // Forward propagation
@@ -534,34 +535,31 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     for (Index j = 0; j < outputs_number; j++)
         squared_errors_Jacobian.chip(j, 1) = deltas.chip(j, 1);
 
-    // Weights
+    // squared_errors_Jacobian.slice(array<Index, 2>{0, 0}, array<Index, 2>{deltas.dimension(0), biases_number})
+    //     .device(*thread_pool_device) = deltas;
 
-    #pragma omp parallel for collapse(2)
-    for (Index j = 0; j < outputs_number; j++)
-    {
-        for (Index i = 0; i < inputs_number; i++)
-        {
-            const Index weight_column_index = biases_number + (j * inputs_number) + i;
+    // for (Index j = 0; j < outputs_number; j++)
+    // {
+    //     const Tensor<type, 1> delta_j = deltas.chip(j, 1);
 
-            squared_errors_Jacobian.chip(weight_column_index, 1) = deltas.chip(j, 1) * inputs.chip(i, 1);
-        }
-    }
+    //     for (Index i = 0; i < inputs_number; i++)
+    //     {
+    //         const Tensor<type, 1> input_i = inputs.chip(i, 1);
 
-    if (!dense2d_layer_back_propagation_lm->is_first_layer)
-    {
-        Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
+    //         const Tensor<type, 1> derivative = delta_j * input_i;
 
-        #pragma omp parallel for collapse(2)
-        for (Index b = 0; b < batch_size; ++b)
-            for (Index i = 0; i < inputs_number; ++i)
-            {
-                type sum = 0.0;
-                for (Index j = 0; j < outputs_number; ++j)
-                    sum += deltas(b, j) * weights(i, j);
+    //         const Index weight_column_index = biases_number + (j * inputs_number) + i;
 
-                input_deltas(b, i) = sum;
-            }
-    }
+    //         squared_errors_Jacobian.chip(weight_column_index, 1)
+    //             .device(*thread_pool_device) = derivative;
+    //     }
+    // }
+
+    // if (!is_first_layer)
+    // {
+    //     const Tensor<type, 2> weights_transposed = weights.shuffle(array<int, 2>{1, 0});
+    //     input_deltas.device(*thread_pool_device) = deltas.contract(weights_transposed, axes(1, 0));
+    // }
 }
 
 

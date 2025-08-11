@@ -43,12 +43,13 @@ int main()
         // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
+
         cout << "dataset leido" << endl;
         // time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
 
         time_series_dataset.print();
 
-        // time_series_dataset.scale_data();
+        time_series_dataset.scale_data();
         cout << "-----------------------------------" << endl;
 
         if(time_series_dataset.has_nan())
@@ -101,7 +102,11 @@ int main()
 
         Layer* layer_ptr = forecasting_network.get_first("Recurrent");
         Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
+<<<<<<< HEAD
         recurrent_layer->set_activation_function("HyperbolicTangent");
+=======
+        // recurrent_layer->set_activation_function("HyperbolicTangent");
+>>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
         // recurrent_layer->set_timesteps(1);
 
         forecasting_network.print();
@@ -141,7 +146,23 @@ int main()
 
         training_strategy.train();
 
+<<<<<<< HEAD
         // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+=======
+        //cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
+
+        // Tensor<type, 3> inputs(1,2,2);
+        // inputs.setValues({
+        //     {
+        //         {1.76624, 1.41520},
+        //         {2.11640, 1.80730},
+        //        // {1.2405,  2.1018}
+        //     }
+        // });
+        // cout << "Inputs: \n" << inputs << endl;
+        // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+        // cout << "outputs: " << outputs << endl;
+>>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
 
         /// Testing analysis
         // TestingAnalysis testing_analysis(&forecasting_network, &time_series_dataset);
@@ -185,8 +206,13 @@ int main()
         //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
         //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
 
+<<<<<<< HEAD
         //     Tensor<type, 3> inputs(1, 2, 1); //batch, time, input
         //     inputs.setValues({{{input_val_1}, {input_val_2}}});
+=======
+        //     Tensor<type, 3> inputs(1, 1, 2);
+        //     inputs.setValues({{{input_val_1, input_val_2}}});
+>>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
         //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
         //     cout << "Output: " << outputs << endl;

@@ -453,7 +453,6 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
                                       : matrix_col[actual_row];
             }
         }
-
 }
 
 

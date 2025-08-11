@@ -303,6 +303,7 @@ void Scaling3d::print() const
     {
         cout << "Input Feature " << i << endl
              << "Scaler: " << scalers_text[i] << endl;
+
         descriptives[i].print();
     }
 }

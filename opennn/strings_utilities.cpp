@@ -287,51 +287,26 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
 void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
 {
-    string buffer;
-    size_t position = 0;
-    size_t previous_position;
-    const string underscore = "_";
+    size_t start_pos = 0;
 
-    // Reserve a rough estimate of the override size of the chain
-
-    buffer.reserve(text.size());
-
-    while(true)
+    while((start_pos = text.find(to_replace, start_pos)) != string::npos)
     {
-        previous_position = position;
-        position = text.find(to_replace, position);
+        // Verify that there are no letters or underscores before to_replace
 
-        if(position == string::npos) break;
+        bool is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
 
-        // Verify that there are no letters before or after to_replace
+        // Verify that there are no letters or underscores after to_replace
 
-        if((previous_position == 0 || !isalpha(text[previous_position - 1]))
-        && (position + to_replace.size() == text.size() || !isalpha(text[position + to_replace.size()])))
+        size_t end_pos = start_pos + to_replace.length();
+        bool is_suffix_valid = (end_pos == text.length()) || (!isalnum(text[end_pos]) && text[end_pos] != '_');
+
+        if (is_prefix_valid && is_suffix_valid)
         {
-            // Verify that there are no underscores before or after to_replace
-
-            if((previous_position == 0 || text[previous_position - 1] != '_')
-            && (position + to_replace.size() == text.size() || text[position + to_replace.size()] != '_'))
-            {
-                buffer.append(text, previous_position, position - previous_position);
-                buffer += replace_with;
-                position += to_replace.size();
-            }
-            else
-            {
-                buffer.append(text, previous_position, position - previous_position + to_replace.size());
-                position += to_replace.size();
-            }
-        }
-        else
-        {
-            buffer.append(text, previous_position, position - previous_position + to_replace.size());
-            position += to_replace.size();
-        }
+            text.replace(start_pos, to_replace.length(), replace_with);
+            start_pos += replace_with.length();
+        } else
+            start_pos += 1;
     }
-
-    buffer.append(text, previous_position, text.size() - previous_position);
-    text.swap(buffer);
 }
 
 
