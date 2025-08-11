@@ -72,10 +72,8 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
             : type(1)/column_descriptives.standard_deviation;
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = (matrix(i, column_index)) * slope;
-
 }
 
 
@@ -96,7 +94,6 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
         throw runtime_error("The range values are not valid.");
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = (matrix(i, column_index) - minimum) / (maximum - minimum);
 }
@@ -216,6 +213,7 @@ void scale_logarithmic_3d(Tensor<type, 3>& tensor, const Index& feature_index)
 
 }
 
+
 void unscale_minimum_maximum(Tensor<type, 2>& matrix,
                              const Index& column_index,
                              const Descriptives& column_descriptives,
@@ -246,7 +244,6 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
         // throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
 

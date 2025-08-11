@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M I N K O W S K I   E R R O R   C L A S S   H E A D E R               
+//   M I N K O W S K I   E R R O R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -19,47 +19,47 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   MinkowskiError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    MinkowskiError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   type get_Minkowski_parameter() const override;
+    type get_Minkowski_parameter() const override;
 
-   void set_default();
+    void set_default();
 
-   void set_Minkowski_parameter(const type&);
+    void set_Minkowski_parameter(const type&);
 
-   void calculate_error(const Batch& batch,
-                        const ForwardPropagation& forward_propagation,
-                        BackPropagation& back_propagation) const override;
+    void calculate_error(const Batch& batch,
+                         const ForwardPropagation& forward_propagation,
+                         BackPropagation& back_propagation) const override;
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   string get_name() const override;
+    string get_name() const override;
 
-   void from_XML(const XMLDocument&) override;
+    void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const override;
+    void to_XML(XMLPrinter&) const override;
 
 private:
 
-   type minkowski_parameter;
+    type minkowski_parameter;
 
     const type epsilon = numeric_limits<type>::epsilon();
 
 #ifdef OPENNN_CUDA
 
-   // Error
+    // Error
 
-   void calculate_error_cuda(const BatchCuda&,
-                             const ForwardPropagationCuda&,
-                             BackPropagationCuda&) const override;
+    void calculate_error_cuda(const BatchCuda&,
+                              const ForwardPropagationCuda&,
+                              BackPropagationCuda&) const override;
 
-   // Gradient
+    // Gradient
 
-   void calculate_output_delta_cuda(const BatchCuda&,
-                                    ForwardPropagationCuda&,
-                                    BackPropagationCuda&) const override;
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
 
 #endif
 

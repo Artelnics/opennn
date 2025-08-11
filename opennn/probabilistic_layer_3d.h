@@ -19,92 +19,92 @@ class Probabilistic3d : public Layer
 
 public:
 
-   enum class Activation { Softmax, Competitive };
+    enum class Activation { Softmax, Competitive };
 
-   Probabilistic3d(const Index& = 0,
-                   const Index& = 0,
-                   const Index& = 0,
-                   const string& = "probabilistic_layer_3d");
+    Probabilistic3d(const Index& = 0,
+                    const Index& = 0,
+                    const Index& = 0,
+                    const string& = "probabilistic_layer_3d");
 
-   Index get_inputs_number_xxx() const;
-   Index get_inputs_depth() const;
-   Index get_neurons_number() const;
+    Index get_inputs_number_xxx() const;
+    Index get_inputs_depth() const;
+    Index get_neurons_number() const;
 
-   // @todo
+    // @todo
 
-   dimensions get_input_dimensions() const override
-   {
-       throw runtime_error("XXX");
-   }
+    dimensions get_input_dimensions() const override
+    {
+        throw runtime_error("XXX");
+    }
 
 
-   dimensions get_output_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   const Activation& get_activation_function() const;
-   string get_activation_function_string() const;
-   string get_activation_function_text() const;
+    const Activation& get_activation_function() const;
+    string get_activation_function_string() const;
+    string get_activation_function_text() const;
 
-   void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
+    void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
 
-   void set_inputs_number(const Index);
-   void set_input_dimensions(const dimensions&) override;
+    void set_inputs_number(const Index);
+    void set_input_dimensions(const dimensions&) override;
 
-   void set_inputs_depth(const Index&);
-   void set_output_dimensions(const dimensions&) override;
+    void set_inputs_depth(const Index&);
+    void set_output_dimensions(const dimensions&) override;
 
-   void set_activation_function(const Activation&);
-   void set_activation_function(const string&);
+    void set_activation_function(const Activation&);
+    void set_activation_function(const string&);
 
-   vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
-   void calculate_combinations(const Tensor<type, 3>&,
-                               Tensor<type, 3>&) const;
+    void calculate_combinations(const Tensor<type, 3>&,
+                                Tensor<type, 3>&) const;
 
-   void calculate_activations(Tensor<type, 3>&) const;
+    void calculate_activations(Tensor<type, 3>&) const;
 
-   // Outputs
+    // Outputs
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   // Gradient
+    // Gradient
 
-   void back_propagate(const vector<pair<type*, dimensions>>&,
-                       const vector<pair<type*, dimensions>>&,
-                       unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void calculate_combination_deltas(const Tensor<type, 3>&,
-                                                 const Tensor<type, 2>&,
-                                                 const Tensor<type, 2>&,
-                                                 Tensor<type, 3>&) const;
+    void calculate_combination_deltas(const Tensor<type, 3>&,
+                                      const Tensor<type, 2>&,
+                                      const Tensor<type, 2>&,
+                                      Tensor<type, 3>&) const;
 
-   // Serialization
+    // Serialization
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-       // @todo
-    #endif
+#ifdef OPENNN_CUDA
+        // @todo
+#endif
 
 private:
 
-   Index inputs_number_xxx;
+    Index inputs_number_xxx;
 
-   Tensor<type, 1> biases;
+    Tensor<type, 1> biases;
 
-   Tensor<type, 2> weights;
+    Tensor<type, 2> weights;
 
-   Activation activation_function = Activation::Softmax;
+    Activation activation_function = Activation::Softmax;
 };
 
 
 struct Probabilistic3dForwardPropagation : LayerForwardPropagation
 {
     Probabilistic3dForwardPropagation(const Index& = 0, Layer* = nullptr);
-    
+
     pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;

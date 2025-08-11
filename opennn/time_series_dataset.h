@@ -48,7 +48,7 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    void impute_missing_values_mean();
+    void impute_missing_values_interpolate();
 
     void fill_input_tensor(const vector<Index>&,
                            const vector<Index>&,

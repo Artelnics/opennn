@@ -19,21 +19,21 @@ class Scaling4d : public Layer
 
 public:
 
-   Scaling4d(const dimensions& = {0, 0, 0, 0});
+    Scaling4d(const dimensions& = {0, 0, 0, 0});
 
-   dimensions get_input_dimensions() const override;
-   dimensions get_output_dimensions() const override;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   void set(const dimensions& = { 0, 0, 0, 0 });
+    void set(const dimensions& = { 0, 0, 0, 0 });
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   void print() const override;
+    void print() const override;
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
 #ifdef OPENNN_CUDA
 
@@ -45,18 +45,18 @@ public:
 
 private:
 
-   dimensions input_dimensions;
+    dimensions input_dimensions;
 
-   type min_range;
-   type max_range;
+    type min_range;
+    type max_range;
 
 };
 
 
 struct Scaling4dForwardPropagation : LayerForwardPropagation
-{   
+{
     Scaling4dForwardPropagation(const Index& = 0, Layer* = nullptr);
-        
+
     pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;

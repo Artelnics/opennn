@@ -162,28 +162,22 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        const type* inputs_data = inputs.data();
-        type* outputs_data = outputs.data();
-
-        #pragma omp parallel for
-        for (Index i = 0; i < inputs.size(); ++i)
-            outputs_data[i] = inputs_data[i];
-
+        //outputs = inputs.eval();
+        outputs.device(*thread_pool_device) = inputs;
         return;
     }
 
     const Index rows_number = inputs.dimension(0);
     const Index columns_number = inputs.dimension(1);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < rows_number; i++)
+#pragma omp parallel for
+    for (Index j = 0; j < columns_number; j++)
     {
-        for (Index j = 0; j < columns_number; j++)
-        {
-            const type& lower_bound = lower_bounds(j);
-            const type& upper_bound = upper_bounds(j);
+        const type& lower_bound = lower_bounds(j);
+        const type& upper_bound = upper_bounds(j);
+
+        for (Index i = 0; i < rows_number; i++)
             outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
-        }
     }
 }
 
@@ -202,8 +196,8 @@ string Bounding::get_bounding_method_string() const
 string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
-        ? get_default_input_names()
-        : new_input_names;
+                                           ? get_default_input_names()
+                                           : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
@@ -243,7 +237,7 @@ void Bounding::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
 
-    for (Index i = 0; i < output_dimensions[0]; i++) 
+    for (Index i = 0; i < output_dimensions[0]; i++)
     {
         printer.OpenElement("Item");
         printer.PushAttribute("Index", unsigned(i + 1));
@@ -251,7 +245,7 @@ void Bounding::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
         add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
 
-        printer.CloseElement(); 
+        printer.CloseElement();
     }
 
     add_xml_element(printer, "BoundingMethod", get_bounding_method_string());
@@ -263,7 +257,7 @@ void Bounding::to_XML(XMLPrinter& printer) const
 void Bounding::from_XML(const XMLDocument& document)
 {
     const auto* root_element = document.FirstChildElement("Bounding");
-    
+
     if (!root_element)
         throw runtime_error("Bounding element is nullptr.\n");
 
@@ -273,14 +267,14 @@ void Bounding::from_XML(const XMLDocument& document)
 
     const auto* item_element = root_element->FirstChildElement("Item");
 
-    for (Index i = 0; i < neurons_number && item_element; i++) 
+    for (Index i = 0; i < neurons_number && item_element; i++)
     {
         unsigned index = 0;
         item_element->QueryUnsignedAttribute("Index", &index);
 
-        if (index != i + 1) 
+        if (index != i + 1)
             throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
-        
+
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
 

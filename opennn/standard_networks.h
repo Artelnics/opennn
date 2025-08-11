@@ -11,6 +11,7 @@
 
 #include "multihead_attention_layer.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "perceptron_layer.h"
@@ -104,17 +105,18 @@ public:
                        const dimensions& complexity_dimensions,
                        const dimensions& output_dimensions) : NeuralNetwork()
     {
-        // add_layer(make_unique<Scaling2d>(input_dimensions));
+
+        add_layer(make_unique<Scaling3d>(input_dimensions));
 
         add_layer(make_unique<Recurrent>(input_dimensions,
-                                         output_dimensions));
+                                         complexity_dimensions));
 
-        // add_layer(make_unique<Dense2d>(complexity_dimensions,
-        //                                output_dimensions,
-        //                                "Linear",
-        //                                "recurrent_layer"));
+        add_layer(make_unique<Dense2d>(complexity_dimensions,
+                                       output_dimensions,
+                                       "Linear",
+                                       "recurrent_layer"));
 
-        // add_layer(make_unique<Unscaling>(output_dimensions));
+        add_layer(make_unique<Unscaling>(output_dimensions));
 
         //add_layer(make_unique<Bounding>(output_dimensions));
 

@@ -19,72 +19,72 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   WeightedSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    WeightedSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   type get_positives_weight() const;
-   type get_negatives_weight() const;
+    type get_positives_weight() const;
+    type get_negatives_weight() const;
 
-   type get_normalizaton_coefficient() const;
+    type get_normalizaton_coefficient() const;
 
-   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-   void set_default();
+    void set_default();
 
-   void set_positives_weight(const type&);
-   void set_negatives_weight(const type&);
+    void set_positives_weight(const type&);
+    void set_negatives_weight(const type&);
 
-   void set_weights(const type&, const type&);
+    void set_weights(const type&, const type&);
 
-   void set_weights();
+    void set_weights();
 
-   void set_normalization_coefficient() override;
+    void set_normalization_coefficient() override;
 
-   void set_dataset(const Dataset*) override;
+    void set_dataset(const Dataset*) override;
 
-   string get_name() const override;
+    string get_name() const override;
 
-   
 
-   // Back propagation
 
-   void calculate_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const override;
+    // Back propagation
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const override;
 
-   // Serialization
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   void from_XML(const XMLDocument&) override;
+    // Serialization
 
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+
+    void to_XML(XMLPrinter&) const override;
 
 private:
 
-   type positives_weight = type(NAN);
+    type positives_weight = type(NAN);
 
-   type negatives_weight = type(NAN);
+    type negatives_weight = type(NAN);
 
-   type normalization_coefficient;
+    type normalization_coefficient;
 
-   Tensor<type, 2> errors_weights;
+    Tensor<type, 2> errors_weights;
 
 
 #ifdef OPENNN_CUDA
 
-   // Error
+    // Error
 
-   void calculate_error_cuda(const BatchCuda&,
-                             const ForwardPropagationCuda&,
-                             BackPropagationCuda&) const override;
+    void calculate_error_cuda(const BatchCuda&,
+                              const ForwardPropagationCuda&,
+                              BackPropagationCuda&) const override;
 
-   // Gradient
+    // Gradient
 
-   void calculate_output_delta_cuda(const BatchCuda&,
-                                    ForwardPropagationCuda&,
-                                    BackPropagationCuda&) const override;
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
 
 #endif
 

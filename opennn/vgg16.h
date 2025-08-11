@@ -14,17 +14,17 @@
 namespace opennn
 {
 
-    class VGG16 : public NeuralNetwork
-    {
-    public:
+class VGG16 : public NeuralNetwork
+{
+public:
 
-        VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions);
+    VGG16(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
-        VGG16(const filesystem::path&);
+    VGG16(const filesystem::path&);
 
-        void set(const dimensions& input_dimensions, const dimensions& target_dimensions);
+    void set(const dimensions& input_dimensions, const dimensions& target_dimensions);
 
-    };
+};
 
 } // namespace opennn
 

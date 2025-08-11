@@ -80,7 +80,7 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         const bool&)
 {
     const Index batch_size = layer_forward_propagation->batch_size;
-//    const Index sequence_length = get_sequence_length();
+    //    const Index sequence_length = get_sequence_length();
     const Index embedding_dimension = get_embedding_dimension();
 
     const TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, sequence_length, embedding_dimension);
@@ -89,48 +89,33 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
         static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
+
     Tensor<type, 2>& means = this_forward_propagation->means;
     Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
 
+    const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
+    const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});
+
     // Standarization
 
-    #pragma omp parallel for collapse(2)
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        for (Index j = 0; j < sequence_length; ++j)
-        {
-            type mean_sum = 0;
+    means.device(*thread_pool_device) = inputs.mean(array<Index, 1>({2}));
 
-            for (Index k = 0; k < embedding_dimension; ++k)
-                mean_sum += inputs(i, j, k);
+    standard_deviations.device(*thread_pool_device)
+        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)).square().mean(array<Index, 1>({2})).sqrt();
 
-            means(i, j) = mean_sum / type(embedding_dimension);
-
-            type std_dev_sum = 0;
-            const type current_mean = means(i, j);
-
-            for (Index k = 0; k < embedding_dimension; ++k)
-            {
-                type diff = inputs(i, j, k) - current_mean;
-                std_dev_sum += diff * diff;
-            }
-
-            standard_deviations(i, j) = sqrt(std_dev_sum / type(embedding_dimension));
-
-            const type current_std_dev = standard_deviations(i, j);
-
-            for (Index k = 0; k < embedding_dimension; ++k)
-                outputs(i, j, k) = (inputs(i, j, k) - current_mean) / (current_std_dev + epsilon);
-        }
-    }
+    outputs.device(*thread_pool_device)
+        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
+          / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
 
     // Affine transformation
 
-    #pragma omp parallel for collapse(3)
-    for (Index i = 0; i < batch_size; ++i)
-        for (Index j = 0; j < sequence_length; ++j)
-            for (Index k = 0; k < embedding_dimension; ++k)
-                outputs(i, j, k) = outputs(i, j, k) * gammas(k) + betas(k);
+    multiply_matrices(thread_pool_device.get(), outputs, gammas);
+
+    outputs.device(*thread_pool_device) = outputs
+                                          + betas.reshape(array<Index, 3>{1, 1, betas.dimension(0)})
+                                                .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
+
+    //sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
 
@@ -142,12 +127,12 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    if(delta_pairs.size() > 1)     
+    if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
-    const Normalization3dForwardPropagation* this_forward_propagation 
+    const Normalization3dForwardPropagation* this_forward_propagation
         = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
@@ -155,72 +140,46 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
-    
+
     Tensor<type, 1>& gamma_derivatives = this_back_propagation->gamma_derivatives;
     Tensor<type, 1>& beta_derivatives = this_back_propagation->beta_derivatives;
 
     Tensor<type, 3>& scaled_deltas = this_back_propagation->scaled_deltas;
+    Tensor<type, 3>& standard_deviation_derivatives = this_back_propagation->standard_deviation_derivatives;
+
     Tensor<type, 3>& input_deltas = this_back_propagation->input_deltas;
+
+    Tensor<type, 2>& aux_2d = this_back_propagation->aux_2d;
 
     // Parameters derivatives
 
-    gamma_derivatives.setZero();
-    beta_derivatives.setZero();
+    gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(array<Index, 2>({0, 1}));
+    beta_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0, 1}));
 
-    #pragma omp parallel
-    {
-        Tensor<type, 1> private_gamma_derivs(embedding_dimension); private_gamma_derivs.setZero();
-        Tensor<type, 1> private_beta_derivs(embedding_dimension); private_beta_derivs.setZero();
-
-        #pragma omp for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < sequence_length; ++j)
-                for (Index k = 0; k < embedding_dimension; ++k)
-                {
-                    private_gamma_derivs(k) += outputs(i, j, k) * deltas(i, j, k);
-                    private_beta_derivs(k) += deltas(i, j, k);
-                }
-
-        #pragma omp critical
-        {
-            gamma_derivatives += private_gamma_derivs;
-            beta_derivatives += private_beta_derivs;
-        }
-    }
-    
     // Input derivatives
 
-    #pragma omp parallel for collapse(3)
-    for (Index i = 0; i < batch_size; ++i)
-        for (Index j = 0; j < sequence_length; ++j)
-            for (Index k = 0; k < embedding_dimension; ++k)
-                scaled_deltas(i, j, k) = deltas(i, j, k) * gammas(k);
+    scaled_deltas.device(*thread_pool_device) = deltas;
+    multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    #pragma omp parallel for collapse(2)
-    for (Index i = 0; i < batch_size; ++i)
-        for (Index j = 0; j < sequence_length; ++j)
-        {
-            type d_var_sum = 0;
-            type d_mean_sum = 0;
-            const type inv_std_dev = type(1) / (standard_deviations(i, j) + epsilon);
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(array<Index, 1>({2}))
+                                         / (embedding_dimension * (standard_deviations + epsilon));
 
-            for (Index k = 0; k < embedding_dimension; ++k)
-                d_var_sum += scaled_deltas(i, j, k) * outputs(i, j, k);
+    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
+    multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
-            d_var_sum *= -type(0.5) * pow(inv_std_dev, 3);
+    scaled_deltas.device(*thread_pool_device) = scaled_deltas
+                                                / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                                                       .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
 
-            for (Index k = 0; k < embedding_dimension; ++k)
-                d_mean_sum += scaled_deltas(i, j, k);
+    input_deltas.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
-            d_mean_sum *= -inv_std_dev;
-
-            const type inv_embed_dim = type(1) / type(embedding_dimension);
-
-            for (Index k = 0; k < embedding_dimension; ++k)
-                input_deltas(i, j, k) = scaled_deltas(i, j, k) * inv_std_dev
-                                        + d_var_sum * type(2) * outputs(i, j, k) * inv_std_dev * inv_embed_dim
-                                        + d_mean_sum * inv_embed_dim;
-        }
+    aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(array<Index, 1>({2}));
+    /*
+    input_derivatives.device(*thread_pool_device) = input_derivatives
+        - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
+                .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
+*/
+    //substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
 }
 
 
@@ -327,9 +286,9 @@ void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new
 void Normalization3dBackPropagation::print() const
 {
     cout << "Gammas derivatives:" << endl
-        << gamma_derivatives << endl
-        << "Betas derivatives:" << endl
-        << beta_derivatives << endl;
+         << gamma_derivatives << endl
+         << "Betas derivatives:" << endl
+         << beta_derivatives << endl;
 }
 
 

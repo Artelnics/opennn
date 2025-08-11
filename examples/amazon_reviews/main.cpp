@@ -208,132 +208,132 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-//         // const Index batch_size = 4;
-//         // const Index num_heads  = 2;
-//         // const Index seq_len_a  = 8;
-//         // const Index seq_len_b  = 8;
-//         // const Index depth      = 16;
+        //         // const Index batch_size = 4;
+        //         // const Index num_heads  = 2;
+        //         // const Index seq_len_a  = 8;
+        //         // const Index seq_len_b  = 8;
+        //         // const Index depth      = 16;
 
-//         const Index batch_size = 2;
-//         const Index num_heads  = 2;
-//         const Index seq_len_a  = 4;
-//         const Index seq_len_b  = 4;
-//         const Index depth      = 10;
-
-
-//         Tensor<type, 4> A(batch_size, num_heads, seq_len_a, depth);
-//         Tensor<type, 4> B(batch_size, num_heads, seq_len_b, depth);
-//         Tensor<type, 4> C(batch_size, num_heads, seq_len_a, seq_len_b);
-//         Tensor<type, 4> E(batch_size, num_heads, seq_len_a, seq_len_b);
-//         Tensor<type, 4> D(batch_size, num_heads, seq_len_a, seq_len_b);
-
-//         Tensor<type, 4> V(batch_size, num_heads, seq_len_b, depth);
-
-//         for (Index b = 0; b < batch_size; ++b) {
-//             for (Index h = 0; h < num_heads; ++h) {
-//                 for (Index s = 0; s < seq_len_a; ++s) {
-//                     for (Index d = 0; d < depth; ++d) {
-//                         Index flat_index = ((b * num_heads + h) * seq_len_a + s) * depth + d;
-//                         A(b, h, s, d) = static_cast<type>(flat_index + 1);
-//                     }
-//                 }
-//             }
-//         }
-
-//         for (Index b = 0; b < batch_size; ++b) {
-//             for (Index h = 0; h < num_heads; ++h) {
-//                 for (Index s = 0; s < seq_len_b; ++s) {
-//                     for (Index d = 0; d < depth; ++d) {
-//                         Index flat_index = ((b * num_heads + h) * seq_len_b + s) * depth + d;
-//                         B(b, h, s, d) = static_cast<type>(flat_index + 1);
-//                     }
-//                 }
-//             }
-//         }
-
-//         for (Index b = 0; b < batch_size; ++b) {
-//             for (Index h = 0; h < num_heads; ++h) {
-//                 for (Index s = 0; s < seq_len_b; ++s) {
-//                     for (Index d = 0; d < depth; ++d) {
-//                         Index flat_index = ((b * num_heads + h) * seq_len_b + s) * depth + d;
-//                         V(b, h, s, d) = static_cast<type>(flat_index + 1);
-//                     }
-//                 }
-//             }
-//         }
-
-//         matmul_por_lotes_bucles(A, B, C);
-
-//         cout << "C(0, 0, 0, 0)" << C(0, 0, 0, 0) << endl;
-//         cout << "C(1, 2, 3, 3)" << C(1, 1, 2, 3) << endl;
-
-//         cout << C.dimensions() << endl;
-//         cout << V.dimensions() << endl;
-
-//         Tensor<type, 4> F(batch_size, num_heads, seq_len_a, depth);
-//         // matmul_por_lotes_tensor(C, V, F);
-
-//         cout << "F.dimensions" << F.dimensions() << endl;
-
-//         F = (C.reshape(array_5(batch_size, num_heads, seq_len_a, seq_len_b, 1)).broadcast(array_5(1, 1, 1, 1, depth))
-//              * V.reshape(array_5(batch_size, num_heads, 1, seq_len_b, depth)).broadcast(array_5(1, 1, seq_len_a, 1, 1)))
-//                 .sum(array_1(3));
-
-//         cout << "F.dimensions" << F.dimensions() << endl;
-//         cout << "F(0, 0, 0, 0)" << F(0, 0, 0, 0) << endl;
-//         cout << "F(1, 2, 3, 3)" << F(1, 1, 2, 3) << endl;
-
-//         // Tensor<type, 3> result(batch_size, seq_len_a, num_heads * depth);
-//         // cout << "result: " << result.dimensions() <<  endl;
-
-//         // auto transposed = F.shuffle(array_4(0, 2, 1, 3)).eval();
-//         // result = transposed.reshape(array_3(batch_size, seq_len_a, num_heads * depth));
-
-//         // result.resize(batch_size, seq_len_a, num_heads * depth);
-//         // for(int b = 0; b < batch_size; ++b) {
-//         //     for(int s = 0; s < seq_len_a; ++s) {
-//         //         for(int h = 0; h < num_heads; ++h) {
-//         //             for(int d = 0; d < depth; ++d) {
-//         //                 result(b, s, h * depth + d) = F(b, h, s, d);
-//         //             }
-//         //         }
-//         //     }
-//         // }
-
-//         Tensor<type, 3> result(batch_size, seq_len_a, num_heads * depth);
-
-//         // for(int h = 0; h < num_heads; ++h) {
-//         //     // chip() es muy eficiente para extraer una "rebanada"
-//         //     auto head_slice = F.chip(h, 1); // Extraer head h: (batch, seq, depth)
-
-//         //     // Hacer transpose de seq y depth usando shuffle
-//         //     auto transposed_head = head_slice.shuffle(array_3(0, 2, 1)); // (batch, depth, seq)
-
-//         //     // Colocar en la posición correcta
-//         //     Eigen::array<Index, 3> offsets = {0, 0, h * depth};
-//         //     Eigen::array<Index, 3> extents = {batch_size, seq_len_a, depth};
-//         //     result.slice(offsets, extents) = transposed_head.shuffle(array_3(0, 2, 1));
-//         // }
-//         // auto F_shuffled = F.shuffle(array_4(0, 2, 1, 3));  // (B, L, H, D)
-//         // auto F_flat = F_shuffled.reshape(array_3(batch_size, seq_len_a, num_heads * depth));
-//         // result = F_flat;
+        //         const Index batch_size = 2;
+        //         const Index num_heads  = 2;
+        //         const Index seq_len_a  = 4;
+        //         const Index seq_len_b  = 4;
+        //         const Index depth      = 10;
 
 
-// // #pragma omp parallel for
-// //         for(int h = 0; h < num_heads; ++h)
-// //             result.slice(array_3(0, 0, h * depth), array_3(batch_size, seq_len_a, depth)) = F.chip(h, 1);
+        //         Tensor<type, 4> A(batch_size, num_heads, seq_len_a, depth);
+        //         Tensor<type, 4> B(batch_size, num_heads, seq_len_b, depth);
+        //         Tensor<type, 4> C(batch_size, num_heads, seq_len_a, seq_len_b);
+        //         Tensor<type, 4> E(batch_size, num_heads, seq_len_a, seq_len_b);
+        //         Tensor<type, 4> D(batch_size, num_heads, seq_len_a, seq_len_b);
 
-//         // result.resize(batch_size, seq_len_a, num_heads * depth);
-//         // for(int h = 0; h < num_heads; ++h)
-//         //     result.slice(array_3(0, 0, h * depth), array_3(batch_size, seq_len_a, depth)) = F.chip(h, 1);
+        //         Tensor<type, 4> V(batch_size, num_heads, seq_len_b, depth);
 
-//         result = F.shuffle(array_4(0, 2, 1, 3))  // (B, S, H, D/H)
-//                      .reshape(array_3(batch_size, seq_len_a, depth));  // (B, S, D)
+        //         for (Index b = 0; b < batch_size; ++b) {
+        //             for (Index h = 0; h < num_heads; ++h) {
+        //                 for (Index s = 0; s < seq_len_a; ++s) {
+        //                     for (Index d = 0; d < depth; ++d) {
+        //                         Index flat_index = ((b * num_heads + h) * seq_len_a + s) * depth + d;
+        //                         A(b, h, s, d) = static_cast<type>(flat_index + 1);
+        //                     }
+        //                 }
+        //             }
+        //         }
+
+        //         for (Index b = 0; b < batch_size; ++b) {
+        //             for (Index h = 0; h < num_heads; ++h) {
+        //                 for (Index s = 0; s < seq_len_b; ++s) {
+        //                     for (Index d = 0; d < depth; ++d) {
+        //                         Index flat_index = ((b * num_heads + h) * seq_len_b + s) * depth + d;
+        //                         B(b, h, s, d) = static_cast<type>(flat_index + 1);
+        //                     }
+        //                 }
+        //             }
+        //         }
+
+        //         for (Index b = 0; b < batch_size; ++b) {
+        //             for (Index h = 0; h < num_heads; ++h) {
+        //                 for (Index s = 0; s < seq_len_b; ++s) {
+        //                     for (Index d = 0; d < depth; ++d) {
+        //                         Index flat_index = ((b * num_heads + h) * seq_len_b + s) * depth + d;
+        //                         V(b, h, s, d) = static_cast<type>(flat_index + 1);
+        //                     }
+        //                 }
+        //             }
+        //         }
+
+        //         matmul_por_lotes_bucles(A, B, C);
+
+        //         cout << "C(0, 0, 0, 0)" << C(0, 0, 0, 0) << endl;
+        //         cout << "C(1, 2, 3, 3)" << C(1, 1, 2, 3) << endl;
+
+        //         cout << C.dimensions() << endl;
+        //         cout << V.dimensions() << endl;
+
+        //         Tensor<type, 4> F(batch_size, num_heads, seq_len_a, depth);
+        //         // matmul_por_lotes_tensor(C, V, F);
+
+        //         cout << "F.dimensions" << F.dimensions() << endl;
+
+        //         F = (C.reshape(array_5(batch_size, num_heads, seq_len_a, seq_len_b, 1)).broadcast(array_5(1, 1, 1, 1, depth))
+        //              * V.reshape(array_5(batch_size, num_heads, 1, seq_len_b, depth)).broadcast(array_5(1, 1, seq_len_a, 1, 1)))
+        //                 .sum(array_1(3));
+
+        //         cout << "F.dimensions" << F.dimensions() << endl;
+        //         cout << "F(0, 0, 0, 0)" << F(0, 0, 0, 0) << endl;
+        //         cout << "F(1, 2, 3, 3)" << F(1, 1, 2, 3) << endl;
+
+        //         // Tensor<type, 3> result(batch_size, seq_len_a, num_heads * depth);
+        //         // cout << "result: " << result.dimensions() <<  endl;
+
+        //         // auto transposed = F.shuffle(array_4(0, 2, 1, 3)).eval();
+        //         // result = transposed.reshape(array_3(batch_size, seq_len_a, num_heads * depth));
+
+        //         // result.resize(batch_size, seq_len_a, num_heads * depth);
+        //         // for(int b = 0; b < batch_size; ++b) {
+        //         //     for(int s = 0; s < seq_len_a; ++s) {
+        //         //         for(int h = 0; h < num_heads; ++h) {
+        //         //             for(int d = 0; d < depth; ++d) {
+        //         //                 result(b, s, h * depth + d) = F(b, h, s, d);
+        //         //             }
+        //         //         }
+        //         //     }
+        //         // }
+
+        //         Tensor<type, 3> result(batch_size, seq_len_a, num_heads * depth);
+
+        //         // for(int h = 0; h < num_heads; ++h) {
+        //         //     // chip() es muy eficiente para extraer una "rebanada"
+        //         //     auto head_slice = F.chip(h, 1); // Extraer head h: (batch, seq, depth)
+
+        //         //     // Hacer transpose de seq y depth usando shuffle
+        //         //     auto transposed_head = head_slice.shuffle(array_3(0, 2, 1)); // (batch, depth, seq)
+
+        //         //     // Colocar en la posición correcta
+        //         //     Eigen::array<Index, 3> offsets = {0, 0, h * depth};
+        //         //     Eigen::array<Index, 3> extents = {batch_size, seq_len_a, depth};
+        //         //     result.slice(offsets, extents) = transposed_head.shuffle(array_3(0, 2, 1));
+        //         // }
+        //         // auto F_shuffled = F.shuffle(array_4(0, 2, 1, 3));  // (B, L, H, D)
+        //         // auto F_flat = F_shuffled.reshape(array_3(batch_size, seq_len_a, num_heads * depth));
+        //         // result = F_flat;
 
 
-//         cout << "result.dimensions" << result.dimensions() << endl;
-//         cout << "result(0, 0, 0, 0)" << result(0, 0, 0) << endl;
-//         cout << "result(1, 2, 3, 3)" << result(1, 1, 1) << endl;
+        // // #pragma omp parallel for
+        // //         for(int h = 0; h < num_heads; ++h)
+        // //             result.slice(array_3(0, 0, h * depth), array_3(batch_size, seq_len_a, depth)) = F.chip(h, 1);
+
+        //         // result.resize(batch_size, seq_len_a, num_heads * depth);
+        //         // for(int h = 0; h < num_heads; ++h)
+        //         //     result.slice(array_3(0, 0, h * depth), array_3(batch_size, seq_len_a, depth)) = F.chip(h, 1);
+
+        //         result = F.shuffle(array_4(0, 2, 1, 3))  // (B, S, H, D/H)
+        //                      .reshape(array_3(batch_size, seq_len_a, depth));  // (B, S, D)
+
+
+        //         cout << "result.dimensions" << result.dimensions() << endl;
+        //         cout << "result(0, 0, 0, 0)" << result(0, 0, 0) << endl;
+        //         cout << "result(1, 2, 3, 3)" << result(1, 1, 1) << endl;
 
 
         // return 0;

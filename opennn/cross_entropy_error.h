@@ -19,47 +19,47 @@ class CrossEntropyError2d : public LossIndex
 
 public:
 
-   CrossEntropyError2d(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    CrossEntropyError2d(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   // Error
+    // Error
 
-   void calculate_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const override;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const override;
 
-   void calculate_binary_error(const Batch&,
-                               const ForwardPropagation&,
-                               BackPropagation&) const;
+    void calculate_binary_error(const Batch&,
+                                const ForwardPropagation&,
+                                BackPropagation&) const;
 
-   void calculate_multiple_error(const Batch&,
-                                 const ForwardPropagation&,
-                                 BackPropagation&) const;
+    void calculate_multiple_error(const Batch&,
+                                  const ForwardPropagation&,
+                                  BackPropagation&) const;
 
-   // Gradient
+    // Gradient
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   void calculate_binary_output_delta(const Batch&,
-                                      ForwardPropagation&,
-                                      BackPropagation&) const;
+    void calculate_binary_output_delta(const Batch&,
+                                       ForwardPropagation&,
+                                       BackPropagation&) const;
 
-   void calculate_multiple_output_delta(const Batch&,
-                                        ForwardPropagation&,
-                                        BackPropagation&) const;
+    void calculate_multiple_output_delta(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&) const;
 
-   string get_name() const override;    
+    string get_name() const override;
 
-   // Serialization
-      
-   void from_XML(const XMLDocument&) override;
+    // Serialization
 
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+
+    void to_XML(XMLPrinter&) const override;
 
 private:
 
-   const type epsilon = numeric_limits<type>::epsilon();
+    const type epsilon = numeric_limits<type>::epsilon();
 
 #ifdef OPENNN_CUDA
 

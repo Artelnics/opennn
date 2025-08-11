@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   M E A N   S Q U A R E D   E R R O R    C L A S S   H E A D E R        
+//   M E A N   S Q U A R E D   E R R O R    C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -18,50 +18,50 @@ class MeanSquaredError : public LossIndex
 {
 
 public:
-   
-   MeanSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   void calculate_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const override;
+    MeanSquaredError(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const override;
 
-   // Back propagation LM
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   void calculate_error_lm(const Batch&,
-                           const ForwardPropagation&,
-                           BackPropagationLM&) const override;
+    // Back propagation LM
 
-   void calculate_output_delta_lm(const Batch&,
-                                  ForwardPropagation&,
-                                  BackPropagationLM&) const override;
+    void calculate_error_lm(const Batch&,
+                            const ForwardPropagation&,
+                            BackPropagationLM&) const override;
 
-   void calculate_error_gradient_lm(const Batch&,
-                                    BackPropagationLM&) const override;
-
-   void calculate_error_hessian_lm(const Batch&,
+    void calculate_output_delta_lm(const Batch&,
+                                   ForwardPropagation&,
                                    BackPropagationLM&) const override;
 
-   // Serialization
+    void calculate_error_gradient_lm(const Batch&,
+                                     BackPropagationLM&) const override;
 
-   void to_XML(XMLPrinter &) const override;
+    void calculate_error_hessian_lm(const Batch&,
+                                    BackPropagationLM&) const override;
 
-   string get_name() const override;
+    // Serialization
 
-   void from_XML(const XMLDocument& document) override;
+    void to_XML(XMLPrinter &) const override;
+
+    string get_name() const override;
+
+    void from_XML(const XMLDocument& document) override;
 
 #ifdef OPENNN_CUDA
 
-   void calculate_error_cuda(const BatchCuda&,
-                             const ForwardPropagationCuda&,
-                             BackPropagationCuda&) const override;
+    void calculate_error_cuda(const BatchCuda&,
+                              const ForwardPropagationCuda&,
+                              BackPropagationCuda&) const override;
 
-   void calculate_output_delta_cuda(const BatchCuda&,
-                                    ForwardPropagationCuda&,
-                                    BackPropagationCuda&) const override;
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
 
 #endif
 

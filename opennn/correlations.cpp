@@ -965,7 +965,6 @@ void register_layers()
     // Bounding bounding_layer;
     // bounding_layer.print();
     // MultiHeadAttention multi_head_attention; multi_head_attention.print();
-
 }
 
 
