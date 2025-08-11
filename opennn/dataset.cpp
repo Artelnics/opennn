@@ -3694,7 +3694,6 @@ void Dataset::impute_missing_values_interpolate()
 
 void Dataset::scrub_missing_values()
 {
-    cout << "adri71 - liimpiar valores nan" << endl;
     switch (missing_values_method)
     {
     case MissingValuesMethod::Unuse:

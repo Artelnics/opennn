@@ -14,7 +14,10 @@ namespace opennn
 
 Layer::Layer()
 {
+    const unsigned int threads_number = thread::hardware_concurrency();
 
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
@@ -98,6 +101,16 @@ vector<pair<type *, Index> > Layer::get_parameter_pairs() const
 }
 
 
+void Layer::set_threads_number(const int& new_threads_number)
+{
+    thread_pool.reset();
+    thread_pool_device.reset();
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
 string Layer::get_expression(const vector<string> &, const vector<string> &) const
 {
     return string();
@@ -140,17 +153,8 @@ void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) con
 {
     TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
 
-    type* deltas_data = deltas.data();
-
-    for (size_t i = 1; i < delta_pairs.size(); ++i)
-    {
-        const TensorMap<Tensor<type, 3>> current_delta = tensor_map<3>(delta_pairs[i]);
-        const type* current_delta_data = current_delta.data();
-
-        #pragma omp parallel for
-        for (Index j = 0; j < deltas.size(); ++j)
-            deltas_data[j] += current_delta_data[j];
-    }
+    for (Index i = 1; i < Index(delta_pairs.size()); i++)
+        deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
 }
 
 
@@ -170,7 +174,7 @@ Index Layer::get_outputs_number() const
 }
 
 
-void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
+void Layer::forward_propagate(const vector<pair<type*, dimensions>>&,
                               unique_ptr<LayerForwardPropagation>&, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
@@ -191,30 +195,21 @@ void Layer::set_output_dimensions(const dimensions&)
 
 
 void Layer::softmax(Tensor<type, 2>& y) const
-{    
+{
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
-    
-    #pragma omp parallel for
-    for (Index i = 0; i < rows_number; ++i)
-    {
-        type max_val = y(i, 0);
 
-        for (Index j = 1; j < columns_number; ++j)
-            if (y(i, j) > max_val)
-                max_val = y(i, j);
+    y.device(*thread_pool_device) = y - y.maximum(array_1(1))
+                                            .eval()
+                                            .reshape(array<Index, 2>({rows_number, 1}))
+                                            .broadcast(array<Index, 2>({1, columns_number}));
 
-        type sum_exp = 0.0;
+    y.device(*thread_pool_device) = y.exp();
 
-        for (Index j = 0; j < columns_number; ++j)
-        {
-            y(i, j) = exp(y(i, j) - max_val);
-            sum_exp += y(i, j);
-        }
-
-        for (Index j = 0; j < columns_number; ++j)
-            y(i, j) /= sum_exp;
-    }
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
+                                            .eval()
+                                            .reshape(array<Index, 2>({rows_number, 1}))
+                                            .broadcast(array<Index, 2>({1, columns_number}));
 }
 
 
@@ -223,26 +218,18 @@ void Layer::softmax(Tensor<type, 3>& y) const
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
-    
-    #pragma omp parallel for collapse(2)
-    for (Index i = 0; i < rows_number; ++i)
-    {
-        for (Index j = 0; j < columns_number; ++j)
-        {
-            type max_val = y(i, j, 0);
-            for (Index k = 1; k < channels; ++k)
-                if (y(i, j, k) > max_val)
-                    max_val = y(i, j, k);
 
-            type sum_exp = type(0);
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({2}))
+                                            .eval()
+                                            .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                            .broadcast(array<Index, 3>({1, 1, channels}));
 
-            for (Index k = 0; k < channels; ++k)
-                sum_exp += std::exp(y(i, j, k) - max_val);
+    y.device(*thread_pool_device) = y.exp();
 
-            for (Index k = 0; k < channels; ++k)
-                y(i, j, k) = std::exp(y(i, j, k) - max_val) / sum_exp;
-        }
-    }
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({2}))
+                                            .eval()
+                                            .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                            .broadcast(array<Index, 3>({1, 1, channels}));
 }
 
 
@@ -253,29 +240,17 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    #pragma omp parallel for collapse(3)
-    for (Index i = 0; i < rows_number; ++i)
-    {
-        for (Index j = 0; j < columns_number; ++j)
-        {
-            for (Index k = 0; k < channels; ++k)
-            {
-                type max_val = y(i, j, k, 0);
+    y.device(*thread_pool_device) = y - y.maximum(array_1(0))
+                                            .eval()
+                                            .reshape(array_4(1, columns_number, channels, blocks_number))
+                                            .broadcast(array_4(rows_number, 1, 1, 1));
 
-                for (Index l = 1; l < blocks_number; ++l)
-                    if (y(i, j, k, l) > max_val)
-                        max_val = y(i, j, k, l);
+    y.device(*thread_pool_device) = y.exp();
 
-                type sum_exp = type(0);
-
-                for (Index l = 0; l < blocks_number; ++l)
-                    sum_exp += std::exp(y(i, j, k, l) - max_val);
-
-                for (Index l = 0; l < blocks_number; ++l)
-                    y(i, j, k, l) = std::exp(y(i, j, k, l) - max_val) / sum_exp;
-            }
-        }
-    }
+    y.device(*thread_pool_device) = y / y.sum(array_1(0))
+                                            .eval()
+                                            .reshape(array_4(1, columns_number, channels, blocks_number))
+                                            .broadcast(array_4(rows_number, 1, 1, 1 ));
 }
 
 
@@ -312,7 +287,7 @@ void Layer::softmax(Tensor<type, 4>& y) const
 //            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
 //            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
-            
+
 //            sum.device(*thread_pool_device) = aux_rows.sum();
 
 //            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
@@ -322,24 +297,39 @@ void Layer::softmax(Tensor<type, 4>& y) const
 
 
 void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
-    TensorMap<Tensor<type, 3>>& result) const
+                                             TensorMap<Tensor<type, 3>>& result,
+                                             Tensor<type, 1>& aux_rows) const
 {
     const Index rows = softmax.dimension(0);
     const Index columns = softmax.dimension(1);
     const Index depth = softmax.dimension(2);
 
-    #pragma omp parallel for
+
+    type* softmax_data = (type*)softmax.data();
+    type* result_data = result.data();
+
+    type* softmax_vector_data = nullptr;
+    type* result_vector_data = nullptr;
+
+    Tensor<type, 0> sum;
+
     for (Index i = 0; i < depth; i++)
     {
         for (Index j = 0; j < columns; j++)
         {
-            auto softmax_vec = softmax.chip(i, 2).chip(j, 1);
-            auto tensor_vec = result.chip(i, 2).chip(j, 1);
+            softmax_vector_data = softmax_data + rows * (i * columns + j);
+            result_vector_data = result_data + rows * (i * columns + j);
 
-            const Tensor<type, 0> sum_tensor = (softmax_vec * tensor_vec).sum();
-            const type sum = sum_tensor(0);
+            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows);
+            const TensorMap<Tensor<type, 1>> tensor_vector(result_vector_data, rows);
 
-            tensor_vec = softmax_vec * tensor_vec - softmax_vec * sum;
+            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows);
+
+            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+
+            sum.device(*thread_pool_device) = aux_rows.sum();
+
+            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
         }
     }
 }
@@ -357,18 +347,18 @@ void Layer::create_cuda()
     cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor);
 
     cudnnSetOpTensorDescriptor(operator_multiplication_descriptor,
-        CUDNN_OP_TENSOR_MUL,
-        CUDNN_DATA_FLOAT,
-        CUDNN_NOT_PROPAGATE_NAN);
+                               CUDNN_OP_TENSOR_MUL,
+                               CUDNN_DATA_FLOAT,
+                               CUDNN_NOT_PROPAGATE_NAN);
 
     // Sum
 
     cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
 
     cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-        CUDNN_OP_TENSOR_ADD,
-        CUDNN_DATA_FLOAT,
-        CUDNN_NOT_PROPAGATE_NAN);
+                               CUDNN_OP_TENSOR_ADD,
+                               CUDNN_DATA_FLOAT,
+                               CUDNN_NOT_PROPAGATE_NAN);
 }
 
 

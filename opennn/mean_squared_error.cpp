@@ -52,22 +52,9 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     if(outputs.dimension(1) != targets.dimension(1))
         throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
-    const Index size = errors.size();
-    type* errors_data = errors.data();
-    const type* outputs_data = outputs.data();
-    const type* targets_data = targets.data();
+    errors.device(*thread_pool_device) = outputs - targets;
 
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-        errors_data[i] = outputs_data[i] - targets_data[i];
-
-    type sum_of_squares = type(0);
-
-    #pragma omp parallel for reduction(+:sum_of_squares)
-    for (Index i = 0; i < size; ++i)
-        sum_of_squares += errors_data[i] * errors_data[i];
-
-    error() = sum_of_squares / type(samples_number * outputs_number);
+    error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -78,22 +65,14 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
                                           BackPropagationLM& back_propagation) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
-    
+
     const Index samples_number = batch.get_samples_number();
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    const Index size = squared_errors.size();
-    const type* squared_errors_data = squared_errors.data();
-    type sum_result = type(0);
-
-    #pragma omp parallel for reduction(+:sum_result)
-    for (Index i = 0; i < size; ++i)
-        sum_result += squared_errors_data[i] * squared_errors_data[i];
-
-    error() = sum_result / type(samples_number * outputs_number);
+    error.device(*thread_pool_device) = squared_errors.square().sum() / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -117,13 +96,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    const Index size = errors.size();
-    const type* errors_data = errors.data();
-    type* deltas_data = output_deltas.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-        deltas_data[i] = errors_data[i] / type(0.5 * outputs_number * samples_number);
+    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * samples_number);
 }
 
 
@@ -138,15 +111,8 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    const Index size = errors.size();
-    const type* errors_data = errors.data();
-    type* deltas_data = output_deltas.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-        deltas_data[i] = errors_data[i];
-
-    divide_columns(output_deltas, squared_errors);
+    output_deltas.device(*thread_pool_device) = errors;
+    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
@@ -164,18 +130,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    const Index rows_number = squared_errors_jacobian.dimension(0);
-    const Index cols_number = squared_errors_jacobian.dimension(1);
-
-    #pragma omp parallel for
-    for (Index j = 0; j < cols_number; ++j)
-    {
-        type sum = type(0);
-        for (Index i = 0; i < rows_number; ++i)
-            sum += squared_errors_jacobian(i, j) * squared_errors(i);
-
-        gradient(j) = sum * coefficient;
-    }
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0))*coefficient;
 }
 
 
@@ -193,23 +148,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    const Index rows = squared_errors_jacobian.dimension(0);
-    const Index cols = squared_errors_jacobian.dimension(1);
-
-    #pragma omp parallel for
-    for (Index i = 0; i < cols; ++i)
-    {
-        for (Index j = i; j < cols; ++j)
-        {
-            type sum = type(0);
-            for (Index k = 0; k < rows; ++k)
-                sum += squared_errors_jacobian(k, i) * squared_errors_jacobian(k, j);
-
-            hessian(i, j) = sum * coefficient;
-            if (i != j)
-                hessian(j, i) = hessian(i, j);
-        }
-    }
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
 }
 
 
@@ -245,7 +184,7 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    // Batch 
+    // Batch
 
     const Index samples_number = batch_cuda.get_samples_number();
 
@@ -268,18 +207,18 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
     float alpha = 1.0f;
     float alpha_minus_one = -1.0f;
     const float beta = 0.0f;
-    
+
     cudnnOpTensor(cudnn_handle,
-        operator_sum_descriptor,
-        &alpha_minus_one,
-        output_tensor_descriptor,
-        targets,
-        &alpha,
-        output_tensor_descriptor,
-        outputs,
-        &beta,
-        output_tensor_descriptor,
-        errors_device);
+                  operator_sum_descriptor,
+                  &alpha_minus_one,
+                  output_tensor_descriptor,
+                  targets,
+                  &alpha,
+                  output_tensor_descriptor,
+                  outputs,
+                  &beta,
+                  output_tensor_descriptor,
+                  errors_device);
 
     cublasSdot(cublas_handle, samples_number * outputs_number, errors_device, 1, errors_device, 1, &error(0));
 

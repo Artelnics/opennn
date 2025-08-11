@@ -55,7 +55,26 @@ void LossIndex::set(const NeuralNetwork* new_neural_network, const Dataset* new_
     neural_network = const_cast<NeuralNetwork*>(new_neural_network);
     dataset = const_cast<Dataset*>(new_dataset);
 
+    thread_pool.reset();
+    thread_pool_device.reset();
+
+    const unsigned int threads_number = thread::hardware_concurrency();
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
     regularization_method = "L2";
+}
+
+
+void LossIndex::set_threads_number(const int& new_threads_number)
+{
+    if(thread_pool != nullptr)
+        thread_pool.reset();
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -102,14 +121,7 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
 
-    const Index size = back_propagation.errors.size();
-    type* errors_data = back_propagation.errors.data();
-    const type* outputs_data = outputs.data();
-    const type* targets_data = targets.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-        errors_data[i] = outputs_data[i] - targets_data[i];
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
 
 
@@ -121,20 +133,7 @@ void LossIndex::calculate_squared_errors_lm(const Batch&,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    const Index rows = errors.dimension(0);
-    const Index cols = errors.dimension(1);
-
-    #pragma omp parallel for
-    for (Index i = 0; i < rows; ++i)
-    {
-        type sum_of_squares_in_row = type(0);
-        for (Index j = 0; j < cols; ++j)
-        {
-            const type val = errors(i, j);
-            sum_of_squares_in_row += val * val;
-        }
-        squared_errors(i) = sqrt(sum_of_squares_in_row);
-    }
+    squared_errors.device(*thread_pool_device) = errors.square().sum(array_1(1)).sqrt();
 }
 
 
@@ -163,11 +162,10 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
     const Index layers_number = neural_network->get_layers_number();
 
-//    type regularization_value = 0;
+    //    type regularization_value = 0;
 
-    type regularization_loss_sum = type(0);
+    //#pragma omp parallel for schedule(dynamic) // @todo check this pragma vs thread_pool
 
-    #pragma omp parallel for reduction(+:regularization_loss_sum)
     for (Index layer_index = 0; layer_index < layers_number; layer_index++)
     {
         Layer* layer = neural_network->get_layer(layer_index).get();
@@ -193,10 +191,9 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
             {
                 const Tensor<type, 0> norm = parameters_map.abs().sum();
 
-                // back_propagation.loss += regularization_weight * norm(0);
-                regularization_loss_sum += regularization_weight * norm(0);
+                back_propagation.loss += regularization_weight*norm(0);
 
-                delta_map += regularization_weight * parameters_map.sign();
+                delta_map += regularization_weight*parameters_map.sign();
 
             }
             else if(regularization_method == "L2")
@@ -205,10 +202,9 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
                 if(norm(0) >= NUMERIC_LIMITS_MIN)
                 {
-                    // back_propagation.loss += regularization_weight * norm(0);
-                    regularization_loss_sum += regularization_weight * norm(0);
+                    back_propagation.loss += regularization_weight*norm(0);
 
-                    delta_map += parameters_map * (regularization_weight / norm(0));
+                    delta_map += parameters_map*(regularization_weight/norm(0));
                 }
             }
             else
@@ -216,11 +212,10 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
         }
     }
 
-    back_propagation.loss += regularization_loss_sum;
-
     //back_propagation.regularization = regularization_value;
     //back_propagation.loss += regularization_weight * regularization_value;
 }
+
 
 
 void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
@@ -252,7 +247,7 @@ void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) co
 
         loss += regularization_weight*norm(0);
         gradient += parameters*(regularization_weight/norm(0));
-        hessian += self_kronecker_product(parameters)/(norm(0)*norm(0)*norm(0));
+        hessian += self_kronecker_product(thread_pool_device.get(), parameters)/(norm(0)*norm(0)*norm(0));
     }
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
@@ -339,17 +334,7 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    const Index samples_number = squared_errors_jacobian.dimension(0);
-    const Index parameters_number = squared_errors_jacobian.dimension(1);
-
-    #pragma omp parallel for
-    for (Index j = 0; j < parameters_number; ++j) {
-        type sum = type(0);
-        for (Index i = 0; i < samples_number; ++i) {
-            sum += squared_errors_jacobian(i, j) * squared_errors(i);
-        }
-        gradient(j) = sum;
-    }
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0));
 }
 
 
@@ -665,7 +650,6 @@ Tensor<type, 1> LossIndex::calculate_gradient()
     batch.fill(sample_indices, input_variable_indices, target_variable_indices);
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
-
     Tensor<type, 1> parameters;
     neural_network->get_parameters(parameters);
     neural_network->forward_propagate(batch.get_input_pairs(),
@@ -693,7 +677,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     // @todo decoder variables
 
-    Batch batch(samples_number, dataset);    
+    Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);

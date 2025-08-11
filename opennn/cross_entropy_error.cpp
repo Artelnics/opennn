@@ -54,21 +54,8 @@ void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    const Index size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-
-    type cross_entropy_sum = type(0);
-
-    #pragma omp parallel for reduction(+:cross_entropy_sum)
-    for (Index i = 0; i < size; ++i)
-    {
-        const type target = targets_data[i];
-        const type output = outputs_data[i];
-        cross_entropy_sum += target * log(output + epsilon) + (type(1) - target) * log(type(1) - output + epsilon);
-    }
-
-    error() = cross_entropy_sum / type(-samples_number);
+    error.device(*thread_pool_device)
+        = ((targets * (outputs + epsilon).log() + (type(1) - targets) * ((type(1) - outputs + epsilon).log())).sum()) / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -96,17 +83,7 @@ void CrossEntropyError2d::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    const Index size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-
-    type cross_entropy_sum = type(0);
-
-    #pragma omp parallel for reduction(+:cross_entropy_sum)
-    for (Index i = 0; i < size; ++i)
-        cross_entropy_sum += targets_data[i] * log(outputs_data[i] + epsilon);
-
-    error() = cross_entropy_sum / type(-samples_number);
+    error.device(*thread_pool_device) = (targets*(outputs + epsilon).log()).sum() / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -148,18 +125,8 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    const Index size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-    type* deltas_data = output_deltas.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-    {
-        const type target = targets_data[i];
-        const type output = outputs_data[i];
-        deltas_data[i] = (-target / (output + epsilon) + (type(1) - target) / (type(1) - output + epsilon)) / type(samples_number);
-    }
+    output_deltas.device(*thread_pool_device)
+        = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);
 }
 
 
@@ -187,14 +154,7 @@ void CrossEntropyError2d::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    const Index size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-    type* deltas_data = output_deltas.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < size; ++i)
-        deltas_data[i] = (outputs_data[i] - targets_data[i]) / type(samples_number);
+    output_deltas.device(*thread_pool_device) = (outputs - targets) / type(samples_number);
 }
 
 
@@ -280,13 +240,13 @@ void CrossEntropyError2d::calculate_binary_error_cuda(const BatchCuda& batch_cud
     calculate_binary_cross_entropy_cuda(size, errors, targets, outputs, epsilon);
 
     cudnnReduceTensor(cudnn_handle,
-        reduce_tensor_descriptor,
-        nullptr, 0,
-        workspace, workspaceSize,
-        &alpha,
-        output_tensor_descriptor, errors,
-        &beta,
-        output_reduce_tensor_descriptor, error_device);
+                      reduce_tensor_descriptor,
+                      nullptr, 0,
+                      workspace, workspaceSize,
+                      &alpha,
+                      output_tensor_descriptor, errors,
+                      &beta,
+                      output_reduce_tensor_descriptor, error_device);
 
     CHECK_CUDA(cudaMemcpy(error.data(), error_device, sizeof(float), cudaMemcpyDeviceToHost));
 
@@ -331,13 +291,13 @@ void CrossEntropyError2d::calculate_multiple_error_cuda(const BatchCuda& batch_c
     const float beta = 0.0f;
 
     cudnnReduceTensor(cudnn_handle,
-        reduce_tensor_descriptor,
-        nullptr, 0,
-        workspace, workspaceSize,
-        &alpha,
-        output_tensor_descriptor, errors,
-        &beta,
-        output_reduce_tensor_descriptor, error_device);
+                      reduce_tensor_descriptor,
+                      nullptr, 0,
+                      workspace, workspaceSize,
+                      &alpha,
+                      output_tensor_descriptor, errors,
+                      &beta,
+                      output_reduce_tensor_descriptor, error_device);
 
     CHECK_CUDA(cudaMemcpy(error.data(), error_device, sizeof(type), cudaMemcpyDeviceToHost));
 

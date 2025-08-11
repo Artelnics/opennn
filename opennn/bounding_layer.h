@@ -19,69 +19,69 @@ class Bounding : public Layer
 
 public:
 
-   Bounding(const dimensions& = {0}, const string& = "bounding_layer");
+    Bounding(const dimensions& = {0}, const string& = "bounding_layer");
 
-   enum class BoundingMethod{NoBounding, Bounding};
+    enum class BoundingMethod{NoBounding, Bounding};
 
-   dimensions get_input_dimensions() const override;
-   dimensions get_output_dimensions() const override;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   const BoundingMethod& get_bounding_method() const;
+    const BoundingMethod& get_bounding_method() const;
 
-   string get_bounding_method_string() const;
+    string get_bounding_method_string() const;
 
-   const Tensor<type, 1>& get_lower_bounds() const;
-   type get_lower_bound(const Index&) const;
+    const Tensor<type, 1>& get_lower_bounds() const;
+    type get_lower_bound(const Index&) const;
 
-   const Tensor<type, 1>& get_upper_bounds() const;
-   type get_upper_bound(const Index&) const;
+    const Tensor<type, 1>& get_upper_bounds() const;
+    type get_upper_bound(const Index&) const;
 
-   void set(const dimensions & = { 0 }, const string & = "bounding_layer");
+    void set(const dimensions & = { 0 }, const string & = "bounding_layer");
 
-   void set_input_dimensions(const dimensions&) override;
-   void set_output_dimensions(const dimensions&) override;
+    void set_input_dimensions(const dimensions&) override;
+    void set_output_dimensions(const dimensions&) override;
 
-   void set_bounding_method(const BoundingMethod&);
-   void set_bounding_method(const string&);
+    void set_bounding_method(const BoundingMethod&);
+    void set_bounding_method(const string&);
 
-   void set_lower_bounds(const Tensor<type, 1>&);
-   void set_lower_bound(const Index&, const type&);
+    void set_lower_bounds(const Tensor<type, 1>&);
+    void set_lower_bound(const Index&, const type&);
 
-   void set_upper_bounds(const Tensor<type, 1>&);
-   void set_upper_bound(const Index&, const type&);
+    void set_upper_bounds(const Tensor<type, 1>&);
+    void set_upper_bound(const Index&, const type&);
 
-   // Lower and upper bounds
+    // Lower and upper bounds
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   // Expression
+    // Expression
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-   // Serialization
+    // Serialization
 
-   void print() const override;
+    void print() const override;
 
-   void from_XML(const XMLDocument&) override;
+    void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const override;
+    void to_XML(XMLPrinter&) const override;
 
 private:
 
-   BoundingMethod bounding_method = BoundingMethod::Bounding;
+    BoundingMethod bounding_method = BoundingMethod::Bounding;
 
-   Tensor<type, 1> lower_bounds;
+    Tensor<type, 1> lower_bounds;
 
-   Tensor<type, 1> upper_bounds;
+    Tensor<type, 1> upper_bounds;
 };
 
 
 struct BoundingForwardPropagation : LayerForwardPropagation
 {
     BoundingForwardPropagation(const Index& = 0, Layer* = nullptr);
-        
+
     pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
@@ -113,4 +113,3 @@ struct BoundingForwardPropagation : LayerForwardPropagation
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

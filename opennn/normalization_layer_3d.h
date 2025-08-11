@@ -44,14 +44,14 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
         // @todo
-    #endif
+#endif
 
 private:
 
     Index sequence_length;
-        
+
     Tensor<type, 1> gammas;
 
     Tensor<type, 1> betas;
@@ -61,7 +61,7 @@ private:
 
 
 struct Normalization3dForwardPropagation : LayerForwardPropagation
-{        
+{
     Normalization3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_output_pair() const override;
@@ -98,12 +98,12 @@ struct Normalization3dBackPropagation : LayerBackPropagation
     Tensor<type, 3> scaled_deltas;
     Tensor<type, 3> standard_deviation_derivatives;
     Tensor<type, 2> aux_2d;
-        
+
 };
 
 
 #ifdef OPENNN_CUDA
-    // @todo
+// @todo
 #endif
 
 }

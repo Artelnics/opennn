@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R               
+//   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -20,63 +20,63 @@ class Unscaling : public Layer
 
 public:
 
-   Unscaling(const dimensions& = {0}, const string& = "unscaling_layer");
-   
-   dimensions get_input_dimensions() const override;
-   dimensions get_output_dimensions() const override;
+    Unscaling(const dimensions& = {0}, const string& = "unscaling_layer");
 
-   vector<Descriptives> get_descriptives() const; 
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   Tensor<type, 1> get_minimums() const;
-   Tensor<type, 1> get_maximums() const;
+    vector<Descriptives> get_descriptives() const;
 
-   vector<Scaler> get_unscaling_method() const;
+    Tensor<type, 1> get_minimums() const;
+    Tensor<type, 1> get_maximums() const;
 
-   vector<string> write_unscaling_methods() const;
-   vector<string> write_unscaling_method_text() const;
+    vector<Scaler> get_unscaling_method() const;
 
-   void set(const Index& = 0, const string& = "unscaling_layer");
+    vector<string> write_unscaling_methods() const;
+    vector<string> write_unscaling_method_text() const;
 
-   void set_input_dimensions(const dimensions&) override;
-   void set_output_dimensions(const dimensions&) override;
+    void set(const Index& = 0, const string& = "unscaling_layer");
 
-   void set_descriptives(const vector<Descriptives>&);
+    void set_input_dimensions(const dimensions&) override;
+    void set_output_dimensions(const dimensions&) override;
 
-   void set_min_max_range(const type min, const type max);
+    void set_descriptives(const vector<Descriptives>&);
 
-   void set_scalers(const vector<Scaler>&);
-   void set_scalers(const string&);
-   void set_scalers(const vector<string>&);
-   void set_scalers(const Scaler&);
+    void set_min_max_range(const type min, const type max);
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void set_scalers(const vector<Scaler>&);
+    void set_scalers(const string&);
+    void set_scalers(const vector<string>&);
+    void set_scalers(const Scaler&);
 
-   vector<string> write_scalers_text() const;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   void print() const override;
+    vector<string> write_scalers_text() const;
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void print() const override;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
+
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
 private:
 
-   vector<Descriptives> descriptives;
+    vector<Descriptives> descriptives;
 
-   vector<Scaler> scalers;
+    vector<Scaler> scalers;
 
-   type min_range;
-   type max_range;
+    type min_range;
+    type max_range;
 };
 
 
 struct UnscalingForwardPropagation : LayerForwardPropagation
 {
     UnscalingForwardPropagation(const Index& = 0, Layer* = 0);
-    
+
     pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;

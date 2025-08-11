@@ -19,45 +19,45 @@ class Recurrent : public Layer
 
 public:
 
-   Recurrent(const dimensions & = {0}, const dimensions& = {0});
+    Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
-   dimensions get_input_dimensions() const override;
-   dimensions get_output_dimensions() const override;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   Index get_timesteps() const;
+    Index get_timesteps() const;
 
-   vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<pair<type*, Index>> get_parameter_pairs() const override;
 
-   string get_activation_function() const;
+    string get_activation_function() const;
 
-   void set(const dimensions& = {}, const dimensions& = {});
+    void set(const dimensions& = {}, const dimensions& = {});
 
-   void set_input_dimensions(const dimensions&) override;
-   void set_output_dimensions(const dimensions&) override;
+    void set_input_dimensions(const dimensions&) override;
+    void set_output_dimensions(const dimensions&) override;
 
-   void set_timesteps(const Index&);
+    void set_timesteps(const Index&);
 
-   void set_activation_function(const string&);
+    void set_activation_function(const string&);
 
-   void calculate_combinations(const Tensor<type, 2>&,
-                               const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
+    void calculate_combinations(const Tensor<type, 2>&,
+                                const Tensor<type, 2>&,
+                                Tensor<type, 2>&) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   void back_propagate(const vector<pair<type*, dimensions>>&,
-                       const vector<pair<type*, dimensions>>&,
-                       unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const override;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-   void print() const override;
+    void print() const override;
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -132,7 +132,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
-    // @todo
+// @todo
 #endif
 
 }

@@ -29,56 +29,56 @@ public:
 
     void set_dataset(const Dataset* new_dataset) override;
 
-   type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-     
-   void calculate_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const override;
+    type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const override;
 
-   void calculate_error_lm(const Batch&,
-                           const ForwardPropagation&,
-                           BackPropagationLM&) const override;
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   void calculate_output_delta_lm(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagationLM&) const override;
+    void calculate_error_lm(const Batch&,
+                            const ForwardPropagation&,
+                            BackPropagationLM&) const override;
 
-   void calculate_error_gradient_lm(const Batch&,
-                              BackPropagationLM&) const override;
-
-   void calculate_error_hessian_lm(const Batch&,
+    void calculate_output_delta_lm(const Batch&,
+                                   ForwardPropagation&,
                                    BackPropagationLM&) const override;
 
-   string get_name() const override;
+    void calculate_error_gradient_lm(const Batch&,
+                                     BackPropagationLM&) const override;
 
-   void from_XML(const XMLDocument&) override;
+    void calculate_error_hessian_lm(const Batch&,
+                                    BackPropagationLM&) const override;
 
-   void to_XML(XMLPrinter&) const override;
+    string get_name() const override;
+
+    void from_XML(const XMLDocument&) override;
+
+    void to_XML(XMLPrinter&) const override;
 
 protected:
 
-   type normalization_coefficient = type(1);
+    type normalization_coefficient = type(1);
 
 
 #ifdef OPENNN_CUDA
 
-   // Error
+    // Error
 
-   void calculate_error_cuda(const BatchCuda&,
-                             const ForwardPropagationCuda&,
-                             BackPropagationCuda&) const override;
+    void calculate_error_cuda(const BatchCuda&,
+                              const ForwardPropagationCuda&,
+                              BackPropagationCuda&) const override;
 
-   // Gradient
+    // Gradient
 
-   void calculate_output_delta_cuda(const BatchCuda&,
-                                    ForwardPropagationCuda&,
-                                    BackPropagationCuda&) const override;
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
 
 #endif
 

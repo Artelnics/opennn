@@ -36,10 +36,9 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
-        // TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
+        TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
-        TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
-        // TimeSeriesDataset time_series_dataset("../data/Dataset_Nans.csv", ",", true, false);
+        // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);
         // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
@@ -49,7 +48,7 @@ int main()
 
         time_series_dataset.print();
 
-        time_series_dataset.scale_data();
+        //time_series_dataset.scale_data();
         cout << "-----------------------------------" << endl;
 
         if(time_series_dataset.has_nan())
@@ -59,7 +58,6 @@ int main()
             cout << "sigue habiendo nans" << endl;
         else
             cout << "nans arreglados" << endl;
-
 
         cout << "-----------------------------------" << endl;
 
@@ -100,13 +98,13 @@ int main()
                                           {4},
                                           {time_series_dataset.get_target_dimensions()});
 
+        // Layer* layer_ptr_scaling = forecasting_network.get_first("Scaling3d");
+        // Scaling3d* scaling_layer = dynamic_cast<Scaling3d*>(layer_ptr_scaling);
+        // scaling_layer->set_scalers("None");
+
         Layer* layer_ptr = forecasting_network.get_first("Recurrent");
         Recurrent* recurrent_layer = dynamic_cast<Recurrent*>(layer_ptr);
-<<<<<<< HEAD
         recurrent_layer->set_activation_function("HyperbolicTangent");
-=======
-        // recurrent_layer->set_activation_function("HyperbolicTangent");
->>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
         // recurrent_layer->set_timesteps(1);
 
         forecasting_network.print();
@@ -114,7 +112,7 @@ int main()
         cout << "------------------------------------------" << endl;
 
         /// Calcular gradiente
-        NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
+        // NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
         // const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
         // const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
@@ -146,23 +144,7 @@ int main()
 
         training_strategy.train();
 
-<<<<<<< HEAD
         // cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
-=======
-        //cout << "Error: " << normalized_squared_error.calculate_numerical_error() << endl;
-
-        // Tensor<type, 3> inputs(1,2,2);
-        // inputs.setValues({
-        //     {
-        //         {1.76624, 1.41520},
-        //         {2.11640, 1.80730},
-        //        // {1.2405,  2.1018}
-        //     }
-        // });
-        // cout << "Inputs: \n" << inputs << endl;
-        // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
-        // cout << "outputs: " << outputs << endl;
->>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
 
         /// Testing analysis
         // TestingAnalysis testing_analysis(&forecasting_network, &time_series_dataset);
@@ -170,17 +152,17 @@ int main()
         // testing_analysis.print_goodness_of_fit_analysis();
 
         /// Pruebas output
-        // Tensor<type, 3> inputs(1,2,2);
-        // inputs.setValues({
-        //     {
-        //         {1.76624, 1.41520},
-        //         {2.11640, 1.80730},
-        //        // {1.2405,  2.1018}
-        //     }
-        // });
-        // cout << "Inputs: \n" << inputs << endl;
-        // const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
-        // cout << "outputs: " << outputs << endl;
+        Tensor<type, 3> inputs(1,2,2);
+        inputs.setValues({
+            {
+                {1.76624, 1.41520},
+                {2.11640, 1.80730},
+               // {1.2405,  2.1018}
+            }
+        });
+        cout << "Inputs: \n" << inputs << endl;
+        const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+        cout << "outputs: " << outputs << endl;
 
         /// Pruebas output funcion seno
         // const std::vector<std::pair<type, type>> input_pairs = {
@@ -206,13 +188,8 @@ int main()
         //     cout << "\n--- Prueba " << i + 1 << " ---" << endl;
         //     cout << "Inputs: [ " << input_val_1 << ", " << input_val_2 << " ]" << endl;
 
-<<<<<<< HEAD
         //     Tensor<type, 3> inputs(1, 2, 1); //batch, time, input
         //     inputs.setValues({{{input_val_1}, {input_val_2}}});
-=======
-        //     Tensor<type, 3> inputs(1, 1, 2);
-        //     inputs.setValues({{{input_val_1, input_val_2}}});
->>>>>>> 89d173f474a493c3dcc5723e3681b9d5cd9d9fc0
         //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
         //     cout << "Output: " << outputs << endl;

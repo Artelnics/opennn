@@ -89,10 +89,10 @@ type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
-void sum_matrices(const Tensor<type, 1>&, Tensor<type, 3>&);
+void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
-void multiply_matrices(Tensor<type, 3>&, const Tensor<type, 1>&);
-void multiply_matrices(Tensor<type, 3>&, const Tensor<type, 2>&);
+void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
+void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
 void set_identity(Tensor<type, 2>&);
 
@@ -149,7 +149,8 @@ void sum_diagonal(Tensor<type, 2>&, const type&);
 // }
 
 template <typename T, Index Rank, typename CTensor>
-void batch_matrix_multiplication(const Tensor<T, Rank>& A,
+void batch_matrix_multiplication(const ThreadPoolDevice* device,
+                                 const Tensor<T, Rank>& A,
                                  const Tensor<T, Rank>& B,
                                  CTensor& C,
                                  const Eigen::array<IndexPair<Index>, 1>& contraction_axes)
@@ -158,7 +159,7 @@ void batch_matrix_multiplication(const Tensor<T, Rank>& A,
 
     if constexpr (Rank == 2)
     {
-        C = A.contract(B, contraction_axes);
+        C.device(*device) = A.contract(B, contraction_axes);
         return;
     }
 
@@ -207,9 +208,9 @@ void batch_matrix_multiplication(const Tensor<T, Rank>& A,
     }
 }
 
-Tensor<type, 2> self_kronecker_product(const Tensor<type, 1>&);
+Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-void divide_columns(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
+void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
 bool is_binary(const Tensor<type, Rank>& tensor)
@@ -233,7 +234,7 @@ bool is_constant(const Tensor<type, Rank>& tensor)
 
     while (first_non_nan_index < size && isnan(tensor(first_non_nan_index)))
         first_non_nan_index++;
-    
+
     if (first_non_nan_index == size)
         return true;
 
@@ -297,7 +298,7 @@ Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type
 Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 template <typename T>
-void push_back(Tensor<T, 1>& tensor, const T& value) 
+void push_back(Tensor<T, 1>& tensor, const T& value)
 {
     const int new_size = tensor.dimension(0) + 1;
 
@@ -326,7 +327,7 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
     for (size_t i = 0; i < x.size(); i++)
     {
         buffer << x[i];
-        if (i < x.size() - 1) 
+        if (i < x.size() - 1)
             buffer << separator;
     }
 
@@ -470,9 +471,9 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
         if constexpr (is_same_v<Type, bool>)
             if (tensor(i) != value)
                 return false;
-        else
-            if (abs(tensor(i) - value) > tolerance)
-                return false;
+            else
+                if (abs(tensor(i) - value) > tolerance)
+                    return false;
 
     return true;
 }
@@ -492,9 +493,9 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
         if constexpr (is_same_v<Type, bool>)
             if (tensor_1(i) != tensor_2(i))
                 return false;
-        else
-            if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
-                return false;
+            else
+                if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
+                    return false;
 
     return true;
 }

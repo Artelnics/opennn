@@ -253,7 +253,7 @@ void Scaling3d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 3>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < inputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
@@ -302,8 +302,8 @@ void Scaling3d::print() const
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Input Feature " << i << endl
-             << "Scaler: " << scalers_text[i] << endl;
-
+             << "  Scaler: " << scalers_text[i] << endl;
+        cout << "  ";
         descriptives[i].print();
     }
 }

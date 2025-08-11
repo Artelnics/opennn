@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R 
+//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -29,11 +29,11 @@ public:
     OptimizationAlgorithm(const LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
-                                 MinimumLossDecrease,
-                                 LossGoal,
-                                 MaximumSelectionErrorIncreases,
-                                 MaximumEpochsNumber,
-                                 MaximumTime};
+                                   MinimumLossDecrease,
+                                   LossGoal,
+                                   MaximumSelectionErrorIncreases,
+                                   MaximumEpochsNumber,
+                                   MaximumTime};
 
     LossIndex* get_loss_index() const;
 
@@ -54,6 +54,8 @@ public:
     string write_time(const type&) const;
 
     void set(const LossIndex* = nullptr);
+
+    virtual void set_threads_number(const int&);
 
     virtual void set_loss_index(LossIndex*);
 
@@ -92,23 +94,26 @@ public:
 
 protected:
 
-   LossIndex* loss_index = nullptr;
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-   Index maximum_epochs_number = 10000;
+    LossIndex* loss_index = nullptr;
 
-   type maximum_time = type(360000);
+    Index maximum_epochs_number = 10000;
 
-   BoxPlot auto_association_box_plot;
+    type maximum_time = type(360000);
 
-   string hardware_use = "Multi-core";
+    BoxPlot auto_association_box_plot;
 
-   Index display_period = 10;
+    string hardware_use = "Multi-core";
 
-   Index save_period = numeric_limits<Index>::max();
+    Index display_period = 10;
 
-   string neural_network_file_name = "neural_network.xml";
+    Index save_period = numeric_limits<Index>::max();
 
-   bool display = true;
+    string neural_network_file_name = "neural_network.xml";
+
+    bool display = true;
 
 #ifdef OPENNN_CUDA
 
