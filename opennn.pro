@@ -17,7 +17,7 @@ DEFINES += NDEBUG
 SUBDIRS += opennn
 SUBDIRS += examples
 SUBDIRS += blank
-#SUBDIRS += blank_cuda
+SUBDIRS += blank_cuda
 SUBDIRS += tests
 
 CONFIG += ordered

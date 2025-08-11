@@ -415,7 +415,7 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const Index weights_number = weights.size();
+    const Index biases_number = biases.size();
 
     // Forward propagation
 
@@ -438,33 +438,31 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    Index weight_index = 0;
+    squared_errors_Jacobian.slice(array<Index, 2>{0, 0}, array<Index, 2>{deltas.dimension(0), biases_number})
+        .device(*thread_pool_device) = deltas;
 
-    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
+    for (Index j = 0; j < outputs_number; j++)
     {
-        const Tensor<type, 1> combination_delta_neuron = tensor_map_(deltas, neuron_index);
+        const Tensor<type, 1> delta_j = deltas.chip(j, 1);
 
-        for(Index input_index = 0; input_index < inputs_number; input_index++)
+        for (Index i = 0; i < inputs_number; i++)
         {
-            const Tensor<type, 1> input = inputs.chip(input_index,1);
+            const Tensor<type, 1> input_i = inputs.chip(i, 1);
 
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
-                = tensor_map(squared_errors_Jacobian, weight_index++);
+            const Tensor<type, 1> derivative = delta_j * input_i;
 
-            squared_errors_jacobian_synaptic_weight.device(*thread_pool_device)
-                = combination_delta_neuron * input;
+            const Index weight_column_index = biases_number + (j * inputs_number) + i;
+
+            squared_errors_Jacobian.chip(weight_column_index, 1)
+                .device(*thread_pool_device) = derivative;
         }
-
-        const Index bias_index = weights_number + neuron_index;
-
-        TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias
-            = tensor_map(squared_errors_Jacobian, bias_index);
-
-        squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
     }
 
-    if(!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+    if (!is_first_layer)
+    {
+        const Tensor<type, 2> weights_transposed = weights.shuffle(array<int, 2>{1, 0});
+        input_deltas.device(*thread_pool_device) = deltas.contract(weights_transposed, axes(1, 0));
+    }
 }
 
 

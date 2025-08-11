@@ -311,9 +311,9 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 
     for (const auto& entry : sorted_words)
     {
-        if (entry.second < size_t(minimum_word_frequency)) continue;
-        if (find(reserved_tokens.begin(), reserved_tokens.end(), entry.first) != reserved_tokens.end()) continue;
-        if (vocabulary.size() >= size_t(maximum_vocabulary_size)) break;
+        // if (entry.second < size_t(minimum_word_frequency)) continue;
+        // if (find(reserved_tokens.begin(), reserved_tokens.end(), entry.first) != reserved_tokens.end()) continue;
+        // if (vocabulary.size() >= size_t(maximum_vocabulary_size)) break;
 
         vocabulary.push_back(entry.first);
     }

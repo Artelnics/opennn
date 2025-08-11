@@ -40,9 +40,6 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
-        reference_flatten_layer();
-        reference_addition_layer();
-
         #ifdef OPENNN_CUDA
 
         // Data set

@@ -22,8 +22,12 @@ namespace opennn
     void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));
-
     void scale_logarithmic(Tensor<type, 2>&, const Index&);
+
+    void scale_mean_standard_deviation_3d(Tensor<type, 3>&, const Index&, const Descriptives&);
+    void scale_standard_deviation_3d(Tensor<type, 3>&, const Index&, const Descriptives&);
+    void scale_minimum_maximum_3d(Tensor<type, 3>&, const Index&, const Descriptives&, const type&, const type&);
+    void scale_logarithmic_3d(Tensor<type, 3>&, const Index&);
 
     void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));
     void unscale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
