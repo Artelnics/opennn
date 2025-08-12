@@ -130,7 +130,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         throw runtime_error("Data set is null.");
 
     const bool has_selection = dataset->has_selection();
-    
+
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
@@ -238,6 +238,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                                 target_variable_indices);
 
             // Neural network
+
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -258,7 +259,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         // Loss
 
         training_error /= type(training_batches_number);
-        if(is_classification_model)   
+        if(is_classification_model)
             training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
@@ -266,7 +267,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         if(has_selection)
         {
             selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
-            
+
             selection_error = type(0);
             if(is_classification_model)    selection_accuracy = type(0);
 
@@ -284,7 +285,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                 neural_network->forward_propagate(selection_batch->get_input_pairs(),
                                                   *selection_forward_propagation,
                                                   is_training);
-                
+
                 // Loss
 
                 loss_index->calculate_error(*selection_batch,
@@ -293,7 +294,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 selection_error += selection_back_propagation->error();
 
-                if(is_classification_model) 
+                if(is_classification_model)
                     selection_accuracy += selection_back_propagation->accuracy(0);
             }
 
@@ -304,7 +305,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
-        
+
         // Elapsed time
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -367,7 +368,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-    
+
     set_unscaling();
 
     if(display) results.print();
@@ -406,7 +407,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
     const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
 
-    #pragma omp parallel for
     for(Index layer_index = 0; layer_index < layers_number; layer_index++)
     {
         Layer* layer = neural_network->get_layer(layer_index).get();
@@ -431,18 +431,18 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay[layer_index][parameter_index];
             Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay[layer_index][parameter_index];
 
-            for (Index i = 0; i < parameter_size; ++i)
-                gradient_exponential_decay(i) = gradient_exponential_decay(i) * beta_1 + gradient(i) * (type(1) - beta_1);
+            gradient_exponential_decay.device(*thread_pool_device)
+                = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
 
-            for (Index i = 0; i < parameter_size; ++i)
-                square_gradient_exponential_decay(i) = square_gradient_exponential_decay(i) * beta_2 + (gradient(i) * gradient(i)) * (type(1) - beta_2);
+            square_gradient_exponential_decay.device(*thread_pool_device)
+                = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
 
-            for (Index i = 0; i < parameter_size; ++i)
-            {
-                const type corrected_gradient_exponential_decay  = gradient_exponential_decay(i) / bias_correction_1;
-                const type corrected_square_gradient_exponential_decay  = square_gradient_exponential_decay(i) / bias_correction_2;
-                parameters(i) -= learning_rate * corrected_gradient_exponential_decay / (sqrt(corrected_square_gradient_exponential_decay) + epsilon);
-            }
+            Tensor<type, 1> corrected_gradient_exponential_decay = gradient_exponential_decay / bias_correction_1;
+            Tensor<type, 1> corrected_square_gradient_exponential_decay = square_gradient_exponential_decay / bias_correction_2;
+
+            parameters.device(*thread_pool_device)
+                -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
+
         }
     }
 }
@@ -477,9 +477,9 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
-    set_loss_goal(read_xml_type(root_element, "LossGoal")); 
-    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));   
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));    
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
@@ -546,7 +546,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         return TrainingResults();
 
     TrainingResults results(maximum_epochs_number + 1);
-    
+
     check();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
@@ -652,7 +652,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     optimization_data_cuda.iteration = 1;
 
     for (Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    { 
+    {
         if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -730,7 +730,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
                 selection_error += selection_back_propagation_cuda->error();
 
-                if (is_classification_model)    
+                if (is_classification_model)
                     selection_accuracy += selection_back_propagation_cuda->accuracy();
             }
 
@@ -813,7 +813,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     if (display) results.print();
 
     return results;
-    
+
 }
 
 
