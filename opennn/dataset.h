@@ -558,8 +558,8 @@ protected:
 
     bool display = true;
 
-    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good"};
-    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad" };
+    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
 };
 

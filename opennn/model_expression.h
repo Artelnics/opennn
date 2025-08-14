@@ -36,7 +36,7 @@ public:
     // python
     string write_header_python() const;
     string write_subheader_python() const;
-    string get_expression_python() const;
+    string get_expression_python(const vector<Dataset::RawVariable>&) const;
 
     // php
     string write_header_api() const;
@@ -54,9 +54,10 @@ public:
     string relu_javascript() const;
     string exponential_linear_javascript() const;
     string selu_javascript() const;
+    string hyperbolic_tangent_javascript() const;
     string header_javascript() const;
     string subheader_javascript() const;
-    string get_expression_javascript(const vector<Dataset::RawVariable>& ) const;
+    string get_expression_javascript(const vector<Dataset::RawVariable>&) const;
 
     // other functions
     string replace_reserved_keywords(const string&) const;
@@ -64,7 +65,7 @@ public:
     vector<string> fix_input_names(const vector<string>&) const;
     vector<string> fix_output_names(const vector<string>& ) const;
 
-    void save_python(const filesystem::path&) const;
+    void save_python(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
     void save_c(const filesystem::path&) const;
     void save_javascript(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
     void save_api(const filesystem::path&) const;
