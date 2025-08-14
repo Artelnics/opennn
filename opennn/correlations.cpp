@@ -534,7 +534,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
-    if (x_filtered.size() == 0
+    if (x_filtered.size() < 2
         || is_constant(x_filtered)
         || is_constant(y_filtered))
     {
@@ -590,7 +590,12 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     correlation.b = coefficients(0);
 
     if(correlation.b < type(0))
+    {
         correlation.r *= type(-1);
+        type old_lower = correlation.lower_confidence;
+        correlation.lower_confidence = -correlation.upper_confidence;
+        correlation.upper_confidence = -old_lower;
+    }
 
     return correlation;
 }
@@ -664,7 +669,13 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.a = coefficients(1);
     correlation.b = coefficients(0);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    if(correlation.b < type(0))
+    {
+        correlation.r *= type(-1);
+        type old_lower = correlation.lower_confidence;
+        correlation.lower_confidence = -correlation.upper_confidence;
+        correlation.upper_confidence = -old_lower;
+    }
 
     return correlation;
 }
