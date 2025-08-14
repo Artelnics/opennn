@@ -98,9 +98,9 @@ void Dense3d::set(const Index& new_sequence_length,
 void Dense3d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "HyperbolicTangent"
-        || new_activation_function == "Linear"
-        || new_activation_function == "RectifiedLinear"
-        || new_activation_function == "Softmax")
+    || new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "Softmax")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
@@ -113,8 +113,6 @@ void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
     combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
                                                + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
                                                      .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
-
-    //    sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
 

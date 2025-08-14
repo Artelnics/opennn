@@ -38,12 +38,8 @@ void MinkowskiError::set_default()
 
 void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter)
 {
-    // Control sentence
-
     if(new_Minkowski_parameter < type(1))
         throw runtime_error("The Minkowski parameter must be greater than 1.\n");
-
-    // Set Minkowski parameter
 
     minkowski_parameter = new_Minkowski_parameter;
 }
@@ -53,7 +49,6 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
-
     // Batch
 
     const Index samples_number = batch.get_samples_number();

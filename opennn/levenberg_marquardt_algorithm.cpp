@@ -361,8 +361,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-    const type regularization_weight = loss_index->get_regularization_weight();
-
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     Tensor<type, 1>& parameters = back_propagation_lm.parameters;

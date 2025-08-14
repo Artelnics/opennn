@@ -188,7 +188,7 @@ private:
 
     type momentum = type(0.9);
 
-    const type epsilon = 1e-5F;
+    const type epsilon = type(1e-5);
 
     Tensor<type, 1> scales;
     Tensor<type, 1> offsets;

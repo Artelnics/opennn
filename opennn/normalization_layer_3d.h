@@ -66,7 +66,7 @@ struct Normalization3dForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = 0);
+    void set(const Index& = 0, Layer* = 0) override;
 
     void print() const override;
 
@@ -82,13 +82,13 @@ struct Normalization3dBackPropagation : LayerBackPropagation
     Normalization3dBackPropagation(const Index& new_batch_size = 0,
                                    Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> gamma_derivatives;
     Tensor<type, 1> beta_derivatives;

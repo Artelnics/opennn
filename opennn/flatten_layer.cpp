@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennnn.net
 //
-//   F L A T TEN   L A Y E R   R E G I S T R A T I O N
+//   F L A T T E N   L A Y E R   R E G I S T R A T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,7 +14,6 @@ namespace opennn
 	using Flatten2d = Flatten<2>;
 	using Flatten3d = Flatten<3>;
 	using Flatten4d = Flatten<4>;
-
 
 	using FlattenForwardPropagation2d = FlattenForwardPropagation<2>;
 	using FlattenBackPropagation2d = FlattenBackPropagation<2>;

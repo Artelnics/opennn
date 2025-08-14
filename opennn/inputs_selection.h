@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef INPUTSSELECTIONALGORITHM_H
-#define INPUTSSELECTIONALGORITHM_H
+#ifndef INPUTSSELECTION_H
+#define INPUTSSELECTION_H
 
 #include "tinyxml2.h"
 
@@ -59,8 +59,6 @@ public:
     void set_selection_error_goal(const type&);
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
-    void set_maximum_correlation(const type&);
-    void set_minimum_correlation(const type&);
 
     string write_stopping_condition(const TrainingResults&) const;
 

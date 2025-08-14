@@ -20,7 +20,6 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
-#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "addition_layer_3d.h"
@@ -257,7 +256,7 @@ public:
                                                     false, 
                                                     "stem_conv_1");
 
-        add_layer(move(stem_conv), { last_layer_index });
+        add_layer(std::move(stem_conv), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -268,7 +267,7 @@ public:
                                               Pooling::PoolingMethod::MaxPooling, 
                                               "stem_pool");
 
-        add_layer(move(stem_pool), { last_layer_index });
+        add_layer(std::move(stem_pool), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -293,7 +292,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-                add_layer(move(conv1), { block_input_index });
+                add_layer(std::move(conv1), { block_input_index });
 
                 Index main_path_index = get_layers_number() - 1;
 
@@ -305,7 +304,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
-                add_layer(move(conv2), { main_path_index });
+                add_layer(std::move(conv2), { main_path_index });
 
                 main_path_index = get_layers_number() - 1;
 
@@ -322,7 +321,7 @@ public:
                                                                 false,
                                                                 "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
-                    add_layer(move(skip_conv), { block_input_index });
+                    add_layer(std::move(skip_conv), { block_input_index });
 
                     skip_path_index = get_layers_number() - 1;
                 }
@@ -331,7 +330,7 @@ public:
 
                 auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
-                add_layer(move(addition_layer), { main_path_index, skip_path_index });
+                add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
                 last_layer_index = get_layers_number() - 1;
 
@@ -343,7 +342,7 @@ public:
                                                                    false,
                                                                    "s" + to_string(stage) + "b" + to_string(block) + "_relu");
 
-                add_layer(move(activation_layer), { last_layer_index });
+                add_layer(std::move(activation_layer), { last_layer_index });
 
                 last_layer_index = get_layers_number() - 1;
             }
@@ -364,7 +363,7 @@ public:
 
         auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_dimensions());
 
-        add_layer(move(flatten_layer), { last_layer_index });
+        add_layer(std::move(flatten_layer), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 

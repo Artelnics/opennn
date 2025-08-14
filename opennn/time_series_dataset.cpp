@@ -465,7 +465,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     if(sample_indices.empty() || target_indices.empty())
         return;
 
-    const Index rows_number = sample_indices.size();
+//    const Index rows_number = sample_indices.size();
     const Index columns_number = target_indices.size();
     const Index total_rows_in_data = data.dimension(0);
 
@@ -486,10 +486,9 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
             const type* matrix_column = matrix_data + data.dimension(0) * col_index + past_time_steps;
             type* tensor_value = target_tensor_data + i + sample_indices.size() * j;
 
-            if (skip)
-                *tensor_value = static_cast<type>(0);
-            else
-                *tensor_value = matrix_column[sample_row];
+            *tensor_value = skip
+                ? static_cast<type>(0)
+                : matrix_column[sample_row];
         }
     }
 }

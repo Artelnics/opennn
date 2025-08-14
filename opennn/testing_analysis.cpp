@@ -2309,9 +2309,9 @@ void TestingAnalysis::load(const filesystem::path& file_name)
 }
 
 
-void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targets,
-                                                 const Tensor<type, 1> &new_outputs,
-                                                 const type &new_determination)
+void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1>& new_targets,
+                                                 const Tensor<type, 1>& new_outputs,
+                                                 const type& new_determination)
 {
     targets = new_targets;
     outputs = new_outputs;

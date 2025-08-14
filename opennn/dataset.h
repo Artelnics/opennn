@@ -41,10 +41,6 @@ public:
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    //enum class string{Training, Selection, Testing, None};
-
-    //enum class string{Id, Input, Target, Time, None, Decoder};
-
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
@@ -558,8 +554,8 @@ protected:
 
     bool display = true;
 
-    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good"};
-    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad" };
+    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
 };
 
@@ -653,7 +649,6 @@ struct BatchCuda
 };
 
 #endif
-
 
 }
 

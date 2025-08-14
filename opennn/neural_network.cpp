@@ -1045,10 +1045,10 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
 
-    // file << parameters << endl;
+    file << parameters << endl;
 
     file.close();
 }
@@ -1240,7 +1240,6 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
-
 }
 
 

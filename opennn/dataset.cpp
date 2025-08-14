@@ -11,7 +11,6 @@
 #include "correlations.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-#include "time_series_dataset.h"
 
 namespace opennn
 {
@@ -48,16 +47,12 @@ bool Dataset::is_empty()
 
 dimensions Dataset::get_input_dimensions() const
 {
-    //    return dimensions({get_variables_number("Input")});
-
     return input_dimensions;
 }
 
 
 dimensions Dataset::get_target_dimensions() const
 {
-    //    return dimensions({get_variables_number("Target")});
-
     return target_dimensions;
 }
 
@@ -212,83 +207,6 @@ Tensor<Index, 1> Dataset::get_sample_use_numbers() const
 
     return count;
 }
-
-
-// Tensor<type, 1> Dataset::get_sample_use_percentages() const
-// {
-//     const Index samples_number = get_samples_number();
-
-//     return (get_sample_use_numbers().cast<type>()) * (100 / type(samples_number));
-// }
-
-
-// string Dataset::get_sample_string(const Index& sample_index) const
-// {
-//     const Tensor<type, 1> sample = data.chip(sample_index, 0);
-
-//     string sample_string;
-
-//     const Index raw_variables_number = get_raw_variables_number();
-
-//     Index variable_index = 0;
-
-//     for (Index i = 0; i < raw_variables_number; i++)
-//     {
-//         const RawVariable& raw_variable = raw_variables[i];
-
-//         switch (raw_variable.type)
-//         {
-//         case RawVariableType::Numeric:
-//         case RawVariableType::DateTime:
-//         case RawVariableType::Constant:
-//             sample_string += isnan(data(sample_index, variable_index))
-//                                  ? missing_values_label
-//                                  : to_string(double(data(sample_index, variable_index)));
-
-//             variable_index++;
-//             break;
-
-//         case RawVariableType::Binary:
-//             sample_string += isnan(data(sample_index, variable_index))
-//                 ? missing_values_label
-//                 : raw_variable.categories[Index(data(sample_index, variable_index))];
-
-//             variable_index++;
-//             break;
-
-//         case RawVariableType::Categorical:
-//             if (isnan(data(sample_index, variable_index)))
-//             {
-//                 sample_string += missing_values_label;
-//             }
-//             else
-//             {
-//                 const Index categories_number = raw_variable.get_categories_number();
-
-//                 for (Index j = 0; j < categories_number; j++)
-//                 {
-//                     if (abs(data(sample_index, variable_index + j) - type(1)) < NUMERIC_LIMITS_MIN)
-//                     {
-//                         sample_string += raw_variable.categories[j];
-//                         break;
-//                     }
-//                 }
-
-//                 variable_index += categories_number;
-//             }
-//             break;
-
-
-//         default:
-//             break;
-//         }
-
-//         if (i != raw_variables_number - 1)
-//             sample_string += get_separator_string() + string(" ");
-//     }
-
-//     return sample_string;
-// }
 
 
 vector<Index> Dataset::get_sample_indices(const string& sample_use) const
@@ -1786,37 +1704,6 @@ void Dataset::set_threads_number(const int& new_threads_number)
 }
 
 
-// Tensor<Index, 1> Dataset::unuse_repeated_samples()
-// {
-//     const Index samples_number = get_samples_number();
-
-//     Tensor<Index, 1> repeated_samples;
-
-//     Tensor<type, 1> sample_i;
-//     Tensor<type, 1> sample_j;
-
-//     for (Index i = 0; i < samples_number; i++)
-//     {
-//         sample_i = get_sample_data(i);
-
-//         for (Index j = Index(i + 1); j < samples_number; j++)
-//         {
-//             sample_j = get_sample_data(j);
-
-//             if (get_sample_use(j) != "None"
-//                 && equal(sample_i.data(), sample_i.data() + sample_i.size(), sample_j.data()))
-//             {
-//                 set_sample_use(j, "None");
-
-//                 push_back(repeated_samples, j);
-//             }
-//         }
-//     }
-
-//     return repeated_samples;
-// }
-
-
 vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_correlation)
 {
     vector<string> unused_raw_variables;
@@ -1996,8 +1883,8 @@ vector<Histogram> Dataset::calculate_raw_variable_distributions(const Index& bin
 
             for (Index j = 0; j < used_samples_number; j++)
                 binary_frequencies(abs(data(used_sample_indices[j], variable_index) - type(1)) < NUMERIC_LIMITS_MIN
-                                       ? 0
-                                       : 1)++;
+                                       ? 1
+                                       : 0)++;
 
             histograms[used_raw_variable_index].frequencies = binary_frequencies;
             variable_index++;
@@ -2434,7 +2321,6 @@ void Dataset::print_top_input_target_raw_variables_correlations() const
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlations() const
 {
-    // list to return
     cout << "Calculating pearson inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
@@ -2890,10 +2776,19 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     {
         set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
+        const string raw_string = read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber");
+        const vector<string> tokens = get_tokens(raw_string, " ");
 
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
-            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+        vector<Index> valid_numbers;
+        valid_numbers.reserve(tokens.size());
+
+        for (const string& token : tokens)
+            if (!token.empty())
+                valid_numbers.push_back(stoi(token));
+
+        raw_variables_missing_values_number.resize(valid_numbers.size());
+        for (size_t i = 0; i < valid_numbers.size(); ++i)
+            raw_variables_missing_values_number(i) = valid_numbers[i];
 
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
@@ -3205,6 +3100,7 @@ Tensor<Index, 1> Dataset::calculate_target_distribution() const
             }
         }
     }
+
     return class_distribution;
 }
 
@@ -3911,9 +3807,9 @@ void Dataset::read_csv()
                     if (token.empty() || token == missing_values_label)
                         data(sample_index, variable_indices[0]) = NAN;
                     else if (categories.size() > 0 && token == categories[0])
-                        data(sample_index, variable_indices[0]) = 1;
-                    else if (categories.size() > 1 && token == categories[1])
                         data(sample_index, variable_indices[0]) = 0;
+                    else if (categories.size() > 1 && token == categories[1])
+                        data(sample_index, variable_indices[0]) = 1;
                     else
                         data(sample_index, variable_indices[0]) = stof(token);
                 }

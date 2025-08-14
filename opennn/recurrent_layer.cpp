@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "tensors.h"
-//#include "strings_utilities.h"
 #include "recurrent_layer.h"
 
 namespace opennn
@@ -211,9 +210,10 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2> combination_deltas(batch_size, output_size);
 
+    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
+
     for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
-    {
-        Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
+    {             
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
@@ -281,14 +281,14 @@ void Recurrent::print() const
          << "Input weights dimensions: " << input_weights.dimensions() << endl
          << "Recurrent weights dimensions: " << recurrent_weights.dimensions() << endl;
 
-    cout << "Biases:" << endl;
-    cout << biases << endl;
-    cout << "Input weights:" << endl;
-    cout << input_weights << endl;
-    cout << "Recurrent weights:" << endl;
-    cout << recurrent_weights << endl;
-    cout << "Activation function: " << activation_function << endl;
-    cout << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
+    cout << "Biases:" << endl
+         << biases << endl
+         << "Input weights:" << endl
+         << input_weights << endl
+         << "Recurrent weights:" << endl
+         << recurrent_weights << endl
+         << "Activation function: " << activation_function << endl
+         << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
 }
 
 
@@ -420,12 +420,12 @@ RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_size, 
 
 vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_pairs() const
 {
-
     const Index past_time_steps = layer->get_input_dimensions()[0];
     const Index inputs_number = layer->get_input_dimensions()[1];
 
     return {{(type*)(input_deltas.data()), {batch_size, past_time_steps, inputs_number}}};
 }
+
 
 vector<pair<type*, Index>> RecurrentBackPropagation::get_parameter_delta_pairs() const
 {

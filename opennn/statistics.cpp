@@ -1167,7 +1167,7 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
         if (i >= 0 && i < x.size())
             sum += x(i);
         else
-            std::cerr << "Index out of range: " << i << endl;
+            cerr << "Index out of range: " << i << endl;
 
         squared_sum += double(x(i)) * double(x(i));
         count++;

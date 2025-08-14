@@ -139,7 +139,7 @@ private:
     Tensor<type, 1> moving_standard_deviations;
 
     type momentum = type(0.9);
-    const type epsilon = 1e-5F;
+    const type epsilon = type(1e-5);
 
     string activation_function = "HyperbolicTangent";
 
