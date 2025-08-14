@@ -580,8 +580,6 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    const type regularization_weight = loss_index->get_regularization_weight();
-
     Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
 
     const Tensor<type, 1>& parameters = optimization_data.parameters;
@@ -604,7 +602,6 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(
 
         potential_parameters.device(*thread_pool_device)
             = parameters + training_direction * triplet.B.first;
-
 
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters, forward_propagation);

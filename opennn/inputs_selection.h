@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef INPUTSSELECTIONALGORITHM_H
-#define INPUTSSELECTIONALGORITHM_H
+#ifndef INPUTSSELECTION_H
+#define INPUTSSELECTION_H
 
 #include "tinyxml2.h"
 

@@ -41,10 +41,6 @@ public:
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    //enum class string{Training, Selection, Testing, None};
-
-    //enum class string{Id, Input, Target, Time, None, Decoder};
-
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
@@ -653,7 +649,6 @@ struct BatchCuda
 };
 
 #endif
-
 
 }
 

@@ -71,7 +71,6 @@ private:
 
     Tensor<type, 2> errors_weights;
 
-
 #ifdef OPENNN_CUDA
 
     // Error

@@ -512,6 +512,7 @@ void ImageDataset::unscale_variables(const string&)
                                            input_dimensions[0],
                                            input_dimensions[1],
                                            input_dimensions[2]);
+
     inputs_data.device(*thread_pool_device) = inputs_data * type(255);
 }
 

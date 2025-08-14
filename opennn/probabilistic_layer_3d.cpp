@@ -9,7 +9,7 @@
 #include "registry.h"
 #include "tensors.h"
 #include "probabilistic_layer_3d.h"
-#include "strings_utilities.h"
+//#include "strings_utilities.h"
 
 namespace opennn
 {

@@ -154,7 +154,7 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 
 void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                  const bool& is_training)
+                                  const bool&)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
@@ -209,10 +209,8 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         auto sample_deltas = deltas.chip(sample_index, 0);
 
         for(Index word_index = 0; word_index < sequence_length; word_index++)
-        {
             weight_deltas.chip(Index(inputs(sample_index, word_index)), 0)
                 += sample_deltas.chip(word_index, 0);
-        }
     }
 }
 

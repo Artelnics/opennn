@@ -9,9 +9,6 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-//#include "registry.h"
-//#include "tensors.h"
-
 #include "layer.h"
 
 namespace opennn

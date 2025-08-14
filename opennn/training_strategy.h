@@ -15,7 +15,6 @@
 namespace opennn
 {
 
-//class NeuralNetwork;
 class LossIndex;
 class OptimizationAlgorithm;
 

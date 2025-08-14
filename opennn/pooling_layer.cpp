@@ -517,19 +517,13 @@ void Pooling::from_XML(const XMLDocument& document)
         throw runtime_error("Pooling layer element is nullptr.\batch_index");
 
     set_label(read_xml_string(pooling_layer_element, "Label"));
-
     set_input_dimensions(string_to_dimensions(read_xml_string(pooling_layer_element, "InputDimensions")));
-
     set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
-
     set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
-
     set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
     set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
-
     set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
     set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
-
 }
 
 
