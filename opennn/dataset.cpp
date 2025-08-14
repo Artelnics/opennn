@@ -1996,8 +1996,8 @@ vector<Histogram> Dataset::calculate_raw_variable_distributions(const Index& bin
 
             for (Index j = 0; j < used_samples_number; j++)
                 binary_frequencies(abs(data(used_sample_indices[j], variable_index) - type(1)) < NUMERIC_LIMITS_MIN
-                                       ? 0
-                                       : 1)++;
+                                       ? 1
+                                       : 0)++;
 
             histograms[used_raw_variable_index].frequencies = binary_frequencies;
             variable_index++;
@@ -2890,10 +2890,19 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     {
         set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
+        const string raw_string = read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber");
+        const vector<string> tokens = get_tokens(raw_string, " ");
 
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
-            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+        vector<Index> valid_numbers;
+        valid_numbers.reserve(tokens.size());
+
+        for (const string& token : tokens)
+            if (!token.empty())
+                valid_numbers.push_back(stoi(token));
+
+        raw_variables_missing_values_number.resize(valid_numbers.size());
+        for (size_t i = 0; i < valid_numbers.size(); ++i)
+            raw_variables_missing_values_number(i) = valid_numbers[i];
 
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
@@ -3911,9 +3920,9 @@ void Dataset::read_csv()
                     if (token.empty() || token == missing_values_label)
                         data(sample_index, variable_indices[0]) = NAN;
                     else if (categories.size() > 0 && token == categories[0])
-                        data(sample_index, variable_indices[0]) = 1;
-                    else if (categories.size() > 1 && token == categories[1])
                         data(sample_index, variable_indices[0]) = 0;
+                    else if (categories.size() > 1 && token == categories[1])
+                        data(sample_index, variable_indices[0]) = 1;
                     else
                         data(sample_index, variable_indices[0]) = stof(token);
                 }
