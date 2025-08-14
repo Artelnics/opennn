@@ -269,7 +269,9 @@ TrainingResults AdaptiveMomentEstimation::train()
             selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
-            if(is_classification_model)    selection_accuracy = type(0);
+
+            if(is_classification_model)
+                selection_accuracy = type(0);
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
