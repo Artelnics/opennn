@@ -1256,14 +1256,11 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
         for (size_t j = 0; j < variables_input.size(); ++j)
         {
-            if(line.find(variables_input[j]) != string::npos){
-                cout << "dvd coincide normal" << endl;
+            if(line.find(variables_input[j]) != string::npos)
                 replace_all_word_appearances(line, variables_input[j], variables_input_fixed[j]);
-            }
-            if(line.find(variable_scaled[j]) != string::npos){
-                cout << "dvd coincide scaled" << endl;
+
+            if(line.find(variable_scaled[j]) != string::npos)
                 replace_all_appearances(line, variable_scaled[j], replace_reserved_keywords(variable_scaled[j]));
-            }
         }
 
         // for (size_t i = 0; i < variable_scaled.size(); ++i)
@@ -1293,8 +1290,8 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
 
-    // for(size_t i = 0; i < fixed_outputs.size(); i++)
-    //     buffer << fixed_outputs[i] << endl;
+    for(size_t i = 0; i < fixed_outputs.size(); i++)
+        buffer << fixed_outputs[i] << endl;
 
     buffer << "\t" << "var out = [];" << endl;
 
