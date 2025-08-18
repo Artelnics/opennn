@@ -12,39 +12,39 @@
 namespace opennn
 {
 
-    string scaler_to_string(const Scaler& scaler)
+string scaler_to_string(const Scaler& scaler)
+{
+    switch (scaler)
     {
-        switch (scaler)
-        {
-        case Scaler::None: return "None";
-        case Scaler::MinimumMaximum: return "MinimumMaximum";
-        case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
-        case Scaler::StandardDeviation: return "StandardDeviation";
-        case Scaler::Logarithm: return "Logarithm";
-        case Scaler::ImageMinMax: return "ImageMinMax";
-        default: throw runtime_error("Unknown scaler\n");
-        }
+    case Scaler::None: return "None";
+    case Scaler::MinimumMaximum: return "MinimumMaximum";
+    case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
+    case Scaler::StandardDeviation: return "StandardDeviation";
+    case Scaler::Logarithm: return "Logarithm";
+    case Scaler::ImageMinMax: return "ImageMinMax";
+    default: throw runtime_error("Unknown scaler\n");
     }
+}
 
 
-    Scaler string_to_scaler(const string& new_scaler)
-    {
-        if (new_scaler == "None")
-            return Scaler::None;
-        else if (new_scaler == "MinimumMaximum")
-            return Scaler::MinimumMaximum;
-        else if (new_scaler == "MeanStandardDeviation")
-            return Scaler::MeanStandardDeviation;
-        else if (new_scaler == "StandardDeviation")
-            return Scaler::StandardDeviation;
-        else if (new_scaler == "Logarithm")
-            return Scaler::Logarithm;
-        else if (new_scaler == "ImageMinMax")
-            return Scaler::ImageMinMax;
-        else
-            throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+Scaler string_to_scaler(const string& new_scaler)
+{
+    if (new_scaler == "None")
+        return Scaler::None;
+    else if (new_scaler == "MinimumMaximum")
+        return Scaler::MinimumMaximum;
+    else if (new_scaler == "MeanStandardDeviation")
+        return Scaler::MeanStandardDeviation;
+    else if (new_scaler == "StandardDeviation")
+        return Scaler::StandardDeviation;
+    else if (new_scaler == "Logarithm")
+        return Scaler::Logarithm;
+    else if (new_scaler == "ImageMinMax")
+        return Scaler::ImageMinMax;
+    else
+        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+}
 
-    }
 
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
@@ -55,7 +55,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
 
     // if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
     //     throw runtime_error("Standard deviation is zero.");
-    const type epsilon = 1e-7;
+    const type epsilon = type(1e-7);
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -128,7 +128,7 @@ void scale_mean_standard_deviation_3d(Tensor<type, 3>& tensor,
 {
     const type mean = feature_descriptives.mean;
     const type standard_deviation = feature_descriptives.standard_deviation;
-    const type epsilon = 1e-7;
+    const type epsilon = type(1e-7);
 
     const Index batch_size = tensor.dimension(0);
     const Index time_steps = tensor.dimension(1);

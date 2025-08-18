@@ -107,9 +107,9 @@ protected:
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-    string label = "layer";
+    string label = "my_layer";
 
-    string name;
+    string name = "layer";
 
     bool is_trainable = true;
 

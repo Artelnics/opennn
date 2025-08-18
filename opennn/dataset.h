@@ -195,7 +195,7 @@ public:
 
     const bool& get_display() const;
 
-    bool is_empty();
+    bool is_empty() const;
 
     dimensions get_input_dimensions() const;
     dimensions get_target_dimensions() const;

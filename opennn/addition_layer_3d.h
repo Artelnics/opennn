@@ -197,13 +197,13 @@ struct AdditionForwardPropagation : LayerForwardPropagation
 
         const dimensions output_dimensions = layer->get_output_dimensions();
 
-        array<Index, Rank> full_dimensions;
+        DSizes<Index, Rank+1> full_dimensions;   // <-- Rank+1 to include batch
         full_dimensions[0] = batch_size;
 
-        for(int i = 0; i < Rank; ++i)
+        for (int i = 0; i < Rank; ++i)
             full_dimensions[i+1] = output_dimensions[i];
 
-        outputs.resize(DSizes<Index, Rank>(full_dimensions));
+        outputs.resize(full_dimensions);
     }
 
 

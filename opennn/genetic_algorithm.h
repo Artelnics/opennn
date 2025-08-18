@@ -72,7 +72,7 @@ public:
 
     void perform_mutation();
 
-    vector<Index> get_selected_individuals_indices();
+    vector<Index> get_selected_individuals_indices() const;
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 

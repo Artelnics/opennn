@@ -515,7 +515,7 @@ void TrainingResults::save(const filesystem::path& file_name) const
 }
 
 
-void TrainingResults::print(const string &message)
+void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
 

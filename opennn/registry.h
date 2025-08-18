@@ -66,7 +66,7 @@ private:
 namespace { \
     const bool CLASS##_registered = []() { \
               Registry<BASE>::instance().register_component(NAME, [](){ \
-                          return make_unique<CLASS>(); \
+                          return std::make_unique<CLASS>(); \
                   }); \
               return true; \
       }(); \

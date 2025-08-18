@@ -23,8 +23,8 @@ public:
     Tensor<type, 1> elbow_method(const Tensor<type, 2>&, Index max_clusters=10);
     Index find_optimal_clusters(const Tensor<type, 1>&) const;
 
-    Tensor<Index, 1> get_cluster_labels();
-    Tensor<type, 2> get_cluster_centers();
+    Tensor<Index, 1> get_cluster_labels() const;
+    Tensor<type, 2> get_cluster_centers() const;
     Index get_clusters_number() const;
 
     void fit(const Tensor<type, 2>&);

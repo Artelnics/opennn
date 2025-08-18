@@ -311,7 +311,7 @@ struct BackPropagationCuda
 
     float* get_output_deltas_device() const;
 
-    void print();
+    void print() const;
 
     void free();
 

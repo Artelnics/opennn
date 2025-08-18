@@ -170,7 +170,7 @@ struct TrainingResults
 
     void save(const filesystem::path&) const;
 
-    void print(const string& message = string());
+    void print(const string& message = string()) const;
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 

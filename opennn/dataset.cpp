@@ -39,7 +39,7 @@ const bool& Dataset::get_display() const
 }
 
 
-bool Dataset::is_empty()
+bool Dataset::is_empty() const
 {
     return data.size() == 0;
 }
