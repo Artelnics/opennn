@@ -98,11 +98,11 @@ int main()
         training_strategy.get_loss_index()->set_regularization_method("None");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(1600);
-        adam->set_maximum_epochs_number(5);
+        adam->set_batch_size(10000);
+        adam->set_maximum_epochs_number(10);
 
-        //training_strategy.train_cuda();
-        training_strategy.train();
+        training_strategy.train_cuda();
+        //training_strategy.train();
         
         cudaDeviceSynchronize();
         
@@ -112,8 +112,8 @@ int main()
         testing_analysis.set_batch_size(16);
 
         cout << "Calculating confusion...." << endl;
-        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
         
         #endif

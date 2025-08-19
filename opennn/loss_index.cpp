@@ -1661,7 +1661,7 @@ float* BackPropagationCuda::get_output_deltas_device() const
 }
 
 
-void BackPropagationCuda::print()
+void BackPropagationCuda::print() const
 {
 
 }
