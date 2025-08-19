@@ -19,7 +19,7 @@ struct ForwardPropagation;
 struct BackPropagationLM;
 struct LevenbergMarquardtAlgorithmData;
 
-class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
+class LevenbergMarquardtAlgorithm final : public OptimizationAlgorithm
 {
 
 public:
@@ -110,7 +110,7 @@ private:
 };
 
 
-struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
+struct LevenbergMarquardtAlgorithmData final : public OptimizationAlgorithmData
 {
 
     LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr);

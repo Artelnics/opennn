@@ -115,11 +115,11 @@ void Convolutional::apply_batch_normalization(unique_ptr<LayerForwardPropagation
 }
 
 
-void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Convolutional::forward_propagate(const vector<TensorView>& input_views,
                                       unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                       const bool& is_training)
 {
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
 
     ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
@@ -141,14 +141,14 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 }
 
 /*
-void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                   const vector<pair<type*, dimensions>>& delta_pairs,
+void Convolutional::back_propagate(const vector<TensorView>& input_views,
+                                   const vector<TensorView>& delta_views,
                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     // --- 1. SETUP ---
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
-    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
+    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_views[0]);
 
     const ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<const ConvolutionalForwardPropagation*>(forward_propagation.get());
@@ -215,8 +215,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 }
 */
 
-void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                   const vector<pair<type*, dimensions>>& delta_pairs,
+void Convolutional::back_propagate(const vector<TensorView>& input_views,
+                                   const vector<TensorView>& delta_views,
                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
@@ -234,8 +234,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index kernel_channels = get_kernel_channels();
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
-    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
+    TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_views[0]);
 
     // Forward propagation
 
@@ -676,9 +676,9 @@ Index Convolutional::get_input_width() const
 }
 
 
-vector<pair<type*, Index> > Convolutional::get_parameter_pairs() const
+vector<ParameterView > Convolutional::get_parameter_views() const
 {
-    vector<pair<type*, Index>> parameter_pairs =
+    vector<ParameterView> parameter_pairs =
         {
             {(type*)(biases.data()), biases.size()},
             {(type*)(weights.data()), weights.size()}
@@ -804,7 +804,7 @@ ConvolutionalForwardPropagation::ConvolutionalForwardPropagation(const Index& ne
 }
 
 
-pair<type*, dimensions> ConvolutionalForwardPropagation::get_output_pair() const
+TensorView ConvolutionalForwardPropagation::get_output_pair() const
 {
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
@@ -922,7 +922,7 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
 }
 
 
-vector<pair<type*, dimensions>> ConvolutionalBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> ConvolutionalBackPropagation::get_input_derivative_views() const
 {
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
@@ -936,11 +936,11 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagation::get_input_derivati
 }
 
 
-vector<pair<type*, Index>> ConvolutionalBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> ConvolutionalBackPropagation::get_parameter_delta_views() const
 {
     const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
 
-    vector<pair<type*, Index>> delta_pairs =
+    vector<ParameterView> delta_views =
         {
             {const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
             {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}
@@ -948,11 +948,11 @@ vector<pair<type*, Index>> ConvolutionalBackPropagation::get_parameter_delta_pai
 
     if (convolutional_layer->get_batch_normalization())
     {
-        delta_pairs.push_back({ const_cast<type*>(bn_scale_deltas.data()), bn_scale_deltas.size() });
-        delta_pairs.push_back({ const_cast<type*>(bn_offset_deltas.data()), bn_offset_deltas.size() });
+        delta_views.push_back({ const_cast<type*>(bn_scale_deltas.data()), bn_scale_deltas.size() });
+        delta_views.push_back({ const_cast<type*>(bn_offset_deltas.data()), bn_offset_deltas.size() });
     }
 
-    return delta_pairs;
+    return delta_views;
 }
 
 
@@ -1595,7 +1595,7 @@ vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delt
 
     const Index bias_deltas_size = convolutional_layer->get_kernels_number();
 
-    vector<pair<float*, Index>> delta_pairs =
+    vector<pair<float*, Index>> delta_views =
         {
             {bias_deltas_device, bias_deltas_size},
             {weight_deltas_device, weight_deltas_size}
@@ -1603,11 +1603,11 @@ vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delt
 
     if (convolutional_layer->get_batch_normalization())
     {
-        delta_pairs.push_back({ bn_scale_deltas_device, convolutional_layer->get_scales().size()});
-        delta_pairs.push_back({ bn_offset_deltas_device, convolutional_layer->get_offsets().size()});
+        delta_views.push_back({ bn_scale_deltas_device, convolutional_layer->get_scales().size()});
+        delta_views.push_back({ bn_offset_deltas_device, convolutional_layer->get_offsets().size()});
     }
 
-    return delta_pairs;
+    return delta_views;
 }
 
 

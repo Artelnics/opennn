@@ -22,7 +22,7 @@ struct BackPropagationCuda;
 struct ADAMOptimizationDataCuda;
 #endif
 
-class AdaptiveMomentEstimation : public OptimizationAlgorithm
+class AdaptiveMomentEstimation final : public OptimizationAlgorithm
 {
     
 public:
@@ -116,13 +116,13 @@ private:
 };
 
 
-struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
+struct AdaptiveMomentEstimationData final : public OptimizationAlgorithmData
 {
     AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
 
     void set(AdaptiveMomentEstimation* = nullptr);
 
-    virtual void print() const;
+    void print() const override;
 
     AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
@@ -138,7 +138,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
 #ifdef OPENNN_CUDA
 
-    struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
+    struct ADAMOptimizationDataCuda final : public OptimizationAlgorithmData
     {
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
 

@@ -147,7 +147,7 @@ struct OptimizationAlgorithmData
 {
     OptimizationAlgorithmData();
 
-    void print() const;
+    virtual void print() const;
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
@@ -170,7 +170,7 @@ struct TrainingResults
 
     void save(const filesystem::path&) const;
 
-    void print(const string& message = string());
+    void print(const string& message = string()) const;
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 

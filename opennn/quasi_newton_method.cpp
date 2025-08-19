@@ -723,7 +723,7 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
 
     type alpha = 1.0;
     const type rho = 0.5;
-    const type c = 1e-4F;
+    const type c = type(1e-4);
 
     const Tensor<type, 1>& parameters = optimization_data.parameters;
     const Tensor<type, 1>& training_direction = optimization_data.training_direction;

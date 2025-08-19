@@ -18,7 +18,7 @@ namespace opennn
 struct QuasiNewtonMethodData;
 struct Triplet;
 
-class QuasiNewtonMethod : public OptimizationAlgorithm
+class QuasiNewtonMethod final : public OptimizationAlgorithm
 {
 
 public:
@@ -133,7 +133,7 @@ struct Triplet
 };
 
 
-struct QuasiNewtonMethodData : public OptimizationAlgorithmData
+struct QuasiNewtonMethodData final : public OptimizationAlgorithmData
 {
     QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr);
 

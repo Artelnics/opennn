@@ -238,17 +238,17 @@ void Scaling3d::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-void Scaling3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Scaling3d::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool&)
 {
-    const dimensions current_input_dimensions = input_pairs[0].second;
+    const dimensions current_input_dimensions = input_views[0].dims;
     const Index inputs_number = current_input_dimensions[2];
 
     Scaling3dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling3dForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
 
     Tensor<type, 3>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
@@ -385,7 +385,7 @@ Scaling3dForwardPropagation::Scaling3dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Scaling3dForwardPropagation::get_output_pair() const
+TensorView Scaling3dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dims = layer->get_output_dimensions();
     return {(type*)outputs.data(), {batch_size, output_dims[0], output_dims[1]}};

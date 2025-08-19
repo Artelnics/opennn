@@ -368,12 +368,12 @@ void NeuralNetwork::get_parameters(Tensor<type, 1>& parameters) const
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
+        const vector<ParameterView> layer_parameter_pairs = layer->get_parameter_views();
 
-        for(const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        for(const ParameterView& parameter_pair : layer_parameter_pairs)
         {
-            memcpy(parameters.data() + position, parameter_pair.first, parameter_pair.second * sizeof(type));
-            position += parameter_pair.second;
+            memcpy(parameters.data() + position, parameter_pair.data, parameter_pair.size * sizeof(type));
+            position += parameter_pair.size;
         }
     }
 }
@@ -403,12 +403,12 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     for (const unique_ptr<Layer>& layer : layers)
     {
-        const vector<pair<type *, Index> > layer_parameter_pairs = layer->get_parameter_pairs();
+        const vector<ParameterView> layer_parameter_pairs = layer->get_parameter_views();
 
-        for (const pair<type*, Index>& parameter_pair : layer_parameter_pairs)
+        for (const ParameterView& parameter_pair : layer_parameter_pairs)
         {
-            memcpy(parameter_pair.first, new_parameters.data() + index, parameter_pair.second * sizeof(type));
-            index += parameter_pair.second;
+            memcpy(parameter_pair.data, new_parameters.data() + index, parameter_pair.size * sizeof(type));
+            index += parameter_pair.size;
         }
     }
 }
@@ -477,7 +477,7 @@ void NeuralNetwork::set_parameters_glorot()
 }
 
 
-void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
+void NeuralNetwork::forward_propagate(const vector<TensorView>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
 {   
@@ -492,7 +492,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
         last_layer_index = get_last_trainable_layer_index();
     }
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+    const vector<vector<TensorView>> layer_input_pairs
         = forward_propagation.get_layer_input_pairs(input_pair, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
@@ -502,7 +502,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 }
 
 
-void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& input_pair,
+void NeuralNetwork::forward_propagate(const vector<TensorView>& input_pair,
                                       const Tensor<type, 1>& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
@@ -600,16 +600,16 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         if(layers[0]->get_name() == "Scaling2d")
         {
-            pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, {inputs_dimensions[0], inputs_dimensions[1]});
+            TensorView scaled_inputs_tensor(scaled_inputs_data, {inputs_dimensions[0], inputs_dimensions[1]});
 
             const Tensor<Index, 0> size = inputs_dimensions.prod();
 
-            memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
+            memcpy(scaled_inputs_tensor.data, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
 
             layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
 
-            const pair<type*, dimensions> outputs_pair = forward_propagation.layers[0]->get_output_pair();
-            scaled_outputs = tensor_map<2>(outputs_pair);
+            const TensorView outputs_view = forward_propagation.layers[0]->get_output_pair();
+            scaled_outputs = tensor_map<2>(outputs_view);
         }
         else
         {
@@ -628,11 +628,11 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 outputs_dimensions = get_dimensions(scaled_outputs);
 
-                pair<type*, dimensions> inputs_tensor(last_layer_outputs.data(), {last_layer_outputs_dimensions[0], last_layer_outputs_dimensions[1]});
+                TensorView inputs_tensor(last_layer_outputs.data(), {last_layer_outputs_dimensions[0], last_layer_outputs_dimensions[1]});
 
                 const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
 
-                memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
+                memcpy(inputs_tensor.data, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
 
                 layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
 
@@ -1243,7 +1243,7 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
 }
 
 
-pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pair() const
+TensorView ForwardPropagation::get_last_trainable_layer_outputs_pair() const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
@@ -1253,7 +1253,7 @@ pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pai
 }
 
 
-vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pairs(const vector<pair<type*, dimensions>>& batch_input_pairs,
+vector<vector<TensorView>> ForwardPropagation::get_layer_input_pairs(const vector<TensorView>& batch_input_pairs,
                                                                                   const bool& is_training) const
 {
     const Index layers_number = neural_network->get_layers_number();
@@ -1263,7 +1263,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
-    vector<vector<pair<type*, dimensions>>> layer_input_pairs(layers_number);
+    vector<vector<TensorView>> layer_input_pairs(layers_number);
 
     layer_input_pairs[0] = batch_input_pairs;
 

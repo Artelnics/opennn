@@ -142,15 +142,15 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[i].get();
 
-        const vector<pair<type*, Index>> layer_parameter_pairs = layer->get_parameter_pairs();
-        const vector<pair<type*, Index>> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+        const vector<ParameterView> layer_parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_views();
 
         // #pragma omp parallel for #@todo check pragma vs thread_pool_device
         for(size_t j = 0; j < layer_parameter_pairs.size(); j++)
         {
-            type* parameter_data = layer_parameter_pairs[j].first;
-            const Index parameter_size = layer_parameter_pairs[j].second;
-            type* delta_data = layer_parameter_delta_pairs[j].first;
+            type* parameter_data = layer_parameter_pairs[j].data;
+            const Index parameter_size = layer_parameter_pairs[j].size;
+            type* delta_data = layer_parameter_delta_pairs[j].data;
 
             TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
             TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
@@ -455,8 +455,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
                                       ? "true"
                                       : "false";
 
-    string_matrix.setValues({
-                             {"Inital learning rate", to_string(double(initial_learning_rate))},
+    string_matrix.setValues({{"Inital learning rate", to_string(double(initial_learning_rate))},
                              {"Inital decay", to_string(double(initial_decay))},
                              {"Apply momentum", apply_momentum},
                              {"Training loss goal", to_string(double(training_loss_goal))},
@@ -527,14 +526,14 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
-        const vector<pair<type*, Index>> parameter_pairs = layer->get_parameter_pairs();
+        const vector<ParameterView> parameter_pairs = layer->get_parameter_views();
 
         parameters_increment[i].resize(parameter_pairs.size());
         last_parameters_increment[i].resize(parameter_pairs.size());
 
         for(Index j = 0; j < (Index)parameter_pairs.size(); j++)
         {
-            const Index size = parameter_pairs[j].second;
+            const Index size = parameter_pairs[j].size;
 
             parameters_increment[i][j].resize(array<Index, 1>{size});
             last_parameters_increment[i][j].resize(array<Index, 1>{size});
@@ -543,7 +542,6 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
             last_parameters_increment[i][j].setZero();
         }
     }
-
 }
 
 
@@ -832,13 +830,13 @@ void StochasticGradientDescent::update_parameters_cuda(BackPropagationCuda& back
 
         const vector<pair<float*, Index>> parameter_pairs = layer->get_parameter_pair_device();
         LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
-        const vector<pair<float*, Index>> delta_pairs = layer_back_prop->get_parameter_delta_pair_device();
+        const vector<pair<float*, Index>> delta_views = layer_back_prop->get_parameter_delta_pair_device();
 
         for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); ++parameter_index)
         {
             float* params_d = parameter_pairs[parameter_index].first;
             const Index param_size = parameter_pairs[parameter_index].second;
-            const float* grads_d = delta_pairs[parameter_index].first;
+            const float* grads_d = delta_views[parameter_index].first;
             float* velocity_d = optimization_data_cuda.velocity[layer_index][parameter_index];
 
             sgd_update_device(

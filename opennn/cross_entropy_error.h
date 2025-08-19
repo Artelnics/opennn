@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class CrossEntropyError2d : public LossIndex
+class CrossEntropyError2d final : public LossIndex
 {
 
 public:

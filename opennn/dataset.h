@@ -12,6 +12,7 @@
 #include "tinyxml2.h"
 #include "correlations.h"
 #include "scaling.h"
+#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -195,7 +196,7 @@ public:
 
     const bool& get_display() const;
 
-    bool is_empty();
+    bool is_empty() const;
 
     dimensions get_input_dimensions() const;
     dimensions get_target_dimensions() const;
@@ -564,8 +565,8 @@ struct Batch
 {
     Batch(const Index& = 0, const Dataset* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_pairs() const;
-    pair<type*, dimensions> get_target_pair() const;
+    vector<TensorView> get_input_pairs() const;
+    TensorView get_target_pair() const;
 
     Index get_samples_number() const;
 
@@ -608,7 +609,7 @@ struct BatchCuda
     ~BatchCuda() { free(); }
 
     vector<float*> get_input_device() const;
-    pair<type*, dimensions> get_target_pair_device() const;
+    TensorView get_target_pair_device() const;
 
     Index get_samples_number() const;
 

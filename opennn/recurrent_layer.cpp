@@ -38,7 +38,7 @@ Index Recurrent::get_timesteps() const
 }
 
 
-vector<pair<type *, Index> > Recurrent::get_parameter_pairs() const
+vector<ParameterView > Recurrent::get_parameter_views() const
 {
     return {
         {(type*)biases.data(), biases.size()},
@@ -123,15 +123,15 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Recurrent::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool& is_training)
 {
-    const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[1];
-    const Index input_size = input_pairs[0].second[2];
+    const Index batch_size = input_views[0].dims[0];
+    const Index past_time_steps = input_views[0].dims[1];
+    const Index input_size = input_views[0].dims[2];
 
-    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
+    TensorMap<Tensor<type, 3>> inputs(input_views[0].data, batch_size, past_time_steps, input_size);
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
@@ -169,14 +169,14 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                               const vector<pair<type*, dimensions>>& delta_pairs,
+void Recurrent::back_propagate(const vector<TensorView>& input_views,
+                               const vector<TensorView>& delta_views,
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[1];
-    const Index input_size = input_pairs[0].second[2];
+    const Index batch_size = input_views[0].dims[0];
+    const Index past_time_steps = input_views[0].dims[1];
+    const Index input_size = input_views[0].dims[2];
     const Index output_size = get_outputs_number();
 
     Tensor<type, 2> initial_hidden_states(batch_size, output_size);
@@ -184,8 +184,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
 
-    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
-    TensorMap<Tensor<type, 2>> deltas(delta_pairs[0].first, batch_size, output_size);
+    TensorMap<Tensor<type, 3>> inputs(input_views[0].data, batch_size, past_time_steps, input_size);
+    TensorMap<Tensor<type, 2>> deltas(delta_views[0].data, batch_size, output_size);
 
     RecurrentForwardPropagation* recurrent_forward =
         static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
@@ -332,7 +332,7 @@ RecurrentForwardPropagation::RecurrentForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> RecurrentForwardPropagation::get_output_pair() const
+TensorView RecurrentForwardPropagation::get_output_pair() const
 {
     const Index outputs_number = layer->get_outputs_number();
 
@@ -418,7 +418,7 @@ RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_size, 
 }
 
 
-vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> RecurrentBackPropagation::get_input_derivative_views() const
 {
     const Index past_time_steps = layer->get_input_dimensions()[0];
     const Index inputs_number = layer->get_input_dimensions()[1];
@@ -427,7 +427,7 @@ vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_p
 }
 
 
-vector<pair<type*, Index>> RecurrentBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> RecurrentBackPropagation::get_parameter_delta_views() const
 {
     return {
         {(type*)bias_deltas.data(), bias_deltas.size()},

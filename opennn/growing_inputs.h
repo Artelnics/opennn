@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class GrowingInputs : public InputsSelection
+class GrowingInputs final : public InputsSelection
 {
 
 public:
@@ -55,8 +55,8 @@ public:
 
 private:
 
-    Index maximum_inputs_number = 1;
     Index minimum_inputs_number = 1;
+    Index maximum_inputs_number = 1;
 
     type minimum_correlation = 0;
     type maximum_correlation = 0;

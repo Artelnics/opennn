@@ -452,7 +452,7 @@ void GeneticAlgorithm::perform_selection()
 }
 
 
-vector<Index> GeneticAlgorithm::get_selected_individuals_indices()
+vector<Index> GeneticAlgorithm::get_selected_individuals_indices() const
 {
     vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
 

@@ -43,14 +43,14 @@ void Scaling4d::set(const dimensions& new_input_dimensions)
 }
 
 
-void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Scaling4d::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool&)
 {
     Scaling4dForwardPropagation* this_forward_propagation =
         static_cast<Scaling4dForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_pairs[0]);
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
@@ -95,7 +95,7 @@ Scaling4dForwardPropagation::Scaling4dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Scaling4dForwardPropagation::get_output_pair() const
+TensorView Scaling4dForwardPropagation::get_output_pair() const
 {
     const Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(layer);
 

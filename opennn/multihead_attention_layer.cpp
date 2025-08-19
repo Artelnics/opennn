@@ -98,7 +98,7 @@ dimensions MultiHeadAttention::get_output_dimensions() const
 }
 
 
-vector<pair<type *, Index> > MultiHeadAttention::get_parameter_pairs() const
+vector<ParameterView > MultiHeadAttention::get_parameter_views() const
 {
 
     return {
@@ -306,14 +306,14 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& conc
 }
 
 
-void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views,
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool&)
 {
-    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> source_input = (input_pairs.size() == 1)
+    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_views[0]);
+    const TensorMap<Tensor<type, 3>> source_input = (input_views.size() == 1)
                                                         ? query_input
-                                                        : tensor_map<3>(input_pairs[1]);
+                                                        : tensor_map<3>(input_views[1]);
 
     MultiHeadAttentionForwardPropagation* this_forward_propagation =
         static_cast<MultiHeadAttentionForwardPropagation*>(layer_forward_propagation.get());
@@ -373,8 +373,8 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 }
 
 
-void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                        const vector<pair<type*, dimensions>>& delta_pairs,
+void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
+                                        const vector<TensorView>& delta_views,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
@@ -387,12 +387,12 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         static_cast<MultiHeadAttentionBackPropagation*>(back_propagation.get());
 
     // Get tensors from forward propagation
-    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_pairs[0]);
-    const TensorMap<Tensor<type, 3>> source_input = tensor_map<3>(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_views[0]);
+    const TensorMap<Tensor<type, 3>> source_input = tensor_map<3>(input_views[1]);
 
-    // const TensorMap<Tensor<type, 3>> source_input = (input_pairs.size() == 1)
+    // const TensorMap<Tensor<type, 3>> source_input = (input_views.size() == 1)
     //                                                     ? query_input
-    //                                                     : tensor_map<3>(input_pairs[1]);
+    //                                                     : tensor_map<3>(input_views[1]);
 
     const Tensor<type, 4>& query = this_forward_propagation->query;
     const Tensor<type, 4>& key = this_forward_propagation->key;
@@ -401,7 +401,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     const Tensor<type, 3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
     // Get incoming gradient (ΔY)
-    const TensorMap<Tensor<type, 3>> delta_Y = tensor_map<3>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> delta_Y = tensor_map<3>(delta_views[0]);
 
     // Get gradient storage
     Tensor<type, 2>& projection_weight_deltas = this_back_propagation->projection_weight_deltas;
@@ -604,7 +604,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         value_deltas_reshaped.contract(value_weights, axes(2, 1));
 
     // For self-attention, accumulate all gradients into input_query_deltas
-    if(input_pairs.size() == 1)
+    if(input_views.size() == 1)
     {
         input_query_deltas.device(*thread_pool_device) += input_source_deltas;
     }
@@ -685,7 +685,7 @@ MultiHeadAttentionForwardPropagation::MultiHeadAttentionForwardPropagation(const
 }
 
 
-pair<type*, dimensions> MultiHeadAttentionForwardPropagation::get_output_pair() const
+TensorView MultiHeadAttentionForwardPropagation::get_output_pair() const
 {
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
@@ -803,7 +803,7 @@ MultiHeadAttentionBackPropagation::MultiHeadAttentionBackPropagation(const Index
 }
 
 
-vector<pair<type*, dimensions>> MultiHeadAttentionBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> MultiHeadAttentionBackPropagation::get_input_derivative_views() const
 {
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
@@ -817,7 +817,7 @@ vector<pair<type*, dimensions>> MultiHeadAttentionBackPropagation::get_input_der
 }
 
 
-vector<pair<type*, Index>> MultiHeadAttentionBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> MultiHeadAttentionBackPropagation::get_parameter_delta_views() const
 {
     return {
         {(type*)query_weight_deltas.data(), query_weight_deltas.size()},

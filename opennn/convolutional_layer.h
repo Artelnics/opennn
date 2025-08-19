@@ -14,12 +14,11 @@
 namespace opennn
 {
 
-class Convolutional : public Layer
+class Convolutional final : public Layer
 {
 
 public:
-    enum class Convolution{Valid,
-                             Same};
+    enum class Convolution{Valid, Same};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
@@ -65,7 +64,7 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     // Set
 
@@ -100,14 +99,14 @@ public:
 
     void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
     // Back propagation
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -195,11 +194,11 @@ private:
 };
 
 
-struct ConvolutionalForwardPropagation : LayerForwardPropagation
+struct ConvolutionalForwardPropagation final : LayerForwardPropagation
 {
     ConvolutionalForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -216,13 +215,13 @@ struct ConvolutionalForwardPropagation : LayerForwardPropagation
 };
 
 
-struct ConvolutionalBackPropagation : LayerBackPropagation
+struct ConvolutionalBackPropagation final : LayerBackPropagation
 {
     ConvolutionalBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -236,7 +235,6 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> bn_scale_deltas;
     Tensor<type, 1> bn_offset_deltas;
-
 };
 
 

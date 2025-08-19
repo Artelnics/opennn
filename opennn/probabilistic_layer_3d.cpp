@@ -154,7 +154,7 @@ void Probabilistic3d::set_activation_function(const string& new_activation_funct
 }
 
 
-vector<pair<type *, Index> > Probabilistic3d::get_parameter_pairs() const
+vector<ParameterView > Probabilistic3d::get_parameter_views() const
 {
     return {{(type*)(biases.data()), biases.size()},
             {(type*)(weights.data()), weights.size()}};
@@ -185,11 +185,11 @@ void Probabilistic3d::calculate_activations(Tensor<type, 3>& activations) const
 }
 
 
-void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Probabilistic3d::forward_propagate(const vector<TensorView>& input_views,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         const bool&)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
 
     Probabilistic3dForwardPropagation* this_forward_propagation =
         static_cast<Probabilistic3dForwardPropagation*>(forward_propagation.get());
@@ -202,12 +202,12 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     const vector<pair<type*, dimensions>>&,
+void Probabilistic3d::back_propagate(const vector<TensorView>& input_views,
+                                     const vector<TensorView>&,
                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
     const Index samples_number = inputs.dimension(0);
 
     // Forward propagation
@@ -321,7 +321,7 @@ Probabilistic3dForwardPropagation::Probabilistic3dForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Probabilistic3dForwardPropagation::get_output_pair() const
+TensorView Probabilistic3dForwardPropagation::get_output_pair() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
@@ -397,7 +397,7 @@ Probabilistic3dBackPropagation::Probabilistic3dBackPropagation(const Index& new_
 }
 
 
-vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Probabilistic3dBackPropagation::get_input_derivative_views() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
@@ -408,7 +408,7 @@ vector<pair<type*, dimensions>> Probabilistic3dBackPropagation::get_input_deriva
 }
 
 
-vector<pair<type*, Index>> Probabilistic3dBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> Probabilistic3dBackPropagation::get_parameter_delta_views() const
 {
     return {
         {(type*)bias_deltas.data(), bias_deltas.size()},

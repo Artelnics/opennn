@@ -112,14 +112,14 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
-    const pair<type*, dimensions> outputs_pair
+    const TensorView outputs_view
         = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_view);
 
-    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
+    const TensorView targets_view = batch.get_target_pair();
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
+    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_view);
 
     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 }
@@ -175,16 +175,16 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
 
-        const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
-        const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+        const vector<ParameterView>& parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView>& delta_views = layer_back_propagation->get_parameter_delta_views();
 
         for (Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
         {
-            type* parameter_data = parameter_pairs[parameter_index].first;
-            const Index parameter_size = parameter_pairs[parameter_index].second;
+            type* parameter_data = parameter_pairs[parameter_index].data;
+            const Index parameter_size = parameter_pairs[parameter_index].size;
             TensorMap<Tensor<type, 1>> parameters_map(parameter_data, parameter_size);
 
-            type* delta_data = delta_pairs[parameter_index].first;
+            type* delta_data = delta_views[parameter_index].data;
             TensorMap<Tensor<type, 1>> delta_map(delta_data, parameter_size);
 
             if(regularization_method == "L1")
@@ -194,7 +194,6 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
                 back_propagation.loss += regularization_weight*norm(0);
 
                 delta_map += regularization_weight*parameters_map.sign();
-
             }
             else if(regularization_method == "L2")
             {
@@ -294,10 +293,10 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+    const vector<vector<TensorView>> layer_input_pairs
         = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
-    const vector<vector<pair<type*, dimensions>>> layer_delta_pairs
+    const vector<vector<TensorView>> layer_delta_pairs
         = back_propagation_lm.get_layer_delta_pairs();
 
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
@@ -384,10 +383,10 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+    const vector<vector<TensorView>> layer_input_pairs
         = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
-    const vector<vector<pair<type*, dimensions>>> layer_delta_pairs
+    const vector<vector<TensorView>> layer_delta_pairs
         = back_propagation.get_layer_delta_pairs();
 
     calculate_output_delta(batch, forward_propagation, back_propagation);
@@ -412,13 +411,13 @@ void LossIndex::assemble_layers_error_gradient(const BackPropagation& back_propa
     {
         if (!back_propagation.neural_network.layers[i].get()) continue;
 
-        const vector<pair<type*, Index>> layer_gradient = back_propagation.neural_network.layers[i]->get_parameter_delta_pairs();
+        const vector<ParameterView> layer_gradient = back_propagation.neural_network.layers[i]->get_parameter_delta_views();
 
         for(Index j = 0; j < Index(layer_gradient.size()); j++)
         {
-            memcpy(gradient.data() + index, layer_gradient[j].first, layer_gradient[j].second * sizeof(type));
+            memcpy(gradient.data() + index, layer_gradient[j].data, layer_gradient[j].size * sizeof(type));
 
-            index += layer_gradient[j].second;
+            index += layer_gradient[j].size;
         }
     }
 }
@@ -541,7 +540,7 @@ void BackPropagation::set(const Index& new_samples_number, const LossIndex* new_
 }
 
 
-vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs() const
+vector<vector<TensorView>> BackPropagation::get_layer_delta_pairs() const
 {
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
 
@@ -551,9 +550,9 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
     const vector<unique_ptr<LayerBackPropagation>>& layer_back_propagations = neural_network.get_layers();
 
-    vector<pair<type*, dimensions>> input_derivative_pairs;
+    vector<TensorView> input_derivative_pairs;
 
-    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
+    vector<vector<TensorView>> layer_delta_pairs(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -572,7 +571,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
-            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs();
+            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_views();
 
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }
@@ -582,7 +581,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 }
 
 
-pair<type*, dimensions> BackPropagation::get_output_deltas_pair() const
+TensorView BackPropagation::get_output_deltas_pair() const
 {
     return {(type*)output_deltas.data(), output_deltas_dimensions};
 }
@@ -835,29 +834,29 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_deltas()
     Tensor<type, 1> numerical_inputs_derivatives(values_number);
     numerical_inputs_derivatives.setConstant(type(0));
 
-    const vector<pair<type*, dimensions>>& input_pairs = batch.get_input_pairs();
+    const vector<TensorView>& input_views = batch.get_input_pairs();
 
-    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map<4>(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map<4>(input_views[0]);
 
     for (Index i = 0; i < values_number; i++)
     {
         h = calculate_h(inputs_vector(i));
 
-        input_pairs[0].first[i] += h;
+        input_views[0].data[i] += h;
 
-        neural_network->forward_propagate(input_pairs, forward_propagation);
+        neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_forward = back_propagation.error();
 
-        input_pairs[0].first[i] -= 2*h;
+        input_views[0].data[i] -= 2*h;
 
-        neural_network->forward_propagate(input_pairs, forward_propagation);
+        neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
         error_backward = back_propagation.error();
 
-        input_pairs[0].first[i] += h;
+        input_views[0].data[i] += h;
 
         numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
     }
@@ -1229,7 +1228,7 @@ void BackPropagationLM::print() const
 }
 
 
-vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs() const
+vector<vector<TensorView>> BackPropagationLM::get_layer_delta_pairs() const
 {
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
 
@@ -1240,9 +1239,9 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
 
     const vector<unique_ptr<LayerBackPropagationLM>>& layer_back_propagations = neural_network.get_layers();
 
-    vector<pair<type*, dimensions>> input_derivative_pairs;
+    vector<TensorView> input_derivative_pairs;
 
-    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
+    vector<vector<TensorView>> layer_delta_pairs(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -1261,7 +1260,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
-            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs();
+            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_views();
 
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }
@@ -1271,7 +1270,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
 }
 
 
-pair<type*, dimensions> BackPropagationLM::get_output_deltas_pair() const
+TensorView BackPropagationLM::get_output_deltas_pair() const
 {
     return {(type*)output_deltas.data(), output_deltas_dimensions};
 }
@@ -1421,8 +1420,8 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
 
         LayerBackPropagationCuda* layer_back_prop_cuda = back_propagation_cuda.neural_network.layers[layer_index].get();
 
-        const vector<pair<type*, Index>>& parameter_device_pairs = layer->get_parameter_pair_device();
-        const vector<pair<type*, Index>>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_pair_device();
+        const vector<ParameterView>& parameter_device_pairs = layer->get_parameter_pair_device();
+        const vector<ParameterView>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_pair_device();
 
         for (Index param_index = 0; param_index < parameter_device_pairs.size(); ++param_index)
         {
@@ -1661,7 +1660,7 @@ float* BackPropagationCuda::get_output_deltas_device() const
 }
 
 
-void BackPropagationCuda::print()
+void BackPropagationCuda::print() const
 {
 
 }

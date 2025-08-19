@@ -78,8 +78,6 @@ public:
 
     virtual void print() const {}
 
-
-
 protected:
 
     TrainingStrategy* training_strategy = nullptr;

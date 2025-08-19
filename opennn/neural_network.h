@@ -32,9 +32,9 @@ struct ForwardPropagation
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 
-    pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
+    TensorView get_last_trainable_layer_outputs_pair() const;
 
-    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const vector<pair<type*, dimensions>>&, const bool&) const;
+    vector<vector<TensorView>> get_layer_input_pairs(const vector<TensorView>&, const bool&) const;
 
     void print() const;
 
@@ -163,18 +163,18 @@ public:
        for (Index i = 0; i < input_rank; ++i)
            input_dimensions.push_back(inputs.dimension(i));
 
-       const pair<type*, dimensions> input_pair((type*)inputs.data(), input_dimensions);
+       const TensorView input_pair((type*)inputs.data(), input_dimensions);
 
        forward_propagate({input_pair}, forward_propagation, false);
 
-       const pair<type*, dimensions>& outputs_pair = forward_propagation.layers.back()->get_output_pair();
+       const TensorView& outputs_view = forward_propagation.layers.back()->get_output_pair();
 
        if constexpr (output_rank == 2)
-           return tensor_map<2>(outputs_pair);
+           return tensor_map<2>(outputs_view);
        else if constexpr (output_rank == 3)
-           return tensor_map<3>(outputs_pair);
+           return tensor_map<3>(outputs_view);
        else if constexpr (output_rank == 4)
-           return tensor_map<4>(outputs_pair);
+           return tensor_map<4>(outputs_view);
        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
 
@@ -193,17 +193,21 @@ public:
 
        ForwardPropagation forward_propagation(batch_size, this);
 
-       const pair<type*, dimensions> input_pair_1((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}});
-       const pair<type*, dimensions> input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
+       const TensorView input_pair_1((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}});
+       const TensorView input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
 
-       forward_propagate({input_pair_1, input_pair_2}, forward_propagation, false);
+       vector<TensorView> input_views(2);
+       input_views[0] = input_pair_1;
+       input_views[1] = input_pair_2;
+
+       forward_propagate(input_views, forward_propagation, false);
 
        const vector<string> layer_labels = get_layer_labels();
 
-       const pair<type*, dimensions> outputs_pair
+       const TensorView outputs_view
            = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
-       return tensor_map<3>(outputs_pair);
+       return tensor_map<3>(outputs_view);
    }
 
 
@@ -237,11 +241,11 @@ public:
 
    void save_outputs(Tensor<type, 2>&, const filesystem::path&);
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
+   void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
                           const bool& = false) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
+   void forward_propagate(const vector<TensorView>&,
                           const Tensor<type, 1>&,
                           ForwardPropagation&);
 

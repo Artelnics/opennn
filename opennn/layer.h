@@ -10,6 +10,7 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
+#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -49,7 +50,7 @@ public:
 
     Index get_parameters_number() const;
 
-    virtual vector<pair<type*, Index>> get_parameter_pairs() const;
+    virtual vector<ParameterView> get_parameter_views() const;
 
     //virtual pair
 
@@ -64,19 +65,19 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
+    virtual void forward_propagate(const vector<TensorView>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    const bool&) = 0;
 
     // Back propagation
 
-    virtual void back_propagate(const vector<pair<type*, dimensions>>&,
-                                const vector<pair<type*, dimensions>>&,
+    virtual void back_propagate(const vector<TensorView>&,
+                                const vector<TensorView>&,
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>&) const {}
 
-    virtual void back_propagate_lm(const vector<pair<type*, dimensions>>&,
-                                   const vector<pair<type*, dimensions>>&,
+    virtual void back_propagate_lm(const vector<TensorView>&,
+                                   const vector<TensorView>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
@@ -107,9 +108,9 @@ protected:
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
-    string label = "layer";
+    string label = "my_layer";
 
-    string name;
+    string name = "layer";
 
     bool is_trainable = true;
 
@@ -239,7 +240,7 @@ protected:
     //void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
-    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const;
+    void add_deltas(const vector<TensorView>& delta_views) const;
 
     template <int Rank>
     void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const
@@ -315,7 +316,7 @@ struct LayerForwardPropagation
 
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
-    virtual pair<type*, dimensions> get_output_pair() const = 0;
+    virtual TensorView get_output_pair() const = 0;
 
     virtual void print() const {}
 
@@ -331,11 +332,11 @@ struct LayerBackPropagation
 
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 
-    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+    virtual vector<TensorView> get_input_derivative_views() const = 0;
 
-    virtual vector<pair<type*, Index>> get_parameter_delta_pairs() const
+    virtual vector<ParameterView> get_parameter_delta_views() const
     {
-        return vector<pair<type*, Index>>();
+        return vector<ParameterView>();
     }
 
     virtual void print() const {}
@@ -352,7 +353,7 @@ struct LayerBackPropagationLM
 {
     LayerBackPropagationLM() {}
 
-    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+    virtual vector<TensorView> get_input_derivative_views() const = 0;
 
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;
 

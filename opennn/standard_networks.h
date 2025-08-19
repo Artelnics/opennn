@@ -275,13 +275,13 @@ public:
         {
             for (Index block = 0; block < blocks_per_stage[stage]; ++block)
             {
-                Index block_input_index = last_layer_index;
+                const Index block_input_index = last_layer_index;
 
                 dimensions current_input_dims = get_layer(block_input_index)->get_output_dimensions();
 
-                Index filters = initial_filters[stage];
+                const Index filters = initial_filters[stage];
 
-                Index stride = (stage > 0 && block == 0) ? 2 : 1;
+                const Index stride = (stage > 0 && block == 0) ? 2 : 1;
 
                 // Main
                 auto conv1 = make_unique<Convolutional>(current_input_dims,
@@ -373,7 +373,7 @@ public:
                                                 false,
                                                 "dense_classifier");
 
-        add_layer(move(dense_layer), { last_layer_index });
+        add_layer(std::move(dense_layer), { last_layer_index });
 
         cout << "\n=======================================================================" << endl;
         cout << "          Análisis de la Arquitectura y Flujo de Dimensiones" << endl;
@@ -442,7 +442,7 @@ public:
         const Index embedding_dimension = input_dimensions[2];
 
         const Index heads_number = complexity_dimensions[0];
-        const bool use_causal_mask = false;
+        //const bool use_causal_mask = false;
 
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,

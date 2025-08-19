@@ -57,13 +57,13 @@ void Addition3d::set(const Index& new_sequence_length,
 }
 
 
-void Addition3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Addition3d::forward_propagate(const vector<TensorView>& input_views,
                                    unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                    const bool&)
 {
-    const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map<3>(input_views[0]);
 
-    const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map<3>(input_pairs[1]);
+    const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map<3>(input_views[1]);
 
     Addition3dForwardPropagation* this_forward_propagation =
         static_cast<Addition3dForwardPropagation*>(layer_forward_propagation.get());
@@ -74,12 +74,12 @@ void Addition3d::forward_propagate(const vector<pair<type*, dimensions>>& input_
 }
 
 
-void Addition3d::back_propagate(const vector<pair<type*, dimensions>>&,
-                                const vector<pair<type*, dimensions>>& delta_pairs,
+void Addition3d::back_propagate(const vector<TensorView>&,
+                                const vector<TensorView>& delta_views,
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
     // Back propagation
 
@@ -130,7 +130,7 @@ Addition3dForwardPropagation::Addition3dForwardPropagation(const Index& new_batc
 }
 
 
-pair<type*, dimensions> Addition3dForwardPropagation::get_output_pair() const
+TensorView Addition3dForwardPropagation::get_output_pair() const
 {
     Addition3d* addition_3d = static_cast<Addition3d*>(layer);
 
@@ -203,7 +203,7 @@ Addition3dBackPropagation::Addition3dBackPropagation(const Index& new_batch_size
 }
 
 
-vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Addition3dBackPropagation::get_input_derivative_views() const
 {
     Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
 

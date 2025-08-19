@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Transformer : public NeuralNetwork
+class Transformer final : public NeuralNetwork
 {
 public:
 

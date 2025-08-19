@@ -53,7 +53,7 @@ void Flatten3d::set(const dimensions& new_input_dimensions)
 }
 
 
-void Flatten3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Flatten3d::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool&)
 {
@@ -64,16 +64,16 @@ void Flatten3d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Flatten3dForwardPropagation* flatten_layer_3d_forward_propagation =
         static_cast<Flatten3dForwardPropagation*>(layer_forward_propagation.get());
 
-    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
+    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_views[0].first, batch_size, outputs_number);
 }
 
 
-void Flatten3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                               const vector<pair<type*, dimensions>>& delta_pairs,
+void Flatten3d::back_propagate(const vector<TensorView>& input_views,
+                               const vector<TensorView>& delta_views,
                                unique_ptr<LayerForwardPropagation>&,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_pairs[0].second[0];
+    const Index batch_size = input_views[0].second[0];
     const Index outputs_number = get_outputs_number();
 
     // Back propagation
@@ -84,7 +84,7 @@ void Flatten3d::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 3>& input_deltas = flatten_layer_3d_back_propagation->input_deltas;
 
     memcpy(input_deltas.data(),
-           delta_pairs[0].first,
+           delta_views[0].first,
            (batch_size * outputs_number * sizeof(type)));
 }
 
@@ -133,7 +133,7 @@ Flatten3dForwardPropagation::Flatten3dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Flatten3dForwardPropagation::get_output_pair() const
+TensorView Flatten3dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -192,7 +192,7 @@ Flatten3dBackPropagation::Flatten3dBackPropagation(const Index& new_batch_size, 
 }
 
 
-vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Flatten3dBackPropagation::get_input_derivative_views() const
 {
     const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 

@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class MultiHeadAttention : public Layer
+class MultiHeadAttention final : public Layer
 {
 
 public:
@@ -40,7 +40,7 @@ public:
 
     dimensions get_output_dimensions() const override;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     void set(const Index& = 0,
              const Index& = 0,
@@ -59,12 +59,12 @@ public:
 
     void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -112,12 +112,12 @@ private:
 };
 
 
-struct MultiHeadAttentionForwardPropagation : LayerForwardPropagation
+struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
 {
     MultiHeadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                          Layer* new_layer = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -140,13 +140,13 @@ struct MultiHeadAttentionForwardPropagation : LayerForwardPropagation
 };
 
 
-struct MultiHeadAttentionBackPropagation : LayerBackPropagation
+struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
 {
     MultiHeadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
