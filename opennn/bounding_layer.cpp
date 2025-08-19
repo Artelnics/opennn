@@ -149,11 +149,11 @@ void Bounding::set_upper_bound(const Index& index, const type& new_upper_bound)
 }
 
 
-void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Bounding::forward_propagate(const vector<TensorView>& input_views,
                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
                                  const bool&)
 {
-    const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_views[0]);
 
     BoundingForwardPropagation* this_forward_propagation =
         static_cast<BoundingForwardPropagation*>(forward_propagation.get());
@@ -162,7 +162,6 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        //outputs = inputs.eval();
         outputs.device(*thread_pool_device) = inputs;
         return;
     }
@@ -292,7 +291,7 @@ BoundingForwardPropagation::BoundingForwardPropagation(const Index& new_batch_si
 }
 
 
-pair<type*, dimensions> BoundingForwardPropagation::get_output_pair() const
+TensorView BoundingForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

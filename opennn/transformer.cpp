@@ -301,20 +301,20 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const pair<type*, dimensions> input_pair(input.data(), { samples_number, input_length });
-    const pair<type*, dimensions> decoder_pair(decoder.data(), { samples_number, decoder_length });
+    const TensorView input_pair(input.data(), { samples_number, input_length });
+    const TensorView decoder_pair(decoder.data(), { samples_number, decoder_length });
 
-    const vector<pair<type*, dimensions>> input_pairs = {decoder_pair, input_pair};
+    const vector<TensorView> input_views = {decoder_pair, input_pair};
 
     const Index layers_number = get_layers_number();
 
-    const pair<type*, dimensions> outputs_pair 
+    const TensorView outputs_view 
         = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
-    TensorMap <Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
+    TensorMap <Tensor<type, 2>> outputs(outputs_view.data, outputs_view.dims[1], outputs_view.dims[2]);
     outputs.setZero();
 
-    Tensor<type, 1> current_outputs(outputs_pair.second[2]);
+    Tensor<type, 1> current_outputs(outputs_view.dims[2]);
     current_outputs.setZero();
 
     Tensor<Index, 0> prediction;
@@ -323,7 +323,7 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     for(Index i = 1; i < decoder_length; i++)
     {
-        forward_propagate(input_pairs, forward_propagation, false);
+        forward_propagate(input_views, forward_propagation, false);
 
         current_outputs = outputs.chip(i - 1, 0);
 
@@ -400,16 +400,16 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 {
     const Index samples_number = input.dimension(0);
 
-    const pair<type*, dimensions> input_pair((type*)input.data(), { samples_number, input.dimension(1) });
-    const pair<type*, dimensions> context_pair((type*)context.data(), { samples_number, context.dimension(1) });
+    const TensorView input_pair((type*)input.data(), { samples_number, input.dimension(1) });
+    const TensorView context_pair((type*)context.data(), { samples_number, context.dimension(1) });
 
-    const vector<pair<type*, dimensions>> input_pairs = { input_pair, context_pair };
+    const vector<TensorView> input_views = { input_pair, context_pair };
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    forward_propagate(input_pairs, forward_propagation, false);
+    forward_propagate(input_views, forward_propagation, false);
 
-    const pair<type*, dimensions> output_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+    const TensorView output_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     return tensor_map<3>(output_pair);
 }

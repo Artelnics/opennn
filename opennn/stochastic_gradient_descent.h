@@ -22,7 +22,7 @@ struct SGDOptimizationDataCuda;
 #endif
 
 
-class StochasticGradientDescent : public OptimizationAlgorithm
+class StochasticGradientDescent final : public OptimizationAlgorithm
 {
 
 public:
@@ -93,7 +93,7 @@ public:
 };
 
 
-struct StochasticGradientDescentData : public OptimizationAlgorithmData
+struct StochasticGradientDescentData final : public OptimizationAlgorithmData
 {
     StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
 
@@ -110,7 +110,7 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 
 #ifdef OPENNN_CUDA
 
-struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
+struct SGDOptimizationDataCuda final : public OptimizationAlgorithmData
 {
     SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
 

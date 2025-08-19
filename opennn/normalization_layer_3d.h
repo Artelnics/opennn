@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Normalization3d : public Layer
+class Normalization3d final : public Layer
 {
 
 public:
@@ -28,16 +28,16 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -60,11 +60,11 @@ private:
 };
 
 
-struct Normalization3dForwardPropagation : LayerForwardPropagation
+struct Normalization3dForwardPropagation final : LayerForwardPropagation
 {
     Normalization3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = 0) override;
 
@@ -77,14 +77,14 @@ struct Normalization3dForwardPropagation : LayerForwardPropagation
 };
 
 
-struct Normalization3dBackPropagation : LayerBackPropagation
+struct Normalization3dBackPropagation final : LayerBackPropagation
 {
     Normalization3dBackPropagation(const Index& new_batch_size = 0,
                                    Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

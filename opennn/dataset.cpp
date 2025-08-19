@@ -4239,7 +4239,6 @@ void Batch::set(const Index& new_samples_number, const Dataset* new_dataset)
     //     decoder_dimensions = prepend(samples_number, data_set_decoder_dimensions);
     //     decoder_tensor.resize(get_size(decoder_dimensions));
     // }
-
 }
 
 
@@ -4298,19 +4297,19 @@ bool Batch::is_empty() const
 
 
 
-vector<pair<type*, dimensions>> Batch::get_input_pairs() const
+vector<TensorView> Batch::get_input_pairs() const
 {
-    vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
+    vector<TensorView> input_views = {{(type*)input_tensor.data(), input_dimensions}};
 
     // @todo DECODER VARIABLES
     // if (!decoder_dimensions.empty())
-    //     input_pairs.insert(input_pairs.begin(), {(type*)decoder_tensor.data(), decoder_dimensions});
+    //     input_views.insert(input_views.begin(), {(type*)decoder_tensor.data(), decoder_dimensions});
 
-    return input_pairs;
+    return input_views;
 }
 
 
-pair<type*, dimensions> Batch::get_target_pair() const
+TensorView Batch::get_target_pair() const
 {
     return { (type*)target_tensor.data() , target_dimensions};
 }
@@ -4455,9 +4454,9 @@ vector<float*> BatchCuda::get_input_device() const
 }
 
 
-pair<type*, dimensions> BatchCuda::get_target_pair_device() const
+TensorView BatchCuda::get_target_pair_device() const
 {
-    pair<type*, dimensions> target_pair = {targets_device , target_dimensions};
+    TensorView target_pair = {targets_device , target_dimensions};
 
     return target_pair;
 }

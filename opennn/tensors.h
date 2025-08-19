@@ -6,6 +6,69 @@
 namespace opennn
 {
 
+struct ParameterView
+{
+    type* data = nullptr;
+    Index size;
+
+    ParameterView() noexcept = default;
+    ParameterView(type* new_data, Index new_size) noexcept : data(new_data), size(new_size)
+    {}
+};
+
+
+struct TensorView
+{
+
+    type* data = nullptr;
+    dimensions dims;
+
+    TensorView() noexcept = default;
+    TensorView(type* new_data, dimensions new_dims) noexcept : data(new_data), dims(std::move(new_dims))
+    {}
+
+    Index rank() const { return dims.size(); }
+    //Index size() const { return get_size(dims); }
+
+    template <int Rank>
+    auto to_tensor_map() const
+    {
+        if (dims.size() != Rank)
+            throw runtime_error("TensorView Error: Requested TensorMap rank " + to_string(Rank) +
+                                " does not match stored dimensions size " + to_string(dims.size()));
+        if constexpr (Rank == 1)
+            return TensorMap<const Tensor<const type, 1>>(data, dims[0]);
+        else if constexpr (Rank == 2)
+            return TensorMap<const Tensor<const type, 2>>(data, dims[0], dims[1]);
+        else if constexpr (Rank == 3)
+            return TensorMap<const Tensor<const type, 3>>(data, dims[0], dims[1], dims[2]);
+        else if constexpr (Rank == 4)
+            return TensorMap<const Tensor<const type, 4>>(data, dims[0], dims[1], dims[2], dims[3]);
+        else
+            static_assert(Rank >= 1 && Rank <= 4, "Unsupported TensorMap Rank requested.");
+    }
+
+    template <int Rank>
+    auto to_tensor_map()
+    {
+        if (dims.size() != Rank)
+            throw runtime_error("TensorView Error: Requested TensorMap rank " + to_string(Rank) +
+                                " does not match stored dimensions size " + to_string(dims.size()));
+        if constexpr (Rank == 1)
+            return TensorMap<const Tensor<const type, 1>>(data, dims[0]);
+        else if constexpr (Rank == 2)
+            return TensorMap<const Tensor<const type, 2>>(data, dims[0], dims[1]);
+        else if constexpr (Rank == 3)
+            return TensorMap<const Tensor<const type, 3>>(data, dims[0], dims[1], dims[2]);
+        else if constexpr (Rank == 4)
+            return TensorMap<const Tensor<const type, 4>>(data, dims[0], dims[1], dims[2], dims[3]);
+        else
+            static_assert(Rank >= 1 && Rank <= 4, "Unsupported TensorMap Rank requested.");
+    }
+
+};
+
+
 template<typename T, std::size_t N>
 using array = Eigen::array<T, N>;
 
@@ -372,31 +435,31 @@ TensorMap<Tensor<type, 1>> tensor_map_(const TensorMap<Tensor<type, 2>>&, const 
 
 
 template <Index rank>
-TensorMap<Tensor<type, rank>> tensor_map(const pair<type*, dimensions>& x_pair)
+TensorMap<Tensor<type, rank>> tensor_map(const TensorView& x_pair)
 {
-    if (!x_pair.first)
+    if (!x_pair.data)
         throw runtime_error("tensor_map: Null pointer in pair.");
 
-    if (x_pair.second.size() != rank)
-        throw runtime_error("Dimensions is " + to_string(x_pair.second.size()) + " and must be " + to_string(rank));
+    if (x_pair.rank() != rank)
+        throw runtime_error("Dimensions is " + to_string(x_pair.rank()) + " and must be " + to_string(rank));
 
     if constexpr (rank == 1)
-        return TensorMap<Tensor<type, 1>>(x_pair.first, x_pair.second[0]);
+        return TensorMap<Tensor<type, 1>>(x_pair.data, x_pair.dims[0]);
     else if constexpr (rank == 2)
-        return TensorMap<Tensor<type, 2>>(x_pair.first,
-                                          x_pair.second[0],
-                                          x_pair.second[1]);
+        return TensorMap<Tensor<type, 2>>(x_pair.data,
+                                          x_pair.dims[0],
+                                          x_pair.dims[1]);
     else if constexpr (rank == 3)
-        return TensorMap<Tensor<type, 3>>(x_pair.first,
-                                          x_pair.second[0],
-                                          x_pair.second[1],
-                                          x_pair.second[2]);
+        return TensorMap<Tensor<type, 3>>(x_pair.data,
+                                          x_pair.dims[0],
+                                          x_pair.dims[1],
+                                          x_pair.dims[2]);
     else if constexpr (rank == 4)
-        return TensorMap<Tensor<type, 4>>(x_pair.first,
-                                          x_pair.second[0],
-                                          x_pair.second[1],
-                                          x_pair.second[2],
-                                          x_pair.second[3]);
+        return TensorMap<Tensor<type, 4>>(x_pair.data,
+                                          x_pair.dims[0],
+                                          x_pair.dims[1],
+                                          x_pair.dims[2],
+                                          x_pair.dims[3]);
     else
         static_assert(rank >= 1 && rank <= 4, "Unsupported tensor rank");
 }
@@ -469,11 +532,13 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
 
     for (Index i = 0; i < size; i++)
         if constexpr (is_same_v<Type, bool>)
+        {
             if (tensor(i) != value)
                 return false;
             else
                 if (std::abs(tensor(i) - value) > tolerance)
                     return false;
+        }
 
     return true;
 }

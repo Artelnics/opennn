@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class GrowingInputs : public InputsSelection
+class GrowingInputs final : public InputsSelection
 {
 
 public:

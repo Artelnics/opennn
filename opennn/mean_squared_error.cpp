@@ -36,9 +36,9 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(batch.get_target_pair());
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_pair);
+    const TensorMap<Tensor<type, 2>> outputs = tensor_map<2>(outputs_view);
 
     // Back propagation
 
@@ -92,7 +92,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    const TensorView output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
@@ -107,7 +107,7 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
-    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    const TensorView output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 

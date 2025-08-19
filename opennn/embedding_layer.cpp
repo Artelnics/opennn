@@ -57,7 +57,7 @@ dimensions Embedding::get_output_dimensions() const
 }
 
 
-vector<pair<type *, Index> > Embedding::get_parameter_pairs() const
+vector<ParameterView > Embedding::get_parameter_views() const
 {
     return {{(type*)(weights.data()), weights.size()}};
 }
@@ -152,11 +152,11 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 }
 
 
-void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Embedding::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool&)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
 
     EmbeddingForwardPropagation* embedding_forward_propagation =
         static_cast<EmbeddingForwardPropagation*>(layer_forward_propagation.get());
@@ -173,22 +173,22 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                               const vector<pair<type*, dimensions>>& delta_pairs,
+void Embedding::back_propagate(const vector<TensorView>& input_views,
+                               const vector<TensorView>& delta_views,
                                unique_ptr<LayerForwardPropagation>&,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index embedding_dimension = get_embedding_dimension();
 
-    const Index batch_size = input_pairs[0].second[0];
-    const Index sequence_length = input_pairs[0].second[1];
+    const Index batch_size = input_views[0].dims[0];
+    const Index sequence_length = input_views[0].dims[1];
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
 
-    if (delta_pairs.size() > 1)
-        add_deltas(delta_pairs);
+    if (delta_views.size() > 1)
+        add_deltas(delta_views);
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
     // Back propagation
 
@@ -279,7 +279,7 @@ EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> EmbeddingForwardPropagation::get_output_pair() const
+TensorView EmbeddingForwardPropagation::get_output_pair() const
 {
     const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 
@@ -325,12 +325,12 @@ EmbeddingBackPropagation::EmbeddingBackPropagation(const Index& new_batch_size, 
 }
 
 
-vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> EmbeddingBackPropagation::get_input_derivative_views() const
 {
-    return vector<pair<type*, dimensions>>();
+    return vector<TensorView>();
 }
 
-vector<pair<type*, Index>> EmbeddingBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> EmbeddingBackPropagation::get_parameter_delta_views() const
 {
     return {
         {(type*)weight_deltas.data(), weight_deltas.size()}

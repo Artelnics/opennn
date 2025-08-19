@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class GeneticAlgorithm : public InputsSelection
+class GeneticAlgorithm final : public InputsSelection
 {
 
 public:

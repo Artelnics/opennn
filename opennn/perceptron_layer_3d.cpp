@@ -116,11 +116,11 @@ void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
 }
 
 
-void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Dense3d::forward_propagate(const vector<TensorView>& input_views,
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
 
     Dense3dForwardPropagation* this_forward_propagation =
         static_cast<Dense3dForwardPropagation*>(layer_forward_propagation.get());
@@ -139,17 +139,17 @@ void Dense3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 }
 
 
-void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                             const vector<pair<type*, dimensions>>& delta_pairs,
+void Dense3d::back_propagate(const vector<TensorView>& input_views,
+                             const vector<TensorView>& delta_views,
                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
 
-    if(delta_pairs.size() > 1)
-        add_deltas(delta_pairs);
+    if(delta_views.size() > 1)
+        add_deltas(delta_views);
 
-    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
     // Forward propagation
 
@@ -231,7 +231,7 @@ Dense3dForwardPropagation::Dense3dForwardPropagation(const Index& new_batch_size
 }
 
 
-pair<type*, dimensions> Dense3dForwardPropagation::get_output_pair() const
+TensorView Dense3dForwardPropagation::get_output_pair() const
 {
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
@@ -296,7 +296,7 @@ Dense3dBackPropagation::Dense3dBackPropagation(const Index& new_batch_size, Laye
 }
 
 
-vector<pair<type*, dimensions>> Dense3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Dense3dBackPropagation::get_input_derivative_views() const
 {
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 

@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Pooling3d : public Layer
+class Pooling3d final : public Layer
 {
 
 public:
@@ -34,12 +34,12 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -54,11 +54,11 @@ private:
 };
 
 
-struct Pooling3dForwardPropagation : LayerForwardPropagation
+struct Pooling3dForwardPropagation final : LayerForwardPropagation
 {
     Pooling3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index&, Layer*) override;
 
@@ -68,11 +68,11 @@ struct Pooling3dForwardPropagation : LayerForwardPropagation
 };
 
 
-struct Pooling3dBackPropagation : LayerBackPropagation
+struct Pooling3dBackPropagation final : LayerBackPropagation
 {
     Pooling3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
     void set(const Index&, Layer*) override;
 

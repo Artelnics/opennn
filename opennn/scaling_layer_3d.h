@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-class Scaling3d : public Layer
+class Scaling3d final : public Layer
 {
 
 public:
@@ -53,7 +53,7 @@ public:
     void set_scalers(const Scaler&);
     void set_scalers(const string&);
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
@@ -77,11 +77,11 @@ private:
 };
 
 
-struct Scaling3dForwardPropagation : LayerForwardPropagation
+struct Scaling3dForwardPropagation final : LayerForwardPropagation
 {
     Scaling3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
