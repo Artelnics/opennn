@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "tensors.h"
-//#include "strings_utilities.h"
 #include "recurrent_layer.h"
 
 namespace opennn
@@ -23,7 +22,7 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return {input_weights.dimension(0), past_time_steps};
+    return {past_time_steps, input_weights.dimension(0)};
 }
 
 
@@ -59,7 +58,7 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 {
     biases.resize(new_output_dimensions[0]);
 
-    input_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
+    input_weights.resize(new_input_dimensions[1], new_output_dimensions[0]);
 
     recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 
@@ -100,10 +99,10 @@ void Recurrent::set_timesteps(const Index& new_timesteps)
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Logistic"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ExponentialLinear")
+        || new_activation_function == "HyperbolicTangent"
+        || new_activation_function == "Linear"
+        || new_activation_function == "RectifiedLinear"
+        || new_activation_function == "ExponentialLinear")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
@@ -120,7 +119,7 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     combinations = inputs.contract(input_weights, axes(1,0))
                    + previous_hidden_states.contract(recurrent_weights, axes(1,0))
                    + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
-                   .broadcast(array<Index,2>{batch_size, 1});
+                         .broadcast(array<Index,2>{batch_size, 1});
 }
 
 
@@ -129,9 +128,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[2];
-    const Index input_size = input_pairs[0].second[1];
-    const Index output_size = get_outputs_number();
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
 
@@ -140,33 +138,32 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 2>& outputs = recurrent_forward->outputs;
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
+    Tensor<type, 2>& current_activation_derivatives = recurrent_forward->current_activation_derivatives;
     Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
+
+    const Index output_size = input_weights.dimension(1);
 
     Tensor<type, 2> previous_hidden_states(batch_size, output_size);
     previous_hidden_states.setZero();
-
-    for (Index time_step = 0; time_step < past_time_steps; time_step++)
+    for(Index time_step = 0; time_step < past_time_steps; time_step++)
     {
-        #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < output_size; ++j)
-            {
-                type sum = biases(j);
+        // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
+        outputs.device(*thread_pool_device)
+            = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
+              + previous_hidden_states.contract(recurrent_weights, axes(1,0))
+              + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
 
-                for (Index k = 0; k < input_size; ++k)
-                    sum += inputs(i, time_step, k) * input_weights(k, j);
+        //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
 
-                for (Index k = 0; k < output_size; ++k)
-                    sum += previous_hidden_states(i, k) * recurrent_weights(k, j);
-
-                outputs(i, j) = sum;
-            }
-
-        Tensor<type, 2> current_activation_derivatives = activation_derivatives.chip(time_step, 1);
+        current_activation_derivatives.device(*thread_pool_device) =
+            activation_derivatives.chip(time_step, 1);
 
         calculate_activations(activation_function, outputs, current_activation_derivatives);
 
+        activation_derivatives.chip(time_step, 1) = current_activation_derivatives;
+
         hidden_states.chip(time_step, 1) = outputs;
+
         previous_hidden_states = outputs;
     }
 }
@@ -178,9 +175,14 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index past_time_steps = input_pairs[0].second[2];
-    const Index input_size = input_pairs[0].second[1];
+    const Index past_time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
+
+    Tensor<type, 2> initial_hidden_states(batch_size, output_size);
+    initial_hidden_states.setZero();
+
+    Tensor<type, 2> previous_hidden_states(batch_size, output_size);
 
     TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, past_time_steps, input_size);
     TensorMap<Tensor<type, 2>> deltas(delta_pairs[0].first, batch_size, output_size);
@@ -193,110 +195,57 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& hidden_states = recurrent_forward->hidden_states;
 
-    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_deltas = recurrent_backward->input_deltas;
     Tensor<type, 2>& input_weight_deltas = recurrent_backward->input_weight_deltas;
     Tensor<type, 2>& recurrent_weight_deltas = recurrent_backward->recurrent_weight_deltas;
     Tensor<type, 1>& bias_deltas = recurrent_backward->bias_deltas;
+    Tensor<type, 2>& current_combination_deltas = recurrent_backward->current_combination_deltas;
 
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
 
     input_weight_deltas.setZero();
     recurrent_weight_deltas.setZero();
     bias_deltas.setZero();
+    current_combination_deltas.setZero();
 
-    Tensor<type, 2> next_hidden_state_delta(batch_size, output_size);
-    next_hidden_state_delta.setZero();
+    Tensor<type, 2> combination_deltas(batch_size, output_size);
 
-    for (Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
-    {
+    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
+
+    for(Index time_step = past_time_steps - 1; time_step >= 0; --time_step)
+    {             
         if (time_step == past_time_steps - 1)
             current_deltas = deltas;
         else
-            current_deltas = next_hidden_state_delta;
+            current_deltas = current_combination_deltas;
 
-        TensorMap<Tensor<type, 2>> current_act_derivs(activation_derivatives.data() + time_step * batch_size * output_size,
-                                                      batch_size, output_size);
+        combination_deltas.device(*thread_pool_device) =
+            current_deltas * activation_derivatives.chip(time_step, 1);
 
-        #pragma omp parallel for
-        for (Index i = 0; i < current_deltas.size(); ++i)
-            current_deltas.data()[i] *= current_act_derivs.data()[i];
+        // Need
 
-        TensorMap<Tensor<type, 2>> current_input(inputs.data() + time_step * batch_size * input_size,
-                                                 batch_size, input_size);
+        input_weight_deltas.device(*thread_pool_device) +=
+            inputs.chip(time_step, 1).contract(combination_deltas, axes(0,0));
 
-        TensorMap<Tensor<type, 2>> prev_hidden((time_step == 0)
-                                                   ? Tensor<type, 2>(batch_size, output_size).setZero().data()
-                                                   : hidden_states.data() + (time_step - 1) * batch_size * output_size,
-                                               batch_size, output_size);
+        if (time_step == 0)
+            previous_hidden_states.device(*thread_pool_device) = initial_hidden_states;
+        else
+            previous_hidden_states.device(*thread_pool_device) = hidden_states.chip(time_step - 1, 1);
 
-        #pragma omp parallel for
-        for (Index i = 0; i < input_size; ++i)
-            for (Index j = 0; j < output_size; ++j)
-            {
-                type sum = 0;
+        recurrent_weight_deltas.device(*thread_pool_device) +=
+            previous_hidden_states.contract(combination_deltas, axes(0,0));
 
-                for (Index k = 0; k < batch_size; ++k)
-                    sum += current_input(k, i) * current_deltas(k, j);
+        bias_deltas.device(*thread_pool_device) +=
+            combination_deltas.sum(array<Index, 1>({ 0 }));
 
-                #pragma omp atomic
-                input_weight_deltas(i, j) += sum;
-            }
+        if(time_step == 0)
+            current_combination_deltas.setZero();
+        else
+            current_combination_deltas.device(*thread_pool_device)
+                = combination_deltas.contract(recurrent_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
 
-        #pragma omp parallel for
-        for (Index i = 0; i < output_size; ++i)
-            for (Index j = 0; j < output_size; ++j)
-            {
-                type sum = 0;
-
-                for (Index k = 0; k < batch_size; ++k)
-                    sum += prev_hidden(k, i) * current_deltas(k, j);
-
-                #pragma omp atomic
-                recurrent_weight_deltas(i, j) += sum;
-            }
-
-        #pragma omp parallel for
-        for (Index j = 0; j < output_size; ++j)
-        {
-            type sum = 0;
-
-            for (Index i = 0; i < batch_size; ++i)
-                sum += current_deltas(i, j);
-
-            #pragma omp atomic
-            bias_deltas(j) += sum;
-        }
-
-        if (time_step > 0)
-        {
-            #pragma omp parallel for
-            for (Index i = 0; i < batch_size; ++i)
-                for (Index j = 0; j < output_size; ++j)
-                {
-                    type sum = 0;
-
-                    for (Index k = 0; k < output_size; ++k)
-                        sum += current_deltas(i, k) * recurrent_weights(j, k);
-
-                    next_hidden_state_delta(i, j) = sum;
-                }
-        }
-
-        TensorMap<Tensor<type, 2>> current_input_delta(input_deltas.data() + time_step * batch_size * input_size,
-                                                       batch_size, input_size);
-
-        #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < input_size; ++j)
-            {
-                type sum = 0;
-
-                for (Index k = 0; k < output_size; ++k)
-                    sum += current_deltas(i, k) * input_weights(j, k);
-
-                current_input_delta(i, j) = sum;
-            }
+        input_deltas.chip(time_step, 1).device(*thread_pool_device)
+            = combination_deltas.contract(input_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
     }
 }
 
@@ -325,21 +274,21 @@ string Recurrent::get_expression(const vector<string>& input_names,
 void Recurrent::print() const
 {
     cout << "Recurrent layer" << endl
-         << "Time steps: " << get_input_dimensions()[1] << endl
-         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Time steps: " << get_input_dimensions()[0] << endl
+         << "Input dimensions: " << get_input_dimensions()[1] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
          << "Input weights dimensions: " << input_weights.dimensions() << endl
          << "Recurrent weights dimensions: " << recurrent_weights.dimensions() << endl;
 
-    cout << "Biases:" << endl;
-    cout << biases << endl;
-    cout << "Input weights:" << endl;
-    cout << input_weights << endl;
-    cout << "Recurrent weights:" << endl;
-    cout << recurrent_weights << endl;
-    cout << "Activation function: " << activation_function << endl;
-    cout << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
+    cout << "Biases:" << endl
+         << biases << endl
+         << "Input weights:" << endl
+         << input_weights << endl
+         << "Recurrent weights:" << endl
+         << recurrent_weights << endl
+         << "Activation function: " << activation_function << endl
+         << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
 }
 
 
@@ -402,8 +351,8 @@ void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_la
         throw std::runtime_error("recurrrent layer is nullptr");
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index past_time_steps = layer->get_input_dimensions()[1];
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index past_time_steps = layer->get_input_dimensions()[0];
 
     current_inputs.resize(batch_size, past_time_steps, inputs_number);
 
@@ -433,8 +382,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index past_time_steps = layer->get_input_dimensions()[1];
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index past_time_steps = layer->get_input_dimensions()[0];
 
     combinations_bias_deltas.resize(outputs_number, outputs_number);
     combinations_input_weight_deltas.resize(inputs_number, outputs_number, outputs_number);
@@ -471,10 +420,12 @@ RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_size, 
 
 vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_pairs() const
 {
-    const Index inputs_number = layer->get_input_dimensions()[0];
+    const Index past_time_steps = layer->get_input_dimensions()[0];
+    const Index inputs_number = layer->get_input_dimensions()[1];
 
-    return {{(type*)(input_deltas.data()), {batch_size, inputs_number}}};
+    return {{(type*)(input_deltas.data()), {batch_size, past_time_steps, inputs_number}}};
 }
+
 
 vector<pair<type*, Index>> RecurrentBackPropagation::get_parameter_delta_pairs() const
 {

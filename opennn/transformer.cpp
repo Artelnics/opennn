@@ -347,6 +347,55 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 }
 
 
+vector<string> Transformer::preprocess_language_document(const string &document, const bool &input)
+{
+    vector<string> tokens;
+
+    // if(!input)
+    tokens.push_back("[START]");
+
+    string currentToken;
+
+    for (char c : document)
+    {
+        if (isalnum(c))
+        {
+            // Add alphanumeric characters to the current token
+            currentToken += tolower(c);
+        }
+        else
+        {
+            // If the current token is not empty, add it to the tokens list
+            if (!currentToken.empty())
+            {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            // Treat punctuation as a separate token
+
+            if (ispunct(c))
+            {
+                tokens.push_back(string(1, c));
+            }
+            else if (isspace(c))
+            {
+                // Ignore spaces, they just delimit tokens
+            }
+        }
+    }
+
+    // Add the last token if it's not empty
+    if (!currentToken.empty())
+        tokens.push_back(currentToken);
+
+    // Add [END] token
+    // if(!input)
+    tokens.push_back("[END]");
+
+    return tokens;
+}
+
+
 Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, const Tensor<type, 2>& context)
 {
     const Index samples_number = input.dimension(0);

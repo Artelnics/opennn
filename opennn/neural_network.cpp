@@ -245,6 +245,13 @@ void NeuralNetwork::set_default()
 }
 
 
+void NeuralNetwork::set_threads_number(const int& new_threads_number)
+{
+    for (const unique_ptr<Layer>& layer : layers)
+        layer->set_threads_number(new_threads_number);
+}
+
+
 void NeuralNetwork::set_layers_number(const Index& new_layers_number)
 {
     layers.resize(new_layers_number);
@@ -1038,10 +1045,10 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    // Tensor<type, 1> parameters;
-    // get_parameters(parameters);
+    Tensor<type, 1> parameters;
+    get_parameters(parameters);
 
-    // file << parameters << endl;
+    file << parameters << endl;
 
     file.close();
 }
@@ -1233,7 +1240,6 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
-
 }
 
 

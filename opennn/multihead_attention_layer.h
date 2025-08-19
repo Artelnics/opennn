@@ -9,9 +9,6 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-//#include "registry.h"
-//#include "tensors.h"
-
 #include "layer.h"
 
 namespace opennn
@@ -56,7 +53,7 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    void calculate_attention_outputs(const Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;
 
@@ -88,6 +85,7 @@ private:
     Index source_sequence_length = 0;
 
     Index heads_number = 0;
+    Index head_dimension = 0;
     Index embedding_dimension = 0;
 
     Tensor<type, 2> query_weights;
@@ -108,6 +106,7 @@ private:
     Tensor<bool,2> key_mask;             //Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
+    type scaling_factor = 0;
 
     const type minus_inf = -numeric_limits<float>::infinity();
 };
@@ -161,15 +160,15 @@ struct MultiHeadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> key_deltas;
     Tensor<type, 4> value_deltas;
 
-    Tensor<type, 3> query_weight_deltas;
-    Tensor<type, 3> key_weight_deltas;
-    Tensor<type, 3> value_weight_deltas;
+    Tensor<type, 2> query_weight_deltas;
+    Tensor<type, 2> key_weight_deltas;
+    Tensor<type, 2> value_weight_deltas;
 
     Tensor<type, 2> projection_weight_deltas;
 
-    Tensor<type, 2> query_bias_deltas;
-    Tensor<type, 2> key_bias_deltas;
-    Tensor<type, 2> value_bias_deltas;
+    Tensor<type, 1> query_bias_deltas;
+    Tensor<type, 1> key_bias_deltas;
+    Tensor<type, 1> value_bias_deltas;
     Tensor<type, 1> projection_bias_deltas;
 
     Tensor<type, 1> aux_rows;

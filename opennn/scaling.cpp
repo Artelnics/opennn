@@ -12,39 +12,39 @@
 namespace opennn
 {
 
-    string scaler_to_string(const Scaler& scaler)
+string scaler_to_string(const Scaler& scaler)
+{
+    switch (scaler)
     {
-        switch (scaler)
-        {
-        case Scaler::None: return "None";
-        case Scaler::MinimumMaximum: return "MinimumMaximum";
-        case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
-        case Scaler::StandardDeviation: return "StandardDeviation";
-        case Scaler::Logarithm: return "Logarithm";
-        case Scaler::ImageMinMax: return "ImageMinMax";
-        default: throw runtime_error("Unknown scaler\n");
-        }
+    case Scaler::None: return "None";
+    case Scaler::MinimumMaximum: return "MinimumMaximum";
+    case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
+    case Scaler::StandardDeviation: return "StandardDeviation";
+    case Scaler::Logarithm: return "Logarithm";
+    case Scaler::ImageMinMax: return "ImageMinMax";
+    default: throw runtime_error("Unknown scaler\n");
     }
+}
 
 
-    Scaler string_to_scaler(const string& new_scaler)
-    {
-        if (new_scaler == "None")
-            return Scaler::None;
-        else if (new_scaler == "MinimumMaximum")
-            return Scaler::MinimumMaximum;
-        else if (new_scaler == "MeanStandardDeviation")
-            return Scaler::MeanStandardDeviation;
-        else if (new_scaler == "StandardDeviation")
-            return Scaler::StandardDeviation;
-        else if (new_scaler == "Logarithm")
-            return Scaler::Logarithm;
-        else if (new_scaler == "ImageMinMax")
-            return Scaler::ImageMinMax;
-        else
-            throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+Scaler string_to_scaler(const string& new_scaler)
+{
+    if (new_scaler == "None")
+        return Scaler::None;
+    else if (new_scaler == "MinimumMaximum")
+        return Scaler::MinimumMaximum;
+    else if (new_scaler == "MeanStandardDeviation")
+        return Scaler::MeanStandardDeviation;
+    else if (new_scaler == "StandardDeviation")
+        return Scaler::StandardDeviation;
+    else if (new_scaler == "Logarithm")
+        return Scaler::Logarithm;
+    else if (new_scaler == "ImageMinMax")
+        return Scaler::ImageMinMax;
+    else
+        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+}
 
-    }
 
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,
@@ -55,7 +55,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
 
     // if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
     //     throw runtime_error("Standard deviation is zero.");
-    const type epsilon = 1e-7;
+    const type epsilon = type(1e-7);
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -72,11 +72,8 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
             : type(1)/column_descriptives.standard_deviation;
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, column_index) = (matrix(i, column_index)) * slope;
-    }
 }
 
 
@@ -97,7 +94,6 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
         throw runtime_error("The range values are not valid.");
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = (matrix(i, column_index) - minimum) / (maximum - minimum);
 }
@@ -124,6 +120,97 @@ void scale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
 
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = log(matrix(i, column_index));
+}
+
+void scale_mean_standard_deviation_3d(Tensor<type, 3>& tensor,
+                                      const Index& feature_index,
+                                      const Descriptives& feature_descriptives)
+{
+    const type mean = feature_descriptives.mean;
+    const type standard_deviation = feature_descriptives.standard_deviation;
+    const type epsilon = type(1e-7);
+
+    const Index batch_size = tensor.dimension(0);
+    const Index time_steps = tensor.dimension(1);
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; b++)
+        for(Index t = 0; t < time_steps; t++)
+            tensor(b, t, feature_index) = (tensor(b, t, feature_index) - mean) / (standard_deviation + epsilon);
+}
+
+
+void scale_standard_deviation_3d(Tensor<type, 3>& tensor,
+                                 const Index& feature_index,
+                                 const Descriptives& feature_descriptives)
+{
+    const type slope = (feature_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
+                           ? type(1)
+                           : type(1) / feature_descriptives.standard_deviation;
+
+    const Index batch_size = tensor.dimension(0);
+    const Index time_steps = tensor.dimension(1);
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; b++)
+        for(Index t = 0; t < time_steps; t++)
+            tensor(b, t, feature_index) *= slope;
+}
+
+
+void scale_minimum_maximum_3d(Tensor<type, 3>& tensor,
+                              const Index& feature_index,
+                              const Descriptives& feature_descriptives,
+                              const type& min_range,
+                              const type& max_range)
+{
+    const type minimum = feature_descriptives.minimum;
+    const type maximum = feature_descriptives.maximum;
+    const type range_diff = maximum - minimum;
+
+    if(abs(range_diff) < NUMERIC_LIMITS_MIN)
+        return;
+
+    if(max_range - min_range < NUMERIC_LIMITS_MIN)
+        throw runtime_error("The range values are not valid.");
+
+    const Index batch_size = tensor.dimension(0);
+    const Index time_steps = tensor.dimension(1);
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; b++)
+        for(Index t = 0; t < time_steps; t++)
+        {
+            type scaled_01 = (tensor(b, t, feature_index) - minimum) / range_diff;
+            tensor(b, t, feature_index) = scaled_01 * (max_range - min_range) + min_range;
+        }
+}
+
+
+void scale_logarithmic_3d(Tensor<type, 3>& tensor, const Index& feature_index)
+{
+    type min_value = numeric_limits<type>::max();
+    const Index batch_size = tensor.dimension(0);
+    const Index time_steps = tensor.dimension(1);
+
+    for(Index b = 0; b < batch_size; b++)
+        for(Index t = 0; t < time_steps; t++)
+            if(!isnan(tensor(b, t, feature_index)) && tensor(b, t, feature_index) < min_value)
+                min_value = tensor(b, t, feature_index);
+
+    if(min_value <= type(0))
+    {
+        const type offset = abs(min_value) + type(1) + NUMERIC_LIMITS_MIN;
+        for(Index b = 0; b < batch_size; b++)
+            for(Index t = 0; t < time_steps; t++)
+                    tensor(b, t, feature_index) += offset;
+    }
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; b++)
+        for(Index t = 0; t < time_steps; t++)
+            tensor(b, t, feature_index) = log(tensor(b, t, feature_index));
+
 }
 
 
@@ -157,7 +244,6 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
         // throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
 

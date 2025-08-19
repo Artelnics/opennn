@@ -197,13 +197,13 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
 }
 
 
-Tensor<type, 2> KMeans::get_cluster_centers()
+Tensor<type, 2> KMeans::get_cluster_centers() const
 {
     return cluster_centers;
 }
 
 
-Tensor<Index, 1> KMeans::get_cluster_labels()
+Tensor<Index, 1> KMeans::get_cluster_labels() const
 {
     return rows_cluster_labels;
 }

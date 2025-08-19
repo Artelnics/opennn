@@ -38,8 +38,8 @@ dimensions Dense2d::get_output_dimensions() const
 vector<pair<type*, Index>> Dense2d::get_parameter_pairs() const
 {
     vector<pair<type*, Index>> parameter_pairs =
-    {{(type*)(biases.data()), biases.size()},
-     {(type*)(weights.data()), weights.size()}};
+        {{(type*)(biases.data()), biases.size()},
+         {(type*)(weights.data()), weights.size()}};
 
     if (batch_normalization)
     {
@@ -98,10 +98,10 @@ void Dense2d::set(const dimensions& new_input_dimensions,
         throw runtime_error("Input dimensions size is not 1");
 
     if (new_output_dimensions.size() != 1)
-        throw runtime_error("Output dimensions size is not 1");   
+        throw runtime_error("Output dimensions size is not 1");
 
-    biases.resize(new_output_dimensions[0]);    
-    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);    
+    biases.resize(new_output_dimensions[0]);
+    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
@@ -127,23 +127,23 @@ void Dense2d::set(const dimensions& new_input_dimensions,
     }
 
     set_label(new_label);
-    
+
     name = "Dense2d";
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
 
     if (batch_normalization)
     {
         cudnnCreateTensorDescriptor(&bn_tensor_descriptor);
 
         cudnnSetTensor4dDescriptor(bn_tensor_descriptor,
-            CUDNN_TENSOR_NCHW,
-            CUDNN_DATA_FLOAT,
-            1, outputs_number, 1, 1);
+                                   CUDNN_TENSOR_NCHW,
+                                   CUDNN_DATA_FLOAT,
+                                   1, outputs_number, 1, 1);
     }
 
     // Activations
-    
+
     if (activation_function != "Softmax")
     {
         cudnnCreateActivationDescriptor(&activation_descriptor);
@@ -189,7 +189,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
         cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
 
-    #endif
+#endif
 }
 
 
@@ -224,11 +224,11 @@ void Dense2d::set_batch_normalization(const bool& new_batch_normalization)
 void Dense2d::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Logistic"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ExponentialLinear"
-    || new_activation_function == "Softmax")
+        || new_activation_function == "HyperbolicTangent"
+        || new_activation_function == "Linear"
+        || new_activation_function == "RectifiedLinear"
+        || new_activation_function == "ExponentialLinear"
+        || new_activation_function == "Softmax")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
@@ -243,19 +243,11 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
-    const Index inputs_number = weights.dimension(0);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            type sum = biases(j);
-
-            for (Index k = 0; k < inputs_number; ++k)
-                sum += inputs(i, k) * weights(k, j);
-
-            combinations(i, j) = sum;
-        }
+    combinations.device(*thread_pool_device)
+        = inputs.contract(weights, axes(1,0))
+          + biases.reshape(array_2(1, outputs_number))
+                .broadcast(array_2(batch_size, 1));
 }
 
 
@@ -272,81 +264,48 @@ void Dense2d::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& lay
     Tensor<type, 1>& means = dense2d_forward_propagation->means;
     Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
 
+    const array<int, 1> reduction_axes = { 0 };
+    const array<Index, 2> reshape_dims = { 1, outputs_number };
+    const array<Index, 2> broadcast_dims = { batch_size, 1 };
+
     if (is_training)
     {
-        #pragma omp parallel for
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            type mean_sum = 0;
+        means.device(*thread_pool_device) = outputs.mean(reduction_axes);
 
-            for (Index i = 0; i < batch_size; ++i)
-                mean_sum += outputs(i, j);
+        standard_deviations.device(*thread_pool_device) = (
+                                                              (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
+                                                                  .square()
+                                                                  .mean(reduction_axes) + epsilon
+                                                              ).sqrt();
 
-            means(j) = mean_sum / type(batch_size);
+        normalized_outputs.device(*thread_pool_device) =
+            (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+            standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
 
-            type variance_sum = 0;
-            const type current_mean = means(j);
-
-            for (Index i = 0; i < batch_size; ++i)
-            {
-                type diff = outputs(i, j) - current_mean;
-                variance_sum += diff * diff;
-            }
-
-            standard_deviations(j) = sqrt(variance_sum / type(batch_size) + epsilon);
-        }
-
-        #pragma omp parallel for
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            const type mean_val = means(j);
-            const type std_dev_val = standard_deviations(j);
-
-            for (Index i = 0; i < batch_size; ++i)
-                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
-        }
-
-        #pragma omp parallel for
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            moving_means(j) = moving_means(j) * momentum + means(j) * (type(1) - momentum);
-            moving_standard_deviations(j) = moving_standard_deviations(j) * momentum + standard_deviations(j) * (type(1) - momentum);
-        }
+        moving_means.device(*thread_pool_device) = moving_means * momentum + means * (type(1) - momentum);
+        moving_standard_deviations.device(*thread_pool_device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
     }
     else
     {
-        #pragma omp parallel for
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            const type mean_val = moving_means(j);
-            const type std_dev_val = moving_standard_deviations(j) + epsilon;
-
-            for (Index i = 0; i < batch_size; ++i)
-                normalized_outputs(i, j) = (outputs(i, j) - mean_val) / std_dev_val;
-        }
+        normalized_outputs.device(*thread_pool_device) =
+            (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+            (moving_standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
     }
 
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        const type scale_val = scales(j);
-        const type offset_val = offsets(j);
-
-        for (Index i = 0; i < batch_size; ++i)
-            outputs(i, j) = normalized_outputs(i, j) * scale_val + offset_val;
-    }
+    outputs.device(*thread_pool_device) =
+        normalized_outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
+        offsets.reshape(reshape_dims).broadcast(broadcast_dims);
 }
 
 
 void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& deltas,
-                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation, 
+                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<const Dense2dForwardPropagation*>(layer_forward_propagation.get());
 
     const Index batch_size = dense2d_forward_propagation->batch_size;
-    const Index outputs_number = get_outputs_number();
 
     const Tensor<type, 2>& normalized_outputs = dense2d_forward_propagation->normalized_outputs;
     const Tensor<type, 1>& standard_deviations = dense2d_forward_propagation->standard_deviations;
@@ -357,38 +316,23 @@ void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& del
     Tensor<type, 1>& bn_scale_deltas = dense2d_back_propagation->bn_scale_deltas;
     Tensor<type, 1>& bn_offset_deltas = dense2d_back_propagation->bn_offset_deltas;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        type offset_sum = 0;
-        type scale_sum = 0;
+    const array<int, 1> reduction_axes = { 0 };
+    const array<Index, 2> reshape_dims = { 1, get_outputs_number() };
+    const array<Index, 2> broadcast_dims = { batch_size, 1 };
 
-        for (Index i = 0; i < batch_size; ++i)
-        {
-            offset_sum += deltas(i, j);
-            scale_sum += deltas(i, j) * normalized_outputs(i, j);
-        }
+    bn_offset_deltas.device(*thread_pool_device) = deltas.sum(reduction_axes);
+    bn_scale_deltas.device(*thread_pool_device) = (deltas * normalized_outputs).sum(reduction_axes);
 
-        bn_offset_deltas(j) = offset_sum;
-        bn_scale_deltas(j) = scale_sum;
-    }
+    const auto inv_m = type(1) / batch_size;
 
-    const type inv_m = type(1) / type(batch_size);
-
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        const type inv_std_dev = type(1) / standard_deviations(j);
-        const type scale_val = scales(j);
-        const type offset_delta = bn_offset_deltas(j);
-        const type scale_delta = bn_scale_deltas(j);
-
-        for (Index i = 0; i < batch_size; ++i)
-        {
-            deltas(i, j) = ( (deltas(i, j) * type(batch_size)) - offset_delta - (normalized_outputs(i, j) * scale_delta) )
-            * inv_m * inv_std_dev * scale_val;
-        }
-    }
+    deltas.device(*thread_pool_device) =
+        ((deltas * type(batch_size))
+         - bn_offset_deltas.reshape(reshape_dims).broadcast(broadcast_dims)
+         - normalized_outputs *
+               bn_scale_deltas.reshape(reshape_dims).broadcast(broadcast_dims)
+         ) * inv_m
+        / standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims)
+        * scales.reshape(reshape_dims).broadcast(broadcast_dims);
 }
 
 
@@ -404,7 +348,7 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
     Tensor<type, 2>& outputs = dense2d_forward_propagation->outputs;
 
     calculate_combinations(inputs, outputs);
-    
+
     if (batch_normalization)
         apply_batch_normalization(layer_forward_propagation, is_training);
 
@@ -436,78 +380,42 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     Dense2dBackPropagation* dense2d_back_propagation =
         static_cast<Dense2dBackPropagation*>(back_propagation.get());
-    
+
     Tensor<type, 2>& weight_deltas = dense2d_back_propagation->weight_deltas;
+
     Tensor<type, 1>& bias_deltas = dense2d_back_propagation->bias_deltas;
+
     const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
+
     Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
-    const Index batch_size = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
-    const Index outputs_number = deltas.dimension(1);
-
-    if (activation_function != "Softmax")
-    {
-        #pragma omp parallel for
-        for (Index i = 0; i < deltas.size(); ++i)
-            deltas.data()[i] *= activation_derivatives.data()[i];
-    }
+    if(activation_function != "Softmax")
+        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
     if (batch_normalization)
         apply_batch_normalization_backward(deltas, forward_propagation, back_propagation);
 
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        type sum = 0;
+    bias_deltas.device(*thread_pool_device) = deltas.sum(array_1(0));
 
-        for (Index i = 0; i < batch_size; ++i)
-            sum += deltas(i, j);
-
-        bias_deltas(j) = sum;
-    }
-
-    #pragma omp parallel for
-    for (Index i = 0; i < inputs_number; ++i)
-        for (Index j = 0; j < outputs_number; ++j)
-        {
-            type sum = 0;
-
-            for (Index k = 0; k < batch_size; ++k)
-                sum += inputs(k, i) * deltas(k, j);
-
-            weight_deltas(i, j) = sum;
-        }
+    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
-    {
-        #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < inputs_number; ++j)
-            {
-                type sum = 0;
-
-                for (Index k = 0; k < outputs_number; ++k)
-                    sum += deltas(i, k) * weights(j, k);
-
-                input_deltas(i, j) = sum;
-            }
-    }
+        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 
 void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
-                                        const vector<pair<type*, dimensions>>& delta_pairs,
-                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                        unique_ptr<LayerBackPropagationLM>& back_propagation) const
+                                const vector<pair<type*, dimensions>>& delta_pairs,
+                                unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                unique_ptr<LayerBackPropagationLM>& back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
     TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
-    
-    const Index batch_size = inputs.dimension(0);
+
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
-    const Index weights_number = weights.size();
+
+    const Index biases_number = biases.size();
 
     // Forward propagation
 
@@ -528,48 +436,39 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
 
-    #pragma omp parallel for
-    for(Index i = 0; i < deltas.size(); ++i)
-        deltas.data()[i] *= activation_derivatives.data()[i];
+    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    #pragma omp parallel for
-    for (Index neuron_index = 0; neuron_index < outputs_number; ++neuron_index)
+    squared_errors_Jacobian.slice(array<Index, 2>{0, 0}, array<Index, 2>{deltas.dimension(0), biases_number})
+        .device(*thread_pool_device) = deltas;
+
+    for (Index j = 0; j < outputs_number; j++)
     {
-        auto combination_delta_neuron = deltas.chip(neuron_index, 1);
+        const Tensor<type, 1> delta_j = deltas.chip(j, 1);
 
-        for (Index input_index = 0; input_index < inputs_number; ++input_index)
+        for (Index i = 0; i < inputs_number; i++)
         {
-            auto input_col = inputs.chip(input_index, 1);
-            Index weight_param_index = neuron_index * inputs_number + input_index;
-            auto jacobian_col_for_weight = squared_errors_Jacobian.chip(weight_param_index, 1);
-            jacobian_col_for_weight = combination_delta_neuron * input_col;
-        }
+            const Tensor<type, 1> input_i = inputs.chip(i, 1);
 
-        Index bias_param_index = weights_number + neuron_index;
-        auto jacobian_col_for_bias = squared_errors_Jacobian.chip(bias_param_index, 1);
-        jacobian_col_for_bias = combination_delta_neuron;
+            const Tensor<type, 1> derivative = delta_j * input_i;
+
+            const Index weight_column_index = biases_number + (j * inputs_number) + i;
+
+            squared_errors_Jacobian.chip(weight_column_index, 1)
+                .device(*thread_pool_device) = derivative;
+        }
     }
 
     if (!is_first_layer)
     {
-        #pragma omp parallel for
-        for (Index i = 0; i < batch_size; ++i)
-            for (Index j = 0; j < inputs_number; ++j)
-            {
-                type sum = 0;
-
-                for (Index k = 0; k < outputs_number; ++k)
-                    sum += deltas(i, k) * weights(j, k);
-
-                input_deltas(i, j) = sum;
-            }
+        const Tensor<type, 2> weights_transposed = weights.shuffle(array<int, 2>{1, 0});
+        input_deltas.device(*thread_pool_device) = deltas.contract(weights_transposed, axes(1, 0));
     }
 }
 
 
 void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
-                                                   const Index& index,
-                                                   Tensor<type, 2>& squared_errors_Jacobian) const
+                                                const Index& index,
+                                                Tensor<type, 2>& squared_errors_Jacobian) const
 {
     const Index parameters_number = get_parameters_number();
     const Index batch_size = back_propagation->batch_size;
@@ -586,15 +485,15 @@ void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationL
 
 
 string Dense2d::get_expression(const vector<string>& new_input_names,
-                                       const vector<string>& new_output_names) const
+                               const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
-       ? get_default_input_names()
-       : new_input_names;
+                                           ? get_default_input_names()
+                                           : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
-        ? get_default_output_names()
-        : new_output_names;
+                                            ? get_default_output_names()
+                                            : new_output_names;
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
@@ -689,7 +588,7 @@ void Dense2d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));
     add_xml_element(printer, "Weights", tensor_to_string<type, 2>(weights));
 
-    printer.CloseElement();  
+    printer.CloseElement();
 }
 
 
@@ -698,7 +597,7 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
     if (!new_layer) return;
 
     layer = new_layer;
-    
+
     batch_size = new_batch_size;
 
     const Index outputs_number = layer->get_outputs_number();
@@ -723,13 +622,13 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
 pair<type *, dimensions> Dense2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
-    
+
     return pair<type *, dimensions>((type*)outputs.data(), {{batch_size, output_dimensions[0]}});
 }
 
 
 Dense2dForwardPropagation::Dense2dForwardPropagation(const Index& new_batch_size, Layer *new_layer)
-: LayerForwardPropagation()
+    : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
@@ -796,8 +695,8 @@ vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() c
     const auto* dense_layer = static_cast<const Dense2d*>(layer);
 
     vector<pair<type*, Index>> delta_pairs =
-    {{const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
-     {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}};
+        {{const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
+         {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}};
 
     if (dense_layer->get_batch_normalization())
     {
@@ -852,51 +751,29 @@ vector<pair<type*, dimensions>> Dense2dLayerBackPropagationLM::get_input_derivat
 void Dense2dLayerBackPropagationLM::print() const
 {
     cout << "Squared errors Jacobian: " << endl
-        << squared_errors_Jacobian << endl;
+         << squared_errors_Jacobian << endl;
     cout << "Input derivatives: " << endl
-        << input_deltas << endl;
+         << input_deltas << endl;
 }
 
 
 void Dense2d::normalization(Tensor<type, 1> &means,
                             Tensor<type, 1> &standard_deviations,
+                            const Tensor<type, 2> &inputs,
                             Tensor<type, 2> &outputs) const
 {
-    const Index batch_size = outputs.dimension(0);
-    const Index outputs_number = outputs.dimension(1);
+    const array<Index, 2> rows({outputs.dimension(0), 1});
 
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        type mean_sum = 0;
+    const array<int, 1> axis_x({0});
 
-        for (Index i = 0; i < batch_size; ++i)
-            mean_sum += outputs(i, j);
+    means.device(*thread_pool_device) = outputs.mean(axis_x);
 
-        means(j) = mean_sum / type(batch_size);
+    standard_deviations.device(*thread_pool_device)
+        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
 
-        type variance_sum = 0;
-        const type current_mean = means(j);
-
-        for (Index i = 0; i < batch_size; ++i)
-        {
-            type diff = outputs(i, j) - current_mean;
-            variance_sum += diff * diff;
-        }
-
-        standard_deviations(j) = sqrt(variance_sum / type(batch_size));
-    }
-
-    #pragma omp parallel for
-    for (Index j = 0; j < outputs_number; ++j)
-    {
-        const type current_mean = means(j);
-        const type current_std_dev = standard_deviations(j);
-
-        if (std::abs(current_std_dev) > static_cast<type>(1.0e-9))
-            for (Index i = 0; i < batch_size; ++i)
-                outputs(i, j) = (outputs(i, j) - current_mean) / current_std_dev;
-    }
+    outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
+        //shifts.broadcast(rows);
+        //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
 }
 
 
@@ -931,24 +808,24 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     // Combinations
 
     cublasSgemm(cublas_handle,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        batch_size, outputs_number, inputs_number,
-        &alpha,
-        inputs_device[0],
-        batch_size,
-        weights_device,
-        inputs_number,
-        &beta,
-        outputs_buffer,
-        batch_size);
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                batch_size, outputs_number, inputs_number,
+                &alpha,
+                inputs_device[0],
+                batch_size,
+                weights_device,
+                inputs_number,
+                &beta,
+                outputs_buffer,
+                batch_size);
 
     cudnnStatus_t status = cudnnAddTensor(cudnn_handle,
-        &alpha,
-        biases_tensor_descriptor,
-        biases_device,
-        &beta_add,
-        output_tensor_descriptor,
-        outputs_buffer);
+                                          &alpha,
+                                          biases_tensor_descriptor,
+                                          biases_device,
+                                          &beta_add,
+                                          output_tensor_descriptor,
+                                          outputs_buffer);
 
     if (status != CUDNN_STATUS_SUCCESS)
         cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(status) << endl;
@@ -1010,36 +887,36 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     else if (activation_function == "Softmax")
         cudnnSoftmaxForward(cudnn_handle,
-            CUDNN_SOFTMAX_ACCURATE,
-            CUDNN_SOFTMAX_MODE_CHANNEL,
-            &alpha,
-            output_softmax_tensor_descriptor,
-            combinations,
-            &beta,
-            output_softmax_tensor_descriptor,
-            outputs);
+                            CUDNN_SOFTMAX_ACCURATE,
+                            CUDNN_SOFTMAX_MODE_CHANNEL,
+                            &alpha,
+                            output_softmax_tensor_descriptor,
+                            combinations,
+                            &beta,
+                            output_softmax_tensor_descriptor,
+                            outputs);
     else
         cudnnActivationForward(cudnn_handle,
-            activation_descriptor,
-            &alpha,
-            output_tensor_descriptor,
-            outputs_buffer,
-            &beta,
-            output_tensor_descriptor,
-            outputs);
+                               activation_descriptor,
+                               &alpha,
+                               output_tensor_descriptor,
+                               outputs_buffer,
+                               &beta,
+                               output_tensor_descriptor,
+                               outputs);
 
     // Droput
 
     if (is_training && activation_function != "Softmax" && get_dropout_rate() > type(0))
     {
         status = cudnnDropoutForward(cudnn_handle,
-            dense2d_layer_forward_propagation_cuda->dropout_descriptor,
-            output_tensor_descriptor,
-            outputs,
-            output_tensor_descriptor,
-            outputs,
-            dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
-            dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
+                                     dense2d_layer_forward_propagation_cuda->dropout_descriptor,
+                                     output_tensor_descriptor,
+                                     outputs,
+                                     output_tensor_descriptor,
+                                     outputs,
+                                     dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
+                                     dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
 
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
@@ -1087,13 +964,13 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
     if (get_dropout_rate() > type(0) && activation_function != "Softmax")
     {
         cudnnStatus_t status = cudnnDropoutBackward(cudnn_handle,
-            dense2d_layer_forward_propagation_cuda->dropout_descriptor,
-            deltas_tensor_descriptor,
-            deltas_device[0],
-            deltas_tensor_descriptor,
-            deltas_device[0],
-            dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
-            dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
+                                                    dense2d_layer_forward_propagation_cuda->dropout_descriptor,
+                                                    deltas_tensor_descriptor,
+                                                    deltas_device[0],
+                                                    deltas_tensor_descriptor,
+                                                    deltas_device[0],
+                                                    dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
+                                                    dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
 
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(status) << endl;
@@ -1106,17 +983,17 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         if (use_combinations)
         {
             cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
-                activation_descriptor,
-                &alpha,
-                deltas_tensor_descriptor,
-                outputs,
-                deltas_tensor_descriptor,
-                deltas_device[0],
-                deltas_tensor_descriptor,
-                combinations,
-                &beta,
-                deltas_tensor_descriptor,
-                deltas_device[0]);
+                                                           activation_descriptor,
+                                                           &alpha,
+                                                           deltas_tensor_descriptor,
+                                                           outputs,
+                                                           deltas_tensor_descriptor,
+                                                           deltas_device[0],
+                                                           deltas_tensor_descriptor,
+                                                           combinations,
+                                                           &beta,
+                                                           deltas_tensor_descriptor,
+                                                           deltas_device[0]);
 
             if (status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
@@ -1124,17 +1001,17 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
         else
         {
             cudnnStatus_t status = cudnnActivationBackward(cudnn_handle,
-                activation_descriptor,
-                &alpha,
-                deltas_tensor_descriptor,
-                outputs,
-                deltas_tensor_descriptor,
-                deltas_device[0],
-                deltas_tensor_descriptor,
-                outputs,
-                &beta,
-                deltas_tensor_descriptor,
-                deltas_device[0]);
+                                                           activation_descriptor,
+                                                           &alpha,
+                                                           deltas_tensor_descriptor,
+                                                           outputs,
+                                                           deltas_tensor_descriptor,
+                                                           deltas_device[0],
+                                                           deltas_tensor_descriptor,
+                                                           outputs,
+                                                           &beta,
+                                                           deltas_tensor_descriptor,
+                                                           deltas_device[0]);
 
             if (status != CUDNN_STATUS_SUCCESS)
                 cout << "cudnnActivationBackward failed: " << cudnnGetErrorString(status) << endl;
@@ -1171,57 +1048,57 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
     // Bias derivatives
 
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
-        outputs_number,
-        1,
-        batch_size,
-        &alpha,
-        deltas_device[0],
-        batch_size,
-        ones,
-        batch_size,
-        &beta,
-        bias_deltas,
-        outputs_number);
+                outputs_number,
+                1,
+                batch_size,
+                &alpha,
+                deltas_device[0],
+                batch_size,
+                ones,
+                batch_size,
+                &beta,
+                bias_deltas,
+                outputs_number);
 
     // Weight derivatives
 
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
-        inputs_number,
-        outputs_number,
-        batch_size,
-        &alpha,
-        inputs_device[0],
-        batch_size,
-        deltas_device[0],
-        batch_size,
-        &beta,
-        weight_deltas,
-        inputs_number);
+                inputs_number,
+                outputs_number,
+                batch_size,
+                &alpha,
+                inputs_device[0],
+                batch_size,
+                deltas_device[0],
+                batch_size,
+                &beta,
+                weight_deltas,
+                inputs_number);
 
     // Input derivatives
 
     cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_T,
-        batch_size,
-        inputs_number,
-        outputs_number,
-        &alpha,
-        deltas_device[0],
-        batch_size,
-        weights_device,
-        inputs_number,
-        &beta,
-        input_deltas,
-        batch_size);
+                batch_size,
+                inputs_number,
+                outputs_number,
+                &alpha,
+                deltas_device[0],
+                batch_size,
+                weights_device,
+                inputs_number,
+                &beta,
+                input_deltas,
+                batch_size);
 }
 
 
 vector<pair<float*, Index>> Dense2d::get_parameter_pair_device() const
 {
     vector<pair<float*, Index>> parameter_pairs =
-    {
-        {biases_device, biases.size()},
-        {weights_device, weights.size()}
-    };
+        {
+            {biases_device, biases.size()},
+            {weights_device, weights.size()}
+        };
 
     if (batch_normalization)
     {
@@ -1354,12 +1231,12 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     cudnnCreateTensorDescriptor(&biases_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(biases_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        1,
-        outputs_number,
-        1,
-        1);
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               1,
+                               outputs_number,
+                               1,
+                               1);
 
     // Outputs
 
@@ -1374,22 +1251,22 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(output_softmax_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        1,
-        outputs_number,
-        batch_size,
-        1);
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               1,
+                               outputs_number,
+                               batch_size,
+                               1);
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(output_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        batch_size,
-        outputs_number,
-        1,
-        1);
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               batch_size,
+                               outputs_number,
+                               1,
+                               1);
 
     //Dropout
 
@@ -1408,11 +1285,11 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         CHECK_CUDA(cudaMalloc(&dropout_states, dropout_states_size));
 
         cudnnSetDropoutDescriptor(dropout_descriptor,
-            dense2d_layer->get_cudnn_handle(),
-            static_cast<float>(dense2d_layer->get_dropout_rate()),
-            dropout_states,
-            dropout_states_size,
-            dropout_seed);
+                                  dense2d_layer->get_cudnn_handle(),
+                                  static_cast<float>(dense2d_layer->get_dropout_rate()),
+                                  dropout_states,
+                                  dropout_states_size,
+                                  dropout_seed);
 
         cudnnDropoutGetReserveSpaceSize(output_tensor_descriptor, &dropout_reserve_space_size);
         CHECK_CUDA(cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size));
@@ -1516,7 +1393,7 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     CUDA_MALLOC_AND_REPORT(weight_deltas_device, inputs_number * outputs_number * sizeof(float));
 
     // Input deltas
-    
+
     //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
     CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(float));
 
@@ -1525,12 +1402,12 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
     cudnnCreateTensorDescriptor(&deltas_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(deltas_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        batch_size,
-        outputs_number,
-        1,
-        1);
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               batch_size,
+                               outputs_number,
+                               1,
+                               1);
 
     // Batch Normalization
 
@@ -1553,10 +1430,10 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
     const Index bias_deltas_size = dense_layer->get_output_dimensions()[0];
 
     vector<pair<float*, Index>> delta_pairs =
-    {
-        { bias_deltas_device,   bias_deltas_size },
-        { weight_deltas_device, weight_deltas_size }
-    };
+        {
+            { bias_deltas_device,   bias_deltas_size },
+            { weight_deltas_device, weight_deltas_size }
+        };
 
     if (dense_layer->get_batch_normalization())
     {

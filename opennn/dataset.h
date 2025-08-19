@@ -41,10 +41,6 @@ public:
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 
-    //enum class string{Training, Selection, Testing, None};
-
-    //enum class string{Id, Input, Target, Time, None, Decoder};
-
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
     // Structs
@@ -199,7 +195,7 @@ public:
 
     const bool& get_display() const;
 
-    bool is_empty();
+    bool is_empty() const;
 
     dimensions get_input_dimensions() const;
     dimensions get_target_dimensions() const;
@@ -208,15 +204,17 @@ public:
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
 
-    void set(const filesystem::path&, 
-             const string&, 
-             const bool& = true, 
-             const bool& = false, 
+    void set(const filesystem::path&,
+             const string&,
+             const bool& = true,
+             const bool& = false,
              const Dataset::Codification& = Codification::UTF8);
 
     void set(const filesystem::path&);
 
     void set_default();
+
+    void set_threads_number(const int&);
 
     // Samples set
 
@@ -336,7 +334,7 @@ public:
     vector<Descriptives> calculate_raw_variable_descriptives_categories(const Index&) const;
 
     vector<Descriptives> calculate_variable_descriptives(const string&) const;
- 
+
     vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
     //Tensor<type, 1> calculate_used_variables_minimums() const;
@@ -484,8 +482,8 @@ public:
                                    const vector<Index>&,
                                    type*) const;
 
-    virtual void fill_input_tensor_row_major(const vector<Index>&, 
-                                             const vector<Index>&, 
+    virtual void fill_input_tensor_row_major(const vector<Index>&,
+                                             const vector<Index>&,
                                              type*) const;
 
     virtual void fill_target_tensor(const vector<Index>&,
@@ -498,6 +496,9 @@ public:
 
 
 protected:
+
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     // DATA
 
@@ -553,8 +554,8 @@ protected:
 
     bool display = true;
 
-    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good"};
-    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad" };
+    const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
+    const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
 };
 
@@ -593,6 +594,9 @@ struct Batch
 
     dimensions target_dimensions;
     Tensor<type, 1> target_tensor;
+
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 };
 
 #ifdef OPENNN_CUDA
@@ -645,7 +649,6 @@ struct BatchCuda
 };
 
 #endif
-
 
 }
 

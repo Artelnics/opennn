@@ -40,13 +40,16 @@ int main()
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
+        // dataset.scale_data();
+        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+        // dataset.set_sample_uses("Training");
+        dataset.print();
+
         dataset.scale_data();
 
-        dataset.set_sample_uses("Training");
-
         ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
-        //approximation_network.print();
-
+        approximation_network.print();
+        cout << "-----------------------------" << endl;
         NormalizedSquaredError loss(&approximation_network, &dataset);
 
         //cout << loss.calculate_gradient() << endl;
@@ -56,20 +59,20 @@ int main()
         loss.set_regularization_method("L1");
         loss.set_regularization_weight(0.0);
 
-        LevenbergMarquardtAlgorithm optimizer(&loss);
+        // LevenbergMarquardtAlgorithm optimizer(&loss);
 
-        optimizer.train();
-/*
-        // TrainingStrategy training_strategy(&approximation_network, &dataset);
+        // optimizer.train();
+
+        TrainingStrategy training_strategy(&approximation_network, &dataset);
 
         // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
 
-        //TrainingResults training_results = training_strategy.train();
+        TrainingResults training_results = training_strategy.train();
 
-        // TestingAnalysis testing_analysis(&approximation_network, &dataset);
-        // cout << "Goodness of fit analysis:\n" << endl;
-        // testing_analysis.print_goodness_of_fit_analysis();
-*/
+        TestingAnalysis testing_analysis(&approximation_network, &dataset);
+        cout << "Goodness of fit analysis:\n" << endl;
+        testing_analysis.print_goodness_of_fit_analysis();
+
         cout << "Good bye!" << endl;
 
         return 0;

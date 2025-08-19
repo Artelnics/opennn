@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O S S   I N D E X   C L A S S   H E A D E R                         
+//   L O S S   I N D E X   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -36,129 +36,139 @@ class LossIndex
 
 public:
 
-   LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
+    ~LossIndex()
+    {
+        if(thread_pool != nullptr)
+            thread_pool.reset();
+        if(thread_pool_device != nullptr)
+            thread_pool_device.reset();
+    }
 
-   inline NeuralNetwork* get_neural_network() const 
-   {
-      return neural_network;
-   }
+    enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
-   inline Dataset* get_dataset() const
-   {
-      return dataset;
-   }
+    inline NeuralNetwork* get_neural_network() const
+    {
+        return neural_network;
+    }
 
-   const type& get_regularization_weight() const;
+    inline Dataset* get_dataset() const
+    {
+        return dataset;
+    }
 
-   const bool& get_display() const;
+    const type& get_regularization_weight() const;
 
-   bool has_neural_network() const;
+    const bool& get_display() const;
 
-   bool has_dataset() const;
+    bool has_neural_network() const;
 
-   string get_regularization_method() const;
+    bool has_dataset() const;
 
-   void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    string get_regularization_method() const;
 
-   void set_neural_network(const NeuralNetwork*);
+    void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-   virtual void set_dataset(const Dataset*);
+    void set_threads_number(const int&);
 
-   void set_regularization_method(const string&);
-   void set_regularization_weight(const type&);
+    void set_neural_network(const NeuralNetwork*);
 
-   void set_display(const bool&);
+    virtual void set_dataset(const Dataset*);
 
-   virtual void set_normalization_coefficient() {}
+    void set_regularization_method(const string&);
+    void set_regularization_weight(const type&);
 
-   virtual type get_Minkowski_parameter() const { return 1.5; }
+    void set_display(const bool&);
 
-   // Back propagation
+    virtual void set_normalization_coefficient() {}
 
-   virtual void calculate_error(const Batch&,
-                                const ForwardPropagation&,
-                                BackPropagation&) const = 0;
+    virtual type get_Minkowski_parameter() const { return 1.5; }
 
-   void add_regularization(BackPropagation&) const;
-   void add_regularization_lm(BackPropagationLM&) const;
+    // Back propagation
 
-   virtual void calculate_output_delta(const Batch&,
-                                       ForwardPropagation&,
-                                       BackPropagation&) const = 0;
+    virtual void calculate_error(const Batch&,
+                                 const ForwardPropagation&,
+                                 BackPropagation&) const = 0;
 
-   void calculate_layers_error_gradient(const Batch&,
+    void add_regularization(BackPropagation&) const;
+    void add_regularization_lm(BackPropagationLM&) const;
+
+    virtual void calculate_output_delta(const Batch&,
                                         ForwardPropagation&,
-                                        BackPropagation&) const;
+                                        BackPropagation&) const = 0;
 
-   void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
+    void calculate_layers_error_gradient(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&) const;
 
-   void back_propagate(const Batch&,
-                       ForwardPropagation&,
-                       BackPropagation&) const;
+    void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
-   // Back propagation LM
+    void back_propagate(const Batch&,
+                        ForwardPropagation&,
+                        BackPropagation&) const;
 
-   void calculate_errors_lm(const Batch&,
-                            const ForwardPropagation&,
-                            BackPropagationLM&) const; 
+    // Back propagation LM
 
-   virtual void calculate_squared_errors_lm(const Batch&,
-                                            const ForwardPropagation&,
-                                            BackPropagationLM&) const;
+    void calculate_errors_lm(const Batch&,
+                             const ForwardPropagation&,
+                             BackPropagationLM&) const;
 
-   virtual void calculate_error_lm(const Batch&,
-                                   const ForwardPropagation&,
-                                   BackPropagationLM&) const {}
+    virtual void calculate_squared_errors_lm(const Batch&,
+                                             const ForwardPropagation&,
+                                             BackPropagationLM&) const;
 
-   virtual void calculate_output_delta_lm(const Batch&,
-                                          ForwardPropagation&,
-                                          BackPropagationLM&) const {}
+    virtual void calculate_error_lm(const Batch&,
+                                    const ForwardPropagation&,
+                                    BackPropagationLM&) const {}
 
-   void calculate_layers_squared_errors_jacobian_lm(const Batch&,
-                                                    ForwardPropagation&,
-                                                    BackPropagationLM&) const;
-
-   virtual void calculate_error_gradient_lm(const Batch&,
-                                      BackPropagationLM&) const;
-
-   virtual void calculate_error_hessian_lm(const Batch&,
+    virtual void calculate_output_delta_lm(const Batch&,
+                                           ForwardPropagation&,
                                            BackPropagationLM&) const {}
 
-   void back_propagate_lm(const Batch&,
-                          ForwardPropagation&,
-                          BackPropagationLM&) const;
+    void calculate_layers_squared_errors_jacobian_lm(const Batch&,
+                                                     ForwardPropagation&,
+                                                     BackPropagationLM&) const;
 
-   // Regularization
+    virtual void calculate_error_gradient_lm(const Batch&,
+                                             BackPropagationLM&) const;
 
-   type calculate_regularization(const Tensor<type, 1>&) const;
+    virtual void calculate_error_hessian_lm(const Batch&,
+                                            BackPropagationLM&) const {}
 
-   // Serialization
+    void back_propagate_lm(const Batch&,
+                           ForwardPropagation&,
+                           BackPropagationLM&) const;
 
-   virtual void from_XML(const XMLDocument&) = 0;
+    // Regularization
 
-   virtual void to_XML(XMLPrinter&) const;
+    type calculate_regularization(const Tensor<type, 1>&) const;
 
-   void regularization_from_XML(const XMLDocument&);
-   void write_regularization_XML(XMLPrinter&) const;
+    // Serialization
 
-   virtual string get_name() const;
+    virtual void from_XML(const XMLDocument&) = 0;
 
-   // Numerical differentiation
+    virtual void to_XML(XMLPrinter&) const;
 
-   static type calculate_h(const type&);
+    void regularization_from_XML(const XMLDocument&);
+    void write_regularization_XML(XMLPrinter&) const;
 
-   type calculate_numerical_error() const;
+    virtual string get_name() const;
 
-   Tensor<type, 1> calculate_gradient();
+    // Numerical differentiation
 
-   Tensor<type, 1> calculate_numerical_gradient();
-   Tensor<type, 1> calculate_numerical_gradient_lm();
-   Tensor<type, 2> calculate_numerical_jacobian();
-   Tensor<type, 1> calculate_numerical_input_deltas();
-   Tensor<type, 2> calculate_numerical_hessian();
-   Tensor<type, 2> calculate_inverse_hessian();
+    static type calculate_h(const type&);
+
+    type calculate_numerical_error() const;
+
+    Tensor<type, 1> calculate_gradient();
+
+    Tensor<type, 1> calculate_numerical_gradient();
+    Tensor<type, 1> calculate_numerical_gradient_lm();
+    Tensor<type, 2> calculate_numerical_jacobian();
+    Tensor<type, 1> calculate_numerical_input_deltas();
+    Tensor<type, 2> calculate_numerical_hessian();
+    Tensor<type, 2> calculate_inverse_hessian();
 
 #ifdef OPENNN_CUDA
 
@@ -186,7 +196,7 @@ public:
                              BackPropagationCuda&);
 
     void add_regularization_cuda(BackPropagationCuda&) const;
-    
+
 protected:
 
     cublasHandle_t cublas_handle = nullptr;
@@ -197,6 +207,9 @@ protected:
     void print(){}
 
 protected:
+
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 
@@ -217,7 +230,7 @@ struct BackPropagationLM
     void set(const Index& = 0, LossIndex* = nullptr);
 
     void print() const;
-    
+
     pair<type*, dimensions> get_output_deltas_pair() const;
 
     vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
@@ -267,7 +280,7 @@ struct BackPropagation
     NeuralNetworkBackPropagation neural_network;
 
     Tensor<type, 0> error;
-//    type regularization = type(0);
+    //    type regularization = type(0);
     type loss = type(0);
 
     Tensor<type, 2> errors;
@@ -298,7 +311,7 @@ struct BackPropagationCuda
 
     float* get_output_deltas_device() const;
 
-    void print();
+    void print() const;
 
     void free();
 

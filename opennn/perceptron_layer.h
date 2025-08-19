@@ -2,7 +2,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R             
+//   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -47,14 +47,14 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
-    
+
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
     void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
-    void normalization(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 2>&) const;
-    
+    void normalization(Tensor<type, 1>&, Tensor<type, 1>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
     void set_batch_normalization(const bool&);
     void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
     void apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>&, unique_ptr<LayerForwardPropagation>&, unique_ptr<LayerBackPropagation>&) const;
@@ -139,7 +139,7 @@ private:
     Tensor<type, 1> moving_standard_deviations;
 
     type momentum = type(0.9);
-    const type epsilon = 1e-5;
+    const type epsilon = type(1e-5);
 
     string activation_function = "HyperbolicTangent";
 
@@ -229,7 +229,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
     unsigned long long dropout_seed;
 
     void* dropout_reserve_space = nullptr;
-    size_t dropout_reserve_space_size = 0;  
+    size_t dropout_reserve_space_size = 0;
 
     float* bn_saved_mean = nullptr;
     float* bn_saved_inv_variance = nullptr;
@@ -250,7 +250,7 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 
     float* bias_deltas_device = nullptr;
     float* weight_deltas_device = nullptr;
-    
+
     float* ones = nullptr;
 
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;

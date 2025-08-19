@@ -18,8 +18,8 @@ class Convolutional : public Layer
 {
 
 public:
-    enum class Convolution{Valid, 
-                           Same};
+    enum class Convolution{Valid,
+                             Same};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
@@ -104,21 +104,21 @@ public:
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-   // Back propagation
+    // Back propagation
 
-   void back_propagate(const vector<pair<type*, dimensions>>&,
-                       const vector<pair<type*, dimensions>>&,
-                       unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-   void print() const override;
+    void print() const override;
 
 #ifdef OPENNN_CUDA
 
-    public:
+public:
 
     void forward_propagate_cuda(const vector<float*>&,
                                 unique_ptr<LayerForwardPropagationCuda>&,
@@ -165,77 +165,77 @@ protected:
 
 private:
 
-   Tensor<type, 4> weights;
+    Tensor<type, 4> weights;
 
-   Tensor<type, 1> biases;
+    Tensor<type, 1> biases;
 
-   Index row_stride = 1;
+    Index row_stride = 1;
 
-   Index column_stride = 1;
+    Index column_stride = 1;
 
-   dimensions input_dimensions;
+    dimensions input_dimensions;
 
-   Convolution convolution_type = Convolution::Valid;
+    Convolution convolution_type = Convolution::Valid;
 
-   string activation_function = "Linear";
+    string activation_function = "Linear";
 
-   // Batch normalization
+    // Batch normalization
 
-   bool batch_normalization = false;
+    bool batch_normalization = false;
 
-   Tensor<type, 1> moving_means;
-   Tensor<type, 1> moving_standard_deviations;
+    Tensor<type, 1> moving_means;
+    Tensor<type, 1> moving_standard_deviations;
 
-   type momentum = type(0.9);
+    type momentum = type(0.9);
 
-   const type epsilon = 1e-5;
+    const type epsilon = type(1e-5);
 
-   Tensor<type, 1> scales;
-   Tensor<type, 1> offsets;
+    Tensor<type, 1> scales;
+    Tensor<type, 1> offsets;
 };
 
 
 struct ConvolutionalForwardPropagation : LayerForwardPropagation
 {
-   ConvolutionalForwardPropagation(const Index& = 0, Layer* = nullptr);
-      
-   pair<type*, dimensions> get_output_pair() const override;
+    ConvolutionalForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-   void set(const Index& = 0, Layer* = nullptr) override;
+    pair<type*, dimensions> get_output_pair() const override;
 
-   void print() const override;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-   Tensor<type, 4> outputs;
+    void print() const override;
 
-   Tensor<type, 4> preprocessed_inputs;
+    Tensor<type, 4> outputs;
 
-   Tensor<type, 1> means;
-   Tensor<type, 1> standard_deviations;
+    Tensor<type, 4> preprocessed_inputs;
 
-   Tensor<type, 4> activation_derivatives;
+    Tensor<type, 1> means;
+    Tensor<type, 1> standard_deviations;
+
+    Tensor<type, 4> activation_derivatives;
 };
 
 
 struct ConvolutionalBackPropagation : LayerBackPropagation
 {
-   ConvolutionalBackPropagation(const Index& = 0, Layer* = nullptr);
+    ConvolutionalBackPropagation(const Index& = 0, Layer* = nullptr);
 
-   vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-   vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
-   void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-   void print() const override;
+    void print() const override;
 
-   Tensor<type, 1> bias_deltas;
-   Tensor<type, 4> weight_deltas;
-   Tensor<type, 4> input_deltas;
+    Tensor<type, 1> bias_deltas;
+    Tensor<type, 4> weight_deltas;
+    Tensor<type, 4> input_deltas;
 
-   Tensor<type, 4> rotated_weights;
+    Tensor<type, 4> rotated_weights;
 
-   Tensor<type, 1> bn_scale_deltas;
-   Tensor<type, 1> bn_offset_deltas;
+    Tensor<type, 1> bn_scale_deltas;
+    Tensor<type, 1> bn_offset_deltas;
 
 };
 

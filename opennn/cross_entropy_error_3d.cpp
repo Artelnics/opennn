@@ -7,10 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+//#include "tensors.h"
 #include "neural_network.h"
 #include "cross_entropy_error_3d.h"
-#include "probabilistic_layer_3d.h"
+//#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -25,7 +25,7 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
-/*
+    /*
     // Batch
 
     const Index samples_number = batch.get_samples_number();
@@ -76,7 +76,7 @@ void CrossEntropyError3d::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
-    // Probabilistic3d does not have deltas. 
+    // Probabilistic3d does not have deltas.
     // Error combinations derivatives are calculated directly.
 }
 

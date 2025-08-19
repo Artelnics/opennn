@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   Q U A S I - N E W T O N   M E T H O D    C L A S S   H E A D E R      
+//   Q U A S I - N E W T O N   M E T H O D    C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -23,93 +23,93 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-   QuasiNewtonMethod(const LossIndex* = nullptr);
+    QuasiNewtonMethod(const LossIndex* = nullptr);
 
-   // Stopping criteria
+    // Stopping criteria
 
-   const type& get_minimum_loss_decrease() const;
-   const type& get_loss_goal() const;
+    const type& get_minimum_loss_decrease() const;
+    const type& get_loss_goal() const;
 
-   const Index& get_maximum_selection_failures() const;
+    const Index& get_maximum_selection_failures() const;
 
-   // Set
+    // Set
 
-   void set_loss_index(LossIndex*) override;
+    void set_loss_index(LossIndex*) override;
 
-   void set_display(const bool&) override;
+    void set_display(const bool&) override;
 
-   void set_default();
+    void set_default();
 
-   // Stopping criteria
+    // Stopping criteria
 
-   void set_minimum_loss_decrease(const type&);
-   void set_loss_goal(const type&);
+    void set_minimum_loss_decrease(const type&);
+    void set_loss_goal(const type&);
 
-   void set_maximum_selection_failures(const Index&);
+    void set_maximum_selection_failures(const Index&);
 
-   void set_maximum_epochs_number(const Index&);
-   void set_maximum_time(const type&);
+    void set_maximum_epochs_number(const Index&);
+    void set_maximum_time(const type&);
 
-   // Training
+    // Training
 
-   void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
+    void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
 
-   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
+    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
 
-   TrainingResults train() override;
+    TrainingResults train() override;
 
-   string get_name() const override;
+    string get_name() const override;
 
-   // Serialization
-   
-   void from_XML(const XMLDocument&) override;
+    // Serialization
 
-   void to_XML(XMLPrinter&) const override;
-   
-   Tensor<string, 2> to_string_matrix() const override;
+    void from_XML(const XMLDocument&) override;
 
-   type calculate_learning_rate(const Triplet&) const;
+    void to_XML(XMLPrinter&) const override;
 
-   Triplet calculate_bracketing_triplet(const Batch&,
-                                        ForwardPropagation&,
-                                        BackPropagation&,
-                                        QuasiNewtonMethodData&);
+    Tensor<string, 2> to_string_matrix() const override;
 
-   pair<type, type> calculate_directional_point(const Batch&,
-                                                ForwardPropagation&,
-                                                BackPropagation&,
-                                                QuasiNewtonMethodData&,
-                                                const type&);
+    type calculate_learning_rate(const Triplet&) const;
+
+    Triplet calculate_bracketing_triplet(const Batch&,
+                                         ForwardPropagation&,
+                                         BackPropagation&,
+                                         QuasiNewtonMethodData&);
+
+    pair<type, type> calculate_directional_point(const Batch&,
+                                                 ForwardPropagation&,
+                                                 BackPropagation&,
+                                                 QuasiNewtonMethodData&,
+                                                 const type&);
 
 #ifdef OPENNN_CUDA
 
-   TrainingResults train_cuda() override
-   {
-       throw runtime_error("CUDA train_cuda is not implemented for OptimizationMethod: QuasiNewtonMethod");
-   }
+    TrainingResults train_cuda() override
+    {
+        throw runtime_error("CUDA train_cuda is not implemented for OptimizationMethod: QuasiNewtonMethod");
+    }
 
 #endif
 
 
-private: 
+private:
 
-   type first_learning_rate = type(0.01);
+    type first_learning_rate = type(0.01);
 
-   // Stopping criteria
+    // Stopping criteria
 
-   type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
+    type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
 
-   type training_loss_goal;
+    type training_loss_goal;
 
-   Index maximum_selection_failures;
+    Index maximum_selection_failures;
 
-   const type epsilon = numeric_limits<type>::epsilon();
+    const type epsilon = numeric_limits<type>::epsilon();
 
-   type learning_rate_tolerance;
+    type learning_rate_tolerance;
 
-   type loss_tolerance;
+    type loss_tolerance;
 
-   const type golden_ratio = type(1.618);
+    const type golden_ratio = type(1.618);
 };
 
 

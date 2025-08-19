@@ -32,9 +32,9 @@ public:
 
     vector<pair<type*, Index>> get_parameter_pairs() const override;
 
-    void set(const Index& = 0, 
-             const Index& = 0, 
-             const Index& = 0, 
+    void set(const Index& = 0,
+             const Index& = 0,
+             const Index& = 0,
              const string & = "embedding_layer");
 
     void set_dropout_rate(const type&);

@@ -44,14 +44,14 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
         // @todo
-    #endif
+#endif
 
 private:
 
     Index sequence_length;
-        
+
     Tensor<type, 1> gammas;
 
     Tensor<type, 1> betas;
@@ -61,12 +61,12 @@ private:
 
 
 struct Normalization3dForwardPropagation : LayerForwardPropagation
-{        
+{
     Normalization3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = 0);
+    void set(const Index& = 0, Layer* = 0) override;
 
     void print() const override;
 
@@ -82,13 +82,13 @@ struct Normalization3dBackPropagation : LayerBackPropagation
     Normalization3dBackPropagation(const Index& new_batch_size = 0,
                                    Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> gamma_derivatives;
     Tensor<type, 1> beta_derivatives;
@@ -98,12 +98,12 @@ struct Normalization3dBackPropagation : LayerBackPropagation
     Tensor<type, 3> scaled_deltas;
     Tensor<type, 3> standard_deviation_derivatives;
     Tensor<type, 2> aux_2d;
-        
+
 };
 
 
 #ifdef OPENNN_CUDA
-    // @todo
+// @todo
 #endif
 
 }

@@ -83,7 +83,8 @@ public:
                                        const bool&) const;
 
     void forward_propagate_average_pooling(const Tensor<type, 4>&,
-                                           unique_ptr<LayerForwardPropagation>&) const;
+                                           unique_ptr<LayerForwardPropagation>&,
+                                           const bool&) const;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
@@ -149,9 +150,9 @@ private:
 
 
 struct PoolingForwardPropagation : LayerForwardPropagation
-{   
+{
     PoolingForwardPropagation(const Index& = 0, Layer* = nullptr);
-    
+
     pair<type*, dimensions> get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
@@ -195,7 +196,7 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
     void free() override;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
-    
+
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 };
 

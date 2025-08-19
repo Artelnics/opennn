@@ -80,13 +80,13 @@ void Embedding::set(const Index& new_vocabulary_size,
 
     const type half_depth = type(new_embedding_dimension)/2;
 
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
 
     for (Index i = 0; i < sequence_length; i++)
         for (Index j = 0; j < new_embedding_dimension; j++)
             positional_encoding(i, j) = (j < Index(half_depth))
-            ? sin(i / pow(10000, j / half_depth))
-            : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
+                                            ? sin(i / pow(10000, j / half_depth))
+                                            : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
     label = new_label;
 }
@@ -118,7 +118,7 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
         throw runtime_error("Batch size mismatch between inputs and outputs: inputs.dimension(0) = "
                             + to_string(batch_size) + ", outputs.dimension(0) = " + to_string(outputs.dimension(0)));
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_output = outputs.chip(sample_index, 0);
@@ -142,22 +142,19 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 
 
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
-{ 
+{
     const Index batch_size = embeddings.dimension(0);
-    const Index sequence_len = embeddings.dimension(1);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < batch_size; ++i)
-        for (Index j = 0; j < sequence_len; ++j)
-            for (Index k = 0; k < embedding_dimension; ++k)
-                embeddings(i, j, k) += positional_encoding(j, k);
+    embeddings.device(*thread_pool_device) += positional_encoding
+                                                  .reshape(array_3(1, sequence_length, embedding_dimension))
+                                                  .broadcast(array_3(batch_size, 1, 1));
 }
 
 
 void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                  const bool& is_training)
+                                  const bool&)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
 
@@ -202,26 +199,18 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     weight_deltas.setZero();
 
-    if (scale_embedding)
-    {
-        const type scale_factor = sqrt(type(embedding_dimension));
-        type* deltas_data = deltas.data();
+    if(scale_embedding)
+        deltas.device(*thread_pool_device) = deltas*sqrt(type(embedding_dimension));
 
-        #pragma omp parallel for
-        for (Index i = 0; i < deltas.size(); ++i)
-            deltas_data[i] *= scale_factor;
-    }
+#pragma omp parallel for
 
-    #pragma omp parallel for
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
         auto sample_deltas = deltas.chip(sample_index, 0);
 
         for(Index word_index = 0; word_index < sequence_length; word_index++)
-        {
             weight_deltas.chip(Index(inputs(sample_index, word_index)), 0)
-            += sample_deltas.chip(word_index, 0);
-        }
+                += sample_deltas.chip(word_index, 0);
     }
 }
 
@@ -279,7 +268,7 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
     add_xml_element(printer, "Weights", tensor_to_string<type, 2>(weights));
 
-    printer.CloseElement();  
+    printer.CloseElement();
 }
 
 

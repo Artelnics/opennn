@@ -54,12 +54,7 @@ void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
-    const type* inputs_data = inputs.data();
-    type* outputs_data = outputs.data();
-
-    #pragma omp parallel for
-    for (Index i = 0; i < inputs.size(); ++i)
-        outputs_data[i] = inputs_data[i] / type(255);
+    outputs.device(*thread_pool_device) = inputs/type(255);
 }
 
 
@@ -144,7 +139,7 @@ void Scaling4d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     type* outputs_device = scaling_layer_forward_propagation->outputs;
     type* scalar_device = scaling_layer_forward_propagation->scalar_device;
- 
+
     division(size, inputs_device[0], scalar_device, outputs_device);
 }
 
@@ -192,7 +187,7 @@ void Scaling4dForwardPropagationCuda::print() const
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     cout << "Scaling4d Outputs:" << endl
-        << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
+         << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
 }
 
 

@@ -11,6 +11,7 @@
 
 #include "multihead_attention_layer.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
 #include "perceptron_layer.h"
@@ -19,7 +20,6 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
-#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "addition_layer_3d.h"
@@ -104,17 +104,18 @@ public:
                        const dimensions& complexity_dimensions,
                        const dimensions& output_dimensions) : NeuralNetwork()
     {
-        // add_layer(make_unique<Scaling2d>(input_dimensions));
+
+        add_layer(make_unique<Scaling3d>(input_dimensions));
 
         add_layer(make_unique<Recurrent>(input_dimensions,
-                                         output_dimensions));
+                                         complexity_dimensions));
 
-        // add_layer(make_unique<Dense2d>(complexity_dimensions,
-        //                                output_dimensions,
-        //                                "Linear",
-        //                                "recurrent_layer"));
+        add_layer(make_unique<Dense2d>(complexity_dimensions,
+                                       output_dimensions,
+                                       "Linear",
+                                       "recurrent_layer"));
 
-        // add_layer(make_unique<Unscaling>(output_dimensions));
+        add_layer(make_unique<Unscaling>(output_dimensions));
 
         //add_layer(make_unique<Bounding>(output_dimensions));
 
@@ -255,7 +256,7 @@ public:
                                                     false, 
                                                     "stem_conv_1");
 
-        add_layer(move(stem_conv), { last_layer_index });
+        add_layer(std::move(stem_conv), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -266,21 +267,21 @@ public:
                                               Pooling::PoolingMethod::MaxPooling, 
                                               "stem_pool");
 
-        add_layer(move(stem_pool), { last_layer_index });
+        add_layer(std::move(stem_pool), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
         for (size_t stage = 0; stage < blocks_per_stage.size(); ++stage)
         {
-            for (size_t block = 0; block < blocks_per_stage[stage]; ++block)
+            for (Index block = 0; block < blocks_per_stage[stage]; ++block)
             {
-                Index block_input_index = last_layer_index;
+                const Index block_input_index = last_layer_index;
 
                 dimensions current_input_dims = get_layer(block_input_index)->get_output_dimensions();
 
-                Index filters = initial_filters[stage];
+                const Index filters = initial_filters[stage];
 
-                Index stride = (stage > 0 && block == 0) ? 2 : 1;
+                const Index stride = (stage > 0 && block == 0) ? 2 : 1;
 
                 // Main
                 auto conv1 = make_unique<Convolutional>(current_input_dims,
@@ -291,7 +292,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-                add_layer(move(conv1), { block_input_index });
+                add_layer(std::move(conv1), { block_input_index });
 
                 Index main_path_index = get_layers_number() - 1;
 
@@ -303,7 +304,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
-                add_layer(move(conv2), { main_path_index });
+                add_layer(std::move(conv2), { main_path_index });
 
                 main_path_index = get_layers_number() - 1;
 
@@ -320,7 +321,7 @@ public:
                                                                 false,
                                                                 "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
-                    add_layer(move(skip_conv), { block_input_index });
+                    add_layer(std::move(skip_conv), { block_input_index });
 
                     skip_path_index = get_layers_number() - 1;
                 }
@@ -329,7 +330,7 @@ public:
 
                 auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
-                add_layer(move(addition_layer), { main_path_index, skip_path_index });
+                add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
                 last_layer_index = get_layers_number() - 1;
 
@@ -341,7 +342,7 @@ public:
                                                                    false,
                                                                    "s" + to_string(stage) + "b" + to_string(block) + "_relu");
 
-                add_layer(move(activation_layer), { last_layer_index });
+                add_layer(std::move(activation_layer), { last_layer_index });
 
                 last_layer_index = get_layers_number() - 1;
             }
@@ -362,7 +363,7 @@ public:
 
         auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_dimensions());
 
-        add_layer(move(flatten_layer), { last_layer_index });
+        add_layer(std::move(flatten_layer), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -372,7 +373,7 @@ public:
                                                 false,
                                                 "dense_classifier");
 
-        add_layer(move(dense_layer), { last_layer_index });
+        add_layer(std::move(dense_layer), { last_layer_index });
 
         cout << "\n=======================================================================" << endl;
         cout << "          Análisis de la Arquitectura y Flujo de Dimensiones" << endl;
@@ -380,7 +381,7 @@ public:
 
         const auto& all_input_indices = get_layer_input_indices();
 
-        for (size_t i = 0; i < get_layers_number(); ++i)
+        for (Index i = 0; i < get_layers_number(); ++i)
         {
             const auto& layer = get_layer(i);
             const auto& inputs_for_this_layer = all_input_indices[i];
@@ -441,7 +442,7 @@ public:
         const Index embedding_dimension = input_dimensions[2];
 
         const Index heads_number = complexity_dimensions[0];
-        const bool use_causal_mask = false;
+        //const bool use_causal_mask = false;
 
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,

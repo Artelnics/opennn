@@ -51,7 +51,7 @@ Tensor<type, 1> Scaling2d::get_minimums() const
 
     Tensor<type, 1> minimums(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         minimums[i] = descriptives[i].minimum;
 
@@ -65,7 +65,7 @@ Tensor<type, 1> Scaling2d::get_maximums() const
 
     Tensor<type, 1> maximums(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         maximums[i] = descriptives[i].maximum;
 
@@ -79,7 +79,7 @@ Tensor<type, 1> Scaling2d::get_means() const
 
     Tensor<type, 1> means(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         means[i] = descriptives[i].mean;
 
@@ -93,7 +93,7 @@ Tensor<type, 1> Scaling2d::get_standard_deviations() const
 
     Tensor<type, 1> standard_deviations(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         standard_deviations[i] = descriptives[i].standard_deviation;
 
@@ -113,7 +113,7 @@ vector<string> Scaling2d::write_scalers() const
 
     vector<string> scaling_methods_strings(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for (Index i = 0; i < outputs_number; i++)
         scaling_methods_strings[i] = scaler_to_string(scalers[i]);
@@ -128,7 +128,7 @@ vector<string> Scaling2d::write_scalers_text() const
 
     vector<string> scaling_methods_strings(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "no scaling";
@@ -155,7 +155,7 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), new_input_dimensions.end(), 1, multiplies<Index>());
 
     descriptives.resize(new_inputs_number);
-    
+
     for(Index i = 0; i < new_inputs_number; i++)
         descriptives[i].set(type(-1.0), type(1), type(0), type(1));
 
@@ -212,7 +212,7 @@ void Scaling2d::set_scalers(const vector<string>& new_scaling_methods_string)
 
     vector<Scaler> new_scaling_methods(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         new_scaling_methods[i] = string_to_scaler(new_scaling_methods_string[i]);
 
@@ -224,7 +224,7 @@ void Scaling2d::set_scalers(const string& new_scaling_methods_string)
 {
     const Index outputs_number = get_outputs_number();
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         scalers[i] = string_to_scaler(new_scaling_methods_string);
 }
@@ -234,18 +234,17 @@ void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 {
     const Index outputs_number = get_outputs_number();
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         scalers[i] = new_scaling_method;
 }
 
 
 void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool&)
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  const bool&)
 {
     const Index outputs_number = get_outputs_number();
-    const Index batch_size = input_pairs[0].second[0];
 
     Scaling2dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
@@ -255,7 +254,6 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
 
-    #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
@@ -263,24 +261,23 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         {
         case Scaler::None:
             continue;
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             scale_minimum_maximum(outputs, i, descriptives[i], min_range, max_range);
-        break;
+            break;
         case Scaler::MeanStandardDeviation:
             scale_mean_standard_deviation(outputs, i, descriptives[i]);
-        break;
+            break;
         case Scaler::StandardDeviation:
             scale_standard_deviation(outputs, i, descriptives[i]);
-        break;
+            break;
         case Scaler::Logarithm:
             scale_logarithmic(outputs, i);
-        break;
+            break;
         case Scaler::ImageMinMax:
-            for (Index row = 0; row < batch_size; ++row)
-                outputs(row, i) /= type(255);
-        break;
+            outputs.chip(i,1).device(*thread_pool_device) =  outputs.chip(i,1) / type(255);
+            break;
         default:
             throw runtime_error("Unknown scaling method.\n");
         }
@@ -415,8 +412,8 @@ string Scaling2d::write_standard_deviation_expression(const vector<string>& inpu
 string Scaling2d::get_expression(const vector<string>& new_input_names, const vector<string>&) const
 {
     const vector<string> input_names = new_input_names.empty()
-    ? get_default_input_names()
-    : new_input_names;
+                                           ? get_default_input_names()
+                                           : new_input_names;
 
     const Index outputs_number = get_outputs_number();
 
@@ -427,7 +424,7 @@ string Scaling2d::get_expression(const vector<string>& new_input_names, const ve
     for(Index i = 0; i < outputs_number; i++)
     {
         switch(scalers[i])
-        { 
+        {
         case Scaler::None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
             break;
@@ -495,7 +492,7 @@ void Scaling2d::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scaling_methods_string[i]);
 
-        printer.CloseElement();  
+        printer.CloseElement();
     }
 
     printer.CloseElement();
@@ -538,7 +535,7 @@ void Scaling2d::from_XML(const XMLDocument& document)
                 type(stof(descriptives_string[1])),
                 type(stof(descriptives_string[2])),
                 type(stof(descriptives_string[3]))
-            );
+                );
         }
 
         scalers[i] = string_to_scaler(read_xml_string(scaling_neuron_element, "Scaler"));

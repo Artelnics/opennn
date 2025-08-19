@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R             
+//   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -32,16 +32,16 @@ public:
 
     struct GoodnessOfFitAnalysis
     {
-       type determination = type(0);
+        type determination = type(0);
 
-       Tensor<type, 1> targets;
-       Tensor<type, 1> outputs;
+        Tensor<type, 1> targets;
+        Tensor<type, 1> outputs;
 
-       void set(const Tensor<type, 1>&, const Tensor<type, 1>&, const type&);
+        void set(const Tensor<type, 1>&, const Tensor<type, 1>&, const type&);
 
-       void save(const filesystem::path&) const;
+        void save(const filesystem::path&) const;
 
-       void print() const;
+        void print() const;
     };
 
 
@@ -93,6 +93,8 @@ public:
     void set_dataset(Dataset*);
 
     void set_display(const bool&);
+
+    void set_threads_number(const int&);
 
     // Checking
 
@@ -258,7 +260,7 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
 
     void set_batch_size(const Index&);
     Index get_batch_size();
@@ -269,9 +271,12 @@ private:
 
     Index batch_size = 1000;
 
-    #endif
+#endif
 
 private:
+
+    unique_ptr<ThreadPool> thread_pool = nullptr;
+    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

@@ -20,6 +20,11 @@ TestingAnalysis::TestingAnalysis(const NeuralNetwork* new_neural_network, const 
 {
     neural_network = const_cast<NeuralNetwork*>(new_neural_network);
     dataset = const_cast<Dataset*>(new_dataset);
+
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
@@ -38,6 +43,15 @@ Dataset* TestingAnalysis::get_dataset() const
 const bool& TestingAnalysis::get_display() const
 {
     return display;
+}
+
+void TestingAnalysis::set_threads_number(const int& new_threads_number)
+{
+    thread_pool.reset();
+    thread_pool_device.reset();
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -88,7 +102,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        linear_correlation(i) = opennn::linear_correlation(output.chip(i,1), target.chip(i,1));
+        linear_correlation(i) = opennn::linear_correlation(thread_pool_device.get(), output.chip(i,1), target.chip(i,1));
 
     return linear_correlation;
 }
@@ -211,16 +225,16 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> absolute_errors = (testing_target_data - testing_output_data).abs();
 
-   #pragma omp parallel for
-   for(Index i = 0; i < outputs_number; i++)
-   {
-       for(Index j = 0; j < testing_samples_number; j++)
-       {
-           error_data(j, 0, i) = absolute_errors(j,i);
-           error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
-           error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
-         }
-   }
+#pragma omp parallel for
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        for(Index j = 0; j < testing_samples_number; j++)
+        {
+            error_data(j, 0, i) = absolute_errors(j,i);
+            error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
+            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
+        }
+    }
     return error_data;
 }
 
@@ -271,14 +285,14 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     Tensor<type, 2> error_data(testing_samples_number, outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
-       for(Index j = 0; j < outputs_number; j++)
+        for(Index j = 0; j < outputs_number; j++)
         {
             error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
-       }
+        }
     }
 
     return error_data;
@@ -491,22 +505,12 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 {
     const Index batch_size = outputs.dimension(0);
 
-    const Index total_elements = outputs.size();
-
     Tensor<type, 1> errors(4);
 
-    type sum_of_squares = type(0);
-    const type* outputs_data = outputs.data();
-    const type* targets_data = targets.data();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    #pragma omp parallel for reduction(+:sum_of_squares)
-    for (Index i = 0; i < total_elements; ++i)
-    {
-        const type diff = outputs_data[i] - targets_data[i];
-        sum_of_squares += diff * diff;
-    }
-
-    errors(0) = sqrt(sum_of_squares);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(batch_size);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -545,18 +549,10 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const st
 
     // Results
 
-    type sum_of_squares = type(0);
-    const type* outputs_data = outputs.data();
-    const type* targets_data = targets.data();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    #pragma omp parallel for reduction(+:sum_of_squares)
-    for (Index i = 0; i < outputs.size(); ++i)
-    {
-        const type diff = outputs_data[i] - targets_data[i];
-        sum_of_squares += diff * diff;
-    }
-
-    errors(0) = sqrt(sum_of_squares);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -585,18 +581,10 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 
     // Results
 
-    type sum_of_squares = type(0);
-    const type* outputs_data = outputs.data();
-    const type* targets_data = targets.data();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    #pragma omp parallel for reduction(+:sum_of_squares)
-    for (Index i = 0; i < outputs.size(); ++i)
-    {
-        const type diff = outputs_data[i] - targets_data[i];
-        sum_of_squares += diff * diff;
-    }
-
-    errors(0) = sqrt(sum_of_squares);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -609,41 +597,24 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Index samples_number = targets.dimension(0);
-    const Index targets_number = targets.dimension(1);
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    // Mean squared error
-
-    type mean_squared_error = type(0);
-    const Index total_size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-
-    #pragma omp parallel for reduction(+:mean_squared_error)
-    for (Index i = 0; i < total_size; ++i)
-    {
-        const type diff = outputs_data[i] - targets_data[i];
-        mean_squared_error += diff * diff;
-    }
-
-    // Normalization coefficient
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
     type normalization_coefficient = type(0);
 
-    #pragma omp parallel for reduction(+:normalization_coefficient)
-    for (Index i = 0; i < samples_number; ++i)
+    Tensor<type, 0> norm;
+
+    for(Index i = 0; i < samples_number; i++)
     {
-        type row_sum_of_squares = type(0);
-        for (Index j = 0; j < targets_number; ++j)
-        {
-            const type diff = targets(i, j) - targets_mean(j);
-            row_sum_of_squares += diff * diff;
-        }
-        normalization_coefficient += row_sum_of_squares;
+        norm.device(*thread_pool_device) = (targets.chip(i, 0) - targets_mean).square().sum();
+
+        normalization_coefficient += norm(0);
     }
 
-    return mean_squared_error / normalization_coefficient;
+    return mean_squared_error()/normalization_coefficient;
 }
 
 
@@ -658,7 +629,8 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
     type cross_entropy_error_2d = type(0);
 
-    #pragma omp parallel for reduction(+:cross_entropy_error_2d)
+#pragma omp parallel for reduction(+:cross_entropy_error_2d)
+
     for(Index i = 0; i < testing_samples_number; i++)
     {
         outputs_row = outputs.chip(i, 0);
@@ -669,7 +641,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
             outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), numeric_limits<type>::max());
 
             cross_entropy_error_2d -=
-                    targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
+                targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
         }
     }
 
@@ -709,8 +681,6 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
                                                        const Tensor<type, 2>& outputs,
                                                        const Tensor<type, 1>& weights) const
 {
-    // Weights
-
     type negatives_weight;
     type positives_weight;
 
@@ -735,23 +705,21 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         negatives_weight = weights[1];
     }
 
-    // Mean squared error
+    const Tensor<bool, 2> if_sentence = (targets == targets.constant(type(1))).cast<bool>();
+    const Tensor<bool, 2> else_sentence = (targets == targets.constant(type(0))).cast<bool>();
 
-    const Index size = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
+    Tensor<type, 2> f_1(targets.dimension(0), targets.dimension(1));
+    Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
+    Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-    type mean_squared_error = type(0);
+    f_1.device(*thread_pool_device) = (targets - outputs).square() * positives_weight;
 
-    #pragma omp parallel for reduction(+:mean_squared_error)
-    for (Index i = 0; i < size; ++i)
-    {
-        const type diff = targets_data[i] - outputs_data[i];
-        const type weight = (targets_data[i] == type(1)) ? positives_weight : negatives_weight;
-        mean_squared_error += (diff * diff) * weight;
-    }
+    f_2.device(*thread_pool_device) = (targets - outputs).square()*negatives_weight;
 
-    // Normalization coefficient
+    f_3.device(*thread_pool_device) = targets.constant(type(0));
+
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     Index negatives = 0;
 
@@ -763,7 +731,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
 
-    return mean_squared_error / normalization_coefficient;
+    return mean_squared_error(0)/normalization_coefficient;
 }
 
 
@@ -771,15 +739,10 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
                                                 const Tensor<type, 2>& outputs,
                                                 const type minkowski_parameter) const
 {
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
-    type error_sum = type(0);
+    Tensor<type, 0> minkowski_error;
+    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter);
 
-    #pragma omp parallel for reduction(+:error_sum)
-    for (Index i = 0; i < targets.size(); ++i)
-        error_sum += pow(std::abs(outputs_data[i] - targets_data[i]), minkowski_parameter);
-
-    return pow(error_sum, type(1.0) / minkowski_parameter);
+    return minkowski_error();
 }
 
 
@@ -812,36 +775,22 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 
 type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
 {
-    const Index n = targets.size();
-    const type* targets_data = targets.data();
-    const type* outputs_data = outputs.data();
+    Tensor<type, 0> targets_mean;
+    targets_mean.device(*thread_pool_device) = targets.mean();
 
-    const Tensor<type, 0> targets_sum_tensor = targets.sum();
-    const type targets_mean = targets_sum_tensor(0) / type(n);
+    Tensor<type, 0> outputs_mean;
+    outputs_mean.device(*thread_pool_device) = outputs.mean();
 
-    const Tensor<type, 0> outputs_sum_tensor = outputs.sum();
-    const type outputs_mean = outputs_sum_tensor(0) / type(n);
+    Tensor<type,0> numerator;
+    numerator.device(*thread_pool_device) = ((-targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
 
-    type numerator = type(0);
-    type denominator_targets = type(0);
-    type denominator_outputs = type(0);
+    Tensor<type,0> denominator;
+    denominator.device(*thread_pool_device) = ((-targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
 
-    #pragma omp parallel for reduction(+:numerator, denominator_targets, denominator_outputs)
-    for (Index i = 0; i < n; ++i)
-    {
-        const type t_diff = targets_data[i] - targets_mean;
-        const type o_diff = outputs_data[i] - outputs_mean;
-        numerator += t_diff * o_diff;
-        denominator_targets += t_diff * t_diff;
-        denominator_outputs += o_diff * o_diff;
-    }
+    if(denominator(0) == type(0))
+        denominator(0) = 1;
 
-    const type denominator = sqrt(denominator_targets * denominator_outputs);
-
-    if(denominator == type(0))
-        return (numerator * numerator);
-
-    return (numerator * numerator) / (denominator * denominator);
+    return (numerator(0)*numerator(0))/(denominator(0)*denominator(0));
 }
 
 
@@ -888,7 +837,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 
     if(confusion_sum != testing_samples_number)
         throw runtime_error("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
-                            "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
+                                                                                                    "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
 
     return confusion;
 }
@@ -902,7 +851,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
 
     if(targets_number != outputs.dimension(1))
         throw runtime_error("Number of targets (" + to_string(targets_number) + ") "
-                            "must be equal to number of outputs (" + to_string(outputs.dimension(1)) + ").\n");
+                                                                                "must be equal to number of outputs (" + to_string(outputs.dimension(1)) + ").\n");
 
     Tensor<Index, 2> confusion(targets_number + 1, targets_number + 1);
     confusion.setZero();
@@ -962,7 +911,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_thres
                                   input_dimensions[0],
                                   input_dimensions[1],
                                   input_dimensions[2]);
-        
+
         memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs<4,2>(inputs_4d);
@@ -1142,7 +1091,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
     points_number = maximum_points_number;
 
-   if(targets.dimension(1) != 1)
+    if(targets.dimension(1) != 1)
         throw runtime_error("Number of of target variables (" +  to_string(targets.dimension(1)) + ") must be one.\n");
 
     if(outputs.dimension(1) != 1)
@@ -1216,8 +1165,8 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 
 
 type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curve) const
-{        
-    type area_under_curve = type(0);        
+{
+    type area_under_curve = type(0);
 
     for(Index i = 1; i < roc_curve.dimension(0); i++)
         area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
@@ -1247,8 +1196,8 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     const type Q_2 = (type(2.0) *area_under_curve*area_under_curve)/(type(1) *area_under_curve);
 
     const type confidence_limit = type(type(1.64485)*sqrt((area_under_curve*(type(1) - area_under_curve)
-                                + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
-                                + (type(total_negatives) - type(1))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives))));
+                                                             + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
+                                                             + (type(total_negatives) - type(1))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives))));
 
     return confidence_limit;
 }
@@ -1337,7 +1286,7 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 
         for(Index j = 0; j < maximum_index; j++)
             if(double(sorted_targets(j)) == 1.0)
-                 positives++;
+                positives++;
 
         cumulative_gain(i + 1, 0) = percentage;
         cumulative_gain(i + 1, 1) = type(positives)/type(total_positives);
@@ -1392,7 +1341,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
         for(Index j = 0; j < maximum_index; j++)
             if(sorted_targets(j) < NUMERIC_LIMITS_MIN)
-                 negatives++;
+                negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
         negative_cumulative_gain(i + 1, 1) = type(negatives)/type(total_negatives);
@@ -1426,7 +1375,7 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
     lift_chart(0,0) = type(0);
     lift_chart(0,1) = type(1);
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for(Index i = 1; i < rows_number; i++)
     {
@@ -1473,7 +1422,7 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         percentage += percentage_increment;
 
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
-        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
+            && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > type(0))
         {
             maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
             maximum_gain(0) = percentage;
@@ -1565,9 +1514,9 @@ vector<Index> TestingAnalysis::calculate_false_positive_samples(const Tensor<typ
 
 
 vector<Index> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
-                                                                   const Tensor<type, 2>& outputs,
-                                                                   const vector<Index>& testing_indices,
-                                                                   const type& decision_threshold) const
+                                                                const Tensor<type, 2>& outputs,
+                                                                const vector<Index>& testing_indices,
+                                                                const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -1602,7 +1551,7 @@ vector<Index> TestingAnalysis::calculate_true_negative_samples(const Tensor<type
             true_negatives_indices_copy[index++] = testing_indices[i];
 
     vector<Index> true_negatives_indices(true_negatives_indices_copy.begin(),
-        true_negatives_indices_copy.begin() + index);
+                                         true_negatives_indices_copy.begin() + index);
 
     return true_negatives_indices;
 }
@@ -1625,12 +1574,12 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() c
 
     const Tensor<Index, 0> total_sum = confusion_matrix.sum();
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < confusion_matrix.dimension(0); i++)
         for(Index j = 0; j < confusion_matrix.dimension(1); j++)
             i == j
-            ? diagonal_sum += type(confusion_matrix(i, j))
-            : off_diagonal_sum += type(confusion_matrix(i, j));
+                ? diagonal_sum += type(confusion_matrix(i, j))
+                : off_diagonal_sum += type(confusion_matrix(i, j));
 
     multiple_classification_tests(0) = diagonal_sum/type(total_sum());
     multiple_classification_tests(1) = off_diagonal_sum/type(total_sum());
@@ -1703,8 +1652,8 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
-                                                                                    const Tensor<type, 2>& outputs,
-                                                                                    const vector<Index>& testing_indices) const
+                                                                                     const Tensor<type, 2>& outputs,
+                                                                                     const vector<Index>& testing_indices) const
 {
     const Index samples_number = targets.dimension(0);
     const Index targets_number = targets.dimension(1);
@@ -1732,7 +1681,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index)) 
+        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index))
             = testing_indices[i];
 
         indices(target_index, output_index)++;
@@ -1743,8 +1692,8 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tensor<type, 2>& targets,
-                                                                      const Tensor<type, 2>& outputs,
-                                                                      const vector<string>& labels) const
+                                                                     const Tensor<type, 2>& outputs,
+                                                                     const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -1822,22 +1771,22 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
         j++;
     }
 
-//    array<Index, 2> offsets = {0, 0};
-//    array<Index, 2> extents = {number_of_misclassified, 4};
+    //    array<Index, 2> offsets = {0, 0};
+    //    array<Index, 2> extents = {number_of_misclassified, 4};
 
-//    return misclassified_samples.slice(offsets, extents);
+    //    return misclassified_samples.slice(offsets, extents);
     return misclassified_samples;
 }
 
 
 void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& targets,
-                                                    const Tensor<type, 2>& outputs,
-                                                    const vector<string>& labels,
-                                                    const filesystem::path& file_name) const
+                                                   const Tensor<type, 2>& outputs,
+                                                   const vector<string>& labels,
+                                                   const filesystem::path& file_name) const
 {
     const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
-                                                                                       outputs,
-                                                                                       labels);
+                                                                                        outputs,
+                                                                                        labels);
 
     ofstream file(file_name);
 
@@ -1859,8 +1808,8 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                  const filesystem::path& file_name) const
 {
     const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
-                                                                                   outputs,
-                                                                                   labels);
+                                                                                    outputs,
+                                                                                    labels);
 
     ofstream file(file_name);
 
@@ -2007,7 +1956,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(error.chip(i,1), maximum_past_time_steps);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_past_time_steps);
 
     return error_autocorrelations;
 }
@@ -2028,7 +1977,8 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), past_time_steps);
+        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(),
+                                                                inputs.chip(i,1), errors.chip(i,1), past_time_steps);
 
     return inputs_errors_cross_correlation;
 }
@@ -2130,28 +2080,28 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     const Index true_negative = confusion(1,1);
 
     const type classification_accuracy = (true_positive + true_negative + false_positive + false_negative == 0)
-    ? type(0)
-    : type(true_positive + true_negative) / type(true_positive + true_negative + false_positive + false_negative);
+                                             ? type(0)
+                                             : type(true_positive + true_negative) / type(true_positive + true_negative + false_positive + false_negative);
 
     const type error_rate = (true_positive + true_negative + false_positive + false_negative == 0)
-    ? type(0)
-    : type(false_positive + false_negative) / type(true_positive + true_negative + false_positive + false_negative);
+                                ? type(0)
+                                : type(false_positive + false_negative) / type(true_positive + true_negative + false_positive + false_negative);
 
     const type sensitivity = (true_positive + false_negative == 0)
-    ? type(0)
-    : type(true_positive) / type(true_positive + false_negative);
+                                 ? type(0)
+                                 : type(true_positive) / type(true_positive + false_negative);
 
     const type false_positive_rate = (false_positive + true_negative == 0)
-    ? type(0)
-    : type(false_positive) / type(false_positive + true_negative);
+                                         ? type(0)
+                                         : type(false_positive) / type(false_positive + true_negative);
 
     const type specificity = (false_positive + true_negative == 0)
-    ? type(0)
-    : type(true_negative) / type(true_negative + false_positive);
+                                 ? type(0)
+                                 : type(true_negative) / type(true_negative + false_positive);
 
     const type precision = (true_positive + false_positive == 0)
-    ? type(0)
-    : type(true_positive) / type(true_positive + false_positive);
+                               ? type(0)
+                               : type(true_positive) / type(true_positive + false_positive);
 
     type positive_likelihood;
 
@@ -2172,49 +2122,49 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
         negative_likelihood = specificity/(type(1) - sensitivity);
 
     const type f1_score = (2 * true_positive + false_positive + false_negative == 0)
-    ? type(0)
-    : type(2.0) * type(true_positive) / (type(2.0) * type(true_positive) + type(false_positive) + type(false_negative));
+                              ? type(0)
+                              : type(2.0) * type(true_positive) / (type(2.0) * type(true_positive) + type(false_positive) + type(false_negative));
 
     const type false_discovery_rate = (false_positive + true_positive == 0)
-    ? type(0)
-    : type(false_positive) / type(false_positive + true_positive);
+                                          ? type(0)
+                                          : type(false_positive) / type(false_positive + true_positive);
 
     const type false_negative_rate = (false_negative + true_positive == 0)
-    ? type(0)
-    : type(false_negative) / type(false_negative + true_positive);
+                                         ? type(0)
+                                         : type(false_negative) / type(false_negative + true_positive);
 
     const type negative_predictive_value = (true_negative + false_negative == 0)
-    ? type(0)
-    : type(true_negative) / type(true_negative + false_negative);
+                                               ? type(0)
+                                               : type(true_negative) / type(true_negative + false_negative);
 
     const type Matthews_correlation_coefficient = ((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
-    ? type(0)
-    : type(true_positive * true_negative - false_positive * false_negative) / type(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
+                                                      ? type(0)
+                                                      : type(true_positive * true_negative - false_positive * false_negative) / type(sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
 
     const type informedness = sensitivity + specificity - type(1);
 
     const type markedness = (true_negative + false_positive == 0)
-                          ? precision - type(1)
-                          : precision + negative_predictive_value - type(1);
+                                ? precision - type(1)
+                                : precision + negative_predictive_value - type(1);
 
     Tensor<type, 1> binary_classification_test(15);
 
     binary_classification_test.setValues(
-    {classification_accuracy,
-    error_rate,
-    sensitivity,
-    specificity,
-    precision,
-    positive_likelihood,
-    negative_likelihood,
-    f1_score,
-    false_positive_rate,
-    false_discovery_rate,
-    false_negative_rate,
-    negative_predictive_value,
-    Matthews_correlation_coefficient,
-    informedness,
-    markedness});
+        {classification_accuracy,
+         error_rate,
+         sensitivity,
+         specificity,
+         precision,
+         positive_likelihood,
+         negative_likelihood,
+         f1_score,
+         false_positive_rate,
+         false_discovery_rate,
+         false_negative_rate,
+         negative_predictive_value,
+         Matthews_correlation_coefficient,
+         informedness,
+         markedness});
 
     return binary_classification_test;
 }
@@ -2270,16 +2220,16 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
         false_positives= column_sum(0) - true_positives;
 
         const type precision = (true_positives + false_positives == 0)
-                             ? type(0)
-                             : type(true_positives) / type(true_positives + false_positives);
+                                   ? type(0)
+                                   : type(true_positives) / type(true_positives + false_positives);
 
         const type recall = (true_positives + false_negatives == 0)
-                          ? type(0)
-                          : type(true_positives) / type(true_positives + false_negatives);
+                                ? type(0)
+                                : type(true_positives) / type(true_positives + false_negatives);
 
         const type f1_score = (precision + recall == 0)
-                            ? type(0)
-                            : type(2 * precision * recall) / type(precision + recall);
+                                  ? type(0)
+                                  : type(2 * precision * recall) / type(precision + recall);
 
         // Save results
 
@@ -2359,9 +2309,9 @@ void TestingAnalysis::load(const filesystem::path& file_name)
 }
 
 
-void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targets,
-                                                 const Tensor<type, 1> &new_outputs,
-                                                 const type &new_determination)
+void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1>& new_targets,
+                                                 const Tensor<type, 1>& new_outputs,
+                                                 const type& new_determination)
 {
     targets = new_targets;
     outputs = new_outputs;

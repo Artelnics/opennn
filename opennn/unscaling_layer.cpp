@@ -49,7 +49,7 @@ Tensor<type, 1> Unscaling::get_minimums() const
 
     Tensor<type, 1> minimums(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         minimums[i] = descriptives[i].minimum;
 
@@ -63,7 +63,7 @@ Tensor<type, 1> Unscaling::get_maximums() const
 
     Tensor<type, 1> maximums(outputs_number);
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
         maximums[i] = descriptives[i].maximum;
 
@@ -78,15 +78,15 @@ vector<Scaler> Unscaling::get_unscaling_method() const
 
 
 string Unscaling::get_expression(const vector<string>& new_input_names,
-                                      const vector<string>& new_output_names) const
+                                 const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
-        ? get_default_input_names()
-        : new_input_names;
+                                           ? get_default_input_names()
+                                           : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
-       ? get_default_output_names()
-       : new_output_names;
+                                            ? get_default_output_names()
+                                            : new_output_names;
 
     const Index outputs_number = get_outputs_number();
 
@@ -99,15 +99,15 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
         const Scaler scaler = scalers[i];
 
         switch (scaler)
-        { 
+        {
 
         case Scaler::None:
-        
+
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
 
         case Scaler::MinimumMaximum:
-        
+
             if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
             {
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
@@ -123,21 +123,21 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
             break;
 
         case Scaler::MeanStandardDeviation:
-        
+
             buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
-        
+
             break;
 
         case  Scaler::StandardDeviation:
-        
+
             buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
-        
+
             break;
 
         case Scaler::Logarithm:
 
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-            
+
             break;
 
         default:
@@ -279,13 +279,13 @@ void Unscaling::set_scalers(const Scaler& new_unscaling_method)
 
 
 void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool&)
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  const bool&)
 {
     const Index outputs_number = get_outputs_number();
 
     UnscalingForwardPropagation* this_forward_propagation =
-            static_cast<UnscalingForwardPropagation*>(forward_propagation.get());
+        static_cast<UnscalingForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map<2>(input_pairs[0]);
 
@@ -301,29 +301,29 @@ void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
             descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
-            //throw runtime_error("Standard deviation is zero.");
+        //throw runtime_error("Standard deviation is zero.");
 
         switch(scaler)
         {
         case Scaler::None:
             continue;
-        break;
+            break;
 
         case Scaler::MinimumMaximum:
             unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
-        break;
+            break;
 
         case Scaler::MeanStandardDeviation:
             unscale_mean_standard_deviation(outputs, i, descriptive);
-        break;
+            break;
 
         case Scaler::StandardDeviation:
             unscale_standard_deviation(outputs, i, descriptive);
-        break;
+            break;
 
         case Scaler::Logarithm:
             unscale_logarithmic(outputs, i);
-        break;
+            break;
 
         case Scaler::ImageMinMax:
             unscale_image_minimum_maximum(outputs, i);
@@ -389,7 +389,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 
     const vector<string> scalers = write_unscaling_methods();
 
-    for (Index i = 0; i < output_dimensions[0]; i++) 
+    for (Index i = 0; i < output_dimensions[0]; i++)
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
@@ -479,7 +479,7 @@ void UnscalingForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 void UnscalingForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-        << outputs << endl;
+         << outputs << endl;
 }
 
 REGISTER(Layer, Unscaling, "Unscaling")

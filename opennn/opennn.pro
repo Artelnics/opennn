@@ -104,8 +104,10 @@ INCLUDEPATH += ../eigen
 
 # Source files
 
-HEADERS += $$files($$PWD/*.h)
-SOURCES += $$files($$PWD/*.cpp)
+HEADERS += $$files($$PWD/*.h) \
+    scaling_layer_3d.h
+SOURCES += $$files($$PWD/*.cpp) \
+    scaling_layer_3d.cpp
 
 SOURCES -= $$PWD/addition_layer_4d.cpp
 HEADERS -= $$PWD/addition_layer_4d.h

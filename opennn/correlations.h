@@ -45,33 +45,33 @@ struct Correlation
 };
 
 
-Correlation linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation exponential_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation power_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation logistic_correlation_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation logistic_correlation_vector_vector(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation logistic_correlation_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
+Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 2>&);
 
-Correlation logistic_correlation_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
+Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-Correlation logistic_correlation_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-Correlation correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Correlation correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 // Spearman correlation
 
-Correlation linear_correlation_spearman(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
 Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1>&);
 
-Correlation logistic_correlation_vector_vector_spearman(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-Correlation correlation_spearman(const Tensor<type, 2>&, const Tensor<type, 2>&);
+Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 // Confidence interval
 
@@ -83,10 +83,12 @@ Tensor<type, 1> confidence_interval_z_correlation(const type&, const Index&);
 
 // Time series correlation
 
-Tensor<type, 1> autocorrelations(const Tensor<type, 1>&,
+Tensor<type, 1> autocorrelations(const ThreadPoolDevice*,
+                                 const Tensor<type, 1>&,
                                  const Index&  = 10);
 
-Tensor<type, 1> cross_correlations(const Tensor<type, 1>&,
+Tensor<type, 1> cross_correlations(const ThreadPoolDevice*,
+                                   const Tensor<type, 1>&,
                                    const Tensor<type, 1>&,
                                    const Index&);
 

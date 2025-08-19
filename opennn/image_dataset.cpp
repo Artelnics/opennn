@@ -493,13 +493,13 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
 vector<Descriptives> ImageDataset::scale_variables(const string&)
 {
-    type* data_ptr = data.data();
-    const Index total_size = data.size();
-    const type divisor = type(255);
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < total_size; ++i)
-        data_ptr[i] /= divisor;
+    inputs_data.device(*thread_pool_device) = inputs_data / type(255);
 
     return vector<Descriptives>();
 }
@@ -507,13 +507,13 @@ vector<Descriptives> ImageDataset::scale_variables(const string&)
 
 void ImageDataset::unscale_variables(const string&)
 {
-    type* data_ptr = data.data();
-    const Index total_size = data.size();
-    const type multiplier = type(255);
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
 
-    #pragma omp parallel for
-    for (Index i = 0; i < total_size; ++i)
-        data_ptr[i] *= multiplier;
+    inputs_data.device(*thread_pool_device) = inputs_data * type(255);
 }
 
 

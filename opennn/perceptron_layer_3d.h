@@ -29,52 +29,52 @@ public:
     Index get_input_embedding() const;
     Index get_output_embedding() const;
 
-   dimensions get_input_dimensions() const override;
-   dimensions get_output_dimensions() const override;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-   type get_dropout_rate() const;
+    type get_dropout_rate() const;
 
-   string get_activation_function() const;
+    string get_activation_function() const;
 
-   void set(const Index& = 0,
-            const Index& = 0,
-            const Index& = 0,
-            const string& = "HyperbolicTangent",
-            const string & = "dense3d_layer");
+    void set(const Index& = 0,
+             const Index& = 0,
+             const Index& = 0,
+             const string& = "HyperbolicTangent",
+             const string & = "dense3d_layer");
 
-   void set_activation_function(const string&);
-   void set_dropout_rate(const type&);
+    void set_activation_function(const string&);
+    void set_dropout_rate(const type&);
 
-   void calculate_combinations(const Tensor<type, 3>&,
-                               Tensor<type, 3>&) const;
+    void calculate_combinations(const Tensor<type, 3>&,
+                                Tensor<type, 3>&) const;
 
-   void forward_propagate(const vector<pair<type*, dimensions>>&,
-                          unique_ptr<LayerForwardPropagation>&,
-                          const bool&) override;
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
-   void back_propagate(const vector<pair<type*, dimensions>>&,
-                       const vector<pair<type*, dimensions>>&,
-                       unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void from_XML(const XMLDocument&) override;
-   void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
         // @todo
-    #endif
+#endif
 
 private:
 
-   Index sequence_length;
+    Index sequence_length;
 
-   Tensor<type, 1> biases;
+    Tensor<type, 1> biases;
 
-   Tensor<type, 2> weights;
+    Tensor<type, 2> weights;
 
-   string activation_function;
+    string activation_function;
 
-   type dropout_rate = type(0);
+    type dropout_rate = type(0);
 };
 
 
@@ -112,7 +112,7 @@ struct Dense3dBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
-    // @todo
+// @todo
 #endif
 
 }
