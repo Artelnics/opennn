@@ -586,8 +586,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     Tensor<type, 1> coefficients;
     neural_network.get_parameters(coefficients);
 
-    correlation.a = coefficients(1);
-    correlation.b = coefficients(0);
+    correlation.a = coefficients(0);
+    correlation.b = coefficients(1);
 
     if(correlation.b < type(0))
     {
@@ -666,8 +666,8 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     Tensor<type, 1> coefficients;
     neural_network.get_parameters(coefficients);
 
-    correlation.a = coefficients(1);
-    correlation.b = coefficients(0);
+    correlation.a = coefficients(0);
+    correlation.b = coefficients(1);
 
     if(correlation.b < type(0))
     {
