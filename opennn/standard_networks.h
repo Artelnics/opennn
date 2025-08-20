@@ -20,6 +20,7 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "addition_layer_3d.h"
@@ -455,13 +456,13 @@ public:
             "multihead_attention_layer"
             ));
 
-        // add_layer(make_unique<Pooling3d>(
-        //     get_output_dimensions()
-        //     ));
-
-        add_layer(make_unique<Flatten<3>>(
+        add_layer(make_unique<Pooling3d>(
             get_output_dimensions()
             ));
+
+        // add_layer(make_unique<Flatten<3>>(
+        //     get_output_dimensions()
+        //     ));
 
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),

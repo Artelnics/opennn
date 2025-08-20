@@ -700,6 +700,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
+        cout << "Parameter " << (i + 1) << " of " << parameters_number << endl;
+
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;

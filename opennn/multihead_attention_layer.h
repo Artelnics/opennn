@@ -175,6 +175,12 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
 
     Tensor<type, 3> input_query_deltas;
     Tensor<type, 3> input_source_deltas;
+
+    Tensor<type, 4> softmax_deltas;
+
+    Tensor<type, 3> query_deltas_reshaped;
+    Tensor<type, 3> key_deltas_reshaped;
+    Tensor<type, 3> value_deltas_reshaped;
 };
 
 #ifdef OPENNN_CUDA
