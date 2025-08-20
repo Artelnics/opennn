@@ -171,6 +171,9 @@ public:
 
     const vector<vector<string>>& get_data_file_preview() const;
 
+    const vector<string>& get_positive_words() const { return positive_words; }
+    const vector<string>& get_negative_words() const { return negative_words; }
+
     // Members get
 
     MissingValuesMethod get_missing_values_method() const;
@@ -557,7 +560,6 @@ protected:
 
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
-
 };
 
 
