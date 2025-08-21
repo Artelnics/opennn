@@ -526,14 +526,14 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
     for(Index i = 0; i < layers_number; i++)
     {
         Layer* layer = neural_network->get_layer(i).get();
-        const vector<ParameterView> parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView> parameter_views = layer->get_parameter_views();
 
-        parameters_increment[i].resize(parameter_pairs.size());
-        last_parameters_increment[i].resize(parameter_pairs.size());
+        parameters_increment[i].resize(parameter_views.size());
+        last_parameters_increment[i].resize(parameter_views.size());
 
-        for(Index j = 0; j < (Index)parameter_pairs.size(); j++)
+        for(Index j = 0; j < (Index)parameter_views.size(); j++)
         {
-            const Index size = parameter_pairs[j].size;
+            const Index size = parameter_views[j].size;
 
             parameters_increment[i][j].resize(array<Index, 1>{size});
             last_parameters_increment[i][j].resize(array<Index, 1>{size});
@@ -828,15 +828,15 @@ void StochasticGradientDescent::update_parameters_cuda(BackPropagationCuda& back
         if (!layer->get_is_trainable())
             continue;
 
-        const vector<pair<float*, Index>> parameter_pairs = layer->get_parameter_pair_device();
+        const vector<ParameterView> parameter_views = layer->get_parameter_views_device();
         LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
-        const vector<pair<float*, Index>> delta_views = layer_back_prop->get_parameter_delta_pair_device();
+        const vector<ParameterView> delta_views = layer_back_prop->get_parameter_delta_views_device();
 
-        for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); ++parameter_index)
+        for (Index parameter_index = 0; parameter_index < parameter_views.size(); ++parameter_index)
         {
-            float* params_d = parameter_pairs[parameter_index].first;
-            const Index param_size = parameter_pairs[parameter_index].second;
-            const float* grads_d = delta_views[parameter_index].first;
+            float* params_d = parameter_views[parameter_index].data;
+            const Index param_size = parameter_views[parameter_index].size;
+            const float* grads_d = delta_views[parameter_index].data;
             float* velocity_d = optimization_data_cuda.velocity[layer_index][parameter_index];
 
             sgd_update_device(
@@ -873,14 +873,14 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
         Layer* layer = neural_network->get_layer(i).get();
         if (!layer->get_is_trainable()) continue;
 
-        const auto parameter_pairs = layer->get_parameter_pair_device();
-        const size_t param_blocks_count = parameter_pairs.size();
+        const auto parameter_views = layer->get_parameter_views_device();
+        const size_t param_blocks_count = parameter_views.size();
 
         velocity[i].resize(param_blocks_count, nullptr);
 
         for (Index j = 0; j < param_blocks_count; ++j)
         {
-            const Index param_size = parameter_pairs[j].second;
+            const Index param_size = parameter_views[j].size;
             if (param_size > 0)
             {
                 const size_t memory_size_bytes = param_size * sizeof(float);
@@ -921,11 +921,11 @@ void SGDOptimizationDataCuda::print() const
         if (!layer->get_is_trainable()) continue;
 
         cout << "Layer " << i << " (" << layer->get_name() << "):" << endl;
-        const auto parameter_pairs = layer->get_parameter_pair_device();
+        const auto parameter_views = layer->get_parameter_views_device();
 
-        for (Index j = 0; j < parameter_pairs.size(); ++j)
+        for (Index j = 0; j < parameter_views.size(); ++j)
         {
-            const Index param_size = parameter_pairs[j].second;
+            const Index param_size = parameter_views[j].size;
             if (param_size == 0) continue;
 
             cout << "  - Parameter Block " << j << " (Size: " << param_size << "):" << endl;

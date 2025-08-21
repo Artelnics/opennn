@@ -281,7 +281,7 @@ public:
                                      unique_ptr<LayerForwardPropagationCuda>&,
                                      unique_ptr<LayerBackPropagationCuda>&) const {}
 
-    virtual vector<pair<float*, Index>> get_parameter_pair_device() const;
+    virtual vector<ParameterView> get_parameter_views_device() const;
 
     virtual void copy_parameters_host() {}
 
@@ -405,9 +405,9 @@ struct LayerBackPropagationCuda
 
     virtual vector<float*> get_input_derivatives_device() { return {input_deltas}; }
 
-    virtual vector<pair<float*, Index>> get_parameter_delta_pair_device() const
+    virtual vector<ParameterView> get_parameter_delta_views_device() const
     {
-        return vector<pair<float*, Index>>();
+        return vector<ParameterView>();
     }
 
     Index batch_size = 0;
