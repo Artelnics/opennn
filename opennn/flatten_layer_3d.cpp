@@ -1,3 +1,4 @@
+/*
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -5,7 +6,7 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-/*
+
 #include "registry.h"
 #include "tensors.h"
 #include "flatten_layer_3d.h"
@@ -64,7 +65,7 @@ void Flatten3d::forward_propagate(const vector<TensorView>& input_views,
     Flatten3dForwardPropagation* flatten_layer_3d_forward_propagation =
         static_cast<Flatten3dForwardPropagation*>(layer_forward_propagation.get());
 
-    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_views[0].first, batch_size, outputs_number);
+    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_views[0].data, batch_size, outputs_number);
 }
 
 
@@ -73,7 +74,7 @@ void Flatten3d::back_propagate(const vector<TensorView>& input_views,
                                unique_ptr<LayerForwardPropagation>&,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_views[0].second[0];
+    const Index batch_size = back_propagation->batch_size;
     const Index outputs_number = get_outputs_number();
 
     // Back propagation
@@ -84,7 +85,7 @@ void Flatten3d::back_propagate(const vector<TensorView>& input_views,
     Tensor<type, 3>& input_deltas = flatten_layer_3d_back_propagation->input_deltas;
 
     memcpy(input_deltas.data(),
-           delta_views[0].first,
+           delta_views[0].data,
            (batch_size * outputs_number * sizeof(type)));
 }
 
@@ -208,7 +209,7 @@ REGISTER(LayerForwardPropagation, Flatten3dForwardPropagation, "Flatten3d")
 REGISTER(LayerBackPropagation, Flatten3dBackPropagation, "Flatten3d")
 
 }
-*/
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
@@ -227,3 +228,4 @@ REGISTER(LayerBackPropagation, Flatten3dBackPropagation, "Flatten3d")
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

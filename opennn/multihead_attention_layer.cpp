@@ -217,95 +217,6 @@ void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_paddi
 }
 
 
-void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& value,
-                                                     const Tensor<type, 4>& attention_weights,
-                                                     Tensor<type, 4>& attention_outputs) const
-{
-    batch_matrix_multiplication<type, 4>(thread_pool_device.get(),
-                                         attention_weights,
-                                         value,
-                                         attention_outputs,
-                                         axes<Index>(0,0));
-}
-
-
-void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outputs,
-                                           Tensor<type, 3>& concatenated_attention_outputs) const
-{
-    /*
-    const Index batch_size = attention_outputs.dimension(2);
-    const Index head_dimension = attention_outputs.dimension(1);
-
-    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-    {
-        TensorMap<Tensor<type, 2>> sample_output = tensor_map(concatenated_attention_outputs, sample_index);
-
-        for(Index head_index = 0; head_index < heads_number; head_index++)
-        {
-            const TensorMap<Tensor<type, 2>> head_output = tensor_map(attention_outputs, head_index, sample_index);
-
-            const Index start_col = head_index * head_dimension;
-
-            sample_output.slice(array<Index,2>{0, start_col},
-                                array<Index,2>{query_sequence_length, head_dimension}) = head_output;
-        }
-    }
-*/
-    // @todo check This gives the AI
-
-    // Original dimensions of attention_outputs: (query_sequence_length, head_dimension, batch_size, heads_number)
-    // We want to merge dimensions 1 (head_dimension) and 3 (heads_number) to form the new embedding_dimension.
-    // The desired output shape is (batch_size, query_sequence_length, embedding_dimension)
-
-    // Define the shuffling pattern: map old dimensions to new ones.
-    // Old: 0(seq), 1(depth), 2(batch), 3(heads)
-    // New: 2(batch), 0(seq), 3(heads), 1(depth)
-
-    // const array<int, 4> shuffling_pattern = {2, 0, 3, 1};
-
-    // concatenated_attention_outputs.device(*thread_pool_device) =
-    //     attention_outputs.shuffle(shuffling_pattern)
-    //         .reshape(array<Index, 3>{
-    //             attention_outputs.dimension(2), // batch_size
-    //             query_sequence_length,
-    //             heads_number * get_hidden_depth() // embedding_dimension
-    //         });
-
-    const array<int, 4> shuffling_pattern = {0, 3, 1, 2};
-
-    const array<Index, 3> target_shape = {
-        query_sequence_length,
-        heads_number * get_head_dimension(),
-        attention_outputs.dimension(2) // batch_size
-    };
-
-    concatenated_attention_outputs.device(*thread_pool_device) =
-        attention_outputs.shuffle(shuffling_pattern)
-            .reshape(target_shape);
-}
-
-
-void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& concatenated_attention_outputs,
-                                                     Tensor<type, 3>& outputs) const
-{
-    const Index batch_size = outputs.dimension(0);
-
-    for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-    {
-        const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(concatenated_attention_outputs, sample_index);
-
-        outputs.chip(sample_index, 0).device(*thread_pool_device)
-            = sample_attention_output.contract(projection_weights, axes(1,0));
-    }
-    /*
-    outputs.device(*thread_pool_device) = outputs
-        + projection_biases.reshape(array<Index, 3>{1, 1, projection_biases.dimension(0)})
-                           .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
-    */
-    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
-}
-
-
 void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views,
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool&)
@@ -333,33 +244,33 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     query.device(*thread_pool_device) = (query_input.contract(query_weights, axes(2,0))
                                          + query_biases.reshape(array_3(1, 1, embedding_dimension))
-                                               .broadcast(array_3(batch_size, query_sequence_length, 1)))
-                                            .reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
-                                            .shuffle(array_4(0, 2, 1, 3));
+                                         .broadcast(array_3(batch_size, query_sequence_length, 1)))
+                                         .reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
+                                         .shuffle(array_4(0, 2, 1, 3));
 
     key.device(*thread_pool_device) = (source_input.contract(key_weights, axes(2,0))
                                        + key_biases.reshape(array_3(1, 1, embedding_dimension))
-                                             .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                          .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                          .shuffle(array_4(0, 2, 1, 3));
+                                       .broadcast(array_3(batch_size, source_sequence_length, 1)))
+                                       .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
+                                       .shuffle(array_4(0, 2, 1, 3));
 
     value.device(*thread_pool_device) = (source_input.contract(value_weights, axes(2,0))
                                          + value_biases.reshape(array_3(1, 1, embedding_dimension))
-                                               .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                            .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                            .shuffle(array_4(0, 2, 1, 3));
+                                         .broadcast(array_3(batch_size, source_sequence_length, 1)))
+                                         .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
+                                         .shuffle(array_4(0, 2, 1, 3));
 
     attention_weights.device(*thread_pool_device) =
         (query.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension)).broadcast(array_5(1, 1, 1, source_sequence_length, 1))
          * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
-            .sum(array_1(4)) * scaling_factor;
+         .sum(array_1(4)) * scaling_factor;
 
     softmax(attention_weights);
 
     attention_outputs.device(*thread_pool_device) =
         (attention_weights.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1)).broadcast(array_5(1, 1, 1, 1, head_dimension))
          * value.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
-            .sum(array_1(3));
+         .sum(array_1(3));
 
 #pragma omp parallel for
     for(int head_number = 0; head_number < heads_number; ++head_number)
@@ -369,7 +280,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     outputs.device(*thread_pool_device) =
         concatenated_attention_outputs.contract(projection_weights, axes(2, 0))
         + projection_biases.reshape(array_3(1, 1, embedding_dimension))
-              .broadcast(array_3(batch_size, query_sequence_length, 1));
+        .broadcast(array_3(batch_size, query_sequence_length, 1));
 }
 
 
@@ -388,11 +299,9 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     // Get tensors from forward propagation
     const TensorMap<Tensor<type, 3>> query_input = tensor_map<3>(input_views[0]);
-    const TensorMap<Tensor<type, 3>> source_input = tensor_map<3>(input_views[1]);
-
-    // const TensorMap<Tensor<type, 3>> source_input = (input_views.size() == 1)
-    //                                                     ? query_input
-    //                                                     : tensor_map<3>(input_views[1]);
+    const TensorMap<Tensor<type, 3>> source_input = (input_views.size() == 1)
+                                                        ? query_input
+                                                        : tensor_map<3>(input_views[1]);
 
     const Tensor<type, 4>& query = this_forward_propagation->query;
     const Tensor<type, 4>& key = this_forward_propagation->key;
@@ -420,18 +329,20 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     Tensor<type, 1>& value_bias_deltas = this_back_propagation->value_bias_deltas;
     Tensor<type, 3>& input_query_deltas = this_back_propagation->input_query_deltas;
     Tensor<type, 3>& input_source_deltas = this_back_propagation->input_source_deltas;
+    Tensor<type, 4>& softmax_deltas = this_back_propagation->softmax_deltas;
+    Tensor<type, 3>& query_deltas_reshaped = this_back_propagation->query_deltas_reshaped;
+    Tensor<type, 3>& key_deltas_reshaped = this_back_propagation->key_deltas_reshaped;
+    Tensor<type, 3>& value_deltas_reshaped = this_back_propagation->value_deltas_reshaped;
 
     const Index batch_size = this_forward_propagation->batch_size;
 
-
-    // Step 1: Derivative of the Final Projection
+    // Step 1: Derivative of the final projection
     // ∇W_O L = H_concat^T * ΔY
     projection_weight_deltas.device(*thread_pool_device) =
         concatenated_attention_outputs.reshape(array_2(batch_size * query_sequence_length, embedding_dimension))
-            .contract(delta_Y.reshape(array_2(batch_size * query_sequence_length, embedding_dimension)), axes(0, 0));
+        .contract(delta_Y.reshape(array_2(batch_size * query_sequence_length, embedding_dimension)), axes(0, 0));
 
     // ∇b_O L = sum(ΔY, axis=(0,1))
-
     projection_bias_deltas.device(*thread_pool_device) =
         delta_Y.sum(array_2(0, 1));
 
@@ -440,6 +351,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
         delta_Y.contract(projection_weights, axes(2, 1));
 
 // Step 2: Split ΔH_concat by heads
+
 #pragma omp parallel for
     for(int head_index = 0; head_index < heads_number; ++head_index)
     {
@@ -451,14 +363,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     // Step 3: Derivative of H_i = A_i * V_i
     // ∇V_i L = A_i^T * ΔH_i
-    // value_deltas.device(*thread_pool_device) =
-    //     attention_weights.shuffle(array_4(0, 1, 3, 2))
-    //         .reshape(array_5(batch_size, heads_number, source_sequence_length, query_sequence_length, 1))
-    //         .broadcast(array_5(1, 1, 1, 1, head_dimension))
-    //     * attention_output_deltas.reshape(array_5(batch_size, heads_number, 1, query_sequence_length, head_dimension))
-    //           .broadcast(array_5(1, 1, source_sequence_length, 1, 1));
-    // value_deltas = value_deltas.sum(array_1(3));
-
     value_deltas.device(*thread_pool_device) =
         (attention_weights.shuffle(array_4(0, 1, 3, 2))
              .reshape(array_5(batch_size, heads_number, source_sequence_length, query_sequence_length, 1))
@@ -468,14 +372,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
                .broadcast(array_5(1, 1, source_sequence_length, 1, 1))
          ).sum(array_1(3));
 
-    // // ∇A_i L = ΔH_i * V_i^T
-    // attention_weight_deltas_xxx.device(*thread_pool_device) =
-    //     attention_output_deltas.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension))
-    //         .broadcast(array_5(1, 1, 1, source_sequence_length, 1))
-    //     * value.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension))
-    //           .broadcast(array_5(1, 1, query_sequence_length, 1, 1));
-    // attention_weight_deltas_xxx = attention_weight_deltas_xxx.sum(array_1(4));
-
+    // ∇A_i L = ΔH_i * V_i^T
     attention_weight_deltas_xxx.device(*thread_pool_device) =
         (attention_output_deltas.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension))
              .broadcast(array_5(1, 1, 1, source_sequence_length, 1))
@@ -483,61 +380,43 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
                .broadcast(array_5(1, 1, query_sequence_length, 1, 1))
          ).sum(array_1(4));
 
-    // Step 4: Derivative of Softmax
+    // Step 4: Derivative of softmax
     // For each position in each head in each batch
     // ∇S_i L = diag(A_i) * ΔA_i - A_i * (A_i^T * ΔA_i)
-    Tensor<type, 4> softmax_grad(batch_size, heads_number, query_sequence_length, source_sequence_length);
-
 #pragma omp parallel for collapse(3)
-    for(int b = 0; b < batch_size; ++b)
+    for(Index b = 0; b < batch_size; ++b)
     {
-        for(int h = 0; h < heads_number; ++h)
+        for(Index h = 0; h < heads_number; ++h)
         {
-            for(int q = 0; q < query_sequence_length; ++q)
+            for(Index q = 0; q < query_sequence_length; ++q)
             {
-                // Get the attention weights and deltas for this position
                 type dot_product = 0;
-                for(int s = 0; s < source_sequence_length; ++s)
+                for(Index s = 0; s < source_sequence_length; ++s)
                 {
                     dot_product += attention_weights(b, h, q, s) * attention_weight_deltas_xxx(b, h, q, s);
                 }
 
-                for(int s = 0; s < source_sequence_length; ++s)
+                for(Index s = 0; s < source_sequence_length; ++s)
                 {
-                    softmax_grad(b, h, q, s) = attention_weights(b, h, q, s) *
+                    softmax_deltas(b, h, q, s) = attention_weights(b, h, q, s) *
                                                (attention_weight_deltas_xxx(b, h, q, s) - dot_product);
                 }
             }
         }
     }
 
-    // Step 5: Derivative of Scores S_i = Q_i * K_i^T / sqrt(d_k)
+    // Step 5: Derivative of scores S_i = Q_i * K_i^T / sqrt(d_k)
     // ∇Q_i L = (1/sqrt(d_k)) * ΔS_i * K_i
-    // query_deltas.device(*thread_pool_device) =
-    //     softmax_grad.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1))
-    //         .broadcast(array_5(1, 1, 1, 1, head_dimension))
-    //     * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension))
-    //           .broadcast(array_5(1, 1, query_sequence_length, 1, 1));
-    // query_deltas = query_deltas.sum(array_1(3)) * scaling_factor;
-
     query_deltas.device(*thread_pool_device) =
-        (softmax_grad.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1))
+        (softmax_deltas.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1))
              .broadcast(array_5(1, 1, 1, 1, head_dimension))
          * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension))
                .broadcast(array_5(1, 1, query_sequence_length, 1, 1))
          ).sum(array_1(3)) * scaling_factor;
 
     // ∇K_i L = (1/sqrt(d_k)) * ΔS_i^T * Q_i
-    // key_deltas.device(*thread_pool_device) =
-    //     softmax_grad.shuffle(array_4(0, 1, 3, 2))
-    //         .reshape(array_5(batch_size, heads_number, source_sequence_length, query_sequence_length, 1))
-    //         .broadcast(array_5(1, 1, 1, 1, head_dimension))
-    //     * query.reshape(array_5(batch_size, heads_number, 1, query_sequence_length, head_dimension))
-    //           .broadcast(array_5(1, 1, source_sequence_length, 1, 1));
-    // key_deltas = key_deltas.sum(array_1(3)) * scaling_factor;
-
     key_deltas.device(*thread_pool_device) =
-        (softmax_grad.shuffle(array_4(0, 1, 3, 2))
+        (softmax_deltas.shuffle(array_4(0, 1, 3, 2))
              .reshape(array_5(batch_size, heads_number, source_sequence_length, query_sequence_length, 1))
              .broadcast(array_5(1, 1, 1, 1, head_dimension))
          * query.reshape(array_5(batch_size, heads_number, 1, query_sequence_length, head_dimension))
@@ -545,28 +424,24 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
          ).sum(array_1(3)) * scaling_factor;
 
 
-    // Step 6: Derivative of Projections
+    // Step 6: Derivative of projections
     // First reshape the deltas back to (batch_size, sequence_length, embedding_dimension)
-    Tensor<type, 3> query_deltas_reshaped(batch_size, query_sequence_length, embedding_dimension);
-    Tensor<type, 3> key_deltas_reshaped(batch_size, source_sequence_length, embedding_dimension);
-    Tensor<type, 3> value_deltas_reshaped(batch_size, source_sequence_length, embedding_dimension);
-
     query_deltas_reshaped.device(*thread_pool_device) =
         query_deltas.shuffle(array_4(0, 2, 1, 3))
-            .reshape(array_3(batch_size, query_sequence_length, embedding_dimension));
+        .reshape(array_3(batch_size, query_sequence_length, embedding_dimension));
 
     key_deltas_reshaped.device(*thread_pool_device) =
         key_deltas.shuffle(array_4(0, 2, 1, 3))
-            .reshape(array_3(batch_size, source_sequence_length, embedding_dimension));
+        .reshape(array_3(batch_size, source_sequence_length, embedding_dimension));
 
     value_deltas_reshaped.device(*thread_pool_device) =
         value_deltas.shuffle(array_4(0, 2, 1, 3))
-            .reshape(array_3(batch_size, source_sequence_length, embedding_dimension));
-    //
+        .reshape(array_3(batch_size, source_sequence_length, embedding_dimension));
+
     // ∇W_Q L = X^T * ∇Q L
     query_weight_deltas.device(*thread_pool_device) =
         query_input.reshape(array_2(batch_size * query_sequence_length, embedding_dimension))
-            .contract(query_deltas_reshaped.reshape(array_2(batch_size * query_sequence_length, embedding_dimension)), axes(0, 0));
+        .contract(query_deltas_reshaped.reshape(array_2(batch_size * query_sequence_length, embedding_dimension)), axes(0, 0));
 
     // ∇b_Q L = sum(∇Q L, axis=(0,1))
     query_bias_deltas.device(*thread_pool_device) =
@@ -575,7 +450,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     // ∇W_K L = X^T * ∇K L
     key_weight_deltas.device(*thread_pool_device) =
         source_input.reshape(array_2(batch_size * source_sequence_length, embedding_dimension))
-            .contract(key_deltas_reshaped.reshape(array_2(batch_size * source_sequence_length, embedding_dimension)), axes(0, 0));
+        .contract(key_deltas_reshaped.reshape(array_2(batch_size * source_sequence_length, embedding_dimension)), axes(0, 0));
 
     // ∇b_K L = sum(∇K L, axis=(0,1))
     key_bias_deltas.device(*thread_pool_device) =
@@ -584,13 +459,13 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     // ∇W_V L = X^T * ∇V L
     value_weight_deltas.device(*thread_pool_device) =
         source_input.reshape(array_2(batch_size * source_sequence_length, embedding_dimension))
-            .contract(value_deltas_reshaped.reshape(array_2(batch_size * source_sequence_length, embedding_dimension)), axes(0, 0));
+        .contract(value_deltas_reshaped.reshape(array_2(batch_size * source_sequence_length, embedding_dimension)), axes(0, 0));
 
     // ∇b_V L = sum(∇V L, axis=(0,1))
     value_bias_deltas.device(*thread_pool_device) =
         value_deltas_reshaped.sum(array_2(0, 1));
-    //
-    // Step 7: Accumulate Input Gradient
+
+    // Step 7: Accumulate input gradient
     // ∇X L (from Q) = ∇Q L * W_Q^T
     input_query_deltas.device(*thread_pool_device) =
         query_deltas_reshaped.contract(query_weights, axes(2, 1));
@@ -608,8 +483,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     {
         input_query_deltas.device(*thread_pool_device) += input_source_deltas;
     }
-    // cout << "value_bias_deltas: " << value_bias_deltas.dimensions() << endl;
-    // /*
 }
 
 void MultiHeadAttention::from_XML(const XMLDocument& document)
@@ -716,13 +589,7 @@ void MultiHeadAttentionForwardPropagation::set(const Index& new_batch_size, Laye
     key.resize(batch_size, heads_number, source_sequence_length, head_dimension);
     value.resize(batch_size, heads_number, source_sequence_length, head_dimension);
 
-    // attention_weights.resize(batch_size, heads_number, source_sequence_length, query_sequence_length);
     attention_weights.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
-
-    // attention_outputs.resize(batch_size, heads_number, query_sequence_length, head_dimension);
-    // concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
-    // projection_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
-    // outputs.resize(batch_size, query_sequence_length, embedding_dimension);
 
     attention_outputs.resize(batch_size, heads_number, query_sequence_length, head_dimension);
     concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
@@ -774,6 +641,12 @@ void MultiHeadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
     input_source_deltas.resize(batch_size, source_sequence_length, embedding_dimension);
 
     // Auxiliar
+
+    softmax_deltas.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
+
+    query_deltas_reshaped.resize(batch_size, query_sequence_length, embedding_dimension);
+    key_deltas_reshaped.resize(batch_size, source_sequence_length, embedding_dimension);
+    value_deltas_reshaped.resize(batch_size, source_sequence_length, embedding_dimension);
 
     attention_weight_deltas_xxx.resize(batch_size, heads_number, source_sequence_length, query_sequence_length);
 

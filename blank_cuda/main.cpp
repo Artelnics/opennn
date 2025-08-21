@@ -64,8 +64,8 @@ int main()
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
-        dataset.set_data_path("../examples/mnist/data_bin");
-        //dataset.set_data_path("../examples/mnist/data");
+        //dataset.set_data_path("../examples/mnist/data_bin");
+        dataset.set_data_path("../examples/mnist/data");
 
         //dimensions data_dimensions = { 224, 224, 3 };
 
@@ -81,7 +81,7 @@ int main()
 
         ImageClassificationNetwork neural_network(
             input_dimensions,
-            {32},//{ 64, 64, 128, 128, 32 },
+            {128},//{ 64, 64, 128, 128, 32 },
             output_dimensions);
         
         //VGG16 neural_network(input_dimensions, output_dimensions);

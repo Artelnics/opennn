@@ -175,13 +175,13 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
 
-        const vector<ParameterView>& parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView>& parameter_views = layer->get_parameter_views();
         const vector<ParameterView>& delta_views = layer_back_propagation->get_parameter_delta_views();
 
-        for (Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
+        for (Index parameter_index = 0; parameter_index < Index(parameter_views.size()); parameter_index++)
         {
-            type* parameter_data = parameter_pairs[parameter_index].data;
-            const Index parameter_size = parameter_pairs[parameter_index].size;
+            type* parameter_data = parameter_views[parameter_index].data;
+            const Index parameter_size = parameter_views[parameter_index].size;
             TensorMap<Tensor<type, 1>> parameters_map(parameter_data, parameter_size);
 
             type* delta_data = delta_views[parameter_index].data;
@@ -700,6 +700,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
+        cout << "Parameter " << (i + 1) << " of " << parameters_number << endl;
+
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;
@@ -1420,13 +1422,13 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
 
         LayerBackPropagationCuda* layer_back_prop_cuda = back_propagation_cuda.neural_network.layers[layer_index].get();
 
-        const vector<ParameterView>& parameter_device_pairs = layer->get_parameter_pair_device();
-        const vector<ParameterView>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_pair_device();
+        const vector<ParameterView>& parameter_device_pairs = layer->get_parameter_views_device();
+        const vector<ParameterView>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_views_device();
 
         for (Index param_index = 0; param_index < parameter_device_pairs.size(); ++param_index)
         {
-            type* param_device_ptr = parameter_device_pairs[param_index].first;
-            const Index param_size = parameter_device_pairs[param_index].second;
+            type* param_device_ptr = parameter_device_pairs[param_index].data;
+            const Index param_size = parameter_device_pairs[param_index].size;
 
             if (param_size == 0) continue;
 
@@ -1461,7 +1463,7 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
 
             // Regularization Gradient
 
-            type* delta_device_ptr = delta_device_pairs[param_index].first;
+            type* delta_device_ptr = delta_device_pairs[param_index].data;
 
             if (regularization_method == "L1")
             {

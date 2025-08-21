@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <string>
 #include <filesystem>
+#include "tinyxml2.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using type = float;

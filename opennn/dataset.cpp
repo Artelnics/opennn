@@ -3760,7 +3760,7 @@ void Dataset::read_csv()
     for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         const vector<string>& tokens = raw_file_content[sample_index];
-        print_vector(tokens);
+
         if (has_missing_values(tokens)) {
             rows_missing_values_number++;
             for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++) {

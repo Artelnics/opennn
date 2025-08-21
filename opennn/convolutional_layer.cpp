@@ -678,7 +678,7 @@ Index Convolutional::get_input_width() const
 
 vector<ParameterView > Convolutional::get_parameter_views() const
 {
-    vector<ParameterView> parameter_pairs =
+    vector<ParameterView> parameter_views =
         {
             {(type*)(biases.data()), biases.size()},
             {(type*)(weights.data()), weights.size()}
@@ -686,11 +686,11 @@ vector<ParameterView > Convolutional::get_parameter_views() const
 
     if (batch_normalization)
     {
-        parameter_pairs.push_back({ const_cast<type*>(scales.data()), scales.size() });
-        parameter_pairs.push_back({ const_cast<type*>(offsets.data()), offsets.size() });
+        parameter_views.push_back({ const_cast<type*>(scales.data()), scales.size() });
+        parameter_views.push_back({ const_cast<type*>(offsets.data()), offsets.size() });
     }
 
-    return parameter_pairs;
+    return parameter_views;
 }
 
 
@@ -1266,20 +1266,20 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-vector<pair<float*, Index>> Convolutional::get_parameter_pair_device() const
+vector<ParameterView> Convolutional::get_parameter_views_device() const
 {
-    vector<pair<float*, Index>> parameter_pairs =
+    vector<ParameterView> parameter_views =
         {
             {biases_device, biases.size()},
             {weights_device, weights.size()}
         };
 
     if (batch_normalization) {
-        parameter_pairs.push_back({ bn_scale_device, scales.size() });
-        parameter_pairs.push_back({ bn_offset_device, offsets.size() });
+        parameter_views.push_back({ bn_scale_device, scales.size() });
+        parameter_views.push_back({ bn_offset_device, offsets.size() });
     }
 
-    return parameter_pairs;
+    return parameter_views;
 }
 
 
@@ -1584,7 +1584,7 @@ ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& 
 }
 
 
-vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delta_pair_device() const
+vector<ParameterView> ConvolutionalBackPropagationCuda::get_parameter_delta_views_device() const
 {
     const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
 
@@ -1595,7 +1595,7 @@ vector<pair<float*, Index>> ConvolutionalBackPropagationCuda::get_parameter_delt
 
     const Index bias_deltas_size = convolutional_layer->get_kernels_number();
 
-    vector<pair<float*, Index>> delta_views =
+    vector<ParameterView> delta_views =
         {
             {bias_deltas_device, bias_deltas_size},
             {weight_deltas_device, weight_deltas_size}

@@ -20,6 +20,7 @@
 #include "embedding_layer.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
+#include "pooling_layer_3d.h"
 #include "flatten_layer.h"
 #include "flatten_layer_3d.h"
 #include "addition_layer_3d.h"

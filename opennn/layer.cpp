@@ -53,11 +53,11 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_parameters_random()
 {
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
 
         set_random(this_parameters);
     }
@@ -71,11 +71,11 @@ void Layer::set_parameters_glorot()
 
     const type limit = sqrt(6.0 / (inputs_number + outputs_number));
 
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
 
         set_random(this_parameters, -limit, limit);
     }
@@ -84,12 +84,12 @@ void Layer::set_parameters_glorot()
 
 Index Layer::get_parameters_number() const
 {
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
     Index parameters_number = 0;
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
-        parameters_number += parameter_pairs[i].size;
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
+        parameters_number += parameter_views[i].size;
 
     return parameters_number;
 }
@@ -235,65 +235,23 @@ void Layer::softmax(Tensor<type, 3>& y) const
 
 void Layer::softmax(Tensor<type, 4>& y) const
 {
-    const Index rows_number = y.dimension(0);
+    const Index rows_number    = y.dimension(0);
     const Index columns_number = y.dimension(1);
-    const Index channels = y.dimension(2);
-    const Index blocks_number = y.dimension(3);
+    const Index channels       = y.dimension(2);
+    const Index blocks_number  = y.dimension(3);
 
-    y.device(*thread_pool_device) = y - y.maximum(array_1(0))
-                                            .eval()
-                                            .reshape(array_4(1, columns_number, channels, blocks_number))
-                                            .broadcast(array_4(rows_number, 1, 1, 1));
+    y.device(*thread_pool_device) =
+        y - y.maximum(array_1(3)).eval()
+                .reshape(array_4(rows_number, columns_number, channels, 1))
+                .broadcast(array_4(1, 1, 1, blocks_number));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(array_1(0))
-                                            .eval()
-                                            .reshape(array_4(1, columns_number, channels, blocks_number))
-                                            .broadcast(array_4(rows_number, 1, 1, 1 ));
+    y.device(*thread_pool_device) =
+        y / y.sum(array_1(3)).eval()
+                .reshape(array_4(rows_number, columns_number, channels, 1))
+                .broadcast(array_4(1, 1, 1, blocks_number));
 }
-
-
-//void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
-//                                             const Tensor<type, 3>& tensor,
-//                                             TensorMap<Tensor<type, 3>>& result,
-//                                             Tensor<type, 1>& aux_rows) const
-//{
-//    const Index rows_number = softmax.dimension(0);
-//    const Index columns_number = softmax.dimension(1);
-//    const Index channels = softmax.dimension(2);
-
-//    type* softmax_data = (type*)softmax.data();
-//    type* tensor_data = (type*)tensor.data();
-//    type* result_data = result.data();
-
-//    type* softmax_vector_data = nullptr;
-//    type* tensor_vector_data = nullptr;
-//    type* result_vector_data = nullptr;
-
-//    Tensor<type, 0> sum;
-
-//    for(Index i = 0; i < channels; i++)
-//    {
-//        for(Index j = 0; j < columns_number; j++)
-//        {
-//            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
-//            tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);
-//            result_vector_data = result_data + rows_number * (i * columns_number + j);
-
-//            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
-//            const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
-
-//            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
-
-//            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
-
-//            sum.device(*thread_pool_device) = aux_rows.sum();
-
-//            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
-//        }
-//    }
-//}
 
 
 void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
@@ -378,9 +336,9 @@ cudnnHandle_t Layer::get_cudnn_handle()
 }
 
 
-vector<pair<float*, Index>> Layer::get_parameter_pair_device() const
+vector<ParameterView> Layer::get_parameter_views_device() const
 {
-    return vector<pair<float*, Index>>();
+    return vector<ParameterView>();
 }
 
 #endif
