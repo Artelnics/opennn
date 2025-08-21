@@ -223,7 +223,7 @@ struct AdditionBackPropagation : LayerBackPropagation
     }
 
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const
+    vector<TensorView> get_input_derivative_views() const override
     {
         const dimensions input_dimensions = layer->get_input_dimensions();
         dimensions full_dimensions = {batch_size};
