@@ -53,12 +53,6 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
-    void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
-    void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;
-
-    void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 3>&) const;
-
     void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;

@@ -311,7 +311,7 @@ struct FlattenBackPropagation final : LayerBackPropagation
         cout << "Flatten Input derivatives:" << endl << input_deltas.dimensions() << endl;
     }
 
-    Tensor<type, 4> input_deltas;
+    Tensor<type, Rank> input_deltas;
 };
 
 

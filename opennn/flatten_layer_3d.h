@@ -1,3 +1,4 @@
+/*
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -5,7 +6,7 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-/*
+
 #ifndef FLATTEN_LAYER_3D_H
 #define FLATTEN_LAYER_3D_H
 
@@ -81,7 +82,7 @@ struct Flatten3dBackPropagation : LayerBackPropagation
 }
 
 #endif // FLATTEN_LAYER_3D_H
-*/
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
@@ -99,3 +100,4 @@ struct Flatten3dBackPropagation : LayerBackPropagation
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
