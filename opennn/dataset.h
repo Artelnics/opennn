@@ -12,6 +12,7 @@
 #include "tinyxml2.h"
 #include "correlations.h"
 #include "scaling.h"
+#include "tensors.h"
 
 using namespace tinyxml2;
 
@@ -169,6 +170,9 @@ public:
     Tensor<type, 1> get_sample(const Index&) const;
 
     const vector<vector<string>>& get_data_file_preview() const;
+
+    const vector<string>& get_positive_words() const { return positive_words; }
+    const vector<string>& get_negative_words() const { return negative_words; }
 
     // Members get
 
@@ -556,7 +560,6 @@ protected:
 
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
-
 };
 
 
@@ -564,8 +567,8 @@ struct Batch
 {
     Batch(const Index& = 0, const Dataset* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_pairs() const;
-    pair<type*, dimensions> get_target_pair() const;
+    vector<TensorView> get_input_pairs() const;
+    TensorView get_target_pair() const;
 
     Index get_samples_number() const;
 
@@ -608,7 +611,7 @@ struct BatchCuda
     ~BatchCuda() { free(); }
 
     vector<float*> get_input_device() const;
-    pair<type*, dimensions> get_target_pair_device() const;
+    TensorView get_target_pair_device() const;
 
     Index get_samples_number() const;
 

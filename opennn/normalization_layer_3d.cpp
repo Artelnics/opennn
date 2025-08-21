@@ -48,7 +48,7 @@ dimensions Normalization3d::get_output_dimensions() const
 }
 
 
-vector<pair<type *, Index> > Normalization3d::get_parameter_pairs() const
+vector<ParameterView > Normalization3d::get_parameter_views() const
 {
     return {
         {(type*)gammas.data(), gammas.size()},
@@ -75,7 +75,7 @@ void Normalization3d::set(const Index& new_sequence_length,
 }
 
 
-void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool&)
 {
@@ -83,7 +83,7 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
     //    const Index sequence_length = get_sequence_length();
     const Index embedding_dimension = get_embedding_dimension();
 
-    const TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, sequence_length, embedding_dimension);
+    const TensorMap<Tensor<type, 3>> inputs(input_views[0].data, batch_size, sequence_length, embedding_dimension);
 
     Normalization3dForwardPropagation* this_forward_propagation =
         static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
@@ -119,18 +119,18 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     const vector<pair<type*, dimensions>>& delta_pairs,
+void Normalization3d::back_propagate(const vector<TensorView>& input_views,
+                                     const vector<TensorView>& delta_views,
                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_pairs[0].second[0];
+    const Index batch_size = input_views[0].dims[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    if(delta_pairs.size() > 1)
-        add_deltas(delta_pairs);
+    if(delta_views.size() > 1)
+        add_deltas(delta_views);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
     const Normalization3dForwardPropagation* this_forward_propagation
         = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
@@ -221,7 +221,7 @@ Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index
 }
 
 
-pair<type*, dimensions> Normalization3dForwardPropagation::get_output_pair() const
+TensorView Normalization3dForwardPropagation::get_output_pair() const
 {
     Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 
@@ -299,7 +299,7 @@ Normalization3dBackPropagation::Normalization3dBackPropagation(const Index& new_
 }
 
 
-vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Normalization3dBackPropagation::get_input_derivative_views() const
 {
     Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
 
@@ -309,7 +309,7 @@ vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_deriva
     return { {(type*)(input_deltas.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
 
-vector<pair<type*, Index>> Normalization3dBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> Normalization3dBackPropagation::get_parameter_delta_views() const
 {
     return {
         {(type*)gamma_derivatives.data(), gamma_derivatives.size()},

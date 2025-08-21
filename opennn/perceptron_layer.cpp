@@ -35,9 +35,9 @@ dimensions Dense2d::get_output_dimensions() const
 }
 
 
-vector<pair<type*, Index>> Dense2d::get_parameter_pairs() const
+vector<ParameterView> Dense2d::get_parameter_views() const
 {
-    vector<pair<type*, Index>> parameter_pairs =
+    vector<ParameterView> parameter_pairs =
         {{(type*)(biases.data()), biases.size()},
          {(type*)(weights.data()), weights.size()}};
 
@@ -336,11 +336,11 @@ void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& del
 }
 
 
-void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Dense2d::forward_propagate(const vector<TensorView>& input_views,
                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                 const bool& is_training)
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
 
     Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
@@ -361,13 +361,13 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 }
 
 
-void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                             const vector<pair<type*, dimensions>>& delta_pairs,
+void Dense2d::back_propagate(const vector<TensorView>& input_views,
+                             const vector<TensorView>& delta_views,
                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_views[0]);
 
     // Forward propagation
 
@@ -404,13 +404,13 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 }
 
 
-void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
-                                const vector<pair<type*, dimensions>>& delta_pairs,
+void Dense2d::back_propagate_lm(const vector<TensorView>& input_views,
+                                const vector<TensorView>& delta_views,
                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
                                 unique_ptr<LayerBackPropagationLM>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
-    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map<2>(delta_views[0]);
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
@@ -619,11 +619,11 @@ void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_laye
 }
 
 
-pair<type *, dimensions> Dense2dForwardPropagation::get_output_pair() const
+TensorView Dense2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return pair<type *, dimensions>((type*)outputs.data(), {{batch_size, output_dimensions[0]}});
+    return TensorView((type*)outputs.data(), {{batch_size, output_dimensions[0]}});
 }
 
 
@@ -682,7 +682,7 @@ void Dense2dBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
 }
 
 
-vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Dense2dBackPropagation::get_input_derivative_views() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -690,21 +690,21 @@ vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pai
 }
 
 
-vector<pair<type*, Index>> Dense2dBackPropagation::get_parameter_delta_pairs() const
+vector<ParameterView> Dense2dBackPropagation::get_parameter_delta_views() const
 {
     const auto* dense_layer = static_cast<const Dense2d*>(layer);
 
-    vector<pair<type*, Index>> delta_pairs =
+    vector<ParameterView> delta_views =
         {{const_cast<type*>(bias_deltas.data()), bias_deltas.size()},
          {const_cast<type*>(weight_deltas.data()), weight_deltas.size()}};
 
     if (dense_layer->get_batch_normalization())
     {
-        delta_pairs.push_back({ const_cast<type*>(bn_scale_deltas.data()), bn_scale_deltas.size() });
-        delta_pairs.push_back({ const_cast<type*>(bn_offset_deltas.data()), bn_offset_deltas.size() });
+        delta_views.push_back({ const_cast<type*>(bn_scale_deltas.data()), bn_scale_deltas.size() });
+        delta_views.push_back({ const_cast<type*>(bn_offset_deltas.data()), bn_offset_deltas.size() });
     }
 
-    return delta_pairs;
+    return delta_views;
 }
 
 
@@ -740,7 +740,7 @@ void Dense2dLayerBackPropagationLM::set(const Index&new_samples_number, Layer *n
 }
 
 
-vector<pair<type*, dimensions>> Dense2dLayerBackPropagationLM::get_input_derivative_pairs() const
+vector<TensorView> Dense2dLayerBackPropagationLM::get_input_derivative_views() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -1429,7 +1429,7 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
     const Index weight_deltas_size = dense_layer->get_input_dimensions()[0] * dense_layer->get_output_dimensions()[0];
     const Index bias_deltas_size = dense_layer->get_output_dimensions()[0];
 
-    vector<pair<float*, Index>> delta_pairs =
+    vector<pair<float*, Index>> delta_views =
         {
             { bias_deltas_device,   bias_deltas_size },
             { weight_deltas_device, weight_deltas_size }
@@ -1437,11 +1437,11 @@ vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair
 
     if (dense_layer->get_batch_normalization())
     {
-        delta_pairs.push_back({ bn_scale_deltas_device, dense_layer->get_scales().size() });
-        delta_pairs.push_back({ bn_offset_deltas_device, dense_layer->get_offsets().size() });
+        delta_views.push_back({ bn_scale_deltas_device, dense_layer->get_scales().size() });
+        delta_views.push_back({ bn_offset_deltas_device, dense_layer->get_offsets().size() });
     }
 
-    return delta_pairs;
+    return delta_views;
 }
 
 

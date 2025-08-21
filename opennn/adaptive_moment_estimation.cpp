@@ -418,14 +418,14 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
 
-        const vector<pair<type*, Index>>& parameter_pairs = layer->get_parameter_pairs();
-        const vector<pair<type*, Index>>& delta_pairs = layer_back_propagation->get_parameter_delta_pairs();
+        const vector<ParameterView>& parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView>& delta_views = layer_back_propagation->get_parameter_delta_views();
 
         for(Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
         {
-            type* parameter_data = parameter_pairs[parameter_index].first;
-            const Index parameter_size = parameter_pairs[parameter_index].second;
-            type* delta_data = delta_pairs[parameter_index].first;
+            type* parameter_data = parameter_pairs[parameter_index].data;
+            const Index parameter_size = parameter_pairs[parameter_index].size;
+            type* delta_data = delta_views[parameter_index].data;
 
             TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
             TensorMap<Tensor<type, 1>> gradient(delta_data, parameter_size);
@@ -511,7 +511,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
         if (!layer->get_is_trainable())
             continue;
 
-        const auto& parameter_pairs = layer->get_parameter_pairs();
+        const auto& parameter_pairs = layer->get_parameter_views();
         const Index parameter_sets_number = parameter_pairs.size();
 
         gradient_exponential_decay[i].resize(parameter_sets_number);
@@ -519,7 +519,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
         for (Index j = 0; j < parameter_sets_number; j++)
         {
-            const Index parameter_size = parameter_pairs[j].second;
+            const Index parameter_size = parameter_pairs[j].size;
 
             gradient_exponential_decay[i][j].resize(parameter_size);
             gradient_exponential_decay[i][j].setZero();
@@ -841,15 +841,15 @@ void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_
         const vector<pair<float*, Index>> parameter_pairs = layer->get_parameter_pair_device();
 
         LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
-        const vector<pair<float*, Index>> delta_pairs = layer_back_prop->get_parameter_delta_pair_device();
+        const vector<pair<float*, Index>> delta_views = layer_back_prop->get_parameter_delta_pair_device();
 
-        assert(parameter_pairs.size() == delta_pairs.size());
+        assert(parameter_pairs.size() == delta_views.size());
 
         for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); ++parameter_index)
         {
             float* params_d = parameter_pairs[parameter_index].first;
             const Index param_size = parameter_pairs[parameter_index].second;
-            const float* grads_d = delta_pairs[parameter_index].first;
+            const float* grads_d = delta_views[parameter_index].first;
 
             float* m_d = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
             float* v_d = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];

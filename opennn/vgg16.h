@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class VGG16 : public NeuralNetwork
+class VGG16 final : public NeuralNetwork
 {
 public:
 

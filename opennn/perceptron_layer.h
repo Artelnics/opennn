@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-class Dense2d : public Layer
+class Dense2d final : public Layer
 {
 
 public:
@@ -29,7 +29,7 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     type get_dropout_rate() const;
 
@@ -59,17 +59,17 @@ public:
     void apply_batch_normalization(unique_ptr<LayerForwardPropagation>&, const bool&);
     void apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>&, unique_ptr<LayerForwardPropagation>&, unique_ptr<LayerBackPropagation>&) const;
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
-                           const vector<pair<type*, dimensions>>&,
+    void back_propagate_lm(const vector<TensorView>&,
+                           const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            unique_ptr<LayerBackPropagationLM>&) const override;
 
@@ -147,11 +147,11 @@ private:
 };
 
 
-struct Dense2dForwardPropagation : LayerForwardPropagation
+struct Dense2dForwardPropagation final : LayerForwardPropagation
 {
     Dense2dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -167,13 +167,13 @@ struct Dense2dForwardPropagation : LayerForwardPropagation
 };
 
 
-struct Dense2dBackPropagation : LayerBackPropagation
+struct Dense2dBackPropagation final : LayerBackPropagation
 {
     Dense2dBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -193,7 +193,7 @@ struct Dense2dLayerBackPropagationLM : LayerBackPropagationLM
 {
     Dense2dLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

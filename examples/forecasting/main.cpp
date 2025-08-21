@@ -165,7 +165,7 @@ int main()
         cout << "outputs: " << outputs << endl;
 
         /// Pruebas output funcion seno
-        // const std::vector<std::pair<type, type>> input_pairs = {
+        // const std::vector<std::pair<type, type>> input_views = {
         //     {0.0,          0.0998334166},
         //     {0.0998334166, 0.1986693308},
         //     {0.198669331,  0.295520207},
@@ -179,9 +179,9 @@ int main()
         //     {0.841470985,  0.89120736}
         // };
 
-        // for (size_t i = 0; i < input_pairs.size() - 1; ++i)
+        // for (size_t i = 0; i < input_views.size() - 1; ++i)
         // {
-        //     const auto& current_pair = input_pairs[i];
+        //     const auto& current_pair = input_views[i];
         //     const type input_val_1 = current_pair.first;
         //     const type input_val_2 = current_pair.second;
 
@@ -193,7 +193,7 @@ int main()
         //     const Tensor<type, 2> outputs = forecasting_network.calculate_outputs<3,2>(inputs);
 
         //     cout << "Output: " << outputs << endl;
-        //     cout << "Target: " << input_pairs[i+1].second << endl;
+        //     cout << "Target: " << input_views[i+1].second << endl;
         // }
 
         cout << "Good bye!" << endl;

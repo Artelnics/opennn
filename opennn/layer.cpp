@@ -53,11 +53,11 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_parameters_random()
 {
-    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+    const vector<ParameterView> parameter_pairs = get_parameter_views();
 
     for(Index i = 0; i < Index(parameter_pairs.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
 
         set_random(this_parameters);
     }
@@ -71,11 +71,11 @@ void Layer::set_parameters_glorot()
 
     const type limit = sqrt(6.0 / (inputs_number + outputs_number));
 
-    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+    const vector<ParameterView> parameter_pairs = get_parameter_views();
 
     for(Index i = 0; i < Index(parameter_pairs.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].first, parameter_pairs[i].second);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
 
         set_random(this_parameters, -limit, limit);
     }
@@ -84,20 +84,20 @@ void Layer::set_parameters_glorot()
 
 Index Layer::get_parameters_number() const
 {
-    const vector<pair<type*, Index>> parameter_pairs = get_parameter_pairs();
+    const vector<ParameterView> parameter_pairs = get_parameter_views();
 
     Index parameters_number = 0;
 
     for(Index i = 0; i < Index(parameter_pairs.size()); i++)
-        parameters_number += parameter_pairs[i].second;
+        parameters_number += parameter_pairs[i].size;
 
     return parameters_number;
 }
 
 
-vector<pair<type *, Index> > Layer::get_parameter_pairs() const
+vector<ParameterView > Layer::get_parameter_views() const
 {
-    return vector<pair<type*, Index>>();
+    return vector<ParameterView>();
 }
 
 
@@ -149,12 +149,12 @@ bool Layer::get_is_trainable() const
 }
 
 
-void Layer::add_deltas(const vector<pair<type *, dimensions> > &delta_pairs) const
+void Layer::add_deltas(const vector<TensorView> &delta_views) const
 {
-    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
-    for (Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map<3>(delta_pairs[i]);
+    for (Index i = 1; i < Index(delta_views.size()); i++)
+        deltas.device(*thread_pool_device) += tensor_map<3>(delta_views[i]);
 }
 
 
@@ -174,7 +174,7 @@ Index Layer::get_outputs_number() const
 }
 
 
-void Layer::forward_propagate(const vector<pair<type*, dimensions>>&,
+void Layer::forward_propagate(const vector<TensorView>&,
                               unique_ptr<LayerForwardPropagation>&, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
@@ -235,22 +235,22 @@ void Layer::softmax(Tensor<type, 3>& y) const
 
 void Layer::softmax(Tensor<type, 4>& y) const
 {
-    const Index rows_number = y.dimension(0);
+    const Index rows_number    = y.dimension(0);
     const Index columns_number = y.dimension(1);
-    const Index channels = y.dimension(2);
-    const Index blocks_number = y.dimension(3);
+    const Index channels       = y.dimension(2);
+    const Index blocks_number  = y.dimension(3);
 
-    y.device(*thread_pool_device) = y - y.maximum(array_1(0))
-                                            .eval()
-                                            .reshape(array_4(1, columns_number, channels, blocks_number))
-                                            .broadcast(array_4(rows_number, 1, 1, 1));
+    y.device(*thread_pool_device) =
+        y - y.maximum(array_1(3)).eval()
+                .reshape(array_4(rows_number, columns_number, channels, 1))
+                .broadcast(array_4(1, 1, 1, blocks_number));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(array_1(0))
-                                            .eval()
-                                            .reshape(array_4(1, columns_number, channels, blocks_number))
-                                            .broadcast(array_4(rows_number, 1, 1, 1 ));
+    y.device(*thread_pool_device) =
+        y / y.sum(array_1(3)).eval()
+                .reshape(array_4(rows_number, columns_number, channels, 1))
+                .broadcast(array_4(1, 1, 1, blocks_number));
 }
 
 

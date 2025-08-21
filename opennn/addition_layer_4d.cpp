@@ -70,17 +70,17 @@ void Addition4d::set_input_dimensions(const dimensions& new_input_dimensions)
 }
 
 
-void Addition4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Addition4d::forward_propagate(const vector<TensorView>& input_views,
                                    unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                    const bool&)
 {
-    if (input_pairs.size() != 2)
+    if (input_views.size() != 2)
         throw runtime_error("Addition4d layer requires exactly two inputs.");
-    if (input_pairs[0].second != input_pairs[1].second)
+    if (input_views[0].second != input_views[1].second)
         throw runtime_error("Input dimensions for Addition4d layer must be identical.");
 
-    const TensorMap<Tensor<type, 4>> input_1 = tensor_map<4>(input_pairs[0]);
-    const TensorMap<Tensor<type, 4>> input_2 = tensor_map<4>(input_pairs[1]);
+    const TensorMap<Tensor<type, 4>> input_1 = tensor_map<4>(input_views[0]);
+    const TensorMap<Tensor<type, 4>> input_2 = tensor_map<4>(input_views[1]);
 
     Addition4dForwardPropagation* this_forward_propagation =
         static_cast<Addition4dForwardPropagation*>(layer_forward_propagation.get());
@@ -91,15 +91,15 @@ void Addition4d::forward_propagate(const vector<pair<type*, dimensions>>& input_
 }
 
 
-void Addition4d::back_propagate(const vector<pair<type*, dimensions>>&,
-                                const vector<pair<type*, dimensions>>& delta_pairs,
+void Addition4d::back_propagate(const vector<TensorView>&,
+                                const vector<TensorView>& delta_views,
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    if (delta_pairs.size() != 1)
+    if (delta_views.size() != 1)
         throw runtime_error("Addition4d backpropagation requires exactly one delta input.");
 
-    const TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_views[0]);
 
     Addition4dBackPropagation* this_back_propagation =
         static_cast<Addition4dBackPropagation*>(back_propagation.get());
@@ -141,7 +141,7 @@ Addition4dForwardPropagation::Addition4dForwardPropagation(const Index& new_batc
 }
 
 
-pair<type*, dimensions> Addition4dForwardPropagation::get_output_pair() const
+TensorView Addition4dForwardPropagation::get_output_pair() const
 {
     const Addition4d* addition_layer = static_cast<Addition4d*>(layer);
 
@@ -182,7 +182,7 @@ Addition4dBackPropagation::Addition4dBackPropagation(const Index& new_batch_size
 }
 
 
-vector<pair<type*, dimensions>> Addition4dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Addition4dBackPropagation::get_input_derivative_views() const
 {
     const Addition4d* addition_layer = static_cast<Addition4d*>(layer);
 

@@ -68,14 +68,14 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool& is_training)
 {
     Pooling3dForwardPropagation* pooling_layer_forward_propagation =
         static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
 
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_pairs[0]);
+    const TensorMap<Tensor<type, 3>> inputs = tensor_map<3>(input_views[0]);
     Tensor<type, 2>& outputs = pooling_layer_forward_propagation->outputs;
 
     const Index batch_size = inputs.dimension(0);
@@ -118,13 +118,13 @@ void Pooling3d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void Pooling3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                               const vector<pair<type*, dimensions>>& delta_pairs,
+void Pooling3d::back_propagate(const vector<TensorView>& input_views,
+                               const vector<TensorView>& delta_views,
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap<Tensor<type, 3>> input_tensor_map  = tensor_map<3>(input_pairs[0]);
-    const TensorMap<Tensor<type, 2>> delta_tensor_map  = tensor_map<2>(delta_pairs[0]);
+    const TensorMap<Tensor<type, 3>> input_tensor_map  = tensor_map<3>(input_views[0]);
+    const TensorMap<Tensor<type, 2>> delta_tensor_map  = tensor_map<2>(delta_views[0]);
 
     Pooling3dForwardPropagation* forward_layer  =
         static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
@@ -206,7 +206,7 @@ Pooling3dForwardPropagation::Pooling3dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Pooling3dForwardPropagation::get_output_pair() const
+TensorView Pooling3dForwardPropagation::get_output_pair() const
 {
     return {(type*)outputs.data(), {batch_size, layer->get_output_dimensions()[0]}};
 }
@@ -219,7 +219,7 @@ Pooling3dBackPropagation::Pooling3dBackPropagation(const Index& new_batch_size, 
 }
 
 
-vector<pair<type*, dimensions>> Pooling3dBackPropagation::get_input_derivative_pairs() const
+vector<TensorView> Pooling3dBackPropagation::get_input_derivative_views() const
 {
     const auto input_dims = layer->get_input_dimensions();
     return {{(type*)input_derivatives.data(), {batch_size, input_dims[0], input_dims[1]}}};

@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Probabilistic3d : public Layer
+class Probabilistic3d final : public Layer
 {
 
 public:
@@ -55,7 +55,7 @@ public:
     void set_activation_function(const Activation&);
     void set_activation_function(const string&);
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     void calculate_combinations(const Tensor<type, 3>&,
                                 Tensor<type, 3>&) const;
@@ -64,14 +64,14 @@ public:
 
     // Outputs
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
     // Gradient
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -101,11 +101,11 @@ private:
 };
 
 
-struct Probabilistic3dForwardPropagation : LayerForwardPropagation
+struct Probabilistic3dForwardPropagation final : LayerForwardPropagation
 {
     Probabilistic3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -115,13 +115,13 @@ struct Probabilistic3dForwardPropagation : LayerForwardPropagation
 };
 
 
-struct Probabilistic3dBackPropagation : LayerBackPropagation
+struct Probabilistic3dBackPropagation final : LayerBackPropagation
 {
     Probabilistic3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

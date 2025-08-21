@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Bounding : public Layer
+class Bounding final : public Layer
 {
 
 public:
@@ -52,7 +52,7 @@ public:
 
     // Lower and upper bounds
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
@@ -78,11 +78,11 @@ private:
 };
 
 
-struct BoundingForwardPropagation : LayerForwardPropagation
+struct BoundingForwardPropagation final : LayerForwardPropagation
 {
     BoundingForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

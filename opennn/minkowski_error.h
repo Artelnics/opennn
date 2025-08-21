@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class MinkowskiError : public LossIndex
+class MinkowskiError final : public LossIndex
 {
 
 public:

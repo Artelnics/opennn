@@ -27,7 +27,7 @@ template<int Rank> struct FlattenBackPropagationCuda;
 
 
 template<int Rank>
-class Flatten : public Layer
+class Flatten final : public Layer
 {
 
 public:
@@ -95,7 +95,7 @@ public:
 
     // Forward propagation
 
-    void forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+    void forward_propagate(const vector<TensorView>& input_views,
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            const bool&) override
     {
@@ -105,13 +105,13 @@ public:
         FlattenForwardPropagation<Rank>* forward_prop =
             static_cast<FlattenForwardPropagation<Rank>*>(layer_forward_propagation.get());
 
-        forward_prop->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
+        forward_prop->outputs = TensorMap<Tensor<type, 2>>(input_views[0].data, batch_size, outputs_number);
     }
 
     // Back-propagation
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>& delta_pairs,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>& delta_views,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
@@ -122,7 +122,7 @@ public:
             static_cast<FlattenBackPropagation<Rank>*>(back_propagation.get());
 
         memcpy(back_prop->input_deltas.data(),
-               delta_pairs[0].first,
+               delta_views[0].data,
                (batch_size * outputs_number * sizeof(type)));
     }
 
@@ -226,7 +226,7 @@ private:
 };
 
 template<int Rank>
-struct FlattenForwardPropagation : LayerForwardPropagation
+struct FlattenForwardPropagation final : LayerForwardPropagation
 {
     FlattenForwardPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
     {
@@ -234,7 +234,7 @@ struct FlattenForwardPropagation : LayerForwardPropagation
     }
 
 
-    pair<type*, dimensions> get_output_pair() const override
+    TensorView get_output_pair() const override
     {
         const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -263,8 +263,9 @@ struct FlattenForwardPropagation : LayerForwardPropagation
     Tensor<type, 2> outputs;
 };
 
+
 template<int Rank>
-struct FlattenBackPropagation : LayerBackPropagation
+struct FlattenBackPropagation final : LayerBackPropagation
 {
     FlattenBackPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
     {
@@ -272,7 +273,7 @@ struct FlattenBackPropagation : LayerBackPropagation
     }
 
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override
+    vector<TensorView> get_input_derivative_views() const override
     {
         const Flatten<Rank>* layer_ptr = static_cast<const Flatten<Rank>*>(layer);
         const dimensions input_dimensions = layer_ptr->get_input_dimensions();

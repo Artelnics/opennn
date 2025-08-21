@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class Recurrent : public Layer
+class Recurrent final : public Layer
 {
 
 public:
@@ -26,7 +26,7 @@ public:
 
     Index get_timesteps() const;
 
-    vector<pair<type*, Index>> get_parameter_pairs() const override;
+    vector<ParameterView> get_parameter_views() const override;
 
     string get_activation_function() const;
 
@@ -43,12 +43,12 @@ public:
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
-    void forward_propagate(const vector<pair<type*, dimensions>>&,
+    void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>&,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
@@ -77,11 +77,11 @@ private:
 };
 
 
-struct RecurrentForwardPropagation : LayerForwardPropagation
+struct RecurrentForwardPropagation final : LayerForwardPropagation
 {
     RecurrentForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_output_pair() const override;
+    TensorView get_output_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
@@ -98,13 +98,13 @@ struct RecurrentForwardPropagation : LayerForwardPropagation
 };
 
 
-struct RecurrentBackPropagation : LayerBackPropagation
+struct RecurrentBackPropagation final : LayerBackPropagation
 {
     RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+    vector<TensorView> get_input_derivative_views() const override;
 
-    vector<pair<type*, Index>> get_parameter_delta_pairs() const override;
+    vector<ParameterView> get_parameter_delta_views() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

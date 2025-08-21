@@ -240,7 +240,7 @@ void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Scaling2d::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool&)
 {
@@ -249,7 +249,7 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Scaling2dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_views[0]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
     outputs = inputs;
@@ -552,7 +552,7 @@ Scaling2dForwardPropagation::Scaling2dForwardPropagation(const Index& new_batch_
 }
 
 
-pair<type*, dimensions> Scaling2dForwardPropagation::get_output_pair() const
+TensorView Scaling2dForwardPropagation::get_output_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

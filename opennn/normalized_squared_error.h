@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class NormalizedSquaredError : public LossIndex
+class NormalizedSquaredError final : public LossIndex
 {
 
 public:

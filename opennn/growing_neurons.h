@@ -19,7 +19,7 @@ namespace opennn
 
 struct GrowingNeuronsResults;
 
-class GrowingNeurons : public NeuronsSelection
+class GrowingNeurons final : public NeuronsSelection
 {
 
 public:
