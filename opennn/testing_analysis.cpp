@@ -2070,9 +2070,9 @@ string TestingAnalysis::test_transformer(const vector<string>& context_string, c
 }
 
 
-Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
+Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests(const type& decision_threshold) const
 {
-    const Tensor<Index, 2> confusion = calculate_confusion();
+    const Tensor<Index, 2> confusion = calculate_confusion(decision_threshold);
 
     const Index true_positive = confusion(0,0);
     const Index false_positive = confusion(1,0);

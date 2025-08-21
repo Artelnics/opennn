@@ -152,7 +152,7 @@ public:
 
     // Binary classifcation
 
-    Tensor<type, 1> calculate_binary_classification_tests() const;
+    Tensor<type, 1> calculate_binary_classification_tests(const type& = 0.50) const;
 
     void print_binary_classification_tests() const;
 
