@@ -254,48 +254,6 @@ void Layer::softmax(Tensor<type, 4>& y) const
 }
 
 
-//void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
-//                                             const Tensor<type, 3>& tensor,
-//                                             TensorMap<Tensor<type, 3>>& result,
-//                                             Tensor<type, 1>& aux_rows) const
-//{
-//    const Index rows_number = softmax.dimension(0);
-//    const Index columns_number = softmax.dimension(1);
-//    const Index channels = softmax.dimension(2);
-
-//    type* softmax_data = (type*)softmax.data();
-//    type* tensor_data = (type*)tensor.data();
-//    type* result_data = result.data();
-
-//    type* softmax_vector_data = nullptr;
-//    type* tensor_vector_data = nullptr;
-//    type* result_vector_data = nullptr;
-
-//    Tensor<type, 0> sum;
-
-//    for(Index i = 0; i < channels; i++)
-//    {
-//        for(Index j = 0; j < columns_number; j++)
-//        {
-//            softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
-//            tensor_vector_data = tensor_data + rows_number * (i * columns_number + j);
-//            result_vector_data = result_data + rows_number * (i * columns_number + j);
-
-//            const TensorMap<Tensor<type, 1>> softmax_vector(softmax_vector_data, rows_number);
-//            const TensorMap<Tensor<type, 1>> tensor_vector(tensor_vector_data, rows_number);
-
-//            TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
-
-//            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
-
-//            sum.device(*thread_pool_device) = aux_rows.sum();
-
-//            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
-//        }
-//    }
-//}
-
-
 void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
                                              TensorMap<Tensor<type, 3>>& result,
                                              Tensor<type, 1>& aux_rows) const

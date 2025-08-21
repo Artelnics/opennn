@@ -456,13 +456,13 @@ public:
             "multihead_attention_layer"
             ));
 
-        add_layer(make_unique<Pooling3d>(
-            get_output_dimensions()
-            ));
-
-        // add_layer(make_unique<Flatten<3>>(
+        // add_layer(make_unique<Pooling3d>(
         //     get_output_dimensions()
         //     ));
+
+        add_layer(make_unique<Flatten<3>>(
+            get_output_dimensions()
+            ));
 
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),

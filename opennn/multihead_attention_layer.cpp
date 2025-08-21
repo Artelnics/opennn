@@ -265,13 +265,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
          * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
          .sum(array_1(4)) * scaling_factor;
 
-    // cout << "attention_weights: " << attention_weights.dimensions() << endl;
-
-    softmax(attention_weights); // @TODO checks if it's been applied to the last dimension source_sequence_length
-
-    // cout << "attention_weights: " << attention_weights.dimensions() << endl;
-
-    // throw runtime_error(".");
+    softmax(attention_weights);
 
     attention_outputs.device(*thread_pool_device) =
         (attention_weights.reshape(array_5(batch_size, heads_number, query_sequence_length, source_sequence_length, 1)).broadcast(array_5(1, 1, 1, 1, head_dimension))

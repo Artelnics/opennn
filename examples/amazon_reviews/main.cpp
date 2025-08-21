@@ -70,7 +70,7 @@ int main()
         // Tensor<type, 1> abs_difference = difference.abs();
         // cout << abs_difference.maximum();
 
-        // // cout << normalized_squared_error.calculate_numerical_error() << endl;
+        // cout << normalized_squared_error.calculate_numerical_error() << endl;
 
         // cout << normalized_squared_error.calculate_gradient().abs() - normalized_squared_error.calculate_numerical_gradient().abs()  << endl;
 
