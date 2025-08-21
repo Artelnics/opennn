@@ -58,16 +58,13 @@ public:
     }
 
 
-    void forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+    void forward_propagate(const vector<TensorView>& input_pairs,
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            const bool&) override
     {
 
         if (input_pairs.size() != 2)
             throw runtime_error(name + " layer requires exactly two inputs.");
-
-        if (input_pairs[0].second != input_pairs[1].second)
-            throw runtime_error("Input dimensions for " + name + " must be identical.");
 
         const TensorMap<Tensor<type, Rank>> input_1 = tensor_map<Rank>(input_pairs[0]);
         const TensorMap<Tensor<type, Rank>> input_2 = tensor_map<Rank>(input_pairs[1]);
@@ -80,8 +77,8 @@ public:
 
     }
 
-    void back_propagate(const vector<pair<type*, dimensions>>&,
-                        const vector<pair<type*, dimensions>>& delta_pairs,
+    void back_propagate(const vector<TensorView>&,
+                        const vector<TensorView>& delta_pairs,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
@@ -177,7 +174,7 @@ struct AdditionForwardPropagation : LayerForwardPropagation
     }
 
 
-    pair<type*, dimensions> get_output_pair() const override
+    TensorView get_output_pair() const override
     {
         const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -226,7 +223,7 @@ struct AdditionBackPropagation : LayerBackPropagation
     }
 
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const
     {
         const dimensions input_dimensions = layer->get_input_dimensions();
         dimensions full_dimensions = {batch_size};
