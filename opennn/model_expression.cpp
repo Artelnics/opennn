@@ -466,7 +466,7 @@ string ModelExpression::get_expression_api() const
 
     string word;
 
-    for(size_t i = 0; i < lines_number; i++)
+    for(Index i = 0; i < lines_number; i++)
     {
         string line = lines[i];
         word = get_first_word(line);
@@ -486,13 +486,13 @@ string ModelExpression::get_expression_api() const
            << "$url_components = parse_url($url);" << endl
            << "parse_str($url_components['query'], $params);\n" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
                << "$" << fixes_input_names[i]      << " = floatval(" << "$num"  + to_string(i) << ");"  << endl;
 
     buffer << "if(" << endl;
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         i != inputs_number - 1
             ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
             : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
@@ -736,85 +736,133 @@ string ModelExpression::header_javascript() const
 string ModelExpression::subheader_javascript() const
 {
     return
-        "\n-->\n\n\n"
+        "-->\n\n"
         "<!DOCTYPE HTML>\n"
         "<html lang=\"en\">\n"
         "<head>\n"
-        "\t<link href=\"https://www.neuraldesigner.com/assets/css/neuraldesigner.css\" rel=\"stylesheet\" />\n"
-        "\t<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />\n"
+        "<link href=\"https://www.neuraldesigner.com/assets/css/neuraldesigner.css\" rel=\"stylesheet\" />\n"
+        "<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />\n"
         "</head>\n\n"
-        "<style>\n\n"
+        "<style>\n"
         "body {\n"
-        "\tdisplay: flex;\n"
-        "\tjustify-content: center;\n"
-        "\talign-items: center;\n"
-        "\tmin-height: 100vh;\n"
-        "\tmargin: 0;\n"
-        "\tbackground-color: #f0f0f0;\n"
-        "\tfont-family: Arial, sans-serif;\n"
+        "display: flex;\n"
+        "justify-content: center;\n"
+        "align-items: center;\n"
+        "min-height: 100vh;\n"
+        "margin: 0;\n"
+        "padding: 2em 0;\n"
+        "background-color: #f0f0f0;\n"
+        "font-family: Arial, sans-serif;\n"
+        "box-sizing: border-box;\n"
         "}\n\n"
-        ".form {\n"
-        "\tborder-collapse: collapse;\n"
-        "\twidth: 80%; \n"
-        "\tmax-width: 600px; \n"
-        "\tmargin: 0 auto; \n"
-        "\tbackground-color: #fff; \n"
-        "\tbox-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); \n"
-        "\tborder: 1px solid #777; \n"
-        "\tborder-radius: 5px; \n"
+        ".content-wrapper {\n"
+        "width: 100%;\n"
+        "max-width: 800px;\n"
+        "margin: 0 auto;\n"
+        "padding: 20px;\n"
+        "background-color: #fff;\n"
+        "box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);\n"
+        "border: 1px solid #777;\n"
+        "border-radius: 5px;\n"
+        "text-align: center;\n"
         "}\n\n"
-        "input[type=\"number\"] {\n"
-        "\twidth: 60px; \n"
-        "\ttext-align: center; \n"
+        ".form-table {\n"
+        "border-collapse: collapse;\n"
+        "width: 100%;\n"
+        "margin-bottom: 20px;\n"
+        "border: 1px solid #808080;\n"
         "}\n\n"
-        ".form th,\n"
-        ".form td {\n"
-        "\tpadding: 10px;\n"
-        "\ttext-align: center\n;"
-        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; \n"
+        ".form-table th,\n"
+        ".form-table td {\n"
+        "padding: 10px;\n"
+        "text-align: left;\n"
+        "vertical-align: middle;\n"
+        "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "}\n\n"
+        ".neural-cell {\n"
+        "text-align: center;\n"
+        "width: 50%;\n"
+        "}\n\n"
+        ".neural-cell input,\n"
+        ".neural-cell select {\n"
+        "display: block;\n"
+        "margin-left: auto;\n"
+        "margin-right: auto;\n"
+        "box-sizing: border-box;\n"
+        "max-width: 200px;\n"
+        "width: 90%;\n"
+        "}\n\n"
+        ".neural-cell input[type=\"number\"] {\n"
+        "max-width: 120px;\n"
+        "text-align: center;\n"
+        "margin-top: 8px;\n"
+        "}\n\n"
+        ".neural-cell input[type=\"text\"] {\n"
+        "max-width: 120px;\n"
+        "text-align: center;\n"
         "}\n\n"
         ".btn {\n"
-        "\tbackground-color: #5da9e9;\n"
-        "\tborder: none;\n"
-        "\tcolor: white;\n"
-        "\ttext-align: center;\n"
-        "\tfont-size: 16px;\n"
-        "\tmargin: 4px;\n"
-        "\tcursor: pointer;\n"
-        "\tpadding: 10px 20px;\n"
-        "\tborder-radius: 5px;\n"
-        "\ttransition: background-color 0.3s ease;\n"
-        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "background-color: #5da9e9;\n"
+        "border: none;\n"
+        "color: white;\n"
+        "text-align: center;\n"
+        "font-size: 16px;\n"
+        "margin-top: 10px;\n"
+        "margin-bottom: 20px;\n"
+        "cursor: pointer;\n"
+        "padding: 10px 20px;\n"
+        "border-radius: 5px;\n"
+        "transition: background-color 0.3s ease;\n"
+        "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
         "}\n\n"
         ".btn:hover {\n"
-        "\tbackground-color: #4b92d3; \n"
+        "background-color: #4b92d3;\n"
         "}\n\n"
         "input[type=\"range\"]::-webkit-slider-runnable-track {\n"
-        "\tbackground: #5da9e9;\n"
-        "\theight: 0.5rem;\n"
+        "background: #8fc4f0;\n"
+        "height: 0.5rem;\n"
         "}\n\n"
         "input[type=\"range\"]::-moz-range-track {\n"
-        "\tbackground: #5da9e9;\n"
-        "\theight: 0.5rem;\n"
+        "background: #8fc4f0;\n"
+        "height: 0.5rem;\n"
         "}\n\n"
-        ".tabla {\n"
-        "\twidth: 100%;\n"
-        "\tpadding: 5px;\n"
-        "\tmargin: 0; \n"
+        "input[type=\"range\"]::-webkit-slider-thumb {\n"
+        "-webkit-appearance: none;\n"
+        "appearance: none;\n"
+        "margin-top: -5px;\n"
+        "background-color: #5da9e9;\n"
+        "border-radius: 50%;\n"
+        "height: 20px;\n"
+        "width: 20px;\n"
+        "border: 2px solid #000000;\n"
+        "box-shadow: 0 0 5px rgba(0,0,0,0.25);\n"
+        "cursor: pointer;\n"
         "}\n\n"
-        ".form th {\n"
-        "\tbackground-color: #f2f2f2;\n"
-        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "input[type=\"range\"]::-moz-range-thumb {\n"
+        "background-color: #5da9e9;\n"
+        "border-radius: 50%;\n"
+        "margin-top: -5px;\n"
+        "height: 20px;\n"
+        "width: 20px;\n"
+        "border: 2px solid #000000;\n"
+        "box-shadow: 0 0 5px rgba(0,0,0,0.25);\n"
+        "cursor: pointer;\n"
+        "}\n\n"
+        ".form-table th {\n"
+        "background-color: #f2f2f2;\n"
+        "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "}\n\n"
+        "h4 {\n"
+        "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "color: #333;\n"
         "}\n"
         "</style>\n\n"
         "<body>\n\n"
         "<section>\n"
-        "<br/>\n\n"
-        "<div align=\"center\" style=\"display:block;text-align: center;\">\n"
-        "<!-- MENU OPTIONS HERE  -->\n"
-        "<form style=\"display: inline-block;margin-left: auto; margin-right: auto;\">\n\n"
-        "<table border=\"1px\" class=\"form\">\n\n"
-        "<h4>INPUTS</h4>\n";
+        "<div class=\"content-wrapper\">\n"
+        "<form onsubmit=\"neuralNetwork(); return false;\">\n"
+        "<h4>INPUTS</h4>\n"
+        "<table class=\"form-table\">\n";
 }
 
 
@@ -859,7 +907,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     buffer << header_javascript();
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
         buffer << "\n\t " << i + 1 << ")  " << input_names[i];
 
     buffer << subheader_javascript();
@@ -875,7 +923,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         Index j = 0; // Number of categorical & binary variables found
         Index inputs_processed = 0;
 
-        for (int k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
+        for (size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
 
             if (raw_variables[k].use != "Input")
                 continue;
@@ -890,7 +938,8 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
                 buffer << "<tr style=\"height:3.5em\">" << endl;
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
-                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<td class=\"neural-cell\">" << endl;
+                // buffer << "<td style=\"text-align:center\">" << endl;
 
                 if (min_value==0 && min_value==0)
                 {
@@ -965,7 +1014,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<td style=\"text-align:center\">" << endl;
                 buffer << "<select id=\"Select" << j << "\">" << endl;
 
-                for (int l = 0; l < raw_variable_categories.size(); ++l)
+                for (size_t l = 0; l < raw_variable_categories.size(); ++l)
                 {
                     buffer << "<option value=\"" << l << "\">" << raw_variable_categories[l] << "</option>" << endl;
                 }
@@ -987,42 +1036,39 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
-                   << "<td style=\"text-align:center\">" << endl
+                   << "<td class=\"neural-cell\">" << endl
                    << "<input type=\"range\" id=\"" << fixes_input_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
+                   << "<input type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
 
 
-    buffer << "</table>" << endl
-           << "</form>\n" << endl;
+    buffer << "</table>" << endl;
 
     if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
     }
 
-    buffer << "<div align=\"center\">" << endl
-           << "<!-- BUTTON HERE -->" << endl
+    buffer << "<!-- BUTTON HERE -->" << endl
            << "<button class=\"btn\" onclick=\"neuralNetwork()\">calculate outputs</button>" << endl
-           << "</div>\n" << endl
            << "<br/>\n" << endl
-           << "<table border=\"1px\" class=\"form\">" << endl
+           << "<table border=\"1px\" class=\"form-table\">" << endl
            << "<h4> OUTPUTS </h4>" << endl;
 
     if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "<tr style=\"height:3.5em\">" << endl
                << "<td> Target </td>" << endl
-               << "<td>" << endl
+               << "<td class=\"neural-cell\">" << endl
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
@@ -1030,7 +1076,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                << "</tr>\n" << endl
                << "<tr style=\"height:3.5em\">" << endl
                << "<td> Value </td>" << endl
-               << "<td>" << endl
+               << "<td class=\"neural-cell\">" << endl
                << "<input style=\"text-align:right; padding-right:20px;\" id=\"selected_value\" value=\"\" type=\"text\"  disabled/>" << endl
                << "</td>" << endl
                << "</tr>\n" << endl;
@@ -1039,7 +1085,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         for(Index i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
-                   << "<td>" << endl
+                   << "<td class=\"neural-cell\">" << endl
                    << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
@@ -1087,7 +1133,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     Index inputs_processed = 0;
 
-    for (int k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
+    for (size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
 
         if (raw_variables[k].use != "Input")
             continue;
@@ -1139,7 +1185,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             buffer << "\t" << "var selectElement" << j << "= document.getElementById('Select" << j << "');" << endl;
             buffer << "\t" << "var selectedValue" << j << "= +selectElement" << j << ".value;" << endl;
 
-            for (int l = 0; l < raw_variable_categories.size(); ++l)
+            for (size_t l = 0; l < raw_variable_categories.size(); ++l)
             {
                 string category = raw_variable_categories[l];
                 string fixed_category = replace_reserved_keywords(category);
@@ -1152,7 +1198,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
             buffer << "switch (selectedValue" << j << "){" << endl;
 
-            for (int l = 0; l < raw_variable_categories.size(); ++l)
+            for (size_t l = 0; l < raw_variable_categories.size(); ++l)
             {
                 string category = raw_variable_categories[l];
                 string fixed_category = replace_reserved_keywords(category);
@@ -1179,7 +1225,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-        for(size_t i = 0; i < outputs_number; i++)
+        for(Index i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
@@ -1290,7 +1336,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
 
-    for(Index i = 0; i < fixed_outputs.size(); i++)
+    for(size_t i = 0; i < fixed_outputs.size(); i++)
         buffer << fixed_outputs[i] << endl;
 
     buffer << "\t" << "var out = [];" << endl;
@@ -1524,7 +1570,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
         sufix = "np.";
 
-        for(int j = 0; j < found_tokens.size(); j++)
+        for(size_t j = 0; j < found_tokens.size(); j++)
         {
             key_word = found_tokens[j];
             new_word = sufix + key_word;
@@ -1533,7 +1579,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
         sufix = "self.";
 
-        for(int j = 0; j < found_mathematical_expressions.size(); j++)
+        for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
             key_word = found_mathematical_expressions[j];
             if(key_word == " Linear")
@@ -1673,7 +1719,7 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
 
     for (const auto& pair : sprcialWords)
     {
-        int position = 0;
+        size_t position = 0;
 
         while ((position = out.find(pair.first, position)) != string::npos)
         {
