@@ -780,26 +780,32 @@ string ModelExpression::subheader_javascript() const
         "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
         "}\n\n"
         ".neural-cell {\n"
-        "text-align: center;\n"
+        "text-align: right;\n"
         "width: 50%;\n"
         "}\n\n"
-        ".neural-cell input,\n"
-        ".neural-cell select {\n"
+        ".neural-cell input[type=\"range\"] {\n"
         "display: block;\n"
         "margin-left: auto;\n"
-        "margin-right: auto;\n"
+        "margin-right: 0;\n"
         "box-sizing: border-box;\n"
         "max-width: 200px;\n"
         "width: 90%;\n"
         "}\n\n"
-        ".neural-cell input[type=\"number\"] {\n"
-        "max-width: 120px;\n"
-        "text-align: center;\n"
-        "margin-top: 8px;\n"
+        ".neural-cell input[type=\"number\"],\n"
+        ".neural-cell input[type=\"text\"],\n"
+        ".neural-cell select {\n"
+        "display: block;\n"
+        "margin-left: auto;\n"
+        "margin-right: 0;\n"
+        "box-sizing: border-box;\n"
+        "max-width: 200px;\n"
+        "width: 90%;\n"
+        "padding: 5px;\n"
+        "text-align: right;\n"
+        "text-align-last: right;\n"
         "}\n\n"
-        ".neural-cell input[type=\"text\"] {\n"
-        "max-width: 120px;\n"
-        "text-align: center;\n"
+        ".neural-cell input[type=\"number\"] {\n"
+        "margin-top: 8px;\n"
         "}\n\n"
         ".btn {\n"
         "background-color: #5da9e9;\n"
@@ -939,7 +945,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<tr style=\"height:3.5em\">" << endl;
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
                 buffer << "<td class=\"neural-cell\">" << endl;
-                // buffer << "<td style=\"text-align:center\">" << endl;
 
                 if (min_value==0 && min_value==0)
                 {
@@ -967,7 +972,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
-                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<td class=\"neural-cell\">" << endl;
                 buffer << "<select id=\"Select" << j << "\">" << endl;
 
                 buffer << "<option value=\"" << 0 << "\">" << 0 << "</option>" << endl;
@@ -989,7 +994,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
-                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<td class=\"neural-cell\">" << endl;
                 buffer << "<select id=\"Select" << j << "\">" << endl;
 
                 buffer << "<option value=\"" << 0 << "\">" << raw_variable_categories[0] << "</option>" << endl;
@@ -1011,7 +1016,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
-                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<td class=\"neural-cell\">" << endl;
                 buffer << "<select id=\"Select" << j << "\">" << endl;
 
                 for (size_t l = 0; l < raw_variable_categories.size(); ++l)
