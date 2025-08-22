@@ -24,64 +24,6 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
 }
 
 
-// LanguageDataset::LanguageDataset(const Index& samples_number, const Index& input_sequence_length, const Index& input_vocabulary_size) : Dataset()
-// {
-// //    input_dimensions = new_input_dimensions;
-
-// //    target_dimensions = { new_targets_number };
-
-//     maximum_input_length = input_sequence_length;
-//     maximum_target_length = 1;
-
-//     const Index variables_number = input_sequence_length + 1;
-
-//     data.resize(samples_number, variables_number);
-
-//     raw_variables.resize(variables_number);
-
-//     set_default();
-
-//     for (Index i = 0; i < variables_number; i++)
-//     {
-//         RawVariable& raw_variable = raw_variables[i];
-
-//         raw_variable.type = RawVariableType::Numeric;
-//         raw_variable.name = "variable_" + to_string(i + 1);
-
-//         raw_variable.use = (i < input_sequence_length)
-//                                ? Input
-//                                : "Target";
-//     }
-
-//     const vector<Index> target_variable_indices = get_variable_indices("Target");
-
-//     cout << "variables_number: " << variables_number << endl;
-
-//     cout << "target_variable_indices : " << endl;
-//     print_vector(target_variable_indices);
-
-//     sample_uses.resize(samples_number);
-
-//     split_samples_random();
-
-//     // Initialize data
-
-//     default_random_engine generator;
-//     uniform_int_distribution<int> dist_main(0, input_vocabulary_size-1);
-//     uniform_int_distribution<int> dist_binary(0, 1);
-
-//     for (Index i = 0; i < data.dimension(0); ++i)
-//         for (Index j = 0; j < data.dimension(1) - 1; ++j)
-//             data(i, j) = static_cast<type>(dist_main(generator));
-
-//     for (Index i = 0; i < data.dimension(0); ++i)
-//         data(i, data.dimension(1) - 1) = static_cast<type>(dist_binary(generator));
-
-//     input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
-//     target_vocabulary.resize(1);
-
-// }
-
 LanguageDataset::LanguageDataset(const Index& samples_number,
                                  const Index& input_sequence_length,
                                  const Index& input_vocabulary_size) : Dataset()
@@ -351,6 +293,8 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
 void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
 {
+    cout << "encode_target_data" << endl;
+
     if(maximum_target_length == 1 && target_vocabulary.size() < 6)
     {
         throw logic_error("Encode target data: Invalid case");
@@ -375,9 +319,20 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
             }
         }
     }
-    else if(maximum_target_length == 1 && target_vocabulary.size() > 6) // Multiple classification
+    else if(maximum_target_length == 6 && target_vocabulary.size() >= 6) // Multiple classification
     {
-        // @todo
+        for(size_t sample_index = 0; sample_index < target_document_tokens.size(); sample_index++)
+        {
+            const string& token = target_document_tokens[sample_index][0];
+
+            auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), token);
+
+            const Index token_index = (iterator != target_vocabulary.end())
+                                          ? distance(target_vocabulary.begin(), iterator)
+                                          : 1;
+
+            data(sample_index, maximum_input_length + token_index - reserved_tokens.size()) = 1;
+        }
     }
     else
     {
@@ -779,16 +734,27 @@ void LanguageDataset::read_csv()
 
     maximum_input_length = get_maximum_size(input_document_tokens) + 2;
 
-    maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
-        ? 1
-        : get_maximum_size(target_document_tokens) + 2;
+
+    if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() == 6)
+    {
+        maximum_target_length = 1;
+    }
+    else if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() > 6)
+    {
+        maximum_target_length = target_vocabulary.size() - 4;
+    }
+    else
+    {
+        get_maximum_size(target_document_tokens) + 2;
+    }
+
+    // maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
+    //     ? 1
+    //     : get_maximum_size(target_document_tokens) + 2;
 
     const Index variables_number = maximum_input_length + maximum_target_length;
 
     data.resize(samples_number, variables_number);
-    data.setZero();
-
-    // set variable use
 
     raw_variables.resize(variables_number);
 
