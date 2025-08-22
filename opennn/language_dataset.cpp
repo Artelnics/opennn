@@ -745,7 +745,7 @@ void LanguageDataset::read_csv()
     }
     else
     {
-        get_maximum_size(target_document_tokens) + 2;
+        maximum_target_length = get_maximum_size(target_document_tokens) + 2;
     }
 
     // maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
