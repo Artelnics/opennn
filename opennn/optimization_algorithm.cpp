@@ -254,9 +254,9 @@ void OptimizationAlgorithm::set_scaling()
         input_descriptives = dataset->scale_variables("Input");
         input_has_been_scaled = true;
 
-        Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        scaling_layer_3d->set_descriptives(input_descriptives);
-        scaling_layer_3d->set_scalers(input_scalers);
+        //Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        //scaling_layer_3d->set_descriptives(input_descriptives);
+        //scaling_layer_3d->set_scalers(input_scalers);
     }
     else if (neural_network->has("Scaling4d"))
     {
@@ -325,7 +325,7 @@ void OptimizationAlgorithm::set_unscaling()
     else if (neural_network->has("Scaling3d"))
     {
         Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        dataset->unscale_variables("Input", layer->get_descriptives());
+        //dataset->unscale_variables("Input", layer->get_descriptives());
     }
     else if (neural_network->has("Scaling4d"))
     {

@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensors.h"
 #include "bounding_layer.h"
+#include "tinyxml2.h"
 
 namespace opennn
 {

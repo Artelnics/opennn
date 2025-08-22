@@ -74,7 +74,7 @@ public:
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    vector<pair<float*, Index>> get_parameter_pair_device() const override;
+    vector<ParameterView> get_parameter_views_device() const override;
 
     void copy_parameters_host();
 
@@ -149,7 +149,7 @@ struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
 {
     EmbeddingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<float*, Index>> get_parameter_delta_pair_device() const override;
+    vector<ParameterView> get_parameter_delta_views_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 

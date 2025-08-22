@@ -17,12 +17,7 @@ CONFIG += staticlib
 CONFIG += precompile_header
 CONFIG += jumbo_build
 
-PRECOMPILED_HEADER = pch.h
 DEFINES += __Cpp17__
-
-#QMAKE_CXXFLAGS += /MP
-
-# OpenMP library
 
 win32-msvc* {
     QMAKE_CXXFLAGS += /std:c++17 /openmp /EHsc
@@ -43,60 +38,67 @@ else {
     !isEmpty(TEMPLATE_IS_APP): LIBS += -lpthread -lgomp
 }
 
-# --- CUDA 12.5 ---
-MY_CUDA_VER_MAJOR = 12
-MY_CUDA_VER_MINOR = 5
-
-MY_CUDA_FULL_VERSION_STR = $$sprintf("v%1.%2", $$MY_CUDA_VER_MAJOR, $$MY_CUDA_VER_MINOR)
-MY_CUDA_SHORT_VERSION_STR = $$sprintf("%1.%2", $$MY_CUDA_VER_MAJOR, $$MY_CUDA_VER_MINOR)
-
 win32 {
-    CUDA_PATH_ATTEMPT1 = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/$$MY_CUDA_FULL_VERSION_STR"
-    CUDA_PATH_ATTEMPT2 = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/$$MY_CUDA_SHORT_VERSION_STR"
+    DEFINES += _HAS_STD_BYTE=0
+    DEFINES += WIN32_LEAN_AND_MEAN
+}
+CONFIG(release, debug|release): DEFINES += NDEBUG
 
-    CUDA_PATH = $$CUDA_PATH_ATTEMPT1
-    !exists($$CUDA_PATH) {
-        CUDA_PATH = $$CUDA_PATH_ATTEMPT2
-    }
+CUDA_PATH = $$(CUDA_PATH)
+isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
+win32: isEmpty(CUDA_PATH) {
+    CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
+    CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
+    !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+}
 
-    CUDA_LIB_DIR = $$CUDA_PATH/lib/x64
-    CUDA_BIN_DIR = $$CUDA_PATH/bin
-} else:unix {
-    CUDA_PATH_ATTEMPT1_UNIX = /usr/local/cuda-$$MY_CUDA_SHORT_VERSION_STR
-    CUDA_PATH_ATTEMPT2_UNIX = /usr/local/cuda-$$MY_CUDA_FULL_VERSION_STR
-    CUDA_PATH_ATTEMPT3_UNIX = /usr/local/cuda
+if(!isEmpty(CUDA_PATH)) {
+    CUDA_PATH = $$clean_path($$CUDA_PATH)
+    NVCC_EXECUTABLE_TEST = $$CUDA_PATH/bin/nvcc.exe
+    CUDA_INCLUDE_PATH_TEST = $$CUDA_PATH/include
+    CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib/x64
 
-    CUDA_PATH = $$CUDA_PATH_ATTEMPT1_UNIX
-    !exists($$CUDA_PATH) {
-        CUDA_PATH = $$CUDA_PATH_ATTEMPT2_UNIX
-        !exists($$CUDA_PATH) {
-            CUDA_PATH = $$CUDA_PATH_ATTEMPT3_UNIX
+    if(exists($$NVCC_EXECUTABLE_TEST)) {
+        if(exists($$CUDA_INCLUDE_PATH_TEST)) {
+            if(exists($$CUDA_LIB_DIR_TEST)) {
+
+                message("[opennn.pro] Valid CUDA , configuring...")
+
+                DEFINES += WITH_CUDA
+                CUDA_INCLUDE_PATH = $$CUDA_INCLUDE_PATH_TEST
+                CUDA_LIB_DIR = $$CUDA_LIB_DIR_TEST
+                NVCC_EXECUTABLE = $$NVCC_EXECUTABLE_TEST
+
+                INCLUDEPATH += $$CUDA_INCLUDE_PATH
+                DEPENDPATH += $$CUDA_INCLUDE_PATH
+                LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
+
+                exists($$CUDA_INCLUDE_PATH/cudnn.h) {
+                    message("    -> adding cuDNN .")
+                    DEFINES += HAVE_CUDNN
+                    LIBS += -lcudnn
+                }
+
+                CUDA_COMPILER = $$NVCC_EXECUTABLE
+                CUDA_ARCH = -gencode arch=compute_52,code=sm_52 -gencode arch=compute_61,code=sm_61 -gencode arch=compute_75,code=sm_75
+                CONFIG(debug, debug|release): CUDA_FLAGS = -g -G
+                else: CUDA_FLAGS = --expt-relaxed-constexpr -O2
+
+                cuda.input = CUDA_SOURCES
+                CONFIG(debug, debug|release): cuda.output = $$OUT_PWD/debug/${QMAKE_FILE_BASE}.obj
+                else: cuda.output = $$OUT_PWD/release/${QMAKE_FILE_BASE}.obj
+
+                CUDA_HOST_CXXFLAGS = /std:c++17 /openmp /EHsc /bigobj
+
+                cuda.dependency_type = TYPE_C
+                cuda.variable_out = OBJECTS
+                QMAKE_EXTRA_COMPILERS += cuda
+
+                CUDA_SOURCES += $$files($$PWD/*.cu)
+            }
         }
     }
-    CUDA_LIB_DIR = $$CUDA_PATH/lib
-    CUDA_BIN_DIR = $$CUDA_PATH/bin
 }
-
-!exists($$CUDA_PATH) {
-    warning("CUDA path not found: $$CUDA_PATH. Please check your CUDA installation and CUDA_PATH in the .pro file.")
-    warning("Attempted versions based on MY_VARS: $$MY_CUDA_FULL_VERSION_STR and $$MY_CUDA_SHORT_VERSION_STR")
-} else {
-    message("Using CUDA from: $$CUDA_PATH")
-}
-
-INCLUDEPATH += $$CUDA_PATH/include
-DEPENDPATH += $$CUDA_PATH/include
-
-LIBS += -L$$CUDA_LIB_DIR -lcudart_static
-
-#win32:!win32-g++{
-##QMAKE_CXXFLAGS+= -arch:AVX
-##QMAKE_CFLAGS+= -arch:AVX
-#}
-
-#macx{
-#INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
-#}
 
 # Eigen library
 
@@ -104,10 +106,6 @@ INCLUDEPATH += ../eigen
 
 # Source files
 
-HEADERS += $$files($$PWD/*.h) \
-    scaling_layer_3d.h
-SOURCES += $$files($$PWD/*.cpp) \
-    scaling_layer_3d.cpp
-
-SOURCES -= $$PWD/addition_layer_4d.cpp
-HEADERS -= $$PWD/addition_layer_4d.h
+PRECOMPILED_HEADER = pch.h
+HEADERS += $$files($$PWD/*.h)
+SOURCES += $$files($$PWD/*.cpp)

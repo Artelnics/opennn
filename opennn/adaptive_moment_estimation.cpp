@@ -418,13 +418,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         LayerBackPropagation* layer_back_propagation = back_propagation.neural_network.layers[layer_index].get();
 
-        const vector<ParameterView>& parameter_pairs = layer->get_parameter_views();
+        const vector<ParameterView>& parameter_views = layer->get_parameter_views();
         const vector<ParameterView>& delta_views = layer_back_propagation->get_parameter_delta_views();
 
-        for(Index parameter_index = 0; parameter_index < Index(parameter_pairs.size()); parameter_index++)
+        for(Index parameter_index = 0; parameter_index < Index(parameter_views.size()); parameter_index++)
         {
-            type* parameter_data = parameter_pairs[parameter_index].data;
-            const Index parameter_size = parameter_pairs[parameter_index].size;
+            type* parameter_data = parameter_views[parameter_index].data;
+            const Index parameter_size = parameter_views[parameter_index].size;
             type* delta_data = delta_views[parameter_index].data;
 
             TensorMap<Tensor<type, 1>> parameters(parameter_data, parameter_size);
@@ -511,15 +511,15 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
         if (!layer->get_is_trainable())
             continue;
 
-        const auto& parameter_pairs = layer->get_parameter_views();
-        const Index parameter_sets_number = parameter_pairs.size();
+        const auto& parameter_views = layer->get_parameter_views();
+        const Index parameter_sets_number = parameter_views.size();
 
         gradient_exponential_decay[i].resize(parameter_sets_number);
         square_gradient_exponential_decay[i].resize(parameter_sets_number);
 
         for (Index j = 0; j < parameter_sets_number; j++)
         {
-            const Index parameter_size = parameter_pairs[j].size;
+            const Index parameter_size = parameter_views[j].size;
 
             gradient_exponential_decay[i][j].resize(parameter_size);
             gradient_exponential_decay[i][j].setZero();
@@ -838,18 +838,18 @@ void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_
         if (!layer->get_is_trainable())
             continue;
 
-        const vector<pair<float*, Index>> parameter_pairs = layer->get_parameter_pair_device();
+        const vector<ParameterView> parameter_views = layer->get_parameter_views_device();
 
         LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
-        const vector<pair<float*, Index>> delta_views = layer_back_prop->get_parameter_delta_pair_device();
+        const vector<ParameterView> delta_views = layer_back_prop->get_parameter_delta_views_device();
 
-        assert(parameter_pairs.size() == delta_views.size());
+        assert(parameter_views.size() == delta_views.size());
 
-        for (Index parameter_index = 0; parameter_index < parameter_pairs.size(); ++parameter_index)
+        for (Index parameter_index = 0; parameter_index < parameter_views.size(); ++parameter_index)
         {
-            float* params_d = parameter_pairs[parameter_index].first;
-            const Index param_size = parameter_pairs[parameter_index].second;
-            const float* grads_d = delta_views[parameter_index].first;
+            float* params_d = parameter_views[parameter_index].data;
+            const Index param_size = parameter_views[parameter_index].size;
+            const float* grads_d = delta_views[parameter_index].data;
 
             float* m_d = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
             float* v_d = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];
@@ -898,15 +898,15 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
             continue;
         }
 
-        const auto parameter_pairs = layer->get_parameter_pair_device();
-        const size_t param_blocks_count = parameter_pairs.size();
+        const auto parameter_views = layer->get_parameter_views_device();
+        const size_t param_blocks_count = parameter_views.size();
 
         gradient_exponential_decay[i].resize(param_blocks_count, nullptr);
         square_gradient_exponential_decay[i].resize(param_blocks_count, nullptr);
 
         for (Index j = 0; j < param_blocks_count; ++j)
         {
-            const Index param_size = parameter_pairs[j].second;
+            const Index param_size = parameter_views[j].size;
 
             if (param_size > 0)
             {
@@ -970,11 +970,11 @@ void ADAMOptimizationDataCuda::print() const
 
         cout << "Layer " << i << " (" << layer->get_name() << "):" << endl;
 
-        const auto parameter_pairs = layer->get_parameter_pair_device();
+        const auto parameter_views = layer->get_parameter_views_device();
 
-        for (Index j = 0; j < parameter_pairs.size(); ++j)
+        for (Index j = 0; j < parameter_views.size(); ++j)
         {
-            const Index param_size = parameter_pairs[j].second;
+            const Index param_size = parameter_views[j].size;
 
             if (param_size == 0) continue;
 

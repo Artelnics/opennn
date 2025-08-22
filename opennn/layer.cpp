@@ -53,11 +53,11 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_parameters_random()
 {
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
 
         set_random(this_parameters);
     }
@@ -71,11 +71,11 @@ void Layer::set_parameters_glorot()
 
     const type limit = sqrt(6.0 / (inputs_number + outputs_number));
 
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_pairs[i].data, parameter_pairs[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
 
         set_random(this_parameters, -limit, limit);
     }
@@ -84,12 +84,12 @@ void Layer::set_parameters_glorot()
 
 Index Layer::get_parameters_number() const
 {
-    const vector<ParameterView> parameter_pairs = get_parameter_views();
+    const vector<ParameterView> parameter_views = get_parameter_views();
 
     Index parameters_number = 0;
 
-    for(Index i = 0; i < Index(parameter_pairs.size()); i++)
-        parameters_number += parameter_pairs[i].size;
+    for(Index i = 0; i < Index(parameter_views.size()); i++)
+        parameters_number += parameter_views[i].size;
 
     return parameters_number;
 }
@@ -336,9 +336,9 @@ cudnnHandle_t Layer::get_cudnn_handle()
 }
 
 
-vector<pair<float*, Index>> Layer::get_parameter_pair_device() const
+vector<ParameterView> Layer::get_parameter_views_device() const
 {
-    return vector<pair<float*, Index>>();
+    return vector<ParameterView>();
 }
 
 #endif

@@ -379,9 +379,9 @@ void Embedding::back_propagate_cuda(const vector<float*>&,
 }
 
 
-vector<pair<float*, Index>> Embedding::get_parameter_pair_device() const
+vector<ParameterView> Embedding::get_parameter_views_device() const
 {
-    return vector<pair<float*, Index>>();
+    return vector<ParameterView>();
 }
 
 
@@ -446,9 +446,9 @@ EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index& new_batc
 }
 
 
-vector<pair<float*, Index>> EmbeddingBackPropagationCuda::get_parameter_delta_pair_device() const
+vector<ParameterView> EmbeddingBackPropagationCuda::get_parameter_delta_views_device() const
 {
-    return vector<pair<float*, Index>>();
+    return vector<ParameterView>();
 }
 
 

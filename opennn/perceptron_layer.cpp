@@ -37,17 +37,17 @@ dimensions Dense2d::get_output_dimensions() const
 
 vector<ParameterView> Dense2d::get_parameter_views() const
 {
-    vector<ParameterView> parameter_pairs =
+    vector<ParameterView> parameter_views =
         {{(type*)(biases.data()), biases.size()},
          {(type*)(weights.data()), weights.size()}};
 
     if (batch_normalization)
     {
-        parameter_pairs.push_back({ const_cast<type*>(scales.data()), scales.size() });
-        parameter_pairs.push_back({ const_cast<type*>(offsets.data()), offsets.size() });
+        parameter_views.push_back({ const_cast<type*>(scales.data()), scales.size() });
+        parameter_views.push_back({ const_cast<type*>(offsets.data()), offsets.size() });
     }
 
-    return parameter_pairs;
+    return parameter_views;
 }
 
 
@@ -1092,9 +1092,9 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 }
 
 
-vector<pair<float*, Index>> Dense2d::get_parameter_pair_device() const
+vector<ParameterView> Dense2d::get_parameter_views_device() const
 {
-    vector<pair<float*, Index>> parameter_pairs =
+    vector<ParameterView> parameter_views =
         {
             {biases_device, biases.size()},
             {weights_device, weights.size()}
@@ -1102,11 +1102,11 @@ vector<pair<float*, Index>> Dense2d::get_parameter_pair_device() const
 
     if (batch_normalization)
     {
-        parameter_pairs.push_back({ bn_scale_device, scales.size() });
-        parameter_pairs.push_back({ bn_offset_device, offsets.size() });
+        parameter_views.push_back({ bn_scale_device, scales.size() });
+        parameter_views.push_back({ bn_offset_device, offsets.size() });
     }
 
-    return parameter_pairs;
+    return parameter_views;
 }
 
 
@@ -1423,13 +1423,13 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 }
 
 
-vector<pair<float*, Index>> Dense2dBackPropagationCuda::get_parameter_delta_pair_device() const
+vector<ParameterView> Dense2dBackPropagationCuda::get_parameter_delta_views_device() const
 {
     const auto* dense_layer = static_cast<const Dense2d*>(layer);
     const Index weight_deltas_size = dense_layer->get_input_dimensions()[0] * dense_layer->get_output_dimensions()[0];
     const Index bias_deltas_size = dense_layer->get_output_dimensions()[0];
 
-    vector<pair<float*, Index>> delta_views =
+    vector<ParameterView> delta_views =
         {
             { bias_deltas_device,   bias_deltas_size },
             { weight_deltas_device, weight_deltas_size }

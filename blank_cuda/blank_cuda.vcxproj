@@ -47,7 +47,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);EIGEN_DONT_VECTORIZE;EIGEN_DONT_ALIGN;EIGEN_MAX_ALIGN_BYTES=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;_HAS_STD_BYTE=0;WIN32_LEAN_AND_MEAN;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);EIGEN_DONT_VECTORIZE;EIGEN_DONT_ALIGN;EIGEN_MAX_ALIGN_BYTES=0</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\include;../../opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -73,7 +73,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);EIGEN_DONT_VECTORIZE;EIGEN_DONT_ALIGN;EIGEN_MAX_ALIGN_BYTES=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;_HAS_STD_BYTE=0;WIN32_LEAN_AND_MEAN;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);EIGEN_DONT_VECTORIZE;EIGEN_DONT_ALIGN;EIGEN_MAX_ALIGN_BYTES=0</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\include;../../opennn;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
