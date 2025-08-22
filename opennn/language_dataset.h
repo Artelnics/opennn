@@ -10,6 +10,7 @@
 #define LANGUAGEDataset_H
 
 #include "dataset.h"
+#include <iostream>
 
 namespace opennn
 {
@@ -51,10 +52,10 @@ public:
     void print_input_vocabulary() const;
     void print_target_vocabulary() const;
 
-    inline static const string PAD_TOKEN = "[PAD]";     // 0
-    inline static const string UNK_TOKEN = "[UNK]";     // 1
-    inline static const string START_TOKEN = "[START]"; // 2
-    inline static const string END_TOKEN = "[END]";     // 3
+    inline static const string PAD_TOKEN   = "[PAD]";     // 0
+    inline static const string UNK_TOKEN   = "[UNK]";     // 1
+    inline static const string START_TOKEN = "[START]";   // 2
+    inline static const string END_TOKEN   = "[END]";     // 3
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 
@@ -63,13 +64,9 @@ public:
         return dimensions({get_input_vocabulary_size(), get_input_sequence_length()});
     }
 
-
     dimensions get_target_dimensions() const
     {
-        // @todo
-        //get_variables_number()
-
-        return dimensions({1});
+        return dimensions({get_variables_number("Target")});
     }
 
 private:
