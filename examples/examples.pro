@@ -13,8 +13,9 @@ CONFIG += ordered
 # SUBDIRS += airfoil_self_noise
 # SUBDIRS += forecasting
 SUBDIRS += amazon_reviews
+SUBDIRS += emotion_analysis
 # SUBDIRS += breast_cancer
-# SUBDIRS += iris_plant
+SUBDIRS += iris_plant
 # SUBDIRS += mnist
 # SUBDIRS += translation
 

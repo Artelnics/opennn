@@ -445,6 +445,15 @@ public:
         const Index heads_number = complexity_dimensions[0];
         //const bool use_causal_mask = false;
 
+        const string classification_layer_activation = output_dimensions[0] == 1 ? "Logistic" : "Softmax";
+
+
+        cout << "vocabulary_size: " << vocabulary_size  << endl;
+        cout << "sequence_length: " << sequence_length  << endl;
+        cout << "embedding_dimension: " << embedding_dimension  << endl;
+        cout << "heads_number: " << heads_number  << endl;
+
+
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"
@@ -456,18 +465,18 @@ public:
             "multihead_attention_layer"
             ));
 
-        // add_layer(make_unique<Pooling3d>(
-        //     get_output_dimensions()
-        //     ));
-
-        add_layer(make_unique<Flatten<3>>(
+        add_layer(make_unique<Pooling3d>(
             get_output_dimensions()
             ));
+
+        // add_layer(make_unique<Flatten<3>>(
+        //     get_output_dimensions()
+        //     ));
 
         add_layer(make_unique<Dense2d>(
             get_output_dimensions(),
             output_dimensions,
-            "Logistic",
+            classification_layer_activation,
             "classification_layer"));
     }
 };

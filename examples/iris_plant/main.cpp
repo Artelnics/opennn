@@ -44,7 +44,8 @@ int main()
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.perform_training();
+
+        training_strategy.train();
 
         const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
@@ -58,7 +59,7 @@ int main()
 
         Tensor<type, 1> difference = gradient - numerical_gradient;
         Tensor<type, 1> abs_difference = difference.abs();
-        cout << abs_difference.maximum();
+        cout << abs_difference.maximum() << endl;;
 
         cout << "Bye!" << endl;
 
