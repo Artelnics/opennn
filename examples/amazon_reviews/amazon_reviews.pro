@@ -14,8 +14,8 @@ TEMPLATE = app
 CONFIG += console
 CONFIG += c++17
 
-mac{
-    CONFIG-=app_bundle
+mac {
+    CONFIG -= app_bundle
 }
 
 TARGET = amazon_reviews
@@ -24,14 +24,58 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES = main.cpp
 
-win32-g++{
-QMAKE_LFLAGS += -static-libgcc
-QMAKE_LFLAGS += -static-libstdc++
-QMAKE_LFLAGS += -static
+CUDA_PATH = $$(CUDA_PATH)
+isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
+win32: isEmpty(CUDA_PATH) {
+    CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
+    CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
+    !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+}
 
-#QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread -lgomp
-#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-#LIBS += -fopenmp -pthread -lgomp
+if(!isEmpty(CUDA_PATH)) {
+    CUDA_PATH = $$clean_path($$CUDA_PATH)
+    CUDA_INCLUDE_PATH = $$CUDA_PATH/include
+    CUDA_LIB_DIR = $$CUDA_PATH/lib/x64
+
+    INCLUDEPATH += $$CUDA_INCLUDE_PATH
+    DEPENDPATH += $$CUDA_INCLUDE_PATH
+    LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
+
+    exists($$CUDA_INCLUDE_PATH/cudnn.h) {
+        LIBS += -lcudnn
+    }
+}
+
+win32-msvc* {
+    CONFIG(debug, debug|release) {
+        QMAKE_CXXFLAGS -= /MDd
+        QMAKE_CXXFLAGS += /MTd
+        QMAKE_CFLAGS -= /MDd
+        QMAKE_CFLAGS += /MTd
+    } else {
+        QMAKE_CXXFLAGS -= /MD
+        QMAKE_CXXFLAGS += /MT
+        QMAKE_CFLAGS -= /MD
+        QMAKE_CFLAGS += /MT
+    }
+}
+
+win32-msvc* {
+    QMAKE_CXXFLAGS += /std:c++17 /openmp
+} else {
+    QMAKE_CXXFLAGS += -std=c++17 -fopenmp
+    QMAKE_LFLAGS += -fopenmp
+}
+
+win32-g++ {
+    QMAKE_LFLAGS += -static-libgcc
+    QMAKE_LFLAGS += -static-libstdc++
+    QMAKE_LFLAGS += -static
+}
+
+win32 {
+    DEFINES += _HAS_STD_BYTE=0
+    DEFINES += WIN32_LEAN_AND_MEAN
 }
 
 # OpenNN library
@@ -50,14 +94,7 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 
 # OpenMP library
-
-win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
-QMAKE_LFLAGS += -fopenmp -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}else: macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
+macx {
+    INCLUDEPATH += /usr/local/opt/libomp/include
+    LIBS += /usr/local/opt/libomp/lib/libomp.dylib
+}
