@@ -24,7 +24,7 @@ template<int Rank> struct AdditionBackPropagationCuda;
 #endif
 
 template<int Rank>
-class Addition : public Layer
+class Addition final : public Layer
 {
 
 public:
@@ -58,16 +58,19 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorView>& input_pairs,
+    void forward_propagate(const vector<TensorView>& input_views,
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            const bool&) override
     {
 
-        if (input_pairs.size() != 2)
+        if (input_views.size() != 2)
             throw runtime_error(name + " layer requires exactly two inputs.");
 
-        const TensorMap<Tensor<type, Rank>> input_1 = tensor_map<Rank>(input_pairs[0]);
-        const TensorMap<Tensor<type, Rank>> input_2 = tensor_map<Rank>(input_pairs[1]);
+        if (input_views[0].dims != input_views[1].dims)
+            throw runtime_error("Input dimensions for " + name + " must be identical.");
+
+        const TensorMap<Tensor<type, Rank>> input_1 = tensor_map<Rank>(input_views[0]);
+        const TensorMap<Tensor<type, Rank>> input_2 = tensor_map<Rank>(input_views[1]);
 
         AdditionForwardPropagation<Rank>* this_forward_propagation =
             static_cast<AdditionForwardPropagation<Rank>*>(layer_forward_propagation.get());
@@ -78,14 +81,14 @@ public:
     }
 
     void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>& delta_pairs,
+                        const vector<TensorView>& delta_views,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
-        if (delta_pairs.size() != 1)
+        if (delta_views.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input.");
 
-        const TensorMap<Tensor<type, Rank>> deltas = tensor_map<Rank>(delta_pairs[0]);
+        const TensorMap<Tensor<type, Rank>> deltas = tensor_map<Rank>(delta_views[0]);
 
         AdditionBackPropagation<Rank>* this_back_propagation =
             static_cast<AdditionBackPropagation<Rank>*>(back_propagation.get());
@@ -165,7 +168,7 @@ private:
 
 
 template<int Rank>
-struct AdditionForwardPropagation : LayerForwardPropagation
+struct AdditionForwardPropagation final : LayerForwardPropagation
 {
     AdditionForwardPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
         : LayerForwardPropagation()
@@ -194,13 +197,13 @@ struct AdditionForwardPropagation : LayerForwardPropagation
 
         const dimensions output_dimensions = layer->get_output_dimensions();
 
-        array<Index, Rank> full_dimensions;
+        DSizes<Index, Rank+1> full_dimensions;   // <-- Rank+1 to include batch
         full_dimensions[0] = batch_size;
 
-        for (int i = 0; i < Rank - 1; ++i)
+        for (int i = 0; i < Rank; ++i)
             full_dimensions[i+1] = output_dimensions[i];
 
-        outputs.resize(DSizes<Index, Rank>(full_dimensions));
+        outputs.resize(full_dimensions);
     }
 
 
@@ -214,7 +217,7 @@ struct AdditionForwardPropagation : LayerForwardPropagation
 
 
 template<int Rank>
-struct AdditionBackPropagation : LayerBackPropagation
+struct AdditionBackPropagation final : LayerBackPropagation
 {
     AdditionBackPropagation(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
         : LayerBackPropagation()
