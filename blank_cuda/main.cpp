@@ -60,12 +60,14 @@ int main()
 
         dataset.print_data();
         */
+        /*
         ImageDataset dataset;
 
         //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
+        //dataset.set_data_path("C:/mnist/train");
         //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
-        //dataset.set_data_path("../examples/mnist/data_bin");
-        dataset.set_data_path("../examples/mnist/data");
+        dataset.set_data_path("../examples/mnist/data_bin");
+        //dataset.set_data_path("../examples/mnist/data");
 
         //dimensions data_dimensions = { 224, 224, 3 };
 
@@ -119,6 +121,40 @@ int main()
         #endif
 
         cout << "Bye!" << endl;
+
+        */
+        
+        cout << "OpenNN. Iris Plant Example." << endl;
+
+        // Data set
+
+        Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/iris_plant_original.csv", ";", true, false);
+
+        const Index inputs_number = dataset.get_variables_number("Input");
+        const Index targets_number = dataset.get_variables_number("Target");
+
+        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+
+        // Neural network
+
+        const Index neurons_number = 6;
+
+        ClassificationNetwork classification_network({ inputs_number }, { neurons_number }, { targets_number });
+
+        TrainingStrategy training_strategy(&classification_network, &dataset);
+
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        training_strategy.train();
+
+        const TestingAnalysis testing_analysis(&classification_network, &dataset);
+
+        cout << "Confusion matrix:\n"
+            << testing_analysis.calculate_confusion() << endl;
+
+        cout << "Bye!" << endl;
+        
+        #endif
         
         return 0;
     }

@@ -302,7 +302,10 @@ TrainingResults TrainingStrategy::train_cuda()
     if (!has_dataset())
         throw runtime_error("Data set is null.");
 
-    if(!optimization_algorithm->has_loss_index())
+    if (!loss_index->has_neural_network() || !loss_index->has_dataset())
+        throw runtime_error("Loss index is wrong.");
+
+    if (!optimization_algorithm->has_loss_index())
         throw runtime_error("Optimization algorithm is wrong.");
 
     neural_network->create_cuda();
