@@ -74,6 +74,14 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
+#ifdef OPENNN_CUDA
+
+    void forward_propagate_cuda(const vector<float*>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
+
+#endif
+
 private:
 
     vector<Descriptives> descriptives;
@@ -97,6 +105,29 @@ struct Scaling2dForwardPropagation final : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
 };
+
+
+#ifdef OPENNN_CUDA
+
+struct Scaling2dForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    Scaling2dForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+
+    void set(const Index & = 0, Layer* = nullptr) override;
+
+    void print() const override;
+
+    void free() override;
+
+    int* scalers_device = nullptr;
+    type* minimums_device = nullptr;
+    type* maximums_device = nullptr;
+    type* means_device = nullptr;
+    type* standard_deviations_device = nullptr;
+};
+
+#endif
+
 
 }
 

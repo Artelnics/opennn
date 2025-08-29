@@ -610,3 +610,101 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
 
     apply_elastic_net_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight, mix_factor);
 }
+
+
+__global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
+    const float* inputs_device, float* outputs_device,
+    const int* scalers_device,
+    const float* minimums_device, const float* maximums_device,
+    const float* means_device, const float* std_devs_device,
+    const float min_range, const float max_range)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        const int col = i % outputs_number;
+
+        const int scaler_type = scalers_device[col];
+        const float input_val = inputs_device[i];
+        float output_val = input_val;
+
+        switch (scaler_type)
+        {
+        case CudaScalerNone:
+            break;
+
+        case CudaScalerMinimumMaximum:
+        {
+            const float min_val = minimums_device[col];
+            const float max_val = maximums_device[col];
+            const float range = max_val - min_val;
+            if (range > 1e-9)
+            {
+                const float scaled_01 = (input_val - min_val) / range;
+                output_val = scaled_01 * (max_range - min_range) + min_range;
+            }
+            break;
+        }
+        case CudaScalerMeanStandardDeviation:
+        {
+            const float mean = means_device[col];
+            const float std_dev = std_devs_device[col];
+            if (fabsf(std_dev) > 1e-9)
+            {
+                output_val = (input_val - mean) / std_dev;
+            }
+            break;
+        }
+        case CudaScalerStandardDeviation:
+        {
+            const float std_dev = std_devs_device[col];
+            if (fabsf(std_dev) > 1e-9)
+            {
+                output_val = input_val / std_dev;
+            }
+            break;
+        }
+        case CudaScalerLogarithm:
+            output_val = logf(input_val);
+            break;
+
+        case CudaScalerImageMinMax:
+            output_val = input_val / 255.0f;
+            break;
+
+        default:
+            break;
+        }
+
+        outputs_device[i] = output_val;
+    }
+}
+
+void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_number,
+    const float* inputs_device, float* outputs_device,
+    const int* scalers_device,
+    const float* minimums_device, const float* maximums_device,
+    const float* means_device, const float* std_devs_device,
+    const float min_range, const float max_range)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    scale_2d_kernel << <blocks_per_grid, threads_per_block >> > (
+        static_cast<int>(n),
+        batch_size,
+        outputs_number,
+        inputs_device,
+        outputs_device,
+        scalers_device,
+        minimums_device,
+        maximums_device,
+        means_device,
+        std_devs_device,
+        min_range,
+        max_range
+        );
+}

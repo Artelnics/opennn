@@ -40,7 +40,7 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
 
-        #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA
 
         // Data set
         /*
@@ -85,7 +85,7 @@ int main()
             input_dimensions,
             {128},//{ 64, 64, 128, 128, 32 },
             output_dimensions);
-        
+
         //VGG16 neural_network(input_dimensions, output_dimensions);
 
         //const vector<Index> blocks_per_stage = { 1, 1};
@@ -100,16 +100,16 @@ int main()
         training_strategy.get_loss_index()->set_regularization_method("None");
         training_strategy.get_optimization_algorithm()->set_display_period(1);
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(10000);
+        adam->set_batch_size(1000);
         adam->set_maximum_epochs_number(10);
 
         training_strategy.train_cuda();
         //training_strategy.train();
-        
+
         cudaDeviceSynchronize();
-        
+
         // Testing analysis
-        
+
         TestingAnalysis testing_analysis(&neural_network, &dataset);
         testing_analysis.set_batch_size(16);
 
@@ -117,13 +117,38 @@ int main()
         Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
         //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
-        
+
         #endif
 
         cout << "Bye!" << endl;
-
+        /*
+        /mnt/c/Users/davidgonzalez/Documents/
         */
-        
+        /*
+        cout << "Airfoil self noise" << endl;
+
+        const Index neurons_number = 3;
+
+        Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/airfoil_self_noise.csv", ";", true, false);
+
+        const Index inputs_number = dataset.get_variables_number("Input");
+        const Index targets_number = dataset.get_variables_number("Target");
+
+        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+
+        ClassificationNetwork approximation_network({ inputs_number }, { neurons_number }, {targets_number});
+        //approximation_network.print();
+
+        TrainingStrategy training_strategy(&approximation_network, &dataset);
+
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(10);
+
+        TrainingResults training_results = training_strategy.train_cuda();
+
+        cout << "Good bye!" << endl;
+        */
         cout << "OpenNN. Iris Plant Example." << endl;
 
         // Data set
@@ -133,27 +158,32 @@ int main()
         const Index inputs_number = dataset.get_variables_number("Input");
         const Index targets_number = dataset.get_variables_number("Target");
 
-        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+        dataset.set_sample_uses("Training");
 
         // Neural network
 
-        const Index neurons_number = 6;
+        const Index neurons_number = 1;
 
         ClassificationNetwork classification_network({ inputs_number }, { neurons_number }, { targets_number });
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training_strategy.set_loss_index("CrossEntropyError2d");
+        training_strategy.get_optimization_algorithm()->set_display_period(1);
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(10);
+        adam->set_batch_size(10000);
 
-        training_strategy.train();
+        training_strategy.train_cuda();
 
-        const TestingAnalysis testing_analysis(&classification_network, &dataset);
+        //const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        cout << "Confusion matrix:\n"
-            << testing_analysis.calculate_confusion() << endl;
+        //cout << "Confusion matrix:\n"
+        //    << testing_analysis.calculate_confusion() << endl;
 
         cout << "Bye!" << endl;
-        
+          
         #endif
         
         return 0;
