@@ -647,7 +647,7 @@ void Pooling::forward_propagate_cuda(const vector<float*>& inputs_device,
     PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda
         = static_cast<PoolingForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    const Index batch_size = pooling_layer_forward_propagation_cuda->batch_size;
+//    const Index batch_size = pooling_layer_forward_propagation_cuda->batch_size;
 
     type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
@@ -680,7 +680,7 @@ void Pooling::back_propagate_cuda(const vector<float*>& inputs_device,
     PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda
         = static_cast<PoolingForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    const Index batch_size = pooling_layer_forward_propagation_cuda->batch_size;
+//    const Index batch_size = pooling_layer_forward_propagation_cuda->batch_size;
 
     const type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
@@ -737,17 +737,17 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     const Index input_width = pooling_layer->get_input_width();
     const Index channels = pooling_layer->get_channels_number();
 
-    const Index pool_height = pooling_layer->get_pool_height();
-    const Index pool_width = pooling_layer->get_pool_width();
+//    const Index pool_height = pooling_layer->get_pool_height();
+//    const Index pool_width = pooling_layer->get_pool_width();
 
     const Index output_height = pooling_layer->get_output_height();
     const Index output_width = pooling_layer->get_output_width();
 
-    const Index padding_height = pooling_layer->get_padding_height();
-    const Index padding_width = pooling_layer->get_padding_width();
+//    const Index padding_height = pooling_layer->get_padding_height();
+//    const Index padding_width = pooling_layer->get_padding_width();
 
-    const Index row_stride = pooling_layer->get_row_stride();
-    const Index column_stride = pooling_layer->get_column_stride();
+//    const Index row_stride = pooling_layer->get_row_stride();
+//    const Index column_stride = pooling_layer->get_column_stride();
 
     pooling_mode = (pooling_layer->get_pooling_method() == Pooling::PoolingMethod::MaxPooling)
                        ? CUDNN_POOLING_MAX

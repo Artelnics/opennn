@@ -1128,7 +1128,7 @@ void Convolutional::back_propagate_cuda(const vector<float*>& inputs_device,
 
     Convolutional* convolutional_layer = static_cast<Convolutional*>(convolutional_layer_forward_propagation_cuda->layer);
 
-    const Index batch_size = convolutional_layer_forward_propagation_cuda->batch_size;
+//    const Index batch_size = convolutional_layer_forward_propagation_cuda->batch_size;
 
     const type* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
     const type* outputs = convolutional_layer_forward_propagation_cuda->outputs;
