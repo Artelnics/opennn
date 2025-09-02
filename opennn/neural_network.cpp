@@ -1469,13 +1469,8 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     {
         const auto& current_layer = neural_network_layers[i];
 
-        if (current_layer->get_is_trainable())
-        {
-            layers[i] = Registry<LayerForwardPropagationCuda>::instance().create(current_layer->get_name());
-            layers[i]->set(samples_number, current_layer.get());
-        }
-        else
-            layers[i] = nullptr;
+        layers[i] = Registry<LayerForwardPropagationCuda>::instance().create(current_layer->get_name());
+        layers[i]->set(samples_number, current_layer.get());
     }
 }
 

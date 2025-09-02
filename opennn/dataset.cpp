@@ -4322,12 +4322,54 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      //const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
+    /*
+    // --- DEBUG: imprimir indices ---
+    std::cout << "--- BatchCuda::fill ---" << std::endl;
+
+    std::cout << "Sample indices (" << sample_indices.size() << "): ";
+    for (const auto& idx : sample_indices) std::cout << idx << " ";
+    std::cout << std::endl;
+
+    std::cout << "Input indices (" << input_indices.size() << "): ";
+    for (const auto& idx : input_indices) std::cout << idx << " ";
+    std::cout << std::endl;
+
+    std::cout << "Target indices (" << target_indices.size() << "): ";
+    for (const auto& idx : target_indices) std::cout << idx << " ";
+    std::cout << std::endl;
+    */
     dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
 
     //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
     dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
+    /*
+    Index batch_size = sample_indices.size();
+    Index num_inputs = input_indices.size();
+    Index num_targets = target_indices.size();
 
+    std::cout << "Inputs_host (" << batch_size << " x " << num_inputs << "):" << std::endl;
+    for (Index i = 0; i < batch_size; i++)
+    {
+        for (Index j = 0; j < num_inputs; j++)
+        {
+            std::cout << inputs_host[i * num_inputs + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "Targets_host (" << batch_size << " x " << num_targets << "):" << std::endl;
+    for (Index i = 0; i < batch_size; i++)
+    {
+        for (Index j = 0; j < num_targets; j++)
+        {
+            std::cout << targets_host[i * num_targets + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "-------------------------" << std::endl;
+    */
     copy_device();
 }
 

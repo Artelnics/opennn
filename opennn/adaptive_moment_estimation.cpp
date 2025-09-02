@@ -667,6 +667,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         {
             // Data set
 
+            //cout << "Press ENTER to continue...";
+            //cin.ignore(); cin.get();
+
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
                                      //decoder_variable_indices,
@@ -845,20 +848,20 @@ void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_
 
         assert(parameter_views.size() == delta_views.size());
 
-        for (Index parameter_index = 0; parameter_index < parameter_views.size(); ++parameter_index)
+        for (Index parameter_index = 0; parameter_index < Index(parameter_views.size()); ++parameter_index)
         {
             float* params_d = parameter_views[parameter_index].data;
             const Index param_size = parameter_views[parameter_index].size;
             const float* grads_d = delta_views[parameter_index].data;
 
-            float* m_d = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
-            float* v_d = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];
+            float* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
+            float* square_gradient_exponential_decay = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];
 
             adam_update_device(
                 param_size,
                 params_d,
-                m_d,
-                v_d,
+                gradient_exponential_decay,
+                square_gradient_exponential_decay,
                 grads_d,
                 beta_1,
                 beta_2,
@@ -904,7 +907,7 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
         gradient_exponential_decay[i].resize(param_blocks_count, nullptr);
         square_gradient_exponential_decay[i].resize(param_blocks_count, nullptr);
 
-        for (Index j = 0; j < param_blocks_count; ++j)
+        for (Index j = 0; j < Index(param_blocks_count); ++j)
         {
             const Index param_size = parameter_views[j].size;
 
@@ -958,21 +961,21 @@ void ADAMOptimizationDataCuda::print() const
     cout << "--- ADAM Optimization Data (CUDA) ---" << endl;
 
     NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss_index()->get_neural_network();
+
     const Index layers_number = neural_network->get_layers_number();
 
     for (Index i = 0; i < layers_number; ++i)
     {
         Layer* layer = neural_network->get_layer(i).get();
+
         if (!layer->get_is_trainable())
-        {
             continue;
-        }
 
         cout << "Layer " << i << " (" << layer->get_name() << "):" << endl;
 
         const auto parameter_views = layer->get_parameter_views_device();
 
-        for (Index j = 0; j < parameter_views.size(); ++j)
+        for (Index j = 0; j < Index(parameter_views.size()); ++j)
         {
             const Index param_size = parameter_views[j].size;
 
