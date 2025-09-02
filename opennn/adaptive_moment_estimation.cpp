@@ -667,6 +667,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         {
             // Data set
 
+            //cout << "Press ENTER to continue...";
+            //cin.ignore(); cin.get();
+
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
                                      //decoder_variable_indices,
@@ -851,14 +854,14 @@ void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_
             const Index param_size = parameter_views[parameter_index].size;
             const float* grads_d = delta_views[parameter_index].data;
 
-            float* m_d = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
-            float* v_d = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];
+            float* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay[layer_index][parameter_index];
+            float* square_gradient_exponential_decay = optimization_data_cuda.square_gradient_exponential_decay[layer_index][parameter_index];
 
             adam_update_device(
                 param_size,
                 params_d,
-                m_d,
-                v_d,
+                gradient_exponential_decay,
+                square_gradient_exponential_decay,
                 grads_d,
                 beta_1,
                 beta_2,

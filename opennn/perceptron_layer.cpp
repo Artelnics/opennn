@@ -804,9 +804,17 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
     type* outputs_buffer = use_combinations ? combinations : outputs;
+    /*
+    cout << "batch_size: " << batch_size << endl;
+    cout << "outputs_number: " << outputs_number << endl;
+    cout << "inputs_number: " << inputs_number << endl;
 
+    cout << "Input data perceptron FORWARD:\n" << matrix_from_device(inputs_device[0], batch_size, inputs_number) << endl;
+    cout << "Weights perceptron:\n" << matrix_from_device(weights_device, inputs_number, outputs_number) << endl;
+    cout << "Biases perceptron:\n" << vector_from_device(biases_device, outputs_number) << endl;
+    */
     // Combinations
-
+    
     cublasSgemm(cublas_handle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 batch_size, outputs_number, inputs_number,

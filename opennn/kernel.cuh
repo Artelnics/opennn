@@ -116,4 +116,29 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void apply_elastic_net_gradient_kernel(const int, float*, const float*, const float, const float);
  void apply_elastic_net_gradient_cuda(const size_t, float*, const float*, const float, const float);
 
+ // Scaling
+
+ enum CudaScaler {
+     CudaScalerNone = 0,
+     CudaScalerMinimumMaximum,
+     CudaScalerMeanStandardDeviation,
+     CudaScalerStandardDeviation,
+     CudaScalerLogarithm,
+     CudaScalerImageMinMax
+ };
+
+ __global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
+                                 const float* inputs_device, float* outputs_device,
+                                 const int* scalers_device,
+                                 const float* minimums_device, const float* maximums_device,
+                                 const float* means_device, const float* std_devs_device,
+                                 const float min_range, const float max_range);
+
+ void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_number,
+                    const float* inputs_device, float* outputs_device,
+                    const int* scalers_device,
+                    const float* minimums_device, const float* maximums_device,
+                    const float* means_device, const float* std_devs_device,
+                    const float min_range, const float max_range);
+
 #endif // KERNEL_CUH

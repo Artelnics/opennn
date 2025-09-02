@@ -580,6 +580,108 @@ void Scaling2dForwardPropagation::print() const
          << outputs << endl;
 }
 
+
+#ifdef  OPENNN_CUDA
+
+void Scaling2d::forward_propagate_cuda(const vector<float*>& inputs_device,
+                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                       const bool&)
+{
+    Scaling2dForwardPropagationCuda* scaling_2d_forward_propagation =
+        static_cast<Scaling2dForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    const Index outputs_number = get_outputs_number();
+    const size_t size = outputs_number * scaling_2d_forward_propagation->batch_size;
+
+    scale_2d_cuda(size, scaling_2d_forward_propagation->batch_size, outputs_number,
+                  inputs_device[0], scaling_2d_forward_propagation->outputs,
+                  scaling_2d_forward_propagation->scalers_device,
+                  scaling_2d_forward_propagation->minimums_device,
+                  scaling_2d_forward_propagation->maximums_device,
+                  scaling_2d_forward_propagation->means_device,
+                  scaling_2d_forward_propagation->standard_deviations_device,
+                  min_range,
+                  max_range);
+}
+
+// CUDA structs
+
+Scaling2dForwardPropagationCuda::Scaling2dForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void Scaling2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (!new_layer) return;
+
+    layer = new_layer;
+    batch_size = new_batch_size;
+
+    const Scaling2d* scaling_layer = static_cast<Scaling2d*>(layer);
+    const Index outputs_number = scaling_layer->get_outputs_number();
+    const size_t size = batch_size * outputs_number;
+
+    CUDA_MALLOC_AND_REPORT(outputs, size * sizeof(float));
+
+    const Tensor<type, 1> minimums_host = scaling_layer->get_minimums();
+    const Tensor<type, 1> maximums_host = scaling_layer->get_maximums();
+    const Tensor<type, 1> means_host = scaling_layer->get_means();
+    const Tensor<type, 1> std_devs_host = scaling_layer->get_standard_deviations();
+    const vector<Scaler> scalers_host_vec = scaling_layer->get_scaling_methods();
+
+    Tensor<int, 1> scalers_host_tensor(outputs_number);
+    for (Index i = 0; i < outputs_number; ++i)
+    {
+        scalers_host_tensor(i) = static_cast<int>(scalers_host_vec[i]);
+    }
+
+    CUDA_MALLOC_AND_REPORT(minimums_device, outputs_number * sizeof(float));
+    CUDA_MALLOC_AND_REPORT(maximums_device, outputs_number * sizeof(float));
+    CUDA_MALLOC_AND_REPORT(means_device, outputs_number * sizeof(float));
+    CUDA_MALLOC_AND_REPORT(standard_deviations_device, outputs_number * sizeof(float));
+    CUDA_MALLOC_AND_REPORT(scalers_device, outputs_number * sizeof(int));
+
+    CHECK_CUDA(cudaMemcpy(minimums_device, minimums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(maximums_device, maximums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(means_device, means_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(standard_deviations_device, std_devs_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(scalers_device, scalers_host_tensor.data(), outputs_number * sizeof(int), cudaMemcpyHostToDevice));
+}
+
+
+void Scaling2dForwardPropagationCuda::print() const
+{
+    const Index outputs_number = layer->get_outputs_number();
+
+    cout << "Scaling2d CUDA Outputs:" << endl
+        << matrix_from_device(outputs, batch_size, outputs_number) << endl;
+}
+
+
+void Scaling2dForwardPropagationCuda::free()
+{
+    cudaFree(outputs);
+    cudaFree(scalers_device);
+    cudaFree(minimums_device);
+    cudaFree(maximums_device);
+    cudaFree(means_device);
+    cudaFree(standard_deviations_device);
+
+    outputs = nullptr;
+    scalers_device = nullptr;
+    minimums_device = nullptr;
+    maximums_device = nullptr;
+    means_device = nullptr;
+    standard_deviations_device = nullptr;
+}
+
+REGISTER(LayerForwardPropagationCuda, Scaling2dForwardPropagationCuda, "Scaling2d")
+
+#endif
+
 REGISTER(Layer, Scaling2d, "Scaling2d")
 REGISTER(LayerForwardPropagation, Scaling2dForwardPropagation, "Scaling2d")
 

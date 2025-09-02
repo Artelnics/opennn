@@ -56,9 +56,9 @@ public:
                                        false,
                                        "approximation_layer"));
 
-        add_layer(make_unique<Unscaling>(output_dimensions));
+        //add_layer(make_unique<Unscaling>(output_dimensions));
 
-        add_layer(make_unique<Bounding>(output_dimensions));
+        //add_layer(make_unique<Bounding>(output_dimensions));
 
         const Index inputs_number = get_inputs_number();
         input_names.resize(inputs_number);
@@ -80,18 +80,18 @@ public:
         const Index complexity_size = complexity_dimensions.size();
 
         add_layer(make_unique<Scaling2d>(input_dimensions));
-
+        /*
         for (Index i = 0; i < complexity_size; i++)
             add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                            dimensions{complexity_dimensions[i]},
                                            "HyperbolicTangent",
                                            false,
                                            "dense2d_layer_" + to_string(i + 1)));
-
+                                           */
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
-                                       "Logistic",
-                                       false,
+                                       "Softmax",
+                                       false, // Batch normalization
                                        "classification_layer"));
     }
 };
