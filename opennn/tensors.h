@@ -69,7 +69,7 @@ struct TensorView
 };
 
 
-template<typename T, std::size_t N>
+template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
 template <typename Index>

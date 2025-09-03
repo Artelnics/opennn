@@ -14,7 +14,7 @@ namespace opennn
 
 type bound(const type& value, const type& minimum, const type& maximum)
 {
-    return std::min(std::max(value, minimum), maximum);
+    return min(max(value, minimum), maximum);
 }
 
 

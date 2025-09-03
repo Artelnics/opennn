@@ -251,10 +251,6 @@ struct AdditionBackPropagation final : LayerBackPropagation
 
         for(int i = 0; i < Rank; ++i)
             full_dimensions[i+1] = input_dimensions[i];
-
-        // auto d_sizes = DSizes<Index, Rank>(full_dimensions);
-        // input_1_derivatives.resize(d_sizes);
-        // input_2_derivatives.resize(d_sizes);
     }
 
 

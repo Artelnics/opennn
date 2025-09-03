@@ -296,11 +296,9 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
     Tensor<type, 1> maximal_centers(maximal_indices_size);
     Index index = 0;
 
-    for (Index i = 0; i < frequencies.size(); i++) {
-        if (frequencies(i) == maximum_frequency) {
-            maximal_centers(index++) = type(centers(i));
-        }
-    }
+    for (Index i = 0; i < frequencies.size(); i++)
+        if (frequencies(i) == maximum_frequency)
+            maximal_centers(index++) = type(centers(i));            
 
     return maximal_centers;
 }
@@ -907,9 +905,9 @@ BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
 }
 
 
-Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
+Histogram histogram(const Tensor<type, 1>& new_vector, const Index& bins_number)
 {
-    const Index size = vector.dimension(0);
+    const Index size = new_vector.dimension(0);
     Tensor<type, 1> minimums(bins_number);
     Tensor<type, 1> maximums(bins_number);
 
@@ -920,11 +918,11 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     std::vector<type> unique_values;
 
     unique_values.reserve(min<Index>(size, bins_number));
-    unique_values.push_back(vector(0));
+    unique_values.push_back(new_vector(0));
 
     for(Index i = 1; i < size; i++)
     {
-        const type value = vector(i);
+        const type value = new_vector(i);
 
         if (!isnan(value))
             if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
@@ -954,11 +952,11 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
         for(Index i = 0; i < size; i++)
         {
-            if(isnan(vector(i))) continue;
+            if(isnan(new_vector(i))) continue;
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(vector(i) - centers(j) < NUMERIC_LIMITS_MIN)
+                if(new_vector(i) - centers(j) < NUMERIC_LIMITS_MIN)
                 {
                     frequencies(j)++;
                     break;
@@ -968,8 +966,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
     else
     {
-        const type min = minimum(vector);
-        const type max = maximum(vector);
+        const type min = minimum(new_vector);
+        const type max = maximum(new_vector);
 
         const type length = (max - min) /type(bins_number);
 
@@ -989,22 +987,22 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
         // Calculate bins frequency
 
-        const Index size = vector.dimension(0);
+        const Index size = new_vector.dimension(0);
 
         for(Index i = 0; i < size; i++)
         {
-            if(isnan(vector(i))) continue;
+            if(isnan(new_vector(i))) continue;
 
             for(Index j = 0; j < bins_number - 1; j++)
             {
-                if(vector(i) >= minimums(j) && vector(i) < maximums(j))
+                if(new_vector(i) >= minimums(j) && new_vector(i) < maximums(j))
                 {
                     frequencies(j)++;
                     break;
                 }
             }
 
-            if(vector(i) >= minimums(bins_number - 1))
+            if(new_vector(i) >= minimums(bins_number - 1))
                 frequencies(bins_number - 1)++;
         }
     }
@@ -1195,7 +1193,6 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
-
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
@@ -1206,7 +1203,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
     {
         column = matrix.chip(i, 1);
 
-        if (i >= 0 && i < descriptives.size())
+        if (i >= 0 && i < Index(descriptives.size()))
             descriptives[i] = vector_descriptives(column);   
         else
             cerr << "Index out of range: " << i << endl;

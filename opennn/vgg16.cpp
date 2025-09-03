@@ -16,6 +16,7 @@
 
 namespace opennn
 {
+
 VGG16::VGG16(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     : NeuralNetwork()
 {

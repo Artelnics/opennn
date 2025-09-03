@@ -744,7 +744,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
     Index dense2d_layers_number = 0;
 
     for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == std::string::npos)
+        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == string::npos)
             dense2d_layers_number++;
 
     Tensor<string, 2> information(dense2d_layers_number, 4);
@@ -756,7 +756,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
         const string& name = layers[i]->get_name();
         const string label = layers[i]->get_label();
 
-        if (name != "Dense2d" || label.find("classification") != std::string::npos)
+        if (name != "Dense2d" || label.find("classification") != string::npos)
             continue;
 
         information(dense2d_layer_index, 0) = label;
@@ -781,7 +781,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
     Index probabilistic_layers_number = 0;
 
     for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_label().find("classification") != std::string::npos)
+        if (layers[i]->get_label().find("classification") != string::npos)
             probabilistic_layers_number++;
 
     Tensor<string, 2> information(probabilistic_layers_number,4);
@@ -793,7 +793,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         const string& name = layers[i]->get_name();
         const string label = layers[i]->get_label();
 
-        if (name != "Dense2d" || label.find("dense2d") != std::string::npos)
+        if (name != "Dense2d" || label.find("dense2d") != string::npos)
             continue;
 
         information(probabilistic_layer_index, 0) = label;
