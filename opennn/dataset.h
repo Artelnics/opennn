@@ -610,6 +610,9 @@ struct BatchCuda
 
     ~BatchCuda() { free(); }
 
+    BatchCuda(const BatchCuda&) = delete;
+    BatchCuda& operator=(const BatchCuda&) = delete;
+
     vector<float*> get_input_device() const;
     TensorView get_target_pair_device() const;
 
@@ -621,7 +624,7 @@ struct BatchCuda
 
     void set(const Index&, Dataset*);
 
-    void copy_device();
+    void copy_device(const Index&);
 
     void free();
 
@@ -635,6 +638,8 @@ struct BatchCuda
     bool is_empty() const;
 
     Index samples_number = 0;
+    Index num_input_features = 0;
+    Index num_target_features = 0;
 
     Dataset* dataset = nullptr;
 

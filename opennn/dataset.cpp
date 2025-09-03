@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "image_dataset.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
@@ -4322,55 +4323,20 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      //const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    /*
-    // --- DEBUG: imprimir indices ---
-    std::cout << "--- BatchCuda::fill ---" << std::endl;
+    ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
 
-    std::cout << "Sample indices (" << sample_indices.size() << "): ";
-    for (const auto& idx : sample_indices) std::cout << idx << " ";
-    std::cout << std::endl;
-
-    std::cout << "Input indices (" << input_indices.size() << "): ";
-    for (const auto& idx : input_indices) std::cout << idx << " ";
-    std::cout << std::endl;
-
-    std::cout << "Target indices (" << target_indices.size() << "): ";
-    for (const auto& idx : target_indices) std::cout << idx << " ";
-    std::cout << std::endl;
-    */
-    dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
+    if (image_dataset != nullptr)
+        image_dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
+    else
+        dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
 
     //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
     dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
-    /*
+    
     Index batch_size = sample_indices.size();
-    Index num_inputs = input_indices.size();
-    Index num_targets = target_indices.size();
 
-    std::cout << "Inputs_host (" << batch_size << " x " << num_inputs << "):" << std::endl;
-    for (Index i = 0; i < batch_size; i++)
-    {
-        for (Index j = 0; j < num_inputs; j++)
-        {
-            std::cout << inputs_host[i * num_inputs + j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << "Targets_host (" << batch_size << " x " << num_targets << "):" << std::endl;
-    for (Index i = 0; i < batch_size; i++)
-    {
-        for (Index j = 0; j < num_targets; j++)
-        {
-            std::cout << targets_host[i * num_targets + j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << "-------------------------" << std::endl;
-    */
-    copy_device();
+    copy_device(batch_size);
 }
 
 
@@ -4383,7 +4349,7 @@ BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_dataset)
 void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
 {
     if (!new_dataset) return;
-
+    cout << "BatchCuda set:" << endl;
     samples_number = new_samples_number;
     dataset = new_dataset;
 
@@ -4393,10 +4359,11 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
 
     if (!data_set_input_dimensions.empty())
     {
+        num_input_features = dataset->get_variables_number("Input");
+        const Index input_size = samples_number * num_input_features;
+
         input_dimensions = { samples_number };
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
-
-        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 
         CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
         //CHECK_CUDA(cudaMalloc(&inputs_device, input_size * sizeof(float)));
@@ -4416,10 +4383,11 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
     */
     if (!data_set_target_dimensions.empty())
     {
+        num_target_features = dataset->get_variables_number("Target");
+        const Index target_size = samples_number * num_target_features;
+
         target_dimensions = { samples_number };
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
-
-        const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
 
         CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
         //CHECK_CUDA(cudaMalloc(&targets_device, target_size * sizeof(float)));
@@ -4428,17 +4396,12 @@ void BatchCuda::set(const Index& new_samples_number, Dataset* new_dataset)
 }
 
 
-void BatchCuda::copy_device()
+void BatchCuda::copy_device(const Index& current_batch_size)
 {
-    const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
-    const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
-    const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
+    const Index input_size = current_batch_size * num_input_features;
+    const Index target_size = current_batch_size * num_target_features;
 
     CHECK_CUDA(cudaMemcpy(inputs_device, inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
-
-    if (!decoder_dimensions.empty())
-        CHECK_CUDA(cudaMemcpy(decoder_device, decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
-
     CHECK_CUDA(cudaMemcpy(targets_device, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
 }
 
