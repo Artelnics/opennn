@@ -69,7 +69,7 @@ struct TensorView
 };
 
 
-template<typename T, std::size_t N>
+template<typename T, size_t N>
 using array = Eigen::array<T, N>;
 
 template <typename Index>
@@ -140,7 +140,6 @@ void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.
 {
     random_device rd;
     mt19937 gen(rd());
-    //mt19937 gen(1);
 
     uniform_real_distribution<type> distribution(minimum, maximum);
 

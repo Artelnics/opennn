@@ -146,7 +146,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<ParameterView> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_views();
 
         // #pragma omp parallel for #@todo check pragma vs thread_pool_device
-        for(size_t j = 0; j < layer_parameter_pairs.size(); j++)
+        for(Index j = 0; j < Index(layer_parameter_pairs.size()); j++)
         {
             type* parameter_data = layer_parameter_pairs[j].data;
             const Index parameter_size = layer_parameter_pairs[j].size;
@@ -832,7 +832,7 @@ void StochasticGradientDescent::update_parameters_cuda(BackPropagationCuda& back
         LayerBackPropagationCuda* layer_back_prop = back_propagation_cuda.neural_network.layers[layer_index].get();
         const vector<ParameterView> delta_views = layer_back_prop->get_parameter_delta_views_device();
 
-        for (Index parameter_index = 0; parameter_index < parameter_views.size(); ++parameter_index)
+        for (Index parameter_index = 0; parameter_index < Index(parameter_views.size()); ++parameter_index)
         {
             float* params_d = parameter_views[parameter_index].data;
             const Index param_size = parameter_views[parameter_index].size;
@@ -878,7 +878,7 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 
         velocity[i].resize(param_blocks_count, nullptr);
 
-        for (Index j = 0; j < param_blocks_count; ++j)
+        for (Index j = 0; j < Index(param_blocks_count); ++j)
         {
             const Index param_size = parameter_views[j].size;
             if (param_size > 0)
@@ -923,7 +923,7 @@ void SGDOptimizationDataCuda::print() const
         cout << "Layer " << i << " (" << layer->get_name() << "):" << endl;
         const auto parameter_views = layer->get_parameter_views_device();
 
-        for (Index j = 0; j < parameter_views.size(); ++j)
+        for (Index j = 0; j < Index(parameter_views.size()); ++j)
         {
             const Index param_size = parameter_views[j].size;
             if (param_size == 0) continue;

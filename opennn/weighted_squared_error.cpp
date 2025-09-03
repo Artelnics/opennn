@@ -251,17 +251,17 @@ void WeightedSquaredError::from_XML(const XMLDocument& document)
 
 #ifdef OPENNN_CUDA
 
-void WeightedSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
-                                                const ForwardPropagationCuda& forward_propagation_cuda,
-                                                BackPropagationCuda& back_propagation_cuda) const
+void WeightedSquaredError::calculate_error_cuda(const BatchCuda&,
+                                                const ForwardPropagationCuda&,
+                                                BackPropagationCuda&) const
 {
     throw runtime_error("CUDA calculate_error_cuda not implemented for loss index type: WeightedSquaredError");
 }
 
 
-void WeightedSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
-                                                       ForwardPropagationCuda& forward_propagation_cuda,
-                                                       BackPropagationCuda& back_propagation_cuda) const
+void WeightedSquaredError::calculate_output_delta_cuda(const BatchCuda&,
+                                                       ForwardPropagationCuda&,
+                                                       BackPropagationCuda&) const
 {
     throw runtime_error("CUDA calculate_output_delta_cuda not implemented for loss index type: WeightedSquaredError");
 }

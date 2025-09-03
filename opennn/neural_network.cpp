@@ -9,10 +9,10 @@
 #include "registry.h"
 #include "images.h"
 #include "neural_network.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 #include "scaling_layer_2d.h"
 #include "flatten_layer.h"
-#include "addition_layer_3d.h"
+#include "addition_layer.h"
 
 namespace opennn
 {
@@ -744,7 +744,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
     Index dense2d_layers_number = 0;
 
     for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == std::string::npos)
+        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == string::npos)
             dense2d_layers_number++;
 
     Tensor<string, 2> information(dense2d_layers_number, 4);
@@ -756,7 +756,7 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
         const string& name = layers[i]->get_name();
         const string label = layers[i]->get_label();
 
-        if (name != "Dense2d" || label.find("classification") != std::string::npos)
+        if (name != "Dense2d" || label.find("classification") != string::npos)
             continue;
 
         information(dense2d_layer_index, 0) = label;
@@ -781,7 +781,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
     Index probabilistic_layers_number = 0;
 
     for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_label().find("classification") != std::string::npos)
+        if (layers[i]->get_label().find("classification") != string::npos)
             probabilistic_layers_number++;
 
     Tensor<string, 2> information(probabilistic_layers_number,4);
@@ -793,7 +793,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         const string& name = layers[i]->get_name();
         const string label = layers[i]->get_label();
 
-        if (name != "Dense2d" || label.find("dense2d") != std::string::npos)
+        if (name != "Dense2d" || label.find("dense2d") != string::npos)
             continue;
 
         information(probabilistic_layer_index, 0) = label;
@@ -1399,11 +1399,14 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
 {
     const Index layers_number = get_layers_number();
 
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = get_last_trainable_layer_index();
+    Index first_layer_index = 0;
+    Index last_layer_index = layers_number - 1;
 
-    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
-    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
+    if (is_training)
+    {
+        first_layer_index = get_first_trainable_layer_index();
+        last_layer_index = get_last_trainable_layer_index();
+    }
 
     const vector<vector<float*>> layer_input_device = forward_propagation_cuda.get_layer_inputs_device(input_device, is_training);
 

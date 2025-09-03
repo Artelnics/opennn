@@ -9,13 +9,14 @@
 #include "scaling_layer_4d.h"
 #include "convolutional_layer.h"
 #include "pooling_layer.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 #include "flatten_layer.h"
 
 #include "vgg16.h"
 
 namespace opennn
 {
+
 VGG16::VGG16(const dimensions& new_input_dimensions, const dimensions& new_target_dimensions)
     : NeuralNetwork()
 {

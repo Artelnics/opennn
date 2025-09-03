@@ -125,7 +125,7 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void Recurrent::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  const bool& is_training)
+                                  const bool&)
 {
     const Index batch_size = input_views[0].dims[0];
     const Index past_time_steps = input_views[0].dims[1];

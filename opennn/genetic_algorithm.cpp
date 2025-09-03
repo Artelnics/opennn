@@ -430,7 +430,7 @@ void GeneticAlgorithm::perform_selection()
         for(Index i = 0; i < individuals_number; i++)
             selection(i) = (fitness(i) - 1 >= 0) && (fitness(i) > (individuals_number - elitism_size));
 
-    // The next individuals are selected randomly but their probability is set according to their fitness.
+    // The next individuals are selected randomly but their probability is set according to their fitness
 
     while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
