@@ -1224,7 +1224,7 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     Dense2d* dense2d_layer = static_cast<Dense2d*>(layer);
 
     const Index outputs_number = dense2d_layer->get_outputs_number();
-    const Index inputs_number = dense2d_layer->get_input_dimensions()[0];
+//    const Index inputs_number = dense2d_layer->get_input_dimensions()[0];
 
     // Biases
 
