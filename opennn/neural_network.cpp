@@ -12,7 +12,7 @@
 #include "perceptron_layer.h"
 #include "scaling_layer_2d.h"
 #include "flatten_layer.h"
-#include "addition_layer_3d.h"
+#include "addition_layer.h"
 
 namespace opennn
 {

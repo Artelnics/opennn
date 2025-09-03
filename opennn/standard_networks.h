@@ -22,9 +22,7 @@
 #include "pooling_layer.h"
 #include "pooling_layer_3d.h"
 #include "flatten_layer.h"
-#include "flatten_layer_3d.h"
-#include "addition_layer_3d.h"
-#include "addition_layer_4d.h"
+#include "addition_layer.h"
 #include "neural_network.h"
 #include "multihead_attention_layer.h"
 

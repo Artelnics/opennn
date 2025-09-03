@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "addition_layer_3d.h"
+#include "addition_layer.h"
 
 namespace opennn
 {
