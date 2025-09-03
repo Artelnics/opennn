@@ -667,9 +667,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         {
             // Data set
 
-            //cout << "Press ENTER to continue...";
-            //cin.ignore(); cin.get();
-
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
                                      //decoder_variable_indices,

@@ -88,6 +88,16 @@
         }                                                                         \
     } while (0)
 
+#define CHECK_CUDA_ERROR(message)                                       \
+    do {                                                                \
+        cudaError_t error = cudaGetLastError();                         \
+        if (error != cudaSuccess) {                                     \
+            std::cerr << "CUDA Error after " << message << ": "         \
+                      << cudaGetErrorString(error) << " (" << error     \
+                      << ")" << std::endl;                              \
+        }                                                               \
+    } while (0)
+
 #endif
 
 using namespace std;

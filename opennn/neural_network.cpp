@@ -1399,11 +1399,14 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
 {
     const Index layers_number = get_layers_number();
 
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = get_last_trainable_layer_index();
+    Index first_layer_index = 0;
+    Index last_layer_index = layers_number - 1;
 
-    const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
-    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
+    if (is_training)
+    {
+        first_layer_index = get_first_trainable_layer_index();
+        last_layer_index = get_last_trainable_layer_index();
+    }
 
     const vector<vector<float*>> layer_input_device = forward_propagation_cuda.get_layer_inputs_device(input_device, is_training);
 
