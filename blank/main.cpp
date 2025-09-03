@@ -18,7 +18,7 @@
 #include "../opennn/multihead_attention_layer.h"
 #include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/training_strategy.h"
-#include "../opennn/perceptron_layer.h"
+#include "../opennn/dense_layer.h"
 #include "../opennn/recurrent_layer.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/time_series_dataset.h"
