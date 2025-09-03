@@ -122,8 +122,8 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "PastTimeSteps", to_string(get_past_time_steps()));
-    add_xml_element(printer, "FutureTimeSteps", to_string(get_future_time_steps()));
+    add_xml_element(printer, "LagsNumber", to_string(get_past_time_steps()));
+    add_xml_element(printer, "StepsAhead", to_string(get_future_time_steps()));
 //    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
@@ -217,8 +217,8 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_past_time_steps(stoi(read_xml_string(data_source_element, "PastTimeSteps")));
-    set_future_time_steps(stoi(read_xml_string(data_source_element, "FutureTimeSteps")));
+    set_past_time_steps(stoi(read_xml_string(data_source_element, "LagsNumber")));
+    set_future_time_steps(stoi(read_xml_string(data_source_element, "StepsAhead")));
     //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
@@ -343,6 +343,31 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
     input_dimensions = { get_variables_number("Input"), past_time_steps };
     target_dimensions = { get_variables_number("Target") };
+}
+
+
+void TimeSeriesDataset::read_csv()
+{
+    Dataset::read_csv();
+
+    const Index variables_number = get_variables_number();
+
+    if (variables_number == 1)
+        set_raw_variable_use(0, "InputTarget");
+    else
+    {
+        const vector<Index> target_indices = get_variable_indices("Target");
+        if (!target_indices.empty())
+        {
+            const Index raw_variable_target_index = get_raw_variable_index(target_indices[0]);
+            set_raw_variable_use(raw_variable_target_index, "InputTarget");
+        }
+    }
+
+    input_dimensions = {past_time_steps, get_variables_number("Input")};
+    target_dimensions = {get_variables_number("Target")};
+
+    split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
 

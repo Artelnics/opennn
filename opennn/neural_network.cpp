@@ -9,7 +9,7 @@
 #include "registry.h"
 #include "images.h"
 #include "neural_network.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 #include "scaling_layer_2d.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
