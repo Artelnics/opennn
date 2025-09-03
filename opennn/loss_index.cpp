@@ -1425,7 +1425,7 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
         const vector<ParameterView>& parameter_device_pairs = layer->get_parameter_views_device();
         const vector<ParameterView>& delta_device_pairs = layer_back_prop_cuda->get_parameter_delta_views_device();
 
-        for (Index param_index = 0; param_index < parameter_device_pairs.size(); ++param_index)
+        for (Index param_index = 0; param_index < Index(parameter_device_pairs.size()); ++param_index)
         {
             type* param_device_ptr = parameter_device_pairs[param_index].data;
             const Index param_size = parameter_device_pairs[param_index].size;
@@ -1527,7 +1527,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
 
-    const Index parameters_number = neural_network_ptr->get_parameters_number();
+    //const Index parameters_number = neural_network_ptr->get_parameters_number();
 
     const dimensions output_dimensions = neural_network_ptr->get_output_dimensions();
 
@@ -1646,7 +1646,7 @@ vector<vector<float*>> BackPropagationCuda::get_layer_deltas_device() const
 
             vector<float*> input_deltas_from_child = layer_back_propagations[output_index]->get_input_derivatives_device();
 
-            if (input_index < input_deltas_from_child.size())
+            if (input_index < Index(input_deltas_from_child.size()))
                 layer_deltas[i].push_back(input_deltas_from_child[input_index]);
             else
                 throw runtime_error("Index out of range");
