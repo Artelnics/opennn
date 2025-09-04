@@ -8,7 +8,7 @@
 
 #include "registry.h"
 #include "tensors.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 
 namespace opennn
 {

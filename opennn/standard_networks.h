@@ -14,7 +14,7 @@
 #include "scaling_layer_3d.h"
 #include "scaling_layer_4d.h"
 #include "unscaling_layer.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 #include "bounding_layer.h"
 #include "recurrent_layer.h"
 #include "embedding_layer.h"

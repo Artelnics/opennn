@@ -12,7 +12,7 @@
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
 #include "addition_layer.h"
-#include "perceptron_layer_3d.h"
+#include "dense_layer_3d.h"
 #include "probabilistic_layer_3d.h"
 
 namespace opennn

@@ -10,7 +10,7 @@
 #include "correlations.h"
 #include "dataset.h"
 #include "scaling_layer_2d.h"
-#include "perceptron_layer.h"
+#include "dense_layer.h"
 #include "neural_network.h"
 #include "standard_networks.h"
 #include "mean_squared_error.h"

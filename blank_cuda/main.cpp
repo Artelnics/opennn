@@ -27,7 +27,7 @@
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/pooling_layer.h"
 #include "../opennn/flatten_layer.h"
-#include "../opennn/perceptron_layer.h"
+#include "../opennn/dense_layer.h"
 
 using namespace std;
 using namespace chrono;
