@@ -324,7 +324,7 @@ void OptimizationAlgorithm::set_unscaling()
     }
     else if (neural_network->has("Scaling3d"))
     {
-        Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        //Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
         //dataset->unscale_variables("Input", layer->get_descriptives());
     }
     else if (neural_network->has("Scaling4d"))
