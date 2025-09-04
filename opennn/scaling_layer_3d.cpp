@@ -315,7 +315,7 @@ void Scaling3d::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
 
-    const Index inputs_number = get_output_dimensions()[1];
+    const Index inputs_number = get_input_dimensions()[1];
     const vector<string> scaling_methods_string = write_scalers();
 
     for (Index i = 0; i < inputs_number; i++)
