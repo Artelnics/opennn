@@ -19,7 +19,7 @@ class Recurrent final : public Layer
 
 public:
 
-    Recurrent(const dimensions & = {0}, const dimensions& = {0});
+    Recurrent(const dimensions & = {0, 0}, const dimensions& = {0});
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;

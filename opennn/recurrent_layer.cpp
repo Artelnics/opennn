@@ -60,6 +60,8 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     input_weights.resize(new_input_dimensions[1], new_output_dimensions[0]);
 
+    set_timesteps(new_input_dimensions[0]);
+
     recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
@@ -72,9 +74,13 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
 void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+    if (new_input_dimensions.size() != 2)
+        throw runtime_error("Input dimensions rank is not 2 for Recurrent (time_steps, inputs).");
+
     const Index outputs_number = get_outputs_number();
 
-    input_weights.resize(new_input_dimensions[0], outputs_number);
+    input_weights.resize(new_input_dimensions[1], outputs_number);
+    set_timesteps(new_input_dimensions[0]);
 }
 
 
@@ -299,9 +305,8 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
-    set_timesteps(3);
     set_label(read_xml_string(recurrent_layer_element,"Label"));
-    set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
+    set_input_dimensions(string_to_dimensions(read_xml_string(recurrent_layer_element, "InputDimensions")));
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
     string_to_tensor<type, 1>(read_xml_string(recurrent_layer_element, "Biases"), biases);
@@ -315,7 +320,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Recurrent");
 
     add_xml_element(printer, "Label", get_label());
-    add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "Biases", tensor_to_string<type, 1>(biases));

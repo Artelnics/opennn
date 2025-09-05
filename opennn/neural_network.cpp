@@ -964,7 +964,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
             throw runtime_error("Text is nullptr for LayerInputsIndices element.");
 
         const vector<Index> input_index = string_to_dimensions(string(text), " ");
-        if (layer_index >= layer_input_indices.size())
+        if ((size_t)layer_index >= layer_input_indices.size())
             layer_input_indices.push_back(input_index);
     }
 }

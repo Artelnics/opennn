@@ -341,7 +341,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
-    input_dimensions = { get_variables_number("Input"), past_time_steps };
+    input_dimensions = { past_time_steps, get_variables_number("Input") };
     target_dimensions = { get_variables_number("Target") };
 }
 
@@ -568,10 +568,14 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& past_
     const Index input_raw_variables_number = get_raw_variables_number("Input");
     const Index target_raw_variables_number = get_raw_variables_number("Target");
 
-    const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
+    Index input_target_raw_variables_number = input_raw_variables_number;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
     const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Target");
+
+    for(Index i = 0; i < target_raw_variables_number; i++)
+        if(raw_variables[target_raw_variable_indices[i]].use != "InputTarget")
+            input_target_raw_variables_number++;
 
     Index input_target_numeric_raw_variables_number = 0;
 
@@ -648,7 +652,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
-    const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Input");
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Target");
 
     Index input_target_numeric_raw_variables_number = 0;
     int count = 0;
@@ -670,7 +674,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 
             const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
-            if(target_raw_variable_type == RawVariableType::Numeric)
+            if(target_raw_variable_type == RawVariableType::Numeric && raw_variables[raw_variable_index].use != "InputTarget")
                 input_target_numeric_raw_variables_number++;
 
             count++;
