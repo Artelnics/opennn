@@ -86,13 +86,12 @@ void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
 
 void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index inputs_number = get_inputs_number() - past_time_steps + 1;
+    const Index features_number = input_weights.dimension(0);
+    const Index new_neurons_number = new_output_dimensions[0];
 
-    biases.resize(new_output_dimensions[0]);
-
-    input_weights.resize(inputs_number, new_output_dimensions[0]);
-
-    recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
+    biases.resize(new_neurons_number);
+    input_weights.resize(features_number, new_neurons_number);
+    recurrent_weights.resize(new_neurons_number, new_neurons_number);
 }
 
 

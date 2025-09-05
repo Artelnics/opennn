@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
+#include "time_series_dataset.h"
 #include "pch.h"
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
@@ -221,11 +222,49 @@ void OptimizationAlgorithm::set_names()
     const vector<string> input_names = dataset->get_variable_names("Input");
     const vector<string> target_names = dataset->get_variable_names("Target");
 
+    const Index input_variables_number = dataset->get_variables_number("Input");
+    const Index target_variables_number = dataset->get_variables_number("Target");
+
+    const vector<Dataset::RawVariable> raw_variables = dataset->get_raw_variables();
+    const vector<Index> raw_variable_indices = dataset->get_raw_variable_indices("Input");
+
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_names(target_names);
+    vector<string> input_variable_names;
+    vector<string> target_variable_names;
 
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        if(raw_variables[raw_variable_indices[i]].use == "InputTarget")
+        {
+            const Index time_steps = dynamic_cast<TimeSeriesDataset*>(dataset)->get_past_time_steps();
+
+            if(input_names[i] == "")
+                for(Index j = 0; j < time_steps; j++)
+                    input_variable_names.push_back("variable" + to_string(i + 1) + "_lag" + to_string(j));
+            else
+                for(Index j = 0; j < time_steps; j++)
+                    input_variable_names.push_back(input_names[i] + "_lag" + to_string(j));
+        }
+        else
+        {
+            if(input_names[i] == "")
+                input_variable_names.push_back("variable" + to_string(i + 1));
+            else
+                input_variable_names.push_back(input_names[i]);
+        }
+    }
+
+    for(Index i = 0; i < target_variables_number; i++)
+    {
+        if(target_names[i] == "")
+            target_variable_names.push_back("variable" + to_string(input_variables_number + i + 1));
+        else
+            input_variable_names.push_back(target_names[i]);
+    }
+
+    neural_network->set_input_names(input_variable_names);
+    neural_network->set_output_names(target_variable_names);
 }
 
 
@@ -240,8 +279,8 @@ void OptimizationAlgorithm::set_scaling()
 
     if (neural_network->has("Scaling2d"))
     {
-        input_scalers = dataset->get_variable_scalers("Input");
-        input_descriptives = dataset->scale_variables("Input");
+        input_scalers = dynamic_cast<TimeSeriesDataset*>(dataset)->get_variable_scalers("Input");
+        input_descriptives = dynamic_cast<TimeSeriesDataset*>(dataset)->scale_variables("Input");
         input_has_been_scaled = true;
 
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
@@ -254,9 +293,9 @@ void OptimizationAlgorithm::set_scaling()
         input_descriptives = dataset->scale_variables("Input");
         input_has_been_scaled = true;
 
-        //Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        //scaling_layer_3d->set_descriptives(input_descriptives);
-        //scaling_layer_3d->set_scalers(input_scalers);
+        Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        scaling_layer_3d->set_descriptives(input_descriptives);
+        scaling_layer_3d->set_scalers(input_scalers);
     }
     else if (neural_network->has("Scaling4d"))
     {
@@ -309,7 +348,6 @@ void OptimizationAlgorithm::set_scaling()
         unscaling_layer->set_scalers(target_scalers);
     }
 }
-
 
 
 void OptimizationAlgorithm::set_unscaling()

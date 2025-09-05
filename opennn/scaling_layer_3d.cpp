@@ -344,7 +344,8 @@ void Scaling3d::from_XML(const XMLDocument& document)
     const Index inputs_number = dims[1];
     const XMLElement* start_element = scaling_layer_element->FirstChildElement("InputDimensions");
 
-    for (Index i = 0; i < inputs_number; i++) {
+    for (Index i = 0; i < inputs_number; i++)
+    {
         const XMLElement* scaling_feature_element = start_element->NextSiblingElement("ScalingFeature");
         if (!scaling_feature_element) {
             throw runtime_error("Scaling feature " + to_string(i) + " is nullptr.\n");
