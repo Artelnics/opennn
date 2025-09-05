@@ -503,7 +503,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     for (Index i = 0; i < Index(sample_indices.size()); ++i)
     {
         const Index sample_row = sample_indices[i];
-        const bool skip = is_last_fill && i >= sample_indices.size() - past_time_steps;
+        const bool skip = is_last_fill && i >= Index(sample_indices.size()) - past_time_steps;
 
         for (Index j = 0; j < columns_number; ++j)
         {
