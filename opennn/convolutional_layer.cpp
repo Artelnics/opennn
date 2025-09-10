@@ -557,7 +557,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
         activation = CUDNN_ACTIVATION_RELU;
         use_convolutions = false;
     }
-    else if(activation_function == "ExponentialLinear")
+    else if(activation_function == "ScaledExponentialLinear")
     {
         activation = CUDNN_ACTIVATION_ELU;
         use_convolutions = true;
@@ -586,7 +586,7 @@ void Convolutional::set_activation_function(const string& new_activation_functio
         || new_activation_function == "HyperbolicTangent"
         || new_activation_function == "Linear"
         || new_activation_function == "RectifiedLinear"
-        || new_activation_function == "ExponentialLinear")
+        || new_activation_function == "ScaledExponentialLinear")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
