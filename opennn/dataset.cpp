@@ -3639,11 +3639,13 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
     const Index raw_variables_number = raw_variables.size();
     const size_t rows_to_check = std::min(size_t(100), sample_rows.size());
 
-    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx) {
+    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx)
+    {
         RawVariable& raw_variable = raw_variables[col_idx];
         raw_variable.type = RawVariableType::None;
 
-        for (size_t row_idx = 0; row_idx < rows_to_check; ++row_idx) {
+        for (size_t row_idx = 0; row_idx < rows_to_check; ++row_idx)
+        {
             const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
             if (token_idx >= sample_rows[row_idx].size()) continue;
 
@@ -3653,32 +3655,34 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 
             if (raw_variable.type == RawVariableType::Categorical) break;
 
-            if (is_numeric_string(token)) {
+            if (is_numeric_string(token))
+            {
                 if (raw_variable.type == RawVariableType::None)
                     raw_variable.type = RawVariableType::Numeric;
             }
-            else if (is_date_time_string(token)) {
+            else if (is_date_time_string(token))
+            {
                 if (raw_variable.type == RawVariableType::None)
                     raw_variable.type = RawVariableType::DateTime;
             }
-            else {
+            else
                 raw_variable.type = RawVariableType::Categorical;
-            }
         }
 
-        if (raw_variable.type == RawVariableType::None) {
+        if (raw_variable.type == RawVariableType::None)
             raw_variable.type = RawVariableType::Numeric;
-        }
     }
 
-    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx) {
-        if (raw_variables[col_idx].type == RawVariableType::Categorical) {
+    for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx)
+    {
+        if (raw_variables[col_idx].type == RawVariableType::Categorical)
+        {
             std::set<string> unique_categories;
-            for (const auto& row : sample_rows) {
+            for (const auto& row : sample_rows)
+            {
                 const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
-                if (token_idx < row.size() && !row[token_idx].empty() && row[token_idx] != missing_values_label) {
+                if (token_idx < row.size() && !row[token_idx].empty() && row[token_idx] != missing_values_label)
                     unique_categories.insert(row[token_idx]);
-                }
             }
             raw_variables[col_idx].categories.assign(unique_categories.begin(), unique_categories.end());
         }
@@ -3704,7 +3708,8 @@ void Dataset::read_csv()
     vector<vector<string>> raw_file_content;
     string line;
     const string separator_string = get_separator_string();
-    while (getline(file, line)) {
+    while (getline(file, line))
+    {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         prepare_line(line);
         if (line.empty()) continue;
@@ -3720,7 +3725,8 @@ void Dataset::read_csv()
     read_data_file_preview(raw_file_content);
 
     vector<string> header_tokens = raw_file_content[0];
-    if (has_header) {
+    if (has_header)
+    {
         if (has_numbers(header_tokens)) throw runtime_error("Error: Some header names are numeric.");
         raw_file_content.erase(raw_file_content.begin());
     }
@@ -3732,12 +3738,12 @@ void Dataset::read_csv()
     const Index raw_variables_number = has_sample_ids ? columns_number - 1 : columns_number;
     raw_variables.resize(raw_variables_number);
 
-    if (has_header) {
+    if (has_header)
+    {
         if (has_sample_ids) for (Index i = 0; i < raw_variables_number; i++) raw_variables[i].name = header_tokens[i + 1];
         else set_raw_variable_names(header_tokens);
-    } else {
+    } else
         set_default_raw_variable_names();
-    }
 
     infer_column_types(raw_file_content);
 
@@ -3762,19 +3768,21 @@ void Dataset::read_csv()
     {
         const vector<string>& tokens = raw_file_content[sample_index];
 
-        if (has_missing_values(tokens)) {
+        if (has_missing_values(tokens))
+        {
             rows_missing_values_number++;
-            for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++) {
-                if (tokens[i].empty() || tokens[i] == missing_values_label) {
+            for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++)
+            {
+                if (tokens[i].empty() || tokens[i] == missing_values_label)
+                {
                     missing_values_number++;
                     raw_variables_missing_values_number(has_sample_ids ? i - 1 : i)++;
                 }
             }
         }
 
-        if (has_sample_ids) {
+        if (has_sample_ids)
             sample_ids[sample_index] = tokens[0];
-        }
 
         for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
@@ -3782,7 +3790,8 @@ void Dataset::read_csv()
             const string& token = has_sample_ids ? tokens[raw_variable_index + 1] : tokens[raw_variable_index];
             const vector<Index>& variable_indices = all_variable_indices[raw_variable_index];
 
-            switch(raw_variable.type) {
+            switch(raw_variable.type)
+            {
             case RawVariableType::Numeric:
                 data(sample_index, variable_indices[0]) = (token.empty() || token == missing_values_label) ? NAN : stof(token);
                 break;
@@ -3790,20 +3799,23 @@ void Dataset::read_csv()
                 data(sample_index, variable_indices[0]) = time_t(date_to_timestamp(token));
                 break;
             case RawVariableType::Categorical:
-                if (token.empty() || token == missing_values_label) {
+                if (token.empty() || token == missing_values_label)
                     for (Index cat_idx : variable_indices) data(sample_index, cat_idx) = NAN;
-                } else {
+                else
+                {
                     auto it = std::find(raw_variable.categories.begin(), raw_variable.categories.end(), token);
-                    if (it != raw_variable.categories.end()) {
+                    if (it != raw_variable.categories.end())
+                    {
                         Index category_index = std::distance(raw_variable.categories.begin(), it);
                         data(sample_index, variable_indices[category_index]) = 1;
                     }
                 }
                 break;
             case RawVariableType::Binary:
-                if (contains(positive_words, token) || contains(negative_words, token)) {
+                if (contains(positive_words, token) || contains(negative_words, token))
                     data(sample_index, variable_indices[0]) = contains(positive_words, token) ? 1 : 0;
-                } else {
+                else
+                {
                     const vector<string>& categories = raw_variable.categories;
                     if (token.empty() || token == missing_values_label)
                         data(sample_index, variable_indices[0]) = NAN;

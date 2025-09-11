@@ -241,7 +241,7 @@ void OptimizationAlgorithm::set_names()
 
             if(input_names[i] == "")
                 for(Index j = 0; j < time_steps; j++)
-                    input_variable_names.push_back("variable" + to_string(i + 1) + "_lag" + to_string(j));
+                    input_variable_names.push_back("variable_" + to_string(i + 1) + "_lag" + to_string(j));
             else
                 for(Index j = 0; j < time_steps; j++)
                     input_variable_names.push_back(input_names[i] + "_lag" + to_string(j));
@@ -249,7 +249,7 @@ void OptimizationAlgorithm::set_names()
         else
         {
             if(input_names[i] == "")
-                input_variable_names.push_back("variable" + to_string(i + 1));
+                input_variable_names.push_back("variable_" + to_string(i + 1));
             else
                 input_variable_names.push_back(input_names[i]);
         }
@@ -258,7 +258,7 @@ void OptimizationAlgorithm::set_names()
     for(Index i = 0; i < target_variables_number; i++)
     {
         if(target_names[i] == "")
-            target_variable_names.push_back("variable" + to_string(input_variables_number + i + 1));
+            target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
         else
             input_variable_names.push_back(target_names[i]);
     }

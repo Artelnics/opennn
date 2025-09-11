@@ -35,7 +35,8 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
 
     if(variables_number == 1)
         set_raw_variable_use(0, "InputTarget");
-    else{
+    else
+    {
         const vector<Index> target_index = get_variable_indices("Target");
         set_raw_variable_use(target_index[0], "InputTarget");
     }
@@ -408,6 +409,8 @@ void TimeSeriesDataset::read_csv()
 {
     Dataset::read_csv();
 
+    set_default_raw_variables_uses();
+
     const Index variables_number = get_variables_number();
 
     if (variables_number == 1)
@@ -415,6 +418,7 @@ void TimeSeriesDataset::read_csv()
     else
     {
         const vector<Index> target_indices = get_variable_indices("Target");
+
         if (!target_indices.empty())
         {
             const Index raw_variable_target_index = get_raw_variable_index(target_indices[0]);
