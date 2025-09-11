@@ -170,7 +170,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
             activation = CUDNN_ACTIVATION_RELU;
             use_combinations = false;
         }
-        else if (activation_function == "ExponentialLinear")
+        else if (activation_function == "ScaledExponentialLinear")
         {
             activation = CUDNN_ACTIVATION_ELU;
             use_combinations = true;
@@ -227,7 +227,7 @@ void Dense2d::set_activation_function(const string& new_activation_function)
         || new_activation_function == "HyperbolicTangent"
         || new_activation_function == "Linear"
         || new_activation_function == "RectifiedLinear"
-        || new_activation_function == "ExponentialLinear"
+        || new_activation_function == "ScaledExponentialLinear"
         || new_activation_function == "Softmax")
         activation_function = new_activation_function;
     else

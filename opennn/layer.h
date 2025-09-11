@@ -135,7 +135,7 @@ protected:
             hyperbolic_tangent(activations, activation_derivatives);
         else if (activation_function == "RectifiedLinear")
             rectified_linear(activations, activation_derivatives);
-        else if (activation_function == "ExponentialLinear")
+        else if (activation_function == "ScaledExponentialLinear")
             exponential_linear(activations, activation_derivatives);
         else
             throw runtime_error("Unknown activation: " + activation_function);

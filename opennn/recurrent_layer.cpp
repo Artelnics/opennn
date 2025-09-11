@@ -107,7 +107,7 @@ void Recurrent::set_activation_function(const string& new_activation_function)
         || new_activation_function == "HyperbolicTangent"
         || new_activation_function == "Linear"
         || new_activation_function == "RectifiedLinear"
-        || new_activation_function == "ExponentialLinear")
+        || new_activation_function == "ScaledExponentialLinear")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
