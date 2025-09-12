@@ -44,7 +44,6 @@ int main()
 
 
         cout << "dataset leido" << endl;
-        // time_series_dataset.split_samples_sequential(type(0.8), type(0.2), type(0));
 
         time_series_dataset.print();
 
@@ -61,43 +60,12 @@ int main()
 
         cout << "-----------------------------------" << endl;
 
-        // const vector<Index> sample_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        // const vector<Index> input_indices = {0};
-        // const vector<Index> target_indices =  {0};
-
-        // const vector<Index> samples_indices = time_series_dataset.get_sample_indices("Training");
-        // const Index samples_number = time_series_dataset.get_samples_number("Training");
-        // const vector<Index> input_variable_indices = time_series_dataset.get_variable_indices("Input");
-        // const vector<Index> target_variable_indices = time_series_dataset.get_variable_indices("Target");
-
-        // const Index batch_size = 20;
-
-        // const Index batch_samples_number = min(samples_number, batch_size);
-        // const Index batches_number = std::ceil(static_cast<double>(samples_number) / batch_size);
-
-        // vector<vector<Index>> batches(batches_number);
-
-        // Batch batch(batch_samples_number, &time_series_dataset);
-
-        // batches = time_series_dataset.get_batches(samples_indices, batch_samples_number, false);
-
-        // for (int i = 0; i < batches_number; ++i) {
-        //     cout << "iteracion: " << i << endl;
-        //     for (const auto& element : batches[i])
-        //         std::cout << element << " ";  // Imprimir el elemento de cada fila
-        //     cout << endl;
-        //     batch.fill(batches[i], input_variable_indices, target_variable_indices);
-        //     batch.print();
-        // }
-
-        // batch.fill(batches[0], input_variable_indices, target_variable_indices);
-        // batch.print();
-        // cout << "------------------------------------------" << endl;
-
         ForecastingNetwork forecasting_network({time_series_dataset.get_input_dimensions()},
-                                          {4},
-                                          {time_series_dataset.get_target_dimensions()});
+                                               {4},
+                                               {time_series_dataset.get_target_dimensions()});
 
+
+/*
         // Layer* layer_ptr_scaling = forecasting_network.get_first("Scaling3d");
         // Scaling3d* scaling_layer = dynamic_cast<Scaling3d*>(layer_ptr_scaling);
         // scaling_layer->set_scalers("None");
@@ -195,7 +163,7 @@ int main()
         //     cout << "Output: " << outputs << endl;
         //     cout << "Target: " << input_views[i+1].second << endl;
         // }
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

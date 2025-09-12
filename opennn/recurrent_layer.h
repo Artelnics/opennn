@@ -24,8 +24,6 @@ public:
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    Index get_timesteps() const;
-
     vector<ParameterView> get_parameter_views() const override;
 
     string get_activation_function() const;
@@ -34,8 +32,6 @@ public:
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
-
-    void set_timesteps(const Index&);
 
     void set_activation_function(const string&);
 
@@ -61,14 +57,14 @@ public:
 
 private:
 
-    Index past_time_steps = 2;
+    dimensions input_dimensions;
 
     Tensor<type, 1> biases;
 
     Tensor<type, 2> input_weights;
     Tensor<type, 2> recurrent_weights;
 
-    string activation_function = "Linear";
+    string activation_function = "HyperbolicTangent";
 
 #ifdef OPENNN_CUDA
     // @todo

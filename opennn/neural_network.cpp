@@ -192,7 +192,7 @@ Layer* NeuralNetwork::get_first(const string& name) const
         if(layer->get_name() == name)
             return layer.get();
 
-    throw runtime_error("Neural network is empty.");
+    throw runtime_error("Layer not found in Neural Network: " + name);
 }
 
 
@@ -480,7 +480,7 @@ void NeuralNetwork::set_parameters_glorot()
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_pair,
                                       ForwardPropagation& forward_propagation,
                                       const bool& is_training) const
-{   
+{
     const Index layers_number = get_layers_number();
 
     Index first_layer_index = 0;
@@ -1121,6 +1121,56 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
                 file << ";";
         }
 
+        file << "\n";
+    }
+
+    file.close();
+}
+
+
+void NeuralNetwork::save_outputs(Tensor<type, 3>& inputs_3d, const filesystem::path& file_name)
+{
+    const Tensor<type, 2> outputs = calculate_outputs<3, 2>(inputs_3d);
+
+    const Index batch_size = inputs_3d.dimension(0);
+    const Index past_time_steps = inputs_3d.dimension(1);
+    const Index num_variables = inputs_3d.dimension(2);
+
+    Tensor<type, 2> last_time_step_inputs(batch_size, num_variables);
+
+    last_time_step_inputs = inputs_3d.chip(past_time_steps - 1, 1);
+
+    ofstream file(file_name);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
+
+    const vector<string> output_names = get_output_names();
+    const Index outputs_number = get_outputs_number();
+
+    const vector<string> input_names = get_input_names();
+    for (const auto& name : input_names)
+        file << name << ";";
+
+    for (size_t i = 0; i < size_t(outputs_number); ++i)
+    {
+        file << output_names[i];
+        if (i != output_names.size() - 1)
+            file << ";";
+    }
+    file << "\n";
+
+    for (Index i = 0; i < batch_size; ++i)
+    {
+        for (Index j = 0; j < num_variables; ++j)
+            file << last_time_step_inputs(i, j) << ";";
+
+        for (Index j = 0; j < outputs_number; ++j)
+        {
+            file << outputs(i, j);
+            if (j != outputs_number - 1)
+                file << ";";
+        }
         file << "\n";
     }
 
