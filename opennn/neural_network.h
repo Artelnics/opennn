@@ -51,205 +51,205 @@ class NeuralNetwork
 
 public:
 
-   NeuralNetwork();
+    NeuralNetwork();
 
-   NeuralNetwork(const filesystem::path&);
+    NeuralNetwork(const filesystem::path&);
 
-   void add_layer(unique_ptr<Layer>, 
+    void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
-   bool validate_name(const string&) const;
+    bool validate_name(const string&) const;
 
-   void reference_all_layers();
+    void reference_all_layers();
 
-   // Get
+    // Get
 
-   bool has(const string&) const;
+    bool has(const string&) const;
 
-   bool is_empty() const;
+    bool is_empty() const;
 
-   const vector<string>& get_input_names() const;
-   Index get_input_index(const string&) const;
+    const vector<string>& get_input_names() const;
+    Index get_input_index(const string&) const;
 
-   const vector<string>& get_output_names() const;
-   Index get_output_index(const string&) const;
+    const vector<string>& get_output_names() const;
+    Index get_output_index(const string&) const;
 
-   const vector<unique_ptr<Layer>>& get_layers() const;
-   const unique_ptr<Layer>& get_layer(const Index&) const;
-   const unique_ptr<Layer>& get_layer(const string&) const;
+    const vector<unique_ptr<Layer>>& get_layers() const;
+    const unique_ptr<Layer>& get_layer(const Index&) const;
+    const unique_ptr<Layer>& get_layer(const string&) const;
 
-   Index get_layer_index(const string&) const;
+    Index get_layer_index(const string&) const;
 
-   const vector<vector<Index>>& get_layer_input_indices() const;
-   vector<vector<Index>> get_layer_output_indices() const;
+    const vector<vector<Index>>& get_layer_input_indices() const;
+    vector<vector<Index>> get_layer_output_indices() const;
 
-   Index find_input_index(const vector<Index>&, const Index&) const;
+    Index find_input_index(const vector<Index>&, const Index&) const;
 
-   Layer* get_first(const string&) const;
+    Layer* get_first(const string&) const;
 
-   const bool& get_display() const;
+    const bool& get_display() const;
 
-   // Set
+    // Set
 
-   void set(const filesystem::path&);
+    void set(const filesystem::path&);
 
-   void set_layers_number(const Index&);
+    void set_layers_number(const Index&);
 
-   void set_layer_input_indices(const vector<vector<Index>>&);
-   void set_layer_inputs_indices(const Index&, const vector<Index>&);
+    void set_layer_input_indices(const vector<vector<Index>>&);
+    void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
-   void set_layer_inputs_indices(const string&, const vector<string>&);
-   void set_layer_inputs_indices(const string&, const initializer_list<string>&);
-   void set_layer_inputs_indices(const string&, const string&);
+    void set_layer_inputs_indices(const string&, const vector<string>&);
+    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
+    void set_layer_inputs_indices(const string&, const string&);
 
-   void set_input_names(const vector<string>&);
-   void set_output_names(const vector<string>&);
+    void set_input_names(const vector<string>&);
+    void set_output_names(const vector<string>&);
 
-   void set_input_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&);
 
-   void set_default();
+    void set_default();
 
-   void set_threads_number(const int&);
+    void set_threads_number(const int&);
 
-   void set_display(const bool&);
+    void set_display(const bool&);
 
-   // Layers
+    // Layers
 
-   Index get_layers_number() const;
-   Index get_layers_number(const string&) const;
+    Index get_layers_number() const;
+    Index get_layers_number(const string&) const;
 
-   Index get_first_trainable_layer_index() const;
-   Index get_last_trainable_layer_index() const;
+    Index get_first_trainable_layer_index() const;
+    Index get_last_trainable_layer_index() const;
 
-   // Architecture
+    // Architecture
 
-   Index get_inputs_number() const;
-   Index get_outputs_number() const;
+    Index get_inputs_number() const;
+    Index get_outputs_number() const;
 
-   dimensions get_input_dimensions() const;
-   dimensions get_output_dimensions() const;
+    dimensions get_input_dimensions() const;
+    dimensions get_output_dimensions() const;
 
-   // Parameters
+    // Parameters
 
-   Index get_parameters_number() const;
-   void get_parameters(Tensor<type, 1>&) const;
+    Index get_parameters_number() const;
+    void get_parameters(Tensor<type, 1>&) const;
 
-   vector<Index> get_layer_parameter_numbers() const;
+    vector<Index> get_layer_parameter_numbers() const;
 
-   void set_parameters(const Tensor<type, 1>&);
+    void set_parameters(const Tensor<type, 1>&);
 
-   // Parameters initialization
+    // Parameters initialization
 
-   void set_parameters_random();
-   void set_parameters_glorot();
+    void set_parameters_random();
+    void set_parameters_glorot();
 
-   // Output
+    // Output
 
-   template <Index input_rank, Index output_rank>
-   Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
-   {
-       const Index layers_number = get_layers_number();
+    template <Index input_rank, Index output_rank>
+    Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
+    {
+        const Index layers_number = get_layers_number();
 
-       if (layers_number == 0)
+        if (layers_number == 0)
            return Tensor<type, output_rank>();
 
-       const Index batch_size = inputs.dimension(0);
+        const Index batch_size = inputs.dimension(0);
 
-       ForwardPropagation forward_propagation(batch_size, this);
+        ForwardPropagation forward_propagation(batch_size, this);
 
-       dimensions input_dimensions;
-       input_dimensions.reserve(input_rank);
+        dimensions input_dimensions;
+        input_dimensions.reserve(input_rank);
 
-       for (Index i = 0; i < input_rank; ++i)
+        for (Index i = 0; i < input_rank; ++i)
            input_dimensions.push_back(inputs.dimension(i));
 
-       const TensorView input_pair((type*)inputs.data(), input_dimensions);
+        const TensorView input_pair((type*)inputs.data(), input_dimensions);
 
-       forward_propagate({input_pair}, forward_propagation, false);
+        forward_propagate({input_pair}, forward_propagation, false);
 
-       const TensorView& outputs_view = forward_propagation.layers.back()->get_output_pair();
+        const TensorView& outputs_view = forward_propagation.layers.back()->get_output_pair();
 
-       if constexpr (output_rank == 2)
+        if constexpr (output_rank == 2)
            return tensor_map<2>(outputs_view);
-       else if constexpr (output_rank == 3)
+        else if constexpr (output_rank == 3)
            return tensor_map<3>(outputs_view);
-       else if constexpr (output_rank == 4)
+        else if constexpr (output_rank == 4)
            return tensor_map<4>(outputs_view);
-       else
+        else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
 
-       return Tensor<type, output_rank>();
-   }
+        return Tensor<type, output_rank>();
+    }
 
 
-   Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
-   {
-       const Index layers_number = get_layers_number();
+    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs_1, const Tensor<type, 3>& inputs_2)
+    {
+        const Index layers_number = get_layers_number();
 
-       if (layers_number == 0)
+        if (layers_number == 0)
            return Tensor<type, 3>();
 
-       const Index batch_size = inputs_1.dimension(0);
+        const Index batch_size = inputs_1.dimension(0);
 
-       ForwardPropagation forward_propagation(batch_size, this);
+        ForwardPropagation forward_propagation(batch_size, this);
 
-       const TensorView input_pair_1((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}});
-       const TensorView input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
+        const TensorView input_pair_1((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}});
+        const TensorView input_pair_2((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}});
 
-       vector<TensorView> input_views(2);
-       input_views[0] = input_pair_1;
-       input_views[1] = input_pair_2;
+        vector<TensorView> input_views(2);
+        input_views[0] = input_pair_1;
+        input_views[1] = input_pair_2;
 
-       forward_propagate(input_views, forward_propagation, false);
+        forward_propagate(input_views, forward_propagation, false);
 
-       const vector<string> layer_labels = get_layer_labels();
+        const vector<string> layer_labels = get_layer_labels();
 
-       const TensorView outputs_view
+        const TensorView outputs_view
            = forward_propagation.layers[layers_number - 1]->get_output_pair();
 
-       return tensor_map<3>(outputs_view);
-   }
+        return tensor_map<3>(outputs_view);
+    }
 
+    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
 
-   Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
+    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
+    Index calculate_image_output(const filesystem::path&);
 
-   Index calculate_image_output(const filesystem::path&);
+    // Serialization
 
-   // Serialization
+    Tensor<string, 2> get_dense2d_layers_information() const;
+    Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   Tensor<string, 2> get_dense2d_layers_information() const;
-   Tensor<string, 2> get_probabilistic_layer_information() const;
+    void from_XML(const XMLDocument&);
+    void inputs_from_XML(const XMLElement*);
+    void layers_from_XML(const XMLElement*);
+    void outputs_from_XML(const XMLElement*);
 
-   void from_XML(const XMLDocument&);
-   void inputs_from_XML(const XMLElement*);
-   void layers_from_XML(const XMLElement*);
-   void outputs_from_XML(const XMLElement*);
+    void to_XML(XMLPrinter&) const;
 
-   void to_XML(XMLPrinter&) const;
+    virtual void print() const;
+    void save(const filesystem::path&) const;
+    void save_parameters(const filesystem::path&) const;
 
-   virtual void print() const;
-   void save(const filesystem::path&) const;
-   void save_parameters(const filesystem::path&) const;
+    void load(const filesystem::path&);
+    void load_parameters_binary(const filesystem::path&);
 
-   void load(const filesystem::path&);
-   void load_parameters_binary(const filesystem::path&);
+    vector<string> get_layer_labels() const;
+    vector<string> get_names_string() const;
 
-   vector<string> get_layer_labels() const;
-   vector<string> get_names_string() const;
+    void save_outputs(Tensor<type, 2>&, const filesystem::path&);
+    void save_outputs(Tensor<type, 3>&, const filesystem::path&);
 
-   void save_outputs(Tensor<type, 2>&, const filesystem::path&);
-
-   void forward_propagate(const vector<TensorView>&,
+    void forward_propagate(const vector<TensorView>&,
                           ForwardPropagation&,
                           const bool& = false) const;
 
-   void forward_propagate(const vector<TensorView>&,
+    void forward_propagate(const vector<TensorView>&,
                           const Tensor<type, 1>&,
                           ForwardPropagation&);
 
-   string get_expression() const;
+    string get_expression() const;
 
 #ifdef OPENNN_CUDA
 
@@ -278,17 +278,17 @@ protected:
 
 protected:
 
-   string name = "neural_network";
+    string name = "neural_network";
 
-   vector<string> input_names;
+    vector<string> input_names;
 
-   vector<string> output_names;
+    vector<string> output_names;
 
-   vector<unique_ptr<Layer>> layers;
+    vector<unique_ptr<Layer>> layers;
 
-   vector<vector<Index>> layer_input_indices;
+    vector<vector<Index>> layer_input_indices;
 
-   bool display = true;
+    bool display = true;
 
 };
 

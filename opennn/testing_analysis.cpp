@@ -133,7 +133,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    // // Neural network
+    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 

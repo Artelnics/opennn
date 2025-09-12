@@ -226,7 +226,8 @@ void OptimizationAlgorithm::set_names()
     const Index target_variables_number = dataset->get_variables_number("Target");
 
     const vector<Dataset::RawVariable> raw_variables = dataset->get_raw_variables();
-    const vector<Index> raw_variable_indices = dataset->get_raw_variable_indices("Input");
+    const vector<Index> input_variable_indices = dataset->get_raw_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_raw_variable_indices("Input");
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -235,7 +236,7 @@ void OptimizationAlgorithm::set_names()
 
     for(Index i = 0; i < input_variables_number; i++)
     {
-        if(raw_variables[raw_variable_indices[i]].use == "InputTarget")
+        if(raw_variables[input_variable_indices[i]].use == "InputTarget")
         {
             const Index time_steps = dynamic_cast<TimeSeriesDataset*>(dataset)->get_past_time_steps();
 
@@ -258,7 +259,10 @@ void OptimizationAlgorithm::set_names()
     for(Index i = 0; i < target_variables_number; i++)
     {
         if(target_names[i] == "")
-            target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
+            if(raw_variables[target_variable_indices[i]].use != "InputTarget")
+                target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
+            else
+                target_variable_names.push_back("variable_" + to_string(i + 1));
         else
             input_variable_names.push_back(target_names[i]);
     }

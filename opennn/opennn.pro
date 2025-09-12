@@ -52,9 +52,9 @@ PRECOMPILED_HEADER = pch.h
 HEADERS += $$files($$PWD/*.h)
 SOURCES += $$files($$PWD/*.cpp)
 
-CUDA_SOURCES += kernel.cu
+# CUDA_SOURCES += kernel.cu
 
-include(../cuda.pri)
+# include(../cuda.pri)
 
 win32 {
     DEFINES += _HAS_STD_BYTE=0

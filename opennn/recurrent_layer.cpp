@@ -22,19 +22,13 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return {past_time_steps, input_weights.dimension(0)};
+    return input_dimensions;
 }
 
 
 dimensions Recurrent::get_output_dimensions() const
 {
     return { biases.size() };
-}
-
-
-Index Recurrent::get_timesteps() const
-{
-    return past_time_steps;
 }
 
 
@@ -56,13 +50,17 @@ string Recurrent::get_activation_function() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    biases.resize(new_output_dimensions[0]);
+    set_input_dimensions(new_input_dimensions);
+    set_output_dimensions(new_output_dimensions);
 
-    input_weights.resize(new_input_dimensions[1], new_output_dimensions[0]);
+    const Index inputs_number = new_input_dimensions[1];
+    const Index outputs_number = new_output_dimensions[0];
 
-    set_timesteps(new_input_dimensions[0]);
+    biases.resize(outputs_number);
 
-    recurrent_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
+    input_weights.resize(inputs_number, outputs_number);
+
+    recurrent_weights.resize(outputs_number, outputs_number);
 
     set_parameters_random();
 
@@ -77,37 +75,33 @@ void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
     if (new_input_dimensions.size() != 2)
         throw runtime_error("Input dimensions rank is not 2 for Recurrent (time_steps, inputs).");
 
+    input_dimensions = new_input_dimensions;
+
+    const Index inputs_number = input_dimensions[1];
     const Index outputs_number = get_outputs_number();
 
-    input_weights.resize(new_input_dimensions[1], outputs_number);
-    set_timesteps(new_input_dimensions[0]);
+    input_weights.resize(inputs_number, outputs_number);
 }
 
 
 void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index features_number = input_weights.dimension(0);
-    const Index new_neurons_number = new_output_dimensions[0];
+    const Index inputs_number = input_weights.dimension(0);
+    const Index outputs_number = new_output_dimensions[0];
 
-    biases.resize(new_neurons_number);
-    input_weights.resize(features_number, new_neurons_number);
-    recurrent_weights.resize(new_neurons_number, new_neurons_number);
-}
-
-
-void Recurrent::set_timesteps(const Index& new_timesteps)
-{
-    past_time_steps = new_timesteps;
+    biases.resize(outputs_number);
+    input_weights.resize(inputs_number, outputs_number);
+    recurrent_weights.resize(outputs_number, outputs_number);
 }
 
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Logistic"
-        || new_activation_function == "HyperbolicTangent"
-        || new_activation_function == "Linear"
-        || new_activation_function == "RectifiedLinear"
-        || new_activation_function == "ScaledExponentialLinear")
+    || new_activation_function == "HyperbolicTangent"
+    || new_activation_function == "Linear"
+    || new_activation_function == "RectifiedLinear"
+    || new_activation_function == "ScaledExponentialLinear")
         activation_function = new_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
