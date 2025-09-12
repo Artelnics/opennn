@@ -35,7 +35,8 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
 
     if(variables_number == 1)
         set_raw_variable_use(0, "InputTarget");
-    else{
+    else
+    {
         const vector<Index> target_index = get_variable_indices("Target");
         set_raw_variable_use(target_index[0], "InputTarget");
     }
@@ -63,6 +64,64 @@ const Index& TimeSeriesDataset::get_past_time_steps() const
 const Index& TimeSeriesDataset::get_future_time_steps() const
 {
     return future_time_steps;
+}
+
+
+Tensor<type, 3> TimeSeriesDataset::get_data(const string& sample_use, const string& variable_use) const
+{
+    const vector<Index> sample_indices = get_sample_indices(sample_use);
+    const vector<Index> variable_indices = get_variable_indices(variable_use);
+
+    if (sample_indices.empty() || variable_indices.empty()) {
+        return Tensor<type, 3>();
+    }
+
+    const Index samples_number = sample_indices.size();
+    const Index variables_number = variable_indices.size();
+
+    Tensor<type, 3> data_3d(samples_number, past_time_steps, variables_number);
+    data_3d.setZero();
+
+    if (variable_use == "Input" || variable_use == "InputTarget")
+        fill_input_tensor(sample_indices, variable_indices, data_3d.data());
+    else if (variable_use == "Target")
+        throw runtime_error("get_data for 3D is only implemented for 'Input' variables in TimeSeriesDataset.");
+
+    return data_3d;
+}
+
+
+TimeSeriesDataset::TimeSeriesData TimeSeriesDataset::get_data() const
+{
+    const Index total_samples = get_samples_number();
+    if (total_samples == 0) {
+        return TimeSeriesData();
+    }
+
+    vector<Index> all_sample_indices(total_samples);
+    iota(all_sample_indices.begin(), all_sample_indices.end(), 0);
+
+    TimeSeriesData ts_data;
+
+    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    if (!input_variable_indices.empty())
+    {
+        const Index input_vars_number = input_variable_indices.size();
+        ts_data.inputs.resize(total_samples, past_time_steps, input_vars_number);
+        ts_data.inputs.setZero();
+        fill_input_tensor(all_sample_indices, input_variable_indices, ts_data.inputs.data());
+    }
+
+    const vector<Index> target_variable_indices = get_variable_indices("Target");
+    if (!target_variable_indices.empty())
+    {
+        const Index target_vars_number = target_variable_indices.size();
+        ts_data.targets.resize(total_samples, target_vars_number);
+        ts_data.targets.setZero();
+        fill_target_tensor(all_sample_indices, target_variable_indices, ts_data.targets.data());
+    }
+
+    return ts_data;
 }
 
 
@@ -350,6 +409,8 @@ void TimeSeriesDataset::read_csv()
 {
     Dataset::read_csv();
 
+    set_default_raw_variables_uses();
+
     const Index variables_number = get_variables_number();
 
     if (variables_number == 1)
@@ -357,6 +418,7 @@ void TimeSeriesDataset::read_csv()
     else
     {
         const vector<Index> target_indices = get_variable_indices("Target");
+
         if (!target_indices.empty())
         {
             const Index raw_variable_target_index = get_raw_variable_index(target_indices[0]);

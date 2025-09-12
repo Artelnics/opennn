@@ -9,6 +9,7 @@
 #include "testing_analysis.h"
 #include "correlations.h"
 #include "language_dataset.h"
+#include "time_series_dataset.h"
 #include "transformer.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
@@ -132,15 +133,26 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
-
-    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
-
-    // Neural network
+    // // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs<2,2>(testing_input_data);
+    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
+
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    Tensor<type, 2> testing_output_data;
+
+    if (time_series_dataset)
+    {
+        const Tensor<type, 3> testing_input_data_3d = time_series_dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data_3d);
+    }
+    else
+    {
+        const Tensor<type, 2> testing_input_data_2d = dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data_2d);
+    }
 
     // Testing analysis
 
@@ -193,15 +205,26 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
-
     const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
 
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs<2,2>(testing_input_data);
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    Tensor<type, 2> testing_output_data;
+
+    if (time_series_dataset)
+    {
+        const Tensor<type, 3> testing_input_data = time_series_dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data);
+    }
+    else
+    {
+        const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data);
+    }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
@@ -251,15 +274,27 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
-
     const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
 
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs<2,2>(testing_input_data);
+
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    Tensor<type, 2> testing_output_data;
+
+    if (time_series_dataset)
+    {
+        const Tensor<type, 3> testing_input_data = time_series_dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data);
+    }
+    else
+    {
+        const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
+        testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data);
+    }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
@@ -521,11 +556,22 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 
 Tensor<type, 1> TestingAnalysis::calculate_errors(const string& sample_use) const
 {
-    const Tensor<type, 2> inputs = dataset->get_data(sample_use, "Input");
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     const Tensor<type, 2> targets = dataset->get_data(sample_use, "Target");
 
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
+    Tensor<type, 2> outputs;
+
+    if (time_series_dataset)
+    {
+        const Tensor<type, 3> inputs = time_series_dataset->get_data(sample_use, "Input");
+        outputs = neural_network->calculate_outputs<3, 2>(inputs);
+    }
+    else
+    {
+        const Tensor<type, 2> inputs = dataset->get_data(sample_use, "Input");
+        outputs = neural_network->calculate_outputs<2, 2>(inputs);
+    }
 
     return calculate_errors(targets, outputs);
 }

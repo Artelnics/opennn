@@ -241,7 +241,7 @@ void OptimizationAlgorithm::set_names()
 
             if(input_names[i] == "")
                 for(Index j = 0; j < time_steps; j++)
-                    input_variable_names.push_back("variable" + to_string(i + 1) + "_lag" + to_string(j));
+                    input_variable_names.push_back("variable_" + to_string(i + 1) + "_lag" + to_string(j));
             else
                 for(Index j = 0; j < time_steps; j++)
                     input_variable_names.push_back(input_names[i] + "_lag" + to_string(j));
@@ -249,7 +249,7 @@ void OptimizationAlgorithm::set_names()
         else
         {
             if(input_names[i] == "")
-                input_variable_names.push_back("variable" + to_string(i + 1));
+                input_variable_names.push_back("variable_" + to_string(i + 1));
             else
                 input_variable_names.push_back(input_names[i]);
         }
@@ -258,7 +258,7 @@ void OptimizationAlgorithm::set_names()
     for(Index i = 0; i < target_variables_number; i++)
     {
         if(target_names[i] == "")
-            target_variable_names.push_back("variable" + to_string(input_variables_number + i + 1));
+            target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
         else
             input_variable_names.push_back(target_names[i]);
     }
@@ -279,8 +279,8 @@ void OptimizationAlgorithm::set_scaling()
 
     if (neural_network->has("Scaling2d"))
     {
-        input_scalers = dynamic_cast<TimeSeriesDataset*>(dataset)->get_variable_scalers("Input");
-        input_descriptives = dynamic_cast<TimeSeriesDataset*>(dataset)->scale_variables("Input");
+        input_scalers = dataset->get_variable_scalers("Input");
+        input_descriptives = dataset->scale_variables("Input");
         input_has_been_scaled = true;
 
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
@@ -289,8 +289,9 @@ void OptimizationAlgorithm::set_scaling()
     }
     else if (neural_network->has("Scaling3d"))
     {
-        input_scalers = dataset->get_variable_scalers("Input");
-        input_descriptives = dataset->scale_variables("Input");
+        TimeSeriesDataset* time_series_dataset = static_cast<TimeSeriesDataset*>(dataset);
+        input_scalers = time_series_dataset->get_variable_scalers("Input");
+        input_descriptives = time_series_dataset->scale_variables("Input");
         input_has_been_scaled = true;
 
         Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
