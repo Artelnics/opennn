@@ -15,7 +15,7 @@ CONFIG(release, debug|release) {
 SUBDIRS += opennn
 #SUBDIRS += examples
 #SUBDIRS += blank
-#SUBDIRS += tests
+SUBDIRS += tests
 
 CONFIG += ordered
 

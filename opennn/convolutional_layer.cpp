@@ -430,7 +430,8 @@ Index Convolutional::get_padding_height() const
 {
     if (convolution_type == Convolution::Valid)
         return 0;
-    else if (convolution_type == Convolution::Same)
+
+    if (convolution_type == Convolution::Same)
     {
         const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
 
@@ -442,11 +443,13 @@ Index Convolutional::get_padding_height() const
     throw runtime_error("Unknown convolution type");
 }
 
+
 Index Convolutional::get_padding_width() const
 {
     if (convolution_type == Convolution::Valid)
         return 0;
-    else if (convolution_type == Convolution::Same)
+
+    if (convolution_type == Convolution::Same)
     {
         const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
 
