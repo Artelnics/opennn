@@ -302,7 +302,7 @@ void GeneticAlgorithm::initialize_population_correlations()
                                    ? 1 + rand() % 100
                                    : 1 + rand() % input_raw_variables_number;
 
-        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
+        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true) < raw_variables_active)
         {
             arrow = distribution(gen);
 
@@ -432,7 +432,7 @@ void GeneticAlgorithm::perform_selection()
 
     // The next individuals are selected randomly but their probability is set according to their fitness
 
-    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
+    while(count(selection.data(), selection.data() + selection.size(), true) < selected_individuals_number)
     {
         const type random_number = get_random_type(type(0), fitness_sum());
 
@@ -454,7 +454,7 @@ void GeneticAlgorithm::perform_selection()
 
 vector<Index> GeneticAlgorithm::get_selected_individuals_indices() const
 {
-    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
+    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), true));
 
     Index count = 0;
 
