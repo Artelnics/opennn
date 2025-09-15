@@ -1527,16 +1527,14 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     neural_network.set(samples_number, neural_network_ptr);
 
-    cout << "BackPropagationCuda set:" << endl;
-
     loss = type(0);
     error(0) = type(0);
     regularization = type(0);
 
-    //CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(errors, samples_number * outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(error_device, sizeof(float));
+    CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(errors, samples_number * outputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(error_device, sizeof(float));
 
     // Outputs_delta
 
@@ -1545,8 +1543,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index size = accumulate(output_dimensions.begin(), output_dimensions.end(), samples_number, multiplies<>());
 
-    //CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(output_deltas, size * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(output_deltas, size * sizeof(float));
 
     // Reduce
 

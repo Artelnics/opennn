@@ -884,7 +884,7 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
             if (param_size > 0)
             {
                 const size_t memory_size_bytes = param_size * sizeof(float);
-                CUDA_MALLOC_AND_REPORT(velocity[i][j], memory_size_bytes);
+                CHECK_CUDA(cudaMalloc(&velocity[i][j], memory_size_bytes));
                 CHECK_CUDA(cudaMemset(velocity[i][j], 0, memory_size_bytes));
             }
         }

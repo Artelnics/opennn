@@ -1112,28 +1112,27 @@ vector<ParameterView> Dense2d::get_parameter_views_device() const
 
 void Dense2d::allocate_parameters_device()
 {
-    cout << "Dense2d allocate_parameters_device:" << endl;
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    //CHECK_CUDA(cudaMalloc(&biases_device, outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(biases_device, outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(weights_device, inputs_number * outputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&biases_device, outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(biases_device, outputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(weights_device, inputs_number * outputs_number * sizeof(float));
 
     if (batch_normalization)
     {
-        //CHECK_CUDA(cudaMalloc(&bn_scale_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_scale_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_scale_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_scale_device, outputs_number * sizeof(float));
 
-        //CHECK_CUDA(cudaMalloc(&bn_offset_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_offset_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_offset_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_offset_device, outputs_number * sizeof(float));
 
-        //CHECK_CUDA(cudaMalloc(&bn_running_mean_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_running_mean_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_running_mean_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_running_mean_device, outputs_number * sizeof(float));
 
-        //CHECK_CUDA(cudaMalloc(&bn_running_variance_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_running_variance_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_running_variance_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_running_variance_device, outputs_number * sizeof(float));
     }
 }
 
@@ -1167,7 +1166,6 @@ void Dense2d::free_parameters_device()
 void Dense2d::copy_parameters_device()
 {
     if (!biases_device) cout << "Biases device is null" << endl;
-
     if (!weights_device) cout << "Weights device is null" << endl;
 
     CHECK_CUDA(cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice));
@@ -1215,10 +1213,7 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
-    cout << "Dense2dForwardPropagationCuda set:" << endl;
-
     batch_size = new_batch_size;
-
     layer = new_layer;
 
     Dense2d* dense2d_layer = static_cast<Dense2d*>(layer);
@@ -1242,11 +1237,12 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     if (dense2d_layer->use_combinations)
     {
-        //CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(combinations, batch_size * outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(combinations, batch_size * outputs_number * sizeof(float));
     }
-    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
+
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
 
@@ -1299,10 +1295,10 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     if (dense2d_layer->get_batch_normalization())
     {
-        //CHECK_CUDA(cudaMalloc(&bn_saved_mean, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_saved_mean, outputs_number * sizeof(float));
-        //CHECK_CUDA(cudaMalloc(&bn_saved_inv_variance, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_saved_inv_variance, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_saved_mean, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_saved_mean, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_saved_inv_variance, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_saved_inv_variance, outputs_number * sizeof(float));
     }
 }
 
@@ -1370,10 +1366,7 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 {
     if (!new_layer) return;
 
-    cout << "Dense2dBackPropagationCuda set:" << endl;
-
     batch_size = new_batch_size;
-
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
@@ -1387,15 +1380,15 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Parameters
 
-    //CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(bias_deltas_device, outputs_number * sizeof(float));
-    //CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(weight_deltas_device, inputs_number * outputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&bias_deltas_device, outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(bias_deltas_device, outputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&weight_deltas_device, inputs_number * outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(weight_deltas_device, inputs_number * outputs_number * sizeof(float));
 
     // Input deltas
 
-    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(float));
 
     // Deltas
 
@@ -1415,10 +1408,10 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     if (dense_layer->get_batch_normalization())
     {
-        //CHECK_CUDA(cudaMalloc(&bn_scale_deltas_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_scale_deltas_device, outputs_number * sizeof(float));
-        //CHECK_CUDA(cudaMalloc(&bn_offset_deltas_device, outputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(bn_offset_deltas_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_scale_deltas_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_scale_deltas_device, outputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&bn_offset_deltas_device, outputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(bn_offset_deltas_device, outputs_number * sizeof(float));
     }
 }
 
