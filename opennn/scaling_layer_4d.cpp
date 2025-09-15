@@ -157,10 +157,7 @@ void Scaling4dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
 {
     if (!new_layer) return;
 
-    cout << "Scaling4dForwardPropagationCuda set:" << endl;
-
     layer = new_layer;
-
     batch_size = new_batch_size;
 
     const Scaling4d* flatten_layer = static_cast<Scaling4d*>(layer);
@@ -172,13 +169,13 @@ void Scaling4dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
     Tensor<float, 1> scalar_host(size);
     scalar_host.setConstant(255);
 
-    //CHECK_CUDA(cudaMalloc(&scalar_device, size * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(scalar_device, size * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&scalar_device, size * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(scalar_device, size * sizeof(float));
 
     CHECK_CUDA(cudaMemcpy(scalar_device, scalar_host.data(), size * sizeof(float), cudaMemcpyHostToDevice));
 
-    //CHECK_CUDA(cudaMalloc(&outputs, size * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs, size * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&outputs, size * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(outputs, size * sizeof(float));
 }
 
 

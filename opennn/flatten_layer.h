@@ -353,8 +353,6 @@ void FlattenForwardPropagationCuda<Rank>::set(const Index& new_batch_size, Layer
 {
     if (!new_layer) return;
 
-    cout << "FlattenForwardPropagationCuda set:" << endl;
-
     layer = new_layer;
     batch_size = new_batch_size;
 
@@ -363,11 +361,12 @@ void FlattenForwardPropagationCuda<Rank>::set(const Index& new_batch_size, Layer
 
     if constexpr (Rank == 4)
     {
-        //CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
-        CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(reordered_inputs, batch_size * inputs_number * sizeof(float));
     }
-    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
+
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(outputs, batch_size * outputs_number * sizeof(float));
 }
 
 
@@ -394,14 +393,13 @@ void FlattenBackPropagationCuda<Rank>::set(const Index& new_batch_size, Layer* n
 {
     if (!new_layer) return;
 
-    cout << "FlattenBackPropagationCuda set:" << endl;
-
     layer = new_layer;
     batch_size = new_batch_size;
 
     const size_t inputs_number = layer->get_inputs_number();
 
-    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(type));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * inputs_number * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * inputs_number * sizeof(float));
 }
 
 

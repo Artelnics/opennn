@@ -880,7 +880,6 @@ ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new
 
 void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
-    cout << "ADAMOptimizationDataCuda set (granular):" << endl;
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss_index()->get_neural_network();
@@ -912,10 +911,12 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
             {
                 const size_t memory_size_bytes = param_size * sizeof(float);
 
-                CUDA_MALLOC_AND_REPORT(gradient_exponential_decay[i][j], memory_size_bytes);
+                CHECK_CUDA(cudaMalloc(&gradient_exponential_decay[i][j], memory_size_bytes));
+                //CUDA_MALLOC_AND_REPORT(gradient_exponential_decay[i][j], memory_size_bytes);
                 CHECK_CUDA(cudaMemset(gradient_exponential_decay[i][j], 0, memory_size_bytes));
 
-                CUDA_MALLOC_AND_REPORT(square_gradient_exponential_decay[i][j], memory_size_bytes);
+                CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay[i][j], memory_size_bytes));
+                //CUDA_MALLOC_AND_REPORT(square_gradient_exponential_decay[i][j], memory_size_bytes);
                 CHECK_CUDA(cudaMemset(square_gradient_exponential_decay[i][j], 0, memory_size_bytes));
             }
         }

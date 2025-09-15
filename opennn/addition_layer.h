@@ -287,7 +287,8 @@ struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
         const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
         const size_t total_elements = static_cast<size_t>(batch_size) * layer_elements;
 
-        CUDA_MALLOC_AND_REPORT(outputs, total_elements * sizeof(type));
+        CHECK_CUDA(cudaMalloc(&outputs, total_elements * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(outputs, total_elements * sizeof(float));
     }
 
 
@@ -332,8 +333,10 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
         const size_t layer_elements = accumulate(input_dims.begin(), input_dims.end(), 1, multiplies<Index>());
         const size_t total_elements = static_cast<size_t>(batch_size) * layer_elements;
 
-        CUDA_MALLOC_AND_REPORT(inputs_1_derivatives, total_elements * sizeof(type));
-        CUDA_MALLOC_AND_REPORT(inputs_2_derivatives, total_elements * sizeof(type));
+        CHECK_CUDA(cudaMalloc(&inputs_1_derivatives, total_elements * sizeof(float)));
+        CHECK_CUDA(cudaMalloc(&inputs_2_derivatives, total_elements * sizeof(float)));
+        //CUDA_MALLOC_AND_REPORT(inputs_1_derivatives, total_elements * sizeof(float));
+        //CUDA_MALLOC_AND_REPORT(inputs_2_derivatives, total_elements * sizeof(float));
     }
 
 

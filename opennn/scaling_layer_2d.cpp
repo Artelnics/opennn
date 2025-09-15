@@ -624,8 +624,9 @@ void Scaling2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
     const Index outputs_number = scaling_layer->get_outputs_number();
     const size_t size = batch_size * outputs_number;
 
-    CUDA_MALLOC_AND_REPORT(outputs, size * sizeof(float));
-
+    //CUDA_MALLOC_AND_REPORT(outputs, size * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&outputs, size * sizeof(float)));
+    
     const Tensor<type, 1> minimums_host = scaling_layer->get_minimums();
     const Tensor<type, 1> maximums_host = scaling_layer->get_maximums();
     const Tensor<type, 1> means_host = scaling_layer->get_means();
@@ -638,11 +639,16 @@ void Scaling2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
         scalers_host_tensor(i) = static_cast<int>(scalers_host_vec[i]);
     }
 
-    CUDA_MALLOC_AND_REPORT(minimums_device, outputs_number * sizeof(float));
-    CUDA_MALLOC_AND_REPORT(maximums_device, outputs_number * sizeof(float));
-    CUDA_MALLOC_AND_REPORT(means_device, outputs_number * sizeof(float));
-    CUDA_MALLOC_AND_REPORT(standard_deviations_device, outputs_number * sizeof(float));
-    CUDA_MALLOC_AND_REPORT(scalers_device, outputs_number * sizeof(int));
+    //CUDA_MALLOC_AND_REPORT(minimums_device, outputs_number * sizeof(float));
+    //CUDA_MALLOC_AND_REPORT(maximums_device, outputs_number * sizeof(float));
+    //CUDA_MALLOC_AND_REPORT(means_device, outputs_number * sizeof(float));
+    //CUDA_MALLOC_AND_REPORT(standard_deviations_device, outputs_number * sizeof(float));
+    //CUDA_MALLOC_AND_REPORT(scalers_device, outputs_number * sizeof(int));
+    CHECK_CUDA(cudaMalloc(&minimums_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&maximums_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&means_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&standard_deviations_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&scalers_device, outputs_number * sizeof(float)));
 
     CHECK_CUDA(cudaMemcpy(minimums_device, minimums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaMemcpy(maximums_device, maximums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));

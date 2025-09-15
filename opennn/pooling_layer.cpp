@@ -725,10 +725,7 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 {
     if (!new_layer) return;
 
-    cout << "PoolingForwardPropagationCuda set:" << endl;
-
     batch_size = new_batch_size;
-
     layer = new_layer;
 
     Pooling* pooling_layer = static_cast<Pooling*>(layer);
@@ -737,17 +734,8 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     const Index input_width = pooling_layer->get_input_width();
     const Index channels = pooling_layer->get_channels_number();
 
-//    const Index pool_height = pooling_layer->get_pool_height();
-//    const Index pool_width = pooling_layer->get_pool_width();
-
     const Index output_height = pooling_layer->get_output_height();
     const Index output_width = pooling_layer->get_output_width();
-
-//    const Index padding_height = pooling_layer->get_padding_height();
-//    const Index padding_width = pooling_layer->get_padding_width();
-
-//    const Index row_stride = pooling_layer->get_row_stride();
-//    const Index column_stride = pooling_layer->get_column_stride();
 
     pooling_mode = (pooling_layer->get_pooling_method() == Pooling::PoolingMethod::MaxPooling)
                        ? CUDNN_POOLING_MAX
@@ -767,8 +755,8 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    //CHECK_CUDA(cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(outputs, batch_size * output_height * output_width * channels * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(outputs, batch_size * output_height * output_width * channels * sizeof(float));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -819,10 +807,7 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 {
     if (!new_layer) return;
 
-    cout << "PoolingBackPropagationCuda set:" << endl;
-
     batch_size = new_batch_size;
-
     layer = new_layer;
 
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
@@ -833,8 +818,8 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    //CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_height * input_width * channels * sizeof(float)));
-    CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * input_height * input_width * channels * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&input_deltas, batch_size * input_height * input_width * channels * sizeof(float)));
+    //CUDA_MALLOC_AND_REPORT(input_deltas, batch_size * input_height * input_width * channels * sizeof(float));
 }
 
 

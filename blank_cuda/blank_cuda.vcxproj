@@ -97,17 +97,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\opennn\adaptive_moment_estimation.cpp" />
-    <ClCompile Include="..\opennn\addition_layer_3d.cpp" />
-    <ClCompile Include="..\opennn\addition_layer_4d.cpp" />
     <ClCompile Include="..\opennn\bounding_layer.cpp" />
     <ClCompile Include="..\opennn\convolutional_layer.cpp" />
     <ClCompile Include="..\opennn\correlations.cpp" />
     <ClCompile Include="..\opennn\cross_entropy_error.cpp" />
     <ClCompile Include="..\opennn\cross_entropy_error_3d.cpp" />
     <ClCompile Include="..\opennn\dataset.cpp" />
+    <ClCompile Include="..\opennn\dense_layer.cpp" />
+    <ClCompile Include="..\opennn\dense_layer_3d.cpp" />
     <ClCompile Include="..\opennn\embedding_layer.cpp" />
     <ClCompile Include="..\opennn\flatten_layer.cpp" />
-    <ClCompile Include="..\opennn\flatten_layer_3d.cpp" />
     <ClCompile Include="..\opennn\genetic_algorithm.cpp" />
     <ClCompile Include="..\opennn\growing_inputs.cpp" />
     <ClCompile Include="..\opennn\growing_neurons.cpp" />
@@ -130,8 +129,6 @@
     <ClCompile Include="..\opennn\normalized_squared_error.cpp" />
     <ClCompile Include="..\opennn\optimization_algorithm.cpp" />
     <ClCompile Include="..\opennn\pch.cpp" />
-    <ClCompile Include="..\opennn\perceptron_layer.cpp" />
-    <ClCompile Include="..\opennn\perceptron_layer_3d.cpp" />
     <ClCompile Include="..\opennn\pooling_layer.cpp" />
     <ClCompile Include="..\opennn\pooling_layer_3d.cpp" />
     <ClCompile Include="..\opennn\probabilistic_layer_3d.cpp" />
@@ -163,8 +160,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\opennn\adaptive_moment_estimation.h" />
-    <ClInclude Include="..\opennn\addition_layer_3d.h" />
-    <ClInclude Include="..\opennn\addition_layer_4d.h" />
     <ClInclude Include="..\opennn\back_propagation.h" />
     <ClInclude Include="..\opennn\bounding_layer.h" />
     <ClInclude Include="..\opennn\box_plot.h" />
@@ -175,10 +170,11 @@
     <ClInclude Include="..\opennn\cross_entropy_error.h" />
     <ClInclude Include="..\opennn\cross_entropy_error_3d.h" />
     <ClInclude Include="..\opennn\dataset.h" />
+    <ClInclude Include="..\opennn\dense_layer.h" />
+    <ClInclude Include="..\opennn\dense_layer_3d.h" />
     <ClInclude Include="..\opennn\descriptives.h" />
     <ClInclude Include="..\opennn\embedding_layer.h" />
     <ClInclude Include="..\opennn\flatten_layer.h" />
-    <ClInclude Include="..\opennn\flatten_layer_3d.h" />
     <ClInclude Include="..\opennn\forward_propagation.h" />
     <ClInclude Include="..\opennn\genetic_algorithm.h" />
     <ClInclude Include="..\opennn\growing_inputs.h" />
@@ -209,8 +205,6 @@
     <ClInclude Include="..\opennn\normalized_squared_error.h" />
     <ClInclude Include="..\opennn\optimization_algorithm.h" />
     <ClInclude Include="..\opennn\pch.h" />
-    <ClInclude Include="..\opennn\perceptron_layer.h" />
-    <ClInclude Include="..\opennn\perceptron_layer_3d.h" />
     <ClInclude Include="..\opennn\pooling_layer.h" />
     <ClInclude Include="..\opennn\pooling_layer_3d.h" />
     <ClInclude Include="..\opennn\probabilistic_layer_3d.h" />
