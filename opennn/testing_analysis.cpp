@@ -137,19 +137,25 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
-
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     Tensor<type, 2> testing_output_data;
+    Tensor<type, 2> testing_target_data;
 
     if (time_series_dataset)
     {
         const Tensor<type, 3> testing_input_data_3d = time_series_dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data_3d);
+
+        const vector<Index> testing_samples_indices = time_series_dataset->get_sample_indices("Testing");
+        const vector<Index> target_variable_indices = time_series_dataset->get_variable_indices("Target");
+
+        testing_target_data.resize(static_cast<Index>(testing_samples_indices.size()), static_cast<Index>(target_variable_indices.size()));
+        time_series_dataset->fill_target_tensor(testing_samples_indices, target_variable_indices, testing_target_data.data());
     }
     else
     {
+        testing_target_data = dataset->get_data("Testing", "Target");
         const Tensor<type, 2> testing_input_data_2d = dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data_2d);
     }
@@ -205,8 +211,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
-
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -214,14 +218,21 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     Tensor<type, 2> testing_output_data;
+    Tensor<type, 2> testing_target_data;
 
     if (time_series_dataset)
     {
         const Tensor<type, 3> testing_input_data = time_series_dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data);
+
+        const vector<Index> sample_indices = time_series_dataset->get_sample_indices("Testing");
+        const vector<Index> variable_indices = time_series_dataset->get_variable_indices("Target");
+        testing_target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(variable_indices.size()));
+        time_series_dataset->fill_target_tensor(sample_indices, variable_indices, testing_target_data.data());
     }
     else
     {
+        testing_target_data = dataset->get_data("Testing", "Target");
         const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data);
     }
@@ -274,24 +285,28 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
-    const Tensor<type, 2> testing_target_data = dataset->get_data("Testing", "Target");
-
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     Tensor<type, 2> testing_output_data;
+    Tensor<type, 2> testing_target_data;
 
     if (time_series_dataset)
     {
         const Tensor<type, 3> testing_input_data = time_series_dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<3, 2>(testing_input_data);
+
+        const vector<Index> sample_indices = time_series_dataset->get_sample_indices("Testing");
+        const vector<Index> variable_indices = time_series_dataset->get_variable_indices("Target");
+        testing_target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(variable_indices.size()));
+        time_series_dataset->fill_target_tensor(sample_indices, variable_indices, testing_target_data.data());
     }
     else
     {
+        testing_target_data = dataset->get_data("Testing", "Target");
         const Tensor<type, 2> testing_input_data = dataset->get_data("Testing", "Input");
         testing_output_data = neural_network->calculate_outputs<2, 2>(testing_input_data);
     }
