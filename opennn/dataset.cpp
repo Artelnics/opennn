@@ -604,7 +604,8 @@ vector<string> Dataset::get_variable_names(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use != variable_use && ((variable_use == "Target" || variable_use == "Input") && raw_variable.use != "InputTarget"))
+        if (!((raw_variable.use == variable_use) ||
+              ((variable_use == "Input" || variable_use == "Target") && raw_variable.use == "InputTarget")))
             continue;
 
         if (raw_variable.type == RawVariableType::Categorical)
