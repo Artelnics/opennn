@@ -239,7 +239,7 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 
     vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
 
-    for(int i = 0; i < data_file_preview.size(); i++)
+    for(size_t i = 0; i < data_file_preview.size(); i++)
     {
         printer.OpenElement("Row");
         printer.PushAttribute("Item", to_string(i + 1).c_str());
@@ -358,10 +358,19 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     {
         set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
+        const string raw_string = read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber");
+        const vector<string> tokens = get_tokens(raw_string, " ");
 
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
-            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+        vector<Index> valid_numbers;
+        valid_numbers.reserve(tokens.size());
+
+        for (const string& token : tokens)
+            if (!token.empty())
+                valid_numbers.push_back(stoi(token));
+
+        raw_variables_missing_values_number.resize(valid_numbers.size());
+        for (size_t i = 0; i < valid_numbers.size(); ++i)
+            raw_variables_missing_values_number(i) = valid_numbers[i];
 
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
@@ -430,6 +439,43 @@ void TimeSeriesDataset::read_csv()
     target_dimensions = {get_variables_number("Target")};
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
+}
+
+
+void TimeSeriesDataset::impute_missing_values_unuse()
+{
+    const Index samples_number = get_samples_number();
+    const Index lags = get_past_time_steps();
+
+    vector<bool> row_has_nan(samples_number, false);
+    for (Index i = 0; i < samples_number; ++i)
+        if (has_nan_row(i))
+            row_has_nan[i] = true;
+
+    const Index num_sequences = samples_number - lags;
+    if (num_sequences < 0) return;
+
+    #pragma omp parallel for
+    for (Index i = 0; i < num_sequences; ++i)
+    {
+        bool sequence_is_invalid = false;
+
+        for (Index j = 0; j <= lags; ++j)
+        {
+            const Index current_row = i + j;
+            if (row_has_nan[current_row])
+            {
+                sequence_is_invalid = true;
+                break;
+            }
+        }
+
+        if (sequence_is_invalid)
+            set_sample_use(i, "None");
+    }
+
+    for (Index i = num_sequences; i < samples_number; ++i)
+        set_sample_use(i, "None");
 }
 
 
