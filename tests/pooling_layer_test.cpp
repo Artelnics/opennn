@@ -156,7 +156,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
-    pair<type*, dimensions> input_pair( parameters.input_data.data(),
+    TensorView input_pair( parameters.input_data.data(),
         { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
@@ -164,14 +164,14 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, false);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
+    TensorView output_pair = forward_propagation->get_output_pair();
 
-    EXPECT_EQ(output_pair.second[0], batch_size);
-    EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
-    EXPECT_EQ(output_pair.second[2], parameters.expected_output.dimension(2));
-    EXPECT_EQ(output_pair.second[3], parameters.expected_output.dimension(3));
+    EXPECT_EQ(output_pair.dims[0], batch_size);
+    EXPECT_EQ(output_pair.dims[1], parameters.expected_output.dimension(1));
+    EXPECT_EQ(output_pair.dims[2], parameters.expected_output.dimension(2));
+    EXPECT_EQ(output_pair.dims[3], parameters.expected_output.dimension(3));
 
-    TensorMap<Tensor<type, 4>> output_tensor(output_pair.first,
+    TensorMap<Tensor<type, 4>> output_tensor(output_pair.data,
                                              batch_size,
                                              parameters.expected_output.dimension(1),
                                              parameters.expected_output.dimension(2),
@@ -213,7 +213,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     unique_ptr<LayerBackPropagation> back_propagation =
         make_unique<PoolingBackPropagation>(batch_size, &pooling_layer);
 
-    pair<type*, dimensions> input_pair( parameters.input_data.data(),
+    TensorView input_pair( parameters.input_data.data(),
         { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
@@ -221,14 +221,14 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
+    TensorView output_pair = forward_propagation->get_output_pair();
 
     pooling_layer.back_propagate({ input_pair }, { output_pair }, forward_propagation, back_propagation);
 
-    vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation.get()->get_input_derivative_pairs();
+    vector<TensorView> input_derivatives_pair = back_propagation.get()->get_input_derivative_views();
 
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
-    EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
-    EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
-    EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
+    EXPECT_EQ(input_derivatives_pair[0].dims[0], batch_size);
+    EXPECT_EQ(input_derivatives_pair[0].dims[1], parameters.input_data.dimension(1));
+    EXPECT_EQ(input_derivatives_pair[0].dims[2], parameters.input_data.dimension(2));
+    EXPECT_EQ(input_derivatives_pair[0].dims[3], parameters.input_data.dimension(3));
 }

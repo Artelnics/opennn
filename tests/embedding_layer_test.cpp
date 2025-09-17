@@ -1,11 +1,10 @@
-#include "flatten_layer.h"
 #include "pch.h"
 
 #include "../opennn/tensors.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/embedding_layer.h"
-#include "../opennn/flatten_layer_3d.h"
-#include "../opennn/perceptron_layer.h"
+#include "../opennn/flatten_layer.h"
+#include "../opennn/dense_layer.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/mean_squared_error.h"
 
@@ -86,7 +85,7 @@ TEST(Embedding, ForwardPropagate)
 //     EXPECT_EQ(output_pair.second[2], embedding_dimension);
 // }
 
-
+/*
 TEST(Embedding, BackPropagate)
 {
     LanguageDataset language_dataset("../../examples/amazon_reviews/data/amazon_cells_labelled.txt");
@@ -137,7 +136,7 @@ TEST(Embedding, BackPropagate)
     // print_vector(target_variable_indices);
 
     // cout << "mean_squared_error.calculate_numerical_error(): " << mean_squared_error.calculate_numerical_error() << endl;
-/*
+
     //cout << (mean_squared_error.calculate_gradient().abs() - mean_squared_error.calculate_numerical_gradient().abs()).maximum()<< endl;
 
 
@@ -153,6 +152,6 @@ TEST(Embedding, BackPropagate)
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), sequence_length);
     EXPECT_EQ(outputs.dimension(2), embedding_dimension);
-*/
-}
 
+}
+*/

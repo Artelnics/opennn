@@ -253,6 +253,8 @@
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
     <ClInclude Include="dataset.h" />
+    <ClInclude Include="dense_layer.h" />
+    <ClInclude Include="dense_layer_3d.h" />
     <ClInclude Include="flatten_layer_3d.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="image_dataset.h" />
@@ -273,6 +275,8 @@
     <ClInclude Include="descriptives.h" />
     <ClInclude Include="embedding_layer.h" />
     <ClCompile Include="dataset.cpp" />
+    <ClCompile Include="dense_layer.cpp" />
+    <ClCompile Include="dense_layer_3d.cpp" />
     <ClCompile Include="embedding_layer.cpp" />
     <ClInclude Include="flatten_layer.h" />
     <ClCompile Include="flatten_layer.cpp" />

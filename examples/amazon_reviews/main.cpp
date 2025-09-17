@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A M A Z O N   R E V I E W S
+//   E M O T I O M   A N A L Y S I S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -19,10 +19,9 @@
 #include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "mean_squared_error.h"
-#include "multihead_attention_layer.h"
+#include "../../opennn/mean_squared_error.h"
+#include "../../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 

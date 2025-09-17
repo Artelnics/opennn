@@ -13,7 +13,7 @@
 #include "../../opennn/registry.h"
 #include "../../opennn/dataset.h"
 #include "../../opennn/standard_networks.h"
-#include "../../opennn/perceptron_layer.h"
+#include "../../opennn/dense_layer.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -37,40 +37,32 @@ int main()
         cout << "Airfoil self noise" << endl;
 
         const Index neurons_number = 3;
+        const type regularization_weight = 0.0001;
+
+        // DataSet
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        // dataset.scale_data();
         dataset.split_samples_random(type(0.8), type(0), type(0.2));
-        // dataset.set_sample_uses("Training");
-        dataset.print();
 
-        dataset.scale_data();
+        // Neural Network
 
         ApproximationNetwork approximation_network(dataset.get_input_dimensions(), {neurons_number}, dataset.get_target_dimensions());
-        approximation_network.print();
-        cout << "-----------------------------" << endl;
+
+        // Training strategy
+
         NormalizedSquaredError loss(&approximation_network, &dataset);
-
-        //cout << loss.calculate_gradient() << endl;
-        //cout << loss.calculate_numerical_hessian() << endl;
-        //cout << loss.calculate_numerical_hessian_lm() << endl;
-
         loss.set_regularization_method("L1");
-        loss.set_regularization_weight(0.0);
-
-        // LevenbergMarquardtAlgorithm optimizer(&loss);
-
-        // optimizer.train();
+        loss.set_regularization_weight(regularization_weight);
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
-
-        // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
+        training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
 
         TrainingResults training_results = training_strategy.train();
 
+        // Testing analysis
+
         TestingAnalysis testing_analysis(&approximation_network, &dataset);
-        cout << "Goodness of fit analysis:\n" << endl;
         testing_analysis.print_goodness_of_fit_analysis();
 
         cout << "Good bye!" << endl;

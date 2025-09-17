@@ -52,11 +52,11 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_none);
-        pair<type*, dimensions> input_pair_unscale = { data_to_unscale.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { data_to_unscale.data(), {{samples_number, inputs_number}} };
 
         unscaling_layer_none.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
 
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);
@@ -84,9 +84,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
-        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
         helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
-        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_output_pair();
+        TensorView output_pair_scale = fw_prop_scale->get_output_pair();
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         // (2-2)/(6-2) = 0/4 = 0
@@ -101,9 +101,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_minmax);
-        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_minmax.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);
@@ -134,9 +134,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
-        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
         helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
-        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_output_pair();
+        TensorView output_pair_scale = fw_prop_scale->get_output_pair();
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         unscaling_layer_msd.set_descriptives(actual_descriptives);
@@ -144,9 +144,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_msd);
-        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_msd.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);
@@ -178,9 +178,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
-        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
         helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
-        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_output_pair();
+        TensorView output_pair_scale = fw_prop_scale->get_output_pair();
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         unscaling_layer_std.set_descriptives(actual_descriptives);
@@ -188,9 +188,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_std);
-        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_std.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);
@@ -218,9 +218,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
-        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
         helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
-        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_output_pair();
+        TensorView output_pair_scale = fw_prop_scale->get_output_pair();
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         EXPECT_NEAR(scaled_data(0, 0), type(0.0), NUMERIC_LIMITS_MIN);
@@ -232,9 +232,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_log);
-        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_log.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);
@@ -261,9 +261,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
-        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
         helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
-        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_output_pair();
+        TensorView output_pair_scale = fw_prop_scale->get_output_pair();
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         EXPECT_NEAR(scaled_data(0, 0), type(0.0 / 255.0), NUMERIC_LIMITS_MIN);
@@ -275,9 +275,9 @@ TEST(UnscalingTest, ForwardPropagate)
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_img);
-        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_img.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
-        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_output_pair();
+        TensorView output_pair_unscale = fw_prop_unscale->get_output_pair();
         Tensor<type, 2> unscaled_data = tensor_map<2>(output_pair_unscale);
 
         EXPECT_EQ(unscaled_data.dimension(0), samples_number);

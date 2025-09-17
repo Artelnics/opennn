@@ -50,11 +50,11 @@ TEST(Scaling2dTest, ForwardPropagate)
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
-    pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
+    TensorView input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
 
     scaling_layer_2d.forward_propagate({ input_pairs }, forward_propagation, is_training);
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
+    TensorView output_pair = forward_propagation->get_output_pair();
 
     outputs = tensor_map<2>(output_pair);
 

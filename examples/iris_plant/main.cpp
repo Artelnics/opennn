@@ -41,25 +41,22 @@ int main()
 
         ClassificationNetwork classification_network({inputs_number}, {neurons_number}, {targets_number});
 
+        // Training Strategy
+
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(1000);
 
         training_strategy.train();
+
+        // Testing Analysis
 
         const TestingAnalysis testing_analysis(&classification_network, &dataset);
 
         cout << "Confusion matrix:\n"
              << testing_analysis.calculate_confusion() << endl;
-
-        NormalizedSquaredError normalized_squared_error(&classification_network, &dataset);
-
-        Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
-        Tensor<type, 1> numerical_gradient  = normalized_squared_error.calculate_numerical_gradient();
-
-        Tensor<type, 1> difference = gradient - numerical_gradient;
-        Tensor<type, 1> abs_difference = difference.abs();
-        cout << abs_difference.maximum() << endl;;
 
         cout << "Bye!" << endl;
 

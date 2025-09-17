@@ -118,6 +118,7 @@
     <ClCompile Include="cross_entropy_error_3d_test.cpp" />
     <ClCompile Include="cross_entropy_error_test.cpp" />
     <ClCompile Include="data_set_test.cpp" />
+    <ClCompile Include="dense_layer_3d_test.cpp" />
     <ClCompile Include="embedding_layer_test.cpp" />
     <ClCompile Include="flatten_layer_test.cpp" />
     <ClCompile Include="genetic_algorithm_test.cpp" />
@@ -132,11 +133,9 @@
     <ClCompile Include="multihead_attention_layer_test.cpp" />
     <ClCompile Include="neural_network_test.cpp" />
     <ClCompile Include="normalized_squared_error_test.cpp" />
-    <ClCompile Include="perceptron_layer_test.cpp" />
+    <ClCompile Include="dense_layer_test.cpp" />
     <ClCompile Include="performance_test.cpp" />
     <ClCompile Include="pooling_layer_test.cpp" />
-    <ClCompile Include="probabilistic_layer_3d_test.cpp" />
-    <ClCompile Include="probabilistic_layer_test.cpp" />
     <ClCompile Include="quasi_newton_method_test.cpp" />
     <ClCompile Include="recurrent_layer_test.cpp" />
     <ClCompile Include="response_optimization_test.cpp" />

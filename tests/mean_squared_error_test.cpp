@@ -3,7 +3,7 @@
 #include "../opennn/tensors.h"
 #include "../opennn/dataset.h"
 #include "../opennn/language_dataset.h"
-#include "../opennn/perceptron_layer.h"
+#include "../opennn/dense_layer.h"
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/mean_squared_error.h"

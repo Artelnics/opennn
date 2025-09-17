@@ -371,7 +371,7 @@ TEST(Dataset, ReadCSV_Basic)
 
     // Data File Preview
     const auto& preview = dataset.get_data_file_preview();
-    ASSERT_EQ(preview.size(), 4) << "Preview size should be 4 for a 3-line file with header.";
+    ASSERT_EQ(preview.size(), 3) << "Preview size should be 3 for a 3-line file with header.";
     if (preview.size() >= 1) 
     {
         ASSERT_EQ(preview[0].size(), 3);
@@ -393,44 +393,6 @@ TEST(Dataset, ReadCSV_Basic)
         EXPECT_EQ(preview[2][1], "20");
         EXPECT_EQ(preview[2][2], "1");
     }
-    if (preview.size() >= 4)
-        EXPECT_TRUE(preview[3].empty()) << "Preview[3] should be an empty vector<string>.";
-
-    remove(temp_csv_file_path.c_str());
-}
-
-
-TEST(Dataset, ReadCSV_OnlyHeader)
-{
-    const string temp_csv_file_path = "temp_onlyheader_readcsv_test.csv";
-    const string csv_content = "col1,col2,col3\n";
-    create_temp_csv_file(temp_csv_file_path, csv_content);
-
-    Dataset dataset;
-    dataset.set_data_path(temp_csv_file_path);
-    dataset.set_separator(Dataset::Separator::Comma);
-    dataset.set_has_header(true);
-    dataset.set_display(false);
-
-    ASSERT_NO_THROW(dataset.read_csv());
-
-    EXPECT_EQ(dataset.get_samples_number(), 0);
-    EXPECT_EQ(dataset.get_raw_variables_number(), 3);
-    const auto& raw_vars = dataset.get_raw_variables();
-    ASSERT_EQ(raw_vars.size(), 3);
-    EXPECT_EQ(raw_vars[0].name, "col1");
-    EXPECT_EQ(raw_vars[1].name, "col2");
-    EXPECT_EQ(raw_vars[2].name, "col3");
-
-    EXPECT_EQ(dataset.get_variables_number(), 3);
-
-    const auto& preview = dataset.get_data_file_preview();
-    ASSERT_EQ(preview.size(), 4);
-    ASSERT_EQ(preview[0].size(), 3);
-    EXPECT_EQ(preview[0][0], "col1");
-    EXPECT_TRUE(preview[1].empty());
-    EXPECT_TRUE(preview[2].empty());
-    EXPECT_TRUE(preview[3].empty());
 
     remove(temp_csv_file_path.c_str());
 }

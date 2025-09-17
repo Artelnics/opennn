@@ -16,6 +16,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
 
@@ -31,14 +32,25 @@ int main()
 
         const Index neurons_number = 3;
 
+        // Neural Network
+
         ClassificationNetwork classification_network(dataset.get_input_dimensions(), { neurons_number}, dataset.get_target_dimensions());
         classification_network.print();
 
-        TrainingStrategy training_strategy(&classification_network, &dataset);
-        training_strategy.perform_training();
+        // Training Strategy
 
-        // TestingAnalysis testing_analysis(&classification_network, &dataset);
-        // testing_analysis.print_binary_classification_tests();
+        TrainingStrategy training_strategy(&classification_network, &dataset);
+
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(1000);
+
+        training_strategy.train();
+
+        // Testing Analysis
+
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
+        testing_analysis.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;
 

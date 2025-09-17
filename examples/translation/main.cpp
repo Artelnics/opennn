@@ -19,12 +19,12 @@
 
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/language_dataset.h"
-#include "embedding_layer.h"
-#include "flatten_layer_3d.h"
-#include "multihead_attention_layer.h"
-#include "normalization_layer_3d.h"
-#include "perceptron_layer.h"
-#include "transformer.h"
+#include "../../opennn/embedding_layer.h"
+#include "../../opennn/flatten_layer.h"
+#include "../../opennn/multihead_attention_layer.h"
+#include "../../opennn/normalization_layer_3d.h"
+#include "../../opennn/dense_layer.h"
+#include "../../opennn/transformer.h"
 
 using namespace std;
 using namespace opennn;
@@ -36,10 +36,10 @@ int main()
         cout << "OpenNN. Translation Example." << endl;
 
         // Data set
+        
+        LanguageDataset language_dataset("../data/ENtoES_dataset_reduced_6.txt");
 
-        LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
-
-        // Sentiment analysis case
+        // Neural Network
 
         const Index sequence_length = 10;
         const Index vocabulary_size = 50;
@@ -49,9 +49,11 @@ int main()
 
         Transformer transformer;
 
+        // Training Strategy
+
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
-        training_strategy.perform_training();
+        training_strategy.train();
 
         cout << "Bye!" << endl;
 

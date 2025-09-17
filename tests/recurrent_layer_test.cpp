@@ -21,7 +21,6 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     const Index time_steps = get_random_index(1, 10);
 
     Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-    recurrent_layer.set_timesteps(time_steps);
 
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
     EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);

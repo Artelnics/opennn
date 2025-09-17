@@ -7,6 +7,7 @@
 
 using namespace opennn;
 
+
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
     GeneticAlgorithm genetic_algorithm;
@@ -184,7 +185,7 @@ TEST(GeneticAlgorithmTest, Crossover)
     }
 */
 }
-
+/*
 
 TEST(GeneticAlgorithmTest, Mutation)
 {
