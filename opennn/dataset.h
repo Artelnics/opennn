@@ -315,7 +315,8 @@ public:
 
     void split_samples_random(const type& training_ratio = type(0.6),
                               const type& selection_ratio = type(0.2),
-                              const type& testing_ratio = type(0.2));
+                              const type& testing_ratio = type(0.2),
+                              const size_t random_seed = 0);
 
     // Unusing
 

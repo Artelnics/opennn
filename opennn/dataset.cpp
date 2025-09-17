@@ -12,6 +12,7 @@
 #include "correlations.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -293,9 +294,6 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 {
     if (!shuffle) return split_samples(sample_indices, batch_size);
 
-    random_device rng;
-    mt19937 urng(rng());
-
     const Index samples_number = sample_indices.size();
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
@@ -304,7 +302,7 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
     vector<Index> samples_copy(sample_indices);
 
-    std::shuffle(samples_copy.begin(), samples_copy.end(), urng);
+    std::shuffle(samples_copy.begin(), samples_copy.end(), getGlobalRandomGenerator());
 
 #pragma omp parallel for
     for (Index i = 0; i < batches_number; i++)
@@ -385,11 +383,9 @@ void Dataset::set_sample_uses(const vector<Index>& indices, const string& sample
 
 void Dataset::split_samples_random(const type& training_samples_ratio,
                                    const type& selection_samples_ratio,
-                                   const type& testing_samples_ratio)
+                                   const type& testing_samples_ratio,
+                                   const size_t random_seed)
 {
-    random_device rng;
-    mt19937 urng(rng());
-
     const Index used_samples_number = get_used_samples_number();
 
     if (used_samples_number == 0) return;
@@ -411,7 +407,7 @@ void Dataset::split_samples_random(const type& training_samples_ratio,
     vector<Index> indices(samples_number);
     iota(indices.begin(), indices.end(), 0);
 
-    std::shuffle(indices.data(), indices.data() + indices.size(), urng);
+    std::shuffle(indices.data(), indices.data() + indices.size(), getGlobalRandomGenerator());
 
     auto assign_sample_use = [this, &indices](string use, Index count, Index& i)
     {
