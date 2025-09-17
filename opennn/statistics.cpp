@@ -628,7 +628,8 @@ type standard_deviation(const Tensor<type, 1>& vector)
 }
 
 
-type median(const Tensor<type, 1>& vector) {
+type median(const Tensor<type, 1>& vector)
+{
     const Index size = vector.dimension(0);
 
     // Fix missing values
@@ -665,6 +666,7 @@ type median(const Tensor<type, 1>& vector) {
         return sorted_vector[median_index];
     }
 }
+
 
 Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 {
@@ -787,6 +789,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     return quartiles;
 }
 
+
 Tensor<type, 1> quartiles(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
     const Index indices_size = indices.size();
@@ -797,7 +800,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& data, const vector<Index>& indi
     Index new_size = 0;
 
     for(Index i = 0; i < indices_size; i++)
-        if(!isnan(data(indices[i]))) 
+        if(!isnan(data(indices[i])))
             new_size++;
 
     Tensor<type, 1> sorted_vector(new_size);
@@ -1079,6 +1082,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
     return histogram;
 }
+
 
 Histogram histogram(const Tensor<bool, 1>& v)
 {
@@ -1718,6 +1722,7 @@ Index maximal_index(const Tensor<type, 1>& vector)
     return maximal_index;
 }
 
+
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
     std::vector<type> vector_(vector.dimension(0));
@@ -1755,6 +1760,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 
     return minimal_indices;
 }
+
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
@@ -1794,6 +1800,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& num
 
     return maximal_indices;
 }
+
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
 {
@@ -1847,6 +1854,7 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 
     return maximal_indices;
 }
+
 
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {

@@ -21,8 +21,10 @@ CONFIG += ordered
 
 include(cuda.pri)
 
-if($$CUDA_ENABLED) {
-    SUBDIRS += blank_cuda
+win32-msvc* {
+    if($$CUDA_ENABLED) {
+        SUBDIRS += blank_cuda
+    }
 }
 
 message("[ROOT] Config finished. Projects: $$SUBDIRS")

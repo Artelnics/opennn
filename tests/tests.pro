@@ -77,17 +77,17 @@ QMAKE_CXXFLAGS += -include pch.h
 
 # OpenNN library
 
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../opennn/debug/ -lopennn
-else:unix: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
+win32-msvc*:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn
+else:win32-msvc*:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../opennn/debug/ -lopennn
+else: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
 
 INCLUDEPATH += $$PWD/../opennn
 DEPENDPATH += $$PWD/../opennn
 
 
-win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
-else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
+win32-msvc*:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
+else:win32-msvc*:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
+else: PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/libopennn.a
 
 # OpenMP library
 

@@ -234,11 +234,13 @@ void OptimizationAlgorithm::set_names()
     vector<string> input_variable_names;
     vector<string> target_variable_names;
 
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
     for(Index i = 0; i < input_variables_number; i++)
     {
-        if(raw_variables[input_variable_indices[i]].use == "InputTarget")
+        if(time_series_dataset)
         {
-            const Index time_steps = dynamic_cast<TimeSeriesDataset*>(dataset)->get_past_time_steps();
+            const Index time_steps = time_series_dataset->get_past_time_steps();
 
             if(input_names[i] == "")
                 for(Index j = 0; j < time_steps; j++)
@@ -259,12 +261,16 @@ void OptimizationAlgorithm::set_names()
     for(Index i = 0; i < target_variables_number; i++)
     {
         if(target_names[i] == "")
-            if(raw_variables[target_variable_indices[i]].use != "InputTarget")
+        {
+            auto input_iterator = find(input_variable_indices.begin(), input_variable_indices.end(), target_variable_indices[i]);
+
+            if(input_iterator == input_variable_indices.end())
                 target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
             else
-                target_variable_names.push_back("variable_" + to_string(i + 1));
+                target_variable_names.push_back("variable_" + to_string(int(*input_iterator) + 1));
+        }
         else
-            input_variable_names.push_back(target_names[i]);
+            target_variable_names.push_back(target_names[i]);
     }
 
     neural_network->set_input_names(input_variable_names);
@@ -345,7 +351,7 @@ void OptimizationAlgorithm::set_scaling()
             }
         }
 
-        if (target_descriptives.size() != unscaling_layer->get_outputs_number()) {
+        if (static_cast<Index>(target_descriptives.size()) != unscaling_layer->get_outputs_number()) {
             throw std::runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
         }
 
