@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.18)
 
 project(OpenNN_Project LANGUAGES CXX)
 
+include(GNUInstallDirs)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -34,7 +37,12 @@ if(OPENNN_WITH_CUDA)
     add_subdirectory(blank_cuda)
 endif()
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
+endif()
+
+option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
+if(OpenNN_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()

@@ -2,9 +2,8 @@
 
 #include "../opennn/tensors.h"
 #include "../opennn/cross_entropy_error_3d.h"
-#include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/embedding_layer.h"
-#include "../opennn/perceptron_layer_3d.h"
+#include "../opennn/dense_layer_3d.h"
 #include "../opennn/language_dataset.h"
 #include "../opennn/transformer.h"
 #include "gtest/gtest.h"

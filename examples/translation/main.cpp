@@ -20,7 +20,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/language_dataset.h"
 #include "../../opennn/embedding_layer.h"
-#include "../../opennn/dense_layer_3d.h"
+#include "../../opennn/flatten_layer.h"
 #include "../../opennn/multihead_attention_layer.h"
 #include "../../opennn/normalization_layer_3d.h"
 #include "../../opennn/dense_layer.h"
@@ -36,10 +36,10 @@ int main()
         cout << "OpenNN. Translation Example." << endl;
 
         // Data set
+        
+        LanguageDataset language_dataset("../data/ENtoES_dataset_reduced_6.txt");
 
-        LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
-
-        // Sentiment analysis case
+        // Neural Network
 
         const Index sequence_length = 10;
         const Index vocabulary_size = 50;
@@ -48,6 +48,8 @@ int main()
         const dimensions outputs_number = { 1 };
 
         Transformer transformer;
+
+        // Training Strategy
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 

@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.18)
 
-project(rosenbrock)
+project(breast_cancer)
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -13,5 +13,11 @@ if(WIN32)
 endif()
 
 add_executable(breast_cancer main.cpp)
+
+add_custom_command(TARGET breast_cancer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+    "${CMAKE_BINARY_DIR}/data"
+)
 
 target_link_libraries(breast_cancer PUBLIC opennn)

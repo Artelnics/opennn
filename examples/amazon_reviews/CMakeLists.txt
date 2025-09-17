@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.18)
 
-project(airfoil_self_noise)
+project(amazon_reviews)
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -12,6 +12,13 @@ if(WIN32)
 	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
-add_executable(airfoil_self_noise main.cpp)
+add_executable(amazon_reviews main.cpp)
 
-target_link_libraries(airfoil_self_noise PUBLIC opennn)
+add_custom_command(TARGET amazon_reviews POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+    "${CMAKE_BINARY_DIR}/data"
+)
+
+
+target_link_libraries(amazon_reviews PUBLIC opennn)

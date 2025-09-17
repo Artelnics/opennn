@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 if(UNIX)
 	option(USE_OpenMP "Use OpenMP" ON)
@@ -14,13 +14,12 @@ endif()
 project(examples)
 
 add_subdirectory(airfoil_self_noise)
+add_subdirectory(amazon_reviews)
 add_subdirectory(breast_cancer)
+add_subdirectory(emotion_analysis)
+add_subdirectory(forecasting)
 add_subdirectory(iris_plant)
-# add_subdirectory(leukemia)
-# add_subdirectory(logical_operations)
 add_subdirectory(mnist)
-# add_subdirectory(outlier_detection)
-# add_subdirectory(rosenbrock)
-# add_subdirectory(simple_approximation)
-# add_subdirectory(simple_classification)
+add_subdirectory(translation)
+
 

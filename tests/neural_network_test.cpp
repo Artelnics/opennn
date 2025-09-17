@@ -2,7 +2,7 @@
 
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
-#include "../opennn/perceptron_layer.h"
+#include "../opennn/dense_layer.h"
 #include "../opennn/layer.h"
 #include "../opennn/dataset.h"
 

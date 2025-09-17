@@ -293,8 +293,6 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
 void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
 {
-    cout << "encode_target_data" << endl;
-
     if(maximum_target_length == 1 && target_vocabulary.size() < 6)
     {
         throw logic_error("Encode target data: Invalid case");
@@ -343,21 +341,26 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
         const Index samples_number = get_samples_number();
 
         #pragma omp parallel for
-
         for (Index sample = 0; sample < samples_number; sample++)
         {
             data(sample, maximum_input_length) = 2; // start;
 
             const vector<string>& target_tokens = target_document_tokens[sample];
 
-            for (Index variable = maximum_input_length; variable < maximum_input_length + Index(target_tokens.size()); variable++)
+            for (Index variable = maximum_input_length + 1;
+                variable < maximum_input_length + 1 + Index(target_tokens.size());
+                variable++)
             {
-                auto it = find(target_vocabulary.begin(), target_vocabulary.end(), target_tokens[variable]);
+                const Index token_index = variable - (maximum_input_length + 1);
 
-                data(sample, variable) = (it != target_vocabulary.end()) ? it - target_vocabulary.begin() : 1;
+                const string& current_token = target_tokens[token_index];
+
+                auto it = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
+
+                data(sample, variable) = (it != target_vocabulary.end()) ? distance(target_vocabulary.begin(), it) : 1;
             }
 
-            data(sample, maximum_input_length + target_tokens.size() + 1) = 3;
+            data(sample, maximum_input_length + target_tokens.size() + 1) = 3; // end;
         }
     }
 }
@@ -691,14 +694,14 @@ Index LanguageDataset::count_non_empty_lines() const
 
 void LanguageDataset::read_csv()
 {
-    cout << "Reading .txt file..." << endl;
-
     const Index samples_number = count_non_empty_lines();
 
     ifstream file(data_path);
 
     if (!file.is_open())
         throw runtime_error("Cannot open data file: " + data_path.string());
+
+    cout << "Reading .txt file..." << endl;
 
     vector<vector<string>> input_document_tokens(samples_number);
     vector<vector<string>> target_document_tokens(samples_number);
