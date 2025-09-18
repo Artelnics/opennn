@@ -446,10 +446,10 @@ public:
 
     void print_missing_values_information() const;
 
-    void impute_missing_values_unuse();
+    virtual void impute_missing_values_unuse();
     void impute_missing_values_mean();
     void impute_missing_values_median();
-    void impute_missing_values_interpolate();
+    virtual void impute_missing_values_interpolate();
 
     void scrub_missing_values();
 

@@ -504,7 +504,6 @@ void Dataset::set_default_raw_variables_uses()
     for (Index i = raw_variables_number - 1; i >= 0; i--)
     {
         RawVariable& raw_variable = raw_variables[i];
-
         if (raw_variable.type == RawVariableType::Constant ||
             raw_variable.type == RawVariableType::DateTime)
         {
@@ -1006,10 +1005,10 @@ void Dataset::set_variable_uses(const string& variable_use)
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        if (raw_variables[i].type == RawVariableType::Constant)
-            continue;
-
-        raw_variables[i].set_use(variable_use);
+        if (raw_variables[i].type == RawVariableType::Constant || raw_variables[i].type == RawVariableType::DateTime)
+            raw_variables[i].set_use("None");
+        else
+            raw_variables[i].set_use(variable_use);
     }
 }
 
