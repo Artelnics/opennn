@@ -42,87 +42,10 @@ int main()
         cout << "OpenNN. Blank Cuda." << endl;
 
 #ifdef OPENNN_CUDA
-
-        // Data set
-        /*
-        const Index samples_number = 2;
-
-        const Index image_height = 3;
-        const Index image_width = 3;
-        const Index channels = 1;
-        const Index targets = 2;
-
-        ImageDataset dataset(samples_number, {image_height, image_width, channels}, {targets});
-
-        dataset.set_data_random();
-        dataset.set_data_ascending();
-
-        dataset.set_sample_uses("Training");
-
-        dataset.print_data();
-        */
-        
-        ImageDataset dataset;
-
-        //dataset.set_data_path("C:/melanoma_dataset_bmp_medium");
-        //dataset.set_data_path("C:/mnist/train");
-        //dataset.set_data_path("/mnt/c/melanoma_dataset_bmp_medium"); // WSL
-        dataset.set_data_path("../examples/mnist/data_bin");
-        //dataset.set_data_path("../examples/mnist/data");
-
-        //dimensions data_dimensions = { 224, 224, 3 };
-
-        //dataset.read_bmp(data_dimensions);
-        dataset.read_bmp();
-
-        dataset.split_samples_random(0.8, 0.0, 0.2);
-
-        const dimensions input_dimensions = dataset.get_dimensions("Input");
-        const dimensions output_dimensions = dataset.get_dimensions("Target");
-
-        // Neural network
-
-        ImageClassificationNetwork neural_network(
-            input_dimensions,
-            {128},//{ 64, 64, 128, 128, 32 },
-            output_dimensions);
-
-        //VGG16 neural_network(input_dimensions, output_dimensions);
-
-        //const vector<Index> blocks_per_stage = { 1, 1};
-        //const dimensions initial_filters = { 128, 128 };
-
-        //SimpleResNet neural_network(input_dimensions, blocks_per_stage, initial_filters, output_dimensions);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &dataset);
-        training_strategy.set_loss_index("CrossEntropyError2d");
-        training_strategy.get_loss_index()->set_regularization_method("None");
-        training_strategy.get_optimization_algorithm()->set_display_period(1);
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(1000);
-        adam->set_maximum_epochs_number(10);
-
-        training_strategy.train_cuda();
-        //training_strategy.train();
-
-        cudaDeviceSynchronize();
-
-        // Testing analysis
-
-        TestingAnalysis testing_analysis(&neural_network, &dataset);
-        testing_analysis.set_batch_size(1000);
-
-        cout << "Calculating confusion...." << endl;
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
-        //Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
-        cout << "\nConfusion matrix CUDA:\n" << confusion << endl;
-
+        cout << "Enable CUDA in pch.h" << endl;
+#endif
         cout << "Bye!" << endl;
 
-        #endif
-        
         return 0;
     }
     catch (const exception& e)

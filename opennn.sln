@@ -30,7 +30,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mnist", "examples\mnist\mni
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opennn", "opennn\opennn.vcxproj", "{D2F8B8A4-FD55-3AA3-B597-C6BCD3D1344B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "amazon_reviews", "examples\amazon_reviews\amazon_reviews.vcxproj", "{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "emotion_analysis", "examples\amazon_reviews\amazon_reviews.vcxproj", "{FEA70256-C0B4-3AA1-9CDE-88120A5C9930}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "translation", "examples\translation\translation.vcxproj", "{7303381C-8282-4BA1-B16A-7DFEE47D50E1}"
 EndProject
@@ -44,6 +44,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blank_cuda", "blank_cuda\blank_cuda.vcxproj", "{51D3AD57-1C6F-44C7-9810-6DCA85556242}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{3BC94DD3-CDB8-47E5-9B12-4B66C819FD07}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "amazon_reviews", "examples\emotion_analysis\emotion_analysis.vcxproj", "{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "melanoma_cancer", "examples\melanoma_cancer\melanoma_cancer.vcxproj", "{6F39161D-7428-409B-818A-79A8869E36E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -217,6 +221,38 @@ Global
 		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x86.ActiveCfg = Release|x64
 		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x86.Build.0 = Release|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Debug|x64.ActiveCfg = Debug|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Debug|x64.Build.0 = Debug|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Debug|x86.ActiveCfg = Debug|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Debug|x86.Build.0 = Debug|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.MinSizeRel|x86.ActiveCfg = MinSizeRel|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.MinSizeRel|x86.Build.0 = MinSizeRel|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Release|x64.ActiveCfg = Release|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Release|x64.Build.0 = Release|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Release|x86.ActiveCfg = Release|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.Release|x86.Build.0 = Release|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
+		{B6AC4AC5-2687-4D9B-A022-C2054D8B02C0}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Debug|x64.ActiveCfg = Debug|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Debug|x64.Build.0 = Debug|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Debug|x86.ActiveCfg = Debug|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Debug|x86.Build.0 = Debug|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.MinSizeRel|x86.ActiveCfg = MinSizeRel|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.MinSizeRel|x86.Build.0 = MinSizeRel|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Release|x64.ActiveCfg = Release|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Release|x64.Build.0 = Release|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Release|x86.ActiveCfg = Release|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.Release|x86.Build.0 = Release|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
+		{6F39161D-7428-409B-818A-79A8869E36E0}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A M A Z O N   R E V I E W S
+//   E M O T I O M   A N A L Y S I S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -19,10 +19,9 @@
 #include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "mean_squared_error.h"
-#include "multihead_attention_layer.h"
+#include "../../opennn/mean_squared_error.h"
+#include "../../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 
@@ -30,9 +29,13 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Amazon reviews example." << endl;
+        cout << "OpenNN. Emotion analysis example." << endl;
+
+        // Data Set
 
         LanguageDataset language_dataset("../data/emotion_analysis_tiny.txt");
+
+        // Neural Network
 
         const Index embedding_dimension = 64;
         const Index neurons_number = 8;
@@ -42,11 +45,10 @@ int main()
 
         const Index input_sequence_length = language_dataset.get_input_sequence_length();
         const Index targets_number = language_dataset.get_target_sequence_length();
-        const Index reserved_tokens = language_dataset.reserved_tokens.size();
 
         dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
         dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions = {target_vocabulary_size - reserved_tokens};
+        dimensions output_dimensions = {targets_number};
 
         TextClassificationNetwork text_classification_network(
             input_dimensions,
@@ -54,20 +56,23 @@ int main()
             output_dimensions
             );
 
-        TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+        // Training Strategy
 
-        training_strategy.set_loss_index("CrossEntropyError2d");
+        TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_display_period(5);
-        adam->set_maximum_epochs_number(100);
+        adam->set_maximum_epochs_number(20);
         adam->set_batch_size(100);
 
         training_strategy.train();
 
-        TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
+        // Testing Analysis
 
-        cout << testing_analysis.calculate_confusion() << endl;
+        const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
+
+        cout << "Confusion matrix:\n"
+             << testing_analysis.calculate_confusion() << endl;
 
         cout << "Good bye!" << endl;
         return 0;
