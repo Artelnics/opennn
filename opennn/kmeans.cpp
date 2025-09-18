@@ -8,6 +8,7 @@
 
 #include "tensors.h"
 #include "kmeans.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -225,12 +226,10 @@ void KMeans::set_centers_random(const Tensor<type, 2>& data)
 {
     const Index data_size = data.dimension(0);
 
-    random_device rd;
-    mt19937 gen(rd());
     uniform_int_distribution<> index_distribution(0, data_size - 1);
 
     for(Index i = 0; i < clusters_number; i++)
-        cluster_centers.chip(i, 0) = data.chip(index_distribution(gen), 0);
+        cluster_centers.chip(i, 0) = data.chip(index_distribution(getGlobalRandomGenerator()), 0);
 }
 
 }

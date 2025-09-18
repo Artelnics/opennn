@@ -11,6 +11,7 @@
 
 #include "tinyxml2.h"
 #include "tensors.h"
+#include "random.h"
 
 using namespace tinyxml2;
 
@@ -245,14 +246,24 @@ protected:
     template <int Rank>
     void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const
     {
+        if (dropout_rate >= type(1))
+        {
+            throw runtime_error("Dropout rate should be in range [0, 1). Got: " + std::to_string(dropout_rate));
+        }
+    
         const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+        // Generate a base seed for threads to support reproducibility
+        auto base_seed = getGlobalRandomGenerator()();
 
 #pragma omp parallel
         {
-            mt19937 gen(random_device{}() + omp_get_thread_num());  // thread-local RNG
+            mt19937 gen(base_seed + omp_get_thread_num());  // thread-local RNG
             uniform_real_distribution<float> dis(0.0f, 1.0f);
 
-#pragma omp for
+        // Static schedule should be enough to reproduce results between runs 
+        // with the same seed IF AND ONLY IF the number of threads stays the same
+#pragma omp for schedule(static)
             for (Index i = 0; i < tensor.size(); i++)
                 tensor(i) = (dis(gen) < dropout_rate)
                                 ? 0

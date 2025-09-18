@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensors.h"
 #include "dense_layer.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -1269,10 +1270,10 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     if (dense2d_layer->get_dropout_rate() > type(0))
     {
         {
-            random_device rd;
-            auto now = chrono::high_resolution_clock::now().time_since_epoch().count();
-
-            dropout_seed = (static_cast<unsigned long long>(rd()) << 1) ^ static_cast<unsigned long long>(now);
+            // shift for at least 2 bytes for both 4 byte and 8 byte long integers
+            constexpr uint8_t shift_bits = 16;
+            auto first_half = static_cast<unsigned long long>(getGlobalRandomGenerator()());
+            dropout_seed = (first_half << shift_bits) ^ static_cast<unsigned long long>(getGlobalRandomGenerator()());
         }
         cudnnCreateDropoutDescriptor(&dropout_descriptor);
 

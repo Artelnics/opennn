@@ -8,6 +8,7 @@
 
 #include "../eigen/Eigen/Dense"
 #include "tensors.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -20,21 +21,15 @@ type bound(const type& value, const type& minimum, const type& maximum)
 
 Index get_random_index(const Index& min, const Index& max)
 {
-    random_device rd;
-    mt19937 gen(rd());
     uniform_int_distribution<> dis(min, max);
-    return dis(gen);
+    return dis(getGlobalRandomGenerator());
 }
 
 
 type get_random_type(const type& minimum, const type& maximum)
 {
-    random_device rd;
-    mt19937 gen(rd());
-
     uniform_real_distribution<type> dis(minimum, maximum);
-
-    return dis(gen);
+    return dis(getGlobalRandomGenerator());
 }
 
 
