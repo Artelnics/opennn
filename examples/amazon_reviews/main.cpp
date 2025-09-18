@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   E M O T I O M   A N A L Y S I S
+//   A M A Z O N   R E V I E W S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -16,12 +16,9 @@
 #include "../../opennn/language_dataset.h"
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/neural_network.h"
-#include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/mean_squared_error.h"
-#include "../../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 
@@ -31,7 +28,11 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
+        // Data Set
+
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+
+        // Neural Network
 
         const Index embedding_dimension = 64;
         const Index neurons_number = 8;
@@ -41,10 +42,11 @@ int main()
 
         const Index input_sequence_length = language_dataset.get_input_sequence_length();
         const Index targets_number = language_dataset.get_target_sequence_length();
+        const Index reserved_tokens = language_dataset.reserved_tokens.size();
 
         dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
         dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions = {targets_number};
+        dimensions output_dimensions = {target_vocabulary_size - reserved_tokens};
 
         TextClassificationNetwork text_classification_network(
             input_dimensions,
@@ -52,44 +54,29 @@ int main()
             output_dimensions
             );
 
+        // Training Strategy
+
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
-        AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(5);
-        adam->set_maximum_epochs_number(30);
+
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_display_period(2);
+        adam->set_maximum_epochs_number(20);
         adam->set_batch_size(100);
 
         training_strategy.train();
 
-        // NormalizedSquaredError normalized_squared_error(&text_classification_network, &language_dataset);
+        // Testing Analysis
 
-        // Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
-        // Tensor<type, 1> numerical_gradient  = normalized_squared_error.calculate_numerical_gradient();
+        TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
 
-        // Tensor<type, 1> difference = gradient - numerical_gradient;
-        // Tensor<type, 1> abs_difference = difference.abs();
-        // cout << abs_difference.maximum();
-
-        // cout << normalized_squared_error.calculate_numerical_error() << endl;
-
-        // cout << normalized_squared_error.calculate_gradient().abs() - normalized_squared_error.calculate_numerical_gradient().abs()  << endl;
-
-
-        // const Index batch_size = 1;
-        // Tensor<type, 2> input(batch_size, input_sequence_length);
-        // input.setRandom();
-        // const Tensor<type, 2> outputs = text_classification_network.calculate_outputs<2, 2>(input);
-
-        const TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
-
-        cout << "Confusion matrix:\n"
-             << testing_analysis.calculate_confusion() << endl;
+        cout << testing_analysis.calculate_confusion() << endl;
 
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         cout << "perform_roc_analysis:\n"
-             << "  AUC: " << roc_analysis.area_under_curve << "\n"
-             << "  Confidence Limit: " << roc_analysis.confidence_limit << "\n"
-             << "  Optimal Threshold: " << roc_analysis.optimal_threshold << "\n";
+            << "  AUC: " << roc_analysis.area_under_curve << "\n"
+            << "  Confidence Limit: " << roc_analysis.confidence_limit << "\n"
+            << "  Optimal Threshold: " << roc_analysis.optimal_threshold << "\n";
 
         cout << "Good bye!" << endl;
         return 0;

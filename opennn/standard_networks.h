@@ -443,13 +443,6 @@ public:
 
         const string classification_layer_activation = output_dimensions[0] == 1 ? "Logistic" : "Softmax";
 
-
-        cout << "vocabulary_size: " << vocabulary_size  << endl;
-        cout << "sequence_length: " << sequence_length  << endl;
-        cout << "embedding_dimension: " << embedding_dimension  << endl;
-        cout << "heads_number: " << heads_number  << endl;
-
-
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
                                          "embedding_layer"

@@ -20,6 +20,7 @@ add_subdirectory(emotion_analysis)
 add_subdirectory(forecasting)
 add_subdirectory(iris_plant)
 add_subdirectory(mnist)
+add_subdirectory(melanoma_cancer)
 add_subdirectory(translation)
 
 

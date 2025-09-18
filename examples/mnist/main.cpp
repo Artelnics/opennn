@@ -29,7 +29,7 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset("../data");
+        ImageDataset image_dataset("../data/mnist_data");
 
         // Neural network
 
@@ -50,6 +50,9 @@ int main()
         adam->set_display_period(1);
 
         training_strategy.train();
+#ifdef OPENNN_CUDA
+        //training_strategy.train_cuda();
+#endif
 
         // Testing analysis
 
