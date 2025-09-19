@@ -27,6 +27,10 @@ int main()
     {   
         cout << "OpenNN. Melanoma Cancer CUDA Example." << endl;
 
+        #ifndef OPENNN_CUDA
+            throw runtime_error("CUDA is required for this example. Enable in pch.h");
+        #endif      
+
         // Data set
 
         ImageDataset image_dataset("../data/melanoma_cancer_data");
