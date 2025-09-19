@@ -767,7 +767,8 @@ vector<string> Dataset::get_raw_variable_names(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use != variable_use)
+        if (!((raw_variable.use == variable_use) ||
+              ((variable_use == "Input" || variable_use == "Target") && raw_variable.use == "InputTarget")))
             continue;
 
         names[index++] = raw_variable.name;
