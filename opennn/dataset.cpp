@@ -715,7 +715,8 @@ vector<Index> Dataset::get_used_raw_variables_indices() const
     for (Index i = 0; i < raw_variables_number; i++)
         if (raw_variables[i].use == "Input"
             || raw_variables[i].use == "Target"
-            || raw_variables[i].use == "Time")
+            || raw_variables[i].use == "Time"
+            || raw_variables[i].use == "InputTarget")
             used_indices[index++] = i;
 
     return used_indices;
