@@ -18,6 +18,7 @@ namespace opennn
 CrossEntropyError3d::CrossEntropyError3d(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
+    throw runtime_error("CrossEntropyError3d is not yet implemented. Please check back in a future version.");
 }
 
 
