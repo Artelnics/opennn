@@ -57,6 +57,6 @@ add_executable(run_tests test.cpp
 		weighted_squared_error_test.cpp
 )
 
-target_link_libraries(run_tests gtest gtest_main opennn)
+target_link_libraries(run_tests gtest gtest_main opennn stdc++fs)
 
 target_precompile_headers(run_tests PRIVATE ${PCH_HEADER})
