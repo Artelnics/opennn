@@ -168,6 +168,7 @@ void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
 
 void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
+    //throw runtime_error("MultiHeadAttention::apply_causal_mask is not yet implemented. Please check back in a future version.");
     // const Index batch_size = attention_scores.dimension(2);
 
     // const Index context_input_size = source_sequence_length * query_sequence_length;

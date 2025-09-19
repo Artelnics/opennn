@@ -4,6 +4,7 @@ project(opennn_library LANGUAGES CXX)
 
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
 add_library(opennn STATIC ${CPP_SOURCES})
+target_link_libraries(opennn PUBLIC stdc++fs)
 
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

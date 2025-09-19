@@ -253,7 +253,7 @@ public:
                                                     false, 
                                                     "stem_conv_1");
 
-        add_layer(std::move(stem_conv), { last_layer_index });
+        add_layer(move(stem_conv), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -264,7 +264,7 @@ public:
                                               Pooling::PoolingMethod::MaxPooling, 
                                               "stem_pool");
 
-        add_layer(std::move(stem_pool), { last_layer_index });
+        add_layer(move(stem_pool), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -289,7 +289,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-                add_layer(std::move(conv1), { block_input_index });
+                add_layer(move(conv1), { block_input_index });
 
                 Index main_path_index = get_layers_number() - 1;
 
@@ -301,7 +301,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
-                add_layer(std::move(conv2), { main_path_index });
+                add_layer(move(conv2), { main_path_index });
 
                 main_path_index = get_layers_number() - 1;
 
@@ -318,7 +318,7 @@ public:
                                                                 false,
                                                                 "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
-                    add_layer(std::move(skip_conv), { block_input_index });
+                    add_layer(move(skip_conv), { block_input_index });
 
                     skip_path_index = get_layers_number() - 1;
                 }
@@ -327,7 +327,7 @@ public:
 
                 auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
-                add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
+                add_layer(move(addition_layer), { main_path_index, skip_path_index });
 
                 last_layer_index = get_layers_number() - 1;
 
@@ -360,7 +360,7 @@ public:
 
         auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_dimensions());
 
-        add_layer(std::move(flatten_layer), { last_layer_index });
+        add_layer(move(flatten_layer), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -370,54 +370,7 @@ public:
                                                 false,
                                                 "dense_classifier");
 
-        add_layer(std::move(dense_layer), { last_layer_index });
-
-        cout << "\n=======================================================================" << endl;
-        cout << "          Análisis de la Arquitectura y Flujo de Dimensiones" << endl;
-        cout << "=======================================================================" << endl;
-
-        const auto& all_input_indices = get_layer_input_indices();
-
-        for (Index i = 0; i < get_layers_number(); ++i)
-        {
-            const auto& layer = get_layer(i);
-            const auto& inputs_for_this_layer = all_input_indices[i];
-
-            // --- Información de la Capa ---
-            cout << "Capa " << i << ": " << layer->get_name()
-                << " (" << layer->get_label() << ")" << endl;
-
-            // --- Conexiones de Entrada ---
-            cout << "  |- Conexiones: [ ";
-            for (size_t j = 0; j < inputs_for_this_layer.size(); ++j)
-            {
-                cout << (inputs_for_this_layer[j] == -1 ? "Red" : to_string(inputs_for_this_layer[j]));
-                if (j < inputs_for_this_layer.size() - 1) cout << ", ";
-            }
-            cout << " ]" << endl;
-
-            // --- Dimensiones de Entrada ---
-            cout << "  |- Dim Entrada : ";
-            // Para capas con múltiples entradas, las mostramos todas
-            if (inputs_for_this_layer.size() > 1) {
-                cout << endl;
-                for (const auto& input_idx : inputs_for_this_layer) {
-                    cout << "    - Desde capa " << input_idx << ": ";
-                    print_dim(get_layer(input_idx)->get_output_dimensions());
-                    cout << endl;
-                }
-            }
-            else {
-                // Para capas con una sola entrada
-                print_dim(layer->get_input_dimensions());
-                cout << endl;
-            }
-
-            // --- Dimensiones de Salida ---
-            cout << "  '- Dim Salida  : ";
-            print_dim(layer->get_output_dimensions());
-            cout << "\n-----------------------------------------------------------------------" << endl;
-        }
+        add_layer(move(dense_layer), { last_layer_index });
     }
 };
 
@@ -472,7 +425,7 @@ public:
 
 } // namespace opennn
 
-#endif // VGG16_H
+#endif // STANDARDNETWORKS_H
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

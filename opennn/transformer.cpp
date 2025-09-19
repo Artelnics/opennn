@@ -47,6 +47,8 @@ void Transformer::set(const Index& new_decoder_length,
                       const Index& new_heads_number,
                       const Index& new_blocks_number)
 {
+    throw runtime_error("Transformer is not yet implemented. Please check back in a future version.");
+
     name = "transformer";
 
     input_length = new_input_length;

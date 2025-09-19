@@ -245,17 +245,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClInclude Include="addition_layer_3d.h" />
-    <ClCompile Include="addition_layer_3d.cpp" />
-    <ClInclude Include="addition_layer_4d.h" />
     <ClInclude Include="bounding_layer.h" />
-    <ClCompile Include="addition_layer_4d.cpp" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
     <ClInclude Include="dataset.h" />
     <ClInclude Include="dense_layer.h" />
     <ClInclude Include="dense_layer_3d.h" />
-    <ClInclude Include="flatten_layer_3d.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="image_dataset.h" />
     <ClInclude Include="language_dataset.h" />
@@ -281,7 +276,6 @@
     <ClInclude Include="flatten_layer.h" />
     <ClCompile Include="flatten_layer.cpp" />
     <ClInclude Include="genetic_algorithm.h" />
-    <ClCompile Include="flatten_layer_3d.cpp" />
     <ClCompile Include="genetic_algorithm.cpp" />
     <ClInclude Include="growing_inputs.h" />
     <ClCompile Include="growing_inputs.cpp" />
@@ -300,7 +294,6 @@
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
     <ClInclude Include="loss_index.h" />
     <ClCompile Include="loss_index.cpp" />
-    <ClInclude Include="back_propagation.h" />
     <ClInclude Include="mean_squared_error.h" />
     <ClCompile Include="mean_squared_error.cpp" />
     <ClInclude Include="minkowski_error.h" />
@@ -330,10 +323,6 @@
     <ClCompile Include="strings_utilities.cpp" />
     <ClInclude Include="optimization_algorithm.h" />
     <ClCompile Include="optimization_algorithm.cpp" />
-    <ClInclude Include="perceptron_layer.h" />
-    <ClCompile Include="perceptron_layer.cpp" />
-    <ClInclude Include="perceptron_layer_3d.h" />
-    <ClCompile Include="perceptron_layer_3d.cpp" />
     <ClInclude Include="pooling_layer.h" />
     <ClCompile Include="pooling_layer.cpp" />
     <ClInclude Include="probabilistic_layer_3d.h" />

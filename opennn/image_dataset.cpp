@@ -315,6 +315,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
 Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2>& input_tensor)
 {
+    throw runtime_error("Image Augmentation is not yet implemented. Please check back in a future version.");
 /*
     const dimensions input_dimensions = get_dimensions("Input");
 

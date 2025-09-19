@@ -35,6 +35,8 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
+        throw runtime_error("Translation Example is not yet implemented. Please check back in a future version.");
+
         // Data set
         
         LanguageDataset language_dataset("../data/ENtoES_dataset_reduced_6.txt");

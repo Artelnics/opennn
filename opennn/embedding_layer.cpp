@@ -366,7 +366,7 @@ void Embedding::forward_propagate_cuda(const vector<float*>& inputs_device,
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                        const bool& is_training)
 {
-
+    throw runtime_error("Embedding::forward_propagate_cuda is not yet implemented. Please check back in a future version.");
 }
 
 
@@ -375,7 +375,7 @@ void Embedding::back_propagate_cuda(const vector<float*>&,
                                     unique_ptr<LayerForwardPropagationCuda>&,
                                     unique_ptr<LayerBackPropagationCuda>&) const
 {
-
+    throw runtime_error("Embedding::back_propagate_cuda is not yet implemented. Please check back in a future version.");
 }
 
 
@@ -430,6 +430,8 @@ EmbeddingForwardPropagationCuda::EmbeddingForwardPropagationCuda(const Index& ne
 void EmbeddingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
+
+    throw runtime_error("EmbeddingForwardPropagationCuda::set is not yet implemented. Please check back in a future version.");
 }
 
 
@@ -455,6 +457,8 @@ vector<ParameterView> EmbeddingBackPropagationCuda::get_parameter_delta_views_de
 void EmbeddingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (!new_layer) return;
+
+    throw runtime_error("EmbeddingBackPropagationCuda::set is not yet implemented. Please check back in a future version.");
 }
 
 
