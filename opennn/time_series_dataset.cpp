@@ -418,7 +418,7 @@ void TimeSeriesDataset::read_csv()
 {
     Dataset::read_csv();
 
-    set_default_raw_variables_uses();
+    set_default_raw_variables_uses_forecasting();
 
     const Index variables_number = get_variables_number();
 
