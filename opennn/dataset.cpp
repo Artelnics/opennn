@@ -3972,7 +3972,7 @@ bool Dataset::has_binary_or_categorical_raw_variables() const
 bool Dataset::has_time_raw_variable() const
 {
     return any_of(raw_variables.begin(), raw_variables.end(),
-                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::DateTime; });
+                  [](const RawVariable& raw_variable) { return raw_variable.use == "Time"; });
 }
 
 
