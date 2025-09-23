@@ -57,6 +57,8 @@ public:
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
+    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>& inputs) const;
+
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
     void print() const override;

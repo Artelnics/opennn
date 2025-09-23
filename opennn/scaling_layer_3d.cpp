@@ -279,7 +279,44 @@ void Scaling3d::forward_propagate(const vector<TensorView>& input_views,
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+}
 
+
+Tensor<type, 3> Scaling3d::calculate_outputs(const Tensor<type, 3>& inputs) const
+{
+    const Index inputs_number = inputs.dimension(2);
+
+    if (inputs_number != static_cast<Index>(scalers.size()))
+        throw std::runtime_error("Input features in calculate_outputs do not match layer configuration.");
+
+    Tensor<type, 3> outputs = inputs;
+
+#pragma omp parallel for
+    for(Index i = 0; i < inputs_number; i++)
+    {
+        const Scaler& scaler = scalers[i];
+        switch(scaler)
+        {
+        case Scaler::None:
+            break;
+        case Scaler::MinimumMaximum:
+            scale_minimum_maximum_3d(outputs, i, descriptives[i], min_range, max_range);
+            break;
+        case Scaler::MeanStandardDeviation:
+            scale_mean_standard_deviation_3d(outputs, i, descriptives[i]);
+            break;
+        case Scaler::StandardDeviation:
+            scale_standard_deviation_3d(outputs, i, descriptives[i]);
+            break;
+        case Scaler::Logarithm:
+            scale_logarithmic_3d(outputs, i);
+            break;
+        default:
+            throw std::runtime_error("Unknown scaling method in Scaling3d::calculate_outputs.\n");
+        }
+    }
+
+    return outputs;
 }
 
 
