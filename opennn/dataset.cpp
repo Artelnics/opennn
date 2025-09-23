@@ -3672,7 +3672,7 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
         }
 
         if (raw_variable.type == RawVariableType::None)
-            raw_variable.type = RawVariableType::Numeric;
+            raw_variable.type = RawVariableType::Categorical;
     }
 
     for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx)
