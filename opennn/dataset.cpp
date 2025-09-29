@@ -3639,15 +3639,29 @@ void Dataset::prepare_line(string& line) const
 void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 {
     const Index raw_variables_number = raw_variables.size();
-    const size_t rows_to_check = std::min(size_t(100), sample_rows.size());
+    const size_t total_rows = sample_rows.size();
+
+    if (total_rows == 0) return;
+
+    vector<size_t> row_indices(total_rows);
+    iota(row_indices.begin(), row_indices.end(), 0);
+
+    random_device rd;
+    mt19937 g(rd());
+
+    shuffle(row_indices.begin(), row_indices.end(), g);
+
+    const size_t rows_to_check = min(size_t(100), total_rows);
 
     for (Index col_idx = 0; col_idx < raw_variables_number; ++col_idx)
     {
         RawVariable& raw_variable = raw_variables[col_idx];
         raw_variable.type = RawVariableType::None;
 
-        for (size_t row_idx = 0; row_idx < rows_to_check; ++row_idx)
+        for (size_t i = 0; i < rows_to_check; ++i)
         {
+            const size_t row_idx = row_indices[i];
+
             const size_t token_idx = has_sample_ids ? col_idx + 1 : col_idx;
             if (token_idx >= sample_rows[row_idx].size()) continue;
 
@@ -3972,7 +3986,7 @@ bool Dataset::has_binary_or_categorical_raw_variables() const
 bool Dataset::has_time_raw_variable() const
 {
     return any_of(raw_variables.begin(), raw_variables.end(),
-                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::DateTime; });
+                  [](const RawVariable& raw_variable) { return raw_variable.use == "Time"; });
 }
 
 

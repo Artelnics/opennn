@@ -827,6 +827,52 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 }
 
 
+Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations_spearman(const Index& past_time_steps) const
+{
+    const Index samples_number = get_samples_number();
+
+    if (past_time_steps > samples_number)
+        throw runtime_error("Past time steps (" + to_string(past_time_steps) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
+
+    vector<Index> numeric_vars_indices;
+
+    for(size_t i = 0; i < raw_variables.size(); ++i)
+        if(raw_variables[i].use != "None" && raw_variables[i].type == RawVariableType::Numeric)
+            numeric_vars_indices.push_back(i);
+
+    const Index numeric_vars_count = numeric_vars_indices.size();
+    if (numeric_vars_count == 0) return Tensor<type, 3>(0,0,0);
+
+    map<Index, Tensor<type, 1>> ranked_series;
+
+    for (Index global_idx : numeric_vars_indices)
+    {
+        Tensor<type, 2> var_data = get_raw_variable_data(global_idx);
+        ranked_series[global_idx] = calculate_spearman_ranks(var_data.chip(0, 1));
+    }
+
+    Tensor<type, 3> cross_correlations(numeric_vars_count, numeric_vars_count, past_time_steps);
+
+    #pragma omp parallel for
+    for (Index i = 0; i < numeric_vars_count; ++i)
+    {
+        const Tensor<type, 1>& ranked_series_i = ranked_series.at(numeric_vars_indices[i]);
+
+        for (Index j = 0; j < numeric_vars_count; ++j)
+        {
+            const Tensor<type, 1>& ranked_series_j = ranked_series.at(numeric_vars_indices[j]);
+
+            Tensor<type, 1> ccf_vector = opennn::cross_correlations(thread_pool_device.get(), ranked_series_i, ranked_series_j, past_time_steps);
+
+            for (Index k = 0; k < past_time_steps; ++k)
+                cross_correlations(i, j, k) = ccf_vector(k);
+        }
+    }
+
+    return cross_correlations;
+}
+
+
 vector<vector<Index>> TimeSeriesDataset::get_batches(const vector<Index>& sample_indices,
                                                      const Index& batch_size,
                                                      const bool& shuffle) const

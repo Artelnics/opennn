@@ -50,6 +50,7 @@ public:
 
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
+    Tensor<type, 3> calculate_cross_correlations_spearman(const Index& = 10) const;
 
     void print() const override;
 
