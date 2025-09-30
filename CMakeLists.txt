@@ -37,6 +37,11 @@ if(OPENNN_WITH_CUDA)
     add_subdirectory(blank_cuda)
 endif()
 
+option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
+if(OpenNN_BUILD_BLANK)
+    add_subdirectory(blank)
+endif()
+
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
