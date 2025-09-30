@@ -66,7 +66,9 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 {
     const Index inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
-    maximum_inputs_number = min(new_maximum_inputs_number, inputs_number);
+    maximum_inputs_number = (inputs_number == 0)
+                                ? new_maximum_inputs_number
+                                : min(new_maximum_inputs_number, inputs_number);
 }
 
 
