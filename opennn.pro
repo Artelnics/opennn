@@ -13,9 +13,13 @@ CONFIG(release, debug|release) {
 }
 
 SUBDIRS += opennn
-#SUBDIRS += examples
-#SUBDIRS += blank
+SUBDIRS += examples
+SUBDIRS += blank
 SUBDIRS += tests
+
+blank.depends = opennn
+examples.depends = opennn
+tests.depends = opennn
 
 CONFIG += ordered
 
@@ -24,6 +28,7 @@ include(cuda.pri)
 win32-msvc* {
     if($$CUDA_ENABLED) {
         SUBDIRS += blank_cuda
+        blank_cuda.depends = opennn
     }
 }
 
