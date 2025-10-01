@@ -14,6 +14,11 @@ CONFIG += console c++17
 TARGET = run_tests
 DESTDIR = "$$PWD/bin"
 
+win32-g++ {
+    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_LFLAGS   += -fopenmp
+}
+
 DEFINES += EIGEN_DONT_PARALLELIZE
 
 # Google Test configuration
