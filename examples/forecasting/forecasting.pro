@@ -18,6 +18,11 @@ TARGET = forecasting
 
 DESTDIR = "$$PWD/bin"
 
+win32-g++ {
+    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_LFLAGS   += -fopenmp
+}
+
 SOURCES = main.cpp
 
 win32-g++{

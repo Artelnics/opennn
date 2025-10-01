@@ -13,9 +13,7 @@
 #include <string>
 #include <time.h>
 
-#include "../opennn/training_strategy.h"
 #include "../opennn/dataset.h"
-#include "../opennn/testing_analysis.h"
 
 using namespace opennn;
 
@@ -24,8 +22,6 @@ int main()
     try
     {
         cout << "Blank Testing OpenNN" << endl;
-
-        Dataset dataset(1, { 1 }, { 1 });
 
         cout << "Completed." << endl;
 
