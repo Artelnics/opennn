@@ -14,6 +14,7 @@
 #include <time.h>
 
 #include "../opennn/dataset.h"
+#include "../opennn/weighted_squared_error.h".h"
 
 using namespace opennn;
 
@@ -22,6 +23,10 @@ int main()
     try
     {
         cout << "Blank Testing OpenNN" << endl;
+
+        Dataset dataset(1, { 1 }, { 1 });
+
+        WeightedSquaredError weighted_squared_error;
 
         cout << "Completed." << endl;
 

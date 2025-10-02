@@ -19,7 +19,8 @@ win32-g++ {
     QMAKE_LFLAGS   += -fopenmp
 }
 
-DEFINES += EIGEN_DONT_PARALLELIZE
+CONFIG += thread
+LIBS += -lwinpthread
 
 # Google Test configuration
 GTEST_DIR = ../googletest
@@ -48,11 +49,3 @@ DEPENDPATH += $$PWD/../opennn
 
 # OpenMP
 include(../opennmp.pri)
-win32-g++|linux-g++ {
-    QMAKE_CXXFLAGS += -fopenmp
-    QMAKE_LFLAGS += -fopenmp
-} else:win32-msvc* {
-    QMAKE_CXXFLAGS += /openmp
-} else:macx {
-    LIBS += -lomp
-}
