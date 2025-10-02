@@ -13,10 +13,8 @@
 #include <string>
 #include <time.h>
 
-#include "../opennn/training_strategy.h"
-#include "../opennn/dense_layer.h"
-#include "../opennn/testing_analysis.h"
-#include "dataset.h"
+#include "../opennn/dataset.h"
+#include "../opennn/weighted_squared_error.h".h"
 
 using namespace opennn;
 
@@ -26,10 +24,9 @@ int main()
     {
         cout << "Blank Testing OpenNN" << endl;
 
-        Dataset dataset("/mnt/c/Users/Artelnics/Documents/opennn/build/data/iris_plant_original.csv",";");
+        Dataset dataset(1, { 1 }, { 1 });
 
-        cout << dataset.get_samples_number("Training") << endl;
-
+        WeightedSquaredError weighted_squared_error;
 
         cout << "Completed." << endl;
 
