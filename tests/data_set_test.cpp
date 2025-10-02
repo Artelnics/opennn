@@ -26,7 +26,6 @@ TEST(Dataset, DefaultConstructor)
 
 TEST(Dataset, DimensionsConstructor)
 {
-
     Dataset dataset(1, { 1 }, { 1 });
 
     EXPECT_EQ(dataset.get_samples_number(), 1);
@@ -204,7 +203,6 @@ TEST(Dataset, UnuseConstantRawVariables)
 
 TEST(Dataset, CalculateTargetDistribution)
 {
-/*
     Dataset dataset(5, { 3 }, { 2 });
     Tensor<type, 2> data(5, 4);
 
@@ -216,27 +214,28 @@ TEST(Dataset, CalculateTargetDistribution)
 
 
     dataset.set_data(data);
-    std::vector<Index> input_variables_indices;
-    std::vector<Index> target_variables_indices;
+    vector<Index> input_variables_indices;
+    vector<Index> target_variables_indices;
 
-    for (Index i = 0; i < 4; i++)
+    for (Index i = 0; i < 3; i++)
         input_variables_indices.push_back(i);
 
-
-    target_variables_indices.push_back(0);
+    target_variables_indices.push_back(3);
 
     dataset.set_raw_variable_indices(input_variables_indices, target_variables_indices);
-
+    
     Tensor<Index, 1> target_distribution = dataset.calculate_target_distribution();
 
     Tensor<Index, 1> solution(2);
-    solution(0) = 1;
-    solution(1) = 4;
+    solution(0) = 2;
+    solution(1) = 2;
 
     EXPECT_EQ(target_distribution(0), solution(0));
     EXPECT_EQ(target_distribution(1), solution(1));
-
+    
     // Test more two classes
+
+    Dataset dataset_2(5, { 6 }, { 3 });
 
     data.resize(5, 9);
     data.setZero();
@@ -247,27 +246,25 @@ TEST(Dataset, CalculateTargetDistribution)
                     {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
                     {type(0),type(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0)} });
 
-    dataset.set(5, { 8 }, { 1 });
+    dataset_2.set_data(data);
 
-    dataset.set_data(data);
+    vector<Index> input_variables_indices_2;
+    vector<Index> target_variables_indices_2;
 
-    target_variables_indices.resize(3);
-    target_variables_indices.push_back(6);
-    target_variables_indices.push_back(7);
-    target_variables_indices.push_back(8);
+    target_variables_indices_2.push_back(6);
+    target_variables_indices_2.push_back(7);
+    target_variables_indices_2.push_back(8);
 
-    input_variables_indices.resize(2);
-    input_variables_indices.push_back(0);
-    input_variables_indices.push_back(1);
+    for (Index i = 0; i < 6; i++)
+        input_variables_indices_2.push_back(i);
 
-    dataset.set_raw_variable_indices(input_variables_indices, target_variables_indices);
+    dataset_2.set_raw_variable_indices(input_variables_indices_2, target_variables_indices_2);
 
-    target_distribution = dataset.calculate_target_distribution();
+    Tensor<Index, 1> target_distribution_2 = dataset_2.calculate_target_distribution();
 
-    EXPECT_EQ(target_distribution[0], 4);
-    EXPECT_EQ(target_distribution[1], 1);
-    EXPECT_EQ(target_distribution[2], 2);
-*/
+    EXPECT_EQ(target_distribution_2[0], 1);
+    EXPECT_EQ(target_distribution_2[1], 2);
+    EXPECT_EQ(target_distribution_2[2], 2);
 }
 
 
@@ -1158,74 +1155,6 @@ void Dataset::test_calculate_input_raw_variable_correlations()
 
 }
 
-
-void Dataset::test_unuse_repeated_samples()
-{
-    Tensor<Index, 1> indices;
-
-    dataset.set();
-
-    // Test
-
-    data.resize(3, 3);
-
-    data.setValues({{type(1),type(2),type(2)},
-                    {type(1),type(2),type(2)},
-                    {type(1),type(6),type(6)}});
-
-    dataset = opennn::Dataset();
-
-    dataset.set_data(data);
-    dataset.set("Training");
-
-    indices = dataset.unuse_repeated_samples();
-
-    EXPECT_EQ(indices.size() == 1);
-    EXPECT_EQ(indices(0) == 1);
-
-    // Test
-
-    data.resize(4,3);
-
-    data.setValues({{type(1),type(2),type(2)},
-                   {type(1),type(2),type(2)},
-                   {type(1),type(2),type(4)},
-                   {type(1),type(2),type(4)}});
-
-    dataset = opennn::Dataset();
-
-    dataset.set_data(data);
-    dataset.set("Training");
-
-    indices = dataset.unuse_repeated_samples();
-
-    EXPECT_EQ(indices.size() == 2);
-    EXPECT_EQ(contains(indices, 1));
-    EXPECT_EQ(contains(indices, 3));
-
-    // Test
-
-    data.resize(5, 3);
-    data.setValues({{type(1),type(2),type(2)},
-                   {type(1),type(2),type(2)},
-                   {type(1),type(2),type(4)},
-                   {type(1),type(2),type(4)},
-                   {type(1),type(2),type(4)}});
-
-    dataset.set();
-
-    dataset.set_data(data);
-    dataset.set("Training");
-
-    indices = dataset.unuse_repeated_samples();
-
-    EXPECT_EQ(indices.size() == 3);
-    EXPECT_EQ(contains(indices, 1));
-    EXPECT_EQ(contains(indices, 3));
-    EXPECT_EQ(contains(indices, 4));
-}
-
-
 void Dataset::test_unuse_uncorrelated_raw_variables()
 {
     data.resize(3, 3);
@@ -1233,14 +1162,19 @@ void Dataset::test_unuse_uncorrelated_raw_variables()
                     {type(1),type(0),type(0)},
                     {type(1),type(0),type(1)}});
 }
+*/
 
 
-void Dataset::test_calculate_training_negatives()
+TEST(Dataset,CalculateNegatives)
 {
     Index training_negatives;
     Index target_index;
 
     // Test
+
+    Dataset dataset(3, { 2 }, { 1 });
+
+    Tensor<type, 2> data;
 
     data.resize(3, 3);
 
@@ -1250,105 +1184,104 @@ void Dataset::test_calculate_training_negatives()
 
     dataset.set_data(data);
 
-    training_indices.resize(2);
-    training_indices.setValues({0,1});
-
-    input_variables_indices.resize(2);
-    input_variables_indices.setValues({0, 1});
-
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({2});
-
     target_index = 2;
 
-    dataset.set("Testing");
-    dataset.set_training(training_indices);
+    // Training negatives
 
-    //training_negatives = dataset.calculate_training_negatives(target_index);
-    training_negatives = dataset.calculate_negatives("Training",target_index);
+    dataset.set_sample_uses("Training");
 
-    EXPECT_EQ(training_negatives == 1);
+    training_negatives = dataset.calculate_negatives(target_index, "Training");
+    EXPECT_EQ(training_negatives, 1);
+
+    // Selection Negatives
+
+    dataset.set_sample_uses("Selection");
+
+    training_negatives = dataset.calculate_negatives(target_index, "Selection");
+    EXPECT_EQ(training_negatives, 1);
+
+    // Testing Negatives
+
+    dataset.set_sample_uses("Testing");
+
+    training_negatives = dataset.calculate_negatives(target_index, "Testing");
+    EXPECT_EQ(training_negatives, 1);
+
+    // Mix
+
+    dataset.set_sample_use(0,"Testing");
+    dataset.set_sample_use(1,"Training");
+    dataset.set_sample_use(2,"Selection");
+
+    training_negatives = dataset.calculate_negatives(target_index, "Testing");
+    EXPECT_EQ(training_negatives, 0);
+    training_negatives = dataset.calculate_negatives(target_index, "Training");
+    EXPECT_EQ(training_negatives, 1);
+    training_negatives = dataset.calculate_negatives(target_index, "Selection");
+    EXPECT_EQ(training_negatives, 0);
 }
 
 
-void Dataset::test_calculate_selection_negatives()
+TEST(Dataset, BatchFill)
 {
-    vector<Index> selection_indices;
-    Tensor<Index, 1> input_variables_indices;
-    Tensor<Index, 1> target_variables_indices;
+    Dataset dataset(3, { 2 }, { 1 });
 
-    // Test
+    Tensor<type, 2> data;
 
     data.resize(3, 3);
-
-    data.setValues({{1, 1, 1},{0, 0, 1},{0, 1, 1}});
-
+    data.setValues({{1,4,1},
+                    {2,-5,0},
+                    {-3,6,1}});
     dataset.set_data(data);
 
-    selection_indices.resize(2);
-    selection_indices.setValues({0,1});
+    dataset.set_sample_uses("Training");
 
-    input_variables_indices.resize(2);
-    input_variables_indices.setValues({0, 1});
+    const Index samples_number = dataset.get_samples_number("Training");
 
-    target_variables_indices.resize(1);
-    target_variables_indices.setValues({2});
+    const vector<Index> training_samples_indices = dataset.get_sample_indices("Training");
 
-    Index target_index = 2;
+    vector<Index> input_variables_indices;
+    input_variables_indices.push_back(0);
+    input_variables_indices.push_back(1);
 
-    dataset.set("Testing");
+    vector<Index> target_variables_indices;
+    target_variables_indices.push_back(2);
 
-    dataset.set_selection(selection_indices);
-
-    dataset.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
-
-    //Index selection_negatives = dataset.calculate_selection_negatives(target_index);
-    Index selection_negatives = dataset.calculate_negatives("Selection",target_index);
-    dataset.calculate_negatives("Training",target_index);
-    data = dataset.get_data();
-
-    EXPECT_EQ(selection_negatives == 0);
-
-}
-
-
-void Dataset::test_fill()
-{
-    data.resize(3, 3);
-    data.setValues({{1,4,7},{2,5,8},{3,6,9}});
-    dataset.set_data(data);
-
-    dataset.set("Training");
-
-    const Index training_samples_number = dataset.get_samples_number("Training");
-
-    const Tensor<Index, 1> training_samples_indices = dataset.get_sample_indices("Training");
-
-    const Tensor<Index, 1> input_variables_indices = dataset.get_variable_indices("Input");
-    const Tensor<Index, 1> target_variables_indices = dataset.get_variable_indices("Target");
-
-    batch.set(training_samples_number, &dataset);
-    /*
-    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+    Batch batch(samples_number, &dataset);
+    
+    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     Tensor<type, 2> input_data(3,2);
-    input_data.setValues({{1,4},{2,5},{3,6}});
+    input_data.setValues({{1,4},
+                          {2,-5},
+                          {-3,6}});
 
     Tensor<type, 2> target_data(3,1);
-    target_data.setValues({{7},{8},{9}});
+    target_data.setValues({{1},{0},{1}});
 
-    const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
+    const vector<TensorView> input_views = batch.get_input_pairs();
+    const Tensor<type, 2> inputs = input_views[0].to_tensor_map<2>();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map<2>(input_pairs[0]);
+    ASSERT_EQ(inputs.dimension(0), input_data.dimension(0));
+    ASSERT_EQ(inputs.dimension(1), input_data.dimension(1));
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    for (Index i = 0; i < inputs.dimension(0); ++i) {
+        for (Index j = 0; j < inputs.dimension(1); ++j) {
+            SCOPED_TRACE("Comparando inputs en el índice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
+            EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
+        }
+    }
 
-    const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_pair);
+    const TensorView targets_view = batch.get_target_pair();
+    const Tensor<type, 2> targets = targets_view.to_tensor_map<2>();
 
-    EXPECT_EQ(are_equal(inputs, input_data));
-    EXPECT_EQ(are_equal(targets, target_data));
+    ASSERT_EQ(targets.dimension(0), target_data.dimension(0));
+    ASSERT_EQ(targets.dimension(1), target_data.dimension(1));
 
+    for (Index i = 0; i < targets.dimension(0); ++i) {
+        for (Index j = 0; j < targets.dimension(1); ++j) {
+            SCOPED_TRACE("Comparando targets en el índice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
+            EXPECT_NEAR(targets(i, j), target_data(i, j), 1e-6);
+        }
+    }
 }
-
-}
-*/

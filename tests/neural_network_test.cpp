@@ -272,49 +272,56 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
     EXPECT_NEAR(abs(directional_inputs(4,0)), type(0), NUMERIC_LIMITS_MIN);
 }
 
-// @todo apparently save and load functions doesn't work
+
 TEST(NeuralNetworkTest, TestSave)
 {
-    // NeuralNetwork neural_network;
+    Index inputs_number;
+    Index neurons_number;
+    Index outputs_number;
 
-    // Index inputs_number;
-    // Index neurons_number;
-    // Index outputs_number;
+    const std::string file_path_str = "../../blank/data/neural_network.xml";
+    const std::filesystem::path file_path(file_path_str);
 
-    // const string file_name = "../../blank/data/neural_network.xml";
+  
+    if (!std::filesystem::exists(file_path.parent_path())) {
+        std::filesystem::create_directories(file_path.parent_path());
+    }
 
-    // // Empty neural network
+  
+    // Empty neural network
 
-    // neural_network.set();
-    // neural_network.save(file_name);
+    NeuralNetwork empty_net;
+    empty_net.save(file_path);
+  
+    // Test 1
 
-    // // Only network architecture
+    ApproximationNetwork neural_network_approx1({ 2 }, { 4 }, { 3 });
+    neural_network_approx1.save(file_path);
 
-    // neural_network.set(NeuralNetwork::ModelType::Approximation, { 2 }, { 4 }, { 3 });
-    // neural_network.save(file_name);
 
-    // EXPECT_EQ(neural_network.get_layers_number(), 5);
-    // EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    // EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    // EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_network_approx1.get_layers_number(), 5);
+    EXPECT_EQ(neural_network_approx1.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network_approx1.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network_approx1.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network_approx1.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network_approx1.get_layer(4)->get_name(), "Bounding");
 
-    // // Test
+    // Test 2
 
-    // inputs_number = 1;
-    // neurons_number = 1;
-    // outputs_number = 1;
+    inputs_number = 1;
+    neurons_number = 1;
+    outputs_number = 1;
 
-    // neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-    // neural_network.save(file_name);
+    ApproximationNetwork neural_network_aprox2({ inputs_number }, { neurons_number }, { outputs_number });
+    neural_network_aprox2.save(file_path);
 
-    // EXPECT_EQ(neural_network.get_layers_number(), 5);
-    // EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    // EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    // EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_network_aprox2.get_layers_number(), 5);
+    EXPECT_EQ(neural_network_aprox2.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network_aprox2.get_layer(1)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network_aprox2.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network_aprox2.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network_aprox2.get_layer(4)->get_name(), "Bounding");
+
 }
 
 
@@ -344,4 +351,3 @@ TEST(NeuralNetworkTest, TestLoad)
     // EXPECT_EQ(loaded_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
     // EXPECT_EQ(loaded_network.get_layer(4)->get_type(), Layer::Type::Bounding);
 }
-
