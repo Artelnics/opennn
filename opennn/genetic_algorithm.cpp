@@ -12,6 +12,7 @@
 #include "scaling_layer_2d.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -204,21 +205,17 @@ void GeneticAlgorithm::initialize_population_random()
 
     const int upper_limit = int(ceil(random_raw_variables_number * percentage) - 1);
 
-    random_device rd;
-
-    mt19937 gen(rd());
-
     uniform_int_distribution<> dist(1, upper_limit);
 
     for(Index i = 0; i < individuals_number; i++)
     {
         individual_raw_variables.setConstant(false);
 
-        const int random_number = dist(gen);
+        const int random_number = dist(getGlobalRandomGenerator());
 
         fill_n(individual_raw_variables.data(), random_number, true);
 
-        shuffle(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), gen);
+        shuffle(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), getGlobalRandomGenerator());
 
         if(is_equal(individual_raw_variables, false))
             for(Index j = 0; j < original_input_raw_variables_number; j++)
@@ -284,10 +281,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     population.setConstant(false);
 
-    random_device rd;
-
-    mt19937 gen(rd());
-
     uniform_real_distribution<> distribution(0, fitness_correlations_sum(0));
 
     Index raw_variables_active;
@@ -299,12 +292,12 @@ void GeneticAlgorithm::initialize_population_correlations()
         individual_raw_variables.setConstant(false);
         
         raw_variables_active = input_raw_variables_number > 100
-                                   ? 1 + rand() % 100
-                                   : 1 + rand() % input_raw_variables_number;
+                                   ? 1 + getGlobalRandomGenerator()() % 100
+                                   : 1 + getGlobalRandomGenerator()() % input_raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
-            arrow = distribution(gen);
+            arrow = distribution(getGlobalRandomGenerator());
 
             if(arrow < fitness_correlations_cumsum(0) && !individual_raw_variables(0))
                 individual_raw_variables(0) = true;
@@ -315,7 +308,7 @@ void GeneticAlgorithm::initialize_population_correlations()
         }
 
         if(is_equal(individual_raw_variables, false))
-            individual_raw_variables(rand()%input_raw_variables_number) = true;
+            individual_raw_variables(getGlobalRandomGenerator()()%input_raw_variables_number) = true;
 
         for(Index j = 0; j < raw_variables_number; j++)
             population(i, j) = individual_raw_variables(j);
@@ -482,13 +475,9 @@ void GeneticAlgorithm::perform_crossover()
 
     Tensor<bool, 1> parent_2_raw_variables;
 
-    random_device rd;
-
-    mt19937 g(rd());
-
     vector<Index> parent_1_indices = get_selected_individuals_indices();
 
-    shuffle(parent_1_indices.begin(), parent_1_indices.end(), g);
+    shuffle(parent_1_indices.begin(), parent_1_indices.end(), getGlobalRandomGenerator());
 
     const vector<Index> parent_2_indices = get_selected_individuals_indices();
 
@@ -505,7 +494,7 @@ void GeneticAlgorithm::perform_crossover()
             descendent_raw_variables = parent_1_raw_variables;
 
             for(Index k = 0; k < raw_variables_number; k++)
-                descendent_raw_variables(k) = (rand() % 2) ? parent_1_raw_variables(k) : parent_2_raw_variables(k);
+                descendent_raw_variables(k) = (getGlobalRandomGenerator()() % 2) ? parent_1_raw_variables(k) : parent_2_raw_variables(k);
 
 
             if(is_equal(descendent_raw_variables, false))
@@ -514,7 +503,7 @@ void GeneticAlgorithm::perform_crossover()
 
                 vector<Index> indices(raw_variables_number);
                 iota(indices.begin(), indices.end(), 0);
-                shuffle(indices.begin(), indices.end(), g);
+                shuffle(indices.begin(), indices.end(), getGlobalRandomGenerator());
 
                 for (Index i = 0; i < num_to_activate; i++)
                     descendent_raw_variables(indices[i]) = true;

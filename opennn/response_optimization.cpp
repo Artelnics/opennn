@@ -363,7 +363,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             {
                 inputs(i, index) = (input_conditions(index) == ResponseOptimization::Condition::EqualTo)
                     ? input_minimums[index]
-                    : type(rand() % 2);
+                    : type(getGlobalRandomGenerator()() % 2);
 
                 index++;
             }
@@ -386,7 +386,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 }
 
                 if(equal_index == -1)
-                    inputs(i, index + rand() % categories_number) = type(1);
+                    inputs(i, index + getGlobalRandomGenerator()() % categories_number) = type(1);
 
                 index += categories_number;
             }

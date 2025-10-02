@@ -2,6 +2,7 @@
 #define TENSORS_H
 
 #include "pch.h"
+#include "random.h"
 
 namespace opennn
 {
@@ -125,26 +126,20 @@ bool get_random_bool();
 template<int rank>
 void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
 {
-    random_device rd;
-    mt19937 gen(rd());
-
     uniform_real_distribution<type> distribution(minimum, maximum);
 
     for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(gen);
+        tensor(i) = distribution(getGlobalRandomGenerator());
 }
 
 
 template<int rank>
 void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
 {
-    random_device rd;
-    mt19937 gen(rd());
-
     uniform_real_distribution<type> distribution(minimum, maximum);
 
     for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(gen);
+        tensor(i) = distribution(getGlobalRandomGenerator());
 }
 
 
