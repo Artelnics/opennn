@@ -14,7 +14,7 @@
 #include <time.h>
 
 #include "../opennn/dataset.h"
-#include "../opennn/weighted_squared_error.h".h"
+#include "../opennn/weighted_squared_error.h"
 
 using namespace opennn;
 
