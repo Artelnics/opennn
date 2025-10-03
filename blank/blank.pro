@@ -16,6 +16,11 @@ mac { CONFIG -= app_bundle }
 
 DESTDIR = "$$PWD/bin"
 
+win32-g++ {
+    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_LFLAGS   += -fopenmp
+}
+
 SOURCES = main.cpp
 
 win32 {
@@ -58,4 +63,6 @@ else:win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn
 else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 
+QMAKE_CXXFLAGS += -fopenmp
+QMAKE_LFLAGS   += -fopenmp
 include(../opennmp.pri)

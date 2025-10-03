@@ -89,7 +89,7 @@ public:
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Softmax",
-                                       false, // Batch normalization
+                                       false,
                                        "classification_layer"));
     }
 };
@@ -115,7 +115,7 @@ public:
 
         add_layer(make_unique<Unscaling>(output_dimensions));
 
-        //add_layer(make_unique<Bounding>(output_dimensions));
+        add_layer(make_unique<Bounding>(output_dimensions));
     }
 };
 

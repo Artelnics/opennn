@@ -10,12 +10,10 @@ using namespace opennn;
 
 TEST(NeuralNetworkTest, DefaultConstructor)
 {
-    
     NeuralNetwork neural_network;
 
     EXPECT_EQ(neural_network.is_empty(), true);
-    EXPECT_EQ(neural_network.get_layers_number(), 0);
-    
+    EXPECT_EQ(neural_network.get_layers_number(), 0); 
 }
 
 
@@ -29,33 +27,6 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
-    
-    for (Index i = 0; i < neural_network.get_layers_number(); i++)
-    {
-        const string& name = neural_network.get_layer(i)->get_name();
-
-        switch (i) {
-        case 0:
-            EXPECT_EQ(name, "Scaling2d");
-            break;    
-        case 1:
-            EXPECT_EQ(name, "Dense2d");
-            break;
-        case 2:
-            EXPECT_EQ(name, "Dense2d");
-            break;
-        case 3:
-            EXPECT_EQ(name, "Unscaling");
-            break;
-        case 4:
-            EXPECT_EQ(name, "Bounding");
-            break;
-        default:
-            break;
-        }
-    }
-
-    EXPECT_EQ(neural_network.get_layers_number(), 5);
 }
 
 
@@ -85,13 +56,14 @@ TEST(NeuralNetworkTest, AproximationConstructor)
 
 TEST(NeuralNetworkTest, ForecastingConstructor)
 {
-    ForecastingNetwork neural_network({ 1 }, { 4 }, { 2 });
+    ForecastingNetwork neural_network({ 1,1 }, { 4 }, { 2 });
 
-    EXPECT_EQ(neural_network.get_layers_number(), 4);
-    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling2d");
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
+    EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling3d");
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Recurrent");
-    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Unscaling");
-    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Bounding");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Bounding");
 }
 
 
@@ -115,49 +87,51 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     const Index width = 3;
     const Index channels = 1;
 
-    const Index blocks = 1;
+    const Index complexity = 1;
 
     const Index outputs_number = 1;
 
-    ImageClassificationNetwork neural_network({height, width, channels}, {blocks}, { outputs_number });
+    ImageClassificationNetwork neural_network({height, width, channels}, { complexity }, { outputs_number });
  
-    EXPECT_EQ(neural_network.get_layers_number(), 3);
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling4d");
-    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Flatten");
-    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Convolutional");
+    EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Pooling");
+    EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Flatten4d");
+    EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense2d");
 }
 
 
 TEST(NeuralNetworkTest, ForwardPropagate)
 {
-    constexpr Index inputs_number = 2;
-    constexpr Index outputs_number = 1;
-    constexpr Index batch_size = 5;
-    constexpr Index neurons_number = 1;
+    const Index samples_number = 5;
+    const Index inputs_number = 2;
+    const Index outputs_number = 1;
+    const Index neurons_number = 1;
 
     bool is_training = true;
 
-    Tensor<type, 2> data(batch_size, inputs_number + outputs_number);
+    Tensor<type, 2> data(samples_number, inputs_number + outputs_number);
     data.setValues({
-        {1, 1, 1},
-        {2, 2, 2},
-        {3, 3, 3},
-        {0, 0, 0},
-        {0, 0, 0}
+        {0, 0, 1},
+        {1, 1, 0},
+        {2, 2, 1},
+        {3, 3, 0},
+        {4, 4, 1}
     });
 
-    Dataset dataset(batch_size,
+    Dataset dataset(samples_number,
                     dimensions{inputs_number},
                     dimensions{outputs_number});
     dataset.set_data(data);
-    dataset.set("Training");
+    dataset.set_sample_uses("Training");
 
-    Batch batch(batch_size, &dataset);
+    Batch batch(samples_number, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
                // dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
-
+    
     // Test Logistic
 
     ApproximationNetwork neural_network_aproximation({inputs_number}, {neurons_number}, {outputs_number});
@@ -178,8 +152,8 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     EXPECT_LE(perceptron_activations(3, 0) - type(0.5), type(1e-1));
     EXPECT_LE(perceptron_activations(4, 0) - type(0.5), type(1e-1));
 
-    // Test Probabilistic
-
+    // Test Softmax
+    
     ClassificationNetwork neural_network_classification({inputs_number}, {neurons_number}, {outputs_number});
 
     Dense2d* probabilistic_layer =static_cast<Dense2d*>(neural_network_classification.get_first("Dense2d"));
@@ -272,76 +246,47 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
     EXPECT_NEAR(abs(directional_inputs(4,0)), type(0), NUMERIC_LIMITS_MIN);
 }
 
-// @todo apparently save and load functions doesn't work
-TEST(NeuralNetworkTest, TestSave)
+
+TEST(NeuralNetworkTest, TestSaveLoad)
 {
-    // NeuralNetwork neural_network;
+    Index inputs_number;
+    Index neurons_number;
+    Index outputs_number;
 
-    // Index inputs_number;
-    // Index neurons_number;
-    // Index outputs_number;
+    const string file_path_str = "../blank/data/neural_network.xml";
+    const filesystem::path file_path(file_path_str);
 
-    // const string file_name = "../../blank/data/neural_network.xml";
+    if (!filesystem::exists(file_path.parent_path()))
+        filesystem::create_directories(file_path.parent_path());
+  
+    // Empty neural network
 
-    // // Empty neural network
+    NeuralNetwork empty_net;
+    empty_net.save(file_path);
 
-    // neural_network.set();
-    // neural_network.save(file_name);
+    NeuralNetwork loaded_empty_net(file_path);
 
-    // // Only network architecture
+    EXPECT_EQ(loaded_empty_net.get_inputs_number(), 0);
+    EXPECT_EQ(loaded_empty_net.get_layers_number(), 0);
+    EXPECT_EQ(loaded_empty_net.get_outputs_number(), 0);
 
-    // neural_network.set(NeuralNetwork::ModelType::Approximation, { 2 }, { 4 }, { 3 });
-    // neural_network.save(file_name);
+    // Standard neural network
 
-    // EXPECT_EQ(neural_network.get_layers_number(), 5);
-    // EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    // EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    // EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    ApproximationNetwork neural_approx1_network({ 5 }, { 1 }, { 3 });
+    neural_approx1_network.save(file_path);
 
-    // // Test
+    NeuralNetwork loaded_neural_approx1_network(file_path);
 
-    // inputs_number = 1;
-    // neurons_number = 1;
-    // outputs_number = 1;
+    EXPECT_EQ(neural_approx1_network.get_inputs_number(), loaded_neural_approx1_network.get_inputs_number());
 
-    // neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-    // neural_network.save(file_name);
+    EXPECT_EQ(neural_approx1_network.get_layers_number(), loaded_neural_approx1_network.get_layers_number());
+    EXPECT_EQ(neural_approx1_network.get_layer(0)->get_name(), loaded_neural_approx1_network.get_layer(0)->get_name());
+    EXPECT_EQ(neural_approx1_network.get_layer(1)->get_name(), loaded_neural_approx1_network.get_layer(1)->get_name());
+    EXPECT_EQ(neural_approx1_network.get_layer(2)->get_name(), loaded_neural_approx1_network.get_layer(2)->get_name());
+    EXPECT_EQ(neural_approx1_network.get_layer(3)->get_name(), loaded_neural_approx1_network.get_layer(3)->get_name());
+    EXPECT_EQ(neural_approx1_network.get_layer(4)->get_name(), loaded_neural_approx1_network.get_layer(4)->get_name());
 
-    // EXPECT_EQ(neural_network.get_layers_number(), 5);
-    // EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    // EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    // EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+    EXPECT_EQ(neural_approx1_network.get_layer_input_indices().size(), loaded_neural_approx1_network.get_layer_input_indices().size());
+
+    EXPECT_EQ(neural_approx1_network.get_outputs_number(), loaded_neural_approx1_network.get_outputs_number());
 }
-
-
-TEST(NeuralNetworkTest, TestLoad)
-{
-    // const std::string file_name = "../../blank/data/neural_network.xml";
-
-    // constexpr Index inputs_number = 2;
-    // constexpr Index outputs_number = 1;
-    // constexpr Index neurons_number = 1;
-
-    // NeuralNetwork neural_network(
-    //     NeuralNetwork::ModelType::Approximation,
-    //     {inputs_number},
-    //     {neurons_number},
-    //     {outputs_number});
-
-    // neural_network.save(file_name);
-
-    // NeuralNetwork loaded_network;
-    // loaded_network.load(file_name);
-
-    // EXPECT_EQ(loaded_network.get_layers_number(), 5);
-    // EXPECT_EQ(loaded_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    // EXPECT_EQ(loaded_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(loaded_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
-    // EXPECT_EQ(loaded_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
-    // EXPECT_EQ(loaded_network.get_layer(4)->get_type(), Layer::Type::Bounding);
-}
-

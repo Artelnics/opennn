@@ -12,7 +12,6 @@ endif()
 
 if(WIN32)
 	set(PROJECT_LINK_LIBS ../opennn/Release/opennn)
-	#set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
 target_include_directories(blank PRIVATE

@@ -17,25 +17,6 @@ CONFIG += jumbo_build
 
 DEFINES += __Cpp17__
 
-win32-msvc* {
-    QMAKE_CXXFLAGS += /std:c++17 /openmp /EHsc
-    QMAKE_CXXFLAGS += /bigobj
-    DEFINES += "EIGEN_THREAD_LOCAL=thread_local"
-}
-else:macx {
-    QMAKE_CXXFLAGS += -std=c++17
-    INCLUDEPATH += /usr/local/opt/libomp/include
-    LIBS += -L/usr/local/opt/libomp/lib -lomp
-    TEMPLATE_IS_APP = $$find(TEMPLATE, "app")
-    !isEmpty(TEMPLATE_IS_APP): LIBS += -lpthread
-}
-else {
-    QMAKE_CXXFLAGS += -std=c++17 -fopenmp
-    QMAKE_LFLAGS   += -fopenmp
-    TEMPLATE_IS_APP = $$find(TEMPLATE, "app")
-    !isEmpty(TEMPLATE_IS_APP): LIBS += -lpthread -lgomp
-}
-
 win32 {
     DEFINES += _HAS_STD_BYTE=0
     DEFINES += WIN32_LEAN_AND_MEAN
