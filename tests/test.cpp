@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "Dense2dTest*";
+    ::testing::GTEST_FLAG(filter) = "NeuralNetwork*";
 
     try {
         return RUN_ALL_TESTS();

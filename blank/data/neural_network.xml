@@ -1,0 +1,99 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>5</InputsNumber>
+      <Input Index="1"></Input>
+      <Input Index="2"></Input>
+      <Input Index="3"></Input>
+      <Input Index="4"></Input>
+      <Input Index="5"></Input>
+   </Inputs>
+   <Layers>
+      <LayersNumber>5</LayersNumber>
+      <Scaling2d>
+         <NeuronsNumber>5</NeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </Scaling2d>
+      <Dense2d>
+         <Label>dense2d_layer_1</Label>
+         <InputsNumber>5</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <Activation>RectifiedLinear</Activation>
+         <BatchNormalization>false</BatchNormalization>
+         <Biases>-0.0315617 </Biases>
+         <Weights>-0.0745239 0.0921911 0.0186346 0.0530972 0.066245 </Weights>
+      </Dense2d>
+      <Dense2d>
+         <Label>approximation_layer</Label>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <Activation>Linear</Activation>
+         <BatchNormalization>false</BatchNormalization>
+         <Biases>0.0378219 -0.0776863 0.0650766 </Biases>
+         <Weights>0.0287225 -0.0513257 -0.0445763 </Weights>
+      </Dense2d>
+      <Unscaling>
+         <NeuronsNumber>3</NeuronsNumber>
+         <UnscalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+         <UnscalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+         <UnscalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+      </Unscaling>
+      <Bounding>
+         <NeuronsNumber>3</NeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <Item Index="2">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <Item Index="3">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <BoundingMethod>Bounding</BoundingMethod>
+      </Bounding>
+      <LayerInputIndices>
+         <LayerInputsIndices LayerIndex="0">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="1">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">2</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="4">3</LayerInputsIndices>
+      </LayerInputIndices>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>3</OutputsNumber>
+      <Output Index="1"></Output>
+      <Output Index="2"></Output>
+      <Output Index="3"></Output>
+   </Outputs>
+   <Display>1</Display>
+</NeuralNetwork>

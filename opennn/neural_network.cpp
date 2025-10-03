@@ -870,8 +870,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
-    //set();
-
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
     if(!neural_network_element)
@@ -899,16 +897,13 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     for(Index i = 0; i < new_inputs_number; i++)
     {
         const XMLElement* input_element = start_element->NextSiblingElement("Input");
+        start_element = input_element;
 
         if(input_element->Attribute("Index") != to_string(i+1))
             throw runtime_error("Input index number (" + to_string(i+1) + ") does not match (" + input_element->Attribute("Item") + ").\n");
 
-        if(!input_element->GetText())
-            throw runtime_error("Input text is nullptr.");
-
-        input_names[i] = input_element->GetText();
-
-        start_element = input_element;
+        if(input_element->GetText())
+            input_names[i] = input_element->GetText();
     }
 }
 
