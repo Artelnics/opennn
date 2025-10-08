@@ -22,6 +22,7 @@
 #include "../opennn/normalized_squared_error.h"
 #include "../opennn/optimization_algorithm.h"
 #include "../opennn/genetic_algorithm.h"
+#include "../opennn/weighted_squared_error.h"
 
 using namespace opennn;
 
@@ -43,12 +44,14 @@ int main()
         const Index neurons_number = 6;
 
         ClassificationNetwork classification_network({ inputs_number }, { neurons_number }, { targets_number });
-
+        /*
         // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
+        WeightedSquaredError test;
 
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training_strategy.set_loss_index("WeightedSquaredError");
+        training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
 
         // Genetic Algorithm
 
@@ -77,9 +80,7 @@ int main()
         cout << "\n--- Final Model State ---" << endl;
         cout << "The neural network is now configured with the optimal inputs." << endl;
         cout << "Final number of inputs in the neural network: " << classification_network.get_input_dimensions()[0] << endl;
-
-
-
+        */
         cout << "Completed." << endl;
 
         return 0;

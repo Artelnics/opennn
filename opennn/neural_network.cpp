@@ -241,7 +241,13 @@ void NeuralNetwork::set_default()
 
     display = true;
 
+    layers.clear();
+
     layer_input_indices.clear();
+
+    input_names.clear();
+
+    output_names.clear();
 }
 
 
