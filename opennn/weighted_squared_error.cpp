@@ -49,7 +49,6 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-
     negatives_weight = type(-1.0);
     positives_weight = type(-1.0);
 

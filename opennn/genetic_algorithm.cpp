@@ -299,8 +299,8 @@ void GeneticAlgorithm::initialize_population_correlations()
         individual_raw_variables.setConstant(false);
         
         raw_variables_active = input_raw_variables_number > 100
-                                   ? 1 + rand() % 100
-                                   : 1 + rand() % input_raw_variables_number;
+           ? 1 + rand() % 100
+           : 1 + rand() % input_raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
@@ -362,7 +362,7 @@ void GeneticAlgorithm::evaluate_population()
         raw_inputs_number(i) = individual_raw_variables_indices.size();
 
         dataset->set_raw_variable_indices(individual_raw_variables_indices,
-                                           original_target_raw_variable_indices);
+                                          original_target_raw_variable_indices);
 
         const Index input_variables_number = dataset->get_variables_number("Input");
 
