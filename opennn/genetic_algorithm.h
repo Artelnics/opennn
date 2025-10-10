@@ -37,6 +37,9 @@ public:
 
     Index get_raw_variables_number() const;
 
+    const Index& get_minimum_inputs_number() const override;
+    const Index& get_maximum_inputs_number() const override;
+
     const type& get_mutation_rate() const;
 
     const Index& get_elitism_size() const;
@@ -44,6 +47,9 @@ public:
     const InitializationMethod& get_initialization_method() const;
 
     void set_default();
+
+    void set_minimum_inputs_number(const Index&);
+    void set_maximum_inputs_number(const Index&);
 
     void set_population(const Tensor<bool, 2>&);
 
@@ -111,6 +117,9 @@ private:
     Tensor<type, 1> fitness;
 
     Tensor<bool, 1> selection;
+
+    Index minimum_inputs_number = 1;
+    Index maximum_inputs_number;
 
     type mean_training_error;
 

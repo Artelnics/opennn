@@ -16,6 +16,10 @@ namespace opennn
 
 LossIndex::LossIndex(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
+    const unsigned int threads_number = thread::hardware_concurrency();
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
     set(new_neural_network, new_dataset);
 }
 
@@ -54,13 +58,6 @@ void LossIndex::set(const NeuralNetwork* new_neural_network, const Dataset* new_
 {
     neural_network = const_cast<NeuralNetwork*>(new_neural_network);
     dataset = const_cast<Dataset*>(new_dataset);
-
-    thread_pool.reset();
-    thread_pool_device.reset();
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     regularization_method = "L2";
 }

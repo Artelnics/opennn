@@ -48,7 +48,8 @@ public:
     const Index& get_maximum_iterations_number() const;
     const type& get_maximum_time() const;
 
-    virtual const Index& get_minimum_inputs_number() const { static const Index r(1); return r; }
+    virtual const Index& get_minimum_inputs_number() const = 0;
+    virtual const Index& get_maximum_inputs_number() const = 0;
 
     void set(const TrainingStrategy* = nullptr);
 

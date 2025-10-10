@@ -65,6 +65,18 @@ Index GeneticAlgorithm::get_raw_variables_number() const
 }
 
 
+const Index& GeneticAlgorithm::get_minimum_inputs_number() const 
+{ 
+    return minimum_inputs_number; 
+}
+
+
+const Index& GeneticAlgorithm::get_maximum_inputs_number() const
+{ 
+    return maximum_inputs_number; 
+}
+
+
 const type& GeneticAlgorithm::get_mutation_rate() const
 {
     return mutation_rate;
@@ -94,6 +106,9 @@ void GeneticAlgorithm::set_default()
 
     population.resize(individuals_number, raw_variables_number);
 
+    minimum_inputs_number = 1;
+    maximum_inputs_number = raw_variables_number;
+
     maximum_epochs_number = 40;                 // Modify depending on the Dataset
 
     maximum_time = type(3600);
@@ -114,6 +129,22 @@ void GeneticAlgorithm::set_default()
     elitism_size = Index(ceil(individuals_number / 4));
 
     initialization_method = GeneticAlgorithm::InitializationMethod::Correlations;
+}
+
+
+void GeneticAlgorithm::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
+{
+    minimum_inputs_number = new_minimum_inputs_number;
+}
+
+
+void GeneticAlgorithm::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
+{
+    const Index inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
+
+    maximum_inputs_number = (inputs_number == 0)
+        ? new_maximum_inputs_number
+        : min(new_maximum_inputs_number, inputs_number);
 }
 
 
@@ -202,21 +233,19 @@ void GeneticAlgorithm::initialize_population_random()
 
     cout << "Creating initial random population" << endl;
 
-    const int upper_limit = int(ceil(random_raw_variables_number * percentage) - 1);
-
     random_device rd;
 
     mt19937 gen(rd());
 
-    uniform_int_distribution<> dist(1, upper_limit);
+    uniform_int_distribution<> dist(minimum_inputs_number, maximum_inputs_number);
 
     for(Index i = 0; i < individuals_number; i++)
     {
         individual_raw_variables.setConstant(false);
 
-        const int random_number = dist(gen);
+        const int inputs_to_activate = dist(gen);
 
-        fill_n(individual_raw_variables.data(), random_number, true);
+        fill_n(individual_raw_variables.data(), inputs_to_activate, true);
 
         shuffle(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), gen);
 
@@ -244,6 +273,9 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     const Index raw_variables_number = dataset->get_raw_variables_number("Input");
 
+    if (minimum_inputs_number > maximum_inputs_number)
+        throw runtime_error("GeneticAlgorithm: Minimum inputs number cannot be greater than maximum inputs number.");
+
     fitness_correlations.resize(raw_variables_number);
 
     const Tensor<Correlation, 2> correlations
@@ -253,23 +285,22 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     Tensor<type, 1> absolute_mean_correlations(absolute_correlations.dimension(0));
 
-    if(absolute_correlations.dimension(1) > 1)
-        for(Index i = 0; i < absolute_correlations.dimension(0); i++)
+    if (absolute_correlations.dimension(1) > 1)
+        for (Index i = 0; i < absolute_correlations.dimension(0); i++)
         {
-            const Tensor<type, 1> row_correlations = absolute_correlations.chip(i,0);
+            const Tensor<type, 1> row_correlations = absolute_correlations.chip(i, 0);
             absolute_mean_correlations(i) = mean(row_correlations);
         }
     else
-        absolute_mean_correlations = absolute_correlations.chip(0,1);
+        absolute_mean_correlations = absolute_correlations.chip(0, 1);
 
-   const Tensor<Index, 1> rank = calculate_rank_less(absolute_mean_correlations);
+    const Tensor<Index, 1> rank = calculate_rank_less(absolute_mean_correlations);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        fitness_correlations(rank(i)) = type(i+1);
+    for (Index i = 0; i < raw_variables_number; i++)
+        fitness_correlations(rank(i)) = type(i + 1);
 
-    const Tensor<type,0> fitness_correlations_sum = fitness_correlations.sum();
-
-    const Tensor<type,1> fitness_correlations_cumsum = fitness_correlations.cumsum(0);
+    const Tensor<type, 0> fitness_correlations_sum = fitness_correlations.sum();
+    const Tensor<type, 1> fitness_correlations_cumsum = fitness_correlations.cumsum(0);
 
     const Index individuals_number = get_individuals_number();
 
@@ -278,8 +309,7 @@ void GeneticAlgorithm::initialize_population_correlations()
     Tensor<bool, 1> individual_raw_variables(input_raw_variables_number);
 
     original_input_raw_variables.resize(original_input_raw_variables_number, false);
-
-    for(size_t i = 0; i < original_input_raw_variable_indices.size(); i++)
+    for (size_t i = 0; i < original_input_raw_variable_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variable_indices[i]] = true;
 
     population.setConstant(false);
@@ -290,34 +320,36 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     uniform_real_distribution<> distribution(0, fitness_correlations_sum(0));
 
-    Index raw_variables_active;
+    const Index upper_bound = min(maximum_inputs_number, input_raw_variables_number);
+    uniform_int_distribution<Index> num_inputs_dist(minimum_inputs_number, upper_bound);
 
     type arrow;
 
-    for(Index i = 0; i < individuals_number; i++)
+    for (Index i = 0; i < individuals_number; i++)
     {
         individual_raw_variables.setConstant(false);
-        
-        raw_variables_active = input_raw_variables_number > 100
-                                   ? 1 + rand() % 100
-                                   : 1 + rand() % input_raw_variables_number;
 
-        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true) < raw_variables_active)
+        const Index raw_variables_active = num_inputs_dist(gen);
+
+        while (count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true) < raw_variables_active)
         {
             arrow = distribution(gen);
 
-            if(arrow < fitness_correlations_cumsum(0) && !individual_raw_variables(0))
+            if (arrow < fitness_correlations_cumsum(0) && !individual_raw_variables(0))
                 individual_raw_variables(0) = true;
 
-            for(Index j = 1; j < input_raw_variables_number; j++)
-                if(arrow >= fitness_correlations_cumsum(j - 1) && arrow < fitness_correlations_cumsum(j) && !individual_raw_variables(j))
+            for (Index j = 1; j < input_raw_variables_number; j++)
+                if (arrow >= fitness_correlations_cumsum(j - 1) && arrow < fitness_correlations_cumsum(j) && !individual_raw_variables(j))
                     individual_raw_variables(j) = true;
         }
 
-        if(is_equal(individual_raw_variables, false))
-            individual_raw_variables(rand()%input_raw_variables_number) = true;
+        if (is_equal(individual_raw_variables, false))
+        {
+            uniform_int_distribution<Index> fallback_dist(0, input_raw_variables_number - 1);
+            individual_raw_variables(fallback_dist(gen)) = true;
+        }
 
-        for(Index j = 0; j < raw_variables_number; j++)
+        for (Index j = 0; j < raw_variables_number; j++)
             population(i, j) = individual_raw_variables(j);
     }
 }
@@ -362,7 +394,7 @@ void GeneticAlgorithm::evaluate_population()
         raw_inputs_number(i) = individual_raw_variables_indices.size();
 
         dataset->set_raw_variable_indices(individual_raw_variables_indices,
-                                           original_target_raw_variable_indices);
+                                          original_target_raw_variable_indices);
 
         const Index input_variables_number = dataset->get_variables_number("Input");
 
@@ -432,7 +464,7 @@ void GeneticAlgorithm::perform_selection()
 
     // The next individuals are selected randomly but their probability is set according to their fitness
 
-    while(count(selection.data(), selection.data() + selection.size(), true) < selected_individuals_number)
+    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
         const type random_number = get_random_type(type(0), fitness_sum());
 
@@ -454,7 +486,7 @@ void GeneticAlgorithm::perform_selection()
 
 vector<Index> GeneticAlgorithm::get_selected_individuals_indices() const
 {
-    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), true));
+    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
 
     Index count = 0;
 
@@ -507,7 +539,6 @@ void GeneticAlgorithm::perform_crossover()
             for(Index k = 0; k < raw_variables_number; k++)
                 descendent_raw_variables(k) = (rand() % 2) ? parent_1_raw_variables(k) : parent_2_raw_variables(k);
 
-
             if(is_equal(descendent_raw_variables, false))
             {
                 const Index num_to_activate = max(type(1), type(raw_variables_number / 10));
@@ -521,6 +552,24 @@ void GeneticAlgorithm::perform_crossover()
             }
 
             new_population.chip(descendent_index++, 0) = descendent_raw_variables;
+
+            Index active_inputs = count(descendent_raw_variables.data(), descendent_raw_variables.data() + descendent_raw_variables.size(), true);
+
+            while (active_inputs < minimum_inputs_number) {
+                Index random_pos = rand() % raw_variables_number;
+                if (!descendent_raw_variables(random_pos)) {
+                    descendent_raw_variables(random_pos) = true;
+                    active_inputs++;
+                }
+            }
+
+            while (active_inputs > maximum_inputs_number) {
+                Index random_pos = rand() % raw_variables_number;
+                if (descendent_raw_variables(random_pos)) {
+                    descendent_raw_variables(random_pos) = false;
+                    active_inputs--;
+                }
+            }
         }
     }
 
@@ -540,6 +589,24 @@ void GeneticAlgorithm::perform_mutation()
 
         for(Index j = 0; j < raw_variables_number; j++)
             individual_raw_variables(j) ^= (get_random_type(0, 1) < mutation_rate);
+
+        Index active_inputs = count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true);
+
+        while (active_inputs < minimum_inputs_number) {
+            Index random_pos = rand() % raw_variables_number;
+            if (!individual_raw_variables(random_pos)) {
+                individual_raw_variables(random_pos) = true;
+                active_inputs++;
+            }
+        }
+
+        while (active_inputs > maximum_inputs_number) {
+            Index random_pos = rand() % raw_variables_number;
+            if (individual_raw_variables(random_pos)) {
+                individual_raw_variables(random_pos) = false;
+                active_inputs--;
+            }
+        }
 
         if(is_equal(individual_raw_variables, false))
             for(Index j = 0; j < raw_variables_number; j++)
@@ -574,6 +641,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     // Data set
 
     Dataset* dataset = loss_index->get_dataset();
+
+    if (dataset->has_nan())
+        dataset->scrub_missing_values();
 
     // Neural network
 
@@ -808,6 +878,8 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "ElitismSize", to_string(elitism_size));
     add_xml_element(printer, "MutationRate", to_string(mutation_rate));
     add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
+    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
     add_xml_element(printer, "MaximumGenerationsNumber", to_string(maximum_epochs_number));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
@@ -826,9 +898,9 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
     set_mutation_rate(read_xml_type(root, "MutationRate"));
     set_elitism_size(read_xml_index(root, "ElitismSize"));
     set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
+    set_minimum_inputs_number(read_xml_index(root, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_xml_index(root, "MaximumInputsNumber"));
     set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
-    //set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
-    //set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
     set_maximum_time(read_xml_type(root, "MaximumTime"));
 }
 
