@@ -23,6 +23,7 @@
 #include "../opennn/optimization_algorithm.h"
 #include "../opennn/genetic_algorithm.h"
 #include "../opennn/weighted_squared_error.h"
+#include "../opennn/cross_entropy_error.h"
 
 using namespace opennn;
 
@@ -39,18 +40,33 @@ int main()
         const Index inputs_number = dataset.get_variables_number("Input");
         const Index targets_number = dataset.get_variables_number("Target");
 
+        cout << "\n--- Dataset Information Before Preprocessing ---" << endl;
+        dataset.print_missing_values_information();
+        cout << "Dataset has missing values (NaNs) before scrubbing? "
+            << (dataset.has_nan() ? "Yes" : "No") << endl;
+
+        cout << "\nScrubbing missing values (using mean imputation)..." << endl;
+        dataset.scrub_missing_values();
+
+        cout << "\n--- Dataset Information After Preprocessing ---" << endl;
+        dataset.print_missing_values_information();
+        cout << "Dataset has missing values (NaNs) after scrubbing? "
+            << (dataset.has_nan() ? "Yes" : "No") << endl;
+
+        /*
         // Neural network
 
         const Index neurons_number = 6;
 
         ClassificationNetwork classification_network({ inputs_number }, { neurons_number }, { targets_number });
-        /*
+        
         // Training Strategy
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
         WeightedSquaredError test;
+        CrossEntropyError2d test2;
 
-        training_strategy.set_loss_index("WeightedSquaredError");
+        training_strategy.set_loss_index("CrossEntropyError2d");
         training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
 
         // Genetic Algorithm
@@ -64,6 +80,8 @@ int main()
         genetic_algorithm.set_individuals_number(40); // 40 soluciones candidatas por generación.
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
         genetic_algorithm.set_mutation_rate(0.01);
+
+        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
 
         cout << "\nStarting genetic algorithm for input selection..." << endl;
         InputsSelectionResults ga_results = genetic_algorithm.perform_input_selection();
