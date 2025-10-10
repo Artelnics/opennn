@@ -575,6 +575,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     Dataset* dataset = loss_index->get_dataset();
 
+    if (dataset->has_nan())
+        dataset->scrub_missing_values();
+
     // Neural network
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();

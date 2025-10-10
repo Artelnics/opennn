@@ -138,6 +138,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     dataset->set_input_raw_variables_unused();
 
+    if (dataset->has_nan())
+        dataset->scrub_missing_values();
+
     Index raw_variable_index = 0;
     
     // Neural network

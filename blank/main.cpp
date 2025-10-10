@@ -40,20 +40,8 @@ int main()
         const Index inputs_number = dataset.get_variables_number("Input");
         const Index targets_number = dataset.get_variables_number("Target");
 
-        cout << "\n--- Dataset Information Before Preprocessing ---" << endl;
-        dataset.print_missing_values_information();
-        cout << "Dataset has missing values (NaNs) before scrubbing? "
-            << (dataset.has_nan() ? "Yes" : "No") << endl;
-
-        cout << "\nScrubbing missing values (using mean imputation)..." << endl;
         dataset.scrub_missing_values();
 
-        cout << "\n--- Dataset Information After Preprocessing ---" << endl;
-        dataset.print_missing_values_information();
-        cout << "Dataset has missing values (NaNs) after scrubbing? "
-            << (dataset.has_nan() ? "Yes" : "No") << endl;
-
-        /*
         // Neural network
 
         const Index neurons_number = 6;
@@ -73,10 +61,9 @@ int main()
 
         GeneticAlgorithm genetic_algorithm(&training_strategy);
         genetic_algorithm.set_display(true); // Mostrar información detallada durante la ejecución.
-        genetic_algorithm.set_maximum_epochs_number(20); // Se interpreta como "máximo de generaciones".
-        genetic_algorithm.set_maximum_time(1800); // Límite de tiempo en segundos (e.g., 30 minutos).
+        genetic_algorithm.set_maximum_epochs_number(5); // máximo de generaciones.
+        genetic_algorithm.set_maximum_time(360); // Límite de tiempo en segundos
 
-        // 4.2 (Opcional) Configurar parámetros específicos de GeneticAlgorithm.
         genetic_algorithm.set_individuals_number(40); // 40 soluciones candidatas por generación.
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
         genetic_algorithm.set_mutation_rate(0.01);
@@ -98,7 +85,7 @@ int main()
         cout << "\n--- Final Model State ---" << endl;
         cout << "The neural network is now configured with the optimal inputs." << endl;
         cout << "Final number of inputs in the neural network: " << classification_network.get_input_dimensions()[0] << endl;
-        */
+
         cout << "Completed." << endl;
 
         return 0;
