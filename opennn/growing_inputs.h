@@ -21,9 +21,8 @@ public:
 
     GrowingInputs(const TrainingStrategy* = nullptr);
 
-    const Index& get_maximum_inputs_number() const;
-
     const Index& get_minimum_inputs_number() const override;
+    const Index& get_maximum_inputs_number() const override;
 
     const Index& get_maximum_selection_failures() const;
 

@@ -63,12 +63,13 @@ int main()
         genetic_algorithm.set_display(true); // Mostrar información detallada durante la ejecución.
         genetic_algorithm.set_maximum_epochs_number(5); // máximo de generaciones.
         genetic_algorithm.set_maximum_time(360); // Límite de tiempo en segundos
-
-        genetic_algorithm.set_individuals_number(40); // 40 soluciones candidatas por generación.
+        genetic_algorithm.set_maximum_inputs_number(50);
+        genetic_algorithm.set_individuals_number(10); // 40 soluciones candidatas por generación.
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
         genetic_algorithm.set_mutation_rate(0.01);
 
         genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+        //genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
         cout << "\nStarting genetic algorithm for input selection..." << endl;
         InputsSelectionResults ga_results = genetic_algorithm.perform_input_selection();
