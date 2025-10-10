@@ -66,7 +66,7 @@ int main()
         genetic_algorithm.set_maximum_inputs_number(50);
         genetic_algorithm.set_individuals_number(10); // 40 soluciones candidatas por generación.
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
-        genetic_algorithm.set_mutation_rate(0.01);
+        genetic_algorithm.set_mutation_rate(0.01F);
 
         genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
         //genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
