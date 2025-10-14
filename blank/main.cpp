@@ -24,6 +24,7 @@
 #include "../opennn/genetic_algorithm.h"
 #include "../opennn/weighted_squared_error.h"
 #include "../opennn/cross_entropy_error.h"
+#include "../opennn/image_dataset.h"
 
 using namespace opennn;
 
