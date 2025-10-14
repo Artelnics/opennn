@@ -309,6 +309,7 @@ void GeneticAlgorithm::initialize_population_correlations()
     Tensor<bool, 1> individual_raw_variables(input_raw_variables_number);
 
     original_input_raw_variables.resize(original_input_raw_variables_number, false);
+
     for (size_t i = 0; i < original_input_raw_variable_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variable_indices[i]] = true;
 
@@ -623,10 +624,14 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
+    const LossIndex* loss_index = training_strategy->get_loss_index();
+
+    Dataset* dataset = loss_index->get_dataset();
+
     // Selection algorithm
 
-    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
-    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
+    original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -634,13 +639,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     initialize_population();
 
-    // Loss index
-
-    const LossIndex* loss_index = training_strategy->get_loss_index();
-
     // Data set
-
-    Dataset* dataset = loss_index->get_dataset();
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();
