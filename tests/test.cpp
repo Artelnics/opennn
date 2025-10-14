@@ -9,7 +9,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = "MinkowskiErrorTest*";
+    ::testing::GTEST_FLAG(filter) = "CrossEntropyError2d*";
 
     try {
         return RUN_ALL_TESTS();
