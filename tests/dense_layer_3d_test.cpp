@@ -31,7 +31,6 @@ TEST(Dense3dTest, GeneralConstructor)
 
 TEST(Dense3dTest, ForwardPropagate)
 {
-    /*
     const Index sequence_length = get_random_index(1, 10);
     const Index input_embedding = get_random_index(1, 10);
     const Index output_embedding = get_random_index(1, 10);
@@ -43,20 +42,18 @@ TEST(Dense3dTest, ForwardPropagate)
         make_unique<Dense3dForwardPropagation>(batch_size, &dense_3d);
 
     Tensor<type, 3> inputs(batch_size, sequence_length, input_embedding);
-    inputs.setRandom();
 
-    auto eigen_dimensions = inputs.dimensions();
-    dimensions dims_vector(eigen_dimensions.begin(), eigen_dimensions.end());
+    dimensions dims_vector(inputs.dimensions().begin(), inputs.dimensions().end());
+
     TensorView input_view(inputs.data(), dims_vector);
     vector<TensorView> input_views = { input_view };
 
     dense_3d.forward_propagate(input_views, forward_propagation, false);
 
-    const TensorMap<Tensor<type, 2>> outputs =
-        tensor_map<2>(forward_propagation->get_output_pair());
+    const TensorMap<Tensor<type, 3>> outputs =
+        tensor_map<3>(forward_propagation->get_output_pair());
 
     EXPECT_EQ(outputs.dimension(0), batch_size);
     EXPECT_EQ(outputs.dimension(1), sequence_length);
     EXPECT_EQ(outputs.dimension(2), output_embedding);
-    */
 }

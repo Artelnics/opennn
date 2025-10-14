@@ -20,257 +20,233 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     const Index neurons_number = get_random_index(1, 10);
     const Index time_steps = get_random_index(1, 10);
 
-    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
+    Recurrent recurrent_layer({ time_steps, inputs_number }, { neurons_number });
 
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
-    EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
 
-    EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ time_steps,inputs_number }));
+    EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
+    EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ time_steps, inputs_number }));
     EXPECT_EQ(recurrent_layer.get_output_dimensions(), dimensions({ neurons_number }));
 }
 
 
-TEST(RecurrentLayerTest, Activations)
-{
-    Index neurons_number = 4;
-    Index samples_number = 3;
-    Index inputs_number = 3;
-    Index time_steps = 1;
-/*
-    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-
-    Index total_parameters = recurrent_layer.get_parameters_number();
-
-    Tensor<type, 1> new_parameters(total_parameters);
-    new_parameters.setConstant(type(1));
-
-    Index index = 0;
-
-    recurrent_layer.set_parameters(new_parameters, index);
-
-    Tensor<type, 2> activations(samples_number, neurons_number);
-    Tensor<type, 2> activation_derivatives(samples_number, neurons_number);
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::Logistic);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.731), type(1e-3));
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), type(1e-3));
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::HyperbolicTangent);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(0.761), type(1e-3));
-    EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), type(1e-3));
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::Linear);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::RectifiedLinear);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
-
-    recurrent_layer.set_activation_function(Recurrent::Activation::ExponentialLinear);
-    activations.setConstant(type(1));
-    recurrent_layer.calculate_activations(activations, activation_derivatives);
-
-    EXPECT_NEAR(activations(0, 0), type(1), type(1e-3));
-    EXPECT_NEAR(activation_derivatives(0, 0), type(1), type(1e-3));
-*/
-}
-
 TEST(RecurrentLayerTest, ForwardPropagate)
 {
-    Index neurons_number = 4;
+    Index outputs_number = 4;
     Index samples_number = 3;
     Index inputs_number = 3;
     Index time_steps = 5;
     bool is_training = true;
-/*
-    using Activation = Recurrent::Activation;
 
-    Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
 
     // Test HyperbolicTangent
 
+
     {
-        Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-        recurrent_layer.set_activation_function(Activation::HyperbolicTangent);
+        Recurrent recurrent_layer({ time_steps,inputs_number }, { outputs_number });
+        recurrent_layer.set_activation_function("HyperbolicTangent");
 
-        Index total_parameters = recurrent_layer.get_parameters_number();
+        vector<ParameterView> parameter_views = recurrent_layer.get_parameter_views();
 
-        Tensor<type, 1> new_parameters(total_parameters);
-        new_parameters.setConstant(type(0.1));
+        TensorMap<Tensor<type, 1>> biases_map(parameter_views[0].data, parameter_views[0].size);
+        biases_map.setConstant(0.1);
 
-        Index index = 0;
-        recurrent_layer.set_parameters(new_parameters, index);
+        TensorMap<Tensor<type, 2>> input_weights_map(parameter_views[1].data, inputs_number, outputs_number);
+        input_weights_map.setConstant(0.1);
+
+        TensorMap<Tensor<type, 2>> recurrent_weights_map(parameter_views[2].data, outputs_number, outputs_number);
+        recurrent_weights_map.setConstant(0.1);
 
         Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
         unique_ptr<LayerForwardPropagation> recurrent_layer_forward_propagation
-            = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+            = make_unique<RecurrentForwardPropagation>(samples_number, &recurrent_layer);
 
-        pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+        vector<TensorView> input_tensor;
+        input_tensor.push_back({ inputs.data(), {{samples_number, time_steps, inputs_number}} });
 
-        recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+        recurrent_layer.forward_propagate(input_tensor, recurrent_layer_forward_propagation, is_training);
 
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation_ptr =
-            static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+        TensorView outputs_view = recurrent_layer_forward_propagation.get()->get_output_pair();
 
-        Tensor<type, 2> outputs = recurrent_layer_forward_propagation_ptr->outputs;
+        TensorMap<const Tensor<const type, 2>> output_tensor(outputs_view.data,
+                                                             outputs_view.dims[0],
+                                                             outputs_view.dims[1]
+                                                             );
 
-        EXPECT_EQ(outputs.dimension(0), samples_number);
-        EXPECT_EQ(outputs.dimension(1), neurons_number);
 
-        EXPECT_NEAR(outputs(0, 0), type(0.500356), NUMERIC_LIMITS_MIN);
+        EXPECT_EQ(output_tensor.dimension(0), samples_number);
+        EXPECT_EQ(output_tensor.dimension(1), outputs_number);
+        EXPECT_NEAR(output_tensor(0, 0), 0.550479, 1e-6);
     }
+
 
     // Test Logistic
 
+
     {
-        Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-        recurrent_layer.set_activation_function(Activation::Logistic);
+        Recurrent recurrent_layer({ time_steps, inputs_number }, { outputs_number });
+        recurrent_layer.set_activation_function("Logistic");
 
-        Index total_parameters = recurrent_layer.get_parameters_number();
+        vector<ParameterView> parameter_views = recurrent_layer.get_parameter_views();
 
-        Tensor<type, 1> new_parameters(total_parameters);
-        new_parameters.setConstant(type(0.1));
+        TensorMap<Tensor<type, 1>> biases_map(parameter_views[0].data, parameter_views[0].size);
+        biases_map.setConstant(0.1);
 
-        Index index = 0;
-        recurrent_layer.set_parameters(new_parameters, index);
+        TensorMap<Tensor<type, 2>> input_weights_map(parameter_views[1].data, inputs_number, outputs_number);
+        input_weights_map.setConstant(0.1);
+
+        TensorMap<Tensor<type, 2>> recurrent_weights_map(parameter_views[2].data, outputs_number, outputs_number);
+        recurrent_weights_map.setConstant(0.1);
 
         Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
         unique_ptr<LayerForwardPropagation> recurrent_layer_forward_propagation
-            = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+            = make_unique<RecurrentForwardPropagation>(samples_number, &recurrent_layer);
 
-        pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+        vector<TensorView> input_tensor;
+        input_tensor.push_back({ inputs.data(), {{samples_number, time_steps, inputs_number}} });
 
-        recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+        recurrent_layer.forward_propagate(input_tensor, recurrent_layer_forward_propagation, is_training);
 
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation_ptr =
-            static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+        TensorView outputs_view = recurrent_layer_forward_propagation.get()->get_output_pair();
 
-        Tensor<type, 2> outputs = recurrent_layer_forward_propagation_ptr->outputs;
+        TensorMap<const Tensor<const type, 2>> output_tensor(outputs_view.data,
+                                                             outputs_view.dims[0],
+                                                             outputs_view.dims[1]
+                                                             );
 
-        EXPECT_EQ(outputs.dimension(0), samples_number);
-        EXPECT_EQ(outputs.dimension(1), neurons_number);
-
-        EXPECT_NEAR(outputs(0, 0), type(0.6441), type(1e-3));
+        EXPECT_EQ(output_tensor.dimension(0), samples_number);
+        EXPECT_EQ(output_tensor.dimension(1), outputs_number);
+        EXPECT_NEAR(output_tensor(0, 0), type(0.66066), type(1e-3));
     }
+
 
     //Test Linear
 
+
     {
-        Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-        recurrent_layer.set_activation_function(Activation::Linear);
+        Recurrent recurrent_layer({ time_steps, inputs_number }, { outputs_number });
+        recurrent_layer.set_activation_function("Linear");
 
-        Index total_parameters = recurrent_layer.get_parameters_number();
+        vector<ParameterView> parameter_views = recurrent_layer.get_parameter_views();
 
-        Tensor<type, 1> new_parameters(total_parameters);
-        new_parameters.setConstant(type(0.1));
+        TensorMap<Tensor<type, 1>> biases_map(parameter_views[0].data, parameter_views[0].size);
+        biases_map.setConstant(0.1);
 
-        Index index = 0;
-        recurrent_layer.set_parameters(new_parameters, index);
+        TensorMap<Tensor<type, 2>> input_weights_map(parameter_views[1].data, inputs_number, outputs_number);
+        input_weights_map.setConstant(0.1);
+
+        TensorMap<Tensor<type, 2>> recurrent_weights_map(parameter_views[2].data, outputs_number, outputs_number);
+        recurrent_weights_map.setConstant(0.1);
 
         Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
         unique_ptr<LayerForwardPropagation> recurrent_layer_forward_propagation
-            = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+            = make_unique<RecurrentForwardPropagation>(samples_number, &recurrent_layer);
 
-        pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+        vector<TensorView> input_tensor;
+        input_tensor.push_back({ inputs.data(), {{samples_number, time_steps, inputs_number}} });
 
-        recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+        recurrent_layer.forward_propagate(input_tensor, recurrent_layer_forward_propagation, is_training);
 
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation_ptr =
-            static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+        TensorView outputs_view = recurrent_layer_forward_propagation.get()->get_output_pair();
 
-        Tensor<type, 2> outputs = recurrent_layer_forward_propagation_ptr->outputs;
+        TensorMap<const Tensor<const type, 2>> output_tensor(outputs_view.data,
+                                                             outputs_view.dims[0],
+                                                             outputs_view.dims[1]
+                                                             );
 
-        EXPECT_EQ(outputs.dimension(0), samples_number);
-        EXPECT_EQ(outputs.dimension(1), neurons_number);
-
-        EXPECT_NEAR(outputs(0, 0), type(0.57004), type(1e-3));
+        EXPECT_EQ(output_tensor.dimension(0), samples_number);
+        EXPECT_EQ(output_tensor.dimension(1), outputs_number);
+        EXPECT_NEAR(output_tensor(0, 0), type(0.65984), type(1e-3));
     }
+    
 
     //Test RectifiedLinear
 
+
     {
-        Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-        recurrent_layer.set_activation_function(Activation::RectifiedLinear);
+        Recurrent recurrent_layer({ time_steps, inputs_number }, { outputs_number });
+        recurrent_layer.set_activation_function("RectifiedLinear");
 
-        Index total_parameters = recurrent_layer.get_parameters_number();
+        vector<ParameterView> parameter_views = recurrent_layer.get_parameter_views();
 
-        Tensor<type, 1> new_parameters(total_parameters);
-        new_parameters.setConstant(type(0.1));
+        TensorMap<Tensor<type, 1>> biases_map(parameter_views[0].data, parameter_views[0].size);
+        biases_map.setConstant(0.1);
 
-        Index index = 0;
-        recurrent_layer.set_parameters(new_parameters, index);
+        TensorMap<Tensor<type, 2>> input_weights_map(parameter_views[1].data, inputs_number, outputs_number);
+        input_weights_map.setConstant(0.1);
+
+        TensorMap<Tensor<type, 2>> recurrent_weights_map(parameter_views[2].data, outputs_number, outputs_number);
+        recurrent_weights_map.setConstant(0.1);
 
         Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
         unique_ptr<LayerForwardPropagation> recurrent_layer_forward_propagation
-            = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+            = make_unique<RecurrentForwardPropagation>(samples_number, &recurrent_layer);
 
-        pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+        vector<TensorView> input_tensor;
+        input_tensor.push_back({ inputs.data(), {{samples_number, time_steps, inputs_number}} });
 
-        recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+        recurrent_layer.forward_propagate(input_tensor, recurrent_layer_forward_propagation, is_training);
 
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation_ptr =
-            static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+        TensorView outputs_view = recurrent_layer_forward_propagation.get()->get_output_pair();
 
-        Tensor<type, 2> outputs = recurrent_layer_forward_propagation_ptr->outputs;
+        TensorMap<const Tensor<const type, 2>> output_tensor(outputs_view.data,
+                                                             outputs_view.dims[0],
+                                                             outputs_view.dims[1]
+                                                            );
 
-        EXPECT_EQ(outputs.dimension(0), samples_number);
-        EXPECT_EQ(outputs.dimension(1), neurons_number);
 
-        EXPECT_NEAR(outputs(0, 0), type(0.57004), type(1e-3));
+        EXPECT_EQ(output_tensor.dimension(0), samples_number);
+        EXPECT_EQ(output_tensor.dimension(1), outputs_number);
+        EXPECT_NEAR(output_tensor(0, 0), type(0.65984), type(1e-3));
     }
 
-    //Test ExponentialLinear
+    
+
+    //Test ScaledExponentialLinear
 
     {
-        Recurrent recurrent_layer({ inputs_number, time_steps }, { neurons_number });
-        recurrent_layer.set_activation_function(Activation::ExponentialLinear);
+        Recurrent recurrent_layer({ time_steps,inputs_number }, { outputs_number });
+        recurrent_layer.set_activation_function("ScaledExponentialLinear");
 
-        Index total_parameters = recurrent_layer.get_parameters_number();
+        vector<ParameterView> parameter_views = recurrent_layer.get_parameter_views();
 
-        Tensor<type, 1> new_parameters(total_parameters);
-        new_parameters.setConstant(type(0.1));
+        TensorMap<Tensor<type, 1>> biases_map(parameter_views[0].data, parameter_views[0].size);
+        biases_map.setConstant(0.1);
 
-        Index index = 0;
-        recurrent_layer.set_parameters(new_parameters, index);
+        TensorMap<Tensor<type, 2>> input_weights_map(parameter_views[1].data, inputs_number, outputs_number);
+        input_weights_map.setConstant(0.1);
+
+        TensorMap<Tensor<type, 2>> recurrent_weights_map(parameter_views[2].data, outputs_number, outputs_number);
+        recurrent_weights_map.setConstant(0.1);
 
         Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);
-        inputs.setConstant(type(1));
+        inputs.setConstant(1.0);
 
         unique_ptr<LayerForwardPropagation> recurrent_layer_forward_propagation
-            = make_unique<RecurrentLayerForwardPropagation>(samples_number, &recurrent_layer);
+            = make_unique<RecurrentForwardPropagation>(samples_number, &recurrent_layer);
 
-        pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, time_steps, inputs_number}} };
+        vector<TensorView> input_tensor;
+        input_tensor.push_back({ inputs.data(), {{samples_number, time_steps, inputs_number}} });
 
-        recurrent_layer.forward_propagate({ input_pairs }, recurrent_layer_forward_propagation, is_training);
+        recurrent_layer.forward_propagate(input_tensor, recurrent_layer_forward_propagation, true);
 
-        RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation_ptr =
-            static_cast<RecurrentLayerForwardPropagation*>(recurrent_layer_forward_propagation.get());
+        TensorView outputs_view = recurrent_layer_forward_propagation.get()->get_output_pair();
 
-    EXPECT_NEAR(outputs(0,0),0.5700,type(1e-3));
+        TensorMap<const Tensor<const type, 2>> output_tensor(outputs_view.data,
+                                                             outputs_view.dims[0],
+                                                             outputs_view.dims[1]
+                                                             );
 
-        Tensor<type, 2> outputs = recurrent_layer_forward_propagation_ptr->outputs;
-
-        EXPECT_EQ(outputs.dimension(0), samples_number);
-        EXPECT_EQ(outputs.dimension(1), neurons_number);
-
-        EXPECT_NEAR(outputs(0, 0), type(0.57004), type(1e-3));
+        EXPECT_EQ(output_tensor.dimension(0), samples_number);
+        EXPECT_EQ(output_tensor.dimension(1), outputs_number);
+        EXPECT_NEAR(output_tensor(0, 0), 0.65984, 1e-5);
     }
-*/
 }
