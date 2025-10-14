@@ -89,8 +89,14 @@ public:
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                        output_dimensions,
                                        "Softmax",
-                                       false, // Batch normalization
+                                       false,
                                        "classification_layer"));
+
+        const Index inputs_number = get_inputs_number();
+        input_names.resize(inputs_number);
+
+        const Index outputs_number = get_outputs_number();
+        output_names.resize(outputs_number);
     }
 };
 
@@ -115,7 +121,13 @@ public:
 
         add_layer(make_unique<Unscaling>(output_dimensions));
 
-        //add_layer(make_unique<Bounding>(output_dimensions));
+        add_layer(make_unique<Bounding>(output_dimensions));
+
+        const Index inputs_number = get_inputs_number();
+        input_names.resize(inputs_number);
+
+        const Index outputs_number = get_outputs_number();
+        output_names.resize(outputs_number);
     }
 };
 
@@ -211,6 +223,12 @@ public:
                                        "Softmax",
                                        false, // Batch normalization
                                        "dense_2d_layer"));
+
+        const Index inputs_number = get_inputs_number();
+        input_names.resize(inputs_number);
+
+        const Index outputs_number = get_outputs_number();
+        output_names.resize(outputs_number);
     }
 };
 

@@ -2181,23 +2181,16 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
 
-    //#pragma omp parallel for
-
+    #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_raw_variable_index = input_raw_variable_indices[i];
-
-        const Tensor<type, 2> input_raw_variable_data
-            = get_raw_variable_data(input_raw_variable_index, used_sample_indices);
+        const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_raw_variable_index, used_sample_indices);
 
         for (Index j = 0; j < target_raw_variables_number; j++)
         {
             const Index target_raw_variable_index = target_raw_variable_indices[j];
-
-            const Tensor<type, 2> target_raw_variable_data
-                = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
-
+            const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
             correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
@@ -2220,19 +2213,16 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
 
+    #pragma omp parallel for schedule(dynamic)
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
         const Index input_index = input_raw_variable_indices[i];
-
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_sample_indices);
 
         for (Index j = 0; j < target_raw_variables_number; j++)
         {
             const Index target_index = target_raw_variable_indices[j];
-
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_sample_indices);
-
             correlations(i, j) = correlation_spearman(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
@@ -3438,6 +3428,9 @@ void Dataset::impute_missing_values_mean()
     const vector<Index> input_variable_indices = get_variable_indices("Input");
     const vector<Index> target_variable_indices = get_variable_indices("Target");
 
+    if (used_sample_indices.empty() || used_variable_indices.empty())
+        return;
+
     const Tensor<type, 1> means = mean(data, used_sample_indices, used_variable_indices);
 
     const Index samples_number = used_sample_indices.size();
@@ -3446,8 +3439,6 @@ void Dataset::impute_missing_values_mean()
 
     Index current_variable;
     Index current_sample;
-
-#pragma omp parallel for schedule(dynamic)
 
     for (Index j = 0; j < variables_number - target_variables_number; j++)
     {
@@ -3461,8 +3452,6 @@ void Dataset::impute_missing_values_mean()
                 data(current_sample, current_variable) = means(j);
         }
     }
-
-#pragma omp parallel for schedule(dynamic)
 
     for (Index j = 0; j < target_variables_number; j++)
     {
@@ -3492,8 +3481,6 @@ void Dataset::impute_missing_values_median()
     const Index variables_number = used_variable_indices.size();
     const Index target_variables_number = target_variable_indices.size();
 
-#pragma omp parallel for schedule(dynamic)
-
     for (Index j = 0; j < variables_number - target_variables_number; j++)
     {
         const Index current_variable = input_variable_indices[j];
@@ -3506,8 +3493,6 @@ void Dataset::impute_missing_values_median()
                 data(current_sample, current_variable) = medians(j);
         }
     }
-
-#pragma omp parallel for schedule(dynamic)
 
     for (Index j = 0; j < target_variables_number; j++)
     {
@@ -3538,7 +3523,6 @@ void Dataset::impute_missing_values_interpolate()
     Index current_variable;
     Index current_sample;
 
-#pragma omp parallel for schedule(dynamic)
     for (Index j = 0; j < variables_number - target_variables_number; j++)
     {
         current_variable = input_variable_indices[j];
@@ -3589,7 +3573,6 @@ void Dataset::impute_missing_values_interpolate()
         }
     }
 
-#pragma omp parallel for schedule(dynamic)
     for (Index j = 0; j < target_variables_number; j++)
     {
         current_variable = target_variable_indices[j];
@@ -3625,6 +3608,8 @@ void Dataset::scrub_missing_values()
         impute_missing_values_interpolate();
         break;
     }
+
+    missing_values_number = count_nan();
 }
 
 

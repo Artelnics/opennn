@@ -1462,7 +1462,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
 
-    if(row_indices_size == 0 && column_indices_size == 0) 
+    if(row_indices_size == 0 || column_indices_size == 0) 
         return Tensor<type, 1>();
 
     Index row_index;
@@ -1472,7 +1472,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
 
     // Mean
 
-    Tensor<type, 1> mean(column_indices_size); // @todo check test crash here
+    Tensor<type, 1> mean(column_indices_size);
     mean.setZero();
     
     for(Index j = 0; j < column_indices_size; j++)

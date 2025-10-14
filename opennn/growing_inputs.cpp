@@ -24,15 +24,15 @@ GrowingInputs::GrowingInputs(const TrainingStrategy* new_training_strategy)
 }
 
 
-const Index& GrowingInputs::get_maximum_inputs_number() const
-{
-    return maximum_inputs_number;
-}
-
-
 const Index& GrowingInputs::get_minimum_inputs_number() const
 {
     return minimum_inputs_number;
+}
+
+
+const Index& GrowingInputs::get_maximum_inputs_number() const
+{
+    return maximum_inputs_number;
 }
 
 
@@ -137,6 +137,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     dataset->set_input_raw_variables_unused();
+
+    if (dataset->has_nan())
+        dataset->scrub_missing_values();
 
     Index raw_variable_index = 0;
     

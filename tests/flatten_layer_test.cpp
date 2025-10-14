@@ -34,7 +34,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     const Index batch_size = 2;
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<FlattenForwardPropagation<2>>(batch_size, flatten_layer.get());
+        make_unique<FlattenForwardPropagation<4>>(batch_size, flatten_layer.get());
 
     Tensor<type, 4> inputs(batch_size, height, width, channels);
     inputs.setConstant(1.23f);
@@ -56,28 +56,26 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 
 TEST_F(FlattenLayerTest, BackPropagate)
 {
-    /*
     const Index batch_size = 2;
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<FlattenForwardPropagation<2>>(batch_size, flatten_layer.get());
+        make_unique<FlattenForwardPropagation<4>>(batch_size, flatten_layer.get());
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<FlattenBackPropagation<2>>(batch_size, flatten_layer.get());
+        make_unique<FlattenBackPropagation<4>>(batch_size, flatten_layer.get());
 
     Tensor<type, 4> inputs(batch_size, height, width, channels);
-    inputs.setRandom();
-
+    inputs.setConstant(1.0f);
     TensorView input_view(inputs.data(), dimensions{ batch_size, height, width, channels });
 
     const Index flattened_size = height * width * channels;
     Tensor<type, 2> output_derivatives(batch_size, flattened_size);
     output_derivatives.setConstant(1.0f);
     TensorView output_derivatives_view(output_derivatives.data(), dimensions{ batch_size, flattened_size });
-
+    
     flatten_layer->forward_propagate({ input_view }, forward_propagation, true);
-
+    
     flatten_layer->back_propagate({ input_view }, { output_derivatives_view }, forward_propagation, back_propagation);
-
+    
     const vector<TensorView> input_derivative_views = back_propagation->get_input_derivative_views();
 
     ASSERT_EQ(input_derivative_views.size(), 1) << "Flatten layer should have one input derivative.";
@@ -108,5 +106,4 @@ TEST_F(FlattenLayerTest, BackPropagate)
     }
 
     EXPECT_TRUE(all_values_are_correct) << "All values in the input derivative tensor should be 1.0.";
-    */
 }
