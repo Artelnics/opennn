@@ -19,7 +19,6 @@ struct ParameterView
 
 struct TensorView
 {
-
     type* data = nullptr;
     dimensions dims;
 

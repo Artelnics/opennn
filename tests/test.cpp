@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "NeuralNetwork*";
+    ::testing::GTEST_FLAG(filter) = "FlattenLayerTest*";
 
     try {
         return RUN_ALL_TESTS();
