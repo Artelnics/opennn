@@ -27,38 +27,78 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 }
 
 
-TEST(GeneticAlgorithmTest, InitializePopulation)
+TEST(GeneticAlgorithmTest, InitializePopulationCorrelations_WithVariableFeatures)
 {
-    Index individuals_number = 8;
-    Index inputs_number = 3;
-    Index targets_number = 1;
-    Index neurons_number = 1;
-    Index samples_number = 10;
+    const Index individuals_number = 10000;
+    const Index inputs_number = 3;
+    const Index targets_number = 1;
+    const Index total_variables = inputs_number + targets_number;
+    const Index samples_number = 100;
 
-    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    const Index min_features_to_select = 2;
+    const Index max_features_to_select = 3;
+
+    Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_display(false);
 
-    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
+    Tensor<type, 2> full_data(samples_number, total_variables);
 
+    for (Index i = 0; i < samples_number; ++i) {
+        type value = static_cast<type>(i);
+        full_data(i, 0) = static_cast<type>(rand()) / RAND_MAX;
+        full_data(i, 1) = value;                              
+        full_data(i, 2) = value / 2.0;                       
+        full_data(i, 3) = value;                             
+    }
+
+    dataset.set_data(full_data);
+    dataset.set_raw_variable_use(0, "Input");
+    dataset.set_raw_variable_use(1, "Input");
+    dataset.set_raw_variable_use(2, "Input");
+    dataset.set_raw_variable_use(3, "Target");
+
+    ApproximationNetwork neural_network({ inputs_number }, { 1 }, { targets_number });
     TrainingStrategy training_strategy(&neural_network, &dataset);
-
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-    Tensor <bool, 2> population;
-    Tensor <bool, 1> individual;
-    Tensor <bool, 1> gene;
-
     genetic_algorithm.set_individuals_number(individuals_number);
-    genetic_algorithm.initialize_population();
 
-    population = genetic_algorithm.get_population();
-    gene = population.chip(0, 1);
-    individual = population.chip(1, 0);
+    genetic_algorithm.set_minimum_inputs_number(min_features_to_select);
+    genetic_algorithm.set_maximum_inputs_number(max_features_to_select);
+
+    genetic_algorithm.initialize_population_correlations();
+
+    Tensor<bool, 2> population = genetic_algorithm.get_population();
 
     EXPECT_EQ(population.dimension(0), individuals_number);
     EXPECT_EQ(population.dimension(1), inputs_number);
-    EXPECT_EQ(gene.size(), individuals_number);
-    EXPECT_EQ(individual.size(), inputs_number);
+
+    Tensor<double, 1> counts(inputs_number);
+    counts.setZero();
+    bool found_min = false;
+    bool found_max = false;
+
+    for (Index i = 0; i < individuals_number; i++) {
+        Index active_genes_in_individual = 0;
+        for (Index j = 0; j < inputs_number; j++) {
+            if (population(i, j)) {
+                counts(j)++;
+                active_genes_in_individual++;
+            }
+        }
+
+        EXPECT_GE(active_genes_in_individual, min_features_to_select);
+        EXPECT_LE(active_genes_in_individual, max_features_to_select);
+
+        if (active_genes_in_individual == min_features_to_select) found_min = true;
+        if (active_genes_in_individual == max_features_to_select) found_max = true;
+    }
+
+    EXPECT_TRUE(found_min);
+    EXPECT_TRUE(found_max);
+
+    EXPECT_GT(counts(1), counts(2));
+    EXPECT_GT(counts(2), counts(0));
 }
 
 
