@@ -104,6 +104,9 @@ void GeneticAlgorithm::set_default()
 
     const Index raw_variables_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
+    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
+
     population.resize(individuals_number, raw_variables_number);
 
     minimum_inputs_number = 1;
@@ -231,8 +234,6 @@ void GeneticAlgorithm::initialize_population_random()
     Tensor<bool, 1> individual_raw_variables(original_input_raw_variables_number);
     individual_raw_variables.setConstant(false);
 
-    cout << "Creating initial random population" << endl;
-
     random_device rd;
 
     mt19937 gen(rd());
@@ -259,8 +260,6 @@ void GeneticAlgorithm::initialize_population_random()
 
         population.chip(i, 0) = individual_raw_variables;
     }
-
-    cout << "Initial random population created" << endl;
 }
 
 
