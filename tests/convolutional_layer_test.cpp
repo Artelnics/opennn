@@ -5,17 +5,16 @@
 
 using namespace opennn;
 
-Tensor<type, 4> generate_input_tensor_convolution(const Tensor<type, 2>& data,
-    const vector<Index>& row_indices,
-    const vector<Index>& column_indices,
-    const dimensions& input_dimensions) {
-    Tensor<type, 4> input_tensor(row_indices.size(),
-                                 input_dimensions[0],
-                                 input_dimensions[1],
-                                 input_dimensions[2]);
-    type* tensor_data = input_tensor.data();
-    fill_tensor_data(data, row_indices, column_indices, tensor_data);
-    return input_tensor;
+
+void set_layer_parameters_constant(Layer& layer, const type& value)
+{
+    const vector<ParameterView> parameter_views = layer.get_parameter_views();
+
+    for (const auto& view : parameter_views)
+    {
+        TensorMap<Tensor<type, 1>> parameters_map(view.data, view.size);
+        parameters_map.setConstant(value);
+    }
 }
 
 
@@ -27,38 +26,31 @@ struct ConvolutionalLayerConfig {
     Convolutional::Convolution convolution_type;
     bool batch_normalization;
     string test_name;
-    Tensor<type, 4> input_data;
-    Tensor<type, 4> expected_output;
 };
 
 
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
 
+INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
 
-INSTANTIATE_TEST_SUITE_P(MyTests, ConvolutionalLayerTest, ::testing::Values(
-
-    // Caso de prueba 1: SIN Batch Normalization
     ConvolutionalLayerConfig{
-        {28, 28, 1},          
-        {3, 3, 1, 16},        
-        {1, 1},               
-        "Linear",               
+        {28, 28, 1},         
+        {3, 3, 1, 16},       
+        {1, 1},              
+        "Linear",      
         Convolutional::Convolution::Valid, 
-        false,                
-        "StandardCaseNoBN",   
-        {}, {}                
+        false,          
+        "ValidPaddingWithoutBN"
     },
 
-    // Caso de prueba 2: CON Batch Normalization
     ConvolutionalLayerConfig{
-        {32, 32, 1},          
-        {5, 5, 1, 32},        
-        {2, 2},               
-        "Linear",               
+        {32, 32, 3},
+        {5, 5, 3, 32}, 
+        {1, 1}, 
+        "RectifiedLinear", 
         Convolutional::Convolution::Same, 
-        true,                 
-        "SamePaddingWithBN",  
-        {}, {}               
+        false,                 // Batch Normalization
+        "SamePaddingWithoutBN"
     }
 ));
 
@@ -68,59 +60,52 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     ConvolutionalLayerConfig parameters = GetParam();
 
     Convolutional convolutional_layer(parameters.input_dimensions,
-                                      parameters.kernel_dimensions,
-                                      parameters.activation_function,
-                                      parameters.stride_dimensions,
-                                      parameters.convolution_type,
-                                      parameters.batch_normalization,
-                                      parameters.test_name);
-
+        parameters.kernel_dimensions,
+        parameters.activation_function,
+        parameters.stride_dimensions,
+        parameters.convolution_type,
+        parameters.batch_normalization,
+        parameters.test_name);
 
     EXPECT_EQ(convolutional_layer.get_input_dimensions(), parameters.input_dimensions);
     EXPECT_EQ(convolutional_layer.get_kernel_height(), parameters.kernel_dimensions[0]);
     EXPECT_EQ(convolutional_layer.get_kernel_width(), parameters.kernel_dimensions[1]);
+    EXPECT_EQ(convolutional_layer.get_kernel_channels(), parameters.kernel_dimensions[2]);
     EXPECT_EQ(convolutional_layer.get_kernels_number(), parameters.kernel_dimensions[3]);
     EXPECT_EQ(convolutional_layer.get_row_stride(), parameters.stride_dimensions[0]);
     EXPECT_EQ(convolutional_layer.get_column_stride(), parameters.stride_dimensions[1]);
     EXPECT_EQ(convolutional_layer.get_activation_function(), parameters.activation_function);
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
     EXPECT_EQ(convolutional_layer.get_convolution_type(), parameters.convolution_type);
-
 }
 
 
-// @todo -> crash in forward_propagation
-/*
 TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 {
     ConvolutionalLayerConfig parameters = GetParam();
 
     Convolutional convolutional_layer(parameters.input_dimensions,
-                                      parameters.kernel_dimensions,
-                                      parameters.activation_function,
-                                      parameters.stride_dimensions,
-                                      parameters.convolution_type,
-                                      parameters.batch_normalization,
-                                      parameters.test_name);
+        parameters.kernel_dimensions,
+        parameters.activation_function,
+        parameters.stride_dimensions,
+        parameters.convolution_type,
+        parameters.batch_normalization,
+        parameters.test_name);
 
+    set_layer_parameters_constant(convolutional_layer, 0.5);
 
-    Tensor<type, 1> layer_parameters(convolutional_layer.get_parameters_number());
-    layer_parameters.setConstant(1.0);
-    convolutional_layer.set_parameters(layer_parameters);
+    const Index batch_size = 2;
 
-    const Index batch_size = parameters.input_data.dimension(0);
+    Tensor<type, 4> input_data(batch_size,
+        parameters.input_dimensions[0],
+        parameters.input_dimensions[1],
+        parameters.input_dimensions[2]);
+    input_data.setConstant(1.0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<ConvolutionalForwardPropagation>(batch_size, &convolutional_layer);
 
-    pair<type*, dimensions> input_pair(parameters.input_data.data(),
-                                       {batch_size,
-                                        parameters.input_dimensions[0],
-                                        parameters.input_dimensions[1],
-                                        parameters.input_dimensions[2]});
-
-
-    TensorView input_view(parameters.input_data.data(),
+    TensorView input_view(input_data.data(),
         { batch_size,
          parameters.input_dimensions[0],
          parameters.input_dimensions[1],
@@ -128,137 +113,92 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 
     vector<TensorView> input_views = { input_view };
 
-    convolutional_layer.forward_propagate(input_views, forward_propagation, true); //{input_pair}
-
-
+    convolutional_layer.forward_propagate(input_views, forward_propagation, true);
 
     const TensorView output_view = forward_propagation->get_output_pair();
+    const dimensions expected_output_dims = convolutional_layer.get_output_dimensions();
 
-    EXPECT_EQ(output_view.dims[0], batch_size); //output_pair.second[0]
-    EXPECT_EQ(output_view.dims[1], parameters.expected_output.dimension(1));
-    EXPECT_EQ(output_view.dims[2], parameters.expected_output.dimension(2));
-    EXPECT_EQ(output_view.dims[3], parameters.expected_output.dimension(3));
+    ASSERT_EQ(output_view.dims.size(), 4);
+    EXPECT_EQ(output_view.dims[0], batch_size);
+    EXPECT_EQ(output_view.dims[1], expected_output_dims[0]);
+    EXPECT_EQ(output_view.dims[2], expected_output_dims[1]);
+    EXPECT_EQ(output_view.dims[3], expected_output_dims[2]);
 
+    if (!parameters.batch_normalization && parameters.activation_function == "Linear")
+    {
+        const Index kernel_height = parameters.kernel_dimensions[0];
+        const Index kernel_width = parameters.kernel_dimensions[1];
+        const Index kernel_channels = parameters.kernel_dimensions[2];
 
-    TensorMap<const Tensor<const type, 4>> output_tensor(output_view.data,
-                                           batch_size,
-                                           parameters.expected_output.dimension(1),
-                                           parameters.expected_output.dimension(2),
-                                           parameters.expected_output.dimension(3));
+        const type expected_value = (kernel_height * kernel_width * kernel_channels * 1.0 * 0.5) + 0.5;
 
-    for (Index b = 0; b < batch_size; ++b) {
-        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
-            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
-                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
-                    EXPECT_NEAR(output_tensor(b, h, w, c), parameters.expected_output(b, h, w, c), 1e-5)
-                        << "Mismatch at batch=" << b << ", height=" << h
-                        << ", width=" << w << ", channel=" << c;
-                }
-            }
+        TensorMap<const Tensor<const type, 4>> output_tensor(output_view.data,
+            output_view.dims[0],
+            output_view.dims[1],
+            output_view.dims[2],
+            output_view.dims[3]);
+
+        for (Index i = 0; i < output_tensor.size(); ++i) {
+            EXPECT_NEAR(output_tensor(i), expected_value, 1e-5);
         }
     }
 }
 
-}
-*/
 
-TEST_P(ConvolutionalLayerTest, BackPropagate) 
+TEST_P(ConvolutionalLayerTest, BackPropagate)
 {
-/*
     ConvolutionalLayerConfig parameters = GetParam();
 
     Convolutional convolutional_layer(parameters.input_dimensions,
-                                      parameters.kernel_dimensions,
-                                      parameters.activation_function,
-                                      parameters.stride_dimensions,
-                                      parameters.convolution_type,
-                                      parameters.test_name);
+        parameters.kernel_dimensions,
+        parameters.activation_function,
+        parameters.stride_dimensions,
+        parameters.convolution_type,
+        parameters.batch_normalization,
+        parameters.test_name);
 
-    const Index batch_size = parameters.input_data.dimension(0);
+    set_layer_parameters_constant(convolutional_layer, 0.5);
+
+    const Index batch_size = 2;
+
+    Tensor<type, 4> input_data(batch_size,
+        parameters.input_dimensions[0],
+        parameters.input_dimensions[1],
+        parameters.input_dimensions[2]);
+    input_data.setConstant(1.0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<ConvolutionalForwardPropagation>(batch_size, &convolutional_layer);
 
-    unique_ptr<LayerBackPropagation> back_propagation =
+    TensorView input_view(input_data.data(), { batch_size, parameters.input_dimensions[0], parameters.input_dimensions[1], parameters.input_dimensions[2] });
+    convolutional_layer.forward_propagate({ input_view }, forward_propagation, true);
+
+    unique_ptr<LayerBackPropagation> back_propagation_base =
         make_unique<ConvolutionalBackPropagation>(batch_size, &convolutional_layer);
 
-    pair<type*, dimensions> input_pair(parameters.input_data.data(),
-                                       {batch_size,
-                                        parameters.input_dimensions[0],
-                                        parameters.input_dimensions[1],
-                                        parameters.input_dimensions[2]});
-    
-    convolutional_layer.set_parameters_constant(1.0);
+    ConvolutionalBackPropagation* back_propagation =
+        static_cast<ConvolutionalBackPropagation*>(back_propagation_base.get());
 
-    convolutional_layer.forward_propagate({input_pair}, forward_propagation, true);
+    TensorView output_view = forward_propagation->get_output_pair();
 
-    pair<type*, dimensions> output_pair = forward_propagation->get_output_pair();
+    ASSERT_EQ(output_view.dims.size(), 4);
 
-    // Initialize deltas with ones (mock values for testing backpropagation)
-    Tensor<type, 4> deltas(batch_size,
-                           parameters.expected_output.dimension(1),
-                           parameters.expected_output.dimension(2),
-                           parameters.expected_output.dimension(3));
-
+    Tensor<type, 4> deltas(output_view.dims[0], output_view.dims[1], output_view.dims[2], output_view.dims[3]);
     deltas.setConstant(1.0);
 
-    pair<type*, dimensions> delta_pair(deltas.data(),
-                                       {batch_size,
-                                        parameters.expected_output.dimension(1),
-                                        parameters.expected_output.dimension(2),
-                                        parameters.expected_output.dimension(3)});
+    TensorView delta_view(deltas.data(), output_view.dims);
 
-    convolutional_layer.back_propagate({input_pair}, {delta_pair}, forward_propagation, back_propagation);
+    convolutional_layer.back_propagate({ input_view }, { delta_view }, forward_propagation, back_propagation_base);
 
-    vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation->get_input_derivative_pairs();
-
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
-    EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
-    EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
-    EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
-
-    TensorMap<Tensor<type, 4>> input_derivatives(input_derivatives_pair[0].first,
-                                                 batch_size,
-                                                 parameters.input_data.dimension(1),
-                                                 parameters.input_data.dimension(2),
-                                                 parameters.input_data.dimension(3));
-
-    // @todo fix the validate input derivatives
-
-    // Validate input derivatives (mock expected values for now)
-    Tensor<type, 4> expected_input_derivatives(batch_size,
-                                               parameters.input_data.dimension(1),
-                                               parameters.input_data.dimension(2),
-                                               parameters.input_data.dimension(3));
-
-    expected_input_derivatives.setConstant(1.0);  // Replace with actual expected derivatives logic if known.
-
-    for (Index b = 0; b < batch_size; ++b) {
-        for (Index h = 0; h < parameters.input_data.dimension(1); ++h) {
-            for (Index w = 0; w < parameters.input_data.dimension(2); ++w) {
-                for (Index c = 0; c < parameters.input_data.dimension(3); ++c) {
-                    EXPECT_NEAR(input_derivatives(b, h, w, c), expected_input_derivatives(b, h, w, c), 1e-5)
-                        << "Mismatch in input derivatives at batch=" << b << ", height=" << h
-                        << ", width=" << w << ", channel=" << c;
-                }
-            }
-        }
-    }
-
-    // Validate bias derivatives
-    const Tensor<type, 1>& bias_deltas = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->bias_deltas;
+    const Tensor<type, 1>& bias_deltas = back_propagation->bias_deltas;
     EXPECT_EQ(bias_deltas.size(), convolutional_layer.get_kernels_number());
-    //for (Index k = 0; k < convolutional_layer.get_kernels_number(); ++k)
-    //{
-    //    EXPECT_NEAR(bias_deltas(k), 1.0 * batch_size * parameters.expected_output.dimension(1) * parameters.expected_output.dimension(2), 1e-5)
-    //        << "Mismatch in bias derivative for kernel=" << k;
-    //}
 
-    // Validate synaptic weight derivatives
-    const Tensor<type, 4>& weight_deltas = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->weight_deltas;
-    EXPECT_EQ(weight_deltas.dimension(0), parameters.kernel_dimensions[3]);
-    EXPECT_EQ(weight_deltas.dimension(1), parameters.kernel_dimensions[0]);
-    EXPECT_EQ(weight_deltas.dimension(2), parameters.kernel_dimensions[1]);
-    EXPECT_EQ(weight_deltas.dimension(3), parameters.kernel_dimensions[2]);
-*/
+    const Tensor<type, 4>& input_derivatives = back_propagation->input_deltas;
+
+    EXPECT_EQ(input_derivatives.dimension(0), batch_size);
+    EXPECT_EQ(input_derivatives.dimension(1), input_data.dimension(1));
+    EXPECT_EQ(input_derivatives.dimension(2), input_data.dimension(2));
+    EXPECT_EQ(input_derivatives.dimension(3), input_data.dimension(3));
+
+    // @todo Calculate numeric gradients and compare with analytical gradients.
 }

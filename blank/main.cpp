@@ -69,8 +69,8 @@ int main()
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
         genetic_algorithm.set_mutation_rate(0.01F);
 
-        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
-        //genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
+        //genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Correlations);
+        genetic_algorithm.set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
 
         cout << "\nStarting genetic algorithm for input selection..." << endl;
         InputsSelectionResults ga_results = genetic_algorithm.perform_input_selection();
@@ -80,7 +80,7 @@ int main()
         ga_results.print();
 
         cout << "\n--- Process Summary ---" << endl;
-        cout << "Elapsed time: " << ga_results.elapsed_time; // 'write_time' ya formatea el salto de línea.
+        cout << "Elapsed time: " << ga_results.elapsed_time;
         cout << "Stopping condition: " << ga_results.write_stopping_condition() << endl;
         cout << "Total generations performed: " << ga_results.get_epochs_number() << endl;
 
