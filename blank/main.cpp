@@ -80,7 +80,7 @@ int main()
         ga_results.print();
 
         cout << "\n--- Process Summary ---" << endl;
-        cout << "Elapsed time: " << ga_results.elapsed_time; // 'write_time' ya formatea el salto de línea.
+        cout << "Elapsed time: " << ga_results.elapsed_time;
         cout << "Stopping condition: " << ga_results.write_stopping_condition() << endl;
         cout << "Total generations performed: " << ga_results.get_epochs_number() << endl;
 

@@ -47,7 +47,7 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations_WithVariableFeatures
         type value = static_cast<type>(i);
         full_data(i, 0) = static_cast<type>(rand()) / RAND_MAX;
         full_data(i, 1) = value;                              
-        full_data(i, 2) = value / 2.0;                       
+        full_data(i, 2) = value / 10.0 + (static_cast<type>(rand()) / RAND_MAX) * (samples_number / 10.0);
         full_data(i, 3) = value;                             
     }
 
