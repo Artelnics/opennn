@@ -104,6 +104,9 @@ void GeneticAlgorithm::set_default()
 
     const Index raw_variables_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
 
+    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
+
     population.resize(individuals_number, raw_variables_number);
 
     minimum_inputs_number = 1;
@@ -231,8 +234,6 @@ void GeneticAlgorithm::initialize_population_random()
     Tensor<bool, 1> individual_raw_variables(original_input_raw_variables_number);
     individual_raw_variables.setConstant(false);
 
-    cout << "Creating initial random population" << endl;
-
     random_device rd;
 
     mt19937 gen(rd());
@@ -259,9 +260,6 @@ void GeneticAlgorithm::initialize_population_random()
 
         population.chip(i, 0) = individual_raw_variables;
     }
-
-    cout << "Initial random population created" << endl
-         << "Initial random population: \n" << population << endl;
 }
 
 
@@ -309,6 +307,7 @@ void GeneticAlgorithm::initialize_population_correlations()
     Tensor<bool, 1> individual_raw_variables(input_raw_variables_number);
 
     original_input_raw_variables.resize(original_input_raw_variables_number, false);
+
     for (size_t i = 0; i < original_input_raw_variable_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variable_indices[i]] = true;
 
@@ -331,6 +330,11 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         const Index raw_variables_active = num_inputs_dist(gen);
 
+        // No para de tirar a la ruleta hasta que el numero de 1s activos sea igual a raw_variables_active 
+        // raw_variables_active es un numero aleatorio entre minimum_inputs_number y maximum_inputs_number
+        // Si minimum_inputs_number es 10 y maximum_inputs_number es 50, raw_variables_active puede ser cualquier numero entre 10 y 50
+        // Si raw_variables_active es 30 por ejemplo, el bucle while se repetira hasta que haya 30 variables activas (30 1s) en individual_raw_variables
+        // Si la ruleta cae en una posicion que ya esta activa (ya es un 1), no se activa de nuevo, simplemente se ignora y se vuelve a tirar la ruleta hasta obetener los 30 1s activos.
         while (count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true) < raw_variables_active)
         {
             arrow = distribution(gen);
@@ -447,6 +451,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
     for(Index i = 0; i < individuals_number; i++)
         fitness(rank(i)) = type(i+1);
 }
+
 
 void GeneticAlgorithm::perform_selection()
 {
@@ -623,10 +628,14 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
+    const LossIndex* loss_index = training_strategy->get_loss_index();
+
+    Dataset* dataset = loss_index->get_dataset();
+
     // Selection algorithm
 
-    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
-    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
+    original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -634,13 +643,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     initialize_population();
 
-    // Loss index
-
-    const LossIndex* loss_index = training_strategy->get_loss_index();
-
     // Data set
-
-    Dataset* dataset = loss_index->get_dataset();
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();

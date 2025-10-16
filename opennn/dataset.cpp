@@ -1493,6 +1493,7 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     set_codification(new_codification);
 
+
     read_csv();
 
     set_default_raw_variables_scalers();
@@ -1724,6 +1725,7 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 
         for (Index j = 0; j < target_raw_variables_number; j++)
         {
+        
             if (!isnan(correlations(i, j).r)
                 && abs(correlations(i, j).r) < minimum_correlation
                 && raw_variables[input_raw_variable_index].use != "None")
