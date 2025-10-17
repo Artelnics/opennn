@@ -133,7 +133,7 @@ void OptimizationAlgorithm::check() const
 
 string OptimizationAlgorithm::get_name() const
 {
-    return string();
+    return name;
 }
 
 

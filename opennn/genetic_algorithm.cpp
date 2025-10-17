@@ -97,6 +97,8 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 void GeneticAlgorithm::set_default()
 {
+    name = "GeneticAlgorithm";
+
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
@@ -953,12 +955,6 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
-}
-
-
-string GeneticAlgorithm::get_name() const
-{
-    return "GeneticAlgorithm";
 }
 
 

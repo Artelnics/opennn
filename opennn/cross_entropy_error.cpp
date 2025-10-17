@@ -17,6 +17,7 @@ namespace opennn
 CrossEntropyError2d::CrossEntropyError2d(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
+    name = "CrossEntropyError2d";
 }
 
 
@@ -155,12 +156,6 @@ void CrossEntropyError2d::calculate_multiple_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device) = (outputs - targets) / type(samples_number);
-}
-
-
-string CrossEntropyError2d::get_name() const
-{
-    return "CrossEntropyError2d";
 }
 
 

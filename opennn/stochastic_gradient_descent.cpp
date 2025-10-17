@@ -54,6 +54,8 @@ const type& StochasticGradientDescent::get_loss_goal() const
 
 void StochasticGradientDescent::set_default()
 {
+    name = "StochasticGradientDescent";
+
     // TRAINING OPERATORS
 
     initial_learning_rate = type(0.01);
@@ -438,12 +440,6 @@ TrainingResults StochasticGradientDescent::train()
     if(display) results.print();
 
     return results;
-}
-
-
-string StochasticGradientDescent::get_name() const
-{
-    return "StochasticGradientDescent";
 }
 
 

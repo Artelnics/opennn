@@ -89,6 +89,18 @@ public:
         virtual void from_XML(const XMLDocument&);
         virtual void to_XML(XMLPrinter&) const;
 
+        bool is_binary() const
+        {
+            if(type == Dataset::RawVariableType::Binary) return true;
+            else return false;
+        }
+
+        bool is_categorical() const
+        {
+            if(type == Dataset::RawVariableType::Categorical) return true;
+            else return false;
+        }
+
         void print() const;
     };
 

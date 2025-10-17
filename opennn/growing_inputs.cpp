@@ -44,6 +44,8 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 
 void GrowingInputs::set_default()
 {
+    name = "GrowingInputs";
+
     maximum_selection_failures = 100;
     minimum_inputs_number = 1;
     trials_number = 3;

@@ -207,8 +207,8 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_label)
 {
     descriptives.resize(new_neurons_number);
 
-    for (Index i = 0; i < new_neurons_number; i++)
-        descriptives[i].set(type(-1.0), type(1), type(0), type(1));
+    for (auto& descriptive : descriptives)
+        descriptive.set(type(-1.0), type(1), type(0), type(1));
 
     scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
@@ -245,18 +245,8 @@ void Unscaling::set_scalers(const vector<Scaler>& new_unscaling_method)
 
 void Unscaling::set_scalers(const string& new_scaling_methods_string)
 {
-    if(new_scaling_methods_string == "None")
-        set_scalers(Scaler::None);
-    else if(new_scaling_methods_string == "MinimumMaximum")
-        set_scalers(Scaler::MinimumMaximum);
-    else if(new_scaling_methods_string == "MeanStandardDeviation")
-        set_scalers(Scaler::MeanStandardDeviation);
-    else if(new_scaling_methods_string == "StandardDeviation")
-        set_scalers(Scaler::StandardDeviation);
-    else if(new_scaling_methods_string == "Logarithm")
-        set_scalers(Scaler::Logarithm);
-    else
-        throw runtime_error("set_scalers(const string& new_scaling_methods_string) method.\n");
+    for (Scaler& scaler : scalers)
+        scaler = string_to_scaler(new_scaling_methods_string);
 }
 
 
@@ -271,10 +261,8 @@ void Unscaling::set_scalers(const vector<string>& new_scalers)
 
 void Unscaling::set_scalers(const Scaler& new_unscaling_method)
 {
-    const Index outputs_number = get_outputs_number();
-
-    for(Index i = 0; i < outputs_number; i++)
-        scalers[i] = new_unscaling_method;
+    for (Scaler& scaler : scalers)
+        scaler = new_unscaling_method;
 }
 
 

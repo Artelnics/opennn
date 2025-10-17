@@ -30,6 +30,8 @@ type MinkowskiError::get_Minkowski_parameter() const
 
 void MinkowskiError::set_default()
 {
+    name = "MinkowskiError";
+
     minkowski_parameter = type(1.5);
 
     display = true;
@@ -90,12 +92,6 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     const type coefficient = type(1.0 / samples_number);
 
     deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
-}
-
-
-string MinkowskiError::get_name() const
-{
-    return "MinkowskiError";
 }
 
 

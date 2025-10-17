@@ -222,21 +222,15 @@ void Scaling2d::set_scalers(const vector<string>& new_scaling_methods_string)
 
 void Scaling2d::set_scalers(const string& new_scaling_methods_string)
 {
-    const Index outputs_number = get_outputs_number();
-
-#pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
-        scalers[i] = string_to_scaler(new_scaling_methods_string);
+    for (Scaler& scaler : scalers)
+        scaler = string_to_scaler(new_scaling_methods_string);
 }
 
 
 void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 {
-    const Index outputs_number = get_outputs_number();
-
-#pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
-        scalers[i] = new_scaling_method;
+    for (Scaler& scaler : scalers)
+        scaler = new_scaling_method;
 }
 
 

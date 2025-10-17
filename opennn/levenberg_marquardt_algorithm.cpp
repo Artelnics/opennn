@@ -66,6 +66,8 @@ const type& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 
 void LevenbergMarquardtAlgorithm::set_default()
 {
+    name = "LevenbergMarquardt";
+
     // Stopping criteria
 
     minimum_loss_decrease = type(0);
@@ -451,12 +453,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     }
 
     neural_network->set_parameters(parameters);
-}
-
-
-string LevenbergMarquardtAlgorithm::get_name() const
-{
-    return "LevenbergMarquardt";
 }
 
 

@@ -17,6 +17,8 @@ namespace opennn
 NormalizedSquaredError::NormalizedSquaredError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
+    name = "NormalizedSquaredError";
+
     set_normalization_coefficient();
 }
 
@@ -257,12 +259,6 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
     const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
 
     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
-}
-
-
-string NormalizedSquaredError::get_name() const
-{
-    return "NormalizedSquaredError";
 }
 
 
