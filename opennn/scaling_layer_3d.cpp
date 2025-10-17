@@ -101,7 +101,7 @@ Tensor<type, 1> Scaling3d::get_standard_deviations() const
 }
 
 
-vector<string> Scaling3d::get_scaling_methods() const
+vector<string> Scaling3d::get_scalers() const
 {
     return scalers;
 }
@@ -162,16 +162,16 @@ void Scaling3d::set_descriptives(const vector<Descriptives>& new_descriptives)
 }
 
 
-void Scaling3d::set_scalers(const vector<string>& new_scaling_methods)
+void Scaling3d::set_scalers(const vector<string>& new_scalers)
 {
-    scalers = new_scaling_methods;
+    scalers = new_scalers;
 }
 
 
-void Scaling3d::set_scalers(const string& new_scaling_method)
+void Scaling3d::set_scalers(const string& new_scaler)
 {
     for (string& scaler : scalers)
-        scaler = new_scaling_method;
+        scaler = new_scaler;
 }
 
 

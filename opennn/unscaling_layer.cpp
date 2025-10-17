@@ -71,7 +71,7 @@ Tensor<type, 1> Unscaling::get_maximums() const
 }
 
 
-vector<string> Unscaling::get_unscaling_method() const
+vector<string> Unscaling::get_scalers() const
 {
     return scalers;
 }
@@ -189,16 +189,16 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 }
 
 
-void Unscaling::set_scalers(const vector<string>& new_unscaling_method)
+void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
-    scalers = new_unscaling_method;
+    scalers = new_scaler;
 }
 
 
-void Unscaling::set_scalers(const string& new_scaling_methods_string)
+void Unscaling::set_scalers(const string& new_scalers)
 {
     for (string& scaler : scalers)
-        scaler = new_scaling_methods_string;
+        scaler = new_scalers;
 }
 
 

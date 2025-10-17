@@ -34,7 +34,7 @@ public:
     Tensor<type, 1> get_means() const;
     Tensor<type, 1> get_standard_deviations() const;
 
-    vector<string> get_scaling_methods() const;
+    vector<string> get_scalers() const;
 
     void set(const dimensions& = {0, 0});
 

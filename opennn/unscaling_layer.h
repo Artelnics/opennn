@@ -30,7 +30,7 @@ public:
     Tensor<type, 1> get_minimums() const;
     Tensor<type, 1> get_maximums() const;
 
-    vector<string> get_unscaling_method() const;
+    vector<string> get_scalers() const;
 
     void set(const Index& = 0, const string& = "unscaling_layer");
 

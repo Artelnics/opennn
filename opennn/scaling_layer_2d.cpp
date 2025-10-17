@@ -101,7 +101,7 @@ Tensor<type, 1> Scaling2d::get_standard_deviations() const
 }
 
 
-vector<string> Scaling2d::get_scaling_methods() const
+vector<string> Scaling2d::get_scalers() const
 {
     return scalers;
 }
@@ -160,16 +160,16 @@ void Scaling2d::set_descriptives(const vector<Descriptives>& new_descriptives)
 }
 
 
-void Scaling2d::set_scalers(const vector<string>& new_scaling_methods)
+void Scaling2d::set_scalers(const vector<string>& new_scalers)
 {
-    scalers = new_scaling_methods;
+    scalers = new_scalers;
 }
 
 
-void Scaling2d::set_scalers(const string& new_scaling_methods_string)
+void Scaling2d::set_scalers(const string& new_scaler)
 {
     for (string& scaler : scalers)
-        scaler = new_scaling_methods_string;
+        scaler = new_scaler;
 }
 
 
@@ -547,7 +547,7 @@ void Scaling2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
     const Tensor<type, 1> maximums_host = scaling_layer->get_maximums();
     const Tensor<type, 1> means_host = scaling_layer->get_means();
     const Tensor<type, 1> std_devs_host = scaling_layer->get_standard_deviations();
-    const vector<string> scalers_host_vec = scaling_layer->get_scaling_methods();
+    const vector<string> scalers_host_vec = scaling_layer->get_scalers();
 
     Tensor<int, 1> scalers_host_tensor(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
