@@ -101,48 +101,9 @@ Tensor<type, 1> Scaling3d::get_standard_deviations() const
 }
 
 
-vector<Scaler> Scaling3d::get_scaling_methods() const
+vector<string> Scaling3d::get_scaling_methods() const
 {
     return scalers;
-}
-
-
-vector<string> Scaling3d::write_scalers() const
-{
-    const Index inputs_number = get_output_dimensions()[1];
-
-    vector<string> scaling_methods_strings(inputs_number);
-
-#pragma omp parallel for
-    for (Index i = 0; i < inputs_number; i++)
-        scaling_methods_strings[i] = scaler_to_string(scalers[i]);
-
-    return scaling_methods_strings;
-}
-
-
-vector<string> Scaling3d::write_scalers_text() const
-{
-    const Index inputs_number = get_output_dimensions()[1];
-
-    vector<string> scaling_methods_strings(inputs_number);
-
-#pragma omp parallel for
-    for(Index i = 0; i < inputs_number; i++)
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "no scaling";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "mean and standard deviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "standard deviation";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "minimum and maximum";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
-        else
-            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-
-    return scaling_methods_strings;
 }
 
 
@@ -159,11 +120,11 @@ void Scaling3d::set(const dimensions& new_input_dimensions)
     for(Index i = 0; i < inputs_number; i++)
         descriptives[i].set(type(-1.0), type(1), type(0), type(1));
 
-    scalers.resize(inputs_number, Scaler::MeanStandardDeviation);
+    scalers.resize(inputs_number, "MeanStandardDeviation");
 
     label = "scaling_layer_3d";
 
-    set_scalers(Scaler::MeanStandardDeviation);
+    set_scalers("MeanStandardDeviation");
 
     set_min_max_range(type(-1), type(1));
 
@@ -178,7 +139,7 @@ void Scaling3d::set_input_dimensions(const dimensions& new_input_dimensions)
     input_dimensions = new_input_dimensions;
     const Index inputs_number = new_input_dimensions[1];
     descriptives.resize(inputs_number);
-    scalers.resize(inputs_number, Scaler::MeanStandardDeviation);
+    scalers.resize(inputs_number, "MeanStandardDeviation");
 }
 
 
@@ -201,35 +162,15 @@ void Scaling3d::set_descriptives(const vector<Descriptives>& new_descriptives)
 }
 
 
-void Scaling3d::set_scalers(const vector<Scaler>& new_scaling_methods)
+void Scaling3d::set_scalers(const vector<string>& new_scaling_methods)
 {
     scalers = new_scaling_methods;
 }
 
 
-void Scaling3d::set_scalers(const vector<string>& new_scaling_methods_string)
+void Scaling3d::set_scalers(const string& new_scaling_method)
 {
-    const Index inputs_number = get_output_dimensions()[1];
-    vector<Scaler> new_scaling_methods(inputs_number);
-
-#pragma omp parallel for
-    for(Index i = 0; i < inputs_number; i++)
-        new_scaling_methods[i] = string_to_scaler(new_scaling_methods_string[i]);
-
-    set_scalers(new_scaling_methods);
-}
-
-
-void Scaling3d::set_scalers(const string& new_scaling_methods_string)
-{
-    for (Scaler& scaler : scalers)
-        scaler = string_to_scaler(new_scaling_methods_string);
-}
-
-
-void Scaling3d::set_scalers(const Scaler& new_scaling_method)
-{
-    for (Scaler& scaler : scalers)
+    for (string& scaler : scalers)
         scaler = new_scaling_method;
 }
 
@@ -252,28 +193,20 @@ void Scaling3d::forward_propagate(const vector<TensorView>& input_views,
 #pragma omp parallel for
     for(Index i = 0; i < inputs_number; i++)
     {
-        const Scaler& scaler = scalers[i];
-        switch(scaler)
-        {
-        case Scaler::None:
-            continue;
-            break;
+        const string& scaler = scalers[i];
 
-        case Scaler::MinimumMaximum:
+        if(scaler == "None")
+            continue;        
+        else if(scaler == "MinimumMaximum")
             scale_minimum_maximum_3d(outputs, i, descriptives[i], min_range, max_range);
-            break;
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             scale_mean_standard_deviation_3d(outputs, i, descriptives[i]);
-            break;
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             scale_standard_deviation_3d(outputs, i, descriptives[i]);
-            break;
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             scale_logarithmic_3d(outputs, i);
-            break;
-        default:
+        else
             throw runtime_error("Unknown scaling method.\n");
-        }
     }
 }
 
@@ -283,33 +216,27 @@ Tensor<type, 3> Scaling3d::calculate_outputs(const Tensor<type, 3>& inputs) cons
     const Index inputs_number = inputs.dimension(2);
 
     if (inputs_number != static_cast<Index>(scalers.size()))
-        throw std::runtime_error("Input features in calculate_outputs do not match layer configuration.");
+        throw runtime_error("Input features in calculate_outputs do not match layer configuration.");
 
     Tensor<type, 3> outputs = inputs;
 
 #pragma omp parallel for
     for(Index i = 0; i < inputs_number; i++)
     {
-        const Scaler& scaler = scalers[i];
-        switch(scaler)
-        {
-        case Scaler::None:
-            break;
-        case Scaler::MinimumMaximum:
+        const string& scaler = scalers[i];
+
+        if(scaler == "None")
+            ;
+        else if(scaler == "MinimumMaximum")
             scale_minimum_maximum_3d(outputs, i, descriptives[i], min_range, max_range);
-            break;
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             scale_mean_standard_deviation_3d(outputs, i, descriptives[i]);
-            break;
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             scale_standard_deviation_3d(outputs, i, descriptives[i]);
-            break;
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             scale_logarithmic_3d(outputs, i);
-            break;
-        default:
-            throw std::runtime_error("Unknown scaling method in Scaling3d::calculate_outputs.\n");
-        }
+        else
+            throw runtime_error("Unknown scaling method in Scaling3d::calculate_outputs.\n");
     }
 
     return outputs;
@@ -330,12 +257,11 @@ void Scaling3d::print() const
     cout << "Input Dimensions (Time Steps, Inputs): (" << input_dimensions[0] << ", " << input_dimensions[1] << ")" << endl;
 
     const Index inputs_number = get_output_dimensions()[1];
-    const vector<string> scalers_text = write_scalers_text();
 
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Input Feature " << i << endl
-             << "  Scaler: " << scalers_text[i] << endl;
+             << "  string: " << scalers[i] << endl;
         cout << "  ";
         descriptives[i].print();
     }
@@ -349,14 +275,13 @@ void Scaling3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
 
     const Index inputs_number = get_input_dimensions()[1];
-    const vector<string> scaling_methods_string = write_scalers();
 
     for (Index i = 0; i < inputs_number; i++)
     {
         printer.OpenElement("ScalingFeature");
         printer.PushAttribute("Index", int(i));
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
-        add_xml_element(printer, "Scaler", scaling_methods_string[i]);
+        add_xml_element(printer, "string", scalers[i]);
         printer.CloseElement();
     }
 
@@ -405,7 +330,7 @@ void Scaling3d::from_XML(const XMLDocument& document)
                 );
         }
 
-        scalers[i] = string_to_scaler(read_xml_string(scaling_feature_element, "Scaler"));
+        scalers[i] = read_xml_string(scaling_feature_element, "string");
 
         start_element = scaling_feature_element;
     }

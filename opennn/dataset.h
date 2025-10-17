@@ -51,13 +51,13 @@ public:
         RawVariable(const string& = string(),
                     const string& = "None",
                     const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
-                    const Scaler& = Scaler::MeanStandardDeviation,
+                    const string& = "MeanStandardDeviation",
                     const vector<string>& = vector<string>());
 
         void set(const string& = string(),
                  const string& = "None",
                  const Dataset::RawVariableType& = Dataset::RawVariableType::Numeric,
-                 const Scaler& = Scaler::MeanStandardDeviation,
+                 const string& = "MeanStandardDeviation",
                  const vector<string>& = vector<string>());
 
         string name;
@@ -68,7 +68,7 @@ public:
 
         vector<string> categories;
 
-        Scaler scaler = Scaler::None;
+        string scaler = "None";
 
         // Methods
 
@@ -77,7 +77,6 @@ public:
 
         Index get_categories_number() const;
 
-        void set_scaler(const Scaler&);
         void set_scaler(const string&);
 
         void set_use(const string&);
@@ -157,7 +156,7 @@ public:
 
     dimensions get_dimensions(const string&) const;
 
-    vector<Scaler> get_variable_scalers(const string&) const;
+    vector<string> get_variable_scalers(const string&) const;
 
     virtual vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const;
 
@@ -267,9 +266,9 @@ public:
 
     void set_raw_variables_number(const Index&);
 
-    void set_raw_variable_scalers(const Scaler&);
+    void set_raw_variable_scalers(const string&);
 
-    void set_raw_variable_scalers(const vector<Scaler>&);
+    void set_raw_variable_scalers(const vector<string>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();

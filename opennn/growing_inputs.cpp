@@ -320,7 +320,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     dataset->print();
     
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 

@@ -238,7 +238,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+    unscaling_layer->set_scalers("MinimumMaximum");
 
     Descriptives desc;
     vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
@@ -312,7 +312,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+    unscaling_layer->set_scalers("MinimumMaximum");
 
     Descriptives desc;
     vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
@@ -357,7 +357,7 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() c
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    dataset->set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset->set_raw_variable_scalers("MinimumMaximum");
     dataset->scale_data();
     dataset->calculate_variable_descriptives();
 

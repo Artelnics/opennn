@@ -71,7 +71,7 @@ Tensor<type, 1> Unscaling::get_maximums() const
 }
 
 
-vector<Scaler> Unscaling::get_unscaling_method() const
+vector<string> Unscaling::get_unscaling_method() const
 {
     return scalers;
 }
@@ -96,18 +96,14 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        const Scaler scaler = scalers[i];
+        const string& scaler = scalers[i];
 
-        switch (scaler)
+        if(scaler == "None")
         {
-
-        case Scaler::None:
-
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
-            break;
-
-        case Scaler::MinimumMaximum:
-
+        }
+        else if(scaler == "MinimumMaximum")
+        {
             if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
             {
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
@@ -120,29 +116,22 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
 
                 buffer << output_names[i] << "=" << input_names[i] << "*" << slope << "+" << intercept<<";\n";
             }
-            break;
-
-        case Scaler::MeanStandardDeviation:
-
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
-
-            break;
-
-        case  Scaler::StandardDeviation:
-
-            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
-
-            break;
-
-        case Scaler::Logarithm:
-
-            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-
-            break;
-
-        default:
-            throw runtime_error("Unknown inputs scaling method.\n");
         }
+        else if(scaler == "MeanStandardDeviation")
+        {
+            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
+        }
+        else if(scaler == "StandardDeviation")
+        {
+            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
+        }
+        else if(scaler == "Logarithm")
+        {
+            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
+        }
+        else
+            throw runtime_error("Unknown inputs scaling method.\n");
+
     }
 
     string expression = buffer.str();
@@ -151,43 +140,6 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
     replace(expression, "--", "+");
 
     return expression;
-}
-
-
-vector<string> Unscaling::write_unscaling_methods() const
-{
-    const Index outputs_number = get_outputs_number();
-
-    vector<string> scaling_methods_strings(outputs_number);
-
-    for (Index i = 0; i < outputs_number; i++)
-        scaling_methods_strings[i] = scaler_to_string(scalers[i]);
-
-    return scaling_methods_strings;
-}
-
-
-vector<string> Unscaling::write_unscaling_method_text() const
-{
-    const Index outputs_number = get_outputs_number();
-
-    vector<string> scaling_methods_strings(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "no unscaling";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "minimum and maximum";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "mean and standard deviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "standard deviation";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "logarithm";
-        else
-            throw runtime_error("Unknown unscaling method.\n");
-
-    return scaling_methods_strings;
 }
 
 
@@ -210,11 +162,11 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_label)
     for (auto& descriptive : descriptives)
         descriptive.set(type(-1.0), type(1), type(0), type(1));
 
-    scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
+    scalers.resize(new_neurons_number, "MinimumMaximum");
 
     label = new_label;
 
-    set_scalers(Scaler::MinimumMaximum);
+    set_scalers("MinimumMaximum");
 
     set_min_max_range(type(-1), type(1));
 
@@ -237,7 +189,7 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 }
 
 
-void Unscaling::set_scalers(const vector<Scaler>& new_unscaling_method)
+void Unscaling::set_scalers(const vector<string>& new_unscaling_method)
 {
     scalers = new_unscaling_method;
 }
@@ -245,24 +197,8 @@ void Unscaling::set_scalers(const vector<Scaler>& new_unscaling_method)
 
 void Unscaling::set_scalers(const string& new_scaling_methods_string)
 {
-    for (Scaler& scaler : scalers)
-        scaler = string_to_scaler(new_scaling_methods_string);
-}
-
-
-void Unscaling::set_scalers(const vector<string>& new_scalers)
-{
-    const Index outputs_number = get_outputs_number();
-
-    for(Index i = 0; i < outputs_number; i++)
-        scalers[i] = string_to_scaler(new_scalers[i]);
-}
-
-
-void Unscaling::set_scalers(const Scaler& new_unscaling_method)
-{
-    for (Scaler& scaler : scalers)
-        scaler = new_unscaling_method;
+    for (string& scaler : scalers)
+        scaler = new_scaling_methods_string;
 }
 
 
@@ -283,69 +219,28 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        const Scaler& scaler = scalers[i];
+        const string& scaler = scalers[i];
 
         const Descriptives& descriptive = descriptives[i];
 
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
             descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
-        //throw runtime_error("Standard deviation is zero.");
 
-        switch(scaler)
-        {
-        case Scaler::None:
-            continue;
-            break;
-
-        case Scaler::MinimumMaximum:
+        if(scaler == "None")
+            ;
+        else if(scaler == "MinimumMaximum")
             unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
-            break;
-
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             unscale_mean_standard_deviation(outputs, i, descriptive);
-            break;
-
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             unscale_standard_deviation(outputs, i, descriptive);
-            break;
-
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             unscale_logarithmic(outputs, i);
-            break;
-
-        case Scaler::ImageMinMax:
+        else if(scaler == "ImageMinMax")
             unscale_image_minimum_maximum(outputs, i);
-            break;
-
-        default:
-            //break;
-            throw runtime_error("Unknown scaling method\n");
-        }
-    }
-}
-
-
-vector<string> Unscaling::write_scalers_text() const
-{
-    const Index outputs_number = get_outputs_number();
-
-    vector<string> scaling_methods_strings(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "no scaling";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "mean and standard deviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "standard deviation";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "minimum and maximum";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
         else
-            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
-
-    return scaling_methods_strings;
+            throw runtime_error("Unknown scaling method\n");
+    }
 }
 
 
@@ -355,12 +250,10 @@ void Unscaling::print() const
 
     const Index inputs_number = get_inputs_number();
 
-    const vector<string> scalers_text = write_scalers_text();
-
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Neuron " << i << endl
-             << "Scaler " << scalers_text[i] << endl;
+             << "string " << scalers[i] << endl;
 
         descriptives[i].print();
     }
@@ -375,14 +268,12 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
 
-    const vector<string> scalers = write_unscaling_methods();
-
     for (Index i = 0; i < output_dimensions[0]; i++)
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
-        add_xml_element(printer, "Scaler", scalers[i]);
+        add_xml_element(printer, "string", scalers[i]);
 
         printer.CloseElement();
     }
@@ -428,7 +319,7 @@ void Unscaling::from_XML(const XMLDocument& document)
                 type(stof(splitted_descriptives[3])));
         }
 
-        scalers[i] = string_to_scaler(read_xml_string(unscaling_neuron_element, "Scaler"));
+        scalers[i] = read_xml_string(unscaling_neuron_element, "string");
 
         start_element = unscaling_neuron_element;
     }
