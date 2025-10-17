@@ -20,8 +20,6 @@ Embedding::Embedding(const dimensions& new_input_dimensions,
     set(new_input_dimensions[0], new_input_dimensions[1], new_embedding_dimension, new_label);
 
     name = "Embedding";
-
-    label = new_label;
 }
 
 
@@ -59,7 +57,7 @@ dimensions Embedding::get_output_dimensions() const
 
 vector<ParameterView > Embedding::get_parameter_views() const
 {
-    return {{(type*)(weights.data()), weights.size()}};
+    return {{(type*)weights.data(), weights.size()}};
 }
 
 
@@ -69,13 +67,12 @@ void Embedding::set(const Index& new_vocabulary_size,
                     const string& new_label)
 {
     sequence_length = new_sequence_length;
+    label = new_label;
 
     weights.resize(new_vocabulary_size, new_embedding_dimension);
-
     set_parameters_random();
 
     positional_encoding.resize(sequence_length, new_embedding_dimension);
-
     positional_encoding.setZero();
 
     const type half_depth = type(new_embedding_dimension)/2;
@@ -85,10 +82,9 @@ void Embedding::set(const Index& new_vocabulary_size,
     for (Index i = 0; i < sequence_length; i++)
         for (Index j = 0; j < new_embedding_dimension; j++)
             positional_encoding(i, j) = (j < Index(half_depth))
-                                            ? sin(i / pow(10000, j / half_depth))
-                                            : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
+                ? sin(i / pow(10000, j / half_depth))
+                : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-    label = new_label;
 }
 
 
@@ -101,11 +97,8 @@ void Embedding::set_dropout_rate(const type& new_dropout_rate)
 void Embedding::set_parameters_random()
 {
     if(weights.size() == 0) return;
-
-    // First row must be 0s because input value 0 is padding
-
     weights.setRandom();
-    weights.chip(0, 0).setZero();
+    weights.chip(0, 0).setZero(); // First row is padding
 }
 
 
@@ -147,8 +140,8 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index embedding_dimension = embeddings.dimension(2);
 
     embeddings.device(*thread_pool_device) += positional_encoding
-                                                  .reshape(array_3(1, sequence_length, embedding_dimension))
-                                                  .broadcast(array_3(batch_size, 1, 1));
+      .reshape(array_3(1, sequence_length, embedding_dimension))
+      .broadcast(array_3(batch_size, 1, 1));
 }
 
 
@@ -179,7 +172,6 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index embedding_dimension = get_embedding_dimension();
-
     const Index batch_size = input_views[0].dims[0];
     const Index sequence_length = input_views[0].dims[1];
 
@@ -196,7 +188,6 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
         static_cast<EmbeddingBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& weight_deltas = embedding_back_propagation->weight_deltas;
-
     weight_deltas.setZero();
 
     if(scale_embedding)
@@ -332,11 +323,8 @@ vector<TensorView> EmbeddingBackPropagation::get_input_derivative_views() const
 
 vector<ParameterView> EmbeddingBackPropagation::get_parameter_delta_views() const
 {
-    return {
-        {(type*)weight_deltas.data(), weight_deltas.size()}
-    };
+    return {{(type*)weight_deltas.data(), weight_deltas.size()}};
 }
-
 
 
 void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)

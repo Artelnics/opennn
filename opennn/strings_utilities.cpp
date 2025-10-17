@@ -577,11 +577,11 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
 {
     string::size_type previous_pos = 0;
 
-    for(int i = 0; i < tokens.size(); i++)
+    for (const string& token : tokens)
     {
-        const string found_token = tokens[i];
-        const string to_replace(found_token);
-        const string newword = keyword + " " + found_token;
+        const string to_replace(token);
+
+        const string new_word = keyword + " " + token;
 
         string::size_type position = 0;
 
@@ -589,14 +589,14 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
         {
             if(position > previous_pos)
             {
-                expression.replace(position, to_replace.length(), newword);
-                position += newword.length();
+                expression.replace(position, to_replace.length(), new_word);
+                position += new_word.length();
                 previous_pos = position;
                 break;
             }
             else
             {
-                position += newword.length();
+                position += new_word.length();
             }
         }
     }

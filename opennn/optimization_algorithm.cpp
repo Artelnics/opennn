@@ -133,7 +133,7 @@ void OptimizationAlgorithm::check() const
 
 string OptimizationAlgorithm::get_name() const
 {
-    return string();
+    return name;
 }
 
 
@@ -284,7 +284,7 @@ void OptimizationAlgorithm::set_scaling()
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     vector<Descriptives> input_descriptives;
-    vector<Scaler> input_scalers;
+    vector<string> input_scalers;
     bool input_has_been_scaled = false;
 
     if (neural_network->has("Scaling2d"))
@@ -323,7 +323,7 @@ void OptimizationAlgorithm::set_scaling()
         const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
         vector<Descriptives> target_descriptives;
-        vector<Scaler> target_scalers;
+        vector<string> target_scalers;
 
         for (const Index& target_index : target_variable_indices)
         {
@@ -332,7 +332,7 @@ void OptimizationAlgorithm::set_scaling()
             if (target_position_inputs != input_variable_indices.end())
             {
                 if (!input_has_been_scaled)
-                    throw std::runtime_error("Configuration error: Unscaling layer exists for a target that is also an input, but no input scaling layer was found.");
+                    throw runtime_error("Configuration error: Unscaling layer exists for a target that is also an input, but no input scaling layer was found.");
 
                 const Index input_index = std::distance(input_variable_indices.begin(), target_position_inputs);
                 target_descriptives.push_back(input_descriptives[input_index]);
@@ -341,7 +341,7 @@ void OptimizationAlgorithm::set_scaling()
             else
             {
                 const vector<Descriptives> all_target_descriptives = dataset->scale_variables("Target");
-                const vector<Scaler> all_target_scalers = dataset->get_variable_scalers("Target");
+                const vector<string> all_target_scalers = dataset->get_variable_scalers("Target");
 
                 auto target_position_targets = std::find(target_variable_indices.begin(), target_variable_indices.end(), target_index);
                 const Index target_position = std::distance(target_variable_indices.begin(), target_position_targets);
@@ -352,7 +352,7 @@ void OptimizationAlgorithm::set_scaling()
         }
 
         if (static_cast<Index>(target_descriptives.size()) != unscaling_layer->get_outputs_number()) {
-            throw std::runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
+            throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
         }
 
         unscaling_layer->set_descriptives(target_descriptives);

@@ -966,7 +966,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
                 i += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
+            else if (raw_variables[k].is_binary() && raw_variable_categories.size() == 2 &&
                      ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0")))// INPUT & BINARY (1,0)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
@@ -989,7 +989,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
+            else if (raw_variables[k].is_binary() && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1011,7 +1011,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
+            else if (raw_variables[k].is_categorical()) // INPUT & CATEGORICAL
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1156,7 +1156,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             variables_input_fixed.push_back(fixes_input_names[inputs_processed]);
             variables_input.push_back(input_names[inputs_processed]);
         }
-        else if (raw_variables[k].type == Dataset::RawVariableType::Binary)// INPUT BINARY
+        else if (raw_variables[k].is_binary())// INPUT BINARY
         {
             string aux_buffer = "";
 
@@ -1186,7 +1186,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             variables_input_fixed.push_back(fixes_input_names[inputs_processed]);
             variables_input.push_back(input_names[inputs_processed]);
         }
-        else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
+        else if (raw_variables[k].is_categorical()) // INPUT & CATEGORICAL
         {
             string aux_buffer = "";
 
@@ -1664,10 +1664,10 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
         if (var.type == Dataset::RawVariableType::Numeric) {
             buffer << "\tinputs.append(" << fixed_raw_names[i] << ")\n";
-        } else if (var.type == Dataset::RawVariableType::Binary) {
+        } else if (var.is_binary()) {
             // Para binarias, el valor 0 o 1 ya es el correcto.
             buffer << "\tinputs.append(" << fixed_raw_names[i] << ")\n";
-        } else if (var.type == Dataset::RawVariableType::Categorical) {
+        } else if (var.is_categorical()) {
             // Para categóricas, convertimos el índice a one-hot encoding.
             for (size_t j = 0; j < var.categories.size(); ++j) {
                 buffer << "\tinputs.append(1 if " << fixed_raw_names[i] << " == " << j << " else 0)\n";

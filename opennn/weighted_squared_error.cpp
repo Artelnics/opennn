@@ -49,19 +49,16 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
+    name = "WeightedSquaredError";
+
     negatives_weight = type(-1.0);
     positives_weight = type(-1.0);
-
     normalization_coefficient = type(-1.0);
 
-    if(!has_dataset())
-        return;
-
-    if(dataset->get_samples_number() == 0)
+    if(!has_dataset() || dataset->get_samples_number() == 0)
         return;
 
     set_weights();
-
     set_normalization_coefficient();
 }
 
@@ -96,8 +93,11 @@ void WeightedSquaredError::set_weights()
     {
         positives_weight = type(1);
         negatives_weight = type(1);
+
+        return;
     }
-    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
+
+    if(target_raw_variables.size() == 1 && target_raw_variables[0].is_binary())
     {
         const Tensor<Index, 1> target_distribution = dataset->calculate_target_distribution();
 
@@ -114,29 +114,44 @@ void WeightedSquaredError::set_weights()
 
         negatives_weight = type(1);
         positives_weight = type(negatives)/type(positives);
+
+        return;
     }
+
+    positives_weight = type(1);
+    negatives_weight = type(1);
 }
 
 
 void WeightedSquaredError::set_normalization_coefficient()
 {
-    if (!dataset) return;
+    if (!dataset)
+    {
+        normalization_coefficient = type(1);
+        return;
+    }
 
     const vector<Dataset::RawVariable>& target_raw_variables
         = dataset->get_raw_variables("Target");
 
     if(target_raw_variables.empty())
+    {
         normalization_coefficient = type(1);
-    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
+        return;
+    }
+
+    if(target_raw_variables.size() == 1 && target_raw_variables[0].is_binary())
     {
         const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
         const Index negatives = dataset->calculate_used_negatives(target_variable_indices[0]);
 
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
+
+        return;
     }
-    else
-        normalization_coefficient = type(1);
+
+    normalization_coefficient = type(1);
 }
 
 
@@ -177,12 +192,14 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = (outputs - targets);
+    errors.device(*thread_pool_device) = outputs - targets;
 
-    errors_weights = targets;
+//    errors_weights = targets;
 
     for(Index i = 0; i < targets.size(); i++)
-        errors_weights(i) = (targets(i) == type(0)) ?negatives_weight : positives_weight;
+        errors_weights(i) = (targets(i) == type(0))
+            ? negatives_weight
+            : positives_weight;
 
     const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
@@ -216,12 +233,6 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
     const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient * (errors_weights * errors);
-}
-
-
-string WeightedSquaredError::get_name() const
-{
-    return "WeightedSquaredError";
 }
 
 

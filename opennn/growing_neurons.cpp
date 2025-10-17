@@ -36,6 +36,8 @@ const Index& GrowingNeurons::get_maximum_selection_failures() const
 
 void GrowingNeurons::set_default()
 {
+    name = "GrowingNeurons";
+
     minimum_neurons = 1;
     maximum_neurons = 10;
     trials_number = 3;
