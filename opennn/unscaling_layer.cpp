@@ -99,39 +99,21 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-        {
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
-        }
         else if(scaler == "MinimumMaximum")
-        {
             if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
-            {
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
-            }
             else
-            {
-                const type slope = (descriptives[i].maximum-descriptives[i].minimum)/(max_range-min_range);
-
-                const type intercept = descriptives[i].minimum - min_range*(descriptives[i].maximum-descriptives[i].minimum)/(max_range-min_range);
-
-                buffer << output_names[i] << "=" << input_names[i] << "*" << slope << "+" << intercept<<";\n";
-            }
-        }
+                buffer << output_names[i] << "=" << input_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
+                << ")+" << (descriptives[i].minimum - min_range*(descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)) << ";\n";
         else if(scaler == "MeanStandardDeviation")
-        {
             buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
-        }
         else if(scaler == "StandardDeviation")
-        {
             buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
-        }
         else if(scaler == "Logarithm")
-        {
             buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
-        }
         else
             throw runtime_error("Unknown inputs scaling method.\n");
-
     }
 
     string expression = buffer.str();
