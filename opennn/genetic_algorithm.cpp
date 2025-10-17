@@ -469,7 +469,7 @@ void GeneticAlgorithm::perform_selection()
 
     // The next individuals are selected randomly but their probability is set according to their fitness
 
-    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
+    while(std::count(selection.data(), selection.data() + selection.size(), true) < selected_individuals_number)
     {
         const type random_number = get_random_type(type(0), fitness_sum());
 
@@ -491,7 +491,7 @@ void GeneticAlgorithm::perform_selection()
 
 vector<Index> GeneticAlgorithm::get_selected_individuals_indices() const
 {
-    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
+    vector<Index> selection_indices(std::count(selection.data(), selection.data() + selection.size(), true));
 
     Index count = 0;
 
