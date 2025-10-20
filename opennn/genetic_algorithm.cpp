@@ -200,6 +200,18 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 }
 
 
+void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
+{
+    fitness = new_fitness;
+}
+
+
+void GeneticAlgorithm::set_selection(const Tensor<bool, 1>& new_selection)
+{
+    selection = new_selection;
+}
+
+
 void GeneticAlgorithm::initialize_population()
 {
     initialization_method == GeneticAlgorithm::InitializationMethod::Random
@@ -391,7 +403,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         const Tensor<bool, 1> individual = population.chip(i, 0);
 
-        cout << "\nIndividual " << i + 1 << endl;
+        if (display) cout << "\nIndividual " << i + 1 << endl;
 
         const vector<Index> individual_raw_variables_indices = get_raw_variable_indices(individual);
 
@@ -411,6 +423,9 @@ void GeneticAlgorithm::evaluate_population()
         neural_network->set_parameters_random();
 
         //Training
+
+        if (!display) training_strategy->get_loss_index()->set_display(false);
+        if (!display) training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
 
@@ -749,14 +764,19 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         stop = true;
 
-        if (elapsed_time >= maximum_time)
+        if (input_selection_results.optimum_selection_error <= selection_error_goal)
+        {
+            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_selection_error << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+        }
+        else if (elapsed_time >= maximum_time)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
         else if (epoch >= maximum_epochs_number - 1)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
         else
@@ -764,7 +784,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             stop = false;
         }
 
-        if(stop)
+        if (stop)
         {
             input_selection_results.elapsed_time = write_time(elapsed_time);
             input_selection_results.resize_history(epoch + 1);
