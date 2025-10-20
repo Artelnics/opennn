@@ -2068,7 +2068,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
     vector<string> fixed_raw_names = fix_input_names(original_inputs);
 
-    for(size_t i = 0; i < inputs_number; ++i) {
+    for(Index i = 0; i < inputs_number; ++i) {
         const auto& var = raw_variables[i];
         if (var.use != "Input") continue;
 
@@ -2086,7 +2086,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     buffer << "\n\t# --- Conversión de datos al formato del modelo (No modificar) ---\n";
     buffer << "\tinputs = []\n\n";
 
-    for(size_t i = 0; i < inputs_number; ++i) {
+    for(Index i = 0; i < inputs_number; ++i) {
         const auto& var = raw_variables[i];
         if (var.use != "Input") continue;
 
