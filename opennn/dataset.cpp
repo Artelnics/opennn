@@ -120,7 +120,7 @@ void Dataset::RawVariable::set_categories(const vector<string>& new_categories)
 void Dataset::RawVariable::from_XML(const XMLDocument& document)
 {
     name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "string"));
+    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
     set_use(read_xml_string(document.FirstChildElement(), "Use"));
     set_type(read_xml_string(document.FirstChildElement(), "Type"));
 
@@ -135,7 +135,7 @@ void Dataset::RawVariable::from_XML(const XMLDocument& document)
 void Dataset::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "string", scaler);
+    add_xml_element(printer, "Scaler", scaler);
     add_xml_element(printer, "Use", get_use());
     add_xml_element(printer, "Type", get_type_string());
 
@@ -556,6 +556,7 @@ void Dataset::set_default_raw_variables_uses_forecasting()
         }
     }
 }
+
 
 void Dataset::set_default_raw_variable_names()
 {
@@ -2675,7 +2676,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
             throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "string"));
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 

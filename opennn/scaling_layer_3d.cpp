@@ -281,7 +281,7 @@ void Scaling3d::to_XML(XMLPrinter& printer) const
         printer.OpenElement("ScalingFeature");
         printer.PushAttribute("Index", int(i));
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
-        add_xml_element(printer, "string", scalers[i]);
+        add_xml_element(printer, "Scaler", scalers[i]);
         printer.CloseElement();
     }
 
@@ -330,7 +330,7 @@ void Scaling3d::from_XML(const XMLDocument& document)
                 );
         }
 
-        scalers[i] = read_xml_string(scaling_feature_element, "string");
+        scalers[i] = read_xml_string(scaling_feature_element, "Scaler");
 
         start_element = scaling_feature_element;
     }

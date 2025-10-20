@@ -459,7 +459,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
         start_element = raw_variable_element;
 
         raw_variable.name = read_xml_string(start_element, "Name");
-        raw_variable.set_scaler(read_xml_string(start_element, "string"));
+        raw_variable.set_scaler(read_xml_string(start_element, "Scaler"));
         raw_variable.set_use(read_xml_string(start_element, "Use"));
         raw_variable.set_type(read_xml_string(start_element, "Type"));
 
