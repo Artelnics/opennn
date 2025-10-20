@@ -69,8 +69,6 @@ public:
 
    TrainingResults train() override;
 
-   string get_name() const override;
-
    // Serialization
 
    Tensor<string, 2> to_string_matrix() const override;

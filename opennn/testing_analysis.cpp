@@ -238,7 +238,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+    unscaling_layer->set_scalers("MinimumMaximum");
 
     Descriptives desc;
     vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
@@ -312,7 +312,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     }
 
     Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+    unscaling_layer->set_scalers("MinimumMaximum");
 
     Descriptives desc;
     vector<Descriptives> descriptives = unscaling_layer->get_descriptives();
@@ -320,9 +320,10 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    for(Index i = 0; i < outputs_number; i++){
-        type min_range=output_minimums[i];
-        type max_range=output_maximums[i];
+    for(Index i = 0; i < outputs_number; i++)
+    {
+        const type min_range = output_minimums[i];
+        const type max_range = output_maximums[i];
         desc.set(min_range, max_range);
         descriptives[i] = desc;
     }
@@ -338,12 +339,8 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 #pragma omp parallel for
 
     for(Index i = 0; i < testing_samples_number; i++)
-    {
         for(Index j = 0; j < outputs_number; j++)
-        {
             error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
-        }
-    }
 
     return error_data;
 }
@@ -357,7 +354,7 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() c
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
 
-    dataset->set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset->set_raw_variable_scalers("MinimumMaximum");
     dataset->scale_data();
     dataset->calculate_variable_descriptives();
 

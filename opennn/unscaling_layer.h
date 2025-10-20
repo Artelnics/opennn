@@ -30,10 +30,7 @@ public:
     Tensor<type, 1> get_minimums() const;
     Tensor<type, 1> get_maximums() const;
 
-    vector<Scaler> get_unscaling_method() const;
-
-    vector<string> write_unscaling_methods() const;
-    vector<string> write_unscaling_method_text() const;
+    vector<string> get_scalers() const;
 
     void set(const Index& = 0, const string& = "unscaling_layer");
 
@@ -44,16 +41,12 @@ public:
 
     void set_min_max_range(const type min, const type max);
 
-    void set_scalers(const vector<Scaler>&);
-    void set_scalers(const string&);
     void set_scalers(const vector<string>&);
-    void set_scalers(const Scaler&);
+    void set_scalers(const string&);
 
     void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
-
-    vector<string> write_scalers_text() const;
 
     void print() const override;
 
@@ -66,7 +59,7 @@ private:
 
     vector<Descriptives> descriptives;
 
-    vector<Scaler> scalers;
+    vector<string> scalers;
 
     type min_range;
     type max_range;

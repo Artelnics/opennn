@@ -346,7 +346,7 @@ void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
     layer = new_layer;
     if(layer == nullptr)
-        throw std::runtime_error("recurrrent layer is nullptr");
+        throw runtime_error("recurrrent layer is nullptr");
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];

@@ -12,39 +12,6 @@
 namespace opennn
 {
 
-string scaler_to_string(const Scaler& scaler)
-{
-    switch (scaler)
-    {
-    case Scaler::None: return "None";
-    case Scaler::MinimumMaximum: return "MinimumMaximum";
-    case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
-    case Scaler::StandardDeviation: return "StandardDeviation";
-    case Scaler::Logarithm: return "Logarithm";
-    case Scaler::ImageMinMax: return "ImageMinMax";
-    default: throw runtime_error("Unknown scaler\n");
-    }
-}
-
-
-Scaler string_to_scaler(const string& new_scaler)
-{
-    if (new_scaler == "None")
-        return Scaler::None;
-    else if (new_scaler == "MinimumMaximum")
-        return Scaler::MinimumMaximum;
-    else if (new_scaler == "MeanStandardDeviation")
-        return Scaler::MeanStandardDeviation;
-    else if (new_scaler == "StandardDeviation")
-        return Scaler::StandardDeviation;
-    else if (new_scaler == "Logarithm")
-        return Scaler::Logarithm;
-    else if (new_scaler == "ImageMinMax")
-        return Scaler::ImageMinMax;
-    else
-        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
-}
-
 
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& column_index,

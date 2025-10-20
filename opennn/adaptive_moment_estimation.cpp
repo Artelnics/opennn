@@ -72,6 +72,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 void AdaptiveMomentEstimation::set_default()
 {
     display_period = 100;
+    name = "AdaptiveMomentEstimation";
 }
 
 
@@ -447,12 +448,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         }
     }
-}
-
-
-string AdaptiveMomentEstimation::get_name() const
-{
-    return "AdaptiveMomentEstimation";
 }
 
 

@@ -41,10 +41,6 @@ public:
 
     void set_dataset(const Dataset*) override;
 
-    string get_name() const override;
-
-
-
     // Back propagation
 
     void calculate_error(const Batch&,

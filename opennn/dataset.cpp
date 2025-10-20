@@ -61,7 +61,7 @@ dimensions Dataset::get_target_dimensions() const
 Dataset::RawVariable::RawVariable(const string& new_name,
                                   const string& new_raw_variable_use,
                                   const RawVariableType& new_type,
-                                  const Scaler& new_scaler,
+                                  const string& new_scaler,
                                   const vector<string>& new_categories)
 {
     set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
@@ -71,7 +71,7 @@ Dataset::RawVariable::RawVariable(const string& new_name,
 void Dataset::RawVariable::set(const string& new_name,
                                const string& new_raw_variable_use,
                                const RawVariableType& new_type,
-                               const Scaler& new_scaler,
+                               const string& new_scaler,
                                const vector<string>& new_categories)
 {
     name = new_name;
@@ -82,17 +82,9 @@ void Dataset::RawVariable::set(const string& new_name,
 }
 
 
-void Dataset::RawVariable::set_scaler(const Scaler& new_scaler)
+void Dataset::RawVariable::set_scaler(const string& new_scaler)
 {
     scaler = new_scaler;
-}
-
-
-void Dataset::RawVariable::set_scaler(const string& new_scaler_string)
-{
-    const Scaler new_scaler = string_to_scaler(new_scaler_string);
-
-    set_scaler(new_scaler);
 }
 
 
@@ -128,7 +120,7 @@ void Dataset::RawVariable::set_categories(const vector<string>& new_categories)
 void Dataset::RawVariable::from_XML(const XMLDocument& document)
 {
     name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
+    set_scaler(read_xml_string(document.FirstChildElement(), "string"));
     set_use(read_xml_string(document.FirstChildElement(), "Use"));
     set_type(read_xml_string(document.FirstChildElement(), "Type"));
 
@@ -143,7 +135,7 @@ void Dataset::RawVariable::from_XML(const XMLDocument& document)
 void Dataset::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "Scaler", scaler_to_string(scaler));
+    add_xml_element(printer, "string", scaler);
     add_xml_element(printer, "Use", get_use());
     add_xml_element(printer, "Type", get_type_string());
 
@@ -158,7 +150,7 @@ void Dataset::RawVariable::print() const
          << "Name: " << name << endl
          << "Use: " << get_use() << endl
          << "Type: " << get_type_string() << endl
-         << "Scaler: " << scaler_to_string(scaler) << endl;
+         << "string: " << scaler << endl;
 
     if (categories.size() != 0)
     {
@@ -723,14 +715,14 @@ vector<Index> Dataset::get_used_raw_variables_indices() const
 }
 
 
-vector<Scaler> Dataset::get_variable_scalers(const string& variable_use) const
+vector<string> Dataset::get_variable_scalers(const string& variable_use) const
 {
     const Index input_raw_variables_number = get_raw_variables_number(variable_use);
     const Index input_variables_number = get_variables_number(variable_use);
 
     const vector<RawVariable> input_raw_variables = get_raw_variables(variable_use);
 
-    vector<Scaler> input_variable_scalers(input_variables_number);
+    vector<string> input_variable_scalers(input_variables_number);
 
     Index index = 0;
 
@@ -1021,14 +1013,14 @@ void Dataset::set_raw_variables_number(const Index& new_raw_variables_number)
 }
 
 
-void Dataset::set_raw_variable_scalers(const Scaler& scalers)
+void Dataset::set_raw_variable_scalers(const string& scalers)
 {
     for (Dataset::RawVariable& raw_variable : raw_variables)
         raw_variable.scaler = scalers;
 }
 
 
-void Dataset::set_raw_variable_scalers(const vector<Scaler>& new_scalers)
+void Dataset::set_raw_variable_scalers(const vector<string>& new_scalers)
 {
     const size_t raw_variables_number = get_raw_variables_number();
 
@@ -2454,8 +2446,8 @@ void Dataset::set_default_raw_variables_scalers()
 {
     for (Dataset::RawVariable& raw_variable : raw_variables)
         raw_variable.scaler = (raw_variable.type == RawVariableType::Numeric)
-                                  ? Scaler::MeanStandardDeviation
-                                  : Scaler::MinimumMaximum;
+                                  ? "MeanStandardDeviation"
+                                  : "MinimumMaximum";
 }
 
 
@@ -2471,30 +2463,20 @@ vector<Descriptives> Dataset::scale_data()
     {
         raw_variable_index = get_raw_variable_index(i);
 
-        switch (raw_variables[raw_variable_index].scaler)
-        {
-        case Scaler::None:
-            break;
+        const string& scaler = raw_variables[raw_variable_index].scaler;
 
-        case Scaler::MinimumMaximum:
+        if(scaler == "None")
+            ;
+        else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, i, variable_descriptives[i]);
-            break;
-
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             scale_mean_standard_deviation(data, i, variable_descriptives[i]);
-            break;
-
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             scale_standard_deviation(data, i, variable_descriptives[i]);
-            break;
-
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             scale_logarithmic(data, i);
-            break;
-
-        default:
-            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables[i].scaler)) + "\n");
-        }
+        else
+            throw runtime_error("Unknown scaler: " + scaler + "\n");
     }
 
     return variable_descriptives;
@@ -2506,36 +2488,26 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
     const Index input_variables_number = get_variables_number(variable_use);
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
+    const vector<string> input_variable_scalers = get_variable_scalers(variable_use);
 
     const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
     for (Index i = 0; i < input_variables_number; i++)
     {
-        switch (input_variable_scalers[i])
-        {
-        case Scaler::None:
-            break;
+        const string& scaler = input_variable_scalers[i];
 
-        case Scaler::MinimumMaximum:
+        if(scaler == "None")
+            ;
+        else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             scale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             scale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             scale_logarithmic(data, input_variable_indices[i]);
-            break;
-
-        default:
-            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variable_scalers[i])) + "\n");
-        }
+        else
+            throw runtime_error("Unknown scaling inputs method: " + scaler + "\n");
     }
 
     return input_variable_descriptives;
@@ -2549,38 +2521,26 @@ void Dataset::unscale_variables(const string& variable_use,
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
 
-    const vector<Scaler> input_variable_scalers = get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = get_variable_scalers("Input");
 
     for (Index i = 0; i < input_variables_number; i++)
     {
-        switch (input_variable_scalers[i])
-        {
-        case Scaler::None:
-            break;
+        const string& scaler = input_variable_scalers[i];
 
-        case Scaler::MinimumMaximum:
+        if(scaler == "case string::None")
+            break;
+        else if(scaler == "MinimumMaximum")
             unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::MeanStandardDeviation:
+        else if(scaler == "MeanStandardDeviation")
             unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::StandardDeviation:
+        else if(scaler == "StandardDeviation")
             unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
-            break;
-
-        case Scaler::Logarithm:
+        else if(scaler == "Logarithm")
             unscale_logarithmic(data, input_variable_indices[i]);
-            break;
-
-        case Scaler::ImageMinMax:
+        else if(scaler == "ImageMinMax")
             unscale_image_minimum_maximum(data, input_variable_indices[i]);
-            break;
-
-        default:
-            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variable_scalers[i])) + "\n");
-        }
+        else
+            throw runtime_error("Unknown unscaling and unscaling method: " + scaler + "\n");
     }
 }
 
@@ -2715,7 +2675,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
             throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "string"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 

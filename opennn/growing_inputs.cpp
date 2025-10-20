@@ -44,6 +44,8 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 
 void GrowingInputs::set_default()
 {
+    name = "GrowingInputs";
+
     maximum_selection_failures = 100;
     minimum_inputs_number = 1;
     trials_number = 3;
@@ -318,7 +320,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     dataset->print();
     
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
