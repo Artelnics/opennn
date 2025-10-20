@@ -13,23 +13,23 @@
          <NeuronsNumber>5</NeuronsNumber>
          <ScalingNeuron Index="1">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MeanStandardDeviation</Scaler>
+            <string>MeanStandardDeviation</string>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MeanStandardDeviation</Scaler>
+            <string>MeanStandardDeviation</string>
          </ScalingNeuron>
          <ScalingNeuron Index="3">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MeanStandardDeviation</Scaler>
+            <string>MeanStandardDeviation</string>
          </ScalingNeuron>
          <ScalingNeuron Index="4">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MeanStandardDeviation</Scaler>
+            <string>MeanStandardDeviation</string>
          </ScalingNeuron>
          <ScalingNeuron Index="5">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MeanStandardDeviation</Scaler>
+            <string>MeanStandardDeviation</string>
          </ScalingNeuron>
       </Scaling2d>
       <Dense2d>
@@ -38,8 +38,8 @@
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
          <BatchNormalization>false</BatchNormalization>
-         <Biases>0.0672712 </Biases>
-         <Weights>0.0569151 -0.0792802 -0.096793 -0.0125511 -0.0750306 </Weights>
+         <Biases>0.0925592 </Biases>
+         <Weights>-0.0964833 0.0391589 0.0617495 -0.0930407 0.0890619 </Weights>
       </Dense2d>
       <Dense2d>
          <Label>approximation_layer</Label>
@@ -47,22 +47,22 @@
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>Linear</Activation>
          <BatchNormalization>false</BatchNormalization>
-         <Biases>0.0707773 -0.0685992 0.0288643 </Biases>
-         <Weights>-0.085082 -0.0487556 0.0950334 </Weights>
+         <Biases>0.0171032 -0.0634207 0.0514016 </Biases>
+         <Weights>-0.0247242 0.0576208 0.0479516 </Weights>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>3</NeuronsNumber>
          <UnscalingNeuron Index="1">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MinimumMaximum</Scaler>
+            <string>MinimumMaximum</string>
          </UnscalingNeuron>
          <UnscalingNeuron Index="2">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MinimumMaximum</Scaler>
+            <string>MinimumMaximum</string>
          </UnscalingNeuron>
          <UnscalingNeuron Index="3">
             <Descriptives>-1 1 0 1 </Descriptives>
-            <Scaler>MinimumMaximum</Scaler>
+            <string>MinimumMaximum</string>
          </UnscalingNeuron>
       </Unscaling>
       <Bounding>

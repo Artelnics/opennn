@@ -182,7 +182,6 @@ TEST(Dataset, ScaleData)
 
 TEST(Dataset, UnuseConstantRawVariables)
 {
-
     Dataset dataset(3, { 2 }, { 1 });
 
     Tensor<type, 2> data(3, 3);
@@ -521,6 +520,7 @@ TEST(Dataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
 TEST(Dataset, test_calculate_raw_variable_correlations)
 {
     // Test 1 (numeric and numeric trivial case)
+
     Tensor<type, 2> data;
     Dataset dataset(3, {3}, {1});
 
@@ -531,6 +531,7 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
                     {type(-1), type(-1), type(1), type(-1)} });
 
     dataset.set_data(data);
+    dataset.set_display(false);
         
     vector<Index> input_raw_variable_indices(3);
     input_raw_variable_indices[0] = Index(0);
@@ -540,20 +541,14 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     vector<Index> target_raw_variable_indices(1);
     target_raw_variable_indices[0] = Index(3);
 
-
-
     dataset.set_raw_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
-    
-
 
     EXPECT_EQ(input_target_raw_variable_correlations(0, 0).r, 1.0);
 
     EXPECT_EQ(input_target_raw_variable_correlations(1,0).r, 1.0);
     EXPECT_EQ(input_target_raw_variable_correlations(2, 0).r, -1.0);
-
-    
 
     // Test 2 (numeric and numeric non trivial case)
 
@@ -568,7 +563,6 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     target_raw_variable_indices.resize(2);
     target_raw_variable_indices = { 2, 3 };
 
-
     dataset.set_raw_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_raw_variable_pearson_correlations();
@@ -576,7 +570,6 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     EXPECT_TRUE(-1 < input_target_raw_variable_correlations(0, 0).r && input_target_raw_variable_correlations(0, 0).r < 1);
     EXPECT_TRUE(-1 < input_target_raw_variable_correlations(1, 0).r && input_target_raw_variable_correlations(1, 0).r < 1);
     EXPECT_TRUE(-1 < input_target_raw_variable_correlations(2, 0).r && input_target_raw_variable_correlations(2, 0).r < 1);
-
 
     // Test 3 (binary and binary non trivial case)
 
@@ -658,7 +651,6 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_raw_variable_pearson_correlations();
 
-
     EXPECT_TRUE(-1 < input_target_raw_variable_correlations(0,0).r && input_target_raw_variable_correlations(0,0).r < 1);
     EXPECT_EQ(input_target_raw_variable_correlations(0,0).form, Correlation::Form::Logistic);
 
@@ -704,8 +696,6 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     EXPECT_TRUE(-1 < input_target_raw_variable_correlations(2,0).r && input_target_raw_variable_correlations(1,0).r < 1);
     EXPECT_EQ(input_target_raw_variable_correlations(2,0).form, Correlation::Form::Logistic);
 
-    // With missing values or NAN
-    
     // Test 9 (categorical and categorical)
 
     categorical_dataset.set("../datasets/correlation_tests_with_nan.csv",",", false);
@@ -799,6 +789,7 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
                     {type(3), type(3), type(-3), type(3)}});
 
     dataset.set_data(data);
+    dataset.set_display(false);
 
     vector<Index> input_raw_variable_indices(3);
     input_raw_variable_indices[0] = Index(0);
@@ -903,7 +894,6 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     inputs_correlations = dataset.calculate_input_raw_variable_pearson_correlations();
 
-
     EXPECT_EQ(inputs_correlations(0,0).r, 1);
     EXPECT_EQ(inputs_correlations(0,0).form, Correlation::Form::Linear);
 
@@ -931,13 +921,11 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     EXPECT_EQ(inputs_correlations(2,2).r, 1);
     EXPECT_EQ(inputs_correlations(2,2).form, Correlation::Form::Linear);
     
-    
     // Test 5 (categorical and categorical)
 
     Dataset categorical_dataset = Dataset();
     categorical_dataset.set("../datasets/correlation_tests.csv",",", false);
 
-   
     input_raw_variable_indices.resize(2);
     input_raw_variable_indices = {0, 4};
 
@@ -945,7 +933,6 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     target_raw_variable_indices = {5};
    
     inputs_correlations = categorical_dataset.calculate_input_raw_variable_pearson_correlations();
-
    
     categorical_dataset.set_raw_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
 
@@ -957,8 +944,6 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     EXPECT_EQ(inputs_correlations(1,1).r, 1);
     EXPECT_EQ(inputs_correlations(1,1).form, Correlation::Form::Linear);
-
-   
 
     EXPECT_TRUE(-1 < inputs_correlations(2, 0).r && inputs_correlations(2, 0).r < 1);
     EXPECT_EQ(inputs_correlations(2,0).form, Correlation::Form::Logistic);
@@ -1056,8 +1041,6 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     EXPECT_EQ(inputs_correlations(2,2).r, 1);
     EXPECT_EQ(inputs_correlations(2,2).form, Correlation::Form::Linear);
     
-    // With missing values or NAN
-
     // Test 9 (categorical and categorical)
 
     categorical_dataset.set_missing_values_label("NA");
@@ -1075,8 +1058,6 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     EXPECT_EQ(inputs_correlations(0,0).r, 1);
     EXPECT_EQ(inputs_correlations(0,0).form, Correlation::Form::Linear);
-
-    cout << inputs_correlations(1, 0).r << endl;
 
     EXPECT_TRUE(-1 < inputs_correlations(1,0).r && inputs_correlations(1,0).r <= 1);
     EXPECT_EQ(inputs_correlations(1,0).form, Correlation::Form::Logistic);
@@ -1190,30 +1171,32 @@ TEST(Dataset, test_unuse_uncorrelated_raw_variables)
     data.setValues({
         {type(1), type(1), type(0), type(2)},
         {type(2), type(0), type(0), type(4)},
-        {type(3), type(1), type(0), type(6)},
-        {type(4), type(0), type(0), type(8)} });
+        {type(3), type(0), type(0), type(6)},
+        {type(4), type(1), type(0), type(8)}
+        });
 
     Dataset dataset(4, { 3 }, { 1 });
-
     dataset.set_raw_variable_names({ "A", "B", "C", "T" });
+    dataset.set_data(data);
 
     vector<Index> input_indices = { 0, 1, 2 };
     vector<Index> target_indices = { 3 };
-
     dataset.set_raw_variable_indices(input_indices, target_indices);
-
 
     type min_correlation = 0.25;
     vector<string> unused = dataset.unuse_uncorrelated_raw_variables(min_correlation);
-    
 
-    //EXPECT_FALSE(unused.empty())
+    ASSERT_EQ(unused.size(), 2);
+
+    sort(unused.begin(), unused.end());
     EXPECT_EQ(unused[0], "B");
+    EXPECT_EQ(unused[1], "C");
 
     const auto& raw_vars = dataset.get_raw_variables();
-    EXPECT_EQ(raw_vars[1].use, "None");
     EXPECT_EQ(raw_vars[0].use, "Input");
-    EXPECT_EQ(raw_vars[2].use, "Input");
+    EXPECT_EQ(raw_vars[1].use, "None");
+    EXPECT_EQ(raw_vars[2].use, "None");
+    EXPECT_EQ(raw_vars[3].use, "Target");
 }
 
 TEST(Dataset,CalculateNegatives)

@@ -209,7 +209,7 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
             descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
         else if(scaler == "MeanStandardDeviation")
