@@ -135,7 +135,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
-    for(Index i = 0; i < correlations_rank_descending.size(); i++) 
+    for(Index i = 0; i < correlations_rank_descending.size(); i++)
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     dataset->set_input_raw_variables_unused();
@@ -166,7 +166,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     bool stop = false;
 
     for(Index i = 0; i < maximum_epochs_number; i++)
-    {     
+    {
         dataset->set_raw_variable_use(correlations_rank_descending[raw_variable_index], "Input");
 
         Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
@@ -308,7 +308,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             break;
         }
             
-        raw_variable_index++;        
+        raw_variable_index++;
     }
 
     // Set data set stuff
