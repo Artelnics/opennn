@@ -344,11 +344,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         const Index raw_variables_active = num_inputs_dist(gen);
 
-        // No para de tirar a la ruleta hasta que el numero de 1s activos sea igual a raw_variables_active 
-        // raw_variables_active es un numero aleatorio entre minimum_inputs_number y maximum_inputs_number
-        // Si minimum_inputs_number es 10 y maximum_inputs_number es 50, raw_variables_active puede ser cualquier numero entre 10 y 50
-        // Si raw_variables_active es 30 por ejemplo, el bucle while se repetira hasta que haya 30 variables activas (30 1s) en individual_raw_variables
-        // Si la ruleta cae en una posicion que ya esta activa (ya es un 1), no se activa de nuevo, simplemente se ignora y se vuelve a tirar la ruleta hasta obetener los 30 1s activos.
         while (count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true) < raw_variables_active)
         {
             arrow = distribution(gen);

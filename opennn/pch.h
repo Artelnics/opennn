@@ -21,7 +21,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <string>
+#include <time.h>
 #include <iterator>
 #include <map>
 #include <numeric>
@@ -31,7 +31,7 @@
 #include <exception>
 #include <memory>
 #include <random>
-#include <cassert>
+#include <cstring>
 #include <cstdlib>
 #include <fstream>
 #include <stdexcept>

@@ -1717,13 +1717,11 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 
         for (Index j = 0; j < target_raw_variables_number; j++)
         {
-        
-            if (!isnan(correlations(i, j).r)
-                && abs(correlations(i, j).r) < minimum_correlation
-                && raw_variables[input_raw_variable_index].use != "None")
+            const type r = correlations(i, j).r;
+
+            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].use != "None")
             {
                 raw_variables[input_raw_variable_index].set_use("None");
-
                 unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
             }
         }
@@ -2163,7 +2161,7 @@ void Dataset::set_gmt(const Index& new_gmt)
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_correlations() const
 {
-    cout << "Calculating pearson correlations..." << endl;
+    if (display) cout << "Calculating pearson correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number("Input");
     const Index target_raw_variables_number = get_raw_variables_number("Target");
@@ -2195,7 +2193,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_correlations() const
 {
-    cout << "Calculating spearman correlations..." << endl;
+    if (display) cout << "Calculating spearman correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number("Input");
     const Index target_raw_variables_number = get_raw_variables_number("Target");
@@ -2302,13 +2300,13 @@ void Dataset::print_top_input_target_raw_variables_correlations() const
     map<type, string>::iterator it;
 
     for (it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
+        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlations() const
 {
-    cout << "Calculating pearson inputs correlations..." << endl;
+    if (display) cout << "Calculating pearson inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
@@ -2318,7 +2316,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
+        if (display) cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
 
         const Index current_input_index_i = input_raw_variable_indices[i];
 
@@ -2349,7 +2347,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlations() const
 {
-    cout << "Calculating spearman inputs correlations..." << endl;
+    if (display) cout << "Calculating spearman inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
@@ -2359,7 +2357,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
+        if (display) cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
 
         const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
@@ -2438,7 +2436,7 @@ void Dataset::print_top_inputs_correlations() const
     map<type, string> ::iterator it;
 
     for (it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
+        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
@@ -2466,7 +2464,7 @@ vector<Descriptives> Dataset::scale_data()
         const string& scaler = raw_variables[raw_variable_index].scaler;
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, i, variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
@@ -2497,7 +2495,7 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
         const string& scaler = input_variable_scalers[i];
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
@@ -2527,8 +2525,8 @@ void Dataset::unscale_variables(const string& variable_use,
     {
         const string& scaler = input_variable_scalers[i];
 
-        if(scaler == "case string::None")
-            break;
+        if(scaler == "None")
+            continue;
         else if(scaler == "MinimumMaximum")
             unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")

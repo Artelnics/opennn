@@ -193,7 +193,7 @@ void Scaling2d::forward_propagate(const vector<TensorView>& input_views,
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(outputs, i, descriptives[i], min_range, max_range);
         else if(scaler == "MeanStandardDeviation")

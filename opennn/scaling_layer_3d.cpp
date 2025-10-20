@@ -226,7 +226,7 @@ Tensor<type, 3> Scaling3d::calculate_outputs(const Tensor<type, 3>& inputs) cons
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum_3d(outputs, i, descriptives[i], min_range, max_range);
         else if(scaler == "MeanStandardDeviation")
