@@ -152,7 +152,6 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     dataset.set_data_random();
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_random();
 
     MeanSquaredError loss(&neural_network, &dataset);
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);

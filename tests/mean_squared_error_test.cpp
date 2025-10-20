@@ -50,11 +50,10 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     const type error = mean_squared_error.calculate_numerical_error();
 
-    EXPECT_GE(error, 0);
-
     const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
+    EXPECT_GE(error, 0);
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
@@ -66,8 +65,6 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     const Index outputs_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
-
     Dataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
     dataset.set_sample_uses("Training");
@@ -77,6 +74,7 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
                dataset.get_variable_indices("Input"),
                dataset.get_variable_indices("Target"));
 
+    ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
@@ -133,7 +131,57 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
 
     EXPECT_GE(error, 0.0) << "MSE must be positive";
     EXPECT_TRUE(isfinite(error)) << "Error must be finite";
-    ASSERT_EQ(analytical_gradient.size(), numerical_gradient.size());
     ASSERT_EQ(analytical_gradient.size(), mha_layer->get_parameters_number());
+    EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-3)));
+}
+
+TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
+{
+    const Index batch_size = get_random_index(1, 4);
+    const Index input_height = get_random_index(3, 6);
+    const Index input_width = get_random_index(3, 6);
+    const Index input_channels = get_random_index(1, 4);
+    const dimensions sample_input_dimensions = { input_height, input_width, input_channels };
+
+    const Index kernel_size = get_random_index(1, 2);
+    const Index kernels_number = get_random_index(1, 4);
+    const dimensions kernel_dimensions = { kernel_size, kernel_size, input_channels, kernels_number };
+
+    const dimensions strides = { 1, 1 };
+
+    const Convolution convolution_object(Convolution::Valid);
+
+    const bool has_bias = true;
+
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<Convolutional>(
+        sample_input_dimensions,
+        kernel_dimensions,
+        "Linear",
+        strides,
+        convolution_object, 
+        has_bias
+    ));
+
+    const dimensions sample_target_dimensions = neural_network.get_output_dimensions();
+    Dataset dataset(batch_size, sample_input_dimensions, sample_target_dimensions);
+    dataset.set_data_random();
+
+    Layer* base_layer_ptr = neural_network.get_layer(0).get();
+    Convolutional* convo_layer = dynamic_cast<Convolutional*>(base_layer_ptr);
+    ASSERT_NE(convo_layer, nullptr);
+
+    neural_network.set_parameters_random();
+
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+
+    const type error = mean_squared_error.calculate_numerical_error();
+    const Tensor<type, 1> analytical_gradient = mean_squared_error.calculate_gradient();
+    const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+    EXPECT_GE(error, 0.0) << "MSE must be positive";
+    EXPECT_TRUE(isfinite(error)) << "Error must be finite";
+    ASSERT_EQ(analytical_gradient.size(), convo_layer->get_parameters_number());
     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-3)));
 }

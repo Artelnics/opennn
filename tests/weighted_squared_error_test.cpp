@@ -38,7 +38,6 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
      data_set.set_data_binary_classification();
 
      ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
-     neural_network.set_parameters_random();
 
      WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
 
