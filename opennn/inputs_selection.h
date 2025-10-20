@@ -67,7 +67,10 @@ public:
 
     virtual InputsSelectionResults perform_input_selection() = 0;
 
-    virtual string get_name() const = 0;
+    string get_name() const
+    {
+        return name;
+    }
 
     string write_time(const type&) const;
 
@@ -97,6 +100,8 @@ protected:
     Index maximum_epochs_number;
 
     type maximum_time;
+
+    string name;
 };
 
 

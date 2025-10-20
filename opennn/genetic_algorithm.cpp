@@ -97,6 +97,8 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 void GeneticAlgorithm::set_default()
 {
+    name = "GeneticAlgorithm";
+
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
@@ -809,7 +811,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_dimensions("Input", { Index(optimal_inputs_raw_variables_indices.size()) });
 
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
@@ -973,12 +975,6 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
-}
-
-
-string GeneticAlgorithm::get_name() const
-{
-    return "GeneticAlgorithm";
 }
 
 

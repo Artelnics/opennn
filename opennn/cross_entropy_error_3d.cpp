@@ -7,10 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-//#include "tensors.h"
 #include "neural_network.h"
 #include "cross_entropy_error_3d.h"
-//#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -18,6 +16,8 @@ namespace opennn
 CrossEntropyError3d::CrossEntropyError3d(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
+    name = "CrossEntropyError3d";
+
     throw runtime_error("CrossEntropyError3d is not yet implemented. Please check back in a future version.");
 }
 
@@ -79,12 +79,6 @@ void CrossEntropyError3d::calculate_output_delta(const Batch&,
 {
     // Probabilistic3d does not have deltas.
     // Error combinations derivatives are calculated directly.
-}
-
-
-string CrossEntropyError3d::get_name() const
-{
-    return "CrossEntropyError3d";
 }
 
 

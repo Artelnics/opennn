@@ -99,8 +99,6 @@ public:
 
     void load(const filesystem::path&);
 
-    string get_name() const override;
-
 private:
 
     Tensor<Tensor<type, 1>, 1> parameters;

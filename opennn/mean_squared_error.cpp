@@ -18,6 +18,7 @@ namespace opennn
 MeanSquaredError::MeanSquaredError(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
     : LossIndex(new_neural_network, new_dataset)
 {
+    name = "MeanSquaredError";
 }
 
 
@@ -149,12 +150,6 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
-}
-
-
-string MeanSquaredError::get_name() const
-{
-    return "MeanSquaredError";
 }
 
 

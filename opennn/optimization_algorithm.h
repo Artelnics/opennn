@@ -72,7 +72,7 @@ public:
 
     virtual TrainingResults train() = 0;
 
-    virtual string get_name() const;
+    string get_name() const;
 
     virtual void print() const;
 
@@ -114,6 +114,8 @@ protected:
     string neural_network_file_name = "neural_network.xml";
 
     bool display = true;
+
+    string name;
 
 #ifdef OPENNN_CUDA
 

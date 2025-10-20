@@ -54,6 +54,8 @@ void QuasiNewtonMethod::set_display(const bool& new_display)
 
 void QuasiNewtonMethod::set_default()
 {
+    name = "QuasiNewtonMethod";
+
     learning_rate_tolerance = numeric_limits<type>::epsilon();
     loss_tolerance = numeric_limits<type>::epsilon();
 
@@ -452,12 +454,6 @@ TrainingResults QuasiNewtonMethod::train()
     if(display) results.print();
 
     return results;
-}
-
-
-string QuasiNewtonMethod::get_name() const
-{
-    return "QuasiNewtonMethod";
 }
 
 

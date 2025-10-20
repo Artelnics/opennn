@@ -55,8 +55,6 @@ public:
     void calculate_error_hessian_lm(const Batch&,
                                     BackPropagationLM&) const override;
 
-    string get_name() const override;
-
     void from_XML(const XMLDocument&) override;
 
     void to_XML(XMLPrinter&) const override;
