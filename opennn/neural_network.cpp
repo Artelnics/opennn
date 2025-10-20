@@ -652,7 +652,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
-    { 
+    {
         /// @todo
         return Tensor<type, 2>();
     }

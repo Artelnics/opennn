@@ -12,10 +12,13 @@ using namespace opennn;
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
-    CrossEntropyError3d cross_entropy_error_3d;
+    NeuralNetwork neural_network;
+    Dataset dataset;
 
-    EXPECT_EQ(cross_entropy_error_3d.has_neural_network(), false);
-    EXPECT_EQ(cross_entropy_error_3d.has_dataset(), false);
+    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &dataset);
+
+    EXPECT_TRUE(cross_entropy_error_3d.has_neural_network());
+    EXPECT_TRUE(cross_entropy_error_3d.has_dataset());
 }
 
 

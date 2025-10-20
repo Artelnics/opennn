@@ -15,7 +15,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
     Dataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(data);
-    dataset.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
+    dataset.set_raw_variable_scalers("MeanStandardDeviation");
 
     dataset.scale_data();
    
@@ -38,7 +38,7 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
     Dataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset.set_raw_variable_scalers("MinimumMaximum");
 
     dataset.scale_data();
 
@@ -61,7 +61,7 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::None);
+    dataset.set_raw_variable_scalers("None");
 
     dataset.scale_data();
 
@@ -81,7 +81,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
     Dataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::StandardDeviation);
+    dataset.set_raw_variable_scalers("StandardDeviation");
     dataset.scale_data();
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
@@ -103,7 +103,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
     Dataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::Logarithm);
+    dataset.set_raw_variable_scalers("Logarithm");
     dataset.scale_data();
 
     scaled_matrix = dataset.get_data();
@@ -128,7 +128,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
+    dataset.set_raw_variable_scalers("MeanStandardDeviation");
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
@@ -154,7 +154,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset.set_raw_variable_scalers("MinimumMaximum");
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
@@ -179,7 +179,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::None);
+    dataset.set_raw_variable_scalers("None");
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
@@ -203,7 +203,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     Dataset dataset(samples_number, { samples_number }, { 0 });
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::StandardDeviation);
+    dataset.set_raw_variable_scalers("StandardDeviation");
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 
@@ -228,7 +228,7 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
     dataset.set_data(matrix);
-    dataset.set_raw_variable_scalers(Scaler::Logarithm);
+    dataset.set_raw_variable_scalers("Logarithm");
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_variable_descriptives();
 

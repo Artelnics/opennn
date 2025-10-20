@@ -551,8 +551,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, "Logistic"));
 
-    neural_network.set_parameters_random();
-
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
     mean_squared_error.set_regularization_method("None");
 

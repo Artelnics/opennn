@@ -23,6 +23,7 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
+
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
 

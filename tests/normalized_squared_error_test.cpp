@@ -40,7 +40,6 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     dataset.set_sample_uses("Training");
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
-    neural_network.set_parameters_random();
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();
@@ -73,7 +72,6 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
                dataset.get_variable_indices("Target"));
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
-    neural_network.set_parameters_random();
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();

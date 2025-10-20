@@ -42,7 +42,6 @@ TEST(MinkowskiErrorTest, BackPropagate)
     dataset.set_sample_uses("Training");
 
     ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
-    neural_network.set_parameters_random();
 
     MinkowskiError minkowski_error(&neural_network, &dataset);
 

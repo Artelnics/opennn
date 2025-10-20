@@ -611,7 +611,6 @@ type LossIndex::calculate_numerical_error() const
 
     Batch batch(samples_number, dataset);
 
-    // batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
     batch.fill(training_indices, input_indices, target_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -624,8 +623,6 @@ type LossIndex::calculate_numerical_error() const
     calculate_error(batch, forward_propagation, back_propagation);
 
     return back_propagation.error();
-
-    //return 0;
 }
 
 
@@ -648,6 +645,7 @@ Tensor<type, 1> LossIndex::calculate_gradient()
     BackPropagation back_propagation(samples_number, this);
     Tensor<type, 1> parameters;
     neural_network->get_parameters(parameters);
+
     neural_network->forward_propagate(batch.get_input_pairs(),
                                       parameters,
                                       forward_propagation);
@@ -670,8 +668,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
     //const vector<Index> decoder_variable_indices = dataset->get_variable_indices("Decoder");
-
-    // @todo decoder variables
 
     Batch batch(samples_number, dataset);
     batch.fill(sample_indices, input_variable_indices, target_variable_indices);
@@ -697,8 +693,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        cout << "Parameter " << (i + 1) << " of " << parameters_number << endl;
-
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;
@@ -727,7 +721,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
         numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
 
-    // return Tensor<type, 1>();
     return numerical_gradient;
 }
 

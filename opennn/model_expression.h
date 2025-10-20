@@ -31,7 +31,7 @@ public:
     string write_exponential_linear_c() const;
     string write_selu_c() const;
     //void auto_association_c() const;
-    string get_expression_c() const;
+    string get_expression_c(const vector<Dataset::RawVariable>&) const;
 
     // python
     string write_header_python() const;
@@ -46,7 +46,7 @@ public:
     string relu_api() const;
     string exponential_linear_api() const;
     string scaled_exponential_linear_api() const;
-    string get_expression_api() const;
+    string get_expression_api(const vector<Dataset::RawVariable>&) const;
 
     // javascript
     //string autoassociaton_javascript() const;
@@ -66,9 +66,9 @@ public:
     vector<string> fix_output_names(const vector<string>& ) const;
 
     void save_python(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
-    void save_c(const filesystem::path&) const;
+    void save_c(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
     void save_javascript(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
-    void save_api(const filesystem::path&) const;
+    void save_api(const filesystem::path&, const vector<Dataset::RawVariable>&) const;
 
 protected:
     const NeuralNetwork* neural_network = nullptr;

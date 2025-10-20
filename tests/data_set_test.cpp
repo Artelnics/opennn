@@ -162,7 +162,7 @@ TEST(Dataset, ScaleData)
 
     dataset.set_data(original_data);
 
-    dataset.set_raw_variable_scalers(Scaler::MinimumMaximum);
+    dataset.set_raw_variable_scalers("MinimumMaximum");
     vector<Descriptives> data_descriptives_minmax = dataset.scale_data();
     Tensor<type, 2> scaled_data_minmax = dataset.get_data();
 
@@ -1318,7 +1318,7 @@ TEST(Dataset, BatchFill)
 
     for (Index i = 0; i < inputs.dimension(0); ++i) {
         for (Index j = 0; j < inputs.dimension(1); ++j) {
-            SCOPED_TRACE("Comparando inputs en el índice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
+            SCOPED_TRACE("Comparando inputs en el ï¿½ndice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
             EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
         }
     }
@@ -1331,7 +1331,7 @@ TEST(Dataset, BatchFill)
 
     for (Index i = 0; i < targets.dimension(0); ++i) {
         for (Index j = 0; j < targets.dimension(1); ++j) {
-            SCOPED_TRACE("Comparando targets en el índice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
+            SCOPED_TRACE("Comparando targets en el ï¿½ndice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
             EXPECT_NEAR(targets(i, j), target_data(i, j), 1e-6);
         }
     }

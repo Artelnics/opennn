@@ -9,7 +9,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = "GeneticAlgorithmTest*";
+    ::testing::GTEST_FLAG(filter) = "MeanSquaredErrorTest*";
 
     try {
         return RUN_ALL_TESTS();

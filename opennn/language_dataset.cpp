@@ -448,7 +448,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
         RawVariable& raw_variable = raw_variables[i];
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "string"));
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 

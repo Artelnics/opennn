@@ -39,7 +39,7 @@ TEST(UnscalingTest, ForwardPropagate)
         samples_number = 1;
 
         Unscaling unscaling_layer_none({ inputs_number });
-        unscaling_layer_none.set_scalers(Scaler::None);
+        unscaling_layer_none.set_scalers("None");
 
         vector<Descriptives> none_descriptives(inputs_number);
         for (Index i = 0; i < inputs_number; ++i) {
@@ -80,7 +80,7 @@ TEST(UnscalingTest, ForwardPropagate)
         vector<Descriptives> actual_descriptives = descriptives(original_data);
 
         helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers(Scaler::MinimumMaximum);
+        helper_scaling_layer.set_scalers("MinimumMaximum");
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
@@ -97,7 +97,7 @@ TEST(UnscalingTest, ForwardPropagate)
         EXPECT_NEAR(scaled_data(2, 0), type(1.0), NUMERIC_LIMITS_MIN);
 
         unscaling_layer_minmax.set_descriptives(actual_descriptives);
-        unscaling_layer_minmax.set_scalers(Scaler::MinimumMaximum);
+        unscaling_layer_minmax.set_scalers("MinimumMaximum");
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_minmax);
@@ -130,7 +130,7 @@ TEST(UnscalingTest, ForwardPropagate)
         // Col 1: {10,30} -> mean=20, std=sqrt(200)
 
         helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
+        helper_scaling_layer.set_scalers("MeanStandardDeviation");
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
@@ -140,7 +140,7 @@ TEST(UnscalingTest, ForwardPropagate)
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         unscaling_layer_msd.set_descriptives(actual_descriptives);
-        unscaling_layer_msd.set_scalers(Scaler::MeanStandardDeviation);
+        unscaling_layer_msd.set_scalers("MeanStandardDeviation");
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_msd);
@@ -174,7 +174,7 @@ TEST(UnscalingTest, ForwardPropagate)
         vector<Descriptives> actual_descriptives = descriptives(original_data);
 
         helper_scaling_layer.set_descriptives(actual_descriptives);
-        helper_scaling_layer.set_scalers(Scaler::StandardDeviation);
+        helper_scaling_layer.set_scalers("StandardDeviation");
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
@@ -184,7 +184,7 @@ TEST(UnscalingTest, ForwardPropagate)
         Tensor<type, 2> scaled_data = tensor_map<2>(output_pair_scale);
 
         unscaling_layer_std.set_descriptives(actual_descriptives);
-        unscaling_layer_std.set_scalers(Scaler::StandardDeviation);
+        unscaling_layer_std.set_scalers("StandardDeviation");
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_std);
@@ -214,7 +214,7 @@ TEST(UnscalingTest, ForwardPropagate)
         original_data.setValues({ {type(1.0),      type(exp(2.0))},     // log(1)=0, log(exp(2))=2
                                   {type(exp(1.0)), type(exp(3.0))} });  // log(exp(1))=1, log(exp(3))=3
 
-        helper_scaling_layer.set_scalers(Scaler::Logarithm);
+        helper_scaling_layer.set_scalers("Logarithm");
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
@@ -228,7 +228,7 @@ TEST(UnscalingTest, ForwardPropagate)
         EXPECT_NEAR(scaled_data(1, 0), type(1.0), NUMERIC_LIMITS_MIN);
         EXPECT_NEAR(scaled_data(1, 1), type(3.0), NUMERIC_LIMITS_MIN);
 
-        unscaling_layer_log.set_scalers(Scaler::Logarithm);
+        unscaling_layer_log.set_scalers("Logarithm");
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_log);
@@ -257,7 +257,7 @@ TEST(UnscalingTest, ForwardPropagate)
         original_data.setValues({ {type(0),     type(255)},
                                   {type(127.5), type(51)} });
 
-        helper_scaling_layer.set_scalers(Scaler::ImageMinMax);
+        helper_scaling_layer.set_scalers("ImageMinMax");
 
         unique_ptr<LayerForwardPropagation> fw_prop_scale =
             make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
@@ -271,7 +271,7 @@ TEST(UnscalingTest, ForwardPropagate)
         EXPECT_NEAR(scaled_data(1, 0), type(127.5 / 255.0), NUMERIC_LIMITS_MIN);
         EXPECT_NEAR(scaled_data(1, 1), type(51.0 / 255.0), NUMERIC_LIMITS_MIN);
 
-        unscaling_layer_img.set_scalers(Scaler::ImageMinMax);
+        unscaling_layer_img.set_scalers("ImageMinMax");
 
         unique_ptr<LayerForwardPropagation> fw_prop_unscale =
             make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_img);
