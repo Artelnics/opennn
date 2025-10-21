@@ -2516,28 +2516,28 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
 void Dataset::unscale_variables(const string& variable_use,
                                 const vector<Descriptives>& input_variable_descriptives)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_use);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variables_indices = get_variable_indices(variable_use);
 
-    const vector<string> input_variable_scalers = get_variable_scalers("Input");
+    const vector<string> variables_scalers = get_variable_scalers(variable_use);
 
-    for (Index i = 0; i < input_variables_number; i++)
+    for (Index i = 0; i < variables_number; i++)
     {
-        const string& scaler = input_variable_scalers[i];
+        const string& scaler = variables_scalers[i];
 
         if(scaler == "None")
             continue;
         else if(scaler == "MinimumMaximum")
-            unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_minimum_maximum(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
-            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_mean_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "StandardDeviation")
-            unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "Logarithm")
-            unscale_logarithmic(data, input_variable_indices[i]);
+            unscale_logarithmic(data, variables_indices[i]);
         else if(scaler == "ImageMinMax")
-            unscale_image_minimum_maximum(data, input_variable_indices[i]);
+            unscale_image_minimum_maximum(data, variables_indices[i]);
         else
             throw runtime_error("Unknown unscaling and unscaling method: " + scaler + "\n");
     }
