@@ -38,8 +38,8 @@
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>RectifiedLinear</Activation>
          <BatchNormalization>false</BatchNormalization>
-         <Biases>0.0635095 </Biases>
-         <Weights>0.0716585 0.0083606 -0.019198 -0.027505 0.0592724 </Weights>
+         <Biases>0.0282894 </Biases>
+         <Weights>-0.0974544 -0.00397463 0.0690031 -0.076293 -0.0823069 </Weights>
       </Dense2d>
       <Dense2d>
          <Label>approximation_layer</Label>
@@ -47,8 +47,8 @@
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>Linear</Activation>
          <BatchNormalization>false</BatchNormalization>
-         <Biases>-0.0288122 0.0466618 0.0792898 </Biases>
-         <Weights>0.0495633 0.0843811 0.0138789 </Weights>
+         <Biases>0.0509082 -0.0255456 -0.0907128 </Biases>
+         <Weights>-0.0902944 0.0115539 0.0618984 </Weights>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>3</NeuronsNumber>
