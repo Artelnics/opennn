@@ -57,13 +57,13 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
-        //training_strategy.train();
-#ifdef OPENNN_CUDA
-        training_strategy.train_cuda();
-#endif
+        #ifdef OPENNN_CUDA
+            training_strategy.train_cuda();
+        #endif
 
         // Testing analysis
 
+        cout << "Calculating Binary classification tests..." << endl;
         const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
         testing_analysis.print_binary_classification_tests();
 
