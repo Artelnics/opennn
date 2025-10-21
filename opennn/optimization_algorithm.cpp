@@ -366,23 +366,23 @@ void OptimizationAlgorithm::set_unscaling()
     Dataset* dataset = loss_index->get_dataset();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if (neural_network->has("Scaling2d"))
+    if(neural_network->has("Scaling2d"))
     {
         Scaling2d* layer = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         dataset->unscale_variables("Input", layer->get_descriptives());
     }
-    else if (neural_network->has("Scaling3d"))
+    else if(neural_network->has("Scaling3d"))
     {
-        //Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        //dataset->unscale_variables("Input", layer->get_descriptives());
+        Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        dataset->unscale_variables("Input", layer->get_descriptives());
     }
-    else if (neural_network->has("Scaling4d"))
+    else if(neural_network->has("Scaling4d"))
     {
         ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
         image_dataset->unscale_variables("Input");
     }
 
-    if (neural_network->has("Unscaling"))
+    if(neural_network->has("Unscaling"))
     {
         const vector<Index> input_indices = dataset->get_variable_indices("Input");
         const vector<Index> target_indices = dataset->get_variable_indices("Target");
@@ -392,12 +392,13 @@ void OptimizationAlgorithm::set_unscaling()
         Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
         const vector<Descriptives> all_unscaling_descriptives = unscaling_layer->get_descriptives();
 
-        for (size_t i = 0; i < target_indices.size(); ++i) {
+        for(size_t i = 0; i < target_indices.size(); ++i)
+        {
             const Index& target_index = target_indices[i];
 
-            auto target_position = std::find(input_indices.begin(), input_indices.end(), target_index);
+            auto target_position = find(input_indices.begin(), input_indices.end(), target_index);
 
-            if (target_position == input_indices.end())
+            if(target_position == input_indices.end())
                 targets_to_unscale_descriptives.push_back(all_unscaling_descriptives[i]);
         }
 
