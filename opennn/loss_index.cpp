@@ -521,6 +521,8 @@ void BackPropagation::set(const Index& new_samples_number, const LossIndex* new_
 
     errors.resize(samples_number, outputs_number);
 
+    errors_weights.resize(samples_number, outputs_number);
+
     output_deltas_dimensions = { samples_number };
     output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
 

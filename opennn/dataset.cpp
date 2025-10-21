@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "time_series_dataset.h"
 #include "image_dataset.h"
 #include "statistics.h"
 #include "correlations.h"
@@ -902,17 +903,28 @@ void Dataset::set_raw_variable_indices(const vector<Index>& input_raw_variables,
 {
     set_raw_variables("None");
 
-    for (size_t i = 0; i < input_raw_variables.size(); i++)
-        set_raw_variable_use(input_raw_variables[i], "Input");
+    for(const Index& index : input_raw_variables)
+        set_raw_variable_use(index, "Input");
 
-    for (size_t i = 0; i < target_raw_variables.size(); i++)
-        set_raw_variable_use(target_raw_variables[i], "Target");
+    for(const Index& index : target_raw_variables)
+    {
+        if(raw_variables[index].use == "Input")
+            set_raw_variable_use(index, "InputTarget");
+        else
+            set_raw_variable_use(index, "Target");
+    }
 
-    const Index input_dimensions = get_variables_number("Input");
-    const Index target_dimensions = get_variables_number("Target");
+    const Index input_dimensions_num = get_variables_number("Input");
+    const Index target_dimensions_num = get_variables_number("Target");
 
-    set_dimensions("Input", {input_dimensions});
-    set_dimensions("Target", {target_dimensions});
+    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+
+    if(ts_dataset)
+        set_dimensions("Input", {ts_dataset->get_past_time_steps(), input_dimensions_num});
+    else
+        set_dimensions("Input", {input_dimensions_num});
+
+    set_dimensions("Target", {target_dimensions_num});
 }
 
 
@@ -2516,28 +2528,28 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
 void Dataset::unscale_variables(const string& variable_use,
                                 const vector<Descriptives>& input_variable_descriptives)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_use);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variables_indices = get_variable_indices(variable_use);
 
-    const vector<string> input_variable_scalers = get_variable_scalers("Input");
+    const vector<string> variables_scalers = get_variable_scalers(variable_use);
 
-    for (Index i = 0; i < input_variables_number; i++)
+    for (Index i = 0; i < variables_number; i++)
     {
-        const string& scaler = input_variable_scalers[i];
+        const string& scaler = variables_scalers[i];
 
         if(scaler == "None")
             continue;
         else if(scaler == "MinimumMaximum")
-            unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_minimum_maximum(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
-            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_mean_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "StandardDeviation")
-            unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "Logarithm")
-            unscale_logarithmic(data, input_variable_indices[i]);
+            unscale_logarithmic(data, variables_indices[i]);
         else if(scaler == "ImageMinMax")
-            unscale_image_minimum_maximum(data, input_variable_indices[i]);
+            unscale_image_minimum_maximum(data, variables_indices[i]);
         else
             throw runtime_error("Unknown unscaling and unscaling method: " + scaler + "\n");
     }
