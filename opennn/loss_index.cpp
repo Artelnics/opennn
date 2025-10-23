@@ -336,13 +336,11 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 
 string LossIndex::get_name() const
 {
-    return string();
+    return name;
 }
 
 
-
 // @todo parallelize
-
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
     if(regularization_method == "None")

@@ -8,7 +8,6 @@
 
 #include "../opennn/pch.h"
 #include "../opennn/dataset.h"
-/*
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/standard_networks.h"
@@ -20,7 +19,6 @@
 #include "../opennn/weighted_squared_error.h"
 #include "../opennn/cross_entropy_error.h"
 #include "../opennn/image_dataset.h"
-*/
 
 using namespace opennn;
 
