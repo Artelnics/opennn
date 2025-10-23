@@ -128,6 +128,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossError)
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
 
     adaptive_moment_estimation.set_maximum_epochs_number(1);
+    adaptive_moment_estimation.set_display(false);
 
     TrainingResults training_results = adaptive_moment_estimation.train();
     const type error1 = training_results.get_training_error();
@@ -152,7 +153,6 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     dataset.set_data_random();
 
     ApproximationNetwork neural_network({inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_random();
 
     MeanSquaredError loss(&neural_network, &dataset);
     AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
@@ -162,6 +162,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     adaptive_moment_estimation.set_maximum_epochs_number(10000);
     adaptive_moment_estimation.set_maximum_time(1000.0);
+    adaptive_moment_estimation.set_display(false);
 
     TrainingResults training_results = adaptive_moment_estimation.train();
 

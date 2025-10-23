@@ -72,6 +72,7 @@ void AdaptiveMomentEstimation::set_beta_2(const type& new_beta_2)
 void AdaptiveMomentEstimation::set_default()
 {
     display_period = 100;
+    name = "AdaptiveMomentEstimation";
 }
 
 
@@ -248,6 +249,8 @@ TrainingResults AdaptiveMomentEstimation::train()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+
+            loss_index->add_regularization_to_deltas(training_back_propagation);
 
             training_error += training_back_propagation.error();
 
@@ -447,12 +450,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
         }
     }
-}
-
-
-string AdaptiveMomentEstimation::get_name() const
-{
-    return "AdaptiveMomentEstimation";
 }
 
 

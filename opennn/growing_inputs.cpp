@@ -8,9 +8,11 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "time_series_dataset.h"
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "optimization_algorithm.h"
 #include "training_strategy.h"
 
@@ -44,6 +46,8 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 
 void GrowingInputs::set_default()
 {
+    name = "GrowingInputs";
+
     maximum_selection_failures = 100;
     minimum_inputs_number = 1;
     trials_number = 3;
@@ -108,6 +112,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     // Data set
 
     Dataset* dataset = loss_index->get_dataset();
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     const vector<Index> target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
 
@@ -133,12 +138,12 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
-    for(Index i = 0; i < correlations_rank_descending.size(); i++) 
+    for(Index i = 0; i < correlations_rank_descending.size(); i++)
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     dataset->set_input_raw_variables_unused();
 
-    if (dataset->has_nan())
+    if(dataset->has_nan())
         dataset->scrub_missing_values();
 
     Index raw_variable_index = 0;
@@ -164,21 +169,36 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     bool stop = false;
 
     for(Index i = 0; i < maximum_epochs_number; i++)
-    {     
-        dataset->set_raw_variable_use(correlations_rank_descending[raw_variable_index], "Input");
+    {
+        const Index current_raw_var_index = correlations_rank_descending[raw_variable_index];
+        const string current_use = dataset->get_raw_variables()[current_raw_var_index].use;
+
+        if(current_use == "InputTarget")
+            dataset->set_raw_variable_use(current_raw_var_index, "InputTarget");
+        else
+            dataset->set_raw_variable_use(current_raw_var_index, "Input");
 
         Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
         const Index input_variables_number = dataset->get_variables_number("Input");
 
-        if (input_raw_variables_number < minimum_inputs_number)
+        if(input_raw_variables_number < minimum_inputs_number)
         {
             raw_variable_index++;
             continue;
         }
         const Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
-        neural_network->set_input_dimensions({ input_variables_number });
 
-        dataset->set_dimensions("Input", {input_variables_number});
+        if(time_series_dataset)
+        {
+            const Index past_time_steps = time_series_dataset->get_past_time_steps();
+            neural_network->set_input_dimensions({past_time_steps, input_variables_number});
+            dataset->set_dimensions("Input", {past_time_steps, input_variables_number});
+        }
+        else
+        {
+            neural_network->set_input_dimensions({ input_variables_number });
+            dataset->set_dimensions("Input", {input_variables_number});
+        }
 
         if(display)
         {
@@ -213,7 +233,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 input_selection_results.selection_error_history(input_raw_variables_number-1) = minimum_selection_error;
             }
 
-
             if(minimum_selection_error < input_selection_results.optimum_selection_error)
             {
                 // Neural network
@@ -241,7 +260,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             selection_failures++;
 
-            dataset->set_raw_variable_use(correlations_rank_descending[raw_variable_index], "None");
+            if(dataset->get_raw_variables()[current_raw_var_index].use == "InputTarget")
+                dataset->set_raw_variable_use(current_raw_var_index, "Target");
+            else
+                dataset->set_raw_variable_use(current_raw_var_index, "None");
 
             input_raw_variables_number--;
         }
@@ -306,19 +328,30 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             break;
         }
             
-        raw_variable_index++;        
+        raw_variable_index++;
     }
 
     // Set data set stuff
 
     dataset->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
-                                       target_raw_variable_indices);
+                                      target_raw_variable_indices);
 
-    dataset->set_dimensions("Input", {(Index)input_selection_results.optimal_input_raw_variables_indices.size()});
+    const Index optimal_input_variables_number = (Index)input_selection_results.optimal_input_raw_variables_indices.size();
+    if(time_series_dataset)
+    {
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        dataset->set_dimensions("Input", {past_time_steps, optimal_input_variables_number});
+        neural_network->set_input_dimensions({past_time_steps, optimal_input_variables_number});
+    }
+    else
+    {
+        dataset->set_dimensions("Input", {optimal_input_variables_number});
+        neural_network->set_input_dimensions({optimal_input_variables_number});
+    }
 
     dataset->print();
     
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
@@ -326,15 +359,39 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Set neural network stuff
 
-    neural_network->set_input_dimensions({ dataset->get_variables_number("Input") });
+    if(time_series_dataset)
+    {
+        vector<string> final_input_names;
+        const vector<string> base_names = dataset->get_raw_variable_names("Input");
+        const Index time_steps = time_series_dataset->get_past_time_steps();
 
-    neural_network->set_input_names(dataset->get_variable_names("Input"));
+        final_input_names.reserve(base_names.size() * time_steps);
+
+        for(const string& base_name : base_names)
+        {
+            for(Index j = 0; j < time_steps; j++)
+            {
+                string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                final_input_names.push_back(name);
+            }
+        }
+
+        neural_network->set_input_names(final_input_names);
+    }
+    else
+        neural_network->set_input_names(dataset->get_variable_names("Input"));
 
     if(neural_network->has("Scaling2d"))
     {
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
+    }
+    else if(neural_network->has("Scaling3d"))
+    {
+        Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        scaling_layer_3d->set_descriptives(input_variable_descriptives);
+        scaling_layer_3d->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);

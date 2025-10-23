@@ -58,8 +58,6 @@ public:
 
     TrainingResults train() override;
 
-    string get_name() const override;
-
     // Serialization
 
     void from_XML(const XMLDocument&) override;

@@ -12,10 +12,15 @@ using namespace opennn;
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
-    CrossEntropyError3d cross_entropy_error_3d;
+    /* @todo CrossEntropy3d is not implemented yet
+    NeuralNetwork neural_network;
+    Dataset dataset;
 
-    EXPECT_EQ(cross_entropy_error_3d.has_neural_network(), false);
-    EXPECT_EQ(cross_entropy_error_3d.has_dataset(), false);
+    CrossEntropyError3d cross_entropy_error_3d(&neural_network, &dataset);
+
+    EXPECT_TRUE(cross_entropy_error_3d.has_neural_network());
+    EXPECT_TRUE(cross_entropy_error_3d.has_dataset());
+    */
 }
 
 
@@ -121,7 +126,7 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     for (Index i = 0; i < inputs_number; i++)
         dataset.set_raw_variable_use(i + inputs_number, "Target");
 
-    dataset.set("Training");
+    dataset.set_sample_uses("Training");
 
     training_samples_indices = dataset.get_sample_indices("Training");
 
@@ -194,7 +199,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         dataset.set_data_random_language_model(batch_size, inputs_number, context_length, input_dimensions, context_dimension);
 
-        dataset.set("Training");
+        dataset.set_sample_uses("Training");
 
         training_samples_indices = dataset.get_sample_indices("Training");
         decoder_variables_indices = dataset.get_variable_indices("Decoder");

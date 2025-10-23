@@ -23,7 +23,6 @@ TEST(Scaling2dTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_name(), "Scaling2d");
     EXPECT_EQ(scaling_layer_2d.get_descriptives().size(), 1);
-    EXPECT_EQ(scaling_layer_2d.get_scaling_methods().size(), 1);
 }
 
 TEST(Scaling2dTest, ForwardPropagate)
@@ -42,7 +41,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     // Test None
 
-    scaling_layer_2d.set_scalers(Scaler::None);
+    scaling_layer_2d.set_scalers("None");
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(10));
@@ -77,7 +76,7 @@ TEST(Scaling2dTest, ForwardPropagate)
 
     inputs.setValues({{type(2)},{type(4)},{type(6)}});
 
-    scaling_layer_2d.set_scalers(Scaler::MinimumMaximum);
+    scaling_layer_2d.set_scalers("MinimumMaximum");
 
     forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
@@ -116,7 +115,7 @@ TEST(Scaling2dTest, ForwardPropagate)
     inputs.setValues({ {type(0),type(0)},
                       {type(2),type(2)} });
 
-    scaling_layer_2d.set_scalers(Scaler::MeanStandardDeviation);
+    scaling_layer_2d.set_scalers("MeanStandardDeviation");
 
     forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
@@ -156,7 +155,7 @@ TEST(Scaling2dTest, ForwardPropagate)
     inputs.setValues({ {type(0),type(0)},
                       {type(2),type(2)} });
 
-    scaling_layer_2d.set_scalers(Scaler::StandardDeviation);
+    scaling_layer_2d.set_scalers("StandardDeviation");
 
     forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
@@ -191,7 +190,7 @@ TEST(Scaling2dTest, ForwardPropagate)
     inputs.setValues({ {type(0),type(0)},
                       {type(2),type(2)} });
 
-    scaling_layer_2d.set_scalers(Scaler::Logarithm);
+    scaling_layer_2d.set_scalers("Logarithm");
 
     forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
@@ -231,7 +230,7 @@ TEST(Scaling2dTest, ForwardPropagate)
     inputs.setValues({{type(0),type(255)},
                       {type(100),type(2)}});
 
-    scaling_layer_2d.set_scalers(Scaler::ImageMinMax);
+    scaling_layer_2d.set_scalers("ImageMinMax");
 
     forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 

@@ -190,7 +190,6 @@ TEST(TestingAnalysis, MaximalErrors)
     dataset.set("Testing");
 
     ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
-    neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
@@ -218,7 +217,6 @@ TEST(TestingAnalysis, LinearRegression)
     dataset.set("Testing");
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
-    neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
     linear_correlation = testing_analysis.linear_correlation();
@@ -295,7 +293,6 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     // Neural Network
 
     ClassificationNetwork neural_network({1}, {1}, {1});
-    neural_network.set_parameters_random();
 
     // Testing Analysis
 

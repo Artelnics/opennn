@@ -76,7 +76,7 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
     target_dimensions = { get_target_sequence_length() };
     decoder_dimensions = { 0 };
 
-    set_raw_variable_scalers(Scaler::None);
+    set_raw_variable_scalers("None");
     set_default_raw_variable_names();
     set_binary_raw_variables();
 }
@@ -778,7 +778,7 @@ void LanguageDataset::read_csv()
     decoder_dimensions = {get_target_sequence_length()};
     input_dimensions = {get_input_sequence_length()};
 
-    set_raw_variable_scalers(Scaler::None);
+    set_raw_variable_scalers("None");
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();

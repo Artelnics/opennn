@@ -104,6 +104,10 @@ public:
 
     void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
+    void add_regularization_gradient(Tensor<type, 1>&) const;
+
+    void add_regularization_to_deltas(BackPropagation&) const;
+
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
@@ -153,7 +157,7 @@ public:
     void regularization_from_XML(const XMLDocument&);
     void write_regularization_XML(XMLPrinter&) const;
 
-    virtual string get_name() const;
+    string get_name() const;
 
     // Numerical differentiation
 
@@ -220,6 +224,8 @@ protected:
     type regularization_weight = type(0.01);
 
     bool display = true;
+
+    string name;
 };
 
 

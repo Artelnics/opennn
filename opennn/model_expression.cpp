@@ -117,170 +117,222 @@ void ModelExpression::auto_association_c() const
 }
 */
 
-
-string ModelExpression::get_expression_c() const
+string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw_variables) const
 {
-    string aux;
     ostringstream buffer;
-    ostringstream outputs_buffer;
 
-    vector<string> input_names =  neural_network->get_input_names();
-    vector<string> output_names = neural_network->get_output_names();
+    vector<string> input_names;
+    vector<string> output_names;
 
-    vector<string> fixes_input_names = fix_input_names(input_names);
-    vector<string> fixes_output_names = fix_output_names(output_names);
+    for(const Dataset::RawVariable& raw_variable : raw_variables)
+        if(raw_variable.use == "Input")
+            input_names.push_back(raw_variable.name);
+        else if(raw_variable.use == "Target")
+            output_names.push_back(raw_variable.name);
 
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    // int cell_states_counter = 0;
-    // int hidden_state_counter = 0;
+    vector<string> fixed_output_names = fix_output_names(output_names);
+    const Index outputs_number = output_names.size();
 
     bool logistic = false;
-    bool ReLU = false;
-    bool ExpLinear = false;
-    bool SExpLinear = false;
+    bool relu = false;
+    bool exp_linear = false;
+    bool selu = false;
+    bool tanh = false;
 
     buffer << write_comments_c();
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < input_names.size(); i++)
         buffer << "\n// \t " << i << ")  " << input_names[i];
 
     buffer << "\n \n \n#include <stdio.h>\n"
               "#include <stdlib.h>\n"
               "#include <math.h>\n\n";
 
-    string line;
-    const string expression = neural_network->get_expression();
+    string expression = neural_network->get_expression();
+
+    for (const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if (raw_var.use != "Input")
+            continue;
+
+        if (raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
+        {
+            vector<string> names_to_process;
+
+            if (raw_var.type == Dataset::RawVariableType::Binary)
+                names_to_process.push_back(raw_var.name);
+            else
+                names_to_process = raw_var.categories;
+
+            sort(names_to_process.begin(), names_to_process.end(), [](const string& a, const string& b) { return a.length() > b.length(); });
+
+            for (const string& original_name : names_to_process)
+            {
+                string scaled_name = "scaled_" + original_name;
+                string search_pattern = scaled_name + " = ";
+                size_t start_pos = expression.find(search_pattern);
+
+                if (start_pos != string::npos)
+                {
+                    size_t end_pos = expression.find('\n', start_pos);
+
+                    if (end_pos != string::npos)
+                        expression.erase(start_pos, end_pos - start_pos + 1);
+                    else
+                        expression.erase(start_pos);
+                }
+
+                replace_all_appearances(expression, scaled_name, original_name);
+            }
+        }
+    }
 
     stringstream string_stream(expression);
+    string ss_line;
 
+    while(getline(string_stream, ss_line, '\n'))
+    {
+        if (ss_line.find("=") != string::npos)
+        {
+            string var_name = get_first_word(ss_line);
+
+            if (!var_name.empty())
+                replace_all_word_appearances(expression, var_name, replace_reserved_keywords(var_name));
+        }
+    }
+
+    for (const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if (raw_var.use == "Input")
+        {
+            if (raw_var.type == Dataset::RawVariableType::Categorical)
+                for (const string& cat : raw_var.categories)
+                    replace_all_word_appearances(expression, cat, replace_reserved_keywords(cat));
+            else
+                replace_all_word_appearances(expression, raw_var.name, replace_reserved_keywords(raw_var.name));
+        }
+    }
+
+    for (const string& name : output_names)
+        replace_all_word_appearances(expression, name, replace_reserved_keywords(name));
+
+    stringstream ss(expression);
+    string line;
     vector<string> lines;
 
-    while(getline(string_stream, line, '\n'))
+    while (getline(ss, line, '\n'))
     {
-        if (line.size() > 1)
-        {
-            if (line.back() == '{')
-                break;
+        if (line.empty() || all_of(line.begin(), line.end(), [](char c){ return isspace(c); }))
+            continue;
 
-            if (line.back() != ';')
-                line.append(";");
-        }
+        if (line.find("{") != string::npos)
+            break;
+
+        if (line.back() != ';')
+            line += ';';
 
         lines.push_back(line);
     }
 
-    const vector<pair<string, bool*>> activation_targets =
-        {{"Logistic", &logistic},
-         {"RectifiedLinear", &ReLU},
-         {"ExponentialLinear", &ExpLinear},
-         {"SELU", &SExpLinear}};
+    if(expression.find("Logistic") != string::npos) logistic = true;
+    if(expression.find("RectifiedLinear") != string::npos) relu = true;
+    if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
+    if(expression.find("SELU") != string::npos) selu = true;
+    if(expression.find("HyperbolicTangent") != string::npos) tanh = true;
 
-    const Index lines_number = lines.size();
+    buffer << "float Linear (float x) {\n\treturn x;\n}\n\n";
+    if(logistic) buffer << write_logistic_c();
+    if(relu) buffer << write_relu_c();
+    if(exp_linear) buffer << write_exponential_linear_c();
+    if(selu) buffer << write_selu_c();
+    if(tanh) buffer << "float HyperbolicTangent(float x) {\n\treturn tanhf(x);\n}\n\n";
 
-    vector<string> variable_names;
+    buffer << "float* calculate_outputs(const float* inputs)\n{\n";
 
-    for (Index i = 0; i < lines_number; i++)
+    Index input_index = 0;
+
+    for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        const string first_word = get_first_word(lines[i]);
+        if (raw_var.use != "Input")
+            continue;
 
-        if (first_word.size() > 1 && !contains(variable_names, first_word))
-            variable_names.push_back(first_word);
-
-        for (const auto& [target, flag] : activation_targets)
-            if (line.find(target) != string::npos) *flag = true;
+        if (raw_var.type == Dataset::RawVariableType::Categorical)
+            for (const string& category : raw_var.categories)
+                buffer << "\tconst float " << replace_reserved_keywords(category) << " = inputs[" << input_index++ << "];\n";
+        else
+            buffer << "\tconst float " << replace_reserved_keywords(raw_var.name) << " = inputs[" << input_index++ << "];\n";
     }
 
-    buffer << "\nfloat Linear (float x) {\n"
-           << "\treturn x;\n"
-           << "}\n\n";
-
-    if (expression.find("Logistic") != string::npos) buffer << write_logistic_c();
-    if (expression.find("RectifiedLinear") != string::npos) buffer << write_relu_c();
-    if (expression.find("ExponentialLinear") != string::npos) buffer << write_exponential_linear_c();
-    if (expression.find("SELU") != string::npos) buffer << write_selu_c();
     buffer << "\n";
 
-    buffer << "float* calculate_outputs(const float* inputs)" << endl
-           << "{" << endl;
-
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << "const float " << fixes_input_names[i] << " = " << "inputs[" << to_string(i) << "];" << endl;
-
-    buffer << endl;
-
-    for(Index i = 0; i < lines_number; i++)
-        lines[i].size() <= 1
-            ? outputs_buffer << endl
-            : outputs_buffer << "\t" << lines[i] << endl;
-
-    const string keyword = "double";
-
-    string outputs_expression = outputs_buffer.str();
-
-    replace_substring_in_string(variable_names, outputs_expression, keyword);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        replace_all_word_appearances(outputs_expression, "scaled_" + input_names[i], "scaled_" + fixes_input_names[i]);
-        replace_all_word_appearances(outputs_expression, input_names[i], fixes_input_names[i]);
-    }
-
-    buffer << outputs_expression;
+    for(const string& l : lines)
+        buffer << "\tdouble " << l << "\n";
 
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::C);
 
-    for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t" << fixed_outputs[i] << endl;
+    if (!fixed_outputs.empty())
+    {
+        buffer << "\n";
 
-    buffer << endl;
-    buffer << "\t" << "float* out = (float*)malloc(" << outputs_number << " * sizeof(float));" << endl;
-    buffer << "\t" << "if (out == NULL) {" << endl
-           << "\t\t" << "printf(\"Error: Memory allocation failed in calculate_outputs.\\n\");" << endl
-           << "\t\t" << "return NULL;" << endl
-           << "\t" << "}" << endl << endl;
+        for(const string& l : fixed_outputs)
+            buffer << "\t" << l << "\n";
+    }
 
-    for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t" << "out[" << to_string(i) << "] = " << fixes_output_names[i] << ";" << endl;
-
-    buffer << "\n\t" << "return out;" << endl
-           << "}\n"  << endl
-           << "\n" << "int main() { \n" << endl;
-
-    buffer << "\t" << "float* inputs = (float*)malloc(" << to_string(inputs_number) << " * sizeof(float)); \n"
-           << "\t" << "if (inputs == NULL) {\n"
-           << "\t\t" << "printf(\"Error: Memory allocation failed for inputs.\\n\");\n"
-           << "\t\t" << "return 1;\n"
-           << "\t" << "}\n" << endl;
-
-    buffer << "\t" << "// Please enter your values here:" << endl;
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << "inputs[" << to_string(i) << "] = 0.0f; // " << fixes_input_names[i] << endl;
-    buffer << endl;
-
-    buffer << "\t" << "float* outputs;" << endl
-           << "\n\toutputs = calculate_outputs(inputs);" << endl << endl
-           << "\t" << "if (outputs != NULL) {" << endl
-           << "\t\t" << "printf(\"These are your outputs:\\n\");" << endl;
+    buffer << "\n";
+    buffer << "\tfloat* out = (float*)malloc(" << outputs_number << " * sizeof(float));\n";
+    buffer << "\tif (out == NULL) {\n";
+    buffer << "\t\tprintf(\"Error: Memory allocation failed in calculate_outputs.\\n\");\n";
+    buffer << "\t\treturn NULL;\n";
+    buffer << "\t}\n\n";
 
     for(Index i = 0; i < outputs_number; i++)
-        buffer << "\t\t" << "printf(\""<< fixes_output_names[i] << ": %f \\n\", outputs[" << to_string(i) << "]);" << endl;
-    buffer << "\t" << "}" << endl << endl;
+        buffer << "\tout[" << i << "] = " << fixed_output_names[i] << ";\n";
 
-    buffer << "\t" << "// Free the allocated memory" << endl
-           << "\t" << "free(inputs);" << endl
-           << "\t" << "free(outputs);" << endl << endl;
+    buffer << "\n\treturn out;\n}\n\n";
 
-    buffer << "\t" << "return 0;" << endl
-           << "} \n" << endl;
+    buffer << "int main() { \n\n";
+    buffer << "\tfloat* inputs = (float*)malloc(" << input_index << " * sizeof(float)); \n";
+    buffer << "\tif (inputs == NULL) {\n";
+    buffer << "\t\tprintf(\"Error: Memory allocation failed for inputs.\\n\");\n";
+    buffer << "\t\treturn 1;\n";
+    buffer << "\t}\n\n";
 
-    string out = buffer.str();
-    replace_all_appearances(out, "double double double", "double");
-    replace_all_appearances(out, "double double", "double");
+    buffer << "\t// Please enter your values here:\n";
 
-    return out;
+    input_index = 0;
+    for(const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if (raw_var.use != "Input")
+            continue;
+
+        if (raw_var.type == Dataset::RawVariableType::Categorical)
+        {
+            buffer << "\t// One-hot encoding for " << raw_var.name << ": set one to 1.0f and the rest to 0.0f\n";
+
+            for (const string& category : raw_var.categories)
+                buffer << "\tinputs[" << input_index++ << "] = 0.0f; // " << replace_reserved_keywords(category) << "\n";
+        }
+        else
+            buffer << "\tinputs[" << input_index++ << "] = 0.0f; // " << replace_reserved_keywords(raw_var.name) << "\n";
+    }
+
+    buffer << "\n\tfloat* outputs;\n";
+    buffer << "\n\toutputs = calculate_outputs(inputs);\n\n";
+    buffer << "\tif (outputs != NULL) {\n";
+    buffer << "\t\tprintf(\"These are your outputs:\\n\");\n";
+
+    for(Index i = 0; i < outputs_number; i++)
+        buffer << "\t\tprintf(\""<< fixed_output_names[i] << ": %f \\n\", outputs[" << i << "]);\n";
+
+    buffer << "\t}\n\n";
+    buffer << "\t// Free the allocated memory\n";
+    buffer << "\tfree(inputs);\n";
+    buffer << "\tfree(outputs);\n\n";
+    buffer << "\treturn 0;\n} \n";
+
+    return buffer.str();
 }
+
 
 string ModelExpression::write_header_api() const
 {
@@ -416,218 +468,161 @@ string ModelExpression::scaled_exponential_linear_api() const
 }
 
 
-string ModelExpression::get_expression_api() const
+string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& raw_variables) const
 {
-
     ostringstream buffer;
-    vector<string> found_tokens;
 
-    const vector<string> input_names =  neural_network->get_input_names();
-    const vector<string> output_names = neural_network->get_output_names();
-    const vector<string> fixes_input_names =  fix_input_names(input_names);
-    const vector<string> fixes_output_names = fix_output_names(output_names);
+    vector<string> original_inputs;
+    vector<string> output_names = neural_network->get_output_names();
 
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
+    for(const Dataset::RawVariable& var : raw_variables)
+        if(var.use == "Input")
+            original_inputs.push_back(var.name);
 
-    bool logistic     = false;
-    bool ReLU         = false;
-    bool ExpLinear    = false;
-    bool SExpLinear   = false;
+    const vector<string> fixed_input_names = fix_input_names(original_inputs);
+    const vector<string> fixed_output_names = fix_output_names(output_names);
+    const Index inputs_number = original_inputs.size();
+    const Index outputs_number = output_names.size();
 
     buffer << write_header_api();
-
     for(Index i = 0; i < inputs_number; i++)
-        buffer << "\n\t\t" << i << ")  " << input_names[i];
-
+        buffer << "\n\t\t" << i << ")  " << original_inputs[i];
     buffer << write_subheader_api();
 
-    string line;
     string expression = neural_network->get_expression();
 
-    stringstream string_stream(expression);
-    vector<string> lines;
+    if(expression.find("Linear") != string::npos)
+        buffer << "function Linear($x) { return $x; }\n";
+    if(expression.find("Logistic") != string::npos)
+        buffer << "function Logistic($x) { return 1 / (1 + exp(-$x)); }\n";
+    if(expression.find("RectifiedLinear") != string::npos)
+        buffer << "function RectifiedLinear($x) { return max(0, $x); }\n";
+    if(expression.find("HyperbolicTangent") != string::npos)
+        buffer << "function HyperbolicTangent($x) { return tanh($x); }\n";
+    if(expression.find("ExponentialLinear") != string::npos)
+        buffer << "function ExponentialLinear($x) { $alpha = 1.67326; return ($x > 0) ? $x : $alpha * (exp($x) - 1); }\n";
+    if(expression.find("SELU") != string::npos)
+        buffer << "function SELU($x) { $alpha = 1.67326; $lambda = 1.05070; return $lambda * (($x > 0) ? $x : $alpha * (exp($x) - 1)); }\n";
 
-    while(getline(string_stream, line, '\n'))
+    buffer << "\nsession_start();\n";
+    buffer << "if(isset($_GET['num0'])) { \n";
+    buffer << "$params = $_GET;\n\n";
+
+    for(Index i = 0; i < inputs_number; i++)
+        buffer << "$" << fixed_input_names[i] << " = isset($params['num" << i << "']) ? floatval($params['num" << i << "']) : 0;\n";
+
+    buffer << "\n// One-hot encoding conversion (do not modify)\n";
+
+    map<string, Dataset::RawVariable> raw_vars_map;
+
+    for(const Dataset::RawVariable& var : raw_variables)
+        raw_vars_map[var.name] = var;
+
+    for(Index i = 0; i < inputs_number; ++i)
     {
-        if (line.size() <= 1)
+        const Dataset::RawVariable& var = raw_vars_map[original_inputs[i]];
+
+        if(var.type == Dataset::RawVariableType::Categorical)
+            for(size_t j = 0; j < var.categories.size(); ++j)
+                buffer << "$" << replace_reserved_keywords(var.categories[j]) << " = ($" << fixed_input_names[i] << " == " << j << ") ? 1 : 0;\n";
+    }
+
+    buffer << "\n";
+
+    for(const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if(raw_var.use != "Input")
             continue;
 
-        if (line.back() == '{')
+        if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
+        {
+            vector<string> names_to_process = (raw_var.type == Dataset::RawVariableType::Binary) ? vector<string>{raw_var.name} : raw_var.categories;
+            sort(names_to_process.begin(), names_to_process.end(), [](const string& a, const string& b) { return a.length() > b.length(); });
+
+            for(const string& original_name : names_to_process)
+            {
+                string scaled_name = "scaled_" + original_name;
+                string search_pattern = scaled_name + " = ";
+                size_t start_pos = expression.find(search_pattern);
+
+                if(start_pos != string::npos)
+                {
+                    size_t end_pos = expression.find('\n', start_pos);
+                    expression.erase(start_pos, (end_pos != string::npos) ? (end_pos - start_pos + 1) : string::npos);
+                }
+
+                replace_all_appearances(expression, scaled_name, original_name);
+            }
+        }
+    }
+
+    vector<string> all_possible_vars;
+    stringstream temp_ss(expression);
+    string temp_line;
+
+    while(getline(temp_ss, temp_line, '\n'))
+    {
+        if(temp_line.find("=") != string::npos)
+        {
+            string var_name = get_first_word(temp_line);
+
+            if(!var_name.empty())
+                all_possible_vars.push_back(var_name);
+        }
+    }
+
+    for(const Dataset::RawVariable& var : raw_variables)
+    {
+        if(var.use == "Input")
+        {
+            if(var.type == Dataset::RawVariableType::Categorical)
+                for (const string& cat : var.categories) all_possible_vars.push_back(cat);
+            else
+                all_possible_vars.push_back(var.name);
+        }
+    }
+
+    for(const string& name : output_names) all_possible_vars.push_back(name);
+
+    sort(all_possible_vars.begin(), all_possible_vars.end());
+    all_possible_vars.erase(unique(all_possible_vars.begin(), all_possible_vars.end()), all_possible_vars.end());
+    sort(all_possible_vars.begin(), all_possible_vars.end(), [](const string& a, const string& b){ return a.length() > b.length(); });
+
+    for(const string& var_name : all_possible_vars)
+        replace_all_word_appearances(expression, var_name, "$" + replace_reserved_keywords(var_name));
+
+    stringstream ss(expression);
+    string line;
+    while(getline(ss, line, '\n'))
+    {
+        if(line.empty() || all_of(line.begin(), line.end(), [](char c){ return isspace(c); }))
+            continue;
+
+        if(line.find("{") != string::npos)
             break;
 
-        if (line.back() != ';')
-            line.append(";");
+        if(line.back() != ';')
+            line += ';';
 
-        lines.push_back(line);
+        buffer << line << "\n";
     }
 
-    const Index lines_number = lines.size();
-
-    string word;
-
-    for(Index i = 0; i < lines_number; i++)
-    {
-        string line = lines[i];
-        word = get_first_word(line);
-
-        if(word.size() > 1)
-            found_tokens.push_back(word);
-    }
-
-    buffer << "session_start();" << endl
-           << "if(isset($_SESSION['lastpage']) && $_SESSION['lastpage'] == __FILE__) { " << endl
-           << "if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') " << endl
-           << "\t$url = \"https://\"; " << endl
-           << "else" << endl
-           << "\t$url = \"http://\";\n" << endl
-           << "$url.= $_SERVER['HTTP_HOST'];" << endl
-           << "$url.= $_SERVER['REQUEST_URI'];" << endl
-           << "$url_components = parse_url($url);" << endl
-           << "parse_str($url_components['query'], $params);\n" << endl;
-
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "$num" + to_string(i) << " = " << "$params['num" + to_string(i) << "'];" << endl
-               << "$" << fixes_input_names[i]      << " = floatval(" << "$num"  + to_string(i) << ");"  << endl;
-
-    buffer << "if(" << endl;
-
-    for(Index i = 0; i < inputs_number; i++)
-        i != inputs_number - 1
-            ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
-            : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
-
-    buffer << "{" << endl
-           << "$status=200;" << endl
-           << "$status_msg = 'valid parameters';" << endl
-           << "}" << endl
-           << "else" << endl
-           << "{" << endl
-           << "$status =400;" << endl
-           << "$status_msg = 'invalid parameters';" << endl
-           << "}\n"   << endl;
-
-    string target_string0("Logistic");
-    string target_string1("RectifiedLinear");
-    string target_string4("ExponentialLinear");
-    string target_string5("SELU");
-
-    size_t substring_length0;
-    size_t substring_length1;
-    size_t substring_length4;
-    size_t substring_length5;
-
-    string new_word;
-
-    vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
-    sort_string_vector(found_tokens_and_input_names);
-    vector<string> fixes_tokens = fix_input_names(found_tokens_and_input_names);
-
-    for(size_t i = 0; i < lines.size(); i++)
-    {
-        string t = lines[i];
-
-        substring_length0 = t.find(target_string0);
-        substring_length1 = t.find(target_string1);
-        substring_length4 = t.find(target_string4);
-        substring_length5 = t.find(target_string5);
-
-        if(substring_length0 < t.size() && substring_length0!=0){ logistic     = true; }
-        if(substring_length1 < t.size() && substring_length1!=0){ ReLU         = true; }
-        if(substring_length4 < t.size() && substring_length4!=0){ ExpLinear    = true; }
-        if(substring_length5 < t.size() && substring_length5!=0){ SExpLinear   = true; }
-
-        for(size_t j = 0; j < found_tokens_and_input_names.size(); j++)
-        {
-            new_word = "$" + fixes_tokens[j];
-            replace_all_word_appearances(t, found_tokens_and_input_names[j], new_word);
-        }
-
-        buffer << t << endl;
-    }
-
-    const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::PHP);
-
-    for(size_t i = 0; i < fixed_outputs.size(); i++)
-        buffer << fixed_outputs[i] << endl;
-
-    buffer << "if($status === 200){" << endl
-           << "$response = ['status' => $status,  'status_message' => $status_msg" << endl;
+    buffer << "\nif(true){ // Simplified status check\n";
+    buffer << "$response = ['status' => 200,  'status_message' => 'ok'";
 
     for(Index i = 0; i < outputs_number; i++)
-        buffer << ", '" << fixes_output_names[i] << "' => " << "$" << fixes_output_names[i] << endl;
+        buffer << ", '" << output_names[i] << "' => $" << fixed_output_names[i];
 
-    buffer << "];" << endl
-           << "}" << endl
-           << "else" << endl
-           << "{" << endl
-           << "$response = ['status' => $status,  'status_message' => $status_msg" << "];" << endl
-           << "}" << endl;
+    buffer << "];\n} else {\n";
+    buffer << "$response = ['status' => 400,  'status_message' => 'invalid parameters'];\n}\n\n";
 
-    buffer << "\n$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl
-           << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");" << endl
-           << "}else{" << endl
-           << "echo \"New page\";" << endl
-           << "}" << endl
-           << "$_SESSION['lastpage'] = __FILE__;" << endl
-           << "?>\n" << endl;
+    buffer << "$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);\n";
+    buffer << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");\n";
+    buffer << "} else {\n echo \"Please provide input values in the URL (e.g., ?num0=value0&num1=value1...)\"; \n}\n";
+    buffer << "$_SESSION['lastpage'] = __FILE__;\n";
+    buffer << "?>\n</h4>\n</div>\n</body>\n</html>";
 
-    buffer << "<?php" << endl
-           << "function Linear(float $x) {" << endl
-           << "return $x;" << endl
-           << "}" << endl
-           << "?>\n" << endl;
-
-    if (logistic)
-        buffer << logistic_api();
-
-    if(ReLU)
-        buffer << "<?php" << endl
-               << "function RectifiedLinear(float $x) {" << endl
-               << "$z = max(0, $x);" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>\n" << endl;
-
-    if(ExpLinear)
-        buffer << "<?php" << endl
-               << "function ExponentialLinear(float $x) {" << endl
-               << "$alpha = 1.6732632423543772848170429916717;" << endl
-               << "if($x>0){" << endl
-               << "$z=$x;" << endl
-               << "}else{" << endl
-               << "$z=$alpha*(exp($x)-1);" << endl
-               << "}" << endl
-               << "return $z;" << endl
-               << "}\n" << endl;
-
-    if(SExpLinear)
-        buffer << "<?php" << endl
-               << "function SELU(float $x) {" << endl
-               << "$alpha  = 1.67326;" << endl
-               << "$lambda = 1.05070;" << endl
-               << "if($x>0){" << endl
-               << "$z=$lambda*$x;" << endl
-               << "}else{" << endl
-               << "$z=$lambda*$alpha*(exp($x)-1);" << endl
-               << "}" << endl
-               << "return $z;" << endl
-               << "}" << endl
-               << "?>\n" << endl;
-
-    buffer << "</h4>" << endl
-           << "</div>" << endl
-           << "</body>" << endl
-           << "</html>" << endl;
-
-    string out = buffer.str();
-
-    replace_all_appearances(out, "$$", "$");
-    replace_all_appearances(out, "_$", "_");
-
-    return out;
-
-    return string();
+    return buffer.str();
 }
 
 
@@ -884,7 +879,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     vector<string> input_names;
     vector<string> output_names;
 
-    for (const auto& raw_variable : raw_variables)
+    for(const Dataset::RawVariable& raw_variable : raw_variables)
         if(raw_variable.use == "Input")
             input_names.push_back(raw_variable.name);
         else if(raw_variable.use == "Target")
@@ -900,8 +895,49 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     string token;
     string expression = neural_network->get_expression();
 
+    for (const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if(raw_var.use != "Input")
+            continue;
+
+        if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
+        {
+            vector<string> names_to_process;
+
+            if (raw_var.type == Dataset::RawVariableType::Binary)
+                names_to_process.push_back(raw_var.name);
+            else
+                names_to_process = raw_var.categories;
+
+            sort(names_to_process.begin(), names_to_process.end(),
+                [](const string& a, const string& b) {
+                  return a.length() > b.length();
+                });
+
+            for (const string& original_name : names_to_process)
+            {
+                string scaled_name = "scaled_" + original_name;
+
+                string search_pattern = scaled_name + " = ";
+                size_t start_pos = expression.find(search_pattern);
+
+                if (start_pos != string::npos)
+                {
+                    size_t end_pos = expression.find('\n', start_pos);
+
+                    if (end_pos != string::npos)
+                        expression.erase(start_pos, end_pos - start_pos + 1);
+                    else
+                        expression.erase(start_pos);
+                }
+
+                replace_all_appearances(expression, scaled_name, original_name);
+            }
+        }
+    }
+
     for(int i = 0 ; i < outputs_number; i++)
-        replace_all_appearances(expression, output_names[i], fixes_output_names[i]);
+        replace_all_word_appearances(expression, output_names[i], fixes_output_names[i]);
 
     const int maximum_output_variable_numbers = 5;
 
@@ -928,46 +964,46 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         float min_value;
         float max_value;
 
-        Index i = 0; // Input vector pointers index
-        Index j = 0; // Number of categorical & binary variables found
+        Index input = 0;
+        Index categories = 0;
         Index inputs_processed = 0;
 
-        for (size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
-
-            if (raw_variables[k].use != "Input")
+        for(size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k)
+        {
+            if(raw_variables[k].use != "Input")
                 continue;
 
             const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-            if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
+            if(raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
             {
-                min_value = inputs_descriptives[i].minimum;
-                max_value = inputs_descriptives[i].maximum;
+                min_value = inputs_descriptives[input].minimum;
+                max_value = inputs_descriptives[input].maximum;
 
-                buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
+                buffer << "<!-- "<< to_string(input) <<"scaling layer -->" << endl;
                 buffer << "<tr style=\"height:3.5em\">" << endl;
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
                 buffer << "<td class=\"neural-cell\">" << endl;
 
-                if (min_value==0 && min_value==0)
+                if(min_value==0 && max_value==0)
                 {
                     buffer << "<input type=\"range\" id=\"" << fixes_input_names[inputs_processed] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "_text')\" />" << endl;
-                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[inputs_processed] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "')\">" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[inputs_processed] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "')\">" << endl;
                 }
                 else
                 {
                     buffer << "<input type=\"range\" id=\"" << fixes_input_names[inputs_processed] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "_text')\" />" << endl;
-                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[inputs_processed] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "')\">" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[inputs_processed] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[inputs_processed] << "')\">" << endl;
                 }
 
                 buffer << "</td>" << endl;
                 buffer << "</tr>" << endl;
                 buffer << "\n" << endl;
 
-                i += 1;
+                input += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
-                     ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0")))// INPUT & BINARY (1,0)
+            else if(raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
+                    ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0"))) // INPUT & BINARY (1,0)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -976,7 +1012,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
                 buffer << "<td class=\"neural-cell\">" << endl;
-                buffer << "<select id=\"Select" << j << "\">" << endl;
+                buffer << "<select id=\"Select" << categories << "\">" << endl;
 
                 buffer << "<option value=\"" << 0 << "\">" << 0 << "</option>" << endl;
                 buffer << "<option value=\"" << 1 << "\">" << 1 << "</option>" << endl;
@@ -986,10 +1022,10 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "</tr>" << endl;
                 buffer << "\n" << endl;
 
-                j += 1;
-                i += 1;
+                categories += 1;
+                input += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
+            else if(raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -998,7 +1034,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
                 buffer << "<td class=\"neural-cell\">" << endl;
-                buffer << "<select id=\"Select" << j << "\">" << endl;
+                buffer << "<select id=\"Select" << categories << "\">" << endl;
 
                 buffer << "<option value=\"" << 0 << "\">" << raw_variable_categories[0] << "</option>" << endl;
                 buffer << "<option value=\"" << 1 << "\">" << raw_variable_categories[1] << "</option>" << endl;
@@ -1008,10 +1044,10 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "</tr>" << endl;
                 buffer << "\n" << endl;
 
-                j += 1;
-                i += 1;
+                categories += 1;
+                input += 1;
             }
-            else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
+            else if(raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1020,7 +1056,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "<td> " << input_names[inputs_processed] << " </td>" << endl;
 
                 buffer << "<td class=\"neural-cell\">" << endl;
-                buffer << "<select id=\"Select" << j << "\">" << endl;
+                buffer << "<select id=\"Select" << categories << "\">" << endl;
 
                 for (size_t l = 0; l < raw_variable_categories.size(); ++l)
                 {
@@ -1032,8 +1068,8 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                 buffer << "</tr>" << endl;
                 buffer << "\n" << endl;
 
-                j += 1;
-                i += raw_variable_categories.size();
+                categories += 1;
+                input += raw_variable_categories.size();
             }
 
             inputs_processed++;
@@ -1046,10 +1082,9 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td class=\"neural-cell\">" << endl
                    << "<input type=\"range\" id=\"" << fixes_input_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "_text')\" />" << endl
-                   << "<input type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
+                   << "<input type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"any\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
-
 
     buffer << "</table>" << endl;
 
@@ -1123,11 +1158,11 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
               "\treturn x;\n"
               "}\n";
 
-    if (expression.find("Logistic") != string::npos) buffer << logistic_javascript();
-    if (expression.find("RectifiedLinear") != string::npos) buffer << relu_javascript();
-    if (expression.find("ExponentialLinear") != string::npos) buffer << exponential_linear_javascript();
-    if (expression.find("SELU") != string::npos) buffer << selu_javascript();
-    if (expression.find("HyperbolicTangent") != string::npos) buffer << hyperbolic_tangent_javascript();
+    if(expression.find("Logistic") != string::npos) buffer << logistic_javascript();
+    if(expression.find("RectifiedLinear") != string::npos) buffer << relu_javascript();
+    if(expression.find("ExponentialLinear") != string::npos) buffer << exponential_linear_javascript();
+    if(expression.find("SELU") != string::npos) buffer << selu_javascript();
+    if(expression.find("HyperbolicTangent") != string::npos) buffer << hyperbolic_tangent_javascript();
     buffer << "\n";
 
     buffer << "function neuralNetwork()" << endl
@@ -1141,22 +1176,22 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     Index inputs_processed = 0;
 
-    for (size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k) {
-
-        if (raw_variables[k].use != "Input")
+    for(size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k)
+    {
+        if(raw_variables[k].use != "Input")
             continue;
 
         const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-        if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
+        if(raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
         {
-            buffer << "\t" << "var " << fixes_input_names[inputs_processed] << " =" << " document.getElementById(\"" << fixes_input_names[inputs_processed] << "\").value; " << endl;
+            buffer << "\t" << "var " << fixes_input_names[inputs_processed] << " = (parseFloat(document.getElementById(\"" << fixes_input_names[inputs_processed] << "_text\").value) || 0); " << endl;
             buffer << "\t" << "inputs.push(" << fixes_input_names[inputs_processed] << ");" << endl;
 
             variables_input_fixed.push_back(fixes_input_names[inputs_processed]);
             variables_input.push_back(input_names[inputs_processed]);
         }
-        else if (raw_variables[k].type == Dataset::RawVariableType::Binary)// INPUT BINARY
+        else if(raw_variables[k].type == Dataset::RawVariableType::Binary)// INPUT & BINARY
         {
             string aux_buffer = "";
 
@@ -1186,14 +1221,14 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             variables_input_fixed.push_back(fixes_input_names[inputs_processed]);
             variables_input.push_back(input_names[inputs_processed]);
         }
-        else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
+        else if(raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
         {
             string aux_buffer = "";
 
             buffer << "\t" << "var selectElement" << j << "= document.getElementById('Select" << j << "');" << endl;
             buffer << "\t" << "var selectedValue" << j << "= +selectElement" << j << ".value;" << endl;
 
-            for (size_t l = 0; l < raw_variable_categories.size(); ++l)
+            for(size_t l = 0; l < raw_variable_categories.size(); ++l)
             {
                 string category = raw_variable_categories[l];
                 string fixed_category = replace_reserved_keywords(category);
@@ -1206,7 +1241,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
             buffer << "switch (selectedValue" << j << "){" << endl;
 
-            for (size_t l = 0; l < raw_variable_categories.size(); ++l)
+            for(size_t l = 0; l < raw_variable_categories.size(); ++l)
             {
                 string category = raw_variable_categories[l];
                 string fixed_category = replace_reserved_keywords(category);
@@ -1249,7 +1284,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     }
 
     vector<string> variable_scaled(variables_input.size());
-    for (size_t i = 0; i < variables_input.size(); ++i)
+    for(size_t i = 0; i < variables_input.size(); ++i)
         variable_scaled[i] = "scaled_" + variables_input[i];
 
     buffer << "}" << endl
@@ -1295,20 +1330,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         if(substring_length_4 < line.size() && substring_length_4!=0) ExpLinear = true;
         if(substring_length_5 < line.size() && substring_length_5!=0) SExpLinear = true;
 
-        // for (size_t i = 0; i < variables_input.size(); ++i)
-        //     if(line.find(variables_input[i]) != string::npos)
-        //     {
-        //         string original_input_name = variables_input[i];
-        //         string fix_input_name = replace_reserved_keywords(original_input_name);
-        //         int position = 0;
-
-        //         while((position = line.find(original_input_name, position)) != string::npos){
-        //             line.replace(position, original_input_name.length(), fix_input_name);
-        //             position += fix_input_name.length();
-        //         }
-        //     }
-
-        for (size_t j = 0; j < variables_input.size(); ++j)
+        for(size_t j = 0; j < variables_input.size(); ++j)
         {
             if(line.find(variables_input[j]) != string::npos)
                 replace_all_word_appearances(line, variables_input[j], variables_input_fixed[j]);
@@ -1316,19 +1338,6 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
             if(line.find(variable_scaled[j]) != string::npos)
                 replace_all_appearances(line, variable_scaled[j], replace_reserved_keywords(variable_scaled[j]));
         }
-
-        // for (size_t i = 0; i < variable_scaled.size(); ++i)
-        //     if(line.find(variable_scaled[i]) != string::npos)
-        //     {
-        //         string original_input_name = variable_scaled[i];
-        //         string fix_input_name = replace_reserved_keywords(original_input_name);
-        //         int position = 0;
-
-        //         while((position = line.find(original_input_name, position)) != string::npos){
-        //             line.replace(position, original_input_name.length(), fix_input_name);
-        //             position += fix_input_name.length();
-        //         }
-        //     }
 
         for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
@@ -1355,10 +1364,10 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     buffer << "\n\t" << "return out;" << endl
            << "}\n" << endl;
 
-    if (logistic) buffer << logistic_javascript();
-    if (ReLU) buffer << relu_javascript();
-    if (ExpLinear) buffer << exponential_linear_javascript();
-    if (SExpLinear) buffer << "scaled_exponential_linear()";
+    if(logistic) buffer << logistic_javascript();
+    if(ReLU) buffer << relu_javascript();
+    if(ExpLinear) buffer << exponential_linear_javascript();
+    if(SExpLinear) buffer << "scaled_exponential_linear()";
 
     buffer << "function updateTextInput1(val, id)" << endl
            << "{" << endl
@@ -1371,6 +1380,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     return buffer.str();
 }
+
 
 string ModelExpression::write_header_python() const
 {
@@ -1385,6 +1395,7 @@ string ModelExpression::write_header_python() const
            "\toutputs = model.calculate_outputs(sample)\n \n \n"
            "Inputs Names: \n";
 }
+
 
 string ModelExpression::write_subheader_python() const
 {
@@ -1405,280 +1416,284 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 {
     ostringstream buffer;
 
-    vector<string> found_tokens;
-    vector<string> found_mathematical_expressions;
+    vector<string> original_inputs;
 
-    vector<string> original_inputs = neural_network->get_input_names();
-    vector<string> inputs = fix_input_names(original_inputs);
+    for(const Dataset::RawVariable& var : raw_variables)
+        if (var.use == "Input")
+            original_inputs.push_back(var.name);
+
     vector<string> original_outputs = neural_network->get_output_names();
-    vector<string> outputs = fix_input_names(original_outputs);
+    vector<string> outputs = fix_output_names(original_outputs);
 
-    const Index inputs_number = inputs.size();
+    const Index inputs_number = original_inputs.size();
     const Index outputs_number = outputs.size();
 
     bool logistic     = false;
-    bool ReLU         = false;
-    bool ExpLinear    = false;
-    bool SExpLinear   = false;
-    bool hyperTan     = false;
+    bool relu         = false;
+    bool exp_linear    = false;
+    bool selu   = false;
+    bool hyper_tan     = false;
 
     buffer << write_header_python();
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t" << i << ") " << inputs[i] << endl;
+        buffer << "\t" << i << ") " << original_inputs[i] << endl;
 
     buffer << write_subheader_python();
 
-    vector<string> lines;
-
     string expression = neural_network->get_expression();
-    string line;
 
-    for(int i = 0 ; i < outputs_number; i++)
-        replace_all_appearances(expression, original_outputs[i], outputs[i]);
+    for(const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if(raw_var.use != "Input")
+            continue;
+
+        if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
+        {
+            vector<string> names_to_process;
+
+            if (raw_var.type == Dataset::RawVariableType::Binary)
+                names_to_process.push_back(raw_var.name);
+            else
+                names_to_process = raw_var.categories;
+
+            sort(names_to_process.begin(), names_to_process.end(),
+                    [](const string& a, const string& b) { return a.length() > b.length(); });
+
+            for(const string& original_name : names_to_process)
+            {
+                string scaled_name = "scaled_" + original_name;
+                string search_pattern = scaled_name + " = ";
+                size_t start_pos = expression.find(search_pattern);
+
+                if(start_pos != string::npos)
+                {
+                    size_t end_pos = expression.find('\n', start_pos);
+
+                    if (end_pos != string::npos)
+                        expression.erase(start_pos, end_pos - start_pos + 1);
+                    else
+                        expression.erase(start_pos);
+                }
+
+                replace_all_appearances(expression, scaled_name, original_name);
+            }
+        }
+    }
 
     stringstream string_stream(expression);
-
-    while(getline(string_stream, line, '\n'))
+    string ss_line;
+    while(getline(string_stream, ss_line, '\n'))
     {
-        if(line.size() > 1 && line.back() == '{')
-            break;
-
-        if(line.size() > 1 && line.back() != ';')
-            line += ';';
-
-        for(Index i = 0; i < inputs_number; i++)
+        if(ss_line.find("=") != string::npos)
         {
-            replace_all_appearances(line, "scaled_" + original_inputs[i], "scaled_" + inputs[i]);
-            replace_all_appearances(line, original_inputs[i], inputs[i]);
-        }
+            string var_name = get_first_word(ss_line);
 
+            if(!var_name.empty())
+                replace_all_word_appearances(expression, var_name, replace_reserved_keywords(var_name));
+        }
+    }
+
+    for(const Dataset::RawVariable& raw_var : raw_variables)
+    {
+        if(raw_var.use == "Input")
+        {
+            if(raw_var.type == Dataset::RawVariableType::Categorical)
+                for(const string& cat : raw_var.categories)
+                    replace_all_word_appearances(expression, cat, replace_reserved_keywords(cat));
+            else
+                replace_all_word_appearances(expression, raw_var.name, replace_reserved_keywords(raw_var.name));
+        }
+    }
+
+    for(const string& name : original_outputs)
+        replace_all_word_appearances(expression, name, replace_reserved_keywords(name));
+
+    stringstream ss(expression);
+    string line;
+    vector<string> lines;
+    while(getline(ss, line, '\n'))
+    {
+        if (line.empty() || all_of(line.begin(), line.end(), [](char c){ return isspace(c); })) continue;
+        if (line.find("{") != string::npos) break;
+        if (line.back() != ';') line += ';';
         lines.push_back(line);
     }
 
-    const string target_string0("Logistic");
-    const string target_string1("RectifiedLinear");
-    const string target_string4("ExponentialLinear");
-    const string target_string5("SELU");
-    const string target_string6("HyperbolicTangent");
+    if(expression.find("Logistic") != string::npos) logistic = true;
+    if(expression.find("RectifiedLinear") != string::npos) relu = true;
+    if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
+    if(expression.find("SELU") != string::npos) selu = true;
+    if(expression.find("HyperbolicTangent") != string::npos) hyper_tan = true;
 
-    const Index lines_number = lines.size();
+    buffer << "import numpy as np\n"
+           << "import pandas as pd\n\n"
+           << "class NeuralNetwork:\n\n";
 
-    for(Index i = 0; i < lines_number; i++)
+    string inputs_list_str;
+    Index total_input_vars = 0;
+    for(const Dataset::RawVariable& var : raw_variables)
     {
-        string word;
-        string line = lines[i];
-
-        const size_t substring_length0 = line.find(target_string0);
-        const size_t substring_length1 = line.find(target_string1);
-        const size_t substring_length4 = line.find(target_string4);
-        const size_t substring_length5 = line.find(target_string5);
-        const size_t substring_length6 = line.find(target_string6);
-
-        if(substring_length0 < line.size() && substring_length0 != 0)
-            logistic = true;
-        if(substring_length1 < line.size() && substring_length1 != 0)
-            ReLU = true;
-        if(substring_length4 < line.size() && substring_length4 != 0)
-            ExpLinear = true;
-        if(substring_length5 < line.size() && substring_length5 != 0)
-            SExpLinear = true;
-        if(substring_length6 < line.size() && substring_length6 != 0)
-            hyperTan = true;
-
-        word = get_first_word(line);
-
-        if(word.size() > 1)
-            found_tokens.push_back(word);
+        if(var.use == "Input")
+        {
+            if(var.type == Dataset::RawVariableType::Categorical)
+            {
+                for(const string& cat : var.categories)
+                {
+                    inputs_list_str += "'" + replace_reserved_keywords(cat) + "', ";
+                    total_input_vars++;
+                }
+            }
+            else
+            {
+                inputs_list_str += "'" + replace_reserved_keywords(var.name) + "', ";
+                total_input_vars++;
+            }
+        }
+    }
+    if(!inputs_list_str.empty())
+    {
+        inputs_list_str.pop_back();
+        inputs_list_str.pop_back();
     }
 
-    buffer << "import numpy as np" << endl
-           << "import pandas as pd\n" << endl
-           << "class NeuralNetwork:\n" << endl;
 
-    string inputs_list;
+    buffer << "\tdef __init__(self):\n"
+           << "\t\t" << "self.inputs_number = " << to_string(total_input_vars) << "\n"
+           << "\t\t" << "self.input_names = [" << inputs_list_str << "]\n\n";
 
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        inputs_list += "'" + inputs[i] + "'";
-
-        if(i < inputs_number - 1)
-            inputs_list += ", ";
-    }
-
-    buffer << "\tdef __init__(self):" << endl
-           << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
-           << "\t\t" << "self.input_names = [" << inputs_list << "]\n" << endl;
-
-    buffer << "\t@staticmethod" << endl
-           << "\tdef Linear(x):" << endl
-           << "\t\t" << "return x\n" << endl;
+    buffer << "\t@staticmethod\n"
+           << "\tdef Linear(x):\n"
+           << "\t\t" << "return x\n\n";
 
     if(logistic)
-        buffer << "\t@staticmethod" << endl
-               << "\tdef Logistic (x):" << endl
-               << "\t\t" << "z = 1/(1+np.exp(-x))" << endl
-               << "\t\t" << "return z\n" << endl;
+        buffer << "\t@staticmethod\n"
+               << "\tdef Logistic (x):\n"
+               << "\t\t" << "z = 1/(1+np.exp(-x))\n"
+               << "\t\t" << "return z\n\n";
 
-    if(ReLU)
-        buffer << "\t@staticmethod" << endl
-               << "\tdef RectifiedLinear (x):" << endl
-               << "\t\t" << "z = max(0, x)" << endl
-               << "\t\t" << "return z\n" << endl;
+    if(relu)
+        buffer << "\t@staticmethod\n"
+               << "\tdef RectifiedLinear (x):\n"
+               << "\t\t" << "z = np.maximum(0, x)\n"
+               << "\t\t" << "return z\n\n";
 
-    if(ExpLinear)
-        buffer << "\t@staticmethod" << endl
-               << "\tdef ExponentialLinear (x):" << endl
-               << "\t\t"   << "alpha = 1.67326" << endl
-               << "\t\t"   << "if(x>0):" << endl
-               << "\t\t\t" << "return x" << endl
-               << "\t\t"   << "else:" << endl
-               << "\t\t\t" << "return alpha*(np.exp(x)-1)\n" << endl;
+    if(exp_linear)
+        buffer << "\t@staticmethod\n"
+               << "\tdef ExponentialLinear (x):\n"
+               << "\t\t"   << "alpha = 1.67326\n"
+               << "\t\t"   << "return np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n";
 
-    if(SExpLinear)
-        buffer << "\t@staticmethod" << endl
-               << "\tdef SELU (x):" << endl
-               << "\t\t"   << "alpha = 1.67326" << endl
-               << "\t\t"   << "lambda_val = 1.05070" << endl
-               << "\t\t"   << "if(x>0):" << endl
-               << "\t\t\t" << "return lambda_val*x" << endl
-               << "\t\t"   << "else:" << endl
-               << "\t\t\t" << "return lambda_val*alpha*(np.exp(x)-1)\n" << endl;
+    if(selu)
+        buffer << "\t@staticmethod\n"
+               << "\tdef SELU (x):\n"
+               << "\t\t"   << "alpha = 1.67326\n"
+               << "\t\t"   << "lambda_val = 1.05070\n"
+               << "\t\t"   << "return lambda_val * np.where(x > 0, x, alpha * (np.exp(x) - 1))\n\n";
 
-    if (hyperTan)
-        buffer << "\t@staticmethod" << endl
-               << "\tdef HyperbolicTangent(x):" << endl
-               << "\t\t" << "return np.tanh(x)\n" << endl;
+    if(hyper_tan)
+        buffer << "\t@staticmethod\n"
+               << "\tdef HyperbolicTangent(x):\n"
+               << "\t\t" << "return np.tanh(x)\n\n";
 
-    buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
+    buffer << "\t" << "def calculate_outputs(self, inputs):\n";
 
-    for(Index i = 0; i < inputs_number; i++)
-        buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
-
-    buffer << endl;
-
-    found_tokens.resize(0);
-    found_tokens.push_back("log");
-    found_tokens.push_back("exp");
-    found_tokens.push_back("tanh");
-
-    found_mathematical_expressions.push_back("Logistic");
-    found_mathematical_expressions.push_back("RectifiedLinear");
-    found_mathematical_expressions.push_back("ExponentialLinear");
-    found_mathematical_expressions.push_back("SELU");
-    found_mathematical_expressions.push_back(" Linear");
-
-    string sufix;
-    string new_word;
-    string key_word ;
-
-    for(Index i = 0; i < lines_number; i++)
+    Index input_idx = 0;
+    for(const Dataset::RawVariable& var : raw_variables)
     {
-        string line = lines[i];
-
-        sufix = "np.";
-
-        for(size_t j = 0; j < found_tokens.size(); j++)
+        if(var.use == "Input")
         {
-            key_word = found_tokens[j];
-            new_word = sufix + key_word;
-            replace_all_appearances(line, key_word, new_word);
-        }
-
-        sufix = "self.";
-
-        for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
-        {
-            key_word = found_mathematical_expressions[j];
-            if(key_word == " Linear")
-                new_word = " " + sufix + "Linear";
+            if(var.type == Dataset::RawVariableType::Categorical)
+                for(const string& cat : var.categories)
+                    buffer << "\t\t" << replace_reserved_keywords(cat) << " = inputs[" << input_idx++ << "]\n";
             else
-                new_word = sufix + key_word;
-            replace_all_appearances(line, key_word, new_word);
+                buffer << "\t\t" << replace_reserved_keywords(var.name) << " = inputs[" << input_idx++ << "]\n";
         }
-
-        buffer << "\t\t" << line << endl;
     }
 
-    const vector<string> fixed_outputs = fix_get_expression_outputs(expression, outputs, ProgrammingLanguage::Python);
+    buffer << "\n";
 
-    for (const string& assignment : fixed_outputs)
-        buffer << "\t\t" << assignment << endl;
+    for(const string& l : lines)
+    {
+        string processed_line = l;
+
+        replace_all_word_appearances(processed_line, "Linear", "self.Linear");
+        replace_all_word_appearances(processed_line, "Logistic", "self.Logistic");
+        replace_all_word_appearances(processed_line, "RectifiedLinear", "self.RectifiedLinear");
+        replace_all_word_appearances(processed_line, "ExponentialLinear", "self.ExponentialLinear");
+        replace_all_word_appearances(processed_line, "SELU", "self.SELU");
+        replace_all_word_appearances(processed_line, "HyperbolicTangent", "self.HyperbolicTangent");
+
+        replace(processed_line, ";", "");
+        buffer << "\t\t" << processed_line << "\n";
+    }
 
     string return_list = "[";
     for(size_t i = 0; i < outputs.size(); ++i)
     {
         return_list += outputs[i];
+
         if (i < outputs.size() - 1)
-        {
             return_list += ", ";
-        }
     }
     return_list += "]";
-    buffer << "\t\treturn " << return_list << "\n" << endl;
+    buffer << "\t\treturn " << return_list << "\n\n";
 
-    buffer << "\tdef calculate_batch_output(self, input_batch):" << endl
-           << "\t\t" << "output_batch = np.zeros((len(input_batch), " << to_string(outputs_number) << "))" << endl
-           << "\t\t" << "for i in range(len(input_batch)):" << endl
-           << "\t\t\t" << "inputs = list(input_batch[i])" << endl
-           << "\t\t\t" << "output = self.calculate_outputs(inputs)" << endl
-           << "\t\t\t" << "output_batch[i] = output" << endl
-           << "\t\t" << "return output_batch\n" << endl;
+    buffer << "\tdef calculate_batch_output(self, input_batch):\n"
+           << "\t\t" << "output_batch = np.zeros((len(input_batch), " << to_string(outputs_number) << "))\n"
+           << "\t\t" << "for i in range(len(input_batch)):\n"
+           << "\t\t\t" << "inputs = list(input_batch[i])\n"
+           << "\t\t\t" << "output = self.calculate_outputs(inputs)\n"
+           << "\t\t\t" << "output_batch[i] = output\n"
+           << "\t\t" << "return output_batch\n\n";
 
-    buffer << "def main():" << endl
-           << "\n\tinputs = []\n" << endl;
+    buffer << "def main():\n"
+           << "\n\t# Introduce your input values here\n";
 
-    // for(Index i = 0; i < inputs_number; i++)
-    //     buffer << "\t" << inputs[i] << " = " << "#- ENTER YOUR VALUE HERE -#" << endl
-    //            << "\t" << "inputs.append(" << inputs[i] << ")\n" << endl;
+    vector<string> fixed_raw_names = fix_input_names(original_inputs);
 
-    vector<string> raw_input_names;
-    for (const auto& var : raw_variables) {
-        if (var.use == "Input") {
-            raw_input_names.push_back(var.name);
-        }
-    }
-    vector<string> fixed_raw_names = fix_input_names(raw_input_names);
+    map<string, Dataset::RawVariable> raw_vars_map;
+    for(const Dataset::RawVariable& var : raw_variables)
+        raw_vars_map[var.name] = var;
 
-    for(size_t i = 0; i < raw_input_names.size(); ++i) {
-        const auto& var = raw_variables[i];
-        if (var.use != "Input") continue;
+    for(Index i = 0; i < inputs_number; ++i)
+    {
+        const Dataset::RawVariable& var = raw_vars_map[original_inputs[i]];
 
-        if (var.type == Dataset::RawVariableType::Numeric) {
-            buffer << "\t" << fixed_raw_names[i] << " = 0  # Ejemplo: 32\n";
-        } else { // Para Binarias y Categóricas
-            buffer << "\t" << fixed_raw_names[i] << " = 0  # Opciones: ";
-            for(size_t j = 0; j < var.categories.size(); ++j) {
-                buffer << j << " = " << var.categories[j] << (j < var.categories.size() - 1 ? ", " : "");
-            }
+        if(var.type == Dataset::RawVariableType::Numeric)
+            buffer << "\t" << fixed_raw_names[i] << " = 0  # Example: 32.5\n";
+        else
+        {
+            buffer << "\t" << fixed_raw_names[i] << " = 0  # Options: ";
+
+            for(size_t j = 0; j < var.categories.size(); ++j)
+                buffer << j << " ('" << var.categories[j] << "')" << (j < var.categories.size() - 1 ? ", " : "");
+
             buffer << "\n";
         }
     }
 
-    buffer << "\n\t# --- Conversión de datos al formato del modelo (No modificar) ---\n";
+    buffer << "\n\t# --- Data conversion (DO NOT modify) ---\n";
     buffer << "\tinputs = []\n\n";
 
-    for(size_t i = 0; i < raw_input_names.size(); ++i) {
-        const auto& var = raw_variables[i];
-        if (var.use != "Input") continue;
+    for(Index i = 0; i < inputs_number; ++i)
+    {
+        const Dataset::RawVariable& var = raw_vars_map[original_inputs[i]];
 
-        if (var.type == Dataset::RawVariableType::Numeric) {
+        if(var.type == Dataset::RawVariableType::Numeric)
             buffer << "\tinputs.append(" << fixed_raw_names[i] << ")\n";
-        } else if (var.type == Dataset::RawVariableType::Binary) {
-            // Para binarias, el valor 0 o 1 ya es el correcto.
+        else if(var.type == Dataset::RawVariableType::Binary)
             buffer << "\tinputs.append(" << fixed_raw_names[i] << ")\n";
-        } else if (var.type == Dataset::RawVariableType::Categorical) {
-            // Para categóricas, convertimos el índice a one-hot encoding.
-            for (size_t j = 0; j < var.categories.size(); ++j) {
+        else if(var.type == Dataset::RawVariableType::Categorical)
+            for(size_t j = 0; j < var.categories.size(); ++j)
                 buffer << "\tinputs.append(1 if " << fixed_raw_names[i] << " == " << j << " else 0)\n";
-            }
-        }
     }
 
-    buffer << "\t" << "nn = NeuralNetwork()" << endl
-           << "\t" << "outputs = nn.calculate_outputs(inputs)" << endl
-           << "\t" << "print(outputs)" << endl
-           << "\n" << "main()" << endl;
+    buffer << "\n\t" << "nn = NeuralNetwork()\n"
+           << "\t" << "outputs = nn.calculate_outputs(inputs)\n"
+           << "\t" << "print(outputs)\n\n"
+           << "if __name__ == \"__main__\":\n"
+           << "\tmain()\n";
 
     string out = buffer.str();
 
@@ -1737,7 +1752,6 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
     }
 
     return out;
-
 }
 
 
@@ -1747,107 +1761,57 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 {
     vector<string> out;
     vector<string> tokens;
-    vector<string> found_tokens;
 
     string token;
-    string out_string;
-    string new_variable;
-    string old_variable;
-    string expression = str;
+    stringstream ss(str);
 
-    stringstream ss(expression);
-
-    const Index outputs_number = outputs.size();
-
-    const size_t dimension = outputs_number;
+    const size_t num_outputs = outputs.size();
 
     while(getline(ss, token, '\n'))
     {
-        if(token.size() > 1 && token.back() == '{')
+        if (token.empty() || all_of(token.begin(), token.end(), [](char c){ return isspace(c); }))
+            continue;
+
+        if (token.find("{") != string::npos)
             break;
 
-        if(token.size() > 1 && token.back() != ';')
-            token += ';';
-
-        tokens.push_back(token);
+        if (token.find("=") != string::npos)
+            tokens.push_back(token);
     }
 
-    for(size_t i = 0; i < tokens.size(); i++)
+    if (tokens.size() < num_outputs)
+        return {};
+
+    for (size_t i = 0; i < num_outputs; ++i)
     {
-        string s = tokens[i];
-        string word;
+        string intermediate_var_line = tokens[tokens.size() - num_outputs + i];
+        string intermediate_var_name = get_first_word(intermediate_var_line);
+        string final_output_name = fix_output_names(outputs)[i];
 
-        for(char& c : s)
-            if(c!=' ' && c!='=')
-                word += c;
-            else
-                break;
-
-        if(word.size() > 1)
-            found_tokens.push_back(word);
-    }
-
-    new_variable = found_tokens[found_tokens.size()-1];
-    old_variable = outputs[dimension-1];
-
-    if(new_variable != old_variable)
-    {
-        Index j = found_tokens.size();
-
-        for(Index i = dimension; i --> 0;)
+        if(final_output_name != intermediate_var_name)
         {
-            j -= 1;
-
-            new_variable = found_tokens[j];
-            old_variable = outputs[i];
+            string declaration_line;
 
             switch(programming_Language)
             {
-            //JavaScript
-            case  ProgrammingLanguage::JavaScript:
-                out_string = "\tvar "
-                             + old_variable
-                             + " = "
-                             + new_variable
-                             + ";";
+            case ProgrammingLanguage::C:
+                declaration_line = "double " + final_output_name + " = " + intermediate_var_name + ";";
                 break;
-
-                //Php
-            case  ProgrammingLanguage::PHP:
-                out_string = "$"
-                             + old_variable
-                             + " = "
-                             + "$"
-                             + new_variable
-                             + ";";
+            case ProgrammingLanguage::JavaScript:
+                declaration_line = "\tvar " + final_output_name + " = " + intermediate_var_name + ";";
                 break;
-
-                //Python
-            case  ProgrammingLanguage::Python:
-                out_string = old_variable
-                             + " = "
-                             + new_variable;
+            case ProgrammingLanguage::Python:
+                declaration_line = final_output_name + " = " + intermediate_var_name;
                 break;
-
-                //C
-            case  ProgrammingLanguage::C:
-                out_string = "double "
-                             + old_variable
-                             + " = "
-                             + new_variable
-                             + ";";
-                break;
-
-            default:
+            case ProgrammingLanguage::PHP:
+                declaration_line = "$" + final_output_name + " = $" + intermediate_var_name + ";";
                 break;
             }
 
-            vector<string> fixes_outputs = fix_output_names(outputs);
-            for(size_t i = 0; i < outputs.size(); i++)
-                replace_all_appearances(out_string, outputs[i], fixes_outputs[i]);
-            out.push_back(out_string);
+            out.push_back(declaration_line);
         }
     }
+
     return out;
 }
 
@@ -1896,14 +1860,14 @@ void ModelExpression::save_python(const filesystem::path& file_name, const vecto
 }
 
 
-void ModelExpression::save_c(const filesystem::path& file_name) const
+void ModelExpression::save_c(const filesystem::path& file_name, const vector<Dataset::RawVariable>& raw_variables) const
 {
     ofstream file(file_name);
 
     if (!file.is_open())
         return;
 
-    file << get_expression_c();
+    file << get_expression_c(raw_variables);
 }
 
 
@@ -1918,7 +1882,7 @@ void ModelExpression::save_javascript(const filesystem::path& file_name, const v
 }
 
 
-void ModelExpression::save_api(const filesystem::path& file_name) const
+void ModelExpression::save_api(const filesystem::path& file_name, const vector<Dataset::RawVariable>& raw_variables) const
 {
     ofstream file(file_name);
 
@@ -1926,7 +1890,7 @@ void ModelExpression::save_api(const filesystem::path& file_name) const
         return;
 
 
-    file << get_expression_api();
+    file << get_expression_api(raw_variables);
 }
 
 }

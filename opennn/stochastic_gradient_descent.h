@@ -52,11 +52,9 @@ public:
     void set_loss_goal(const type&);
     void set_maximum_time(const type&);
 
-    void update_parameters(BackPropagation& , StochasticGradientDescentData&) const;
+    void update_parameters(BackPropagation& , StochasticGradientDescentData&, const type&) const;
 
     TrainingResults train() override;
-
-    string get_name() const override;
 
     Tensor<string, 2> to_string_matrix() const override;
 

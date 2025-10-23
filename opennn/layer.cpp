@@ -55,9 +55,9 @@ void Layer::set_parameters_random()
 {
     const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_views.size()); i++)
+    for (const auto& view : parameter_views)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(view.data, view.size);
 
         set_random(this_parameters);
     }
@@ -73,9 +73,9 @@ void Layer::set_parameters_glorot()
 
     const vector<ParameterView> parameter_views = get_parameter_views();
 
-    for(Index i = 0; i < Index(parameter_views.size()); i++)
+    for (const auto& view : parameter_views)
     {
-        TensorMap<Tensor<type, 1>> this_parameters(parameter_views[i].data, parameter_views[i].size);
+        TensorMap<Tensor<type, 1>> this_parameters(view.data, view.size);
 
         set_random(this_parameters, -limit, limit);
     }

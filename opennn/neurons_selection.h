@@ -74,7 +74,10 @@ public:
 
     string write_time(const type&) const;
 
-    virtual string get_name() const = 0;
+    string get_name() const
+    {
+        return name;
+    }
 
     virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
@@ -107,6 +110,8 @@ protected:
     type maximum_time = 0;
 
     bool display = true;
+
+    string name;
 };
 
 

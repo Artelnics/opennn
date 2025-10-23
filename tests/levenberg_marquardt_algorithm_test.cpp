@@ -23,6 +23,7 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
+
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
 
@@ -33,7 +34,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     Dataset dataset(1, { 1 }, { 1 });
     //dataset.set_data_constant(type(1));
     dataset.set_data_random();
-    dataset.set("Training");
+    dataset.set_sample_uses("Training");
 
     //NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     //neural_network.set_parameters_random();

@@ -37,38 +37,19 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_data_random();
-    dataset.set("Training");
-
-    Batch batch(samples_number, &dataset);
-    batch.fill(dataset.get_sample_indices("Training"),
-               dataset.get_variable_indices("Input"),
-               // dataset.get_variable_indices("Decoder"),
-               dataset.get_variable_indices("Target"));
+    dataset.set_sample_uses("Training");
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
-
-    neural_network.set_parameters_random();
-
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-    // Loss index
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();
 
-    BackPropagation back_propagation(samples_number, &normalized_squared_error);
-    normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
+    const type error = normalized_squared_error.calculate_numerical_error();
     const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+    const Tensor<type, 1> gradient = normalized_squared_error.calculate_gradient();
 
-    EXPECT_EQ(back_propagation.errors.dimension(0), samples_number);
-    EXPECT_EQ(back_propagation.errors.dimension(1), targets_number);
-    EXPECT_GE(back_propagation.error(), 0);
-/*
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
-*/
+    EXPECT_GE(error, 0);
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 
@@ -83,39 +64,39 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
 
     Dataset dataset(samples_number, {inputs_number}, {outputs_number});
     dataset.set_data_random();
-    dataset.set("Training");
+    dataset.set_sample_uses("Training");
 
     Batch batch(samples_number, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
-               // dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
-    neural_network.set_parameters_random();
 
     NormalizedSquaredError normalized_squared_error(&neural_network, &dataset);
     normalized_squared_error.set_normalization_coefficient();
 
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+
+    BackPropagation back_propagation(samples_number, &normalized_squared_error);
+    normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    BackPropagationLM back_propagation_lm(samples_number, &normalized_squared_error);
+    normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+    const Tensor<type, 1> numerical_gradient_lm = normalized_squared_error.calculate_numerical_gradient();
+    const Tensor<type, 2> numerical_jacobian_lm = normalized_squared_error.calculate_numerical_jacobian();
+    const Tensor<type, 2> numerical_hessian_lm = normalized_squared_error.calculate_numerical_hessian();
+
     const Tensor<type, 1> gradient_lm = normalized_squared_error.calculate_numerical_gradient();
-    const Tensor<type, 1> numerical_gradient_lm = normalized_squared_error.calculate_numerical_gradient_lm();
 
     EXPECT_EQ(are_equal(gradient_lm, numerical_gradient_lm, type(1.0e-3)), true);
+    EXPECT_NEAR(back_propagation_lm.error(), back_propagation.error(), type(1.0e-3));
 
-    ForwardPropagation forwardpropagation(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_input_pairs(), forwardpropagation, is_training);
-
-    BackPropagationLM backpropagation_lm(samples_number, &normalized_squared_error);
-    normalized_squared_error.back_propagate_lm(batch, forwardpropagation, backpropagation_lm);
-
-    EXPECT_EQ(backpropagation_lm.errors.dimension(0), samples_number);
-    EXPECT_EQ(backpropagation_lm.errors.dimension(1), outputs_number);
-
-    // const Tensor<type, 2> numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
-    // const Tensor<type, 2> numerical_hessian = normalized_squared_error.calculate_numerical_hessian();
-
-    // EXPECT_EQ(are_equal(backpropagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-3)), true);
-    // EXPECT_EQ(are_equal(backpropagation_lm.hessian, numerical_hessian, type(1.0e-3)), true);
+    EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient_lm, type(1e-2)), true);
+    EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian_lm, type(1.0e-3)), true);
+    EXPECT_EQ(are_equal(back_propagation_lm.hessian, numerical_hessian_lm, type(1.0e-3)), true);
 }
 
 

@@ -38,7 +38,6 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     neural_network.set_parameters_random();
 
-
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
 
     const Tensor<type, 1> gradient = cross_entropy_error.calculate_gradient();

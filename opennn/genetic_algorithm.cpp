@@ -97,12 +97,17 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 
 void GeneticAlgorithm::set_default()
 {
+    name = "GeneticAlgorithm";
+
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
     const Index individuals_number = 40;        // Modify depending on the Dataset
 
     const Index raw_variables_number = training_strategy->get_dataset()->get_raw_variables_number("Input");
+
+    original_input_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Input");
+    original_target_raw_variable_indices = training_strategy->get_dataset()->get_raw_variable_indices("Target");
 
     population.resize(individuals_number, raw_variables_number);
 
@@ -197,6 +202,18 @@ void GeneticAlgorithm::set_elitism_size(const Index& new_elitism_size)
 }
 
 
+void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
+{
+    fitness = new_fitness;
+}
+
+
+void GeneticAlgorithm::set_selection(const Tensor<bool, 1>& new_selection)
+{
+    selection = new_selection;
+}
+
+
 void GeneticAlgorithm::initialize_population()
 {
     initialization_method == GeneticAlgorithm::InitializationMethod::Random
@@ -231,8 +248,6 @@ void GeneticAlgorithm::initialize_population_random()
     Tensor<bool, 1> individual_raw_variables(original_input_raw_variables_number);
     individual_raw_variables.setConstant(false);
 
-    cout << "Creating initial random population" << endl;
-
     random_device rd;
 
     mt19937 gen(rd());
@@ -259,9 +274,6 @@ void GeneticAlgorithm::initialize_population_random()
 
         population.chip(i, 0) = individual_raw_variables;
     }
-
-    cout << "Initial random population created" << endl
-         << "Initial random population: \n" << population << endl;
 }
 
 
@@ -388,7 +400,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         const Tensor<bool, 1> individual = population.chip(i, 0);
 
-        cout << "\nIndividual " << i + 1 << endl;
+        if (display) cout << "\nIndividual " << i + 1 << endl;
 
         const vector<Index> individual_raw_variables_indices = get_raw_variable_indices(individual);
 
@@ -408,6 +420,9 @@ void GeneticAlgorithm::evaluate_population()
         neural_network->set_parameters_random();
 
         //Training
+
+        if (!display) training_strategy->get_loss_index()->set_display(false);
+        if (!display) training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
 
@@ -448,6 +463,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
     for(Index i = 0; i < individuals_number; i++)
         fitness(rank(i)) = type(i+1);
 }
+
 
 void GeneticAlgorithm::perform_selection()
 {
@@ -745,14 +761,19 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         stop = true;
 
-        if (elapsed_time >= maximum_time)
+        if (input_selection_results.optimum_selection_error <= selection_error_goal)
+        {
+            if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_selection_error << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+        }
+        else if (elapsed_time >= maximum_time)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
         else if (epoch >= maximum_epochs_number - 1)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
         else
@@ -760,7 +781,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             stop = false;
         }
 
-        if(stop)
+        if (stop)
         {
             input_selection_results.elapsed_time = write_time(elapsed_time);
             input_selection_results.resize_history(epoch + 1);
@@ -785,7 +806,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_dimensions("Input", { Index(optimal_inputs_raw_variables_indices.size()) });
 
-    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers("Input");
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
@@ -949,12 +970,6 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
-}
-
-
-string GeneticAlgorithm::get_name() const
-{
-    return "GeneticAlgorithm";
 }
 
 

@@ -63,6 +63,9 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
+    void set_fitness(const Tensor<type, 1>&); // Used in testing
+    void set_selection(const Tensor<bool, 1>&); // Used in testing
+
     void initialize_population();
 
     void initialize_population_random();
@@ -95,8 +98,6 @@ public:
     void save(const filesystem::path&) const;
 
     void load(const filesystem::path&);
-
-    string get_name() const override;
 
 private:
 

@@ -54,6 +54,8 @@ void QuasiNewtonMethod::set_display(const bool& new_display)
 
 void QuasiNewtonMethod::set_default()
 {
+    name = "QuasiNewtonMethod";
+
     learning_rate_tolerance = numeric_limits<type>::epsilon();
     loss_tolerance = numeric_limits<type>::epsilon();
 
@@ -356,6 +358,8 @@ TrainingResults QuasiNewtonMethod::train()
         loss_index->assemble_layers_error_gradient(training_back_propagation,
                                                    optimization_data.gradient);
 
+        loss_index->add_regularization_gradient(optimization_data.gradient);
+
         results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
@@ -452,12 +456,6 @@ TrainingResults QuasiNewtonMethod::train()
     if(display) results.print();
 
     return results;
-}
-
-
-string QuasiNewtonMethod::get_name() const
-{
-    return "QuasiNewtonMethod";
 }
 
 
