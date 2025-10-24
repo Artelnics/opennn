@@ -40,7 +40,7 @@ EIGEN_LAPACK_FUNC(getrf)(int *m, int *n, RealScalar *pa, int *lda, int *ipiv, in
 //     A * X = B  or  A' * X = B
 //   with a general N-by-N matrix A using the LU factorization computed  by GETRF
 EIGEN_LAPACK_FUNC(getrs)
-(char *trans, int *n, int *nrhs, RealScalar *pa, int *lda, int *ipiv, RealScalar *pb, int *ldb, int *info) {
+(const char *trans, int *n, int *nrhs, RealScalar *pa, int *lda, int *ipiv, RealScalar *pb, int *ldb, int *info) {
   *info = 0;
   if (OP(*trans) == INVALID)
     *info = -1;

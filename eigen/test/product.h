@@ -42,7 +42,7 @@ template <typename Scalar, typename V1, typename V2>
 Scalar ref_dot_product(const V1& v1, const V2& v2) {
   Scalar out = Scalar(0);
   for (Index i = 0; i < v1.size(); ++i) {
-    out = Eigen::numext::fma(v1[i], v2[i], out);
+    out = Eigen::numext::madd(v1[i], v2[i], out);
   }
   return out;
 }
@@ -254,8 +254,6 @@ void product(const MatrixType& m) {
   // inner product
   {
     Scalar x = square2.row(c) * square2.col(c2);
-    // NOTE: FMA is necessary here in the reference to ensure accuracy for
-    // large vector sizes and float16/bfloat16 types.
     Scalar y = ref_dot_product<Scalar>(square2.row(c), square2.col(c2));
     VERIFY_IS_APPROX(x, y);
   }

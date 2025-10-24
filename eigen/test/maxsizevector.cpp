@@ -1,6 +1,8 @@
 #include "main.h"
 
+#ifdef EIGEN_EXCEPTIONS
 #include <exception>  // std::exception
+#endif
 
 #include <Eigen/src/Core/util/MaxSizeVector.h>
 
@@ -31,28 +33,27 @@ struct Foo {
     std::cout << '~';
     --Foo::object_count;
   }
-
+#ifdef EIGEN_EXCEPTIONS
   class Fail : public std::exception {};
+#endif
 };
 
 Index Foo::object_count = 0;
 Index Foo::object_limit = 0;
 
-EIGEN_DECLARE_TEST(cxx11_maxsizevector) {
+EIGEN_DECLARE_TEST(maxsizevector) {
   typedef MaxSizeVector<Foo> VectorX;
   Foo::object_count = 0;
   for (int r = 0; r < g_repeat; r++) {
     Index rows = internal::random<Index>(3, 30);
     Foo::object_limit = internal::random<Index>(0, rows - 2);
     std::cout << "object_limit = " << Foo::object_limit << std::endl;
-    bool exception_raised = false;
 #ifdef EIGEN_EXCEPTIONS
+    bool exception_raised = false;
     try {
-#endif
       std::cout << "\nVectorX m(" << rows << ");\n";
       VectorX vect(rows);
       for (int i = 0; i < rows; ++i) vect.push_back(Foo());
-#ifdef EIGEN_EXCEPTIONS
       VERIFY(false);  // not reached if exceptions are enabled
     } catch (const Foo::Fail&) {
       exception_raised = true;

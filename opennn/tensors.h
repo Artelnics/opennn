@@ -146,6 +146,30 @@ void set_random(TensorMap<Tensor<type, rank>>& tensor, const type& minimum = -0.
         tensor(i) = distribution(gen);
 }
 
+template<int rank>
+void set_random_integers(Tensor<type, rank>& tensor, const Index& minimum, const Index& maximum)
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_int_distribution<Index> distribution(minimum, maximum);
+
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = static_cast<type>(distribution(gen));
+}
+
+template<int rank>
+void set_random_integers(TensorMap<Tensor<type, rank>>& tensor, const Index& minimum, const Index& maximum)
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_int_distribution<Index> distribution(minimum, maximum);
+
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = static_cast<type>(distribution(gen));
+}
+
 
 type bound(const type& value, const type& minimum, const type& maximum);
 

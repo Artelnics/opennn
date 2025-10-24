@@ -182,8 +182,8 @@ EIGEN_DECLARE_TEST(redux) {
     CALL_SUBTEST_5(matrixRedux(ArrayXX<int64_t>(rows, cols)));
     CALL_SUBTEST_6(matrixRedux(MatrixXcf(rows, cols)));
     CALL_SUBTEST_6(matrixRedux(ArrayXXcf(rows, cols)));
-    CALL_SUBTEST_6(matrixRedux(MatrixXcd(rows, cols)));
-    CALL_SUBTEST_6(matrixRedux(ArrayXXcd(rows, cols)));
+    CALL_SUBTEST_7(matrixRedux(MatrixXcd(rows, cols)));
+    CALL_SUBTEST_7(matrixRedux(ArrayXXcd(rows, cols)));
   }
   for (int i = 0; i < g_repeat; i++) {
     int size = internal::random<int>(1, maxsize);

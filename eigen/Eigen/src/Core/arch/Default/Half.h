@@ -955,6 +955,12 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC uint16_t bit_cast<uint16_t, Eigen::half>(c
   return Eigen::half_impl::raw_half_as_uint16(src);
 }
 
+// Specialize multiply-add to match packet operations and reduce conversions to/from float.
+template<>
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half madd<Eigen::half>(const Eigen::half& x, const Eigen::half& y, const Eigen::half& z) {
+  return Eigen::half(static_cast<float>(x) * static_cast<float>(y) + static_cast<float>(z));
+}
+
 }  // namespace numext
 }  // namespace Eigen
 

@@ -323,7 +323,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erfc<float>::run(const T& x
   const T num = ppolevl<T, 3>::run(q2, gamma);
   const T denom = pmul(x, ppolevl<T, 4>::run(q2, delta));
   const T r = pdiv(num, denom);
-  const T maybe_two = pand(pcmp_lt(x, pset1<T>(0.0)), pset1<T>(2.0));
+  const T maybe_two = pselect(pcmp_lt(x, pset1<T>(0.0f)), pset1<T>(2.0f), pset1<T>(0.0f));
   const T erfc_large = pmadd(z, r, maybe_two);
   return pselect(x_abs_gt_one_mask, erfc_large, erfc_small);
 }
@@ -397,7 +397,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T erfc_double_large(const T& x, const T& x
   const T num_large = ppolevl<T, 9>::run(q2, gamma);
   const T denom_large = pmul(x, ppolevl<T, 9>::run(q2, delta));
   const T r = pdiv(num_large, denom_large);
-  const T maybe_two = pand(pcmp_lt(x, pset1<T>(0.0)), pset1<T>(2.0));
+  const T maybe_two = pselect(pcmp_lt(x, pset1<T>(0.0)), pset1<T>(2.0), pset1<T>(0.0));
   return pmadd(z, r, maybe_two);
 }
 

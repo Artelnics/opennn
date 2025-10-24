@@ -16,7 +16,7 @@
 #pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
-#ifndef EIGEN_TEST_ANNOYING_SCALAR_DONT_THROW
+#if defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_TEST_ANNOYING_SCALAR_DONT_THROW)
 struct my_exception {
   my_exception() {}
   ~my_exception() {}
@@ -76,7 +76,7 @@ class AnnoyingScalar {
   }
 
   AnnoyingScalar operator+(const AnnoyingScalar& other) const {
-#ifndef EIGEN_TEST_ANNOYING_SCALAR_DONT_THROW
+#if defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_TEST_ANNOYING_SCALAR_DONT_THROW)
     countdown--;
     if (countdown <= 0 && !dont_throw) throw my_exception();
 #endif

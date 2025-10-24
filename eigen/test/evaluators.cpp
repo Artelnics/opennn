@@ -340,7 +340,7 @@ EIGEN_DECLARE_TEST(evaluators) {
     matXcd_ref.imag() = mat2;
     VERIFY_IS_APPROX(matXcd, matXcd_ref);
 
-    // test Select
+    // test select
     VERIFY_IS_APPROX_EVALUATOR(aX, (aXsrc > 0).select(aXsrc, -aXsrc));
 
     // test Replicate

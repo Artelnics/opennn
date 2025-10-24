@@ -5,6 +5,7 @@
 #include "../opennn/language_dataset.h"
 #include "../opennn/image_dataset.h"
 #include "../opennn/dense_layer.h"
+#include "../opennn/pooling_layer.h"
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/mean_squared_error.h"
@@ -62,7 +63,7 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
 {
     const Index samples_number = get_random_index(2, 10);
     const Index inputs_number = get_random_index(1, 10);
-    const Index targets_number = get_random_index(1, 10);
+    const Index targets_number = get_random_index(3, 10);
     const Index time_steps = get_random_index(1, 10);
 
     Dataset dataset(samples_number, { time_steps, inputs_number }, { targets_number });
@@ -115,24 +116,79 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
 }
 
 
-TEST(MeanSquaredErrorTest, BackPropagatePooling)  //convolutional+pooling+dense
+TEST(MeanSquaredErrorTest, BackPropagatePooling)
 {
+    const Index samples_number = 6;
+    const Index targets_number = 1;
 
+    const dimensions input_dimensions = { 21, 21, 3 };
+    const dimensions kernel_dimensions = { 3, 3, 3, 1 };
+
+    ImageDataset dataset(samples_number, { input_dimensions }, { targets_number });
+    dataset.set_data_random();
+    dataset.set_sample_uses("Training");
+
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<Convolutional>(input_dimensions, kernel_dimensions));
+    const dimensions conv_output_dimensions = neural_network.get_layer(0)->get_output_dimensions();
+    neural_network.add_layer(make_unique<Pooling>(conv_output_dimensions));
+    const dimensions pool_output_dimensions = neural_network.get_layer(1)->get_output_dimensions();
+    neural_network.add_layer(make_unique<Flatten<4>>(pool_output_dimensions));
+    const dimensions flatten_output_dimensions = neural_network.get_layer(2)->get_output_dimensions();
+    neural_network.add_layer(make_unique<Dense2d>(flatten_output_dimensions, dataset.get_target_dimensions()));
+
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+
+    const type error = mean_squared_error.calculate_numerical_error();
+    EXPECT_GE(error, 0);
+
+    const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
+    const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 
 TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
 {
+    const Index samples_number = get_random_index(5, 10); 
+    const Index inputs_number = get_random_index(10, 20); 
+    const Index targets_number = get_random_index(3, 10);
 
+    const Index embeding_dim = inputs_number;
+    const Index sequence_length = get_random_index(1, 10);
+    const Index flattened_size = sequence_length * embeding_dim;
+
+    Dataset dataset(samples_number, { sequence_length }, { targets_number });
+    dataset.set_data_integer(inputs_number);
+    dataset.set_sample_uses("Training");
+
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<Embedding>(dimensions{ inputs_number, sequence_length }, embeding_dim));
+    const dimensions flatten_layer_input_dimensions = neural_network.get_layer(0).get()->get_output_dimensions();
+    neural_network.add_layer(make_unique<Flatten<3>>(dimensions{ flatten_layer_input_dimensions }));
+    neural_network.add_layer(make_unique<Dense2d>(dimensions{ flattened_size }, dimensions{ targets_number }));
+
+    MeanSquaredError mean_squared_error(&neural_network, &dataset);
+
+    const type error = mean_squared_error.calculate_numerical_error();
+    EXPECT_GE(error, 0);
+
+    const Tensor<type, 1> gradient = mean_squared_error.calculate_gradient();
+    const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+
+    EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
 
 
 TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
 {
-    const Index batch_size = get_random_index(1, 4);
-    const Index sequence_length = get_random_index(1, 4);
-    const Index heads_number = get_random_index(1, 4);
-    const Index head_dimension = get_random_index(1, 4);
+    const Index batch_size = get_random_index(1, 10);
+    const Index sequence_length = get_random_index(3, 10);
+    const Index heads_number = get_random_index(1, 10);
+    const Index head_dimension = get_random_index(1, 10);
     const Index embedding_dimension = heads_number * head_dimension;
 
     const dimensions sample_input_dimensions = { sequence_length, embedding_dimension };

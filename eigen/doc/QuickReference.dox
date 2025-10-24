@@ -449,7 +449,7 @@ conj(array1)
 </td></tr>
 </table>
 
-Some coefficient-wise operators are readily available for for matrices and vectors through the following cwise* methods:
+Some coefficient-wise operators are readily available for matrices and vectors through the following cwise* methods:
 <table class="manual">
 <tr><th>Matrix API \matrixworld</th><th>Via Array conversions</th></tr>
 <tr><td>\code

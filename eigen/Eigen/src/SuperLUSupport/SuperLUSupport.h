@@ -65,6 +65,24 @@ DECL_GSSVX(z, double, std::complex<double>)
 #ifdef EIGEN_SUPERLU_HAS_ILU
 
 // similarly for the incomplete factorization using gsisx
+#if defined(SUPERLU_MAJOR_VERSION) && (SUPERLU_MAJOR_VERSION >= 5)
+#define DECL_GSISX(PREFIX, FLOATTYPE, KEYTYPE)                                                                         \
+  extern "C" {                                                                                                         \
+  extern void PREFIX##gsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *, char *, FLOATTYPE *, FLOATTYPE *, \
+                            SuperMatrix *, SuperMatrix *, void *, int, SuperMatrix *, SuperMatrix *, FLOATTYPE *,      \
+                            FLOATTYPE *, GlobalLU_t *, mem_usage_t *, SuperLUStat_t *, int *);                         \
+  }                                                                                                                    \
+  inline float SuperLU_gsisx(superlu_options_t *options, SuperMatrix *A, int *perm_c, int *perm_r, int *etree,         \
+                             char *equed, FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L, SuperMatrix *U, void *work,      \
+                             int lwork, SuperMatrix *B, SuperMatrix *X, FLOATTYPE *recip_pivot_growth,                 \
+                             FLOATTYPE *rcond, SuperLUStat_t *stats, int *info, KEYTYPE) {                             \
+    mem_usage_t mem_usage;                                                                                             \
+    GlobalLU_t gLU;                                                                                                    \
+    PREFIX##gsisx(options, A, perm_c, perm_r, etree, equed, R, C, L, U, work, lwork, B, X, recip_pivot_growth, rcond,  \
+                  &gLU, &mem_usage, stats, info);                                                                      \
+    return mem_usage.for_lu; /* bytes used by the factor storage */                                                    \
+  }
+#else  // version < 5.0
 #define DECL_GSISX(PREFIX, FLOATTYPE, KEYTYPE)                                                                         \
   extern "C" {                                                                                                         \
   extern void PREFIX##gsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *, char *, FLOATTYPE *, FLOATTYPE *, \
@@ -80,6 +98,7 @@ DECL_GSSVX(z, double, std::complex<double>)
                   &mem_usage, stats, info);                                                                            \
     return mem_usage.for_lu; /* bytes used by the factor storage */                                                    \
   }
+#endif
 
 DECL_GSISX(s, float, float)
 DECL_GSISX(c, float, std::complex<float>)
@@ -320,7 +339,7 @@ class SuperLUBase : public SparseSolverBase<Derived> {
     derived().factorize(matrix);
   }
 
-  /** Performs a symbolic decomposition on the sparcity of \a matrix.
+  /** Performs a symbolic decomposition on the sparsity of \a matrix.
    *
    * This function is particularly useful when solving for several problems having the same structure.
    *
@@ -454,7 +473,7 @@ class SuperLU : public SuperLUBase<MatrixType_, SuperLU<MatrixType_> > {
 
   ~SuperLU() {}
 
-  /** Performs a symbolic decomposition on the sparcity of \a matrix.
+  /** Performs a symbolic decomposition on the sparsity of \a matrix.
    *
    * This function is particularly useful when solving for several problems having the same structure.
    *
@@ -468,7 +487,8 @@ class SuperLU : public SuperLUBase<MatrixType_, SuperLU<MatrixType_> > {
 
   /** Performs a numeric decomposition of \a matrix
    *
-   * The given matrix must has the same sparcity than the matrix on which the symbolic decomposition has been performed.
+   * The given matrix must have the same sparsity than the matrix on which the symbolic decomposition has been
+   * performed.
    *
    * \sa analyzePattern()
    */
@@ -762,7 +782,7 @@ class SuperILU : public SuperLUBase<MatrixType_, SuperILU<MatrixType_> > {
 
   ~SuperILU() {}
 
-  /** Performs a symbolic decomposition on the sparcity of \a matrix.
+  /** Performs a symbolic decomposition on the sparsity of \a matrix.
    *
    * This function is particularly useful when solving for several problems having the same structure.
    *
@@ -772,7 +792,8 @@ class SuperILU : public SuperLUBase<MatrixType_, SuperILU<MatrixType_> > {
 
   /** Performs a numeric decomposition of \a matrix
    *
-   * The given matrix must has the same sparcity than the matrix on which the symbolic decomposition has been performed.
+   * The given matrix must have the same sparsity than the matrix on which the symbolic decomposition has been
+   * performed.
    *
    * \sa analyzePattern()
    */

@@ -296,6 +296,23 @@ void checkOptimalTraversal() {
   checkOptimalTraversal_impl<UnrollRowMajor, true>(UnrollRowMajor(Rows, Cols));
   checkOptimalTraversal_impl<DynamicColMajor, true>(DynamicColMajor(rows, cols));
   checkOptimalTraversal_impl<DynamicRowMajor, true>(DynamicRowMajor(rows, cols));
+
+  const Eigen::Array<bool, Eigen::Dynamic, 1> a = Eigen::Array<bool, 2, 1>{false, true};
+  Eigen::Index i = -1;
+
+  VERIFY(!a.minCoeff(&i));
+  VERIFY(i == 0);
+
+  VERIFY(!(!a).minCoeff(&i));
+  VERIFY(i == 1);
+
+  Eigen::Index j = -1;
+
+  VERIFY(a.maxCoeff(&j));
+  VERIFY(j == 1);
+
+  VERIFY((!a).maxCoeff(&j));
+  VERIFY(j == 0);
 }
 
 EIGEN_DECLARE_TEST(visitor) {

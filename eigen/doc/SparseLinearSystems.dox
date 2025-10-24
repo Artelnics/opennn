@@ -178,7 +178,7 @@ For direct methods, the solution are computed at the machine precision. Sometime
 \section BenchmarkRoutine
 Most of the time, all you need is to know how much time it will take to solve your system, and hopefully, what is the most suitable solver. In Eigen, we provide a benchmark routine that can be used for this purpose. It is very easy to use. In the build directory, navigate to `bench/spbench` and compile the routine by typing `make spbenchsolver`. Run it with `--help` option to get the list of all available options. Basically, the matrices to test should be in <a href="http://math.nist.gov/MatrixMarket/formats.html">MatrixMarket Coordinate format</a>, and the routine returns the statistics from all available solvers in Eigen.
 
-To export your matrices and right-hand-side vectors in the matrix-market format, you can the the unsupported SparseExtra module:
+To export your matrices and right-hand-side vectors in the matrix-market format, you can use the unsupported SparseExtra module:
 \code
 #include <unsupported/Eigen/SparseExtra>
 ...

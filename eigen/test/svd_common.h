@@ -381,6 +381,7 @@ void svd_verify_assert_full_only(const MatrixType& input = MatrixType()) {
 
   typedef Matrix<typename MatrixType::Scalar, RowsAtCompileTime, 1> RhsType;
   RhsType rhs = RhsType::Zero(input.rows());
+  EIGEN_UNUSED_VARIABLE(rhs);  // Only used if asserts are enabled.
   MatrixType m(input.rows(), input.cols());
   svd_fill_random(m);
 
@@ -410,6 +411,7 @@ void svd_verify_assert(const MatrixType& input = MatrixType()) {
   enum { RowsAtCompileTime = MatrixType::RowsAtCompileTime };
   typedef Matrix<typename MatrixType::Scalar, RowsAtCompileTime, 1> RhsType;
   RhsType rhs = RhsType::Zero(input.rows());
+  EIGEN_UNUSED_VARIABLE(rhs);  // Only used if asserts are enabled.
   MatrixType m(input.rows(), input.cols());
   svd_fill_random(m);
 

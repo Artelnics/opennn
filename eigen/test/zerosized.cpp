@@ -24,6 +24,8 @@ void zeroReduction(const MatrixType& m) {
   VERIFY_RAISES_ASSERT(m.minCoeff());
   VERIFY_RAISES_ASSERT(m.maxCoeff());
   Index i, j;
+  EIGEN_UNUSED_VARIABLE(i);  // Only used if exceptions are enabled.
+  EIGEN_UNUSED_VARIABLE(j);
   VERIFY_RAISES_ASSERT(m.minCoeff(&i, &j));
   VERIFY_RAISES_ASSERT(m.maxCoeff(&i, &j));
   VERIFY_RAISES_ASSERT(m.reshaped().minCoeff(&i));
