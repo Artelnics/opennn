@@ -209,7 +209,7 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
             descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
         else if(scaler == "MeanStandardDeviation")
@@ -255,7 +255,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
-        add_xml_element(printer, "string", scalers[i]);
+        add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
     }
@@ -301,7 +301,7 @@ void Unscaling::from_XML(const XMLDocument& document)
                 type(stof(splitted_descriptives[3])));
         }
 
-        scalers[i] = read_xml_string(unscaling_neuron_element, "string");
+        scalers[i] = read_xml_string(unscaling_neuron_element, "Scaler");
 
         start_element = unscaling_neuron_element;
     }

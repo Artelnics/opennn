@@ -11,6 +11,7 @@
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
 
@@ -222,12 +223,17 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 
 void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    input_names.resize(new_input_dimensions[0]);
+    const Index total_inputs = accumulate(new_input_dimensions.begin(), new_input_dimensions.end(), 1, multiplies<Index>());
+    input_names.resize(total_inputs);
 
     if(has("Scaling2d"))
     {
         Scaling2d* scaling_layer = static_cast<Scaling2d*>(get_first("Scaling2d"));
-
+        scaling_layer->set_input_dimensions(new_input_dimensions);
+    }
+    else if(has("Scaling3d"))
+    {
+        Scaling3d* scaling_layer = static_cast<Scaling3d*>(get_first("Scaling3d"));
         scaling_layer->set_input_dimensions(new_input_dimensions);
     }
 
@@ -652,7 +658,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
-    { 
+    {
         /// @todo
         return Tensor<type, 2>();
     }

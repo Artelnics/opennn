@@ -287,7 +287,7 @@ void OptimizationAlgorithm::set_scaling()
     vector<string> input_scalers;
     bool input_has_been_scaled = false;
 
-    if (neural_network->has("Scaling2d"))
+    if(neural_network->has("Scaling2d"))
     {
         input_scalers = dataset->get_variable_scalers("Input");
         input_descriptives = dataset->scale_variables("Input");
@@ -297,7 +297,7 @@ void OptimizationAlgorithm::set_scaling()
         scaling_layer_2d->set_descriptives(input_descriptives);
         scaling_layer_2d->set_scalers(input_scalers);
     }
-    else if (neural_network->has("Scaling3d"))
+    else if(neural_network->has("Scaling3d"))
     {
         TimeSeriesDataset* time_series_dataset = static_cast<TimeSeriesDataset*>(dataset);
         input_scalers = time_series_dataset->get_variable_scalers("Input");
@@ -308,14 +308,14 @@ void OptimizationAlgorithm::set_scaling()
         scaling_layer_3d->set_descriptives(input_descriptives);
         scaling_layer_3d->set_scalers(input_scalers);
     }
-    else if (neural_network->has("Scaling4d"))
+    else if(neural_network->has("Scaling4d"))
     {
         ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
         image_dataset->scale_variables("Input");
         input_has_been_scaled = true;
     }
 
-    if (neural_network->has("Unscaling"))
+    if(neural_network->has("Unscaling"))
     {
         Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
@@ -325,16 +325,16 @@ void OptimizationAlgorithm::set_scaling()
         vector<Descriptives> target_descriptives;
         vector<string> target_scalers;
 
-        for (const Index& target_index : target_variable_indices)
+        for(const Index& target_index : target_variable_indices)
         {
-            auto target_position_inputs = std::find(input_variable_indices.begin(), input_variable_indices.end(), target_index);
+            auto target_position_inputs = find(input_variable_indices.begin(), input_variable_indices.end(), target_index);
 
-            if (target_position_inputs != input_variable_indices.end())
+            if(target_position_inputs != input_variable_indices.end())
             {
-                if (!input_has_been_scaled)
+                if(!input_has_been_scaled)
                     throw runtime_error("Configuration error: Unscaling layer exists for a target that is also an input, but no input scaling layer was found.");
 
-                const Index input_index = std::distance(input_variable_indices.begin(), target_position_inputs);
+                const Index input_index = distance(input_variable_indices.begin(), target_position_inputs);
                 target_descriptives.push_back(input_descriptives[input_index]);
                 target_scalers.push_back(input_scalers[input_index]);
             }
@@ -343,17 +343,16 @@ void OptimizationAlgorithm::set_scaling()
                 const vector<Descriptives> all_target_descriptives = dataset->scale_variables("Target");
                 const vector<string> all_target_scalers = dataset->get_variable_scalers("Target");
 
-                auto target_position_targets = std::find(target_variable_indices.begin(), target_variable_indices.end(), target_index);
-                const Index target_position = std::distance(target_variable_indices.begin(), target_position_targets);
+                auto target_position_targets = find(target_variable_indices.begin(), target_variable_indices.end(), target_index);
+                const Index target_position = distance(target_variable_indices.begin(), target_position_targets);
 
                 target_descriptives.push_back(all_target_descriptives[target_position]);
                 target_scalers.push_back(all_target_scalers[target_position]);
             }
         }
 
-        if (static_cast<Index>(target_descriptives.size()) != unscaling_layer->get_outputs_number()) {
+        if(static_cast<Index>(target_descriptives.size()) != unscaling_layer->get_outputs_number())
             throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
-        }
 
         unscaling_layer->set_descriptives(target_descriptives);
         unscaling_layer->set_scalers(target_scalers);
@@ -366,23 +365,23 @@ void OptimizationAlgorithm::set_unscaling()
     Dataset* dataset = loss_index->get_dataset();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if (neural_network->has("Scaling2d"))
+    if(neural_network->has("Scaling2d"))
     {
         Scaling2d* layer = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         dataset->unscale_variables("Input", layer->get_descriptives());
     }
-    else if (neural_network->has("Scaling3d"))
+    else if(neural_network->has("Scaling3d"))
     {
-        //Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        //dataset->unscale_variables("Input", layer->get_descriptives());
+        Scaling3d* layer = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        dataset->unscale_variables("Input", layer->get_descriptives());
     }
-    else if (neural_network->has("Scaling4d"))
+    else if(neural_network->has("Scaling4d"))
     {
         ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
         image_dataset->unscale_variables("Input");
     }
 
-    if (neural_network->has("Unscaling"))
+    if(neural_network->has("Unscaling"))
     {
         const vector<Index> input_indices = dataset->get_variable_indices("Input");
         const vector<Index> target_indices = dataset->get_variable_indices("Target");
@@ -392,12 +391,13 @@ void OptimizationAlgorithm::set_unscaling()
         Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
         const vector<Descriptives> all_unscaling_descriptives = unscaling_layer->get_descriptives();
 
-        for (size_t i = 0; i < target_indices.size(); ++i) {
+        for(size_t i = 0; i < target_indices.size(); ++i)
+        {
             const Index& target_index = target_indices[i];
 
-            auto target_position = std::find(input_indices.begin(), input_indices.end(), target_index);
+            auto target_position = find(input_indices.begin(), input_indices.end(), target_index);
 
-            if (target_position == input_indices.end())
+            if(target_position == input_indices.end())
                 targets_to_unscale_descriptives.push_back(all_unscaling_descriptives[i]);
         }
 

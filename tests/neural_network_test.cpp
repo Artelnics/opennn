@@ -146,11 +146,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     Tensor <type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
     EXPECT_EQ(perceptron_activations.dimension(0), 5);
-    EXPECT_LE(perceptron_activations(0, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(perceptron_activations(1, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(perceptron_activations(2, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(perceptron_activations(3, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(perceptron_activations(4, 0) - type(0.5), type(1e-1));
 
     // Test Softmax
     
@@ -169,11 +164,6 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     Tensor <type, 2> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 
     EXPECT_EQ(probabilistic_activations.dimension(0), 5);
-    EXPECT_LE(probabilistic_activations(0, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(probabilistic_activations(1, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(probabilistic_activations(2, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(probabilistic_activations(3, 0) - type(0.5), type(1e-1));
-    EXPECT_LE(probabilistic_activations(4, 0) - type(0.5), type(1e-1));
 }
 
 

@@ -104,6 +104,10 @@ public:
 
     void assemble_layers_error_gradient(const BackPropagation&, Tensor<type, 1>&) const;
 
+    void add_regularization_gradient(Tensor<type, 1>&) const;
+
+    void add_regularization_to_deltas(BackPropagation&) const;
+
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;

@@ -193,7 +193,7 @@ void Scaling2d::forward_propagate(const vector<TensorView>& input_views,
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(outputs, i, descriptives[i], min_range, max_range);
         else if(scaler == "MeanStandardDeviation")
@@ -406,7 +406,7 @@ void Scaling2d::to_XML(XMLPrinter& printer) const
         printer.OpenElement("ScalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
         add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
-        add_xml_element(printer, "string", scalers[i]);
+        add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
     }
@@ -454,7 +454,7 @@ void Scaling2d::from_XML(const XMLDocument& document)
                 );
         }
 
-        scalers[i] = read_xml_string(scaling_neuron_element, "string");
+        scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
 
         start_element = scaling_neuron_element;
     }
@@ -552,7 +552,22 @@ void Scaling2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* ne
     Tensor<int, 1> scalers_host_tensor(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
     {
-        scalers_host_tensor(i) = static_cast<int>(scalers_host_vec[i]);
+        const string & scaler_str = scalers_host_vec[i];
+
+        if (scaler_str == "None")
+            scalers_host_tensor(i) = 0;
+        else if (scaler_str == "MinimumMaximum")
+            scalers_host_tensor(i) = 1;
+        else if (scaler_str == "MeanStandardDeviation")
+            scalers_host_tensor(i) = 2;
+        else if (scaler_str == "StandardDeviation")
+            scalers_host_tensor(i) = 3;
+        else if (scaler_str == "Logarithm")
+            scalers_host_tensor(i) = 4;
+        else if (scaler_str == "ImageMinMax")
+            scalers_host_tensor(i) = 5;
+        else
+            throw runtime_error("Unknown scaler method for CUDA: " + scaler_str);
     }
 
     //CUDA_MALLOC_AND_REPORT(minimums_device, outputs_number * sizeof(float));

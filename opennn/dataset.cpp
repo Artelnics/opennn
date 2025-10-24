@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "time_series_dataset.h"
 #include "image_dataset.h"
 #include "statistics.h"
 #include "correlations.h"
@@ -119,7 +120,7 @@ void Dataset::RawVariable::set_categories(const vector<string>& new_categories)
 void Dataset::RawVariable::from_XML(const XMLDocument& document)
 {
     name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "string"));
+    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
     set_use(read_xml_string(document.FirstChildElement(), "Use"));
     set_type(read_xml_string(document.FirstChildElement(), "Type"));
 
@@ -134,7 +135,7 @@ void Dataset::RawVariable::from_XML(const XMLDocument& document)
 void Dataset::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "string", scaler);
+    add_xml_element(printer, "Scaler", scaler);
     add_xml_element(printer, "Use", get_use());
     add_xml_element(printer, "Type", get_type_string());
 
@@ -556,6 +557,7 @@ void Dataset::set_default_raw_variables_uses_forecasting()
     }
 }
 
+
 void Dataset::set_default_raw_variable_names()
 {
     const Index raw_variables_number = raw_variables.size();
@@ -900,17 +902,28 @@ void Dataset::set_raw_variable_indices(const vector<Index>& input_raw_variables,
 {
     set_raw_variables("None");
 
-    for (size_t i = 0; i < input_raw_variables.size(); i++)
-        set_raw_variable_use(input_raw_variables[i], "Input");
+    for(const Index& index : input_raw_variables)
+        set_raw_variable_use(index, "Input");
 
-    for (size_t i = 0; i < target_raw_variables.size(); i++)
-        set_raw_variable_use(target_raw_variables[i], "Target");
+    for(const Index& index : target_raw_variables)
+    {
+        if(raw_variables[index].use == "Input")
+            set_raw_variable_use(index, "InputTarget");
+        else
+            set_raw_variable_use(index, "Target");
+    }
 
-    const Index input_dimensions = get_variables_number("Input");
-    const Index target_dimensions = get_variables_number("Target");
+    const Index input_dimensions_num = get_variables_number("Input");
+    const Index target_dimensions_num = get_variables_number("Target");
 
-    set_dimensions("Input", {input_dimensions});
-    set_dimensions("Target", {target_dimensions});
+    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+
+    if(ts_dataset)
+        set_dimensions("Input", {ts_dataset->get_past_time_steps(), input_dimensions_num});
+    else
+        set_dimensions("Input", {input_dimensions_num});
+
+    set_dimensions("Target", {target_dimensions_num});
 }
 
 
@@ -1716,13 +1729,11 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 
         for (Index j = 0; j < target_raw_variables_number; j++)
         {
-        
-            if (!isnan(correlations(i, j).r)
-                && abs(correlations(i, j).r) < minimum_correlation
-                && raw_variables[input_raw_variable_index].use != "None")
+            const type r = correlations(i, j).r;
+
+            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].use != "None")
             {
                 raw_variables[input_raw_variable_index].set_use("None");
-
                 unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
             }
         }
@@ -2162,7 +2173,7 @@ void Dataset::set_gmt(const Index& new_gmt)
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_correlations() const
 {
-    cout << "Calculating pearson correlations..." << endl;
+    if (display) cout << "Calculating pearson correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number("Input");
     const Index target_raw_variables_number = get_raw_variables_number("Target");
@@ -2194,7 +2205,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_correlations() const
 {
-    cout << "Calculating spearman correlations..." << endl;
+    if (display) cout << "Calculating spearman correlations..." << endl;
 
     const Index input_raw_variables_number = get_raw_variables_number("Input");
     const Index target_raw_variables_number = get_raw_variables_number("Target");
@@ -2301,13 +2312,13 @@ void Dataset::print_top_input_target_raw_variables_correlations() const
     map<type, string>::iterator it;
 
     for (it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
+        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlations() const
 {
-    cout << "Calculating pearson inputs correlations..." << endl;
+    if (display) cout << "Calculating pearson inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
@@ -2317,7 +2328,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
+        if (display) cout << "Correlation " << i + 1<< " of " << input_raw_variables_number << endl;
 
         const Index current_input_index_i = input_raw_variable_indices[i];
 
@@ -2348,7 +2359,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlations() const
 {
-    cout << "Calculating spearman inputs correlations..." << endl;
+    if (display) cout << "Calculating spearman inputs correlations..." << endl;
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
@@ -2358,7 +2369,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
+        if (display) cout << "Correlation " << i + 1 << " of " << input_raw_variables_number << endl;
 
         const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
@@ -2437,7 +2448,7 @@ void Dataset::print_top_inputs_correlations() const
     map<type, string> ::iterator it;
 
     for (it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
+        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
@@ -2465,7 +2476,7 @@ vector<Descriptives> Dataset::scale_data()
         const string& scaler = raw_variables[raw_variable_index].scaler;
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, i, variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
@@ -2496,7 +2507,7 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
         const string& scaler = input_variable_scalers[i];
 
         if(scaler == "None")
-            ;
+            continue;
         else if(scaler == "MinimumMaximum")
             scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
@@ -2516,28 +2527,28 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
 void Dataset::unscale_variables(const string& variable_use,
                                 const vector<Descriptives>& input_variable_descriptives)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_use);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variables_indices = get_variable_indices(variable_use);
 
-    const vector<string> input_variable_scalers = get_variable_scalers("Input");
+    const vector<string> variables_scalers = get_variable_scalers(variable_use);
 
-    for (Index i = 0; i < input_variables_number; i++)
+    for (Index i = 0; i < variables_number; i++)
     {
-        const string& scaler = input_variable_scalers[i];
+        const string& scaler = variables_scalers[i];
 
-        if(scaler == "case string::None")
-            break;
+        if(scaler == "None")
+            continue;
         else if(scaler == "MinimumMaximum")
-            unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_minimum_maximum(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
-            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_mean_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "StandardDeviation")
-            unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
         else if(scaler == "Logarithm")
-            unscale_logarithmic(data, input_variable_indices[i]);
+            unscale_logarithmic(data, variables_indices[i]);
         else if(scaler == "ImageMinMax")
-            unscale_image_minimum_maximum(data, input_variable_indices[i]);
+            unscale_image_minimum_maximum(data, variables_indices[i]);
         else
             throw runtime_error("Unknown unscaling and unscaling method: " + scaler + "\n");
     }
@@ -2679,7 +2690,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
             throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "string"));
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 

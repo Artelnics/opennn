@@ -358,6 +358,8 @@ TrainingResults QuasiNewtonMethod::train()
         loss_index->assemble_layers_error_gradient(training_back_propagation,
                                                    optimization_data.gradient);
 
+        loss_index->add_regularization_gradient(optimization_data.gradient);
+
         results.training_error_history(epoch) = training_back_propagation.error();
 
         // Update parameters
