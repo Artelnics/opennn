@@ -45,7 +45,6 @@ bool Dataset::is_empty() const
     return data.size() == 0;
 }
 
-
 dimensions Dataset::get_input_dimensions() const
 {
     return input_dimensions;
@@ -2560,6 +2559,11 @@ void Dataset::set_data_constant(const type& new_value)
 void Dataset::set_data_random()
 {
     set_random(data);
+}
+
+void Dataset::set_data_integer(const Index& vocabulary_size)
+{
+    set_random_integers(data, 0, vocabulary_size - 1);
 }
 
 

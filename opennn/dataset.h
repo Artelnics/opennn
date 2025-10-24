@@ -420,6 +420,7 @@ public:
     // Data generation
 
     virtual void set_data_random();
+    virtual void set_data_integer(const Index& vocabulary_size); 
     void set_data_rosenbrock();
     void set_data_binary_classification();
     void set_data_ascending();

@@ -503,8 +503,8 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_pair,
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);
+            forward_propagation.layers[i],
+            is_training);
 }
 
 

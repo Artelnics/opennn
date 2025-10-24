@@ -47,7 +47,7 @@ if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" OFF)
+option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
