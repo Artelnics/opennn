@@ -281,7 +281,7 @@ public:
 
     void set_dimensions(const string&, const dimensions&);
 
-    // Data set
+    // Dataset
 
     void set_data(const Tensor<type, 2>&);
 

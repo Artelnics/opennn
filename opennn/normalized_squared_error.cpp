@@ -181,7 +181,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
                                                     ForwardPropagation&,
                                                     BackPropagation& back_propagation) const
 {
-    // Data set
+    // Dataset
 
     const Index total_samples_number = dataset->get_samples_number();
 

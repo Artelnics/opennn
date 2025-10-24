@@ -110,7 +110,7 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     input_dimensions = type(1) + rand() % 5;
     depth = type(1) + rand() % 5;
 
-    // Data set
+    // Dataset
 
     data.resize(batch_size, 2 * inputs_number);
 

@@ -124,7 +124,7 @@ void InputsSelection::check() const
     if(neural_network->is_empty())
         throw runtime_error("Neural network is empty.\n");
 
-    // Data set
+    // Dataset
 
     if(!loss_index->has_dataset())
         throw runtime_error("Pointer to data set is nullptr.\n");

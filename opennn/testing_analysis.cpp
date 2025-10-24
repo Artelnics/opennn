@@ -122,7 +122,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 {
     check();
 
-    // Data set
+    // Dataset
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
@@ -166,7 +166,7 @@ pair<Tensor<type,2>, Tensor<type,2>> TestingAnalysis::get_targets_and_outputs(co
 {
     check();
 
-    // Data set
+    // Dataset
 
     const Index samples_number = dataset->get_samples_number(sample_use);
 
@@ -251,7 +251,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
     check();
 
-    // Data set
+    // Dataset
 
     const Index testing_samples_number = dataset->get_samples_number("Testing");
 
@@ -504,7 +504,7 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const string& sample_use) cons
 
 Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const string& sample_use) const
 {
-    // Data set
+    // Dataset
 
     const Index training_samples_number = dataset->get_samples_number(sample_use);
 

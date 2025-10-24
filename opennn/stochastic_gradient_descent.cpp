@@ -198,7 +198,7 @@ TrainingResults StochasticGradientDescent::train()
 
     if(display) cout << "Training with stochastic gradient descent (SGD)...\n";
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -300,7 +300,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             optimization_data.iteration++;
 
-            // Data set
+            // Dataset
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
@@ -349,7 +349,7 @@ TrainingResults StochasticGradientDescent::train()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
@@ -559,7 +559,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     if (display) cout << "Training with stochastic gradient descent (SGD) CUDA...\n";
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -669,7 +669,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         {
             optimization_data.iteration++;
 
-            // Data set
+            // Dataset
 
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
@@ -716,7 +716,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             for (Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch_cuda->fill(selection_batches[iteration],
                                            input_variable_indices,

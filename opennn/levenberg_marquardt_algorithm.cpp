@@ -182,7 +182,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     TrainingResults results(maximum_epochs_number+1);
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 

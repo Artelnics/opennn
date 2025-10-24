@@ -786,13 +786,10 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
 
 Index Dataset::get_used_raw_variables_number() const
 {
-    Index used_raw_variables_number = 0;
-
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use != "None")
-            used_raw_variables_number++;
-
-    return used_raw_variables_number;
+    return count_if(raw_variables.begin(), raw_variables.end(),
+                    [](const RawVariable& var) {
+                          return var.use != "None";
+                    });
 }
 
 
@@ -819,14 +816,10 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
 
 Index Dataset::get_variables_number() const
 {
-    Index count = 0;
-
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
-        count += raw_variable.type == RawVariableType::Categorical
-                     ? raw_variable.get_categories_number()
-                     : 1;
-
-    return count;
+    return accumulate(raw_variables.begin(), raw_variables.end(), 0,
+                      [](Index sum, const RawVariable& var) {
+                      return sum + (var.type == RawVariableType::Categorical ? var.get_categories_number() : 1);
+                      });
 }
 
 

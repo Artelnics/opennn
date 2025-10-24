@@ -100,7 +100,7 @@ void ModelSelection::check() const
     if(neural_network->is_empty())
         throw runtime_error("Multilayer Dense2d is empty.\n");
 
-    // Data set
+    // Dataset
 
     const Dataset* dataset = loss_index->get_dataset();
 

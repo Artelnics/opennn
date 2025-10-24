@@ -266,7 +266,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     if(display) cout << "Training with quasi-Newton method..." << endl;;
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 

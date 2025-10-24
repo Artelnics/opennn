@@ -35,7 +35,7 @@ public:
 
     Index get_individuals_number() const;
 
-    Index get_raw_variables_number() const;
+    Index get_genes_number() const;
 
     const Index& get_minimum_inputs_number() const override;
     const Index& get_maximum_inputs_number() const override;
@@ -80,6 +80,8 @@ public:
     void perform_crossover();
 
     void perform_mutation();
+
+    Index get_selected_individuals_number() const;
 
     vector<Index> get_selected_individuals_indices() const;
 
@@ -135,6 +137,8 @@ private:
     Index elitism_size;
 
     InitializationMethod initialization_method;
+
+    random_device rd;
 };
 
 }

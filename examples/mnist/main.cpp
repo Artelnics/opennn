@@ -27,7 +27,7 @@ int main()
     {   
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
-        // Data set
+        // Dataset
 
         ImageDataset image_dataset("../data/mnist_data");
 

@@ -192,7 +192,7 @@ void NeuronsSelection::check() const
     if(neural_network->get_layers_number() == 1)
         throw runtime_error("Number of layers in neural network must be greater than 1.\n");
 
-    // Data set
+    // Dataset
 
     const Dataset* dataset = loss_index->get_dataset();
 
