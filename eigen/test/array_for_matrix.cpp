@@ -120,7 +120,7 @@ void comparisons(const MatrixType& m) {
   VERIFY((m1.array() == m1(r, c)).any());
   VERIFY(m1.cwiseEqual(m1(r, c)).any());
 
-  // test Select
+  // test select
   VERIFY_IS_APPROX((m1.array() < m2.array()).select(m1, m2), m1.cwiseMin(m2));
   VERIFY_IS_APPROX((m1.array() > m2.array()).select(m1, m2), m1.cwiseMax(m2));
   Scalar mid = m1.cwiseAbs().minCoeff() / Scalar(2) + m1.cwiseAbs().maxCoeff() / Scalar(2);

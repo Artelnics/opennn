@@ -129,30 +129,20 @@ EIGEN_STRONG_INLINE Packet4f preinterpret<Packet4f, Packet4i>(const Packet4i& a)
 }
 
 #ifdef EIGEN_VECTORIZE_VSX
-// VSX support varies between different compilers and even different
-// versions of the same compiler.  For gcc version >= 4.9.3, we can use
-// vec_cts to efficiently convert Packet2d to Packet2l.  Otherwise, use
-// a slow version that works with older compilers.
-// Update: apparently vec_cts/vec_ctf intrinsics for 64-bit doubles
-// are buggy, https://gcc.gnu.org/bugzilla/show_bug.cgi?id=70963
 template <>
 inline Packet2l pcast<Packet2d, Packet2l>(const Packet2d& x) {
-#if EIGEN_GNUC_STRICT_AT_LEAST(7, 1, 0)
-  return vec_cts(x, 0);  // TODO: check clang version.
-#else
-  double tmp[2];
-  memcpy(tmp, &x, sizeof(tmp));
-  Packet2l l = {static_cast<long long>(tmp[0]), static_cast<long long>(tmp[1])};
-  return l;
-#endif
+  EIGEN_ALIGN_MAX double dtmp[2];
+  pstore(dtmp, x);
+  EIGEN_ALIGN_MAX long long itmp[2] = {static_cast<long long>(dtmp[0]), static_cast<long long>(dtmp[1])};
+  return vec_xl(0, itmp);
 }
 
 template <>
 inline Packet2d pcast<Packet2l, Packet2d>(const Packet2l& x) {
-  unsigned long long tmp[2];
-  memcpy(tmp, &x, sizeof(tmp));
-  Packet2d d = {static_cast<double>(tmp[0]), static_cast<double>(tmp[1])};
-  return d;
+  EIGEN_ALIGN_MAX long long itmp[2];
+  vec_xst(x, 0, itmp);
+  EIGEN_ALIGN_MAX double dtmp[2] = {static_cast<double>(itmp[0]), static_cast<double>(itmp[1])};
+  return pload<Packet2d>(dtmp);
 }
 #endif
 

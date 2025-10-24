@@ -381,7 +381,7 @@ class UmfPackLU : public SparseSolverBase<UmfPackLU<MatrixType_> > {
     factorize_impl();
   }
 
-  /** Performs a symbolic decomposition on the sparcity of \a matrix.
+  /** Performs a symbolic decomposition on the sparsity of \a matrix.
    *
    * This function is particularly useful when solving for several problems having the same structure.
    *
@@ -425,7 +425,7 @@ class UmfPackLU : public SparseSolverBase<UmfPackLU<MatrixType_> > {
 
   /** Performs a numeric decomposition of \a matrix
    *
-   * The given matrix must has the same sparcity than the matrix on which the pattern anylysis has been performed.
+   * The given matrix must have the same sparsity than the matrix on which the pattern anylysis has been performed.
    *
    * \sa analyzePattern(), compute()
    */

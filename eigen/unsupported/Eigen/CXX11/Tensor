@@ -45,7 +45,7 @@
 #include <thread>
 
 #if defined(EIGEN_USE_THREADS) || defined(EIGEN_USE_SYCL)
-#include "ThreadPool"
+#include "../../../Eigen/ThreadPool"
 #endif
 
 #ifdef EIGEN_USE_GPU

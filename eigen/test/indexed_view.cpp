@@ -840,11 +840,21 @@ void check_tutorial_examples() {
   }
 }
 
+void check_aliasing() {
+  Eigen::Vector<float, 5> z = {0.0f, 1.1f, 2.2f, 3.3f, 4.4f};
+  std::vector<int> left_indices = {0, 1, 3, 4};
+  std::vector<int> right_indices = {1, 3, 4, 0};
+  z(left_indices) = z(right_indices);
+  Eigen::Vector<float, 5> expected = {1.1f, 3.3f, 2.2f, 4.4f, 0.0f};
+  VERIFY_IS_EQUAL(z, expected);
+}
+
 EIGEN_DECLARE_TEST(indexed_view) {
   for (int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(check_indexed_view());
   }
   CALL_SUBTEST_1(check_tutorial_examples());
+  CALL_SUBTEST_1(check_aliasing());
 
   // static checks of some internals:
   STATIC_CHECK((internal::is_valid_index_type<int>::value));

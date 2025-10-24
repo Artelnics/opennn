@@ -9,6 +9,10 @@
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_MERGE_REQUEST_LABELS =~ "/all-tests/"
+  tags:
+    - saas-linux-2xlarge-amd64
+  allow_failure:
+    exit_codes: 42
 
 ##### x86-64 ###################################################################
 .test:linux:x86-64:
@@ -16,10 +20,6 @@
   variables:
     EIGEN_CI_TARGET_ARCH: x86_64
     EIGEN_CI_CROSS_TARGET_TRIPLE: x86_64-linux-gnu
-  tags:
-    - eigen-runner
-    - linux
-    - x86-64
 
 # GCC-6 (minimum on Ubuntu 18.04)
 .test:linux:x86-64:gcc-6:default:
@@ -204,65 +204,7 @@ test:linux:x86-64:clang-12:avx512dq:unsupported:
   variables:
     EIGEN_CI_CTEST_LABEL: gpu
   tags:
-    - eigen-runner
-    - linux
-    - x86-64
-    - cuda
-
-# NVidia no longer provides docker images < CUDA 11.0.3.
-# # GCC-7, CUDA-9.2
-# test:linux:cuda-9.2:gcc-7:
-#   extends: .test:linux:cuda
-#   image: nvidia/cuda:9.2-devel-ubuntu18.04
-#   needs: [ build:linux:cuda-9.2:gcc-7 ]
-#   variables:
-#     EIGEN_CI_CXX_COMPILER: g++-7
-#     EIGEN_CI_CC_COMPILER: gcc-7
-
-# # Clang-10, CUDA-9.2
-# test:linux:cuda-9.2:clang-10:
-#   extends: .test:linux:cuda
-#   image: nvidia/cuda:9.2-devel-ubuntu18.04
-#   needs: [ build:linux:cuda-9.2:clang-10 ]
-#   variables:
-#     EIGEN_CI_CXX_COMPILER: clang++-10
-#     EIGEN_CI_CC_COMPILER: clang-10
-
-# # GCC-8, CUDA-10.2
-# test:linux:cuda-10.2:gcc-8:
-#   extends: .test:linux:cuda
-#   image: nvidia/cuda:10.2-devel-ubuntu18.04
-#   needs: [ build:linux:cuda-10.2:gcc-8 ]
-#   variables:
-#     EIGEN_CI_CXX_COMPILER: g++-8
-#     EIGEN_CI_CC_COMPILER: gcc-8
-
-# # Clang-10, CUDA-10.2
-# test:linux:cuda-10.2:clang-10:
-#   extends: .test:linux:cuda
-#   image: nvidia/cuda:10.2-devel-ubuntu18.04
-#   needs: [ build:linux:cuda-10.2:clang-10 ]
-#   variables:
-#     EIGEN_CI_CXX_COMPILER: clang++-10
-#     EIGEN_CI_CC_COMPILER: clang-10
-
-# GCC-10, CUDA-11.4
-test:linux:cuda-11.4:gcc-10:
-  extends: .test:linux:cuda
-  image: nvidia/cuda:11.4.3-devel-ubuntu20.04
-  needs: [ build:linux:cuda-11.4:gcc-10 ]
-  variables:
-    EIGEN_CI_CXX_COMPILER: g++-10
-    EIGEN_CI_CC_COMPILER: gcc-10
-
-# Clang-12, CUDA-11.4
-test:linux:cuda-11.4:clang-12:
-  extends: .test:linux:cuda
-  image: nvidia/cuda:11.4.3-devel-ubuntu20.04
-  needs: [ build:linux:cuda-11.4:clang-12 ]
-  variables:
-    EIGEN_CI_CXX_COMPILER: clang++-12
-    EIGEN_CI_CC_COMPILER: clang-12
+    - saas-linux-medium-amd64-gpu-standard
 
 # GCC-10, CUDA-12.2
 test:linux:cuda-12.2:gcc-10:
@@ -289,16 +231,13 @@ test:linux:cuda-12.2:clang-12:
   variables:
     EIGEN_CI_TARGET_ARCH: arm
     EIGEN_CI_CROSS_TARGET_TRIPLE: arm-linux-gnueabihf
-    # Enable cross-compiled arm binary to run on aarch64.
-    EIGEN_CI_BEFORE_SCRIPT: "ln -s /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ && export LD_LIBRARY_PATH=/usr/arm-linux-gnueabihf/lib/"
-  tags:
-    - saas-linux-large-arm64
+    EIGEN_CI_CTEST_ARGS: --timeout 2000
 
 .test:linux:arm:gcc-10:default:
   extends: .test:linux:arm
   needs: [ build:linux:cross:arm:gcc-10:default ]
   variables:
-    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf
+    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf qemu-user-static
 
 test:linux:arm:gcc-10:default:official:
   extends: .test:linux:arm:gcc-10:default
@@ -314,7 +253,7 @@ test:linux:arm:gcc-10:default:unsupported:
   extends: .test:linux:arm
   needs: [ build:linux:cross:arm:clang-12:default ]
   variables:
-    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf clang-12
+    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf clang-12 qemu-user-static
 
 test:linux:arm:clang-12:default:official:
   extends: .test:linux:arm:clang-12:default
@@ -372,60 +311,54 @@ test:linux:aarch64:clang-12:default:unsupported:
 
 .test:linux:ppc64le:
   extends: .test:linux
+  image: ubuntu:24.04
   variables:
     EIGEN_CI_TARGET_ARCH: ppc64le
     EIGEN_CI_CROSS_TARGET_TRIPLE: powerpc64le-linux-gnu
-  tags:
-    - eigen-runner
-    - linux
-    - ppc64le
+    EIGEN_CI_CTEST_ARGS: --timeout 2000
 
-.test:linux:ppc64le:gcc-10:default:
+.test:linux:ppc64le:gcc-14:default:
   extends: .test:linux:ppc64le
-  needs: [ build:linux:cross:ppc64le:gcc-10:default ]
+  needs: [ build:linux:cross:ppc64le:gcc-14:default ]
   variables:
-    EIGEN_CI_INSTALL: g++-10
+    EIGEN_CI_CROSS_INSTALL: g++-14-powerpc64le-linux-gnu qemu-user-static
 
-test:linux:ppc64le:gcc-10:default:official:
-  extends: .test:linux:ppc64le:gcc-10:default
+test:linux:ppc64le:gcc-14:default:official:
+  extends: .test:linux:ppc64le:gcc-14:default
   variables:
     EIGEN_CI_CTEST_LABEL: Official
 
-test:linux:ppc64le:gcc-10:default:unsupported:
-  extends: .test:linux:ppc64le:gcc-10:default
+test:linux:ppc64le:gcc-14:default:unsupported:
+  extends: .test:linux:ppc64le:gcc-14:default
   variables:
     EIGEN_CI_CTEST_LABEL: Unsupported
 
-.test:linux:ppc64le:clang-12:default:
+.test:linux:ppc64le:clang-16:default:
   extends: .test:linux:ppc64le
-  needs: [ build:linux:cross:ppc64le:clang-12:default ]
+  needs: [ build:linux:cross:ppc64le:clang-16:default ]
   variables:
-    EIGEN_CI_INSTALL: clang-12
+    EIGEN_CI_CROSS_INSTALL: g++-14-powerpc64le-linux-gnu clang-16 qemu-user-static
 
-test:linux:ppc64le:clang-12:default:official:
-  extends: .test:linux:ppc64le:clang-12:default
+test:linux:ppc64le:clang-16:default:official:
+  extends: .test:linux:ppc64le:clang-16:default
   variables:
     EIGEN_CI_CTEST_LABEL: Official
 
-test:linux:ppc64le:clang-12:default:unsupported:
-  extends: .test:linux:ppc64le:clang-12:default
+test:linux:ppc64le:clang-16:default:unsupported:
+  extends: .test:linux:ppc64le:clang-16:default
   variables:
     EIGEN_CI_CTEST_LABEL: Unsupported
 
-##### loongarch64 ###################################################################
+##### loongarch64 ##############################################################
+
 .test:linux:loongarch64:
   extends: .test:linux
   image: ubuntu:24.04
   variables:
     EIGEN_CI_TARGET_ARCH: loongarch64
     EIGEN_CI_CROSS_TARGET_TRIPLE: loongarch64-linux-gnu
-    # Install QEMU and set up the execution environment in the image
     EIGEN_CI_CROSS_INSTALL: g++-14-loongarch64-linux-gnu qemu-user-static
     EIGEN_CI_CTEST_ARGS: --timeout 2000
-  tags:
-    - eigen-runner
-    - linux
-    - cross-compiler
 
 # GCC-14 (Ubuntu 24)
 .test:linux:loongarch64:gcc-14:default:
@@ -452,6 +385,8 @@ test:linux:x86-64:gcc-10:default:smoketest:
     EIGEN_CI_CTEST_LABEL: smoketest
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - saas-linux-medium-amd64
 
 test:linux:x86-64:clang-12:default:smoketest:
   extends: .test:linux:x86-64:clang-12:default
@@ -460,3 +395,5 @@ test:linux:x86-64:clang-12:default:smoketest:
     EIGEN_CI_CTEST_LABEL: smoketest
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - saas-linux-medium-amd64

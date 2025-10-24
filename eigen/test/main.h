@@ -14,6 +14,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <limits>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -185,7 +186,7 @@ inline void on_temporary_creation(long int size, int) {
 
 namespace Eigen {
 static std::vector<std::string> g_test_stack;
-// level == 0 <=> abort if test fail
+// level == 0 <=> return 1 if test fail
 // level >= 1 <=> warning message to std::cerr if test fail
 static int g_test_level = 0;
 static int g_repeat = 1;
@@ -343,7 +344,7 @@ static std::vector<std::string> eigen_assert_list;
 #if !defined(EIGEN_TESTING_CONSTEXPR) && !defined(EIGEN_TESTING_PLAINOBJECT_CTOR)
 #define EIGEN_INTERNAL_DEBUGGING
 #endif
-#include <Eigen/QR>  // required for createRandomPIMatrixOfRank and generateRandomMatrixSvs
+#include <Eigen/Core>
 
 inline void verify_impl(bool condition, const char* testname, const char* file, int line,
                         const char* condition_as_string) {
@@ -355,7 +356,7 @@ inline void verify_impl(bool condition, const char* testname, const char* file, 
     const int test_stack_size = static_cast<int>(Eigen::g_test_stack.size());
     for (int i = test_stack_size - 1; i >= 0; --i) std::cerr << "  - " << Eigen::g_test_stack[i] << "\n";
     std::cerr << "\n";
-    if (Eigen::g_test_level == 0) abort();
+    if (Eigen::g_test_level == 0) exit(1);
   }
 }
 
@@ -857,6 +858,12 @@ inline void set_seed_from_string(const char* str) {
   g_has_set_seed = true;
 }
 
+inline void set_seed_from_time() {
+  using namespace std::chrono;
+  long long ns = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
+  g_seed = static_cast<decltype(g_seed)>(ns);
+}
+
 int main(int argc, char* argv[]) {
   g_has_set_repeat = false;
   g_has_set_seed = false;
@@ -895,7 +902,7 @@ int main(int argc, char* argv[]) {
   char* env_EIGEN_SEED = getenv("EIGEN_SEED");
   if (!g_has_set_seed && env_EIGEN_SEED) set_seed_from_string(env_EIGEN_SEED);
 
-  if (!g_has_set_seed) g_seed = (unsigned int)time(NULL);
+  if (!g_has_set_seed) set_seed_from_time();
   if (!g_has_set_repeat) g_repeat = DEFAULT_REPEAT;
 
   std::cout << "Initializing random number generator with seed " << g_seed << std::endl;
@@ -935,3 +942,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 #include "gpu_test_helper.h"
+
+#ifndef EIGEN_TEST_MAX_SIZE
+#define EIGEN_TEST_MAX_SIZE 320
+#endif

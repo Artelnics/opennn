@@ -57,6 +57,10 @@ void product_selfadjoint(const MatrixType& m) {
         v1.tail(rows - 1) * v2.head(cols - 1).adjoint() + v2.head(cols - 1) * v1.tail(rows - 1).adjoint();
     VERIFY_IS_APPROX(m2, m3.template triangularView<Lower>().toDenseMatrix());
   }
+
+  // matrix-vector
+  m2 = m1.template triangularView<Lower>();
+  VERIFY_IS_APPROX(m1 * m4, m2.template selfadjointView<Lower>() * m4);
 }
 
 EIGEN_DECLARE_TEST(product_selfadjoint) {

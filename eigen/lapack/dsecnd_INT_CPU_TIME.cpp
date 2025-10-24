@@ -15,6 +15,8 @@
 #include <ctime>
 #endif
 
+#include "lapack.h"
+
 extern "C" {
 double dsecnd_();
 }

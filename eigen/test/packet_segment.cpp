@@ -142,6 +142,21 @@ struct packet_segment_test_driver<Scalar, 1> {
   static void run() {}
 };
 
+template <bool Enable = internal::packet_traits<half>::Vectorizable>
+void testReverseEdgeCase() {
+  // this reversed cast uses a non-zero offset for ploadSegment
+  Index size = 16 * internal::packet_traits<half>::size + 1;
+  VectorX<half> v1(size);
+  VectorX<float> v2(size), v3(size);
+  v1.setRandom();
+  v2 = v1.reverse().cast<float>();
+  v3 = v1.cast<float>().reverse();
+  VERIFY_IS_EQUAL(v2, v3);
+}
+
+template <>
+void testReverseEdgeCase<false>() {}
+
 template <typename Scalar>
 void test_packet_segment() {
   packet_segment_test_driver<Scalar, internal::packet_traits<Scalar>::size>::run();
@@ -164,5 +179,6 @@ EIGEN_DECLARE_TEST(packet_segment) {
     test_packet_segment<double>();
     test_packet_segment<std::complex<float>>();
     test_packet_segment<std::complex<double>>();
+    testReverseEdgeCase();
   }
 }

@@ -22,8 +22,10 @@ add_custom_target(lapack)
 include_directories(../blas)
 
 set(EigenLapack_SRCS
-  dsecnd_INT_CPU_TIME.cpp second_INT_CPU_TIME.cpp single.cpp double.cpp complex_single.cpp complex_double.cpp ../blas/xerbla.cpp
+  dsecnd_INT_CPU_TIME.cpp second_INT_CPU_TIME.cpp single.cpp double.cpp complex_single.cpp complex_double.cpp
 )
+
+set(EIGEN_LAPACK_DEF "eigen_lapack_cpp.def")
 
 if(EIGEN_Fortran_COMPILER_WORKS)
 
@@ -39,6 +41,8 @@ set(EigenLapack_SRCS  ${EigenLapack_SRCS}
   clacgv.f  zlacgv.f
   slamch.f  dlamch.f
 )
+
+set(EIGEN_LAPACK_DEF "eigen_lapack.def")
 
 option(EIGEN_ENABLE_LAPACK_TESTS OFF "Enable the Lapack unit tests")
 
@@ -97,13 +101,17 @@ endif()
 
 set(EIGEN_LAPACK_TARGETS "")
 
-add_library(eigen_lapack_static ${EigenLapack_SRCS} ${ReferenceLapack_SRCS})
+add_library(eigen_lapack_static STATIC ${EigenLapack_SRCS} ${ReferenceLapack_SRCS})
+target_link_libraries(eigen_lapack_static  eigen_blas_static)
 list(APPEND EIGEN_LAPACK_TARGETS eigen_lapack_static)
 
 if (EIGEN_BUILD_SHARED_LIBS)
-  add_library(eigen_lapack SHARED ${EigenLapack_SRCS})
-  list(APPEND EIGEN_LAPACK_TARGETS eigen_lapack)
+  add_library(eigen_lapack SHARED ${EigenLapack_SRCS} ${EIGEN_LAPACK_DEF})
+  # Build LAPACK but link BLAS.
+  target_compile_definitions(eigen_lapack PUBLIC "EIGEN_BLAS_LINK_DLL" "EIGEN_LAPACK_BUILD_DLL")
   target_link_libraries(eigen_lapack  eigen_blas)
+  set_target_properties(eigen_lapack PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  list(APPEND EIGEN_LAPACK_TARGETS eigen_lapack)
 endif()
 
 foreach(target IN LISTS EIGEN_LAPACK_TARGETS)

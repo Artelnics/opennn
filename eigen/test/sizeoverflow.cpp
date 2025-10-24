@@ -9,6 +9,7 @@
 
 #include "main.h"
 
+#ifdef EIGEN_EXCEPTIONS
 #define VERIFY_THROWS_BADALLOC(a)                         \
   {                                                       \
     bool threw = false;                                   \
@@ -19,6 +20,10 @@
     }                                                     \
     VERIFY(threw && "should have thrown bad_alloc: " #a); \
   }
+#else
+// No way to catch a bad alloc - program terminates.
+#define VERIFY_THROWS_BADALLOC(a)
+#endif
 
 template <typename MatrixType>
 void triggerMatrixBadAlloc(Index rows, Index cols) {

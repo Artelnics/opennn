@@ -2,9 +2,49 @@
 
 ## [Unreleased]
 
-## [3.4.0]
+## [5.0.0] - 2025-09-30
 
-Released on August 18, 2021
+Eigen 5.0 provides many new features, performance enhancements, and bugfixes throughout Eigen’s core template expression infrastructure and linear algebra facilities.  The full set of changes and related issues are too large to list here, but can be accessed via the release milestone %"5.0".
+
+This is the last major release to support the C++14 language standard. The master branch and subsequent releases will require support for C++17.
+
+### Versioning
+
+This release marks a transition to [Semantic Versioning](https://semver.org/). Previously, Eigen used a WORLD.MAJOR.MINOR scheme. From now on, version numbers will follow the MAJOR.MINOR.PATCH format, indicating breaking changes, new features, and bug fixes, respectively. The WORLD version will remain 3 for this and subsequent releases for posterity. See the table below:
+```
+╔═════════╦═════╦═════╗
+║ Release ║ 3.4 ║ 5.0 ║
+╠═════════╬═════╬═════╣
+║ WORLD   ║  3  ║  3  ║
+║ MAJOR   ║  4  ║  5  ║
+║ MINOR   ║  0  ║  0  ║
+║ PATCH   ║  -  ║  0  ║
+╚═════════╩═════╩═════╝
+```
+
+### Breaking changes
+
+* Eigen 5.X.X requires C++14.  When building with GNU-compatible compilers, set `-std=c++14` or later.  As part of this change, some macros such as `EIGEN_HAS_CXX11` have also been removed.
+* The CMake build system has been modernized and older properties have been removed - projects relying on CMake may need to update their configurations [!485].
+* All LGPL-licensed code has been removed (i.e. Constrained Conjugate Gradient) [!1197].  These were "unsupported" anyways, and weren't widely used.
+* Due to name conflicts with other projects, `Eigen::all` and `Eigen::last` have been moved to `Eigen::placeholders::all` and `Eigen::placeholders::last` [!649].
+* Any direct inclusion of an internal header (i.e. under a `../src/..` path) will result in a compilation error [!631].
+* Runtime SVD options for computing thin/full U/V have been deprecated: use compile-time options instead [!826].
+* Scalar (i.e. non-vectorized) comparisons now return masks with values of `Scalar(1)` rather than having all bits set to avoid undefined behavior [!1862].
+* BLAS return types have been changed for Eigen BLAS to `void` instead of `int` for compatibility with other BLAS implementations [!1497].
+* `Eigen::aligned_allocator` no longer inherits from `std::allocator` due to a change in the standard and the use of `allocate_at_least` [!1795].
+* Euler angles are now returned in a more canonical form, potentially resulting in a change of behavior [!1301, !1314].
+* Eigen's random number generation has changed, resulting in a change of behavior.  Please do not rely on specific random numbers from Eigen - these were never guaranteed to be consistent across Eigen versions, nor are they generally consistent across platforms [!1437].
+
+## [3.4.1] - 2025-09-30
+
+Many bug fixes have been backported from the main branch.
+
+A list of new issues addressed can be found via the [3.4.1](https://gitlab.com/libeigen/eigen/-/issues?state=all&label_name%5B%5D=3.4.1) label on GitLab.
+
+Check the [git commit history](https://gitlab.com/libeigen/eigen/-/commits/3.4.1) for the full list of changes.  
+
+## [3.4.0] - 2021-08-18
 
 **Notice:** 3.4.x will be the last major release series of Eigen that will support c++03.
 
@@ -160,9 +200,7 @@ Released on August 18, 2021
 
 See the [announcement](https://www.eigen.tuxfamily.org/index.php?title=3.4) for more details.
 
-## [3.3.9]
-
-Released on December 4, 2020.
+## [3.3.9] - 2020-12-04
 
 Changes since 3.3.8:
 
@@ -175,9 +213,7 @@ Changes since 3.3.8:
 * #2012: Define coeff-wise binary array operators for base class to fix an issue when using Eigen with C++20
 * Commit bfdd4a990: Fix an issue with Intel® MKL PARDISO support.
 
-## [3.3.8]
-
-Released on October 5, 2020.
+## [3.3.8] - 2020-10-05
 
 Changes since 3.3.7:
 
@@ -243,9 +279,7 @@ Changes since 3.3.7:
   * Commit 6c4d57dc9: Fix a gcc7 warning about bool * bool in abs2 default implementation.
   * Commit 89a86ed42: Fix a warning in SparseSelfAdjointView about a branch statement always evaluation to false.
 
-## [3.3.8-rc1]
-
-Released on September 14, 2020.
+## [3.3.8-rc1] - 2020-09-14
 
 Changes since 3.3.7:
 
@@ -308,137 +342,129 @@ Changes since 3.3.7:
   * Commit 89a86ed42: Fix a warning in SparseSelfAdjointView about a branch statement always evaluation to false.
   * Commit dd6de618: Fix a bug with half-precision floats on GPUs.
 
-## [3.3.7]
-
-Released on December 11, 2018.
+## [3.3.7] - 2018-12-11
 
 Changes since 3.3.6:
 
 * #1643: Fix compilation with GCC>=6 and compiler optimization turned off.
 
-## [3.3.6]
-
-Released on December 10, 2018.
+## [3.3.6] - 2018-12-10
 
 Changes since 3.3.5:
 
 * #1617: Fix triangular solve crashing for empty matrix.
 * #785: Make dense Cholesky decomposition work for empty matrices.
 * #1634: Remove double copy in move-ctor of non movable Matrix/Array.
-* Changeset 588e1eb34eff: Workaround weird MSVC bug.
+* Changeset a2d6c106a450: Workaround weird MSVC bug.
 * #1637 Workaround performance regression in matrix products with gcc>=6 and clang>=6.0.
-* Changeset bf0f100339c1: Fix some implicit 0 to Scalar conversions.
+* Changeset 9ccbaaf3dd4c: Fix some implicit 0 to Scalar conversions.
 * #1605: Workaround ABI issue with vector types (aka `__m128`) versus scalar types (aka float).
-* Changeset d1421c479baa: Fix for gcc<4.6 regarding usage of #pragma GCC diagnostic push/pop.
-* Changeset c20b83b9d736: Fix conjugate-gradient for right-hand-sides with a very small magnitude.
-* Changeset 281a877a3bf7: Fix product of empty arrays (returned 0 instead of 1).
+* Changeset 148e579cc004: Fix for gcc<4.6 regarding usage of #pragma GCC diagnostic push/pop.
+* Changeset bc000deaae45: Fix conjugate-gradient for right-hand-sides with a very small magnitude.
+* Changeset 5be00b0e2964: Fix product of empty arrays (returned 0 instead of 1).
 * #1590: Fix collision with some system headers defining the macro FP32.
 * #1584: Fix possible undefined behavior in random generation.
-* Changeset d632d18db8ca: Fix fallback to BLAS for rankUpdate.
+* Changeset e4127b0f7d3b: Fix fallback to BLAS for rankUpdate.
 * Fixes for NVCC 9.
 * Fix matrix-market IO.
 * Various fixes in the doc.
 * Various minor warning fixes/workarounds.
 
-## [3.3.5]
-
-Released on July 23, 2018.
+## [3.3.5] - 2018-07-23
 
 Changes since 3.3.4:
 
 * General bug fixes:
-  * Fix GeneralizedEigenSolver when requesting for eigenvalues only (0d15855abb30)
-  * #1560 fix product with a 1x1 diagonal matrix (90d7654f4a59)
+  * Fix GeneralizedEigenSolver when requesting for eigenvalues only (ab3fa2e12308)
+  * #1560 fix product with a 1x1 diagonal matrix (483beabab9bf)
   * #1543: fix linear indexing in generic block evaluation
-  * Fix compilation of product with inverse transpositions (e.g., `mat * Transpositions().inverse()`) (14a13748d761)
-  * #1509: fix `computeInverseWithCheck` for complexes (8be258ef0b6d)
-  * #1521: avoid signalling `NaN` in hypot and make it std::complex<> friendly (a9c06b854991).
-  * #1517: fix triangular product with unit diagonal and nested scaling factor: `(s*A).triangularView<UpperUnit>()*B` (a546d43bdd4f)
-  * Fix compilation of stableNorm for some odd expressions as input (499e982b9281)
-  * #1485: fix linking issue of non template functions (ae28c2aaeeda)
-  * Fix overflow issues in BDCSVD (92060f82e1de)
-  * #1468: add missing `std::` to `memcpy` (4565282592ae)
-  * #1453: fix Map with non-default inner-stride but no outer-stride (af00212cf3a4)
-  * Fix mixing types in sparse matrix products (7e5fcd0008bd)
-  * #1544: Generate correct Q matrix in complex case (c0c410b508a1)
-  * #1461: fix compilation of `Map<const Quaternion>::x()` (69652a06967d)
+  * Fix compilation of product with inverse transpositions (e.g., `mat * Transpositions().inverse()`) (170914dbbcc3)
+  * #1509: fix `computeInverseWithCheck` for complexes (a2a2c3c86507)
+  * #1521: avoid signalling `NaN` in hypot and make it std::complex<> friendly (b18e2d422b09).
+  * #1517: fix triangular product with unit diagonal and nested scaling factor: `(s*A).triangularView<UpperUnit>()*B` (c24844195d90)
+  * Fix compilation of stableNorm for some odd expressions as input (33b972d8b384)
+  * #1485: fix linking issue of non template functions (d18877f18d8e)
+  * Fix overflow issues in BDCSVD (7a875acfb05f)
+  * #1468: add missing `std::` to `memcpy` (32a6db0f8cd5)
+  * #1453: fix Map with non-default inner-stride but no outer-stride (1ca9072b51d8)
+  * Fix mixing types in sparse matrix products (4ead16cdd6c8)
+  * #1544: Generate correct Q matrix in complex case (39125654ce9e)
+  * #1461: fix compilation of `Map<const Quaternion>::x()` (9a266e5118cf)
 
 * Backends:
-  * Fix MKL backend for symmetric eigenvalues on row-major matrices (4726d6a24f69)
-  * #1527: fix support for MKL's VML (972424860545)
-  * Fix incorrect ldvt in LAPACKE call from JacobiSVD (88c4604601b9)
-  * Fix support for MKL's BLAS when using `MKL_DIRECT_CALL` (205731b87e19, b88c70c6ced7, 46e2367262e1)
-  * Use MKL's lapacke.h header when using MKL (19bc9df6b726)
+  * Fix MKL backend for symmetric eigenvalues on row-major matrices (eab7afe25273)
+  * #1527: fix support for MKL's VML (86a939451c75)
+  * Fix incorrect ldvt in LAPACKE call from JacobiSVD (bfc66e8b9a3b)
+  * Fix support for MKL's BLAS when using `MKL_DIRECT_CALL` (9df7f3d8e9cd, 3108fbf76708, 292dea7922e7)
+  * Use MKL's lapacke.h header when using MKL (070b5958e0ae)
 
 * Diagnostics:
-  * #1516: add assertion for out-of-range diagonal index in `MatrixBase::diagonal(i)` (783d38b3c78c)
-  * Add static assertion for fixed sizes `Ref<>` (e1203d5ceb8e)
-  * Add static assertion on selfadjoint-view's UpLo parameter. (b84db94c677e, 0ffe8a819801)
-  * #1479: fix failure detection in LDLT (67719139abc3)
+  * #1516: add assertion for out-of-range diagonal index in `MatrixBase::diagonal(i)` (273738ba6f6e)
+  * Add static assertion for fixed sizes `Ref<>` (1724dae8b834)
+  * Add static assertion on selfadjoint-view's UpLo parameter. (74daf12e525e, 190b46dd1f05)
+  * #1479: fix failure detection in LDLT (c20043c8fd64)
 
 * Compiler support:
   * #1555: compilation fix with XLC
-  * Workaround MSVC 2013 ambiguous calls (1c7b59b0b5f4)
-  * Adds missing `EIGEN_STRONG_INLINE` to help MSVC properly inlining small vector calculations (1ba3f10b91f2)
-  * Several minor warning fixes: 3c87fc0f1042, ad6bcf0e8efc, "used uninitialized" (20efc44c5500), Wint-in-bool-context (131da2cbc695, b4f969795d1b)
-  * #1428: make NEON vectorization compilable by MSVC. (* 3d1b3dbe5927, 4e1b7350182a)
-  * Fix compilation and SSE support with PGI compiler (faabf000855d 90d33b09040f)
-  * #1555: compilation fix with XLC (23eb37691f14)
-  * #1520: workaround some `-Wfloat-equal` warnings by calling `std::equal_to` (7d9a9456ed7c)
-  * Make the TensorStorage class compile with clang 3.9 (eff7001e1f0a)
-  * Misc: some old compiler fixes (493691b29be1)
-  * Fix MSVC warning C4290: C++ exception specification ignored except to indicate a function is not `__declspec(nothrow)` (524918622506)
+  * Workaround MSVC 2013 ambiguous calls (c92536d92647)
+  * Adds missing `EIGEN_STRONG_INLINE` to help MSVC properly inlining small vector calculations (01fb6217335b)
+  * Several minor warning fixes: f90d136c8445, 542fb03968c2, "used uninitialized" (7634a44bfe11), Wint-in-bool-context (3d1795da28c2, d1c2d6683c55)
+  * #1428: make NEON vectorization compilable by MSVC. (* 1e2d2693b911, 927d023ceaab)
+  * Fix compilation and SSE support with PGI compiler (bb87f618bfc3 450c5e5d2771)
+  * #1555: compilation fix with XLC (20ca86888e70)
+  * #1520: workaround some `-Wfloat-equal` warnings by calling `std::equal_to` (1c4fdad7bd6f)
+  * Make the TensorStorage class compile with clang 3.9 (a7144f8d6a94)
+  * Misc: some old compiler fixes (b60cbbef3791)
+  * Fix MSVC warning C4290: C++ exception specification ignored except to indicate a function is not `__declspec(nothrow)` (3df78d5afc1e)
 
 * Architecture support:
-  * Several AVX512 fixes for `log`, `sqrt`, `rsqrt`, non `AVX512ER` CPUs, `apply_rotation_in_the_plane` b64275e912ba cab3d626a59e 7ce234652ab9, d89b9a754371.
-  * AltiVec fixes: 9450038e380d
-  * NEON fixes: const-cast (e8a69835ccda), compilation of Jacobi rotations (c06cfd545b15,#1436).
-  * Changeset d0658cc9d4a2: Define `pcast<>` for SSE types even when AVX is enabled. (otherwise float are silently reinterpreted as int instead of being converted)
-  * #1494: makes `pmin`/`pmax` behave on Altivec/VSX as on x86 regarding NaNs (d0af83f82b19)
+  * Several AVX512 fixes for `log`, `sqrt`, `rsqrt`, non `AVX512ER` CPUs, `apply_rotation_in_the_plane` 5c59564bfb92 1939c971a3db c2f9e6cb37e5, 609e425166f6.
+  * AltiVec fixes: 1641a6cdd5a4
+  * NEON fixes: const-cast (877a2b64c9ba), compilation of Jacobi rotations (bc837b797559,#1436).
+  * Changeset 971b32440c74: Define `pcast<>` for SSE types even when AVX is enabled. (otherwise float are silently reinterpreted as int instead of being converted)
+  * #1494: makes `pmin`/`pmax` behave on Altivec/VSX as on x86 regarding NaNs (892c0a79ce93)
 
 * Documentation:
   * Update manual pages regarding BDCSVD (#1538)
-  * Add aliasing in common pitfaffs (2a5a8408fdc5)
-  * Update `aligned_allocator` (21e03aef9f2b)
-  * #1456: add perf recommendation for LLT and storage format (c8c154ebf130,  9aef1e23dbe0)
-  * #1455: Cholesky module depends on Jacobi for rank-updates (2e6e26b851a8)
-  * #1458: fix documentation of LLT and LDLT `info()` method (2a4cf4f473dd)
-  * Warn about constness in `LLT::solveInPlace` (518f97b69bdf)
-  * Fix lazyness of `operator*` with CUDA (c4dbb556bd36)
-  * #336: improve doc for `PlainObjectBase::Map` (13dc446545fe)
+  * Add aliasing in common pitfaffs (656712d48f6b)
+  * Update `aligned_allocator` (6fc0f2be70a4)
+  * #1456: add perf recommendation for LLT and storage format (55fbf4fedd04,  9fd138e2b333)
+  * #1455: Cholesky module depends on Jacobi for rank-updates (b87875abf8dc)
+  * #1458: fix documentation of LLT and LDLT `info()` method (ac2c97edff07)
+  * Warn about constness in `LLT::solveInPlace` (51e1aa153957)
+  * Fix lazyness of `operator*` with CUDA (fa77d713359d)
+  * #336: improve doc for `PlainObjectBase::Map` (18868228adae)
 
 * Other general improvements:
-  * Enable linear indexing in generic block evaluation (31537598bf83, 5967bc3c2cdb, #1543).
-  * Fix packet and alignment propagation logic of `Block<Xpr>` expressions. In particular, `(A+B).col(j)` now preserve vectorisation. (b323cc9c2c7f)
-  * Several fixes regarding custom scalar type support: hypot (f8d6c791791d), boost-multiprec (acb8ef9b2478), literal casts (6bbd97f17534, 39f65d65894f),
-  * LLT: avoid making a copy when decomposing in place (2f7e28920f4e), const the arg to `solveInPlace()` to allow passing `.transpose()`, `.block()`, etc. (c31c0090e998).
-  * Add possibility to overwrite `EIGEN_STRONG_INLINE` (7094bbdf3f4d)
-  * #1528: use `numeric_limits::min()` instead of `1/highest()` that might underflow (dd823c64ade7)
-  * #1532: disable `stl::*_negate` in C++17 (they are deprecated) (88e9452099d5)
-  * Add C++11 `max_digits10` for half (faf74dde8ed1)
-  * Make sparse QR result sizes consistent with dense QR (4638bc4d0f96)
+  * Enable linear indexing in generic block evaluation (15752027ec2f, 80af7d6a47c1, #1543).
+  * Fix packet and alignment propagation logic of `Block<Xpr>` expressions. In particular, `(A+B).col(j)` now preserve vectorisation. (9c9e90f6db7e)
+  * Several fixes regarding custom scalar type support: hypot (385d8b5e42c2), boost-multiprec (5f71579a2d3f), literal casts (e6577f3c3049, fbb0c510c52f),
+  * LLT: avoid making a copy when decomposing in place (9d03711df8bc), const the arg to `solveInPlace()` to allow passing `.transpose()`, `.block()`, etc. (0137ed4f19b6).
+  * Add possibility to overwrite `EIGEN_STRONG_INLINE` (6d6e5fcd4356)
+  * #1528: use `numeric_limits::min()` instead of `1/highest()` that might underflow (9ff315024335)
+  * #1532: disable `stl::*_negate` in C++17 (they are deprecated) (3fb42ff7b278)
+  * Add C++11 `max_digits10` for half (70ac6c923001)
+  * Make sparse QR result sizes consistent with dense QR (2136cfa17e28)
 
 * Unsupported/unit-tests/cmake/unvisible internals/etc.
-  * #1484: restore deleted line for 128 bits long doubles, and improve dispatching logic. (dffc0f957f19)
-  * #1462: remove all occurences of the deprecated `__CUDACC_VER__` macro by introducing `EIGEN_CUDACC_VER` (a201b8438d36)
-  * Changeset 2722aa8eb93f: Fix oversharding bug in parallelFor.
-  * Changeset ea1db80eab46: commit 45e9c9996da790b55ed9c4b0dfeae49492ac5c46 (HEAD -> memory_fix)
-  * Changeset 350957be012c: Fix int versus Index
-  * Changeset 424038431015: fix linking issue
-  * Changeset 3f938790b7e0: Fix short vs long
-  * Changeset ba14974d054a: Fix cmake scripts with no fortran compiler
-  * Changeset 2ac088501976: add cmake-option to enable/disable creation of tests
-  * Changeset 56996c54158b: Use col method for column-major matrix
-  * Changeset 762373ca9793: #1449: fix `redux_3` unit test
-  * Changeset eda96fd2fa30: Fix uninitialized output argument.
-  * Changeset 75a12dff8ca4: Handle min/max/inf/etc issue in `cuda_fp16.h` directly in `test/main.h`
-  * Changeset 568614bf79b8: Add tests for sparseQR results (value and size) covering bugs 1522 and 1544
-  * Changeset 12c9ece47d14: `SelfAdjointView<...,Mode>` causes a static assert since commit c73a77e47db8
-  * Changeset 899fd2ef704f: weird compilation issue in `mapped_matrix.cpp`
+  * #1484: restore deleted line for 128 bits long doubles, and improve dispatching logic. (c8e663fe87ec)
+  * #1462: remove all occurences of the deprecated `__CUDACC_VER__` macro by introducing `EIGEN_CUDACC_VER` (e7c065ec717b)
+  * Changeset fea50d40ea79: Fix oversharding bug in parallelFor.
+  * Changeset 866d222d6065: commit 45e9c9996da790b55ed9c4b0dfeae49492ac5c46 (HEAD -> memory_fix)
+  * Changeset 48048172e5aa: Fix int versus Index
+  * Changeset 906a98fe39c3: fix linking issue
+  * Changeset 352489edbe36: Fix short vs long
+  * Changeset 81e94eea024c: Fix cmake scripts with no fortran compiler
+  * Changeset 8bd392ca0e3f: add cmake-option to enable/disable creation of tests
+  * Changeset 02c0cef97fb5: Use col method for column-major matrix
+  * Changeset a8d2459f8e1f: #1449: fix `redux_3` unit test
+  * Changeset e90a14609a56: Fix uninitialized output argument.
+  * Changeset 5d40715db6a7: Handle min/max/inf/etc issue in `cuda_fp16.h` directly in `test/main.h`
+  * Changeset 2f9de522457b: Add tests for sparseQR results (value and size) covering bugs 1522 and 1544
+  * Changeset 4662c610c13c: `SelfAdjointView<...,Mode>` causes a static assert since commit d820ab9edc0b
+  * Changeset 96134409fc91: weird compilation issue in `mapped_matrix.cpp`
 
-## [3.3.4]
-
-Released on June 15, 2017.
+## [3.3.4] - 2017-06-15
 
 Changes since 3.3.3:
 
@@ -469,9 +495,7 @@ Changes since 3.3.3:
   * Add specializations of `std::numeric_limits` for `Eigen::half` and and `AutoDiffScalar`
   * Fix compilation of streaming nested Array, i.e., `std::cout << Array<Array<...>>`
 
-## [3.3.3]
-
-Released on February 21, 2017.
+## [3.3.3] - 2017-02-21
 
 Changes since 3.3.2:
 
@@ -502,9 +526,7 @@ Changes since 3.3.2:
   * Fix usage of `size_t` instead of Index in sefl-adjoint `matrix * vector`
   * #1378: fix doc (`DiagonalIndex` vs `Diagonal`).
 
-## [3.3.2]
-
-Released on January 18, 2017.
+## [3.3.2] - 2017-01-18
 
 Changes since 3.3.1:
 
@@ -535,9 +557,7 @@ Changes since 3.3.1:
   * Fix some warnings with ICC, Power8, etc.
   * Fix compilation with MSVC 2017
 
-## [3.3.1]
-
-Released on December 06, 2016.
+## [3.3.1] - 2016-12-06
 
 Changes since 3.3.0:
 
@@ -558,9 +578,7 @@ Changes since 3.3.0:
 * Bugs #1346,#1347: make Eigen's installation relocatable.
 * Fix some harmless compilation warnings.
 
-## [3.3]
-
-Released on November 10, 2016
+## [3.3] - 2016-11-10
 
 For a comprehensive list of change since the 3.2 series, see this [page](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
@@ -569,9 +587,7 @@ Main changes since 3.3-rc2:
 * Fix regression in printing sparse expressions.
 * Fix sparse solvers when using a SparseVector as the result and/or right-hand-side.
 
-## [3.3-rc2]
-
-Released on November 04, 2016
+## [3.3-rc2] - 2016-11-04
 
 For a comprehensive list of change since the 3.2 series, see this [page](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
@@ -600,9 +616,7 @@ Main changes since 3.3-rc1:
   * SuiteSparse, fix SPQR for rectangular matrices
   * Fix compilation of `qr.inverse()` for column and full pivoting variants
 
-## [3.2.10]
-
-Released on October 04, 2016
+## [3.2.10] - 2016-10-04
 
 Changes since 3.2.9:
 
@@ -621,9 +635,7 @@ Main fixes and improvements:
 * #1249:  disable the use of `__builtin_prefetch` for compilers other than GCC, clang, and ICC.
 * #1265: fix doc of QR decompositions
 
-## [3.3-rc1]
-
-Released on September 22, 2016
+## [3.3-rc1] - 2016-09-22
 
 For a comprehensive list of change since the 3.2 series, see this [page](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
@@ -662,9 +674,7 @@ Main changes since 3.3-beta2:
   * Fix vectorization logic for coeff-based product for some corner cases
   * Bugs #1260, #1261, #1264: several fixes in AutoDiffScalar.
 
-## [3.3-beta2]
-
-Released on July 26, 2016
+## [3.3-beta2] - 2016-08-26
 
 For a comprehensive list of change since the 3.2 series, see this [page](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
@@ -687,7 +697,7 @@ Main changes since 3.3-beta1:
   * #779: in `Map`, allows non aligned buffers for buffers smaller than the requested alignment.
   * Add a complete orthogonal decomposition class: [CompleteOrthogonalDecomposition](http://eigen.tuxfamily.org/dox-devel/classEigen_1_1CompleteOrthogonalDecomposition.html)
   * Improve robustness of JacoviSVD with complexes (underflow, noise amplification in complex to real conversion, compare off-diagonal entries to the current biggest diagonal entry instead of the global biggest, null inputs).
-  * Change Eigen's ColPivHouseholderQR to use a numerically stable norm downdate formula (changeset 9da6c621d055)
+  * Change Eigen's ColPivHouseholderQR to use a numerically stable norm downdate formula (changeset acce4dd0500f)
   * #1214: consider denormals as zero in D&C SVD. This also workaround infinite binary search when compiling with ICC's unsafe optimizations.
   * Add log1p for arrays.
   * #1193: now `lpNorm<Infinity>` supports empty inputs.
@@ -710,7 +720,7 @@ Main changes since 3.3-beta1:
 * Performance improvements:
   *  #256: enable vectorization with unaligned loads/stores. This concerns all architectures and all sizes. This new behavior can be disabled by defining `EIGEN_UNALIGNED_VECTORIZE=0`
   * Add support for s390x(zEC13) ZVECTOR instruction set.
-  * Optimize mixing of real with complex matrices by avoiding a conversion from real to complex when the real types do not match exactly. (see bccae23d7018)
+  * Optimize mixing of real with complex matrices by avoiding a conversion from real to complex when the real types do not match exactly. (see 76faf4a9657e)
   * Speedup square roots in performance critical methods such as norm, normalize(d).
   * #1154: use dynamic scheduling for spmv products.
   * #667,  #1181: improve perf with MSVC and ICC through `FORCE_INLINE`
@@ -800,9 +810,7 @@ Main changes since 3.3-beta1:
   *  #1249: fix compilation with compilers that do not support `__builtin_prefetch` .
   *  #1250: fix `pow()` for `AutoDiffScalar` with custom nested scalar type.
 
-## [3.2.9]
-
-Released on July 18, 2016
+## [3.2.9] - 2016-08-18
 
 Changes since 3.2.8:
 
@@ -836,9 +844,7 @@ Changes since 3.2.8:
   * #1221: shutdown some GCC6's warnings.
   * #1175: fix index type conversion warnings in sparse to dense conversion.
 
-## [3.2.8]
-
-Released on February 16, 2016
+## [3.2.8] - 2016-02-16
 
 Changes since 3.2.7:
 
@@ -869,9 +875,7 @@ Changes since 3.2.7:
   * Some warning fixes.
   * Several other documentation clarifications.
 
-## [3.3-beta1]
-
-Released on December 16, 2015
+## [3.3-beta1] - 2015-12-16
 
 For a comprehensive list of change since the 3.2 series, see this [page](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
@@ -906,7 +910,7 @@ Main changes since 3.3-alpha1:
   * Add temporary-free evaluation of `D.nolias() *= C + A*B`.
   * Add vectorization of round, ceil and floor for SSE4.1/AVX.
   * Optimize assignment into a `Block<SparseMatrix>` by using Ref and avoiding useless updates in non-compressed mode. This make row-by-row filling of a row-major sparse matrix very efficient.
-  * Improve internal cost model leading to faster code in some cases (see changeset 1bcb41187a45).
+  * Improve internal cost model leading to faster code in some cases (see changeset 77ff3386b7d2).
   * #1090: improve redux evaluation logic.
   * Enable unaligned vectorization of small fixed size matrix products.
 
@@ -938,9 +942,7 @@ Main changes since 3.3-alpha1:
   * Fix ICE with VC2015 Update1.
   * Improve cmake install scripts.
 
-## [3.2.7]
-
-Released on November 5, 2015
+## [3.2.7] - 2015-11-05
 
 Changes since 3.2.6:
 
@@ -966,9 +968,7 @@ Changes since 3.2.6:
   * unsupported/ArpackSupport is now properly installed by make install.
   * #1080: warning fixes
 
-## [3.2.6]
-
-Released on October 1, 2015
+## [3.2.6] - 2015-10-01
 
 Changes since 3.2.5:
 
@@ -984,15 +984,11 @@ Changes since 3.2.5:
 * MKL: fix support for the 11.2 version, and fix a naming conflict (#1067)
   * #1033: explicit type conversion from 0 to RealScalar
 
-## [3.3-alpha1]
-
-Released on September 4, 2015
+## [3.3-alpha1] - 2015-09-04
 
 See the [announcement](https://www.eigen.tuxfamily.org/index.php?title=3.3).
 
-## [3.2.5]
-
-Released on June 16, 2015
+## [3.2.5] - 2015-06-16
 
 Changes since 3.2.4:
 
@@ -1036,9 +1032,7 @@ Changes since 3.2.4:
   * #1012: enable alloca on Mac OS or if alloca is defined as macro
   * Doc and build system: #733, #914, #952,  #961, #999
 
-## [3.2.4]
-
-Released on January 21, 2015
+## [3.2.4] - 2015-01-21
 
 Changes since 3.2.3:
 
@@ -1047,9 +1041,7 @@ Changes since 3.2.3:
 * #921: fix utilization of bitwise operation on enums in `first_aligned`.
 * Fix compilation with NEON on some platforms.
 
-## [3.2.3]
-
-Released on December 16, 2014
+## [3.2.3] - 2014-12-16
 
 Changes since 3.2.2:
 
@@ -1088,9 +1080,7 @@ Changes since 3.2.2:
   * #861: enable posix_memalign with PGI.
   * Fix BiCGSTAB doc example.
 
-## [3.2.2]
-
-Released on August 4, 2014
+## [3.2.2] - 2014-08-04
 
 Changes since 3.2.1:
 
@@ -1134,9 +1124,7 @@ Changes since 3.2.1:
   * #632: doc: Note that `dm2 = sm1 + dm1` is not possible
   * Extend AsciiQuickReference (real, imag, conjugate, rot90)
 
-## [3.2.1]
-
-Released on February 26, 2014
+## [3.2.1] - 2014-02-26
 
 Changes since 3.2.0:
 
@@ -1181,9 +1169,7 @@ Changes since 3.2.0:
 * Fix a few compiler warnings (bug #317 and more).
 * Documentation fixes (bugs #609, #638 and #739 and more).
 
-## [3.1.4]
-
-Released on August 02, 2013
+## [3.1.4] - 2013-08-02
 
 Changes since 3.1.3:
 
@@ -1196,18 +1182,14 @@ Changes since 3.1.3:
 * Fix a few warnings and compilation issues with recent compiler versions.
 * Documentation fixes.
 
-## [3.0.7]
-
-Released on August 02, 2013
+## [3.0.7] - 2013-08-02
 
 Changes since 3.0.6:
 
 * Fix traits of `Map<Quaternion>`.
 * Fix a few warnings (#507) and documentation (#531).
 
-## [3.2.0]
-
-Released on July 24, 2013.
+## [3.2.0] - 2013-07-24
 
 Major new features and optimizations since 3.1:
 
@@ -1234,18 +1216,14 @@ Major new features and optimizations since 3.1:
 
 Eigen 3.2 represents about 600 commits since Eigen 3.1.
 
-## [3.2-rc2]
-
-Released on July 19, 2013.
+## [3.2-rc2] - 2013-07-19
 
 Changes since 3.2-rc1:
 
 * Rename `DenseBase::isFinite()` to `allFinite()` to avoid a future naming collision.
 * Fix an ICE with ICC 11.1.
 
-## [3.2-rc1]
-
-Released on July 17, 2013.
+## [3.2-rc1] - 2013-07-17
 
 Main changes since 3.2-beta1:
 * New features:
@@ -1290,9 +1268,7 @@ Main changes since 3.2-beta1:
   * Fix many warnings and compilation issues with recent compiler versions.
   * Many other fixes including #230, #482, #542, #561, #564, #565, #566, #578, #581, #595, #597, #598, #599, #605, #606, #615.
 
-## [3.1.3]
-
-Released on April 16, 2013
+## [3.1.3] - 2013-04-16
 
 Changes since 3.1.2:
 
@@ -1310,9 +1286,7 @@ Changes since 3.1.2:
 * Enable SSE with ICC even when it mimics a gcc version lower than 4.2
 * Workaround [gcc-4.7 bug #53900](http://gcc.gnu.org/bugzilla/show_bug.cgi?id=53900) (too aggressive optimization in our alignment check)
 
-## [3.2-beta1]
-
-Released on March 07, 2013
+## [3.2-beta1] - 2013-03-07
 
 Main changes since 3.1:
 
@@ -1338,9 +1312,7 @@ Main changes since 3.1:
   * New compilation token `EIGEN_INITIALIZE_MATRICES_BY_NAN` to help debugging.
   * All bug fixes of the 3.1 branch, plus a couple of other fixes (including 211, 479, 496, 508, 552)
 
-## [3.1.2]
-
-Released on Nov 05, 2012
+## [3.1.2] - 2012-11-05
 
 Changes since 3.1.1:
 
@@ -1364,9 +1336,7 @@ Changes since 3.1.1:
 * Remove stupid assert in blue norm.
 * Workaround a weird compilation error with MSVC.
 
-## [3.1.1]
-
-Released on July 22, 2012
+## [3.1.1] - 2012-07-22
 
 Changes since 3.1.0:
 * [relicense to MPL2](https://www.eigen.tuxfamily.org/index.php?title=Main_Page#License)
@@ -1382,9 +1352,7 @@ Changes since 3.1.0:
 * Fixed Geometry module compilation under MSVC
 * Fixed Sparse module compilation under MSVC 2005
 
-## [3.0.6]
-
-Released on July 9, 2012
+## [3.0.6] - 2012-07-09
 
 Changes since 3.0.5:
 * #447 - fix infinite recursion in `ProductBase::coeff()`
@@ -1404,9 +1372,7 @@ Changes since 3.0.5:
 * Fix typo in NumericalDiff (unsupported module)
 * Fix LevenbergMarquart for non double scalar type (unsupported module)
 
-## [3.1.0]
-
-Released on June 24, 2012.
+## [3.1.0] - 2012-06-24
 
 Major changes between Eigen 3.0 and Eigen 3.1:
 * New features
@@ -1429,9 +1395,7 @@ Major changes between Eigen 3.0 and Eigen 3.1:
 
 Eigen 3.1 represents about 600 commits since Eigen 3.0.
 
-## [3.1.0-rc2]
-
-Released on June 21, 2012.
+## [3.1.0-rc2] - 2012-06-21
 
 Changes since 3.1.0-rc1:
 * Fix a couple of compilation warnings
@@ -1440,9 +1404,7 @@ Changes since 3.1.0-rc1:
 * #466: `RealSchur` failed on a zero matrix
 * Update Adolc and MPReal support modules
 
-## [3.1.0-rc1]
-
-Released on June 14, 2012
+## [3.1.0-rc1] - 2012-06-14
 
 Main changes since 3.1.0-beta1:
 * #466: fix a possible race condition issue. from now, multithreaded applications that call Eigen from multiple thread must initialize Eigen by calling `initParallel()`.
@@ -1454,9 +1416,7 @@ Main changes since 3.1.0-beta1:
 * Fix ambiguous calls in the math functors
 * Fix BTL interface.
 
-## [3.1.0-beta1]
-
-Released on June 7, 2012
+## [3.1.0-beta1] - 2012-06-07
 
 Main changes since 3.1.0-alpha2:
 * **API changes**
@@ -1487,9 +1447,7 @@ Main changes since 3.1.0-alpha2:
   * New tutorial page on Map
   * and many other bug fixes such as: #417, #419, #450
 
-## [3.0.5]
-
-Released February 10, 2012
+## [3.0.5] - 2012-02-10
 
 Changes since 3.0.4:
 * #417 - fix nesting of `Map` expressions
@@ -1503,9 +1461,7 @@ Changes since 3.0.4:
 * Changeset 4432 - fix asserts in eigenvalue decompositions
 * Changeset 4416 - fix MSVC integer overflow warning
 
-## [3.1.0-alpha2]
-
-Released February 6, 2012
+## [3.1.0-alpha2] - 2012-02-06
 
 Main changes since 3.0.1-alpha1:
 * New optional support for Intel MKL and other BLAS including: ([details](http://eigen.tuxfamily.org/dox-devel/TopicUsingIntelMKL.html))
@@ -1532,9 +1488,7 @@ Main changes since 3.0.1-alpha1:
   * and many other bug fixes such as: #406, #410, #398, #396, #394, #354, #352, #301,
 
 
-## [3.1.0-alpha1]
-
-Released December 6, 2011
+## [3.1.0-alpha1] - 2011-12-06
 
 Main changes since 3.0:
 * Officially supported set of sparse modules. See this [page](http://eigen.tuxfamily.org/dox-devel/TutorialSparse.html) for an overview of the features. Main changes:
@@ -1555,10 +1509,7 @@ Main changes since 3.0:
 * All the fixes and improvements of the 3.0 branch up to the 3.0.4 release (see below)
 
 
-
-## [3.0.4]
-
-Released December 6, 2011
+## [3.0.4] - 2011-12-06
 
 Changes since 3.0.3:
 
@@ -1572,9 +1523,7 @@ Changes since 3.0.3:
 * Fix compilation issue with `QuaternionBase::cast`
 
 
-## [2.0.17]
-
-Released December 6, 2011
+## [2.0.17] - 2011-12-06
 
 Changes since 2.0.16:
 
@@ -1582,9 +1531,7 @@ Changes since 2.0.16:
 * Fix a typo in ParametrizedLine documentation
 
 
-## [3.0.3]
-
-Released October 6, 2011
+## [3.0.3] - 2011-10-06
 
 Changes since 3.0.2:
 
@@ -1596,9 +1543,7 @@ Changes since 3.0.2:
 * Several improvements to the documentation.
 
 
-## [3.0.2]
-
-Released August 26, 2011
+## [3.0.2] - 2011-08-26
 
 Changes since 3.0.1:
 
@@ -1615,9 +1560,7 @@ Changes since 3.0.1:
   * fix a few documentation issues.
 
 
-## [3.0.1]
-
-Released May 30, 2011
+## [3.0.1] - 2011-05-30
 
 Changes since 3.0.0:
 
@@ -1634,9 +1577,7 @@ Changes since 3.0.0:
 * Fix Qt support in Transform.
 * Improved documentation.
 
-## [2.0.16]
-
-Released May 28, 2011
+## [2.0.16] - 2011-05-28
 
 Changes since 2.0.15:
 
@@ -1647,18 +1588,16 @@ Changes since 2.0.15:
 * New feature: support for `part<SelfAdjoint>`.
 * Fix bug in SparseLU::setOrderingMethod.
 
-## [3.0.0]
+## [3.0.0] - 2011-03-19
 
-Released March 19, 2011, at the [meeting](https://www.eigen.tuxfamily.org/index.php?title=Paris_2011_Meeting).
+Released at the [meeting](https://www.eigen.tuxfamily.org/index.php?title=Paris_2011_Meeting).
 
 See the [Eigen 3.0 release notes](https://www.eigen.tuxfamily.org/index.php?title=3.0).
 
 Only change since 3.0-rc1:
 * Fixed compilation of the unsupported 'openglsupport' test.
 
-## [3.0-rc1]
-
-Released March 14, 2011.
+## [3.0-rc1] - 2011-03-14
 
 Main changes since 3.0-beta4:
 
@@ -1677,9 +1616,7 @@ Main changes since 3.0-beta4:
 * more compiler warnings fixes
 * fixed GDB pretty-printer for dynamic-size matrices (#210)
 
-## [3.0-beta4]
-
-Released February 28, 2011.
+## [3.0-beta4] - 2011-02-28
 
 Main changes since 3.0-beta3:
 
@@ -1715,9 +1652,7 @@ Main changes since 3.0-beta3:
   * misc documentation improvements
   * improve documentation of plugins
 
-## [3.0-beta3]
-
-Released February 12, 2011.
+## [3.0-beta3] - 2011-02-12
 
 The biggest news is that the API is now **100% stable**.
 
@@ -1763,9 +1698,7 @@ Main changes since 3.0-beta2:
   * imported a copy of the Eigen 2 test suite, made sure that Eigen 3 passes it. That also allowed to fix several issues.
 
 
-## [3.0-beta2]
-
-Released October 15, 2010.
+## [3.0-beta2] - 2010-10-15
 
 Main changes since 3.0-beta1:
 
@@ -1790,9 +1723,7 @@ Main changes since 3.0-beta1:
 * Remove the Taucs backend (obsolete).
 * Remove the old SVD class (was causing too much troubles, a new decompozition based on bidiagonalisation/householder should come back soon, `JacobiSVD` can be used meanwhile).
 
-## [2.0.15]
-
-Released July 16, 2010
+## [2.0.15] - 2010-07-16
 
 Changes since 2.0.14:
 
@@ -1803,15 +1734,11 @@ Changes since 2.0.14:
 * Fix for ICC in SSE code.
 * Fix some C++ issues found by Clang (patch by Nick Lewycky).
 
-## [3.0-beta1]
-
-Released July 5, 2010
+## [3.0-beta1] - 2010-07-05
 
 See the [announcement](https://www.eigen.tuxfamily.org/index.php?title=3.0).
 
-## [2.0.14]
-
-Released June 22, 2010
+## [2.0.14] - 2010-06-22
 
 Changes since 2.0.13:
 
@@ -1819,9 +1746,7 @@ Changes since 2.0.13:
 * Fix #142: LU of fixed-size matrices was causing dynamic memory allocation (patch by Stuart Glaser).
 * Fix #127: remove useless static keywords (also fixes warnings with clang++).
 
-## [2.0.13]
-
-Released June 10, 2010
+## [2.0.13] - 2010-06-10
 
 Changes since 2.0.12:
 
@@ -1836,9 +1761,7 @@ Changes since 2.0.12:
 * Fix compilation of the BTL benchmarks.
 * Some dox updates.
 
-## [2.0.12]
-
-Released February 12, 2010
+## [2.0.12] - 2010-02-12
 
 Changes since 2.0.11:
 
@@ -1854,9 +1777,7 @@ Changes since 2.0.11:
 * Backport improvements to benchmarking code.
 * Documentation fixes
 
-## [2.0.11]
-
-Released January 10, 2010
+## [2.0.11] - 2010-01-10
 
 Changes since 2.0.10:
 
@@ -1869,9 +1790,7 @@ Changes since 2.0.10:
 * Fix MSVC 2010 compatibility.
 * Some documentation improvements.
 
-## [2.0.10]
-
-Released November 25, 2009
+## [2.0.10] - 2009-11-25
 
 Changes since 2.0.9:
 
@@ -1887,27 +1806,21 @@ Changes since 2.0.9:
 * fix compilation with MSVC 2010
 * adjust to repository name change
 
-## [2.0.9]
-
-Released October 24, 2009
+## [2.0.9] - 2009-10-24
 
 Changes since 2.0.8:
 
 * Really fix installation and the pkg-config file.
 * Install the `NewStdVector` header that was introduced in 2.0.6.
 
-## [2.0.8]
-
-Released October 23, 2009
+## [2.0.8] - 2009-10-23
 
 Changes since 2.0.7:
 
 * fix installation error introduced in 2.0.7: it was choking on the pkg-config file eigen2.pc not being found. The fix had been proposed long ago by Ingmar Vanhassel for the development branch, and when recently the pkg-config support was back-ported to the 2.0 branch, nobody thought of backporting this fix too, and apparently nobody tested "make install" !
 * SVD: add default constructor. Users were relying on the compiler to generate one, and apparenty 2.0.7 triggered a little MSVC 2008 subtlety in this respect. Also added an assert.
 
-## [2.0.7]
-
-Released October 22, 2009
+## [2.0.7] - 2009-10-22
 
 Changes since 2.0.6:
 
@@ -1922,9 +1835,7 @@ Changes since 2.0.6:
 * add pkg-config support by Rhys Ulerich.
 * documentation fix and doc-generation-script updates by Thomas Capricelli
 
-## [2.0.6]
-
-Released September 23, 2009
+## [2.0.6] - 2009-09-23
 
 Changes since 2.0.5:
 
@@ -1938,9 +1849,7 @@ Changes since 2.0.5:
 * fix a warning in `ei_aligned_malloc`; fixed by backporting the body from the devel branch; may result in a different choice of system aligned malloc function.
 * update the documentation.
 
-## [2.0.5]
-
-Released August 22, 2009
+## [2.0.5] - 2009-08-22
 
 Changes since 2.0.4:
 
@@ -1959,9 +1868,7 @@ Changes since 2.0.4:
 * fix the option to build a binary library, although it's not very useful and will be removed
 * add basic .hgignore file and script to build the docs (thanks to Thomas Capricelli)
 
-## [2.0.4]
-
-Released August 1, 2009
+## [2.0.4] - 2009-08-01
 
 Changes since 2.0.3:
 * Several fixes in the overloaded new and delete operators. Thanks to Hauke Heibel.
@@ -1975,9 +1882,7 @@ Changes since 2.0.3:
 * several ctest improvements: use our own dashboard, use a separate project for the 2.0 branch.
 * documentation: improvement on the pages on unaligned arrays (the online copies have been updated immediately).
 
-## [2.0.3]
-
-Released June 21, 2009
+## [2.0.3] - 2009-06-21
 
 Changes since 2.0.2:
 * precision and reliability fixes in various algorithms, especially LLT, QR, Tridiagonalization, and also a precision improvement in LU.
@@ -1987,9 +1892,7 @@ Changes since 2.0.2:
 * backport documentation improvements on transpose() and adjoint()
 * updates in the Sparse module (was needed to support KDE 4.3)
 
-## [2.0.2]
-
-Released May 22, 2009
+## [2.0.2] - 2009-05-22
 
 Changes since 2.0.1:
 * Fix `linearRegression()` compilation, actually it is reimplemented using the better fitHyperplane() which does total least-squares.
@@ -1999,9 +1902,7 @@ Changes since 2.0.1:
 * Fix compatibility with the old GCC 3.3: it is now fully supported again.
 * Fix warnings with recent GCC (4.4.0 and 4.3.3).
 
-## [2.0.1]
-
-Released April 14, 2009
+## [2.0.1] - 2009-04-14
 
 Changes since 2.0.0:
 * disable alignment altogether on exotic platforms on which we don't vectorize anyway. This allows e.g. to use Eigen on ARM platforms.
@@ -2014,6 +1915,6 @@ Changes since 2.0.0:
 * fix wrong static assertion (patch by Markus Moll)
 * add missing operators in `aligned_allocator` (thanks to Hauke Heibel)
 
-## [2.0.0]
+## [2.0.0] - 2009-02-02
 
-Released February 2, 2009
+First public release.

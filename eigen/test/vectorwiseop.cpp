@@ -114,6 +114,8 @@ void vectorwiseop_matrix(const MatrixType& m) {
   RealColVectorType rcres;
   RealRowVectorType rrres;
 
+  Scalar small_scalar = (std::numeric_limits<RealScalar>::min)();
+
   // test broadcast assignment
   m2 = m1;
   m2.colwise() = colvec;
@@ -171,18 +173,26 @@ void vectorwiseop_matrix(const MatrixType& m) {
   VERIFY_IS_APPROX(m1.cwiseAbs().colwise().sum().x(), m1.col(0).cwiseAbs().sum());
 
   // test normalized
-  m2 = m1.colwise().normalized();
-  VERIFY_IS_APPROX(m2.col(c), m1.col(c).normalized());
-  m2 = m1.rowwise().normalized();
-  VERIFY_IS_APPROX(m2.row(r), m1.row(r).normalized());
+  m2 = m1;
+  m2.col(c).fill(small_scalar);
+  m3 = m2.colwise().normalized();
+  for (Index k = 0; k < cols; ++k) VERIFY_IS_APPROX(m3.col(k), m2.col(k).normalized());
+  m2 = m1;
+  m2.row(r).setZero();
+  m3 = m2.rowwise().normalized();
+  for (Index k = 0; k < rows; ++k) VERIFY_IS_APPROX(m3.row(k), m2.row(k).normalized());
 
   // test normalize
   m2 = m1;
-  m2.colwise().normalize();
-  VERIFY_IS_APPROX(m2.col(c), m1.col(c).normalized());
+  m2.col(c).setZero();
+  m3 = m2;
+  m3.colwise().normalize();
+  for (Index k = 0; k < cols; ++k) VERIFY_IS_APPROX(m3.col(k), m2.col(k).normalized());
   m2 = m1;
-  m2.rowwise().normalize();
-  VERIFY_IS_APPROX(m2.row(r), m1.row(r).normalized());
+  m2.row(r).fill(small_scalar);
+  m3 = m2;
+  m3.rowwise().normalize();
+  for (Index k = 0; k < rows; ++k) VERIFY_IS_APPROX(m3.row(k), m2.row(k).normalized());
 
   // test with partial reduction of products
   Matrix<Scalar, MatrixType::RowsAtCompileTime, MatrixType::RowsAtCompileTime> m1m1 = m1 * m1.transpose();

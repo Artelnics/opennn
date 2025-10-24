@@ -18,8 +18,9 @@
 
 // computes the singular values/vectors a general M-by-N matrix A using divide-and-conquer
 EIGEN_LAPACK_FUNC(gesdd)
-(char *jobz, int *m, int *n, Scalar *a, int *lda, RealScalar *s, Scalar *u, int *ldu, Scalar *vt, int *ldvt,
- Scalar * /*work*/, int *lwork, EIGEN_LAPACK_ARG_IF_COMPLEX(RealScalar * /*rwork*/) int * /*iwork*/, int *info) {
+(const char *jobz, int *m, int *n, RealScalar *ra, int *lda, RealScalar *s, RealScalar *ru, int *ldu, RealScalar *rvt,
+ int *ldvt, RealScalar * /*work*/, int *lwork, EIGEN_LAPACK_ARG_IF_COMPLEX(RealScalar * /*rwork*/) int * /*iwork*/,
+ int *info) {
   // TODO exploit the work buffer
   bool query_size = *lwork == -1;
   int diag_size = (std::min)(*m, *n);
@@ -53,37 +54,44 @@ EIGEN_LAPACK_FUNC(gesdd)
 
   if (*n == 0 || *m == 0) return;
 
+  Scalar *a = reinterpret_cast<Scalar *>(ra);
+  Scalar *u = reinterpret_cast<Scalar *>(ru);
+  Scalar *vt = reinterpret_cast<Scalar *>(rvt);
+
   PlainMatrixType mat(*m, *n);
   mat = matrix(a, *m, *n, *lda);
 
-  int option = *jobz == 'A'   ? Eigen::ComputeFullU | Eigen::ComputeFullV
-               : *jobz == 'S' ? Eigen::ComputeThinU | Eigen::ComputeThinV
-               : *jobz == 'O' ? Eigen::ComputeThinU | Eigen::ComputeThinV
-                              : 0;
-
-  Eigen::BDCSVD<PlainMatrixType> svd(mat, option);
-
-  make_vector(s, diag_size) = svd.singularValues().head(diag_size);
-
   if (*jobz == 'A') {
+    Eigen::BDCSVD<PlainMatrixType, Eigen::ComputeFullU | Eigen::ComputeFullV> svd(mat);
+    make_vector(s, diag_size) = svd.singularValues().head(diag_size);
     matrix(u, *m, *m, *ldu) = svd.matrixU();
     matrix(vt, *n, *n, *ldvt) = svd.matrixV().adjoint();
   } else if (*jobz == 'S') {
+    Eigen::BDCSVD<PlainMatrixType, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(mat);
+    make_vector(s, diag_size) = svd.singularValues().head(diag_size);
     matrix(u, *m, diag_size, *ldu) = svd.matrixU();
     matrix(vt, diag_size, *n, *ldvt) = svd.matrixV().adjoint();
   } else if (*jobz == 'O' && *m >= *n) {
+    Eigen::BDCSVD<PlainMatrixType, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(mat);
+    make_vector(s, diag_size) = svd.singularValues().head(diag_size);
     matrix(a, *m, *n, *lda) = svd.matrixU();
     matrix(vt, *n, *n, *ldvt) = svd.matrixV().adjoint();
   } else if (*jobz == 'O') {
+    Eigen::BDCSVD<PlainMatrixType, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(mat);
+    make_vector(s, diag_size) = svd.singularValues().head(diag_size);
     matrix(u, *m, *m, *ldu) = svd.matrixU();
     matrix(a, diag_size, *n, *lda) = svd.matrixV().adjoint();
+  } else {
+    Eigen::BDCSVD<PlainMatrixType> svd(mat);
+    make_vector(s, diag_size) = svd.singularValues().head(diag_size);
   }
 }
 
 // computes the singular values/vectors a general M-by-N matrix A using two sided jacobi algorithm
 EIGEN_LAPACK_FUNC(gesvd)
-(char *jobu, char *jobv, int *m, int *n, Scalar *a, int *lda, RealScalar *s, Scalar *u, int *ldu, Scalar *vt, int *ldvt,
- Scalar * /*work*/, int *lwork, EIGEN_LAPACK_ARG_IF_COMPLEX(RealScalar * /*rwork*/) int *info) {
+(const char *jobu, const char *jobv, int *m, int *n, RealScalar *ra, int *lda, RealScalar *s, RealScalar *ru, int *ldu,
+ RealScalar *rvt, int *ldvt, RealScalar * /*work*/, int *lwork,
+ EIGEN_LAPACK_ARG_IF_COMPLEX(RealScalar * /*rwork*/) int *info) {
   // TODO exploit the work buffer
   bool query_size = *lwork == -1;
   int diag_size = (std::min)(*m, *n);
@@ -115,6 +123,10 @@ EIGEN_LAPACK_FUNC(gesvd)
   }
 
   if (*n == 0 || *m == 0) return;
+
+  Scalar *a = reinterpret_cast<Scalar *>(ra);
+  Scalar *u = reinterpret_cast<Scalar *>(ru);
+  Scalar *vt = reinterpret_cast<Scalar *>(rvt);
 
   PlainMatrixType mat(*m, *n);
   mat = matrix(a, *m, *n, *lda);

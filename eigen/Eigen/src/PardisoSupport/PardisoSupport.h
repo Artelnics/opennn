@@ -147,7 +147,7 @@ class PardisoImpl : public SparseSolverBase<Derived> {
    * See the PARDISO manual to know how to use it. */
   ParameterType& pardisoParameterArray() { return m_iparm; }
 
-  /** Performs a symbolic decomposition on the sparcity of \a matrix.
+  /** Performs a symbolic decomposition on the sparsity of \a matrix.
    *
    * This function is particularly useful when solving for several problems having the same structure.
    *
@@ -157,7 +157,8 @@ class PardisoImpl : public SparseSolverBase<Derived> {
 
   /** Performs a numeric decomposition of \a matrix
    *
-   * The given matrix must has the same sparcity than the matrix on which the symbolic decomposition has been performed.
+   * The given matrix must have the same sparsity than the matrix on which the symbolic decomposition has been
+   * performed.
    *
    * \sa analyzePattern()
    */

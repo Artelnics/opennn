@@ -10,13 +10,10 @@
 #if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_GPU_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_GPU_H
 
-// This header file container defines fo gpu* macros which will resolve to
-// their equivalent hip* or cuda* versions depending on the compiler in use
-// A separate header (included at the end of this file) will undefine all
-#include "TensorGpuHipCudaDefines.h"
-
 // IWYU pragma: private
 #include "./InternalHeaderCheck.h"
+
+#include "../../../../../Eigen/src/Core/util/GpuHipCudaDefines.inc"
 
 namespace Eigen {
 
@@ -390,6 +387,6 @@ static EIGEN_DEVICE_FUNC inline void setGpuSharedMemConfig(gpuSharedMemConfig co
 }  // end namespace Eigen
 
 // undefine all the gpu* macros we defined at the beginning of the file
-#include "TensorGpuHipCudaUndefines.h"
+#include "../../../../../Eigen/src/Core/util/GpuHipCudaUndefines.inc"
 
 #endif  // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_GPU_H

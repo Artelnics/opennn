@@ -8,7 +8,7 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_GPU_HIP_CUDA_DEFINES_H)
+#if defined(EIGEN_USE_GPU) && !defined(EIGEN_CORE_GPU_HIP_CUDA_DEFINES_H)
 #define EIGEN_CXX11_TENSOR_GPU_HIP_CUDA_DEFINES_H
 
 // Note that we are using EIGEN_USE_HIP here instead of EIGEN_HIPCC...this is by design
@@ -98,4 +98,4 @@
 
 #endif  // gpu_assert
 
-#endif  // EIGEN_CXX11_TENSOR_GPU_HIP_CUDA_DEFINES_H
+#endif  // EIGEN_CORE_GPU_HIP_CUDA_DEFINES_H
