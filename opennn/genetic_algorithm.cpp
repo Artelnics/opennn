@@ -485,7 +485,7 @@ void GeneticAlgorithm::perform_selection()
 
 Index GeneticAlgorithm::get_selected_individuals_number() const
 {
-    return count(selection.data(), selection.data() + selection.size(), 1);
+    return count(selection.data(), selection.data() + selection.size(), true);
 }
 
 
