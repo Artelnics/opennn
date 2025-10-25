@@ -28,7 +28,7 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        // Data set
+        // Dataset
 
         Dataset dataset("../data/iris_plant_original.csv", ";", true, false);
 

@@ -123,7 +123,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ..." << endl;
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -231,7 +231,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            // Data set
+            // Dataset
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
@@ -278,7 +278,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch->fill(selection_batches[iteration],
                                       input_variable_indices,
@@ -550,7 +550,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -662,7 +662,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         for (Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            // Data set
+            // Dataset
 
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
@@ -708,7 +708,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
             for (Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch_cuda->fill(selection_batches[iteration],
                                            input_variable_indices,

@@ -361,12 +361,10 @@ dimensions NeuralNetwork::get_output_dimensions() const
 
 Index NeuralNetwork::get_parameters_number() const
 {
-    Index parameters_number = 0;
-
-    for (const auto& layer : layers)
-        parameters_number += layer->get_parameters_number();
-
-    return parameters_number;
+    return accumulate(layers.begin(), layers.end(), 0,
+                       [](Index current_sum, const std::unique_ptr<Layer>& layer) {
+                           return current_sum + layer->get_parameters_number();
+                       });
 }
 
 
