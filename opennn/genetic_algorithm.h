@@ -21,7 +21,7 @@ public:
 
     GeneticAlgorithm(const TrainingStrategy* = nullptr);
 
-    enum class InitializationMethod{Random,Correlations};
+    //enum class InitializationMethod{Random,Correlations};
 
     const Tensor<bool, 2>& get_population() const;
 
@@ -44,7 +44,7 @@ public:
 
     const Index& get_elitism_size() const;
 
-    const InitializationMethod& get_initialization_method() const;
+    const string& get_initialization_method() const;
 
     void set_default();
 
@@ -55,7 +55,7 @@ public:
 
     void set_individuals_number(const Index& new_individuals_number = 4);
 
-    void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
+    void set_initialization_method(const string&);
 
     void set_mutation_rate(const type&);
 
@@ -105,9 +105,8 @@ private:
 
     Tensor<Tensor<type, 1>, 1> parameters;
 
-    vector<bool> original_input_raw_variables;
-
-    vector<bool> original_unused_raw_variables;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
     
     Tensor<type, 1> fitness_correlations;
 
@@ -136,7 +135,7 @@ private:
 
     Index elitism_size;
 
-    InitializationMethod initialization_method;
+    string initialization_method;
 
     random_device rd;
 };

@@ -363,10 +363,9 @@ public:
 
     vector<Histogram> calculate_raw_variable_distributions(const Index& = 10) const;
 
-    // Box and whiskers
+    // Box plots
 
     vector<BoxPlot> calculate_raw_variables_box_plots() const;
-    //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
@@ -382,6 +381,25 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_raw_variable_pearson_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_raw_variable_spearman_correlations() const;
+
+
+    Tensor<type, 1> calculate_input_target_mean_absolute_correlations() const
+    {
+        const Tensor<Correlation, 2> correlations
+            = calculate_input_target_raw_variable_pearson_correlations();
+
+        const Tensor<type, 2> absolute_correlations = get_correlation_values(correlations).abs();
+
+        Tensor<type, 1> absolute_mean_correlations(absolute_correlations.dimension(0));
+
+        for (Index i = 0; i < absolute_correlations.dimension(0); i++)
+        {
+            const Tensor<type, 1> row_correlations = absolute_correlations.chip(i, 0);
+            absolute_mean_correlations(i) = mean(row_correlations);
+        }
+
+        return absolute_mean_correlations;
+    }
 
     void print_input_target_raw_variables_correlations() const;
 
