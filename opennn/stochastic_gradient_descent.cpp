@@ -58,8 +58,8 @@ void StochasticGradientDescent::set_default()
 
     // TRAINING OPERATORS
 
-    initial_learning_rate = type(0.01);
-    initial_decay = type(0);
+    initial_learning_rate = type(0.001);
+    initial_decay = type(0.001);
     momentum = type(0);
     nesterov = false;
 
@@ -274,10 +274,7 @@ TrainingResults StochasticGradientDescent::train()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = false;
-
-    if(neural_network->has("Recurrent"))
-        shuffle = false;
+    bool shuffle = !neural_network->has("Recurrent");
 
     // Main loop
 
@@ -336,7 +333,6 @@ TrainingResults StochasticGradientDescent::train()
 
         // Loss
 
-        //training_loss /= type(batches_number);
         training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
@@ -361,8 +357,6 @@ TrainingResults StochasticGradientDescent::train()
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
                                                   false);
-
-                results.selection_error_history(epoch) = selection_error;
 
                 // Loss
 
