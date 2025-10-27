@@ -799,7 +799,7 @@ vector<Index> GeneticAlgorithm::get_raw_variable_indices(const Tensor<bool, 1>& 
 
     if (indices.empty())
     {
-        for (Index i = 0; i < original_input_raw_variable_indices.size(); ++i)
+        for (Index i = 0; i < Index(original_input_raw_variable_indices.size()); ++i)
             if (original_input_raw_variable_indices[i])
             {
                 indices.push_back(i);
