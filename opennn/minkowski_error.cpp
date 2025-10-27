@@ -91,7 +91,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     const type coefficient = type(1.0 / samples_number);
 
-    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+    deltas.device(*thread_pool_device) = errors*((errors.abs() + epsilon).pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
 }
 
 
