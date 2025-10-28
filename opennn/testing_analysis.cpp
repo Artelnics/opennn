@@ -479,14 +479,14 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() cons
 Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets,
                                                   const Tensor<type, 2>& outputs) const
 {
-    const Index batch_size = outputs.dimension(0);
+    const type predictions_number = static_cast<type>(targets.size());
 
     Tensor<type, 0> mean_squared_error;
     mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
     Tensor<type, 1> errors(5);
     errors(0) = mean_squared_error(0);
-    errors(1) = errors(0)/type(batch_size);
+    errors(1) = errors(0)/type(predictions_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
     errors(4) = calculate_Minkowski_error(targets, outputs);
@@ -516,7 +516,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const st
     // Results
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum();
 
     errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
