@@ -482,13 +482,14 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
     const Index batch_size = outputs.dimension(0);
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
-    Tensor<type, 1> errors(4);
+    Tensor<type, 1> errors(5);
     errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(batch_size);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
+    errors(4) = calculate_Minkowski_error(targets, outputs);
 
     return errors;
 }
@@ -697,8 +698,15 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
                                                 const Tensor<type, 2>& outputs,
                                                 const type minkowski_parameter) const
 {
+    const type predictions_number = static_cast<type>(targets.size());
+
+    if (predictions_number == 0)
+        return type(0);
+
     Tensor<type, 0> minkowski_error;
-    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum().pow(type(1)/minkowski_parameter);
+
+    minkowski_error.device(*thread_pool_device) =
+        (((outputs - targets).abs().pow(minkowski_parameter).sum()) / predictions_number).pow(type(1.0) / minkowski_parameter);
 
     return minkowski_error();
 }
