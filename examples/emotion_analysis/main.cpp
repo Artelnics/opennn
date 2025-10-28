@@ -51,10 +51,25 @@ int main()
         dimensions output_dimensions = {targets_number};
 
         TextClassificationNetwork text_classification_network(
-            input_dimensions,
-            complexity_dimensions,
-            output_dimensions
-            );
+                                                              input_dimensions,
+                                                              complexity_dimensions,
+                                                              output_dimensions
+                                                              );
+
+        //MeanSquaredError mean_squared_error(&text_classification_network, &language_dataset);
+
+        //const Tensor<type, 1> analytical_gradient = mean_squared_error.calculate_gradient();
+        //const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+        //const bool gradients_are_equal = are_equal(analytical_gradient, numerical_gradient, type(1.0e-3));
+
+        //if (gradients_are_equal)
+        //{
+        //    cout << "SUCCESS: The analytical and numerical gradients are equal.\n";
+        //}
+        //else
+        //{
+        //    cout << "FAILURE: The analytical and numerical gradients DO NOT match.\n";
+        //}
 
         // Training Strategy
 

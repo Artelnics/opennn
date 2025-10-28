@@ -530,8 +530,8 @@ Tensor<type, 2> TestingAnalysis::calculate_binary_classification_errors() const
 Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() const
 {
     const Tensor<type, 1> training_errors = calculate_multiple_classification_errors("Training");
-    const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors("Training");
-    const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors("Training");
+    const Tensor<type, 1> selection_errors = calculate_multiple_classification_errors("Selection");
+    const Tensor<type, 1> testing_errors = calculate_multiple_classification_errors("Testing");
 
     Tensor<type, 2> errors(6, 3);
 
