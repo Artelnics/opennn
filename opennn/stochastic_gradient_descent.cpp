@@ -356,7 +356,7 @@ TrainingResults StochasticGradientDescent::train()
 
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
-                                                  false);
+                                                  is_training);
 
                 // Loss
 
@@ -401,7 +401,7 @@ TrainingResults StochasticGradientDescent::train()
         }
         else if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
             results.stopping_condition  = StoppingCondition::LossGoal;
         }
         else if(selection_failures >= maximum_selection_failures)
