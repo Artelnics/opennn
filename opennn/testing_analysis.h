@@ -102,6 +102,8 @@ public:
 
     // Error data
 
+    pair<Tensor<type,2>, Tensor<type,2>> get_targets_and_outputs(const string&) const;
+
     Tensor<type, 2> calculate_error() const;
 
     Tensor<type, 3> calculate_error_data() const;

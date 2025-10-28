@@ -16,8 +16,6 @@
 #include "main.h"
 #include <Eigen/CXX11/Tensor>
 
-#include <Eigen/CXX11/src/Tensor/TensorGpuHipCudaDefines.h>
-
 void test_gpu_random_uniform() {
   Tensor<float, 2> out(72, 97);
   out.setZero();

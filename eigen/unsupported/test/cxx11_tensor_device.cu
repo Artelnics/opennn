@@ -17,8 +17,6 @@
 #include "OffByOneScalar.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include <unsupported/Eigen/CXX11/src/Tensor/TensorGpuHipCudaDefines.h>
-
 using Eigen::RowMajor;
 using Eigen::Tensor;
 

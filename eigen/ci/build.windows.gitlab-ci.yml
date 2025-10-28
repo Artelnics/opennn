@@ -1,5 +1,6 @@
 # Base configuration for windows builds.
 .build:windows:
+  needs: []
   extends: .common:windows
   stage: build
   variables:
@@ -25,31 +26,31 @@
 
 ######### MSVC #################################################################
 
-# MSVC 14.16 (VS 2017)
-build:windows:x86-64:msvc-14.16:default:
+# MSVC 14.29 (VS 2019) 32 bit
+
+build:windows:x86:msvc-14.29:default:
   extends: .build:windows
   variables:
-    EIGEN_CI_MSVC_VER: "14.16"
-    # Override to remove unsupported /d2ReducedOptimizeHugeFunctions.
-    EIGEN_CI_TEST_CUSTOM_CXX_FLAGS: "/DEIGEN_STRONG_INLINE=inline;/Os"
+    EIGEN_CI_MSVC_ARCH: "x64_x86"
 
-# MSVC 14.29 (VS 2019)
+# MSVC 14.29 (VS 2019) 64 bit
+
 build:windows:x86-64:msvc-14.29:default:
   extends: .build:windows
-  variables:
-    EIGEN_CI_MSVC_VER: "14.29"
 
 build:windows:x86-64:msvc-14.29:avx2:
-  extends: build:windows:x86-64:msvc-14.29:default
+  extends: .build:windows
   variables:
     EIGEN_CI_ADDITIONAL_ARGS: "-DEIGEN_TEST_AVX2=on"
 
 build:windows:x86-64:msvc-14.29:avx512dq:
-  extends: build:windows:x86-64:msvc-14.29:default
+  extends: .build:windows
   variables:
     EIGEN_CI_ADDITIONAL_ARGS: "-DEIGEN_TEST_AVX512DQ=on"
 
-######### MSVC + CUDA ##########################################################
+
+# MSVC 14.29 (VS 2019) + CUDA
+
 .build:windows:cuda:
   extends: .build:windows
   variables:
@@ -65,46 +66,8 @@ build:windows:x86-64:msvc-14.29:avx512dq:
     - x86-64
     - cuda
 
-# The CUDA 9.2 compiler crashes with an internal error.
-# # MSVC 14.16 + CUDA 9.2
-# build:windows:x86-64:cuda-9.2:msvc-14.16:
-#   extends: .build:windows:cuda
-#   variables:
-#     # CUDA 9.2 doesn't support sm_75.
-#     EIGEN_CI_CUDA_COMPUTE_ARCH: "50;70"
-#     # CUDA 9.2 only supports up to VS 2017.
-#     EIGEN_CI_MSVC_VER: "14.16"
-#     EIGEN_CI_TEST_CUSTOM_CXX_FLAGS: "/DEIGEN_STRONG_INLINE=inline;/Os"
-#     EIGEN_CI_BEFORE_SCRIPT: $$env:CUDA_PATH=$$env:CUDA_PATH_V9_2
-
-# MSVC 14.29 + CUDA 10.2
-build:windows:x86-64:cuda-10.2:msvc-14.29:
-  extends: .build:windows:cuda
-  variables:
-    EIGEN_CI_MSVC_VER: "14.29"
-    EIGEN_CI_BEFORE_SCRIPT: $$env:CUDA_PATH=$$env:CUDA_PATH_V10_2
-
 # MSVC 14.29 + CUDA 11.4
 build:windows:x86-64:cuda-11.4:msvc-14.29:
   extends: .build:windows:cuda
   variables:
-    EIGEN_CI_MSVC_VER: "14.29"
     EIGEN_CI_BEFORE_SCRIPT: $$env:CUDA_PATH=$$env:CUDA_PATH_V11_4
-
-######## MR Smoke Tests ########################################################
-
-# MSVC 14.29 64-bit (VS 2019)
-build:windows:x86-64:msvc-14.29:avx512dq:smoketest:
-  extends: build:windows:x86-64:msvc-14.29:avx512dq
-  variables:
-    EIGEN_CI_BUILD_TARGET: buildsmoketests
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-# MSVC 14.29 32-bit (VS 2019)
-build:windows:x86:msvc-14.29:avx512dq:smoketest:
-  extends: build:windows:x86-64:msvc-14.29:avx512dq:smoketest
-  variables:
-    EIGEN_CI_MSVC_ARCH: "x86"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

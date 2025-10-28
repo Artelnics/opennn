@@ -26,7 +26,7 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Example." << endl;
 
-        // Data set
+        // Dataset
 
         Dataset dataset("../data/breast_cancer.csv", ";", true, false);
 

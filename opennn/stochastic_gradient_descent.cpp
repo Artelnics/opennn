@@ -58,8 +58,8 @@ void StochasticGradientDescent::set_default()
 
     // TRAINING OPERATORS
 
-    initial_learning_rate = type(0.01);
-    initial_decay = type(0);
+    initial_learning_rate = type(0.001);
+    initial_decay = type(0.001);
     momentum = type(0);
     nesterov = false;
 
@@ -198,7 +198,7 @@ TrainingResults StochasticGradientDescent::train()
 
     if(display) cout << "Training with stochastic gradient descent (SGD)...\n";
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -274,10 +274,7 @@ TrainingResults StochasticGradientDescent::train()
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = false;
-
-    if(neural_network->has("Recurrent"))
-        shuffle = false;
+    bool shuffle = !neural_network->has("Recurrent");
 
     // Main loop
 
@@ -300,7 +297,7 @@ TrainingResults StochasticGradientDescent::train()
         {
             optimization_data.iteration++;
 
-            // Data set
+            // Dataset
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
@@ -336,7 +333,6 @@ TrainingResults StochasticGradientDescent::train()
 
         // Loss
 
-        //training_loss /= type(batches_number);
         training_error /= type(batches_number);
 
         results.training_error_history(epoch) = training_error;
@@ -349,7 +345,7 @@ TrainingResults StochasticGradientDescent::train()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
@@ -360,9 +356,7 @@ TrainingResults StochasticGradientDescent::train()
 
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                                   selection_forward_propagation,
-                                                  false);
-
-                results.selection_error_history(epoch) = selection_error;
+                                                  is_training);
 
                 // Loss
 
@@ -407,7 +401,7 @@ TrainingResults StochasticGradientDescent::train()
         }
         else if(results.training_error_history(epoch) < training_loss_goal)
         {
-            if (display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
             results.stopping_condition  = StoppingCondition::LossGoal;
         }
         else if(selection_failures >= maximum_selection_failures)
@@ -559,7 +553,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     if (display) cout << "Training with stochastic gradient descent (SGD) CUDA...\n";
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
 
@@ -669,7 +663,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         {
             optimization_data.iteration++;
 
-            // Data set
+            // Dataset
 
             training_batch_cuda.fill(training_batches[iteration],
                                      input_variable_indices,
@@ -716,7 +710,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             for (Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-                // Data set
+                // Dataset
 
                 selection_batch_cuda->fill(selection_batches[iteration],
                                            input_variable_indices,

@@ -89,7 +89,7 @@ struct simpl_chol_helper {
         m_set[u] = v;
         u = next;
       }
-    };
+    }
   };
 
   // Computes the higher adjacency pattern by transposing the input lower adjacency matrix.
@@ -273,6 +273,10 @@ struct simpl_chol_helper {
     init_matrix(size, tmp4, L);
   }
 };
+
+// Symbol is ODR-used, so we need a definition.
+template <typename Scalar, typename StorageIndex>
+constexpr StorageIndex simpl_chol_helper<Scalar, StorageIndex>::kEmpty;
 
 }  // namespace internal
 

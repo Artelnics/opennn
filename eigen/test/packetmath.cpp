@@ -44,16 +44,16 @@ template <typename Scalar>
 struct madd_impl<Scalar,
                  std::enable_if_t<Eigen::internal::is_scalar<Scalar>::value && Eigen::NumTraits<Scalar>::IsSigned>> {
   static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar madd(const Scalar& a, const Scalar& b, const Scalar& c) {
-    return numext::fma(a, b, c);
+    return numext::madd(a, b, c);
   }
   static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar msub(const Scalar& a, const Scalar& b, const Scalar& c) {
-    return numext::fma(a, b, Scalar(-c));
+    return numext::madd(a, b, Scalar(-c));
   }
   static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmadd(const Scalar& a, const Scalar& b, const Scalar& c) {
-    return numext::fma(Scalar(-a), b, c);
+    return numext::madd(Scalar(-a), b, c);
   }
   static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar nmsub(const Scalar& a, const Scalar& b, const Scalar& c) {
-    return -Scalar(numext::fma(a, b, c));
+    return -Scalar(numext::madd(a, b, c));
   }
 };
 

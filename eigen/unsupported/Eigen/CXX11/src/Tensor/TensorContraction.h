@@ -700,8 +700,8 @@ struct TensorContractionEvaluatorBase {
     typedef std::remove_const_t<typename EvalRightArgType::Scalar> RhsScalar;
     typedef TensorEvaluator<EvalLeftArgType, Device> LeftEvaluator;
     typedef TensorEvaluator<EvalRightArgType, Device> RightEvaluator;
-    const Index lhs_packet_size = internal::unpacket_traits<typename LeftEvaluator::PacketReturnType>::size;
-    const Index rhs_packet_size = internal::unpacket_traits<typename RightEvaluator::PacketReturnType>::size;
+    const int lhs_packet_size = internal::unpacket_traits<typename LeftEvaluator::PacketReturnType>::size;
+    const int rhs_packet_size = internal::unpacket_traits<typename RightEvaluator::PacketReturnType>::size;
     const int lhs_alignment = LeftEvaluator::IsAligned ? Aligned : Unaligned;
     const int rhs_alignment = RightEvaluator::IsAligned ? Aligned : Unaligned;
     typedef internal::TensorContractionInputMapper<LhsScalar, Index, internal::Lhs, LeftEvaluator, left_nocontract_t,
@@ -770,8 +770,8 @@ struct TensorContractionEvaluatorBase {
     typedef TensorEvaluator<EvalLeftArgType, Device> LeftEvaluator;
     typedef TensorEvaluator<EvalRightArgType, Device> RightEvaluator;
 
-    const Index lhs_packet_size = internal::unpacket_traits<typename LeftEvaluator::PacketReturnType>::size;
-    const Index rhs_packet_size = internal::unpacket_traits<typename RightEvaluator::PacketReturnType>::size;
+    const int lhs_packet_size = internal::unpacket_traits<typename LeftEvaluator::PacketReturnType>::size;
+    const int rhs_packet_size = internal::unpacket_traits<typename RightEvaluator::PacketReturnType>::size;
 
     typedef internal::TensorContractionInputMapper<LhsScalar, Index, internal::Lhs, LeftEvaluator, left_nocontract_t,
                                                    contract_t, lhs_packet_size, lhs_inner_dim_contiguous, false,

@@ -325,22 +325,25 @@ TEST(GeneticAlgorithmTest, Mutation)
 
 TEST(GeneticAlgorithmTest, InputSelection_StopsByErrorGoal)
 {
-    const Index inputs_number = 2;
+    const Index inputs_number = 3;
     Dataset dataset(20, { inputs_number }, { 1 });
-    ApproximationNetwork neural_network({ inputs_number }, { 6 }, { 1 });
-    TrainingStrategy training_strategy(&neural_network, &dataset);
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     Tensor<type, 2> data(20, inputs_number + 1);
     for (Index i = 0; i < 20; i++) {
         data(i, 0) = type(i) / 20.0;
         data(i, 1) = type(10.0);
+        data(i, 2) = type(10.0);
         data(i, 2) = type(i) / 20.0;
     }
     dataset.set_data(data);
     dataset.set_raw_variable_use(0, "Input");
     dataset.set_raw_variable_use(1, "Input");
-    dataset.set_raw_variable_use(2, "Target");
+    dataset.set_raw_variable_use(2, "None");
+    dataset.set_raw_variable_use(3, "Target");
+
+    ApproximationNetwork neural_network(dataset.get_input_dimensions(), {6}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);
@@ -359,9 +362,6 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByMaxEpochs)
 {
     const Index inputs_number = 2;
     Dataset dataset(20, { inputs_number }, { 1 });
-    ApproximationNetwork neural_network({ inputs_number }, { 6 }, { 1 });
-    TrainingStrategy training_strategy(&neural_network, &dataset);
-    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     Tensor<type, 2> data(20, inputs_number + 1);
     for (Index i = 0; i < 20; i++) {
@@ -373,6 +373,10 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByMaxEpochs)
     dataset.set_raw_variable_use(0, "Input");
     dataset.set_raw_variable_use(1, "Input");
     dataset.set_raw_variable_use(2, "Target");
+
+    ApproximationNetwork neural_network(dataset.get_input_dimensions(), {6}, {1});
+    TrainingStrategy training_strategy(&neural_network, &dataset);
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);

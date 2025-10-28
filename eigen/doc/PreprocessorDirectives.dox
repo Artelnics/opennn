@@ -18,9 +18,6 @@ one option, and other parts (or libraries that you use) are compiled with anothe
 fail to link or exhibit subtle bugs. Nevertheless, these options can be useful for people who know what they
 are doing.
 
- - \b EIGEN2_SUPPORT and \b EIGEN2_SUPPORT_STAGEnn_xxx are disabled starting from the 3.3 release.
-   Defining one of these will raise a compile-error. If you need to compile Eigen2 code,
-   <a href="http://eigen.tuxfamily.org/index.php?title=Eigen2">check this site</a>.
  - \b EIGEN_DEFAULT_DENSE_INDEX_TYPE - the type for column and row indices in matrices, vectors and array
    (DenseBase::Index). Set to \c std::ptrdiff_t by default.
  - \b EIGEN_DEFAULT_IO_FORMAT - the IOFormat to use when printing a matrix if no %IOFormat is specified.
@@ -44,7 +41,7 @@ are doing.
    preferable. Not defined by default.
    \warning See the documentation of \c EIGEN_INITIALIZE_MATRICES_BY_ZERO for a discussion on a limitations
    of these macros when applied to \c 1x1, \c 1x2, and \c 2x1 fixed-size matrices.
- - \b EIGEN_NO_AUTOMATIC_RESIZING - if defined, the matrices (or arrays) on both sides of an assignment 
+ - \b EIGEN_NO_AUTOMATIC_RESIZING - if defined, the matrices (or arrays) on both sides of an assignment
    <tt>a = b</tt> have to be of the same size; otherwise, %Eigen automatically resizes \c a so that it is of
    the correct size. Not defined by default.
 
@@ -72,8 +69,8 @@ The %Eigen library contains many assertions to guard against programming errors,
 run time. However, these assertions do cost time and can thus be turned off.
 
  - \b EIGEN_NO_DEBUG - disables %Eigen's assertions if defined. Not defined by default, unless the
-   \c NDEBUG macro is defined (this is a standard C++ macro which disables all asserts). 
- - \b EIGEN_NO_STATIC_ASSERT - if defined, compile-time static assertions are replaced by runtime assertions; 
+   \c NDEBUG macro is defined (this is a standard C++ macro which disables all asserts).
+ - \b EIGEN_NO_STATIC_ASSERT - if defined, compile-time static assertions are replaced by runtime assertions;
    this saves compilation time. Not defined by default.
  - \b eigen_assert - macro with one argument that is used inside %Eigen for assertions. By default, it is
    basically defined to be \c assert, which aborts the program if the assertion is violated. Redefine this
@@ -90,7 +87,7 @@ run time. However, these assertions do cost time and can thus be turned off.
  Let us emphasize that \c EIGEN_MAX_*_ALIGN_BYTES define only a desirable upper bound. In practice data is aligned to largest power-of-two common divisor of \c EIGEN_MAX_STATIC_ALIGN_BYTES and the size of the data, such that memory is not wasted.
  - \b \c EIGEN_DONT_PARALLELIZE - if defined, this disables multi-threading. This is only relevant if you enabled OpenMP.
    See \ref TopicMultiThreading for details.
- - \b \c EIGEN_DONT_VECTORIZE - disables explicit vectorization when defined. Not defined by default, unless 
+ - \b \c EIGEN_DONT_VECTORIZE - disables explicit vectorization when defined. Not defined by default, unless
    alignment is disabled by %Eigen's platform test or the user defining \c EIGEN_DONT_ALIGN.
  - \b \c EIGEN_UNALIGNED_VECTORIZE - disables/enables vectorization with unaligned stores. Default is 1 (enabled).
    If set to 0 (disabled), then expression for which the destination cannot be aligned are not vectorized (e.g., unaligned

@@ -21,7 +21,7 @@ public:
 
     GeneticAlgorithm(const TrainingStrategy* = nullptr);
 
-    enum class InitializationMethod{Random,Correlations};
+    //enum class InitializationMethod{Random,Correlations};
 
     const Tensor<bool, 2>& get_population() const;
 
@@ -35,7 +35,7 @@ public:
 
     Index get_individuals_number() const;
 
-    Index get_raw_variables_number() const;
+    Index get_genes_number() const;
 
     const Index& get_minimum_inputs_number() const override;
     const Index& get_maximum_inputs_number() const override;
@@ -44,7 +44,7 @@ public:
 
     const Index& get_elitism_size() const;
 
-    const InitializationMethod& get_initialization_method() const;
+    const string& get_initialization_method() const;
 
     void set_default();
 
@@ -55,7 +55,7 @@ public:
 
     void set_individuals_number(const Index& new_individuals_number = 4);
 
-    void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
+    void set_initialization_method(const string&);
 
     void set_mutation_rate(const type&);
 
@@ -77,11 +77,15 @@ public:
 
     void perform_selection();
 
+    Tensor<bool, 1> cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2);
+
     void perform_crossover();
 
     void perform_mutation();
 
-    vector<Index> get_selected_individuals_indices() const;
+    Index get_selected_individuals_number() const;
+
+    vector<Index> get_selected_individual_indices() const;
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
@@ -103,12 +107,9 @@ private:
 
     Tensor<Tensor<type, 1>, 1> parameters;
 
-    vector<bool> original_input_raw_variables;
-
-    vector<bool> original_unused_raw_variables;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
     
-    Tensor<type, 1> fitness_correlations;
-
     Tensor<bool, 2> population;
 
     Tensor<type, 1> training_errors;
@@ -134,7 +135,9 @@ private:
 
     Index elitism_size;
 
-    InitializationMethod initialization_method;
+    string initialization_method;
+
+    random_device rd;
 };
 
 }

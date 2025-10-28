@@ -9,8 +9,7 @@ deploy:tag:nightly:
     - git tag -f nightly $CI_COMMIT_SHORT_SHA
     - git push -f $EIGEN_CI_GIT_PUSH_URL tag nightly
   tags:
-    - linux
-    - eigen-runner
+    - saas-linux-small-amd64
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -33,11 +32,10 @@ deploy:docs:
     paths:
       - public
   tags:
-    - eigen-runner
-    - linux
+    - saas-linux-small-amd64
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
     - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_NAMESPACE == "libeigen" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       variables:
         PAGES_PREFIX: docs-$CI_COMMIT_REF_NAME

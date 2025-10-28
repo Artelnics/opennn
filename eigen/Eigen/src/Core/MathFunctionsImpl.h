@@ -28,7 +28,7 @@ namespace internal {
    2. If a is zero, approx_a_recip must be infinite with the same sign as a.
    3. If a is infinite, approx_a_recip must be zero with the same sign as a.
 
-   If the preconditions are satisfied, which they are for for the _*_rcp_ps
+   If the preconditions are satisfied, which they are for the _*_rcp_ps
    instructions on x86, the result has a maximum relative error of 2 ulps,
    and correctly handles reciprocals of zero, infinity, and NaN.
 */
@@ -66,7 +66,7 @@ struct generic_reciprocal_newton_step<Packet, 0> {
    2. If a is zero, approx_a_recip must be infinite with the same sign as a.
    3. If a is infinite, approx_a_recip must be zero with the same sign as a.
 
-   If the preconditions are satisfied, which they are for for the _*_rcp_ps
+   If the preconditions are satisfied, which they are for the _*_rcp_ps
    instructions on x86, the result has a maximum relative error of 2 ulps,
    and correctly handles zero, infinity, and NaN. Positive denormals are
    treated as zero.
@@ -116,7 +116,7 @@ struct generic_rsqrt_newton_step<Packet, 0> {
    2. If a is zero, approx_rsqrt must be infinite.
    3. If a is infinite, approx_rsqrt must be zero.
 
-   If the preconditions are satisfied, which they are for for the _*_rsqrt_ps
+   If the preconditions are satisfied, which they are for the _*_rsqrt_ps
    instructions on x86, the result has a maximum relative error of 2 ulps,
    and correctly handles zero and infinity, and NaN. Positive denormal inputs
    are treated as zero.

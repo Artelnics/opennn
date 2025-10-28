@@ -325,6 +325,22 @@ class SelfAdjointEigenSolver {
     return m_eivec * m_eivalues.cwiseSqrt().asDiagonal() * m_eivec.adjoint();
   }
 
+  /** \brief Computes the matrix exponential the matrix.
+   *
+   * \returns the matrix exponential the matrix.
+   *
+   * \pre The eigenvalues and eigenvectors of a positive-definite matrix
+   * have been computed before.
+   *
+   * \sa operatorInverseSqrt(), operatorSqrt(),
+   * <a href="unsupported/group__MatrixFunctions__Module.html">MatrixFunctions Module</a>
+   */
+  EIGEN_DEVICE_FUNC MatrixType operatorExp() const {
+    eigen_assert(m_isInitialized && "SelfAdjointEigenSolver is not initialized.");
+    eigen_assert(m_eigenvectorsOk && "The eigenvectors have not been computed together with the eigenvalues.");
+    return m_eivec * m_eivalues.array().exp().matrix().asDiagonal() * m_eivec.adjoint();
+  }
+
   /** \brief Computes the inverse square root of the matrix.
    *
    * \returns the inverse positive-definite square root of the matrix

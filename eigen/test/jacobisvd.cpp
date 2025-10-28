@@ -94,6 +94,19 @@ void jacobisvd_verify_inputs(const MatrixType& input = MatrixType()) {
           (int)ColPivHouseholderQRPreconditioner));
 }
 
+template <typename MatrixType>
+void svd_triangular_matrix(const MatrixType& input = MatrixType()) {
+  MatrixType matrix(input.rows(), input.cols());
+  svd_fill_random(matrix);
+  // Make sure that we only consider the 'Lower' part of the matrix.
+  MatrixType matrix_self_adj = matrix.template selfadjointView<Lower>().toDenseMatrix();
+
+  JacobiSVD<MatrixType, ComputeFullV> svd_triangular(matrix.template selfadjointView<Lower>());
+  JacobiSVD<MatrixType, ComputeFullV> svd_full(matrix_self_adj);
+
+  VERIFY_IS_APPROX(svd_triangular.singularValues(), svd_full.singularValues());
+}
+
 namespace Foo {
 // older compiler require a default constructor for Bar
 // cf: https://stackoverflow.com/questions/7411515/
@@ -210,6 +223,11 @@ EIGEN_DECLARE_TEST(jacobisvd) {
   CALL_SUBTEST_54(svd_preallocate<void>());
 
   CALL_SUBTEST_55(svd_underoverflow<void>());
+
+  // Check that the TriangularBase constructor works
+  CALL_SUBTEST_56((svd_triangular_matrix<Matrix3d>()));
+  CALL_SUBTEST_57((svd_triangular_matrix<Matrix4f>()));
+  CALL_SUBTEST_58((svd_triangular_matrix<Matrix<double, 10, 10>>()));
 
   msvc_workaround();
 }

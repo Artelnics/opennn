@@ -39,7 +39,8 @@ void permutationmatrices(const MatrixType& m) {
   RightTranspositionsType rt(rv);
   MatrixType m_permuted = MatrixType::Random(rows, cols);
 
-  VERIFY_EVALUATION_COUNT(m_permuted = lp * m_original * rp, 1);  // 1 temp for sub expression "lp * m_original"
+  VERIFY_EVALUATION_COUNT(m_permuted.noalias() = lp * m_original * rp,
+                          1);  // 1 temp for sub expression "lp * m_original"
 
   for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++) VERIFY_IS_APPROX(m_permuted(lv(i), j), m_original(i, rv(j)));
@@ -50,7 +51,7 @@ void permutationmatrices(const MatrixType& m) {
   VERIFY_IS_APPROX(m_permuted, lm * m_original * rm);
 
   m_permuted = m_original;
-  VERIFY_EVALUATION_COUNT(m_permuted = lp * m_permuted * rp, 1);
+  VERIFY_EVALUATION_COUNT(m_permuted.noalias() = lp * m_permuted * rp, 1);
   VERIFY_IS_APPROX(m_permuted, lm * m_original * rm);
 
   LeftPermutationType lpi;
@@ -169,6 +170,26 @@ void bug890() {
   VERIFY_IS_APPROX(v1, (P.inverse() * rhs).eval());
 }
 
+void test_aliasing() {
+  // Bug #2869.
+  auto P = Eigen::PermutationMatrix<4>{Eigen::Vector4i{0, 2, 3, 1}};
+  {
+    Eigen::Vector<float, 5> z = {0.0f, 1.1f, 2.2f, 3.3f, 4.4f};
+    Eigen::Vector<float, 5> expected = z;
+    z.tail<4>() = P * z.head<4>();
+    expected.tail<4>() = (P * expected.head<4>()).eval();
+    VERIFY_IS_APPROX(z, expected);
+  }
+
+  {
+    // Obfuscate the aliasing in the RHS expression.
+    Eigen::Vector4f a = {1.1f, 2.2f, 3.3f, 4.4f};
+    Eigen::Vector4f expected = P * (a + Eigen::Vector4f::Zero()).cwiseSqrt();
+    a = P * (a + Eigen::Vector4f::Zero()).cwiseSqrt();
+    VERIFY_IS_APPROX(a, expected);
+  }
+}
+
 EIGEN_DECLARE_TEST(permutationmatrices) {
   for (int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST_1(permutationmatrices(Matrix<float, 1, 1>()));
@@ -182,4 +203,5 @@ EIGEN_DECLARE_TEST(permutationmatrices) {
         MatrixXcf(internal::random<int>(1, EIGEN_TEST_MAX_SIZE), internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
   }
   CALL_SUBTEST_5(bug890<double>());
+  CALL_SUBTEST_4(test_aliasing());
 }

@@ -109,7 +109,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     type previus_selection_error = numeric_limits< type>::max();
     type previus_training_error = numeric_limits< type>::max();
 
-    // Data set
+    // Dataset
 
     Dataset* dataset = loss_index->get_dataset();
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);

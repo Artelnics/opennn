@@ -346,6 +346,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 {
     const Index rows_number = correlations.dimension(0);
     const Index columns_number = correlations.dimension(1);
+
     Tensor<type, 2> values(rows_number, columns_number);
 
     for(Index i = 0; i < rows_number; i++)

@@ -786,13 +786,10 @@ Index Dataset::get_raw_variables_number(const string& variable_use) const
 
 Index Dataset::get_used_raw_variables_number() const
 {
-    Index used_raw_variables_number = 0;
-
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use != "None")
-            used_raw_variables_number++;
-
-    return used_raw_variables_number;
+    return count_if(raw_variables.begin(), raw_variables.end(),
+                    [](const RawVariable& var) {
+                          return var.use != "None";
+                    });
 }
 
 
@@ -819,14 +816,10 @@ vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_u
 
 Index Dataset::get_variables_number() const
 {
-    Index count = 0;
-
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
-        count += raw_variable.type == RawVariableType::Categorical
-                     ? raw_variable.get_categories_number()
-                     : 1;
-
-    return count;
+    return accumulate(raw_variables.begin(), raw_variables.end(), 0,
+                      [](Index sum, const RawVariable& var) {
+                      return sum + (var.type == RawVariableType::Categorical ? var.get_categories_number() : 1);
+                      });
 }
 
 
@@ -2449,6 +2442,25 @@ void Dataset::print_top_inputs_correlations() const
 
     for (it = top_correlation.begin(); it != top_correlation.end(); it++)
         if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
+}
+
+
+Tensor<Index, 1> Dataset::calculate_correlations_rank() const
+{
+    const Tensor<Correlation, 2> correlations
+        = calculate_input_target_raw_variable_pearson_correlations();
+
+    const Tensor<type, 2> absolute_correlations = get_correlation_values(correlations).abs();
+
+    Tensor<type, 1> absolute_mean_correlations(absolute_correlations.dimension(0));
+
+    for (Index i = 0; i < absolute_correlations.dimension(0); i++)
+    {
+        const Tensor<type, 1> row_correlations = absolute_correlations.chip(i, 0);
+        absolute_mean_correlations(i) = mean(row_correlations);
+    }
+
+    return calculate_rank_less(absolute_mean_correlations);
 }
 
 

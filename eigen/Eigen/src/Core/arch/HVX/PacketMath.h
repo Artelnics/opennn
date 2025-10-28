@@ -400,8 +400,25 @@ EIGEN_STRONG_INLINE Packet8f pnegate(const Packet8f& a) {
 }
 
 template <HVXPacketSize T>
+EIGEN_STRONG_INLINE HVXPacket<T> ptrue_hvx(const HVXPacket<T>& a) {
+  return HVXPacket<T>::Create(Q6_V_vsplat_R(0x3f800000));
+}
+template <>
+EIGEN_STRONG_INLINE Packet32f ptrue(const Packet32f& a) {
+  return ptrue_hvx(a);
+}
+template <>
+EIGEN_STRONG_INLINE Packet16f ptrue(const Packet16f& a) {
+  return ptrue_hvx(a);
+}
+template <>
+EIGEN_STRONG_INLINE Packet8f ptrue(const Packet8f& a) {
+  return ptrue_hvx(a);
+}
+
+template <HVXPacketSize T>
 EIGEN_STRONG_INLINE HVXPacket<T> pcmp_le_hvx(const HVXPacket<T>& a, const HVXPacket<T>& b) {
-  HVX_Vector v_true = Q6_Vb_vsplat_R(0xff);
+  HVX_Vector v_true = ptrue(a).Get();
   HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(a.Get(), b.Get());
   return HVXPacket<T>::Create(Q6_V_vmux_QVV(pred, Q6_V_vzero(), v_true));
 }
@@ -420,7 +437,7 @@ EIGEN_STRONG_INLINE Packet8f pcmp_le(const Packet8f& a, const Packet8f& b) {
 
 template <HVXPacketSize T>
 EIGEN_STRONG_INLINE HVXPacket<T> pcmp_eq_hvx(const HVXPacket<T>& a, const HVXPacket<T>& b) {
-  HVX_Vector v_true = Q6_Vb_vsplat_R(0xff);
+  HVX_Vector v_true = ptrue(a).Get();
   HVX_VectorPred pred = Q6_Q_vcmp_eq_VwVw(a.Get(), b.Get());
   return HVXPacket<T>::Create(Q6_V_vmux_QVV(pred, v_true, Q6_V_vzero()));
 }
@@ -439,7 +456,7 @@ EIGEN_STRONG_INLINE Packet8f pcmp_eq(const Packet8f& a, const Packet8f& b) {
 
 template <HVXPacketSize T>
 EIGEN_STRONG_INLINE HVXPacket<T> pcmp_lt_hvx(const HVXPacket<T>& a, const HVXPacket<T>& b) {
-  HVX_Vector v_true = Q6_Vb_vsplat_R(0xff);
+  HVX_Vector v_true = ptrue(a).Get();
   HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(b.Get(), a.Get());
   return HVXPacket<T>::Create(Q6_V_vmux_QVV(pred, v_true, Q6_V_vzero()));
 }
@@ -458,7 +475,7 @@ EIGEN_STRONG_INLINE Packet8f pcmp_lt(const Packet8f& a, const Packet8f& b) {
 
 template <HVXPacketSize T>
 EIGEN_STRONG_INLINE HVXPacket<T> pcmp_lt_or_nan_hvx(const HVXPacket<T>& a, const HVXPacket<T>& b) {
-  HVX_Vector v_true = Q6_Vb_vsplat_R(0xff);
+  HVX_Vector v_true = ptrue(a).Get();
   HVX_VectorPred pred = Q6_Q_vcmp_gt_VsfVsf(b.Get(), a.Get());
   return HVXPacket<T>::Create(Q6_V_vmux_QVV(pred, v_true, Q6_V_vzero()));
 }

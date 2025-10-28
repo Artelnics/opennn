@@ -734,7 +734,7 @@ void comparisons(const ArrayType& m) {
   VERIFY_IS_CWISE_EQUAL(m1.abs().cwiseLessOrEqual(NumTraits<Scalar>::highest()), bool_true);
   VERIFY_IS_CWISE_EQUAL(m1.abs().cwiseGreaterOrEqual(Scalar(0)), bool_true);
 
-  // test Select
+  // test select
   VERIFY_IS_APPROX((m1 < m2).select(m1, m2), m1.cwiseMin(m2));
   VERIFY_IS_APPROX((m1 > m2).select(m1, m2), m1.cwiseMax(m2));
   Scalar mid = (m1.cwiseAbs().minCoeff() + m1.cwiseAbs().maxCoeff()) / Scalar(2);
@@ -762,6 +762,18 @@ void comparisons(const ArrayType& m) {
   VERIFY_IS_APPROX(((m1.abs() + 1) > RealScalar(0.1)).colwise().count(),
                    ArrayOfIndices::Constant(cols, rows).transpose());
   VERIFY_IS_APPROX(((m1.abs() + 1) > RealScalar(0.1)).rowwise().count(), ArrayOfIndices::Constant(rows, cols));
+
+  // simple data type that does not permit implicit conversions
+  struct scalar_wrapper {
+    Scalar m_data;
+    scalar_wrapper() : m_data(0) {}
+    explicit scalar_wrapper(Scalar data) : m_data(data) {}
+    bool operator==(scalar_wrapper other) const { return m_data == other.m_data; }
+  };
+
+  // test bug2966: select did not support some scalar types that forbade implicit conversions from bool
+  ArrayX<scalar_wrapper> m5(10);
+  m5 = (m5 == scalar_wrapper(0)).select(m5, m5);
 }
 
 template <typename ArrayType>
@@ -1340,7 +1352,7 @@ EIGEN_DECLARE_TEST(array_cwise) {
     CALL_SUBTEST_3(array_generic(Array44d()));
     CALL_SUBTEST_4(array_generic(
         ArrayXXcf(internal::random<int>(1, EIGEN_TEST_MAX_SIZE), internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
-    CALL_SUBTEST_7(array_generic(
+    CALL_SUBTEST_5(array_generic(
         ArrayXXf(internal::random<int>(1, EIGEN_TEST_MAX_SIZE), internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));
     CALL_SUBTEST_8(array_generic(
         ArrayXXi(internal::random<int>(1, EIGEN_TEST_MAX_SIZE), internal::random<int>(1, EIGEN_TEST_MAX_SIZE))));

@@ -281,7 +281,7 @@ public:
 
     void set_dimensions(const string&, const dimensions&);
 
-    // Data set
+    // Dataset
 
     void set_data(const Tensor<type, 2>&);
 
@@ -363,10 +363,9 @@ public:
 
     vector<Histogram> calculate_raw_variable_distributions(const Index& = 10) const;
 
-    // Box and whiskers
+    // Box plots
 
     vector<BoxPlot> calculate_raw_variables_box_plots() const;
-    //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
 
@@ -382,6 +381,8 @@ public:
 
     Tensor<Correlation, 2> calculate_input_target_raw_variable_pearson_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_raw_variable_spearman_correlations() const;
+
+    Tensor<Index, 1> calculate_correlations_rank() const;
 
     void print_input_target_raw_variables_correlations() const;
 
