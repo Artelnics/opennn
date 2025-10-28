@@ -550,45 +550,53 @@ void GeneticAlgorithm::perform_crossover()
 void GeneticAlgorithm::perform_mutation()
 {
     const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
+    mt19937 gen(rd());
 
-    const Index raw_variables_number = original_input_raw_variable_indices.size();
-/*
-    for(Index i = 0; i < individuals_number; i++)
+    for (Index i = 0; i < individuals_number; i++)
     {
-        Tensor<bool, 1> individual_raw_variables = population.chip(i, 0);
+        Tensor<bool, 1> individual = population.chip(i, 0);
 
-        for(Index j = 0; j < raw_variables_number; j++)
-            individual_raw_variables(j) ^= (get_random_type(0, 1) < mutation_rate);
+        for (Index j = 0; j < genes_number; j++)
+            if (get_random_type(0, 1) < mutation_rate)
+                individual(j) = !individual(j);
 
-        Index active_inputs = count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), true);
+        Index active_genes = count(individual.data(), individual.data() + genes_number, true);
 
-        while (active_inputs < minimum_inputs_number) {
-            Index random_pos = rand() % raw_variables_number;
-            if (!individual_raw_variables(random_pos)) {
-                individual_raw_variables(random_pos) = true;
-                active_inputs++;
-            }
+        while (active_genes < minimum_inputs_number)
+        {
+            vector<Index> inactive_indices;
+            for (Index j = 0; j < genes_number; ++j)
+                if (!individual(j)) inactive_indices.push_back(j);
+
+            if (inactive_indices.empty()) break;
+
+            shuffle(inactive_indices.begin(), inactive_indices.end(), gen);
+            individual(inactive_indices[0]) = true;
+            active_genes++;
         }
 
-        while (active_inputs > maximum_inputs_number) {
-            Index random_pos = rand() % raw_variables_number;
-            if (individual_raw_variables(random_pos)) {
-                individual_raw_variables(random_pos) = false;
-                active_inputs--;
-            }
+        while (active_genes > maximum_inputs_number)
+        {
+            vector<Index> active_indices;
+            for (Index j = 0; j < genes_number; ++j)
+                if (individual(j)) active_indices.push_back(j);
+
+            if (active_indices.empty()) break;
+
+            shuffle(active_indices.begin(), active_indices.end(), gen);
+            individual(active_indices[0]) = false;
+            active_genes--;
         }
 
-        if(is_equal(individual_raw_variables, false))
-            for(Index j = 0; j < raw_variables_number; j++)
-                if(original_input_raw_variables[j])
-                    individual_raw_variables[j] = true;
+        if (active_genes == 0 && genes_number > 0)
+        {
+            const Index random_pos = get_random_index(0, genes_number - 1);
+            individual(random_pos) = true;
+        }
 
-        if(is_equal(individual_raw_variables, false))
-            individual_raw_variables.setConstant(true);
-
-        population.chip(i, 0) = individual_raw_variables;
+        population.chip(i, 0) = individual;
     }
-*/
 }
 
 
@@ -790,22 +798,14 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 vector<Index> GeneticAlgorithm::get_raw_variable_indices(const Tensor<bool, 1>& individual_raw_variables)
 {
     vector<Index> indices;
+    indices.reserve(individual_raw_variables.size());
 
     for (Index i = 0; i < individual_raw_variables.size(); ++i)
-        if (individual_raw_variables(i) && original_input_raw_variable_indices[i])
-            indices.push_back(i);
+        if (individual_raw_variables(i))
+            indices.push_back(original_input_raw_variable_indices[i]);
 
-    // Ensure at least one index is selected
-
-    if (indices.empty())
-    {
-        for (Index i = 0; i < original_input_raw_variable_indices.size(); ++i)
-            if (original_input_raw_variable_indices[i])
-            {
-                indices.push_back(i);
-                break;
-            }
-    }
+    if (indices.empty() && !original_input_raw_variable_indices.empty())
+        indices.push_back(original_input_raw_variable_indices[0]);
 
     return indices;
 }

@@ -335,12 +335,14 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByErrorGoal)
     for (Index i = 0; i < 20; i++) {
         data(i, 0) = type(i) / 20.0;
         data(i, 1) = type(10.0);
+        //data(i, 2) = type(10.0);
         data(i, 2) = type(i) / 20.0;
     }
     dataset.set_data(data);
     dataset.set_raw_variable_use(0, "Input");
     dataset.set_raw_variable_use(1, "Input");
     dataset.set_raw_variable_use(2, "Target");
+    //dataset.set_raw_variable_use(3, "Target");
 
     genetic_algorithm.set_display(false);
     genetic_algorithm.set_individuals_number(6);
