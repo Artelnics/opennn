@@ -121,16 +121,7 @@ type get_random_type(const type& = type(-1), const type& = type(1));
 
 bool get_random_bool();
 
-Index get_random_element(const vector<Index>& values)
-{
-    random_device rd;
-    mt19937 gen(rd());
-
-    uniform_int_distribution<> dist(0, values.size() - 1);
-
-    return values[dist(gen)];
-}
-
+Index get_random_element(const vector<Index>&);
 
 template<int rank>
 void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)

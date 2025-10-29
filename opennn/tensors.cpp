@@ -40,8 +40,21 @@ type get_random_type(const type& minimum, const type& maximum)
 
 bool get_random_bool()
 {
-    //return arc4random() % 2 == 1;
-    return 0;
+    static mt19937 gen(random_device{}());
+
+    static bernoulli_distribution dist(0.5);
+
+    return dist(gen);
+}
+
+
+Index get_random_element(const vector<Index>& values)
+{
+    static mt19937 gen(random_device{}());
+
+    uniform_int_distribution<Index> dist(0, values.size() - 1);
+
+    return values[dist(gen)];
 }
 
 

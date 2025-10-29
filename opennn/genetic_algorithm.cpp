@@ -267,8 +267,8 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     population.setConstant(false);
 
-    const Tensor<Index, 1> correlations_rank = dataset->calculate_correlations_rank() + Index(1);
-/*
+    const Tensor<type, 1> correlations_rank = dataset->calculate_correlations_rank().template cast<type>() + type(1.0);
+
     const Tensor<type, 0> correlations_sum = correlations_rank.sum();
     const Tensor<type, 1> correlations_cumsum = correlations_rank.cumsum(0);
 
@@ -295,7 +295,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         population.chip(i, 0) = individual_genes;
     }
-*/
 }
 
 
@@ -402,45 +401,19 @@ void GeneticAlgorithm::perform_selection()
         for(Index i = 0; i < individuals_number; i++)
             selection(i) = (fitness(i) - 1 >= 0) && (fitness(i) > (individuals_number - elitism_size));
 
-    // The next individuals are selected randomly but their probability is set according to their fitness
+    const Tensor<type, 1> fitness_cumsum = fitness.cumsum(0);
 
-    while(get_selected_individuals_number() < individuals_to_be_selected)
+    const type* begin = fitness_cumsum.data();
+    const type* end = begin + individuals_number;
+
+    while (get_selected_individuals_number() < individuals_to_be_selected)
     {
         const type arrow = get_random_type(type(0), fitness_sum());
 
-        type sum = type(0);
+        const Index i = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
 
-        // @todo simplify using upper_bound?
-
-        for(Index i = 0; i < individuals_number; i++)
-        {
-            sum += fitness(i);
-
-            if(arrow <= sum )
-            {
-                selection(i) = true;
-                break;
-            }
-        }
+        selection(i) = true;
     }
-}
-
-
-Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1> &parent_1, const Tensor<bool, 1> &parent_2)
-{
-    const Index genes_number = get_genes_number();
-
-    Tensor<bool, 1> descendent(genes_number);
-
-    for(Index i = 0; i < genes_number; i++)
-        descendent(i) = (parent_1(i) == parent_2(i)) ? parent_1(i) : get_random_bool();
-
-    if(is_equal(descendent, false))
-    {
-        // @todo do something
-    }
-
-    return descendent;
 }
 
 
@@ -466,21 +439,30 @@ vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 }
 
 
-void GeneticAlgorithm::perform_crossover()
+Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2)
 {
-
-    const Index individuals_number = get_individuals_number();
-
     const Index genes_number = get_genes_number();
 
-    // Couples generation
+    Tensor<bool, 1> descendent(genes_number);
+
+    for (Index i = 0; i < genes_number; i++)
+        descendent(i) = (parent_1(i) == parent_2(i)) ? parent_1(i) : get_random_bool();
+
+    if (is_equal(descendent, false))
+        descendent(get_random_index(0, genes_number - 1)) = true;
+
+    return descendent;
+}
+
+
+void GeneticAlgorithm::perform_crossover()
+{
+    const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
 
     Tensor<bool, 2> new_population(individuals_number, genes_number);
 
-    Tensor<bool, 1> descendent_genes(genes_number);
-
     Tensor<bool, 1> parent_1_genes;
-
     Tensor<bool, 1> parent_2_genes;
 
     mt19937 g(rd());
@@ -489,33 +471,34 @@ void GeneticAlgorithm::perform_crossover()
 
     vector<Index> selected_individual_indices = get_selected_individual_indices();
 
+    if (selected_individuals_number == 0)
+        throw logic_error("Cannot perform crossover with zero selected parents.");
+
     const vector<Index> parent_1_indices = selected_individual_indices;
     vector<Index> parent_2_indices = selected_individual_indices;
     shuffle(parent_2_indices.begin(), parent_2_indices.end(), g);
 
     Index descendent_index = 0;
 
-    for(size_t i = 0; i < selected_individuals_number; i++)
+    while (descendent_index < individuals_number)
     {
-        parent_1_genes = population.chip(selected_individual_indices[i], 0);
+        const Index parent_1_random_index = get_random_element(selected_individual_indices);
+        Index parent_2_random_index = get_random_element(selected_individual_indices);
 
-        for(size_t i = 0; i < 2; i++)
-        {//@todo
-/*
-            parent_2_genes = get_random_element(selected_individual_indices);
+        while (selected_individuals_number > 1 && parent_1_random_index == parent_2_random_index)
+            parent_2_random_index = get_random_element(selected_individual_indices);
 
-            descendent_genes = cross(parent_1_genes, parent_2_genes);
+        const Tensor<bool, 1> parent_1_genes = population.chip(parent_1_random_index, 0);
+        const Tensor<bool, 1> parent_2_genes = population.chip(parent_2_random_index, 0);
 
-            new_population.chip(descendent_index++, 0) = descendent_genes;
-*/
-        }
+        new_population.chip(descendent_index, 0) = cross(parent_1_genes, parent_2_genes);
+        descendent_index++;
     }
 
     if(descendent_index != individuals_number)
         throw logic_error("descendent_index != individuals_number");
 
     population = new_population;
-
 }
 
 

@@ -100,7 +100,7 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
     for (Index i = 0; i < samples_number; ++i) {
         type value = static_cast<type>(i);
         full_data(i, 0) = static_cast<type>(rand()) / RAND_MAX;
-        full_data(i, 1) = value;                              
+        full_data(i, 1) = value;                                                           
         full_data(i, 2) = value / 10.0 + (static_cast<type>(rand()) / RAND_MAX) * (samples_number / 10.0);
         full_data(i, 3) = value;                             
     }
@@ -111,15 +111,13 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
     dataset.set_raw_variable_use(2, "Input");
     dataset.set_raw_variable_use(3, "Target");
 
-    ApproximationNetwork neural_network({ inputs_number }, { 1 }, { targets_number });
+    ApproximationNetwork neural_network(dataset.get_input_dimensions(), {1}, {targets_number});
     TrainingStrategy training_strategy(&neural_network, &dataset);
     GeneticAlgorithm genetic_algorithm(&training_strategy);
 
     genetic_algorithm.set_individuals_number(individuals_number);
-
     genetic_algorithm.set_minimum_inputs_number(min_features_to_select);
     genetic_algorithm.set_maximum_inputs_number(max_features_to_select);
-
     genetic_algorithm.initialize_population_correlations();
 
     Tensor<bool, 2> population = genetic_algorithm.get_population();
@@ -132,10 +130,13 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
     bool found_min = false;
     bool found_max = false;
 
-    for (Index i = 0; i < individuals_number; i++) {
+    for (Index i = 0; i < individuals_number; i++) 
+    {
         Index active_genes_in_individual = 0;
-        for (Index j = 0; j < inputs_number; j++) {
-            if (population(i, j)) {
+        for (Index j = 0; j < inputs_number; j++) 
+        {
+            if (population(i, j)) 
+            {
                 counts(j)++;
                 active_genes_in_individual++;
             }

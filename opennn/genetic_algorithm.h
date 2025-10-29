@@ -77,7 +77,7 @@ public:
 
     void perform_selection();
 
-    Tensor<bool, 1> cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2);
+    Tensor<bool, 1> cross(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
 
     void perform_crossover();
 
