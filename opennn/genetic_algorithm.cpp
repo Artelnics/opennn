@@ -171,7 +171,7 @@ void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
     if (!training_strategy || !training_strategy->get_dataset())
-        throw runtime_error("Training strategy or data set is null");
+        throw runtime_error("Training strategy or dataset is null");
 
     const Index genes_number = get_genes_number();
 
@@ -674,7 +674,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             perform_mutation();
     }
 
-    // Set data set stuff
+    // Set dataset stuff
 
     const vector<Index> optimal_raw_variable_indices = get_raw_variable_indices(input_selection_results.optimal_inputs);
 

@@ -116,7 +116,7 @@ TrainingResults TrainingStrategy::train()
         throw runtime_error("Neural network is null.");
 
     if(!has_dataset())
-        throw runtime_error("Data set is null.");
+        throw runtime_error("Dataset is null.");
 
     if(!loss_index->has_neural_network() || !loss_index->has_dataset())
         throw runtime_error("Loss index is wrong.");
@@ -300,7 +300,7 @@ TrainingResults TrainingStrategy::train_cuda()
         throw runtime_error("Neural network is null.");
 
     if (!has_dataset())
-        throw runtime_error("Data set is null.");
+        throw runtime_error("Dataset is null.");
 
     if (!loss_index->has_neural_network() || !loss_index->has_dataset())
         throw runtime_error("Loss index is wrong.");

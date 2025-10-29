@@ -152,7 +152,7 @@ void TimeSeriesDataset::print() const
     const Index samples_number = get_samples_number();
     const Index target_variables_bumber = get_variables_number("Target");
 
-    cout << "Time series data set object summary:\n"
+    cout << "Time series dataset object summary:\n"
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
@@ -259,7 +259,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
     if(!data_set_element)
-        throw runtime_error("Data set element is nullptr.\n");
+        throw runtime_error("Dataset element is nullptr.\n");
 
     // Data file
 

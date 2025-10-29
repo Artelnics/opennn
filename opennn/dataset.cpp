@@ -2667,7 +2667,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
     if (!data_set_element)
-        throw runtime_error("Data set element is nullptr.\n");
+        throw runtime_error("Dataset element is nullptr.\n");
 
     // Data Source
     const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
@@ -2827,7 +2827,7 @@ void Dataset::print() const
     const Index testing_samples_number = get_samples_number("Testing");
     const Index unused_samples_number = get_samples_number("None");
 
-    cout << "Data set object summary:\n"
+    cout << "Dataset object summary:\n"
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"

@@ -382,7 +382,7 @@ void LanguageDataset::print_target_vocabulary() const
 
 void LanguageDataset::print() const
 {
-    cout << "Language data set" << endl
+    cout << "Language dataset" << endl
          << "Input vocabulary size: " << get_input_vocabulary_size() << endl
          << "Target vocabulary size: " << get_target_vocabulary_size() << endl
          << "Input length: " << get_input_sequence_length() << endl
@@ -397,7 +397,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
 
     if(!data_set_element)
-        throw runtime_error("Data set element is nullptr.\n");
+        throw runtime_error("Dataset element is nullptr.\n");
 
     const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 

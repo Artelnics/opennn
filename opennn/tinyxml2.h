@@ -917,7 +917,7 @@ public:
 	void SetUserData(void* userData)	{ _userData = userData; }
 
 
-// 		Get user data set into the XMLNode. TinyXML-2 in
+// 		Get user dataset into the XMLNode. TinyXML-2 in
 // 		no way processes or interprets user data.
 // 		It is initially 0.
 

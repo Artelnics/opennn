@@ -80,7 +80,7 @@ void TestingAnalysis::check() const
         throw runtime_error("Neural network pointer is nullptr.\n");
 
     if(!dataset)
-        throw runtime_error("Data set pointer is nullptr.\n");
+        throw runtime_error("Dataset pointer is nullptr.\n");
 }
 
 

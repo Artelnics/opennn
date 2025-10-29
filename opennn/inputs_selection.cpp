@@ -127,7 +127,7 @@ void InputsSelection::check() const
     // Dataset
 
     if(!loss_index->has_dataset())
-        throw runtime_error("Pointer to data set is nullptr.\n");
+        throw runtime_error("Pointer to dataset is nullptr.\n");
 
     const Dataset* dataset = loss_index->get_dataset();
 

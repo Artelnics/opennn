@@ -641,14 +641,11 @@ void ImageDataset::read_bmp(const dimensions& new_input_dimensions)
         long long seconds = (total_milliseconds % 60000) / 1000;
         long long milliseconds = total_milliseconds % 1000;
 
-        cout << "\nImage data set loaded in: "
+        cout << "\nImage dataset loaded in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;
     }
-
-    // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
-    // scale_variables("Input");
 }
 
 } // opennn namespace
