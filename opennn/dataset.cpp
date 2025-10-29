@@ -2445,6 +2445,25 @@ void Dataset::print_top_inputs_correlations() const
 }
 
 
+Tensor<Index, 1> Dataset::calculate_correlations_rank() const
+{
+    const Tensor<Correlation, 2> correlations
+        = calculate_input_target_raw_variable_pearson_correlations();
+
+    const Tensor<type, 2> absolute_correlations = get_correlation_values(correlations).abs();
+
+    Tensor<type, 1> absolute_mean_correlations(absolute_correlations.dimension(0));
+
+    for (Index i = 0; i < absolute_correlations.dimension(0); i++)
+    {
+        const Tensor<type, 1> row_correlations = absolute_correlations.chip(i, 0);
+        absolute_mean_correlations(i) = mean(row_correlations);
+    }
+
+    return calculate_rank_less(absolute_mean_correlations);
+}
+
+
 void Dataset::set_default_raw_variables_scalers()
 {
     for (Dataset::RawVariable& raw_variable : raw_variables)
@@ -2648,7 +2667,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
     if (!data_set_element)
-        throw runtime_error("Data set element is nullptr.\n");
+        throw runtime_error("Dataset element is nullptr.\n");
 
     // Data Source
     const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
@@ -2808,7 +2827,7 @@ void Dataset::print() const
     const Index testing_samples_number = get_samples_number("Testing");
     const Index unused_samples_number = get_samples_number("None");
 
-    cout << "Data set object summary:\n"
+    cout << "Dataset object summary:\n"
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"

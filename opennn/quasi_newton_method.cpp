@@ -271,7 +271,7 @@ TrainingResults QuasiNewtonMethod::train()
     Dataset* dataset = loss_index->get_dataset();
 
     if (!dataset)
-        throw runtime_error("Data set is null.");
+        throw runtime_error("Dataset is null.");
 
     const bool has_selection = dataset->has_selection();
 

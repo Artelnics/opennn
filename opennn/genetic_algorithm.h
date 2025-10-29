@@ -77,13 +77,15 @@ public:
 
     void perform_selection();
 
+    Tensor<bool, 1> cross(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
+
     void perform_crossover();
 
     void perform_mutation();
 
     Index get_selected_individuals_number() const;
 
-    vector<Index> get_selected_individuals_indices() const;
+    vector<Index> get_selected_individual_indices() const;
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
@@ -108,8 +110,6 @@ private:
     vector<Index> original_input_raw_variable_indices;
     vector<Index> original_target_raw_variable_indices;
     
-    Tensor<type, 1> fitness_correlations;
-
     Tensor<bool, 2> population;
 
     Tensor<type, 1> training_errors;

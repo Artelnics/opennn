@@ -19,6 +19,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
+#include "../opennn/mean_squared_error.h"
 
 using namespace opennn;
 
@@ -46,13 +47,18 @@ int main()
 
         dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
         dimensions complexity_dimensions = {neurons_number};
-        dimensions output_dimensions = {target_vocabulary_size - reserved_tokens};
+        //MeanSquaredError: outputs and target dimension 1 do not match: 2 1
+
+        //dimensions output_dimensions = { target_vocabulary_size - reserved_tokens };
+        dimensions output_dimensions = { targets_number };
 
         TextClassificationNetwork text_classification_network(
             input_dimensions,
             complexity_dimensions,
             output_dimensions
             );
+
+
 
         // Training Strategy
 
@@ -62,6 +68,7 @@ int main()
         adam->set_display_period(2);
         adam->set_maximum_epochs_number(20);
         adam->set_batch_size(100);
+
 
         training_strategy.train();
 

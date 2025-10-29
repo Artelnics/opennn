@@ -155,7 +155,7 @@ void LevenbergMarquardtAlgorithm::check() const
     const Dataset* dataset = loss_index->get_dataset();
 
     if(!dataset)
-        throw runtime_error("The loss funcional has no data set.");
+        throw runtime_error("The loss funcional has no dataset.");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 

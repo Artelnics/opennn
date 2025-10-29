@@ -331,7 +331,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         raw_variable_index++;
     }
 
-    // Set data set stuff
+    // Set dataset stuff
 
     dataset->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
                                       target_raw_variable_indices);
