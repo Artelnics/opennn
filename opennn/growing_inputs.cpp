@@ -96,58 +96,53 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
 
 InputsSelectionResults GrowingInputs::perform_input_selection()
 {
-    InputsSelectionResults input_selection_results(maximum_epochs_number);
+    // Dataset
 
-    if(display) cout << "Performing growing inputs selection..." << endl;
+    Dataset* dataset = training_strategy->get_dataset();
+    const Index original_input_raw_variables_number = dataset->get_raw_variables_number("Input");
+
+    InputsSelectionResults input_selection_results(original_input_raw_variables_number);
+
+    if (display) cout << "Performing growing inputs selection..." << endl;
 
     // Loss index
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
-
     training_strategy->get_optimization_algorithm()->set_display(false);
 
-    type previus_selection_error = numeric_limits< type>::max();
-    type previus_training_error = numeric_limits< type>::max();
+    type previus_selection_error = numeric_limits<type>::max();
+    type previus_training_error = numeric_limits<type>::max();
 
-    // Dataset
-
-    Dataset* dataset = loss_index->get_dataset();
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-
     const vector<Index> target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
-
-    const Index original_input_raw_variables_number = dataset->get_raw_variables_number("Input");
-
     const vector<string> raw_variable_names = dataset->get_raw_variable_names();
-
     vector<string> input_raw_variable_names;
 
-    if(display) cout << "Calculating correlations..." << endl;
+    if (display) cout << "Calculating correlations..." << endl;
 
     const Tensor<type, 2> correlations = get_correlation_values(dataset->calculate_input_target_raw_variable_pearson_correlations());
-    const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
+    const Tensor<type, 1> total_correlations = correlations.abs().chip(0, 1);
 
     vector<Index> correlation_indices(original_input_raw_variables_number);
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
 
     sort(correlation_indices.data(),
-         correlation_indices.data() + correlation_indices.size(),
-         [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
+        correlation_indices.data() + correlation_indices.size(),
+        [&](Index i, Index j) {return total_correlations[i] > total_correlations[j]; });
 
     const vector<Index> input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
-
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
-    for(Index i = 0; i < correlations_rank_descending.size(); i++)
+    for (Index i = 0; i < correlations_rank_descending.size(); i++)
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     dataset->set_input_raw_variables_unused();
 
-    if(dataset->has_nan())
+    if (dataset->has_nan())
         dataset->scrub_missing_values();
 
     Index raw_variable_index = 0;
-    
+
     // Neural network
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
@@ -155,7 +150,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     // Training strategy
 
     Index selection_failures = 0;
-
     TrainingResults training_results;
 
     // Model selection
@@ -163,203 +157,176 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     time_t beginning_time;
     time_t current_time;
     type elapsed_time = type(0);
-
     time(&beginning_time);
 
     bool stop = false;
+    Index epoch = 0;
 
-    for(Index i = 0; i < maximum_epochs_number; i++)
+    while (!stop)
     {
+        if (raw_variable_index >= correlations_rank_descending.size())
+        {
+            if (display) cout << "\nAll the raw_variables has been used." << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+            stop = true;
+            continue;
+        }
+
         const Index current_raw_var_index = correlations_rank_descending[raw_variable_index];
         const string current_use = dataset->get_raw_variables()[current_raw_var_index].use;
 
-        if(current_use == "InputTarget")
+        if (current_use == "InputTarget")
             dataset->set_raw_variable_use(current_raw_var_index, "InputTarget");
         else
             dataset->set_raw_variable_use(current_raw_var_index, "Input");
 
-        Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
+        const Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
         const Index input_variables_number = dataset->get_variables_number("Input");
 
-        if(input_raw_variables_number < minimum_inputs_number)
+        if (input_raw_variables_number < minimum_inputs_number)
         {
             raw_variable_index++;
             continue;
         }
-        const Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
 
-        if(time_series_dataset)
+        if (time_series_dataset)
         {
             const Index past_time_steps = time_series_dataset->get_past_time_steps();
-            neural_network->set_input_dimensions({past_time_steps, input_variables_number});
-            dataset->set_dimensions("Input", {past_time_steps, input_variables_number});
+            neural_network->set_input_dimensions({ past_time_steps, input_variables_number });
+            dataset->set_dimensions("Input", { past_time_steps, input_variables_number });
         }
         else
         {
             neural_network->set_input_dimensions({ input_variables_number });
-            dataset->set_dimensions("Input", {input_variables_number});
+            dataset->set_dimensions("Input", { input_variables_number });
         }
 
-        if(display)
+        if (display)
         {
             cout << endl
-                    << "Epoch: " << epoch << endl
-                    << "Input raw_variables number: " << input_raw_variables_number << endl
-                    << "Inputs: " << endl;
+                << "Epoch: " << epoch + 1 << endl
+                << "Input raw_variables number: " << input_raw_variables_number << endl
+                << "Inputs: " << endl;
 
             input_raw_variable_names = dataset->get_raw_variable_names("Input");
-
             print_vector(input_raw_variable_names);
         }
 
         type minimum_training_error = numeric_limits<type>::max();
         type minimum_selection_error = numeric_limits<type>::max();
 
-        for(Index j = 0; j < trials_number; j++)
+        for (Index j = 0; j < trials_number; j++)
         {
             neural_network->set_parameters_random();
-
-            if(dataset->has_nan())
-                dataset->scrub_missing_values();
-
             training_results = training_strategy->train();
 
-            if(training_results.get_selection_error() < minimum_selection_error)
+            if (training_results.get_selection_error() < minimum_selection_error)
             {
                 minimum_training_error = training_results.get_training_error();
                 minimum_selection_error = training_results.get_selection_error();
-
-                input_selection_results.training_error_history(input_raw_variables_number-1) = minimum_training_error;
-                input_selection_results.selection_error_history(input_raw_variables_number-1) = minimum_selection_error;
             }
 
-            if(minimum_selection_error < input_selection_results.optimum_selection_error)
+            if (minimum_selection_error < input_selection_results.optimum_selection_error)
             {
-                // Neural network
-
                 input_selection_results.optimal_input_raw_variables_indices = dataset->get_raw_variable_indices("Input");
                 input_selection_results.optimal_input_raw_variable_names = dataset->get_raw_variable_names("Input");
-
                 neural_network->get_parameters(input_selection_results.optimal_parameters);
-
-                // Loss index
-
                 input_selection_results.optimum_training_error = training_results.get_training_error();
                 input_selection_results.optimum_selection_error = training_results.get_selection_error();
             }
 
-            if(display)
-                cout << "Trial number: " << j+1 << endl
-                     << "   Training error: " << training_results.get_training_error() << endl
-                     << "   Selection error: " << training_results.get_selection_error() << endl;
+            if (display)
+                cout << "Trial number: " << j + 1 << endl
+                << "   Training error: " << training_results.get_training_error() << endl
+                << "   Selection error: " << training_results.get_selection_error() << endl;
         }
 
-        if(previus_training_error < minimum_training_error)
+        if (previus_training_error < minimum_training_error)
         {
-            cout << "Selection failure" << endl;
-
+            if (display) cout << "Selection failure" << endl;
             selection_failures++;
 
-            if(dataset->get_raw_variables()[current_raw_var_index].use == "InputTarget")
+            if (dataset->get_raw_variables()[current_raw_var_index].use == "InputTarget")
                 dataset->set_raw_variable_use(current_raw_var_index, "Target");
             else
                 dataset->set_raw_variable_use(current_raw_var_index, "None");
-
-            input_raw_variables_number--;
         }
         else
         {
             previus_training_error = minimum_training_error;
             previus_selection_error = minimum_selection_error;
 
-            input_selection_results.training_error_history(input_raw_variables_number) = minimum_training_error;
-            input_selection_results.selection_error_history(input_raw_variables_number) = minimum_selection_error;
+            input_selection_results.training_error_history(input_raw_variables_number - 1) = minimum_training_error;
+            input_selection_results.selection_error_history(input_raw_variables_number - 1) = minimum_selection_error;
+
+            epoch++;
         }
 
+        raw_variable_index++;
         time(&current_time);
-
-        elapsed_time = type(difftime(current_time,beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         // Stopping criteria
 
-        stop = true;
-
-        if(elapsed_time >= maximum_time)
+        if (elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+            stop = true;
         }
-        else if(input_selection_results.optimum_selection_error <= selection_error_goal)
+        else if (input_selection_results.optimum_selection_error <= selection_error_goal)
         {
-            if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_selection_error << endl;
+            if (display) cout << "\nSelection error reached: " << input_selection_results.optimum_selection_error << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+            stop = true;
         }
-        else if(epoch >= maximum_epochs_number)
+        else if (epoch >= maximum_epochs_number)
         {
-            if(display) cout << "\nMaximum number of epochs reached." << endl;
+            if (display) cout << "\nMaximum number of epochs reached." << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
+            stop = true;
         }
-        else if(selection_failures >= maximum_selection_failures)
+        else if (selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "\nMaximum selection failures ("<<selection_failures<<") reached." << endl;
+            if (display) cout << "\nMaximum selection failures (" << selection_failures << ") reached." << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
+            stop = true;
         }
-        else if(input_raw_variables_number >= maximum_inputs_number || input_raw_variables_number >= original_input_raw_variables_number)
+        else if (dataset->get_raw_variables_number("Input") >= maximum_inputs_number)
         {
-            if(display) cout << "\nMaximum inputs (" << input_raw_variables_number << ") reached." << endl;
+            if (display) cout << "\nMaximum inputs (" << dataset->get_raw_variables_number("Input") << ") reached." << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+            stop = true;
         }
-        else if(raw_variable_index >= correlations_rank_descending.size() - 1 )
-        {
-            if(display) cout << "\nAll the raw_variables has been used." << endl;
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-        }
-        else
-        {
-            stop = false;
-        }
-
-        if(stop)
-        {
-            input_selection_results.elapsed_time = write_time(elapsed_time);
-
-            input_selection_results.resize_history(input_raw_variables_number);
-
-            break;
-        }
-            
-        raw_variable_index++;
     }
 
-    // Set dataset stuff
+    input_selection_results.elapsed_time = write_time(elapsed_time);
+    input_selection_results.resize_history(epoch);
 
-    dataset->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
-                                      target_raw_variable_indices);
+    // Set dataset
 
-    const Index optimal_input_variables_number = (Index)input_selection_results.optimal_input_raw_variables_indices.size();
-    if(time_series_dataset)
+    const Index optimal_input_variables_number = dataset->get_variables_number("Input");
+
+    if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        dataset->set_dimensions("Input", {past_time_steps, optimal_input_variables_number});
-        neural_network->set_input_dimensions({past_time_steps, optimal_input_variables_number});
+        dataset->set_dimensions("Input", { past_time_steps, optimal_input_variables_number });
+        neural_network->set_input_dimensions({ past_time_steps, optimal_input_variables_number });
     }
     else
     {
-        dataset->set_dimensions("Input", {optimal_input_variables_number});
-        neural_network->set_input_dimensions({optimal_input_variables_number});
+        dataset->set_dimensions("Input", { optimal_input_variables_number });
+        neural_network->set_input_dimensions({ optimal_input_variables_number });
     }
 
     dataset->print();
-    
-    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
+    const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
-    set_maximum_inputs_number(dataset->get_raw_variables_number("Input"));
+    // Set neural network
 
-    // Set neural network stuff
-
-    if(time_series_dataset)
+    if (time_series_dataset)
     {
         vector<string> final_input_names;
         const vector<string> base_names = dataset->get_raw_variable_names("Input");
@@ -367,27 +334,26 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         final_input_names.reserve(base_names.size() * time_steps);
 
-        for(const string& base_name : base_names)
+        for (const string& base_name : base_names)
         {
-            for(Index j = 0; j < time_steps; j++)
+            for (Index j = 0; j < time_steps; j++)
             {
                 string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
                 final_input_names.push_back(name);
             }
         }
-
         neural_network->set_input_names(final_input_names);
     }
     else
         neural_network->set_input_names(dataset->get_variable_names("Input"));
 
-    if(neural_network->has("Scaling2d"))
+    if (neural_network->has("Scaling2d"))
     {
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }
-    else if(neural_network->has("Scaling3d"))
+    else if (neural_network->has("Scaling3d"))
     {
         Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
         scaling_layer_3d->set_descriptives(input_variable_descriptives);
@@ -396,7 +362,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);
 
-    if(display) input_selection_results.print();
+    if (display) input_selection_results.print();
 
     return input_selection_results;
 }
