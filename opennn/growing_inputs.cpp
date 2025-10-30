@@ -305,24 +305,29 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Set dataset
 
-    const Index optimal_input_variables_number = dataset->get_variables_number("Input");
+    dataset->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
+        target_raw_variable_indices);
+
+    const Index optimal_processed_variables_number = dataset->get_variables_number("Input");
 
     if (time_series_dataset)
     {
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        dataset->set_dimensions("Input", { past_time_steps, optimal_input_variables_number });
-        neural_network->set_input_dimensions({ past_time_steps, optimal_input_variables_number });
+        dataset->set_dimensions("Input", { past_time_steps, optimal_processed_variables_number });
+        neural_network->set_input_dimensions({ past_time_steps, optimal_processed_variables_number });
     }
     else
     {
-        dataset->set_dimensions("Input", { optimal_input_variables_number });
-        neural_network->set_input_dimensions({ optimal_input_variables_number });
+        dataset->set_dimensions("Input", { optimal_processed_variables_number });
+        neural_network->set_input_dimensions({ optimal_processed_variables_number });
     }
 
     dataset->print();
 
     const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
+
+    set_maximum_inputs_number(dataset->get_raw_variables_number("Input"));
 
     // Set neural network
 
@@ -331,9 +336,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         vector<string> final_input_names;
         const vector<string> base_names = dataset->get_raw_variable_names("Input");
         const Index time_steps = time_series_dataset->get_past_time_steps();
-
         final_input_names.reserve(base_names.size() * time_steps);
-
         for (const string& base_name : base_names)
         {
             for (Index j = 0; j < time_steps; j++)

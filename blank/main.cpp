@@ -55,9 +55,12 @@ int main()
 
         GrowingInputs growing_inputs(&training_strategy);
         growing_inputs.set_display(true); // Mostrar información detallada durante la ejecución.
-        growing_inputs.set_maximum_epochs_number(5); // máximo de generaciones.
+        growing_inputs.set_maximum_epochs_number(500); // máximo de generaciones.
+        growing_inputs.set_maximum_selection_failures(100); // máximo de generaciones.
         growing_inputs.set_maximum_time(360); // Límite de tiempo en segundos
-        growing_inputs.set_maximum_inputs_number(50);
+        growing_inputs.set_minimum_inputs_number(10);
+        growing_inputs.set_maximum_inputs_number(12);
+        growing_inputs.set_trials_number(3);
 
         // Genetic Algorithm
 
@@ -65,6 +68,7 @@ int main()
         genetic_algorithm.set_display(true); // Mostrar información detallada durante la ejecución.
         genetic_algorithm.set_maximum_epochs_number(5); // máximo de generaciones.
         genetic_algorithm.set_maximum_time(360); // Límite de tiempo en segundos
+        genetic_algorithm.set_minimum_inputs_number(1);
         genetic_algorithm.set_maximum_inputs_number(50);
         genetic_algorithm.set_individuals_number(10); // 40 soluciones candidatas por generación.
         genetic_algorithm.set_elitism_size(4); // Los 4 mejores individuos pasan sin cambios a la siguiente generación.
