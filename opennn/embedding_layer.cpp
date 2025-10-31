@@ -282,15 +282,9 @@ TensorView EmbeddingForwardPropagation::get_output_pair() const
 }
 
 
-void EmbeddingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
-
-    batch_size = new_batch_size;
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 
     const Index sequence_length = embedding_layer->get_sequence_length();
 
@@ -327,15 +321,9 @@ vector<ParameterView> EmbeddingBackPropagation::get_parameter_delta_views() cons
 }
 
 
-void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();

@@ -570,14 +570,8 @@ TensorView MultiHeadAttentionForwardPropagation::get_output_pair() const
 }
 
 
-void MultiHeadAttentionForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void MultiHeadAttentionForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
@@ -612,14 +606,8 @@ void MultiHeadAttentionForwardPropagation::print() const
 }
 
 
-void MultiHeadAttentionBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void MultiHeadAttentionBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();

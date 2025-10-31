@@ -161,15 +161,9 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
 }
 
 
-void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Pooling3dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    Pooling3d* pooling_layer = static_cast<Pooling3d*>(new_layer);
+    Pooling3d* pooling_layer = static_cast<Pooling3d*>(layer);
 
     const Index features = pooling_layer->get_output_dimensions()[0];
     outputs.resize(batch_size, features);
@@ -179,15 +173,9 @@ void Pooling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 }
 
 
-void Pooling3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Pooling3dBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    layer = static_cast<Pooling3d*>(new_layer);
+    layer = static_cast<Pooling3d*>(layer);
 
     const dimensions layer_input_dimensions = layer->get_input_dimensions();
 

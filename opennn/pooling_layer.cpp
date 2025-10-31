@@ -512,14 +512,8 @@ TensorView PoolingForwardPropagation::get_output_pair() const
 }
 
 
-void PoolingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void PoolingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
     const Index pool_height = pooling_layer->get_pool_height();
@@ -563,14 +557,8 @@ PoolingBackPropagation::PoolingBackPropagation(const Index& new_batch_size, Laye
 }
 
 
-void PoolingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void PoolingBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
     const dimensions& input_dimensions = pooling_layer->get_input_dimensions();

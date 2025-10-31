@@ -300,15 +300,9 @@ TensorView BoundingForwardPropagation::get_output_pair() const
 }
 
 
-void BoundingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void BoundingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
     const Index neurons_number = static_cast<Bounding*>(layer)->get_output_dimensions()[0];
-
-    batch_size = new_batch_size;
 
     outputs.resize(batch_size, neurons_number);
 }

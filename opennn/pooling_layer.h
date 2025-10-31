@@ -152,7 +152,7 @@ struct PoolingForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 
@@ -170,7 +170,7 @@ struct PoolingBackPropagation final : LayerBackPropagation
 
     vector<TensorView> get_input_derivative_views() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 

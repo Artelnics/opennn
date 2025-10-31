@@ -84,7 +84,7 @@ struct Dense3dForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void initialize() override;
 
     void print() const override;
 
@@ -100,7 +100,7 @@ struct Dense3dBackPropagation final : LayerBackPropagation
 
     vector<TensorView> get_input_derivative_views() const override;
 
-    void set(const Index& = 0, Layer* = nullptr);
+    void initialize() override;
 
     void print() const override;
 

@@ -592,14 +592,8 @@ void Dense2d::to_XML(XMLPrinter& printer) const
 }
 
 
-void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
+void Dense2dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     const Index outputs_number = layer->get_outputs_number();
 
     outputs.resize(batch_size, outputs_number);
@@ -650,14 +644,8 @@ Dense2dBackPropagation::Dense2dBackPropagation(const Index& new_batch_size, Laye
 }
 
 
-void Dense2dBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
+void Dense2dBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 

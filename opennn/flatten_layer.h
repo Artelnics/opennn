@@ -242,13 +242,8 @@ struct FlattenForwardPropagation final : LayerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr) override
+    void initialize() override
     {
-        if (!new_layer) return;
-
-        batch_size = new_batch_size;
-        layer = new_layer;
-
         const dimensions output_dimensions = layer->get_output_dimensions();
         outputs.resize(batch_size, output_dimensions[0]);
     }
@@ -286,13 +281,8 @@ struct FlattenBackPropagation final : LayerBackPropagation
         return {{(type*)(input_deltas.data()), full_dimensions}};
     }
 
-    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr) override
+    void initialize()
     {
-        if (!new_layer) return;
-
-        batch_size = new_batch_size;
-        layer = new_layer;
-
         const Flatten<Rank>* layer_ptr = static_cast<const Flatten<Rank>*>(layer);
         const dimensions input_dimensions = layer_ptr->get_input_dimensions();
 

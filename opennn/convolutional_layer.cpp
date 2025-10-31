@@ -799,14 +799,8 @@ TensorView ConvolutionalForwardPropagation::get_output_pair() const
 }
 
 
-void ConvolutionalForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void ConvolutionalForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
     const Index input_height = convolutional_layer->get_input_height();
@@ -859,14 +853,8 @@ ConvolutionalBackPropagation::ConvolutionalBackPropagation(const Index& new_batc
 }
 
 
-void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void ConvolutionalBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
     const Index input_height = convolutional_layer->get_input_height();

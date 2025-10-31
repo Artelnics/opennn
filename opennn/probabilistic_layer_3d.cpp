@@ -331,15 +331,9 @@ TensorView Probabilistic3dForwardPropagation::get_output_pair() const
 }
 
 
-void Probabilistic3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
-
-    batch_size = new_batch_size;
 
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
@@ -355,14 +349,8 @@ void Probabilistic3dForwardPropagation::print() const
 }
 
 
-void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3dBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();

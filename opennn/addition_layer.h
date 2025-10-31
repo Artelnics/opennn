@@ -188,13 +188,8 @@ struct AdditionForwardPropagation final : LayerForwardPropagation
     }
 
 
-    void set(const Index& new_batch_size, Layer* new_layer) override
+    void initialize() override
     {
-        if (!new_layer) return;
-
-        layer = new_layer;
-        batch_size = new_batch_size;
-
         const dimensions output_dimensions = layer->get_output_dimensions();
 
         DSizes<Index, Rank+1> full_dimensions;   // <-- Rank+1 to include batch
@@ -237,13 +232,8 @@ struct AdditionBackPropagation final : LayerBackPropagation
     }
 
 
-    void set(const Index& new_batch_size, Layer* new_layer) override
+    void initialize() override
     {
-        if (!new_layer) return;
-
-        layer = new_layer;
-        batch_size = new_batch_size;
-
         const dimensions input_dimensions = layer->get_input_dimensions();
 
         array<Index, Rank + 1> full_dimensions;

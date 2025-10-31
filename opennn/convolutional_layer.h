@@ -198,7 +198,7 @@ struct ConvolutionalForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 
@@ -221,7 +221,7 @@ struct ConvolutionalBackPropagation final : LayerBackPropagation
 
     vector<ParameterView> get_parameter_delta_views() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 

@@ -242,13 +242,9 @@ TensorView Dense3dForwardPropagation::get_output_pair() const
 }
 
 
-void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dForwardPropagation::initialize()
 {
-    layer = new_layer;
-
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
-
-    batch_size = new_batch_size;
 
     const Index output_embedding = dense_3d->get_output_embedding();
 
@@ -260,14 +256,8 @@ void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_laye
 }
 
 
-void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dBackPropagation::initialize()
 {
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    if (!layer) return;
-
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     const Index output_embedding = dense_3d->get_output_embedding();

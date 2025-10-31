@@ -476,15 +476,9 @@ TensorView Scaling2dForwardPropagation::get_output_pair() const
 }
 
 
-void Scaling2dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling2dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
     const Index outputs_number = layer->get_outputs_number();
-
-    batch_size = new_batch_size;
 
     outputs.resize(batch_size, outputs_number);
 }
