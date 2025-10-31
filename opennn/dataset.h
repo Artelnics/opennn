@@ -377,7 +377,7 @@ public:
 
     void print_top_inputs_correlations() const;
 
-    // Inputs-targets correlations
+    // Input-target correlations
 
     Tensor<Correlation, 2> calculate_input_target_raw_variable_pearson_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_raw_variable_spearman_correlations() const;
