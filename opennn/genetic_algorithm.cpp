@@ -106,6 +106,9 @@ void GeneticAlgorithm::set_default()
 
     const Dataset* dataset = training_strategy->get_dataset();
 
+    if (!dataset)
+        throw runtime_error("Dataset is null");
+
     original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
     original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
 
@@ -265,6 +268,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     Tensor<bool, 1> individual_genes(genes_number);
 
+    population.resize(individuals_number, genes_number);
     population.setConstant(false);
 
     const Tensor<type, 1> correlations_rank = dataset->calculate_correlations_rank().template cast<type>() + type(1.0);
@@ -767,14 +771,14 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
     if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
 
-    set_individuals_number(read_xml_index(root, "PopulationSize"));
-    set_mutation_rate(read_xml_type(root, "MutationRate"));
-    set_elitism_size(read_xml_index(root, "ElitismSize"));
-    set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
-    set_minimum_inputs_number(read_xml_index(root, "MinimumInputsNumber"));
-    set_maximum_inputs_number(read_xml_index(root, "MaximumInputsNumber"));
-    set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
-    set_maximum_time(read_xml_type(root, "MaximumTime"));
+    set_individuals_number(read_xml_value<Index>(root, "PopulationSize"));
+    set_mutation_rate(read_xml_value<type>(root, "MutationRate"));
+    set_elitism_size(read_xml_value<Index>(root, "ElitismSize"));
+    set_selection_error_goal(read_xml_value<type>(root, "SelectionErrorGoal"));
+    set_minimum_inputs_number(read_xml_value<Index>(root, "MinimumInputsNumber"));
+    set_maximum_inputs_number(read_xml_value<Index>(root, "MaximumInputsNumber"));
+    set_maximum_epochs_number(read_xml_value<Index>(root, "MaximumGenerationsNumber"));
+    set_maximum_time(read_xml_value<type>(root, "MaximumTime"));
 }
 
 

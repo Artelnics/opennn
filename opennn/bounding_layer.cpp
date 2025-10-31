@@ -261,7 +261,7 @@ void Bounding::from_XML(const XMLDocument& document)
     if (!root_element)
         throw runtime_error("Bounding element is nullptr.\n");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Index neurons_number = read_xml_value<Index>(root_element, "NeuronsNumber");
 
     set({ neurons_number });
 
@@ -275,13 +275,13 @@ void Bounding::from_XML(const XMLDocument& document)
         if (index != i + 1)
             throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
 
-        lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
-        upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
+        lower_bounds[index - 1] = read_xml_value<type>(item_element, "LowerBound");
+        upper_bounds[index - 1] = read_xml_value<type>(item_element, "UpperBound");
 
         item_element = item_element->NextSiblingElement("Item");
     }
 
-    set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
+    set_bounding_method(read_xml_value<string>(root_element, "BoundingMethod"));
 }
 
 
@@ -300,15 +300,9 @@ TensorView BoundingForwardPropagation::get_output_pair() const
 }
 
 
-void BoundingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void BoundingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
     const Index neurons_number = static_cast<Bounding*>(layer)->get_output_dimensions()[0];
-
-    batch_size = new_batch_size;
 
     outputs.resize(batch_size, neurons_number);
 }

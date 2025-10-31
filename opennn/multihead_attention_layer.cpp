@@ -495,23 +495,23 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiHeadAttention element is nullptr.\n");
 
-    const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
-    const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
-    const Index new_context_size = read_xml_index(multihead_attention_layer_element, "ContextSize");
-    const Index new_depth = read_xml_index(multihead_attention_layer_element, "Depth");
-    const Index new_heads_number = read_xml_index(multihead_attention_layer_element, "HeadsNumber");
-    const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
+    const string new_name = read_xml_value<string>(multihead_attention_layer_element, "Name");
+    const Index new_input_size = read_xml_value<Index>(multihead_attention_layer_element, "InputSize");
+    const Index new_context_size = read_xml_value<Index>(multihead_attention_layer_element, "ContextSize");
+    const Index new_depth = read_xml_value<Index>(multihead_attention_layer_element, "Depth");
+    const Index new_heads_number = read_xml_value<Index>(multihead_attention_layer_element, "HeadsNumber");
+    const Index new_use_causal_mask = read_xml_value<bool>(multihead_attention_layer_element, "CausalMask");
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
 
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "QueryBiases"), query_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "QueryWeights"), query_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "KeyBiases"), key_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "KeyWeights"), key_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ValueBiases"), value_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ValueWeights"), value_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(multihead_attention_layer_element, "QueryBiases"), query_biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(multihead_attention_layer_element, "QueryWeights"), query_weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(multihead_attention_layer_element, "KeyBiases"), key_biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(multihead_attention_layer_element, "KeyWeights"), key_weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(multihead_attention_layer_element, "ValueBiases"), value_biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(multihead_attention_layer_element, "ValueWeights"), value_weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
 }
 
 
@@ -570,14 +570,8 @@ TensorView MultiHeadAttentionForwardPropagation::get_output_pair() const
 }
 
 
-void MultiHeadAttentionForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void MultiHeadAttentionForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
@@ -612,14 +606,8 @@ void MultiHeadAttentionForwardPropagation::print() const
 }
 
 
-void MultiHeadAttentionBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void MultiHeadAttentionBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();

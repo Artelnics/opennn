@@ -38,21 +38,21 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
             dimensions{ 3, 3, new_input_dimensions[2], 64 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_1"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 64, 64 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_2"));
         add_layer(make_unique<Pooling>(
             get_output_dimensions(),
             dimensions{ 2, 2 },
             dimensions{ 2, 2 },
             dimensions{ 0, 0 },
-            Pooling::PoolingMethod::MaxPooling,
+            "MaxPooling",
             "pool1"));
     }
 
@@ -63,21 +63,21 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
             dimensions{ 3, 3, 64, 128 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_3"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 128, 128 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_4"));
         add_layer(make_unique<Pooling>(
             get_output_dimensions(),
             dimensions{ 2, 2 },
             dimensions{ 2, 2 },
             dimensions{ 0, 0 },
-            Pooling::PoolingMethod::MaxPooling,
+            "MaxPooling",
             "pool2"));
     }
 
@@ -88,28 +88,28 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
             dimensions{ 3, 3, 128, 256 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_5"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 256, 256 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_6"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 256, 256 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_7"));
         add_layer(make_unique<Pooling>(
             get_output_dimensions(),
             dimensions{ 2, 2 },
             dimensions{ 2, 2 },
             dimensions{ 0, 0 },
-            Pooling::PoolingMethod::MaxPooling, "pool3"));
+            "MaxPooling", "pool3"));
     }
 
     // --- Conv 3×3, 512 kernels, ReLU x3 -> Pooling 2×2 stride 2 ---
@@ -119,28 +119,28 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
             dimensions{ 3, 3, 256, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_8"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 512, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_9"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 512, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_10"));
         add_layer(make_unique<Pooling>(
             get_output_dimensions(),
             dimensions{ 2, 2 },
             dimensions{ 2, 2 },
             dimensions{ 0, 0 },
-            Pooling::PoolingMethod::MaxPooling, "pool4"));
+            "MaxPooling", "pool4"));
     }
 
     // --- Conv 3×3, 512 kernels, ReLU x3 -> Pooling 2×2 stride 2 ---
@@ -150,28 +150,28 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
             dimensions{ 3, 3, 512, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_11"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 512, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_12"));
         add_layer(make_unique<Convolutional>(
             get_output_dimensions(),
             dimensions{ 3, 3, 512, 512 },
             "RectifiedLinear",
             dimensions{ 1, 1 },
-            Convolutional::Convolution::Same,
+            "Same",
             "conv_13"));
         add_layer(make_unique<Pooling>(
             get_output_dimensions(),
             dimensions{ 2, 2 },
             dimensions{ 2, 2 },
             dimensions{ 0, 0 },
-            Pooling::PoolingMethod::MaxPooling, "pool5"));
+            "MaxPooling", "pool5"));
     }
 
     const dimensions pre_pool_dims = get_output_dimensions();
@@ -181,7 +181,7 @@ void VGG16::set(const dimensions& new_input_dimensions, const dimensions& new_ta
         dimensions{ pre_pool_dims[0], pre_pool_dims[1] },
         dimensions{ 1, 1 },
         dimensions{ 0, 0 },
-        Pooling::PoolingMethod::AveragePooling,
+        "AveragePooling",
         "global_avg_pool"));
 
     // Flatten

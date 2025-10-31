@@ -102,8 +102,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
-        neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
+        neural_network->get_layer(last_trainable_layer_index - 1)->set_output_dimensions({ neurons_number });
+        neural_network->get_layer(last_trainable_layer_index)->set_input_dimensions({ neurons_number });
 
         //neural_network->print();
         // throw runtime_error("Checking the network");
@@ -258,13 +258,13 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("GrowingNeurons element is nullptr.\n");
 
-    set_minimum_neurons(read_xml_index(root_element, "MinimumNeurons"));
-    set_maximum_neurons(read_xml_index(root_element, "MaximumNeurons"));
-    set_neurons_increment(read_xml_index(root_element, "NeuronsIncrement"));
-    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
-    set_selection_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
-    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_minimum_neurons(read_xml_value<Index>(root_element, "MinimumNeurons"));
+    set_maximum_neurons(read_xml_value<Index>(root_element, "MaximumNeurons"));
+    set_neurons_increment(read_xml_value<Index>(root_element, "NeuronsIncrement"));
+    set_trials_number(read_xml_value<Index>(root_element, "TrialsNumber"));
+    set_selection_error_goal(read_xml_value<type>(root_element, "SelectionErrorGoal"));
+    set_maximum_selection_failures(read_xml_value<Index>(root_element, "MaximumSelectionFailures"));
+    set_maximum_time(read_xml_value<type>(root_element, "MaximumTime"));
 }
 
 

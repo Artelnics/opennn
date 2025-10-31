@@ -296,7 +296,7 @@ void Scaling3d::from_XML(const XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling3d element is nullptr.\n");
 
-    const dimensions dims = string_to_dimensions(read_xml_string(scaling_layer_element, "InputDimensions"));
+    const dimensions dims = string_to_dimensions(read_xml_value<string>(scaling_layer_element, "InputDimensions"));
     set(dims);
 
     const Index inputs_number = dims[1];
@@ -330,7 +330,7 @@ void Scaling3d::from_XML(const XMLDocument& document)
                 );
         }
 
-        scalers[i] = read_xml_string(scaling_feature_element, "Scaler");
+        scalers[i] = read_xml_value<string>(scaling_feature_element, "Scaler");
 
         start_element = scaling_feature_element;
     }
@@ -351,13 +351,8 @@ TensorView Scaling3dForwardPropagation::get_output_pair() const
 }
 
 
-void Scaling3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling3dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-    batch_size = new_batch_size;
-
     const dimensions output_dims = layer->get_output_dimensions();
     outputs.resize(batch_size, output_dims[0], output_dims[1]);
 }

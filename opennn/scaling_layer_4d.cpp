@@ -83,7 +83,7 @@ void Scaling4d::from_XML(const XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
-    set(string_to_dimensions(read_xml_string(scaling_layer_element, "InputDimensions")));
+    set(string_to_dimensions(read_xml_value<string>(scaling_layer_element, "InputDimensions")));
 
 }
 
@@ -105,14 +105,8 @@ TensorView Scaling4dForwardPropagation::get_output_pair() const
 }
 
 
-void Scaling4dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling4dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     outputs.resize(batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]);

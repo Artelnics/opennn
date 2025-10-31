@@ -418,25 +418,25 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_data_path(read_xml_value<string>(data_source_element, "Path"));
+    set_has_ids(read_xml_value<bool>(data_source_element, "HasSamplesId"));
 
-    set_dimensions("Input", { read_xml_index(data_source_element, "Height"),
-                              read_xml_index(data_source_element, "Width"),
-                              read_xml_index(data_source_element, "Channels") });
+    set_dimensions("Input", { read_xml_value<Index>(data_source_element, "Height"),
+                              read_xml_value<Index>(data_source_element, "Width"),
+                              read_xml_value<Index>(data_source_element, "Channels") });
 
-    set_image_padding(read_xml_index(data_source_element, "Padding"));
+    set_image_padding(read_xml_value<Index>(data_source_element, "Padding"));
 
-    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_codification(read_xml_value<string>(data_source_element, "Codification"));
 
-    set_random_reflection_axis_x(read_xml_index(data_source_element, "RandomReflectionAxisX"));
-    set_random_reflection_axis_y(read_xml_index(data_source_element, "RandomReflectionAxisY"));
-    set_random_rotation_minimum(type(atof(read_xml_string(data_source_element, "RandomRotationMinimum").c_str())));
-    set_random_rotation_maximum(type(atof(read_xml_string(data_source_element, "RandomRotationMaximum").c_str())));
-    set_random_horizontal_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMinimum").c_str())));
-    set_random_horizontal_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMaximum").c_str())));
-    set_random_vertical_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMinimum").c_str())));
-    set_random_vertical_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMaximum").c_str())));
+    set_random_reflection_axis_x(read_xml_value<Index>(data_source_element, "RandomReflectionAxisX"));
+    set_random_reflection_axis_y(read_xml_value<Index>(data_source_element, "RandomReflectionAxisY"));
+    set_random_rotation_minimum(type(atof(read_xml_value<string>(data_source_element, "RandomRotationMinimum").c_str())));
+    set_random_rotation_maximum(type(atof(read_xml_value<string>(data_source_element, "RandomRotationMaximum").c_str())));
+    set_random_horizontal_translation_minimum(type(atof(read_xml_value<string>(data_source_element, "RandomHorizontalTranslationMinimum").c_str())));
+    set_random_horizontal_translation_maximum(type(atof(read_xml_value<string>(data_source_element, "RandomHorizontalTranslationMaximum").c_str())));
+    set_random_vertical_translation_minimum(type(atof(read_xml_value<string>(data_source_element, "RandomVerticalTranslationMinimum").c_str())));
+    set_random_vertical_translation_maximum(type(atof(read_xml_value<string>(data_source_element, "RandomVerticalTranslationMaximum").c_str())));
 
     // Raw Variables
 
@@ -445,7 +445,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
-    const Index raw_variables_number = read_xml_index(raw_variables_element, "RawVariablesNumber");
+    const Index raw_variables_number = read_xml_value<Index>(raw_variables_element, "RawVariablesNumber");
 
     set_raw_variables_number(raw_variables_number);
 
@@ -458,14 +458,14 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        raw_variable.name = read_xml_string(start_element, "Name");
-        raw_variable.set_scaler(read_xml_string(start_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(start_element, "Use"));
-        raw_variable.set_type(read_xml_string(start_element, "Type"));
+        raw_variable.name = read_xml_value<string>(start_element, "Name");
+        raw_variable.set_scaler(read_xml_value<string>(start_element, "Scaler"));
+        raw_variable.set_use(read_xml_value<string>(start_element, "Use"));
+        raw_variable.set_type(read_xml_value<string>(start_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
         {
-            raw_variable.categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
+            raw_variable.categories = get_tokens(read_xml_value<string>(start_element, "Categories"), ";");
             target_count++;
         }
     }
@@ -477,18 +477,18 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     // Samples
 
     if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
+        sample_ids = get_tokens(read_xml_value<string>(image_dataset_element, "Ids"), ",");
 
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+    const Index samples_number = read_xml_value<Index>(samples_element, "SamplesNumber");
 
     sample_uses.resize(samples_number);
     data.resize(samples_number, (Index)raw_variables.size());
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    set_sample_uses(get_tokens(read_xml_value<string>(samples_element, "SampleUses"), " "));
 }
 
 

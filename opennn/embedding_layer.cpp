@@ -238,14 +238,14 @@ void Embedding::from_XML(const XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("Embedding element is nullptr.\n");
 
-    const string new_name = read_xml_string(embedding_layer_element, "Name");
-    const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
-    const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
+    const string new_name = read_xml_value<string>(embedding_layer_element, "Name");
+    const Index new_vocabulary_size = read_xml_value<Index>(embedding_layer_element, "VocabularySize");
+    const Index new_sequence_length = read_xml_value<Index>(embedding_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_xml_value<Index>(embedding_layer_element, "EmbeddingSize");
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    string_to_tensor<type, 2>(read_xml_string(embedding_layer_element, "Weights"), weights);
+    string_to_tensor<type, 2>(read_xml_value<string>(embedding_layer_element, "Weights"), weights);
 }
 
 
@@ -282,15 +282,9 @@ TensorView EmbeddingForwardPropagation::get_output_pair() const
 }
 
 
-void EmbeddingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
-
-    batch_size = new_batch_size;
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 
     const Index sequence_length = embedding_layer->get_sequence_length();
 
@@ -327,15 +321,9 @@ vector<ParameterView> EmbeddingBackPropagation::get_parameter_delta_views() cons
 }
 
 
-void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void EmbeddingBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    const Embedding* embedding_layer = static_cast<Embedding*>(new_layer);
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();

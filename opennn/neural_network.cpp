@@ -888,7 +888,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
-    set_display(read_xml_bool(neural_network_element, "Display"));
+    set_display(read_xml_value<bool>(neural_network_element, "Display"));
 }
 
 
@@ -897,7 +897,7 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
-    const Index new_inputs_number = read_xml_index(inputs_element, "InputsNumber");
+    const Index new_inputs_number = read_xml_value<Index>(inputs_element, "InputsNumber");
     input_names.resize(new_inputs_number);
 
     // Inputs names
@@ -923,7 +923,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
     if (!layers_element)
         throw runtime_error("Layers element is nullptr.\n");
 
-    const Index layers_number = read_xml_index(layers_element, "LayersNumber");
+    const Index layers_number = read_xml_value<Index>(layers_element, "LayersNumber");
 
     layers.clear();
 
@@ -980,7 +980,7 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
     if(!outputs_element)
         throw runtime_error("Outputs element is nullptr.\n");
 
-    const Index new_outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+    const Index new_outputs_number = read_xml_value<Index>(outputs_element, "OutputsNumber");
 
     output_names.resize(new_outputs_number);
 

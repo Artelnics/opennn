@@ -60,7 +60,7 @@ struct Pooling3dForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index&, Layer*) override;
+    void initialize() override;
 
     Tensor<type, 2> outputs;
 
@@ -74,7 +74,7 @@ struct Pooling3dBackPropagation final : LayerBackPropagation
 
     vector<TensorView> get_input_derivative_views() const override;
 
-    void set(const Index&, Layer*) override;
+    void initialize() override;
 
     Tensor<type, 3> input_derivatives;
 };
