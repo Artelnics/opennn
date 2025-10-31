@@ -106,6 +106,9 @@ void GeneticAlgorithm::set_default()
 
     const Dataset* dataset = training_strategy->get_dataset();
 
+    if (!dataset)
+        throw runtime_error("Dataset is null");
+
     original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
     original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
 
@@ -265,6 +268,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     Tensor<bool, 1> individual_genes(genes_number);
 
+    population.resize(individuals_number, genes_number);
     population.setConstant(false);
 
     const Tensor<type, 1> correlations_rank = dataset->calculate_correlations_rank().template cast<type>() + type(1.0);

@@ -101,9 +101,12 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     Dataset* dataset = training_strategy->get_dataset();
     const Index original_input_raw_variables_number = dataset->get_raw_variables_number("Input");
 
-    InputsSelectionResults input_selection_results(original_input_raw_variables_number);
+    if (dataset->has_nan())
+        dataset->scrub_missing_values();
 
     if (display) cout << "Performing growing inputs selection..." << endl;
+
+    InputsSelectionResults input_selection_results(original_input_raw_variables_number);
 
     // Loss index
 
@@ -131,15 +134,13 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         [&](Index i, Index j) {return total_correlations[i] > total_correlations[j]; });
 
     const vector<Index> input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
+
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
     for (Index i = 0; i < correlations_rank_descending.size(); i++)
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     dataset->set_input_raw_variables_unused();
-
-    if (dataset->has_nan())
-        dataset->scrub_missing_values();
 
     Index raw_variable_index = 0;
 
