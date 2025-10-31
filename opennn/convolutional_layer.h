@@ -18,15 +18,15 @@ class Convolutional final : public Layer
 {
 
 public:
-    enum class Convolution{Valid, Same};
+    //enum class Convolution{Valid, Same};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                   const string& = "Linear",
                   const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
-                  const Convolution& = Convolution::Valid,          // Convolution type (Valid || Same)
+                  const string& = "Valid",          // Convolution type (Valid || Same)
                   const bool& = false,                              // Batch Normalization)
-                  const string = "convolutional_layer");
+                  const string& = "convolutional_layer");
 
     bool get_batch_normalization() const;
 
@@ -45,8 +45,7 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Convolution get_convolution_type() const;
-    string write_convolution_type() const;
+    string get_convolution_type() const;
 
     Index get_column_stride() const;
 
@@ -72,15 +71,14 @@ public:
              const dimensions& = {3, 3, 1, 1},
              const string& = "Linear",
              const dimensions& = {1, 1},
-             const Convolution& = Convolution::Valid,
+             const string& = "Valid",
              const bool& = false,
-             const string = "convolutional_layer");
+             const string& = "convolutional_layer");
 
     void set_activation_function(const string&);
 
     void set_batch_normalization(const bool&);
 
-    void set_convolution_type(const Convolution&);
     void set_convolution_type(const string&);
 
     void set_row_stride(const Index&);
@@ -174,7 +172,7 @@ private:
 
     dimensions input_dimensions;
 
-    Convolution convolution_type = Convolution::Valid;
+    string convolution_type = "Valid";
 
     string activation_function = "Linear";
 

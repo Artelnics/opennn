@@ -17,8 +17,8 @@ Pooling::Pooling(const dimensions& new_input_dimensions,
                  const dimensions& new_pool_dimensions,
                  const dimensions& new_stride_dimensions,
                  const dimensions& new_padding_dimensions,
-                 const PoolingMethod& new_pooling_method,
-                 const string new_name) : Layer()
+                 const string& new_pooling_method,
+                 const string& new_name) : Layer()
 {
     name = "Pooling";
 
@@ -107,7 +107,7 @@ Index Pooling::get_pool_width() const
 }
 
 
-Pooling::PoolingMethod Pooling::get_pooling_method() const
+string Pooling::get_pooling_method() const
 {
     return pooling_method;
 }
@@ -129,27 +129,12 @@ void Pooling::print() const
 }
 
 
-string Pooling::write_pooling_method() const
-{
-    switch(pooling_method)
-    {
-    case PoolingMethod::MaxPooling:
-        return "MaxPooling";
-
-    case PoolingMethod::AveragePooling:
-        return "AveragePooling";
-    }
-
-    return string();
-}
-
-
 void Pooling::set(const dimensions& new_input_dimensions,
                   const dimensions& new_pool_dimensions,
                   const dimensions& new_stride_dimensions,
                   const dimensions& new_padding_dimensions,
-                  const PoolingMethod& new_pooling_method,
-                  const string new_label)
+                  const string& new_pooling_method,
+                  const string& new_label)
 {
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool dimensions must be 2");
@@ -247,20 +232,12 @@ void Pooling::set_pool_size(const Index& new_pool_rows_number,
 }
 
 
-void Pooling::set_pooling_method(const PoolingMethod& new_pooling_method)
-{
-    pooling_method = new_pooling_method;
-}
-
-
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
-    if(new_pooling_method == "MaxPooling")
-        pooling_method = PoolingMethod::MaxPooling;
-    else if(new_pooling_method == "AveragePooling")
-        pooling_method = PoolingMethod::AveragePooling;
-    else
+    if(new_pooling_method != "MaxPooling" && new_pooling_method != "AveragePooling")
         throw runtime_error("Unknown pooling type: " + new_pooling_method);
+
+    pooling_method = new_pooling_method;
 }
 
 
@@ -270,20 +247,14 @@ void Pooling::forward_propagate(const vector<TensorView>& input_views,
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
 
-    switch(pooling_method)
-    {
-    case PoolingMethod::MaxPooling:
+    if(pooling_method == "MaxPooling")
         forward_propagate_max_pooling(inputs,
                                       layer_forward_propagation,
                                       is_training);
-        break;
-
-    case PoolingMethod::AveragePooling:
+    else if(pooling_method == "AveragePooling")
         forward_propagate_average_pooling(inputs,
                                           layer_forward_propagation,
                                           is_training);
-        break;
-    }
 }
 
 
@@ -372,21 +343,15 @@ void Pooling::back_propagate(const vector<TensorView>& input_views,
     const TensorMap<Tensor<type, 4>> inputs = tensor_map<4>(input_views[0]);
     const TensorMap<Tensor<type, 4>> deltas = tensor_map<4>(delta_views[0]);
 
-    switch(pooling_method)
-    {
-    case PoolingMethod::MaxPooling:
+    if(pooling_method == "MaxPooling")
         back_propagate_max_pooling(inputs,
                                    deltas,
                                    forward_propagation,
                                    back_propagation);
-        break;
-
-    case PoolingMethod::AveragePooling:
+    else if(pooling_method == "AveragePooling")
         back_propagate_average_pooling(inputs,
                                        deltas,
                                        back_propagation);
-        break;
-    }
 }
 
 
@@ -499,7 +464,7 @@ void Pooling::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
     add_xml_element(printer, "PoolHeight", to_string(get_pool_height()));
     add_xml_element(printer, "PoolWidth", to_string(get_pool_width()));
-    add_xml_element(printer, "PoolingMethod", write_pooling_method());
+    add_xml_element(printer, "PoolingMethod", pooling_method);
     add_xml_element(printer, "ColumnStride", to_string(get_column_stride()));
     add_xml_element(printer, "RowStride", to_string(get_row_stride()));
     add_xml_element(printer, "PaddingHeight", to_string(get_padding_height()));
@@ -516,14 +481,14 @@ void Pooling::from_XML(const XMLDocument& document)
     if(!pooling_layer_element)
         throw runtime_error("Pooling layer element is nullptr.\batch_index");
 
-    set_label(read_xml_string(pooling_layer_element, "Label"));
-    set_input_dimensions(string_to_dimensions(read_xml_string(pooling_layer_element, "InputDimensions")));
-    set_pool_size(read_xml_index(pooling_layer_element, "PoolHeight"), read_xml_index(pooling_layer_element, "PoolWidth"));
-    set_pooling_method(read_xml_string(pooling_layer_element, "PoolingMethod"));
-    set_column_stride(read_xml_index(pooling_layer_element, "ColumnStride"));
-    set_row_stride(read_xml_index(pooling_layer_element, "RowStride"));
-    set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
-    set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
+    set_label(read_xml_value<string>(pooling_layer_element, "Label"));
+    set_input_dimensions(string_to_dimensions(read_xml_value<string>(pooling_layer_element, "InputDimensions")));
+    set_pool_size(read_xml_value<Index>(pooling_layer_element, "PoolHeight"), read_xml_value<Index>(pooling_layer_element, "PoolWidth"));
+    set_pooling_method(read_xml_value<string>(pooling_layer_element, "PoolingMethod"));
+    set_column_stride(read_xml_value<Index>(pooling_layer_element, "ColumnStride"));
+    set_row_stride(read_xml_value<Index>(pooling_layer_element, "RowStride"));
+    set_padding_height(read_xml_value<Index>(pooling_layer_element, "PaddingHeight"));
+    set_padding_width(read_xml_value<Index>(pooling_layer_element, "PaddingWidth"));
 }
 
 

@@ -200,7 +200,7 @@ public:
                                                  kernel_dimensions,
                                                  "RectifiedLinear",
                                                  stride_dimensions,
-                                                 Convolutional::Convolution::Same,
+                                                 "Same",
                                                  false, // Batch normalization
                                                  "convolutional_layer_" + to_string(i + 1)));
             
@@ -212,7 +212,7 @@ public:
                                            pool_dimensions,
                                            pooling_stride_dimensions,
                                            padding_dimensions,
-                                           Pooling::PoolingMethod::MaxPooling,
+                                           "MaxPooling",
                                            "pooling_layer_" + to_string(i + 1)));
         }
 
@@ -267,7 +267,7 @@ public:
                                                     dimensions{ 7, 7, input_dimensions[2], initial_filters[0] }, 
                                                     "RectifiedLinear",
                                                     dimensions{ 2, 2 }, 
-                                                    Convolutional::Convolution::Same, 
+                                                    "Same",
                                                     false, 
                                                     "stem_conv_1");
 
@@ -279,7 +279,7 @@ public:
                                               dimensions{ 3, 3 }, 
                                               dimensions{ 2, 2 }, 
                                               dimensions{ 1, 1 },
-                                              Pooling::PoolingMethod::MaxPooling, 
+                                              "MaxPooling",
                                               "stem_pool");
 
         add_layer(move(stem_pool), { last_layer_index });
@@ -303,7 +303,7 @@ public:
                                                         dimensions{ 3, 3, current_input_dims[2], filters }, 
                                                         "RectifiedLinear",
                                                         dimensions{ stride, stride }, 
-                                                        Convolutional::Convolution::Same, 
+                                                        "Same",
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
@@ -315,7 +315,7 @@ public:
                                                         dimensions{ 3, 3, filters, filters }, 
                                                         "Linear",
                                                         dimensions{ 1, 1 }, 
-                                                        Convolutional::Convolution::Same, 
+                                                        "Same",
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
@@ -332,7 +332,7 @@ public:
                                                                 dimensions{ 1, 1, current_input_dims[2], filters }, 
                                                                 "Linear",
                                                                 dimensions{ stride, stride }, 
-                                                                Convolutional::Convolution::Same, 
+                                                                "Same",
                                                                 false,
                                                                 "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
@@ -353,7 +353,7 @@ public:
                                                                    dimensions{ 1, 1, filters, filters }, 
                                                                    "RectifiedLinear",
                                                                    dimensions{ 1, 1 }, 
-                                                                   Convolutional::Convolution::Same, 
+                                                                   "Same",
                                                                    false,
                                                                    "s" + to_string(stage) + "b" + to_string(block) + "_relu");
 
@@ -369,7 +369,7 @@ public:
                                                 dimensions{ pre_pool_dims[0], pre_pool_dims[1] },
                                                 dimensions{ 1, 1 }, 
                                                 dimensions{ 0, 0 },
-                                                Pooling::PoolingMethod::AveragePooling, 
+                                                "AveragePooling",
                                                 "global_avg_pool");
 
         add_layer(move(global_pool), { last_layer_index });

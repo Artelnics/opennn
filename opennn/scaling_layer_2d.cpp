@@ -422,7 +422,7 @@ void Scaling2d::from_XML(const XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling2d element is nullptr.\n");
 
-    const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
+    const Index neurons_number = read_xml_value<Index>(scaling_layer_element, "NeuronsNumber");
     set({ neurons_number });
 
     const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
@@ -454,7 +454,7 @@ void Scaling2d::from_XML(const XMLDocument& document)
                 );
         }
 
-        scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
+        scalers[i] = read_xml_value<string>(scaling_neuron_element, "Scaler");
 
         start_element = scaling_neuron_element;
     }

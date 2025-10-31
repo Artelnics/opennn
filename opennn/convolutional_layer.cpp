@@ -17,9 +17,9 @@ Convolutional::Convolutional(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions,
                              const string& new_activation_function,
                              const dimensions& new_stride_dimensions,
-                             const Convolutional::Convolution& new_convolution_type,
+                             const string& new_convolution_type,
                              const bool& new_batch_normaliztion,
-                             const string new_name) : Layer()
+                             const string& new_name) : Layer()
 {
     name = "Convolutional";
 
@@ -52,7 +52,7 @@ Tensor<type, 1> Convolutional::get_offsets() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    if (convolution_type == Convolution::Same)
+    if (convolution_type == "Same")
         preprocessed_inputs = inputs.pad(get_paddings());
     else
         preprocessed_inputs.device(*thread_pool_device) = inputs;
@@ -344,7 +344,7 @@ const string& Convolutional::get_activation_function() const
 
 Index Convolutional::get_output_height() const
 {
-    if (convolution_type == Convolution::Same)
+    if (convolution_type == "Same")
         return (get_input_height() + get_row_stride() - 1) / get_row_stride();
     else
         return (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
@@ -353,7 +353,7 @@ Index Convolutional::get_output_height() const
 
 Index Convolutional::get_output_width() const
 {
-    if (convolution_type == Convolution::Same)
+    if (convolution_type == "Same")
         return (get_input_width() + get_column_stride() - 1) / get_column_stride();
     else
         return (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
@@ -372,21 +372,9 @@ dimensions Convolutional::get_output_dimensions() const
 }
 
 
-Convolutional::Convolution Convolutional::get_convolution_type() const
+string Convolutional::get_convolution_type() const
 {
     return convolution_type;
-}
-
-
-string Convolutional::write_convolution_type() const
-{
-    switch(convolution_type)
-    {
-    case Convolution::Valid: return "Valid";
-    case Convolution::Same: return "Same";
-    }
-
-    return string();
 }
 
 
@@ -428,10 +416,10 @@ Index Convolutional::get_kernels_number() const
 
 Index Convolutional::get_padding_height() const
 {
-    if (convolution_type == Convolution::Valid)
+    if (convolution_type == "Valid")
         return 0;
 
-    if (convolution_type == Convolution::Same)
+    if (convolution_type == "Same")
     {
         const Index output_height = (get_input_height() + get_row_stride() - 1) / get_row_stride();
 
@@ -446,10 +434,10 @@ Index Convolutional::get_padding_height() const
 
 Index Convolutional::get_padding_width() const
 {
-    if (convolution_type == Convolution::Valid)
+    if (convolution_type == "Valid")
         return 0;
 
-    if (convolution_type == Convolution::Same)
+    if (convolution_type == "Same")
     {
         const Index output_width = (get_input_width() + get_column_stride() - 1) / get_column_stride();
 
@@ -466,9 +454,9 @@ void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
                         const string& new_activation_function,
                         const dimensions& new_stride_dimensions,
-                        const Convolution& new_convolution_type,
+                        const string& new_convolution_type,
                         const bool& new_batch_normalization,
-                        const string new_label)
+                        const string& new_label)
 {
     if(new_kernel_dimensions.size() != 4)
         throw runtime_error("Kernel dimensions must be 4");
@@ -485,7 +473,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
 
-    if (new_convolution_type == Convolution::Same && (new_kernel_dimensions[0] % 2 == 0 || new_kernel_dimensions[1] % 2 == 0))
+    if (new_convolution_type == "Same" && (new_kernel_dimensions[0] % 2 == 0 || new_kernel_dimensions[1] % 2 == 0))
         throw runtime_error("Kernel dimensions (height and width) must be odd (3x3,5x5 etc) when using 'Same' padding mode to ensure symmetric padding.");
 
     input_dimensions = new_input_dimensions;
@@ -602,20 +590,12 @@ void Convolutional::set_batch_normalization(const bool& new_batch_normalization)
 }
 
 
-void Convolutional::set_convolution_type(const Convolutional::Convolution& new_convolution_type)
-{
-    convolution_type = new_convolution_type;
-}
-
-
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
-    if(new_convolution_type == "Valid")
-        convolution_type = Convolution::Valid;
-    else if(new_convolution_type == "Same")
-        convolution_type = Convolution::Same;
-    else
+    if(new_convolution_type != "Valid" && new_convolution_type != "Same")
         throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
+
+    convolution_type = new_convolution_type;
 }
 
 
@@ -731,7 +711,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
-    add_xml_element(printer, "Convolution", write_convolution_type());
+    add_xml_element(printer, "Convolution", convolution_type);
     add_xml_element(printer, "BatchNormalization", to_string(batch_normalization));
     if (batch_normalization)
     {
@@ -754,26 +734,26 @@ void Convolutional::from_XML(const XMLDocument& document)
     if (!convolutional_layer_element)
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    set_label(read_xml_string(convolutional_layer_element, "Label"));
+    set_label(read_xml_value<string>(convolutional_layer_element, "Label"));
 
-    set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
+    set_input_dimensions(string_to_dimensions(read_xml_value<string>(convolutional_layer_element, "InputDimensions")));
 
-    const Index kernel_height = read_xml_index(convolutional_layer_element, "KernelsHeight");
-    const Index kernel_width = read_xml_index(convolutional_layer_element, "KernelsWidth");
-    const Index kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
-    const Index kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
+    const Index kernel_height = read_xml_value<Index>(convolutional_layer_element, "KernelsHeight");
+    const Index kernel_width = read_xml_value<Index>(convolutional_layer_element, "KernelsWidth");
+    const Index kernel_channels = read_xml_value<Index>(convolutional_layer_element, "KernelsChannels");
+    const Index kernels_number = read_xml_value<Index>(convolutional_layer_element, "KernelsNumber");
 
     biases.resize(kernels_number);
 
     weights.resize(kernel_height, kernel_width, kernel_channels, kernels_number);
 
-    set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
+    set_activation_function(read_xml_value<string>(convolutional_layer_element, "Activation"));
 
-    const dimensions stride_dimensions = string_to_dimensions(read_xml_string(convolutional_layer_element, "StrideDimensions"));
+    const dimensions stride_dimensions = string_to_dimensions(read_xml_value<string>(convolutional_layer_element, "StrideDimensions"));
     set_column_stride(stride_dimensions[0]);
     set_row_stride(stride_dimensions[1]);
 
-    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
+    set_convolution_type(read_xml_value<string>(convolutional_layer_element, "Convolution"));
 
     bool use_batch_normalization = false;
     const XMLElement* bn_element = convolutional_layer_element->FirstChildElement("BatchNormalization");
@@ -789,14 +769,14 @@ void Convolutional::from_XML(const XMLDocument& document)
         moving_means.resize(kernels_number);
         moving_standard_deviations.resize(kernels_number);
 
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Scales"), scales);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Offsets"), offsets);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingMeans"), moving_means);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
+        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Scales"), scales);
+        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Offsets"), offsets);
+        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "MovingMeans"), moving_means);
+        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
     }
 
-    string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Biases"), biases);
-    string_to_tensor<type, 4>(read_xml_string(convolutional_layer_element, "Weights"), weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Biases"), biases);
+    string_to_tensor<type, 4>(read_xml_value<string>(convolutional_layer_element, "Weights"), weights);
 }
 
 

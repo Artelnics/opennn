@@ -238,14 +238,14 @@ void Embedding::from_XML(const XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("Embedding element is nullptr.\n");
 
-    const string new_name = read_xml_string(embedding_layer_element, "Name");
-    const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
-    const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
+    const string new_name = read_xml_value<string>(embedding_layer_element, "Name");
+    const Index new_vocabulary_size = read_xml_value<Index>(embedding_layer_element, "VocabularySize");
+    const Index new_sequence_length = read_xml_value<Index>(embedding_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_xml_value<Index>(embedding_layer_element, "EmbeddingSize");
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    string_to_tensor<type, 2>(read_xml_string(embedding_layer_element, "Weights"), weights);
+    string_to_tensor<type, 2>(read_xml_value<string>(embedding_layer_element, "Weights"), weights);
 }
 
 

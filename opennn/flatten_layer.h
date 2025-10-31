@@ -134,11 +134,11 @@ public:
         const XMLElement* element = document.FirstChildElement("Flatten");
         if (!element) throw runtime_error("Flatten2d element is nullptr.\n");
 
-        const Index input_height = read_xml_index(element, "InputHeight");
-        const Index input_width = read_xml_index(element, "InputWidth");
+        const Index input_height = read_xml_value<Index>(element, "InputHeight");
+        const Index input_width = read_xml_value<Index>(element, "InputWidth");
 
         if constexpr (Rank == 3){
-            const Index input_channels = read_xml_index(element, "InputChannels");
+            const Index input_channels = read_xml_value<Index>(element, "InputChannels");
             set({input_height, input_width, input_channels});
         }
         else

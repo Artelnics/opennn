@@ -482,15 +482,15 @@ void StochasticGradientDescent::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");
 
-    set_batch_size(read_xml_index(root_element, "BatchSize"));
+    set_batch_size(read_xml_value<Index>(root_element, "BatchSize"));
 
-    const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
+    const bool apply_momentum = read_xml_value<bool>(root_element, "ApplyMomentum");
     set_momentum(apply_momentum ? type(0.9) : type(0));
 
-    set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
+    set_loss_goal(read_xml_value<type>(root_element, "LossGoal"));
+    set_maximum_epochs_number(read_xml_value<Index>(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_value<type>(root_element, "MaximumTime"));
+    set_hardware_use(read_xml_value<string>(root_element, "HardwareUse"));
 }
 
 

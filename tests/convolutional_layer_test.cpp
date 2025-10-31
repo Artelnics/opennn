@@ -48,7 +48,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
         {5, 5, 3, 32}, 
         {1, 1}, 
         "RectifiedLinear", 
-        Convolutional::Convolution::Same, 
+        "Same", 
         false,                 // Batch Normalization
         "SamePaddingWithoutBN"
     }

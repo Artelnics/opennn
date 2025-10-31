@@ -119,14 +119,14 @@ void Dataset::RawVariable::set_categories(const vector<string>& new_categories)
 
 void Dataset::RawVariable::from_XML(const XMLDocument& document)
 {
-    name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
-    set_use(read_xml_string(document.FirstChildElement(), "Use"));
-    set_type(read_xml_string(document.FirstChildElement(), "Type"));
+    name = read_xml_value<string>(document.FirstChildElement(), "Name");
+    set_scaler(read_xml_value<string>(document.FirstChildElement(), "Scaler"));
+    set_use(read_xml_value<string>(document.FirstChildElement(), "Use"));
+    set_type(read_xml_value<string>(document.FirstChildElement(), "Type"));
 
     if (type == RawVariableType::Categorical)
     {
-        const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
+        const string categories_text = read_xml_value<string>(document.FirstChildElement(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
 }
@@ -2675,12 +2675,12 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element)
         throw runtime_error("Data source element is nullptr.\n");
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_name(read_xml_string(data_source_element, "Separator"));
-    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
-    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_data_path(read_xml_value<string>(data_source_element, "Path"));
+    set_separator_name(read_xml_value<string>(data_source_element, "Separator"));
+    set_has_header(read_xml_value<bool>(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_value<bool>(data_source_element, "HasSamplesId"));
+    set_missing_values_label(read_xml_value<string>(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_value<string>(data_source_element, "Codification"));
 
     // Raw Variables
     const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
@@ -2688,7 +2688,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
-    set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
+    set_raw_variables_number(read_xml_value<Index>(raw_variables_element, "RawVariablesNumber"));
 
     const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
@@ -2701,17 +2701,17 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
         if (raw_variable_element->Attribute("Item") != to_string(i + 1))
             throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
-        raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
-        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
+        raw_variable.name = read_xml_value<string>(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_value<string>(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_value<string>(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_value<string>(raw_variable_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
         {
             const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if (categories_element)
-                raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
+                raw_variable.categories = get_tokens(read_xml_value<string>(raw_variable_element, "Categories"), ";");
             else if (raw_variable.type == RawVariableType::Binary)
                 raw_variable.categories = { "0", "1" };
             else
@@ -2725,12 +2725,12 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+    const Index samples_number = read_xml_value<Index>(samples_element, "SamplesNumber");
 
     if (has_sample_ids)
     {
         const string separator_string = get_separator_string();
-        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
+        sample_ids = get_tokens(read_xml_value<string>(samples_element, "SamplesId"), separator_string);
     }
 
     if (raw_variables.size() != 0)
@@ -2741,7 +2741,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
         data.setZero();
 
         sample_uses.resize(samples_number);
-        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+        set_sample_uses(get_tokens(read_xml_value<string>(samples_element, "SampleUses"), " "));
     }
     else
         data.resize(0, 0);
@@ -2752,13 +2752,13 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
+    missing_values_number = read_xml_value<Index>(missing_values_element, "MissingValuesNumber");
 
     if (missing_values_number > 0)
     {
-        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+        set_missing_values_method(read_xml_value<string>(missing_values_element, "MissingValuesMethod"));
 
-        const string raw_string = read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber");
+        const string raw_string = read_xml_value<string>(missing_values_element, "RawVariablesMissingValuesNumber");
         const vector<string> tokens = get_tokens(raw_string, " ");
 
         vector<Index> valid_numbers;
@@ -2772,7 +2772,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
         for (size_t i = 0; i < valid_numbers.size(); ++i)
             raw_variables_missing_values_number(i) = valid_numbers[i];
 
-        rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
+        rows_missing_values_number = read_xml_value<Index>(missing_values_element, "RowsMissingValuesNumber");
     }
 
     //preview data
@@ -2807,7 +2807,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     }
 
 
-    set_display(read_xml_bool(data_set_element, "Display"));
+    set_display(read_xml_value<bool>(data_set_element, "Display"));
 
     input_dimensions = { get_variables_number("Input") };
     target_dimensions = { get_variables_number("Target") };

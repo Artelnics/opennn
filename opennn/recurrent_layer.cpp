@@ -298,13 +298,13 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
-    set_label(read_xml_string(recurrent_layer_element,"Label"));
-    set_input_dimensions(string_to_dimensions(read_xml_string(recurrent_layer_element, "InputDimensions")));
-    set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
-    string_to_tensor<type, 1>(read_xml_string(recurrent_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "InputWeights"), input_weights);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
+    set_label(read_xml_value<string>(recurrent_layer_element,"Label"));
+    set_input_dimensions(string_to_dimensions(read_xml_value<string>(recurrent_layer_element, "InputDimensions")));
+    set_output_dimensions({ read_xml_value<Index>(recurrent_layer_element, "NeuronsNumber") });
+    set_activation_function(read_xml_value<string>(recurrent_layer_element, "Activation"));
+    string_to_tensor<type, 1>(read_xml_value<string>(recurrent_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(recurrent_layer_element, "InputWeights"), input_weights);
+    string_to_tensor<type, 2>(read_xml_value<string>(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
 }
 
 
