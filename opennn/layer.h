@@ -81,10 +81,6 @@ public:
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
-    // virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-    //                                                   unique_ptr<LayerForwardPropagation>&,
-    //                                                   unique_ptr<LayerBackPropagationLM>&) {}
-
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
@@ -314,7 +310,15 @@ struct LayerForwardPropagation
 {
     LayerForwardPropagation() {}
 
-    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+    {
+        if (!new_layer) return;
+        batch_size = new_batch_size;
+        layer = new_layer;
+        initialize();
+    }
+
+    virtual void initialize() = 0;
 
     virtual TensorView get_output_pair() const = 0;
 
@@ -330,7 +334,15 @@ struct LayerBackPropagation
 {
     LayerBackPropagation() {}
 
-    virtual void set(const Index& = 0, Layer* = nullptr) = 0;
+    void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
+    {
+        if (!new_layer) return;
+        batch_size = new_batch_size;
+        layer = new_layer;
+        initialize();
+    }
+
+    virtual void initialize() = 0;
 
     virtual vector<TensorView> get_input_derivative_views() const = 0;
 

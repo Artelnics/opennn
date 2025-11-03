@@ -190,14 +190,14 @@ void Normalization3d::from_XML(const XMLDocument& document)
     if(!normalization_layer_element)
         throw runtime_error("Normalization3d element is nullptr.\n");
 
-    const string new_name = read_xml_string(normalization_layer_element, "Name");
-    const Index new_sequence_length = read_xml_index(normalization_layer_element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_index(normalization_layer_element, "EmbeddingDimension");
+    const string new_name = read_xml_value<string>(normalization_layer_element, "Name");
+    const Index new_sequence_length = read_xml_value<Index>(normalization_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_xml_value<Index>(normalization_layer_element, "EmbeddingDimension");
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Betas"), betas);
-    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Gammas"), gammas);
+    string_to_tensor<type, 1>(read_xml_value<string>(normalization_layer_element, "Betas"), betas);
+    string_to_tensor<type, 1>(read_xml_value<string>(normalization_layer_element, "Gammas"), gammas);
 }
 
 
@@ -232,14 +232,8 @@ TensorView Normalization3dForwardPropagation::get_output_pair() const
 }
 
 
-void Normalization3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Normalization3dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 
     const Index sequence_length = normalization_3d->get_sequence_length();
@@ -259,14 +253,8 @@ void Normalization3dForwardPropagation::print() const
 }
 
 
-void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Normalization3dBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
 
     const Index sequence_length = normalization_layer_3d->get_sequence_length();

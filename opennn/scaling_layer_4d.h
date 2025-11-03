@@ -59,7 +59,7 @@ struct Scaling4dForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 

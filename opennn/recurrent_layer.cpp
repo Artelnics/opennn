@@ -298,13 +298,13 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
-    set_label(read_xml_string(recurrent_layer_element,"Label"));
-    set_input_dimensions(string_to_dimensions(read_xml_string(recurrent_layer_element, "InputDimensions")));
-    set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
-    string_to_tensor<type, 1>(read_xml_string(recurrent_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "InputWeights"), input_weights);
-    string_to_tensor<type, 2>(read_xml_string(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
+    set_label(read_xml_value<string>(recurrent_layer_element,"Label"));
+    set_input_dimensions(string_to_dimensions(read_xml_value<string>(recurrent_layer_element, "InputDimensions")));
+    set_output_dimensions({ read_xml_value<Index>(recurrent_layer_element, "NeuronsNumber") });
+    set_activation_function(read_xml_value<string>(recurrent_layer_element, "Activation"));
+    string_to_tensor<type, 1>(read_xml_value<string>(recurrent_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(recurrent_layer_element, "InputWeights"), input_weights);
+    string_to_tensor<type, 2>(read_xml_value<string>(recurrent_layer_element, "RecurrentWeights"), recurrent_weights);
 }
 
 
@@ -338,13 +338,8 @@ TensorView RecurrentForwardPropagation::get_output_pair() const
 }
 
 
-void RecurrentForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void RecurrentForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size=new_batch_size;
-
-    layer = new_layer;
     if(layer == nullptr)
         throw runtime_error("recurrrent layer is nullptr");
 
@@ -371,14 +366,8 @@ void RecurrentForwardPropagation::print() const
 }
 
 
-void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void RecurrentBackPropagation::initialize()
 {
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    if (!layer) return;
-
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];
     const Index past_time_steps = layer->get_input_dimensions()[0];

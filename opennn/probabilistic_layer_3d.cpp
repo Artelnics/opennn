@@ -284,16 +284,16 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3d element is nullptr.\n");
 
-    const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
-    const Index new_inputs_depth = read_xml_index(probabilistic_layer_element, "InputsDepth");
-    const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
+    const Index new_inputs_number = read_xml_value<Index>(probabilistic_layer_element, "InputsNumber");
+    const Index new_inputs_depth = read_xml_value<Index>(probabilistic_layer_element, "InputsDepth");
+    const Index new_neurons_number = read_xml_value<Index>(probabilistic_layer_element, "NeuronsNumber");
 
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
-    set_label(read_xml_string(probabilistic_layer_element, "Label"));
-    set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
-    string_to_tensor<type, 1>(read_xml_string(probabilistic_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_string(probabilistic_layer_element, "Weights"), weights);
+    set_label(read_xml_value<string>(probabilistic_layer_element, "Label"));
+    set_activation_function(read_xml_value<string>(probabilistic_layer_element, "Activation"));
+    string_to_tensor<type, 1>(read_xml_value<string>(probabilistic_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(probabilistic_layer_element, "Weights"), weights);
 }
 
 
@@ -331,15 +331,9 @@ TensorView Probabilistic3dForwardPropagation::get_output_pair() const
 }
 
 
-void Probabilistic3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3dForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
-
-    batch_size = new_batch_size;
 
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
@@ -355,14 +349,8 @@ void Probabilistic3dForwardPropagation::print() const
 }
 
 
-void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3dBackPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();

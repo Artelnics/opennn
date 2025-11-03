@@ -185,17 +185,17 @@ void Dense3d::from_XML(const XMLDocument& document)
     if(!dense2d_layer_element)
         throw runtime_error("Dense3d element is nullptr.\n");
 
-    const Index new_sequence_length = read_xml_index(dense2d_layer_element, "InputsNumber");
-    const Index new_input_dimension = read_xml_index(dense2d_layer_element, "InputsDepth");
-    const Index new_output_dimension = read_xml_index(dense2d_layer_element, "NeuronsNumber");
+    const Index new_sequence_length = read_xml_value<Index>(dense2d_layer_element, "InputsNumber");
+    const Index new_input_dimension = read_xml_value<Index>(dense2d_layer_element, "InputsDepth");
+    const Index new_output_dimension = read_xml_value<Index>(dense2d_layer_element, "NeuronsNumber");
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_label(read_xml_string(dense2d_layer_element, "Label"));
-    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
+    set_label(read_xml_value<string>(dense2d_layer_element, "Label"));
+    set_activation_function(read_xml_value<string>(dense2d_layer_element, "Activation"));
 
-    string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_string(dense2d_layer_element, "Weights"), weights);
+    string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_value<string>(dense2d_layer_element, "Weights"), weights);
 }
 
 
@@ -242,13 +242,9 @@ TensorView Dense3dForwardPropagation::get_output_pair() const
 }
 
 
-void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dForwardPropagation::initialize()
 {
-    layer = new_layer;
-
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
-
-    batch_size = new_batch_size;
 
     const Index output_embedding = dense_3d->get_output_embedding();
 
@@ -260,14 +256,8 @@ void Dense3dForwardPropagation::set(const Index& new_batch_size, Layer* new_laye
 }
 
 
-void Dense3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Dense3dBackPropagation::initialize()
 {
-    batch_size = new_batch_size;
-
-    layer = new_layer;
-
-    if (!layer) return;
-
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
     const Index output_embedding = dense_3d->get_output_embedding();

@@ -271,7 +271,7 @@ void Unscaling::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Unscaling element is nullptr.\n");
 
-    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+    const Index neurons_number = read_xml_value<Index>(root_element, "NeuronsNumber");
 
     set(neurons_number);
 
@@ -301,7 +301,7 @@ void Unscaling::from_XML(const XMLDocument& document)
                 type(stof(splitted_descriptives[3])));
         }
 
-        scalers[i] = read_xml_string(unscaling_neuron_element, "Scaler");
+        scalers[i] = read_xml_value<string>(unscaling_neuron_element, "Scaler");
 
         start_element = unscaling_neuron_element;
     }
@@ -323,14 +323,8 @@ TensorView UnscalingForwardPropagation::get_output_pair() const
 }
 
 
-void UnscalingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void UnscalingForwardPropagation::initialize()
 {
-    if (!new_layer) return;
-
-    layer = new_layer;
-
-    batch_size = new_batch_size;
-
     const dimensions output_dimensions = static_cast<Unscaling*>(layer)->get_output_dimensions();
 
     outputs.resize(batch_size, output_dimensions[0]);

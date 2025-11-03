@@ -214,7 +214,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Loss method
 
-    const string loss_method = read_xml_string(loss_index_element, "LossMethod");
+    const string loss_method = read_xml_value<string>(loss_index_element, "LossMethod");
 
     const XMLElement* loss_method_element = loss_index_element->FirstChildElement(loss_method.c_str());
 
@@ -235,7 +235,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Optimization method
 
-    const string optimization_method = read_xml_string(optimization_algorithm_element, "OptimizationMethod");
+    const string optimization_method = read_xml_value<string>(optimization_algorithm_element, "OptimizationMethod");
 
     const XMLElement* optimization_method_element = optimization_algorithm_element->FirstChildElement(optimization_method.c_str());
 
@@ -262,7 +262,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Display
 
-    optimization_algorithm->set_display(read_xml_bool(root_element, "Display"));
+    optimization_algorithm->set_display(read_xml_value<bool>(root_element, "Display"));
 }
 
 

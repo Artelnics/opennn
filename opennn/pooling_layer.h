@@ -21,14 +21,14 @@ class Pooling final : public Layer
 
 public:
 
-    enum class PoolingMethod{MaxPooling, AveragePooling};
+    //enum class PoolingMethod{MaxPooling, AveragePooling};
 
     Pooling(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
             const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
             const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
             const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
-            const PoolingMethod& = PoolingMethod::MaxPooling,
-            const string = "pooling_layer");
+            const string& = "MaxPooling",
+            const string& = "pooling_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -50,16 +50,14 @@ public:
     Index get_pool_height() const;
     Index get_pool_width() const;
 
-    PoolingMethod get_pooling_method() const;
-
-    string write_pooling_method() const;
+    string get_pooling_method() const;
 
     void set(const dimensions& = {0, 0, 0},
              const dimensions& = {1, 1},
              const dimensions& = {1, 1},
              const dimensions& = {0, 0},
-             const PoolingMethod& = PoolingMethod::MaxPooling,
-             const string = "pooling_layer");
+             const string& = "MaxPooling",
+             const string& = "pooling_layer");
 
     void set_input_dimensions(const dimensions&) override;
 
@@ -71,7 +69,6 @@ public:
 
     void set_pool_size(const Index&, const Index&);
 
-    void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
     void forward_propagate(const vector<TensorView>&,
@@ -136,7 +133,7 @@ private:
 
     Index column_stride = 1;
 
-    PoolingMethod pooling_method = PoolingMethod::AveragePooling;
+    string pooling_method = "MaxPooling";
 
 #ifdef OPENNN_CUDA
 
@@ -155,7 +152,7 @@ struct PoolingForwardPropagation final : LayerForwardPropagation
 
     TensorView get_output_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 
@@ -173,7 +170,7 @@ struct PoolingBackPropagation final : LayerBackPropagation
 
     vector<TensorView> get_input_derivative_views() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void initialize() override;
 
     void print() const override;
 
