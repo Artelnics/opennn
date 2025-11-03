@@ -1,21 +1,24 @@
-# OpenMP library
-
-win32-msvc {
+win32-msvc* {
+    message("OpenMP: Enabled for MSVC")
     QMAKE_CXXFLAGS += /openmp
-    QMAKE_LFLAGS += /openmp
-}
-
-win32-g++|unix:g++ {
-    QMAKE_CXXFLAGS += -fopenmp
-    QMAKE_LFLAGS += -fopenmp
-}
-
-clang {
-    QMAKE_CXXFLAGS += -fopenmp
-    QMAKE_LFLAGS += -fopenmp
 }
 
 macx {
-    INCLUDEPATH += /usr/local/opt/libomp/include
-    LIBS += -L/usr/local/opt/libomp/lib -lomp
+    message("OpenMP: Configuring for macOS (Clang)")
+
+    OMP_PREFIX = $$system(/opt/homebrew/bin/brew --prefix libomp)
+
+    !isEmpty(OMP_PREFIX) {
+        INCLUDEPATH += $$OMP_PREFIX/include
+        LIBS        += -L$$OMP_PREFIX/lib -lomp
+
+        QMAKE_CXXFLAGS += -Xpreprocessor -fopenmp
+        QMAKE_LFLAGS   += -L$$OMP_PREFIX/lib
+    }
+}
+
+unix:g++|win32-g++ {
+    message("OpenMP: Enabled for GCC (Linux/MinGW)")
+    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_LFLAGS   += -fopenmp
 }

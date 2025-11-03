@@ -44,6 +44,3 @@ if(!isEmpty(CUDA_PATH)) {
         $${subdir}.includePath += $$CUDA_INCLUDE_PATH
     }
 }
-
-# OpenMP library
-include(../opennmp.pri)

@@ -45,3 +45,6 @@ win32 {
     DEFINES += _HAS_STD_BYTE=0
     DEFINES += WIN32_LEAN_AND_MEAN
 }
+
+#OpenMP
+include(../opennmp.pri)
