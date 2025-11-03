@@ -2087,7 +2087,7 @@ void TestingAnalysis::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
 
-    set_display(read_xml_value<bool>(root_element, "Display"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

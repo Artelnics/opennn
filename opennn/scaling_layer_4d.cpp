@@ -83,7 +83,7 @@ void Scaling4d::from_XML(const XMLDocument& document)
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
 
-    set(string_to_dimensions(read_xml_value<string>(scaling_layer_element, "InputDimensions")));
+    set(string_to_dimensions(read_xml_string(scaling_layer_element, "InputDimensions")));
 
 }
 

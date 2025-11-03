@@ -2249,31 +2249,10 @@ private:
 void add_xml_element(XMLPrinter& printer, const string& name, const string& value);
 void add_xml_element_attribute(XMLPrinter& printer, const string&, const string&, const string&, const string&);
 
-template<typename T>
-T read_xml_value(const XMLElement* parent, const string& name)
-{
-    const XMLElement* element = parent->FirstChildElement(name.c_str());
-    if (!element)
-        throw runtime_error("XML Error: Missing element '" + name + "'.");
-
-    const char* text = element->GetText();
-    if (!text)
-        throw runtime_error("XML Error: Element '" + name + "' is empty.");
-
-    T value;
-
-    if constexpr (is_same_v<T, string>)
-        value = text;
-    else if constexpr (is_integral_v<T>)
-        value = static_cast<T>(stoi(text));
-    else if constexpr (is_floating_point_v<T>)
-        value = static_cast<T>(stod(text));
-    else
-        // This will cause a compile error for unsupported types, which is good.
-        static_assert(false, "Unsupported type for read_xml_value");
-
-    return value;
-}
+type read_xml_type(const XMLElement* root, const string& element_name);
+Index read_xml_index(const XMLElement* root, const string& element_name);
+bool read_xml_bool(const XMLElement* root, const string& element_name);
+string read_xml_string(const XMLElement* root, const string& element_name);
 
 }	// tinyxml2
 

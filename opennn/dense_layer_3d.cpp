@@ -185,17 +185,17 @@ void Dense3d::from_XML(const XMLDocument& document)
     if(!dense2d_layer_element)
         throw runtime_error("Dense3d element is nullptr.\n");
 
-    const Index new_sequence_length = read_xml_value<Index>(dense2d_layer_element, "InputsNumber");
-    const Index new_input_dimension = read_xml_value<Index>(dense2d_layer_element, "InputsDepth");
-    const Index new_output_dimension = read_xml_value<Index>(dense2d_layer_element, "NeuronsNumber");
+    const Index new_sequence_length = read_xml_index(dense2d_layer_element, "InputsNumber");
+    const Index new_input_dimension = read_xml_index(dense2d_layer_element, "InputsDepth");
+    const Index new_output_dimension = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_label(read_xml_value<string>(dense2d_layer_element, "Label"));
-    set_activation_function(read_xml_value<string>(dense2d_layer_element, "Activation"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
+    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
-    string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_value<string>(dense2d_layer_element, "Weights"), weights);
+    string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(dense2d_layer_element, "Weights"), weights);
 }
 
 

@@ -536,15 +536,15 @@ void Dense2d::from_XML(const XMLDocument& document)
     if(!dense2d_layer_element)
         throw runtime_error("Dense2d element is nullptr.\n");
 
-    set_label(read_xml_value<string>(dense2d_layer_element, "Label"));
+    set_label(read_xml_string(dense2d_layer_element, "Label"));
 
-    const Index inputs_number = read_xml_value<Index>(dense2d_layer_element, "InputsNumber");
-    const Index neurons_number = read_xml_value<Index>(dense2d_layer_element, "NeuronsNumber");
+    const Index inputs_number = read_xml_index(dense2d_layer_element, "InputsNumber");
+    const Index neurons_number = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
     set_input_dimensions({ inputs_number });
     set_output_dimensions({ neurons_number });
 
-    set_activation_function(read_xml_value<string>(dense2d_layer_element, "Activation"));
+    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     bool use_batch_normalization = false;
     const XMLElement* bn_element = dense2d_layer_element->FirstChildElement("BatchNormalization");
@@ -558,14 +558,14 @@ void Dense2d::from_XML(const XMLDocument& document)
         moving_means.resize(neurons_number);
         moving_standard_deviations.resize(neurons_number);
 
-        string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "Scales"), scales);
-        string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "Offsets"), offsets);
-        string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "MovingMeans"), moving_means);
-        string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
+        string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Scales"), scales);
+        string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Offsets"), offsets);
+        string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "MovingMeans"), moving_means);
+        string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
     }
 
-    string_to_tensor<type, 1>(read_xml_value<string>(dense2d_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_value<string>(dense2d_layer_element, "Weights"), weights);
+    string_to_tensor<type, 1>(read_xml_string(dense2d_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(dense2d_layer_element, "Weights"), weights);
 }
 
 

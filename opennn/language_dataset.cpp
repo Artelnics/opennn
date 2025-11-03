@@ -404,12 +404,12 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    set_data_path(read_xml_value<string>(data_source_element, "Path"));
-    set_separator_string(read_xml_value<string>(data_source_element, "Separator"));
-    set_missing_values_label(read_xml_value<string>(data_source_element, "MissingValuesLabel"));
-    set_codification(read_xml_value<string>(data_source_element, "Codification"));
-    set_has_header(read_xml_value<bool>(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_value<bool>(data_source_element, "HasSamplesId"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
+    set_separator_string(read_xml_string(data_source_element, "Separator"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
     // RawVariables
 
@@ -447,13 +447,13 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
             throw runtime_error("Raw_variable item number (" + to_string(i + 1) + ") exception.\n");
 
         RawVariable& raw_variable = raw_variables[i];
-        raw_variable.name = read_xml_value<string>(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_value<string>(raw_variable_element, "Scaler"));
-        raw_variable.set_use(read_xml_value<string>(raw_variable_element, "Use"));
-        raw_variable.set_type(read_xml_value<string>(raw_variable_element, "Type"));
+        raw_variable.name = read_xml_string(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
-            raw_variable.categories = get_tokens(read_xml_value<string>(raw_variable_element, "Categories"), ";");
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
 
         //        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
     }
@@ -461,7 +461,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     // Rows label
 
     if(has_sample_ids)
-        sample_ids = get_tokens(read_xml_value<string>(data_set_element, "SamplesId"), ",");
+        sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
 
     // Samples
 
@@ -663,7 +663,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     // Display
 
-    // set_display(read_xml_value<bool>(data_set_element, "Display"));
+    // set_display(read_xml_bool(data_set_element, "Display"));
 }
 
 

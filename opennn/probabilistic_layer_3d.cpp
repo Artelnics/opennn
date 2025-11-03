@@ -284,16 +284,16 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3d element is nullptr.\n");
 
-    const Index new_inputs_number = read_xml_value<Index>(probabilistic_layer_element, "InputsNumber");
-    const Index new_inputs_depth = read_xml_value<Index>(probabilistic_layer_element, "InputsDepth");
-    const Index new_neurons_number = read_xml_value<Index>(probabilistic_layer_element, "NeuronsNumber");
+    const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
+    const Index new_inputs_depth = read_xml_index(probabilistic_layer_element, "InputsDepth");
+    const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
 
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
-    set_label(read_xml_value<string>(probabilistic_layer_element, "Label"));
-    set_activation_function(read_xml_value<string>(probabilistic_layer_element, "Activation"));
-    string_to_tensor<type, 1>(read_xml_value<string>(probabilistic_layer_element, "Biases"), biases);
-    string_to_tensor<type, 2>(read_xml_value<string>(probabilistic_layer_element, "Weights"), weights);
+    set_label(read_xml_string(probabilistic_layer_element, "Label"));
+    set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
+    string_to_tensor<type, 1>(read_xml_string(probabilistic_layer_element, "Biases"), biases);
+    string_to_tensor<type, 2>(read_xml_string(probabilistic_layer_element, "Weights"), weights);
 }
 
 

@@ -102,8 +102,8 @@ public:
         const XMLElement* element = document.FirstChildElement("Addition");
         if (!element) throw runtime_error(name + " element is nullptr.");
 
-        const string new_label = read_xml_value<string>(element, "Label");
-        const dimensions new_input_dimensions = string_to_dimensions(read_xml_value<string>(element, "InputDimensions"));
+        const string new_label = read_xml_string(element, "Label");
+        const dimensions new_input_dimensions = string_to_dimensions(read_xml_string(element, "InputDimensions"));
 
         set(new_input_dimensions, new_label);
     }
