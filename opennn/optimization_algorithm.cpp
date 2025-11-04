@@ -283,80 +283,88 @@ void OptimizationAlgorithm::set_scaling()
     Dataset* dataset = loss_index->get_dataset();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    vector<Descriptives> input_descriptives;
-    vector<string> input_scalers;
-    bool input_has_been_scaled = false;
+    vector<Descriptives> input_variable_descriptives;
+    vector<string> input_variable_scalers;
 
     if(neural_network->has("Scaling2d"))
     {
-        input_scalers = dataset->get_variable_scalers("Input");
-        input_descriptives = dataset->scale_variables("Input");
-        input_has_been_scaled = true;
+        input_variable_scalers = dataset->get_variable_scalers("Input");
+        input_variable_descriptives = dataset->scale_variables("Input");
 
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
-        scaling_layer_2d->set_descriptives(input_descriptives);
-        scaling_layer_2d->set_scalers(input_scalers);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
     else if(neural_network->has("Scaling3d"))
     {
         TimeSeriesDataset* time_series_dataset = static_cast<TimeSeriesDataset*>(dataset);
-        input_scalers = time_series_dataset->get_variable_scalers("Input");
-        input_descriptives = time_series_dataset->scale_variables("Input");
-        input_has_been_scaled = true;
+        input_variable_scalers = time_series_dataset->get_variable_scalers("Input");
+        input_variable_descriptives = time_series_dataset->scale_variables("Input");
 
         Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
-        scaling_layer_3d->set_descriptives(input_descriptives);
-        scaling_layer_3d->set_scalers(input_scalers);
+        scaling_layer_3d->set_descriptives(input_variable_descriptives);
+        scaling_layer_3d->set_scalers(input_variable_scalers);
     }
     else if(neural_network->has("Scaling4d"))
     {
         ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
         image_dataset->scale_variables("Input");
-        input_has_been_scaled = true;
     }
 
-    if(neural_network->has("Unscaling"))
+    if(!neural_network->has("Unscaling"))
+        return;
+
+    vector<Descriptives> target_variable_descriptives = dataset->scale_variables("Target");
+    vector<string> target_variable_scalers = dataset->get_variable_scalers("Target");
+
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+
+    unscaling_layer->set_descriptives(target_variable_descriptives);
+    unscaling_layer->set_scalers(target_variable_scalers);
+
+    /*
+
+    const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
+
+    vector<Descriptives> unscaling_layer_descriptives;
+    vector<string> unscaling_layer_scalers;
+
+    for(const Index& target_index : target_variable_indices)
     {
-        Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+        auto target_position_inputs = find(input_variable_indices.begin(), input_variable_indices.end(), target_index);
 
-        const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
-        const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
-
-        vector<Descriptives> target_descriptives;
-        vector<string> target_scalers;
-
-        for(const Index& target_index : target_variable_indices)
+        if(target_position_inputs != input_variable_indices.end())
         {
-            auto target_position_inputs = find(input_variable_indices.begin(), input_variable_indices.end(), target_index);
+            if(!input_has_been_scaled)
+                throw runtime_error("Configuration error: Unscaling layer exists for a target that is also an input, but no input scaling layer was found.");
 
-            if(target_position_inputs != input_variable_indices.end())
-            {
-                if(!input_has_been_scaled)
-                    throw runtime_error("Configuration error: Unscaling layer exists for a target that is also an input, but no input scaling layer was found.");
+            const Index input_index = distance(input_variable_indices.begin(), target_position_inputs);
 
-                const Index input_index = distance(input_variable_indices.begin(), target_position_inputs);
-                target_descriptives.push_back(input_descriptives[input_index]);
-                target_scalers.push_back(input_scalers[input_index]);
-            }
-            else
-            {
-                const vector<Descriptives> all_target_descriptives = dataset->scale_variables("Target");
-                const vector<string> all_target_scalers = dataset->get_variable_scalers("Target");
-
-                auto target_position_targets = find(target_variable_indices.begin(), target_variable_indices.end(), target_index);
-                const Index target_position = distance(target_variable_indices.begin(), target_position_targets);
-
-                target_descriptives.push_back(all_target_descriptives[target_position]);
-                target_scalers.push_back(all_target_scalers[target_position]);
-            }
+            unscaling_layer_descriptives.push_back(input_variable_descriptives[input_index]);
+            unscaling_layer_scalers.push_back(input_variable_scalers[input_index]);
         }
+        else
+        {
+            const vector<Descriptives> target_variable_descriptives = dataset->scale_variables("Target");
+            const vector<string> target_variable_scalers = dataset->get_variable_scalers("Target");
 
-        if(static_cast<Index>(target_descriptives.size()) != unscaling_layer->get_outputs_number())
-            throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
+            auto target_position_targets = find(target_variable_indices.begin(), target_variable_indices.end(), target_index);
+            const Index target_position = distance(target_variable_indices.begin(), target_position_targets);
 
-        unscaling_layer->set_descriptives(target_descriptives);
-        unscaling_layer->set_scalers(target_scalers);
+            unscaling_layer_descriptives.push_back(target_variable_descriptives[target_position]);
+            unscaling_layer_scalers.push_back(target_variable_scalers[target_position]);
+        }
     }
+
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+
+    if(static_cast<Index>(unscaling_layer_descriptives.size()) != unscaling_layer->get_outputs_number())
+        throw runtime_error("Unscaling setup error: Mismatch between number of target variables and unscaling layer neurons.");
+
+    unscaling_layer->set_descriptives(unscaling_layer_descriptives);
+    unscaling_layer->set_scalers(unscaling_layer_scalers);
+*/
 }
 
 
@@ -381,29 +389,36 @@ void OptimizationAlgorithm::set_unscaling()
         image_dataset->unscale_variables("Input");
     }
 
-    if(neural_network->has("Unscaling"))
+    if(!neural_network->has("Unscaling"))
+        return;
+
+    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const vector<Descriptives> unscaling_layer_descriptives = unscaling_layer->get_descriptives();
+    dataset->unscale_variables("Target", unscaling_layer_descriptives);
+/*
+    const vector<Index> input_indices = dataset->get_variable_indices("Input");
+    const vector<Index> target_indices = dataset->get_variable_indices("Target");
+
+    const size_t targets_number = target_indices.size();
+
+    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const vector<Descriptives> unscaling_layer_descriptives = unscaling_layer->get_descriptives();
+
+    vector<Descriptives> target_variable_descriptives;
+
+    for(size_t i = 0; i < targets_number; ++i)
     {
-        const vector<Index> input_indices = dataset->get_variable_indices("Input");
-        const vector<Index> target_indices = dataset->get_variable_indices("Target");
+        const Index& target_index = target_indices[i];
 
-        vector<Descriptives> targets_to_unscale_descriptives;
+        auto target_position = find(target_indices.begin(), target_indices.end(), target_index);
 
-        Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-        const vector<Descriptives> all_unscaling_descriptives = unscaling_layer->get_descriptives();
-
-        for(size_t i = 0; i < target_indices.size(); ++i)
-        {
-            const Index& target_index = target_indices[i];
-
-            auto target_position = find(input_indices.begin(), input_indices.end(), target_index);
-
-            if(target_position == input_indices.end())
-                targets_to_unscale_descriptives.push_back(all_unscaling_descriptives[i]);
-        }
-
-        if (!targets_to_unscale_descriptives.empty())
-            dataset->unscale_variables("Target", all_unscaling_descriptives);
+        if(target_position == input_indices.end())
+            target_variable_descriptives.push_back(unscaling_layer_descriptives[i]);
     }
+
+    if (!target_variable_descriptives.empty())
+        dataset->unscale_variables("Target", unscaling_layer_descriptives);
+*/
 }
 
 
