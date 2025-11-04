@@ -34,7 +34,7 @@ win32-msvc* {
 INCLUDEPATH += $$PWD/../opennn
 DEPENDPATH += $$PWD/../opennn
 
-win32 {
+win32-msvc {
     CONFIG(debug, debug|release) {
         OPENNN_LIB_PATH = $$OUT_PWD/../opennn/debug
         PRE_TARGETDEPS += $$OPENNN_LIB_PATH/opennn.lib
@@ -42,9 +42,14 @@ win32 {
         OPENNN_LIB_PATH = $$OUT_PWD/../opennn/release
         PRE_TARGETDEPS += $$OPENNN_LIB_PATH/opennn.lib
     }
-} else:unix {
-    OPENNN_LIB_PATH = $$OUT_PWD/../opennn
-    PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
+} else:unix|win32-g++ {
+    CONFIG(debug, debug|release) {
+        OPENNN_LIB_PATH = $$OUT_PWD/../opennn/debug
+        PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
+    } else {
+        OPENNN_LIB_PATH = $$OUT_PWD/../opennn/release
+        PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
+    }
 }
 LIBS += -L$$OPENNN_LIB_PATH -lopennn
 
