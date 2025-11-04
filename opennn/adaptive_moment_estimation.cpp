@@ -475,11 +475,11 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
 
-    set_batch_size(read_xml_value<Index>(root_element, "BatchSize"));
-    set_loss_goal(read_xml_value<type>(root_element, "LossGoal"));
-    set_maximum_epochs_number(read_xml_value<Index>(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_value<type>(root_element, "MaximumTime"));
-    set_hardware_use(read_xml_value<string>(root_element, "HardwareUse"));
+    set_batch_size(read_xml_index(root_element, "BatchSize"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
 

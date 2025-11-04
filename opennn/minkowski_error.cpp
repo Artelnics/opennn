@@ -112,7 +112,7 @@ void MinkowskiError::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Minkowski error element is nullptr.\n");
 
-    set_Minkowski_parameter(read_xml_value<type>(root_element, "MinkowskiParameter"));
+    set_Minkowski_parameter(read_xml_type(root_element, "MinkowskiParameter"));
 }
 
 

@@ -162,7 +162,7 @@ void ModelSelection::from_XML(const XMLDocument& document)
     const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
     if (!neurons_selection_element) throw runtime_error("Neurons selection element is nullptr.\n");
 
-    const string selection_method = read_xml_value<string>(neurons_selection_element, "NeuronsSelectionMethod");
+    const string selection_method = read_xml_string(neurons_selection_element, "NeuronsSelectionMethod");
     
     const XMLElement* neurons_selection_method_element = neurons_selection_element->FirstChildElement(selection_method.c_str());
 
@@ -183,7 +183,7 @@ void ModelSelection::from_XML(const XMLDocument& document)
     const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
     if (!inputs_selection_element) throw runtime_error("Inputs selection element is nullptr.\n");
 
-    const string inputs_method = read_xml_value<string>(inputs_selection_element, "InputsSelectionMethod");
+    const string inputs_method = read_xml_string(inputs_selection_element, "InputsSelectionMethod");
 
     const XMLElement* inputs_selection_method_element = inputs_selection_element->FirstChildElement(inputs_method.c_str());
 

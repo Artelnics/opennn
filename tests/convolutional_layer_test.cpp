@@ -23,7 +23,7 @@ struct ConvolutionalLayerConfig {
     dimensions kernel_dimensions;
     dimensions stride_dimensions;
     string activation_function;
-    Convolutional::Convolution convolution_type;
+    string convolution_type;
     bool batch_normalization;
     string test_name;
 };
@@ -38,7 +38,7 @@ INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::test
         {3, 3, 1, 16},       
         {1, 1},              
         "Linear",      
-        Convolutional::Convolution::Valid, 
+        "Valid",
         false,          
         "ValidPaddingWithoutBN"
     },

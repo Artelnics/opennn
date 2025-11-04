@@ -227,8 +227,8 @@ void Pooling3d::from_XML(const XMLDocument& document)
     const XMLElement* element = document.FirstChildElement("Pooling3d");
     if (!element) throw runtime_error("Pooling3d element is nullptr.");
 
-    set_input_dimensions(string_to_dimensions(read_xml_value<string>(element, "InputDimensions")));
-    set_pooling_method(read_xml_value<string>(element, "PoolingMethod"));
+    set_input_dimensions(string_to_dimensions(read_xml_string(element, "InputDimensions")));
+    set_pooling_method(read_xml_string(element, "PoolingMethod"));
 }
 
 

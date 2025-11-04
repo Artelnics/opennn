@@ -254,8 +254,8 @@ void WeightedSquaredError::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Weighted squared element is nullptr.\n");
 
-    set_positives_weight(read_xml_value<type>(root_element, "PositivesWeight"));
-    set_negatives_weight(read_xml_value<type>(root_element, "NegativesWeight"));
+    set_positives_weight(read_xml_type(root_element, "PositivesWeight"));
+    set_negatives_weight(read_xml_type(root_element, "NegativesWeight"));
 }
 
 

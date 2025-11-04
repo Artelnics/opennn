@@ -501,11 +501,11 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
     if (!learning_rate_algorithm_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");*/
 
-    set_minimum_loss_decrease(read_xml_value<type>(root_element, "MinimumLossDecrease"));
-    set_loss_goal(read_xml_value<type>(root_element, "LossGoal"));
-    set_maximum_selection_failures(read_xml_value<Index>(root_element, "MaximumSelectionFailures"));
-    set_maximum_epochs_number(read_xml_value<Index>(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_value<type>(root_element, "MaximumTime"));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

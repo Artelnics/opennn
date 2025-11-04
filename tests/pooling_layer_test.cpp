@@ -28,7 +28,7 @@ struct PoolingLayerConfig {
     dimensions pool_dimensions;
     dimensions stride_dimensions;
     dimensions padding_dimensions;
-    Pooling::PoolingMethod pooling_method;
+    string pooling_method;
     string test_name;
     Tensor<type, 4> input_data;
     Tensor<type, 4> expected_output;
@@ -41,7 +41,7 @@ class PoolingLayerTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
 INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
     PoolingLayerConfig
     {
-        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, Pooling::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, "MaxPooling", "MaxPoolingNoPadding1Channel",
         ([] {
         Tensor<type, 2> data(4, 16);
         data.setValues({
@@ -76,7 +76,7 @@ INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
     },
     PoolingLayerConfig
     {
-        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, Pooling::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, "AveragePooling", "AveragePoolingNoPadding1Channel",
         ([] {
         Tensor<type, 2> data(4, 16);
         data.setValues({

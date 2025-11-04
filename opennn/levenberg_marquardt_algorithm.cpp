@@ -494,12 +494,12 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Levenberg-Marquardt algorithm element is nullptr.\n");
 
-    set_damping_parameter_factor(read_xml_value<type>(root_element, "DampingParameterFactor"));
-    set_minimum_loss_decrease(read_xml_value<type>(root_element, "MinimumLossDecrease"));
-    set_loss_goal(read_xml_value<type>(root_element, "LossGoal"));
-    set_maximum_selection_failures(read_xml_value<Index>(root_element, "MaximumSelectionFailures"));
-    set_maximum_epochs_number(read_xml_value<Index>(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_value<type>(root_element, "MaximumTime"));
+    set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
+    set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
 

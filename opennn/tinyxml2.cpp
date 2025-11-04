@@ -3070,5 +3070,76 @@ void add_xml_element_attribute(XMLPrinter& printer,
     printer.CloseElement();
 }
 
+void add_xml_document(XMLPrinter& printer, const string& name, const string& value)
+{
+//    printer.OpenElement(name.c_str());
+//    printer.PushText(value.c_str());
+//    printer.CloseElement();
+}
+
+
+type read_xml_type(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return type(stod(text));
+}
+
+
+Index read_xml_index(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return Index(stoi(text));
+}
+
+
+bool read_xml_bool(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return bool(stoi(text));
+}
+
+
+string read_xml_string(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr: " + element_name);
+
+    return string(text);
+}
+
 }   // namespace tinyxml2
 

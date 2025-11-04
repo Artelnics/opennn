@@ -734,26 +734,26 @@ void Convolutional::from_XML(const XMLDocument& document)
     if (!convolutional_layer_element)
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    set_label(read_xml_value<string>(convolutional_layer_element, "Label"));
+    set_label(read_xml_string(convolutional_layer_element, "Label"));
 
-    set_input_dimensions(string_to_dimensions(read_xml_value<string>(convolutional_layer_element, "InputDimensions")));
+    set_input_dimensions(string_to_dimensions(read_xml_string(convolutional_layer_element, "InputDimensions")));
 
-    const Index kernel_height = read_xml_value<Index>(convolutional_layer_element, "KernelsHeight");
-    const Index kernel_width = read_xml_value<Index>(convolutional_layer_element, "KernelsWidth");
-    const Index kernel_channels = read_xml_value<Index>(convolutional_layer_element, "KernelsChannels");
-    const Index kernels_number = read_xml_value<Index>(convolutional_layer_element, "KernelsNumber");
+    const Index kernel_height = read_xml_index(convolutional_layer_element, "KernelsHeight");
+    const Index kernel_width = read_xml_index(convolutional_layer_element, "KernelsWidth");
+    const Index kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
+    const Index kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
 
     biases.resize(kernels_number);
 
     weights.resize(kernel_height, kernel_width, kernel_channels, kernels_number);
 
-    set_activation_function(read_xml_value<string>(convolutional_layer_element, "Activation"));
+    set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
 
-    const dimensions stride_dimensions = string_to_dimensions(read_xml_value<string>(convolutional_layer_element, "StrideDimensions"));
+    const dimensions stride_dimensions = string_to_dimensions(read_xml_string(convolutional_layer_element, "StrideDimensions"));
     set_column_stride(stride_dimensions[0]);
     set_row_stride(stride_dimensions[1]);
 
-    set_convolution_type(read_xml_value<string>(convolutional_layer_element, "Convolution"));
+    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
     bool use_batch_normalization = false;
     const XMLElement* bn_element = convolutional_layer_element->FirstChildElement("BatchNormalization");
@@ -769,14 +769,14 @@ void Convolutional::from_XML(const XMLDocument& document)
         moving_means.resize(kernels_number);
         moving_standard_deviations.resize(kernels_number);
 
-        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Scales"), scales);
-        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Offsets"), offsets);
-        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "MovingMeans"), moving_means);
-        string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
+        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Scales"), scales);
+        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Offsets"), offsets);
+        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingMeans"), moving_means);
+        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingStandardDeviations"), moving_standard_deviations);
     }
 
-    string_to_tensor<type, 1>(read_xml_value<string>(convolutional_layer_element, "Biases"), biases);
-    string_to_tensor<type, 4>(read_xml_value<string>(convolutional_layer_element, "Weights"), weights);
+    string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Biases"), biases);
+    string_to_tensor<type, 4>(read_xml_string(convolutional_layer_element, "Weights"), weights);
 }
 
 

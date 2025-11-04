@@ -190,14 +190,14 @@ void Normalization3d::from_XML(const XMLDocument& document)
     if(!normalization_layer_element)
         throw runtime_error("Normalization3d element is nullptr.\n");
 
-    const string new_name = read_xml_value<string>(normalization_layer_element, "Name");
-    const Index new_sequence_length = read_xml_value<Index>(normalization_layer_element, "SequenceLength");
-    const Index new_embedding_dimension = read_xml_value<Index>(normalization_layer_element, "EmbeddingDimension");
+    const string new_name = read_xml_string(normalization_layer_element, "Name");
+    const Index new_sequence_length = read_xml_index(normalization_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_xml_index(normalization_layer_element, "EmbeddingDimension");
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    string_to_tensor<type, 1>(read_xml_value<string>(normalization_layer_element, "Betas"), betas);
-    string_to_tensor<type, 1>(read_xml_value<string>(normalization_layer_element, "Gammas"), gammas);
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Betas"), betas);
+    string_to_tensor<type, 1>(read_xml_string(normalization_layer_element, "Gammas"), gammas);
 }
 
 
