@@ -465,6 +465,7 @@ public:
     virtual void impute_missing_values_interpolate();
 
     void scrub_missing_values();
+    void calculate_missing_values_statistics();
 
     Tensor<Index, 1> count_nans_per_raw_variable() const;
     Index count_raw_variables_with_nan() const;
