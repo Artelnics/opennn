@@ -56,7 +56,7 @@ void GrowingInputs::set_default()
 
     training_strategy && training_strategy->has_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_raw_variables_number("Input")
-        : maximum_inputs_number = 100;
+        : maximum_inputs_number = 50;
 }
 
 
@@ -257,8 +257,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             previus_training_error = minimum_training_error;
             previus_selection_error = minimum_selection_error;
 
-            input_selection_results.training_error_history(input_raw_variables_number - 1) = minimum_training_error;
-            input_selection_results.selection_error_history(input_raw_variables_number - 1) = minimum_selection_error;
+            input_selection_results.training_error_history(epoch) = minimum_training_error;
+            input_selection_results.selection_error_history(epoch) = minimum_selection_error;
 
             epoch++;
         }
