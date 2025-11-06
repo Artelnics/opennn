@@ -296,7 +296,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         if (is_equal(individual_genes, false))
             throw logic_error("All individual genes are false");
-
+        
         population.chip(i, 0) = individual_genes;
     }
 }
@@ -324,8 +324,6 @@ void GeneticAlgorithm::evaluate_population()
 
     const Index individuals_number = get_individuals_number();
 
-    //Tensor<Index, 1> raw_inputs_number(individuals_number);
-
     for(Index i = 0; i < individuals_number; i++)
     {
         const Tensor<bool, 1> individual = population.chip(i, 0);
@@ -333,8 +331,6 @@ void GeneticAlgorithm::evaluate_population()
         if (display) cout << "\nIndividual " << i + 1 << endl;
 
         const vector<Index> individual_raw_variables_indices = get_raw_variable_indices(individual);
-
-        //raw_inputs_number(i) = individual_raw_variables_indices.size();
 
         dataset->set_raw_variable_indices(individual_raw_variables_indices, original_target_raw_variable_indices);
 
@@ -350,11 +346,8 @@ void GeneticAlgorithm::evaluate_population()
 
         //Training
 
-        if (!display)
-        {
-            training_strategy->get_loss_index()->set_display(false);
-            training_strategy->get_optimization_algorithm()->set_display(false);
-        }
+        training_strategy->get_loss_index()->set_display(false);
+        training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
 
@@ -378,10 +371,6 @@ void GeneticAlgorithm::evaluate_population()
 
     mean_training_error = mean_training_errors();
     mean_selection_error = mean_selection_errors();
-
-    //const type sum_inputs_number = accumulate(raw_inputs_number.data(), raw_inputs_number.data() + raw_inputs_number.size(), type(0));
-
-    //mean_raw_inputs_number = type(sum_inputs_number) / type(individuals_number);
 }
 
 
@@ -629,7 +618,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
                  << "Generation mean selection error: " << input_selection_results.mean_selection_error_history(epoch) << endl
-                 << "Mean inputs number  " << mean_raw_inputs_number << endl
                  << "Generation minimum training error: " << training_errors(optimal_individual_training_index) << endl
                  << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl
                  << "Best ever training error: " << input_selection_results.optimum_training_error << endl

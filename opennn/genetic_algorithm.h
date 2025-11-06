@@ -126,8 +126,6 @@ private:
     type mean_training_error;
 
     type mean_selection_error;
-
-    type mean_raw_inputs_number;
     
     Tensor<bool, 2> optimal_individuals_history;
 

@@ -279,8 +279,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\opennn\opennn.vcxproj">
-      <Project>{D2F8B8A4-FD55-3AA3-B597-C6BCD3D1344B}</Project>
-      <Name>opennn</Name>
+      <Project>{d2f8b8a4-fd55-3aa3-b597-c6bcd3d1344b}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
