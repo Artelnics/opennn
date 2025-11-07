@@ -154,24 +154,15 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
+void NormalizedSquaredError::calculate_error_lm(const Batch&,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
-
-    // Batch
-
-    const Index samples_number = batch.get_samples_number();
-
-    // Back propagation
-
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
+
     Tensor<type, 0>& error = back_propagation.error;
 
-    const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
-
-    error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
+    error.device(*thread_pool_device) = squared_errors.square().sum() * type(0.5);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -203,7 +194,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
+void NormalizedSquaredError::calculate_output_delta_lm(const Batch&,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & back_propagation) const
 {
@@ -219,46 +210,27 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 }
 
 
-void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
+void NormalizedSquaredError::calculate_error_gradient_lm(const Batch&,
                                                          BackPropagationLM& back_propagation_lm) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
-
-    // Batch
-
-    const Index samples_number = batch.get_samples_number();
-
-    // Back propagation
-
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    const type coefficient = type(2* total_samples_number)/type(samples_number* normalization_coefficient);
-
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0))*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
 }
 
 
-void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
+void NormalizedSquaredError::calculate_error_hessian_lm(const Batch&,
                                                         BackPropagationLM& back_propagation_lm) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
-
-    // Batch
-
-    const Index samples_number = batch.get_samples_number();
-
-    // Back propagation
-
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-    const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
-
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
 }
 
 
