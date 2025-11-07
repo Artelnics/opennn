@@ -9,7 +9,9 @@
 #include "registry.h"
 #include "correlations.h"
 #include "dataset.h"
+#include "time_series_dataset.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 
@@ -315,6 +317,7 @@ void GeneticAlgorithm::evaluate_population()
     // Dataset
 
     Dataset* dataset = training_strategy->get_dataset();
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Neural network
 
@@ -336,11 +339,33 @@ void GeneticAlgorithm::evaluate_population()
 
         const Index input_variables_number = dataset->get_variables_number("Input");
 
-        const vector<string> input_names = dataset->get_variable_names("Input");
+        if(time_series_dataset)
+        {
+            const Index past_time_steps = time_series_dataset->get_past_time_steps();
+            neural_network->set_input_dimensions({ past_time_steps, input_variables_number });
+            dataset->set_dimensions("Input", { past_time_steps, input_variables_number });
 
-        neural_network->set_input_dimensions({input_variables_number});
+            vector<string> final_input_names;
+            const vector<string> base_names = dataset->get_raw_variable_names("Input");
+            const Index time_steps = time_series_dataset->get_past_time_steps();
+            final_input_names.reserve(base_names.size() * time_steps);
+            for(const string& base_name : base_names)
+            {
+                for(Index j = 0; j < time_steps; j++)
+                {
+                    string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                    final_input_names.push_back(name);
+                }
+            }
+            neural_network->set_input_names(final_input_names);
+        }
+        else
+        {
+            neural_network->set_input_dimensions({input_variables_number});
+            dataset->set_dimensions("Input", { input_variables_number });
 
-        neural_network->set_input_names(input_names);
+            neural_network->set_input_names(dataset->get_variable_names("Input"));
+        }
 
         neural_network->set_parameters_random();
 
@@ -360,7 +385,7 @@ void GeneticAlgorithm::evaluate_population()
         if(display)
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
-                 << "Variables number: " << input_names.size() << endl
+                 << "Variables number: " << input_variables_number << endl
                  << "Inputs number: " << dataset->get_raw_variables_number("Input") << endl;
 
         dataset->set_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
@@ -512,11 +537,13 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
     Dataset* dataset = loss_index->get_dataset();
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Selection algorithm
 
     original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
     original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
+    const vector<Index> time_raw_variable_indices = dataset->get_raw_variable_indices("Time");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -672,23 +699,56 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_raw_variable_indices(optimal_raw_variable_indices, original_target_raw_variable_indices);
 
-    dataset->set_dimensions("Input", { Index(optimal_inputs_raw_variables_indices.size()) });
-
     const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
+    const Index optimal_variables_number = dataset->get_variables_number("Input");
+
     // Set neural network stuff
 
-    neural_network->set_input_dimensions({ dataset->get_variables_number("Input") });
+    if(time_series_dataset)
+    {
+        if(time_raw_variable_indices.size() == 1)
+            dataset->set_raw_variable_use(time_raw_variable_indices[0], "Time");
 
-    neural_network->set_input_names(dataset->get_variable_names("Input"));
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        neural_network->set_input_dimensions({ past_time_steps, optimal_variables_number });
+        dataset->set_dimensions("Input", { past_time_steps, optimal_variables_number });
+
+        vector<string> final_input_names;
+        const vector<string> base_names = dataset->get_raw_variable_names("Input");
+        const Index time_steps = time_series_dataset->get_past_time_steps();
+        final_input_names.reserve(base_names.size() * time_steps);
+        for(const string& base_name : base_names)
+        {
+            for(Index j = 0; j < time_steps; j++)
+            {
+                string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                final_input_names.push_back(name);
+            }
+        }
+        neural_network->set_input_names(final_input_names);
+    }
+    else
+    {
+        neural_network->set_input_dimensions({optimal_variables_number});
+        dataset->set_dimensions("Input", { optimal_variables_number });
+
+        neural_network->set_input_names(dataset->get_variable_names("Input"));
+    }
 
     if(neural_network->has("Scaling2d"))
     {
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
+    }
+    else if(neural_network->has("Scaling3d"))
+    {
+        Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        scaling_layer_3d->set_descriptives(input_variable_descriptives);
+        scaling_layer_3d->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);
