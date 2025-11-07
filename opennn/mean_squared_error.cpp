@@ -61,19 +61,15 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_lm(const Batch& batch,
+void MeanSquaredError::calculate_error_lm(const Batch&,
                                           const ForwardPropagation&,
                                           BackPropagationLM& back_propagation) const
 {
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    const Index samples_number = batch.get_samples_number();
-
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() / type(samples_number * outputs_number);
+    error.device(*thread_pool_device) = squared_errors.square().sum() * type(0.5);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -117,39 +113,27 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 }
 
 
-void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
+void MeanSquaredError::calculate_error_gradient_lm(const Batch&,
                                                    BackPropagationLM& back_propagation_lm) const
 {
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    const Index samples_number = outputs_number * batch.get_samples_number();
-
-    const type coefficient = type(2)/type(samples_number);
-
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
+
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0))*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
 }
 
 
-void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
+void MeanSquaredError::calculate_error_hessian_lm(const Batch&,
                                                   BackPropagationLM& back_propagation_lm) const
 {
-
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    const Index samples_number = batch.get_samples_number();
-
-    const type coefficient = type(2.0)/type(outputs_number*samples_number);
-
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0))*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
 }
 
 

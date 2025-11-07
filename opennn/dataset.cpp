@@ -3602,6 +3602,14 @@ void Dataset::scrub_missing_values()
 }
 
 
+void Dataset::calculate_missing_values_statistics()
+{
+    missing_values_number = count_nan();
+    raw_variables_missing_values_number = count_nans_per_raw_variable();
+    rows_missing_values_number = count_rows_with_nan();
+}
+
+
 void Dataset::prepare_line(string& line) const
 {
     decode(line);

@@ -206,11 +206,9 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     set_scaling();
 
     Batch training_batch(training_samples_number, dataset);
-    // training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
     training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, dataset);
-    // selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
     selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
@@ -220,13 +218,15 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     loss_index->set_normalization_coefficient();
 
+    BackPropagation training_back_propagation(training_samples_number, loss_index);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index);
+
     type old_loss = type(0);
     type loss_decrease = numeric_limits<type>::max();
 
     Index selection_failures = 0;
 
     BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index);
-    BackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index);
 
     // Training strategy stuff
 
@@ -259,7 +259,10 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
-        results.training_error_history(epoch) = training_back_propagation_lm.error();
+
+        loss_index->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+
+        results.training_error_history(epoch) = training_back_propagation.error();
 
         if(has_selection)
         {
@@ -267,32 +270,25 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
                                               selection_forward_propagation,
                                               is_training);
 
-            loss_index->calculate_errors_lm(selection_batch,
-                                            selection_forward_propagation,
-                                            selection_back_propagation_lm);
 
-            loss_index->calculate_squared_errors_lm(selection_batch,
-                                                    selection_forward_propagation,
-                                                    selection_back_propagation_lm);
+            loss_index->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
-            loss_index->calculate_error_lm(selection_batch,
-                                           selection_forward_propagation,
-                                           selection_back_propagation_lm);
-
-            results.selection_error_history(epoch) = selection_back_propagation_lm.error();
+            results.selection_error_history(epoch) = selection_back_propagation.error();
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1))
                 selection_failures++;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
+
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
+
         old_loss = training_back_propagation_lm.loss;
 
         if(display && epoch%display_period == 0)
         {
-            cout << "Training error: " << training_back_propagation_lm.error << endl;
-            if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
+            cout << "Training error: " << results.training_error_history(epoch) << endl;
+            if(has_selection) cout << "Selection error: " << results.selection_error_history(epoch) << endl;
             cout << "Damping parameter: " << damping_parameter << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }

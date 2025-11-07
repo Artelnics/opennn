@@ -9,7 +9,9 @@
 #include "registry.h"
 #include "correlations.h"
 #include "dataset.h"
+#include "time_series_dataset.h"
 #include "scaling_layer_2d.h"
+#include "scaling_layer_3d.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 
@@ -296,7 +298,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         if (is_equal(individual_genes, false))
             throw logic_error("All individual genes are false");
-
+        
         population.chip(i, 0) = individual_genes;
     }
 }
@@ -315,6 +317,7 @@ void GeneticAlgorithm::evaluate_population()
     // Dataset
 
     Dataset* dataset = training_strategy->get_dataset();
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Neural network
 
@@ -324,8 +327,6 @@ void GeneticAlgorithm::evaluate_population()
 
     const Index individuals_number = get_individuals_number();
 
-    //Tensor<Index, 1> raw_inputs_number(individuals_number);
-
     for(Index i = 0; i < individuals_number; i++)
     {
         const Tensor<bool, 1> individual = population.chip(i, 0);
@@ -334,27 +335,44 @@ void GeneticAlgorithm::evaluate_population()
 
         const vector<Index> individual_raw_variables_indices = get_raw_variable_indices(individual);
 
-        //raw_inputs_number(i) = individual_raw_variables_indices.size();
-
         dataset->set_raw_variable_indices(individual_raw_variables_indices, original_target_raw_variable_indices);
 
         const Index input_variables_number = dataset->get_variables_number("Input");
 
-        const vector<string> input_names = dataset->get_variable_names("Input");
+        if(time_series_dataset)
+        {
+            const Index past_time_steps = time_series_dataset->get_past_time_steps();
+            neural_network->set_input_dimensions({ past_time_steps, input_variables_number });
+            dataset->set_dimensions("Input", { past_time_steps, input_variables_number });
 
-        neural_network->set_input_dimensions({input_variables_number});
+            vector<string> final_input_names;
+            const vector<string> base_names = dataset->get_raw_variable_names("Input");
+            const Index time_steps = time_series_dataset->get_past_time_steps();
+            final_input_names.reserve(base_names.size() * time_steps);
+            for(const string& base_name : base_names)
+            {
+                for(Index j = 0; j < time_steps; j++)
+                {
+                    string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                    final_input_names.push_back(name);
+                }
+            }
+            neural_network->set_input_names(final_input_names);
+        }
+        else
+        {
+            neural_network->set_input_dimensions({input_variables_number});
+            dataset->set_dimensions("Input", { input_variables_number });
 
-        neural_network->set_input_names(input_names);
+            neural_network->set_input_names(dataset->get_variable_names("Input"));
+        }
 
         neural_network->set_parameters_random();
 
         //Training
 
-        if (!display)
-        {
-            training_strategy->get_loss_index()->set_display(false);
-            training_strategy->get_optimization_algorithm()->set_display(false);
-        }
+        training_strategy->get_loss_index()->set_display(false);
+        training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
 
@@ -367,7 +385,7 @@ void GeneticAlgorithm::evaluate_population()
         if(display)
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
-                 << "Variables number: " << input_names.size() << endl
+                 << "Variables number: " << input_variables_number << endl
                  << "Inputs number: " << dataset->get_raw_variables_number("Input") << endl;
 
         dataset->set_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
@@ -378,10 +396,6 @@ void GeneticAlgorithm::evaluate_population()
 
     mean_training_error = mean_training_errors();
     mean_selection_error = mean_selection_errors();
-
-    //const type sum_inputs_number = accumulate(raw_inputs_number.data(), raw_inputs_number.data() + raw_inputs_number.size(), type(0));
-
-    //mean_raw_inputs_number = type(sum_inputs_number) / type(individuals_number);
 }
 
 
@@ -445,6 +459,7 @@ vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 
 Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2)
 {
+    /*
     const Index genes_number = get_genes_number();
 
     Tensor<bool, 1> descendent(genes_number);
@@ -456,6 +471,60 @@ Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const T
         descendent(get_random_index(0, genes_number - 1)) = true;
 
     return descendent;
+    */
+    
+    const Index genes_number = get_genes_number();
+    Tensor<bool, 1> descendent(genes_number);
+    descendent.setConstant(false);
+    mt19937 gen(rd());
+
+    vector<Index> intersection, difference;
+    for (Index i = 0; i < genes_number; ++i)
+        if (parent_1(i) && parent_2(i)) 
+            intersection.push_back(i);
+        else if (parent_1(i) != parent_2(i))
+            difference.push_back(i);
+
+    for (Index idx : intersection)
+        descendent(idx) = true;
+
+    Index current_size = intersection.size();
+
+    if (current_size > maximum_inputs_number) 
+    {
+        shuffle(intersection.begin(), intersection.end(), gen);
+        descendent.setConstant(false);
+        for(Index i = 0; i < maximum_inputs_number; ++i)
+            descendent(intersection[i]) = true;
+
+        return descendent;
+    }
+
+    Index target_size = get_random_index(max(minimum_inputs_number, current_size), maximum_inputs_number);
+
+    shuffle(difference.begin(), difference.end(), gen);
+    Index genes_to_add = target_size - current_size;
+    
+    for (Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+        descendent(difference[i]) = true;
+    
+    Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
+    if (final_count < minimum_inputs_number) 
+    {
+        vector<Index> never_true_indices;
+        for(Index i = 0; i < genes_number; ++i)
+            if(!parent_1(i) && !parent_2(i))
+                never_true_indices.push_back(i);
+
+        shuffle(never_true_indices.begin(), never_true_indices.end(), gen);
+        Index genes_needed = minimum_inputs_number - final_count;
+        for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i) {
+            descendent(never_true_indices[i]) = true;
+        }
+    }
+
+    return descendent;
+    
 }
 
 
@@ -508,6 +577,7 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
+    /*
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
@@ -515,6 +585,51 @@ void GeneticAlgorithm::perform_mutation()
         for (Index j = 0; j < genes_number; j++)
             if(get_random_type(0, 1) < mutation_rate)
                 population(i,j) = !population(i,j);
+    */
+
+    
+    const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
+    mt19937 gen(rd());
+
+    for (Index i = 0; i < individuals_number; i++)
+    {
+        if (get_random_type(0, 1) >= mutation_rate)
+            continue;
+
+        Tensor<bool, 1> individual = population.chip(i, 0);
+        Index current_inputs = count(individual.data(), individual.data() + genes_number, true);
+
+        vector<Index> true_indices, false_indices;
+        for(Index j = 0; j < genes_number; ++j) 
+        {
+            if (individual(j)) true_indices.push_back(j);
+            else false_indices.push_back(j);
+        }
+
+        bool try_add = get_random_bool();
+
+        if (try_add && current_inputs < maximum_inputs_number && !false_indices.empty()) 
+        {
+            shuffle(false_indices.begin(), false_indices.end(), gen);
+            individual(false_indices[0]) = true;
+        } 
+        else if (!try_add && current_inputs > minimum_inputs_number && !true_indices.empty()) 
+        {
+            shuffle(true_indices.begin(), true_indices.end(), gen);
+            individual(true_indices[0]) = false;
+        }
+        else if (!true_indices.empty() && !false_indices.empty()) 
+        {
+            shuffle(true_indices.begin(), true_indices.end(), gen);
+            shuffle(false_indices.begin(), false_indices.end(), gen);
+            individual(true_indices[0]) = false;
+            individual(false_indices[0]) = true;
+        }
+
+        population.chip(i, 0) = individual;
+    }
+    
 }
 
 
@@ -523,11 +638,13 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
     Dataset* dataset = loss_index->get_dataset();
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Selection algorithm
 
     original_input_raw_variable_indices = dataset->get_raw_variable_indices("Input");
     original_target_raw_variable_indices = dataset->get_raw_variable_indices("Target");
+    const vector<Index> time_raw_variable_indices = dataset->get_raw_variable_indices("Time");
 
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -629,7 +746,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
                  << "Generation mean selection error: " << input_selection_results.mean_selection_error_history(epoch) << endl
-                 << "Mean inputs number  " << mean_raw_inputs_number << endl
                  << "Generation minimum training error: " << training_errors(optimal_individual_training_index) << endl
                  << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl
                  << "Best ever training error: " << input_selection_results.optimum_training_error << endl
@@ -684,23 +800,56 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     dataset->set_raw_variable_indices(optimal_raw_variable_indices, original_target_raw_variable_indices);
 
-    dataset->set_dimensions("Input", { Index(optimal_inputs_raw_variables_indices.size()) });
-
     const vector<string> input_variable_scalers = dataset->get_variable_scalers("Input");
 
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives("Input");
 
+    const Index optimal_variables_number = dataset->get_variables_number("Input");
+
     // Set neural network stuff
 
-    neural_network->set_input_dimensions({ dataset->get_variables_number("Input") });
+    if(time_series_dataset)
+    {
+        if(time_raw_variable_indices.size() == 1)
+            dataset->set_raw_variable_use(time_raw_variable_indices[0], "Time");
 
-    neural_network->set_input_names(dataset->get_variable_names("Input"));
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        neural_network->set_input_dimensions({ past_time_steps, optimal_variables_number });
+        dataset->set_dimensions("Input", { past_time_steps, optimal_variables_number });
+
+        vector<string> final_input_names;
+        const vector<string> base_names = dataset->get_raw_variable_names("Input");
+        const Index time_steps = time_series_dataset->get_past_time_steps();
+        final_input_names.reserve(base_names.size() * time_steps);
+        for(const string& base_name : base_names)
+        {
+            for(Index j = 0; j < time_steps; j++)
+            {
+                string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
+                final_input_names.push_back(name);
+            }
+        }
+        neural_network->set_input_names(final_input_names);
+    }
+    else
+    {
+        neural_network->set_input_dimensions({optimal_variables_number});
+        dataset->set_dimensions("Input", { optimal_variables_number });
+
+        neural_network->set_input_names(dataset->get_variable_names("Input"));
+    }
 
     if(neural_network->has("Scaling2d"))
     {
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
+    }
+    else if(neural_network->has("Scaling3d"))
+    {
+        Scaling3d* scaling_layer_3d = static_cast<Scaling3d*>(neural_network->get_first("Scaling3d"));
+        scaling_layer_3d->set_descriptives(input_variable_descriptives);
+        scaling_layer_3d->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);
