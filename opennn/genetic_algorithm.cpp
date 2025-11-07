@@ -505,7 +505,7 @@ Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const T
     shuffle(difference.begin(), difference.end(), gen);
     Index genes_to_add = target_size - current_size;
     
-    for (Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+    for (Index i = 0; i < genes_to_add && i < Index(difference.size()); ++i)
         descendent(difference[i]) = true;
     
     Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
@@ -518,7 +518,7 @@ Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const T
 
         shuffle(never_true_indices.begin(), never_true_indices.end(), gen);
         Index genes_needed = minimum_inputs_number - final_count;
-        for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i) {
+        for(Index i = 0; i < genes_needed && i < Index(never_true_indices.size()); ++i) {
             descendent(never_true_indices[i]) = true;
         }
     }
