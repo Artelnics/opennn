@@ -434,6 +434,7 @@ vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 
 Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2)
 {
+    /*
     const Index genes_number = get_genes_number();
 
     Tensor<bool, 1> descendent(genes_number);
@@ -445,6 +446,60 @@ Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const T
         descendent(get_random_index(0, genes_number - 1)) = true;
 
     return descendent;
+    */
+    
+    const Index genes_number = get_genes_number();
+    Tensor<bool, 1> descendent(genes_number);
+    descendent.setConstant(false);
+    mt19937 gen(rd());
+
+    vector<Index> intersection, difference;
+    for (Index i = 0; i < genes_number; ++i)
+        if (parent_1(i) && parent_2(i)) 
+            intersection.push_back(i);
+        else if (parent_1(i) != parent_2(i))
+            difference.push_back(i);
+
+    for (Index idx : intersection)
+        descendent(idx) = true;
+
+    Index current_size = intersection.size();
+
+    if (current_size > maximum_inputs_number) 
+    {
+        shuffle(intersection.begin(), intersection.end(), gen);
+        descendent.setConstant(false);
+        for(Index i = 0; i < maximum_inputs_number; ++i)
+            descendent(intersection[i]) = true;
+
+        return descendent;
+    }
+
+    Index target_size = get_random_index(max(minimum_inputs_number, current_size), maximum_inputs_number);
+
+    shuffle(difference.begin(), difference.end(), gen);
+    Index genes_to_add = target_size - current_size;
+    
+    for (Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+        descendent(difference[i]) = true;
+    
+    Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
+    if (final_count < minimum_inputs_number) 
+    {
+        vector<Index> never_true_indices;
+        for(Index i = 0; i < genes_number; ++i)
+            if(!parent_1(i) && !parent_2(i))
+                never_true_indices.push_back(i);
+
+        shuffle(never_true_indices.begin(), never_true_indices.end(), gen);
+        Index genes_needed = minimum_inputs_number - final_count;
+        for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i) {
+            descendent(never_true_indices[i]) = true;
+        }
+    }
+
+    return descendent;
+    
 }
 
 
@@ -497,6 +552,7 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
+    /*
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
@@ -504,6 +560,51 @@ void GeneticAlgorithm::perform_mutation()
         for (Index j = 0; j < genes_number; j++)
             if(get_random_type(0, 1) < mutation_rate)
                 population(i,j) = !population(i,j);
+    */
+
+    
+    const Index individuals_number = get_individuals_number();
+    const Index genes_number = get_genes_number();
+    mt19937 gen(rd());
+
+    for (Index i = 0; i < individuals_number; i++)
+    {
+        if (get_random_type(0, 1) >= mutation_rate)
+            continue;
+
+        Tensor<bool, 1> individual = population.chip(i, 0);
+        Index current_inputs = count(individual.data(), individual.data() + genes_number, true);
+
+        vector<Index> true_indices, false_indices;
+        for(Index j = 0; j < genes_number; ++j) 
+        {
+            if (individual(j)) true_indices.push_back(j);
+            else false_indices.push_back(j);
+        }
+
+        bool try_add = get_random_bool();
+
+        if (try_add && current_inputs < maximum_inputs_number && !false_indices.empty()) 
+        {
+            shuffle(false_indices.begin(), false_indices.end(), gen);
+            individual(false_indices[0]) = true;
+        } 
+        else if (!try_add && current_inputs > minimum_inputs_number && !true_indices.empty()) 
+        {
+            shuffle(true_indices.begin(), true_indices.end(), gen);
+            individual(true_indices[0]) = false;
+        }
+        else if (!true_indices.empty() && !false_indices.empty()) 
+        {
+            shuffle(true_indices.begin(), true_indices.end(), gen);
+            shuffle(false_indices.begin(), false_indices.end(), gen);
+            individual(true_indices[0]) = false;
+            individual(false_indices[0]) = true;
+        }
+
+        population.chip(i, 0) = individual;
+    }
+    
 }
 
 
