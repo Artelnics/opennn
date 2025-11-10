@@ -29,7 +29,9 @@ namespace opennn
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
 
-    time_t date_to_timestamp(const string&, const Index& = 0);
+    enum DateFormat {AUTO, DMY, MDY, YMD};
+
+    time_t date_to_timestamp(const string&, const Index& = 0, const DateFormat& format = AUTO);
 
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
