@@ -2015,14 +2015,23 @@ vector<Descriptives> Dataset::calculate_variable_descriptives() const
 }
 
 
-vector<Descriptives> Dataset::calculate_used_variable_descriptives() const
+//vector<Descriptives> Dataset::calculate_used_variable_descriptives() const
+//{
+//    const vector<Index> used_sample_indices = get_used_sample_indices();
+//    const vector<Index> used_variable_indices = get_used_variable_indices();
+
+//    return descriptives(data, used_sample_indices, used_variable_indices);
+//}
+/*
+vector<Descriptives> Dataset::calculate_raw_variable_descriptives() const
 {
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> used_variable_indices = get_used_variable_indices();
+    ffgf
+    raw_variables
+            get_raw_variable_data
 
-    return descriptives(data, used_sample_indices, used_variable_indices);
+    return minmax_raw_variables;
 }
-
+*/
 
 vector<Descriptives> Dataset::calculate_raw_variable_descriptives_positive_samples() const
 {

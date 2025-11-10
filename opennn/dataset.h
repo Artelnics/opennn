@@ -343,7 +343,9 @@ public:
     // Descriptives
 
     vector<Descriptives> calculate_variable_descriptives() const;
-    vector<Descriptives> calculate_used_variable_descriptives() const;
+    //vector<Descriptives> calculate_used_variable_descriptives() const;
+
+    //vector<Descriptives> calculate_raw_variable_descriptives() const;
 
     vector<Descriptives> calculate_raw_variable_descriptives_positive_samples() const;
     vector<Descriptives> calculate_raw_variable_descriptives_negative_samples() const;

@@ -163,18 +163,18 @@ public:
         for (Index i = 0; i < input_rank; ++i)
            input_dimensions.push_back(inputs.dimension(i));
 
-        const TensorView input_pair((type*)inputs.data(), input_dimensions);
+        const TensorView input_view((type*)inputs.data(), input_dimensions);
 
-        forward_propagate({input_pair}, forward_propagation, false);
+        forward_propagate({input_view}, forward_propagation, false);
 
-        const TensorView& outputs_view = forward_propagation.layers.back()->get_output_pair();
+        const TensorView& output_view = forward_propagation.layers.back()->get_output_pair();
 
         if constexpr (output_rank == 2)
-           return tensor_map<2>(outputs_view);
+           return tensor_map<2>(output_view);
         else if constexpr (output_rank == 3)
-           return tensor_map<3>(outputs_view);
+           return tensor_map<3>(output_view);
         else if constexpr (output_rank == 4)
-           return tensor_map<4>(outputs_view);
+           return tensor_map<4>(output_view);
         else
            static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
 
