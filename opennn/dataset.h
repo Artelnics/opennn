@@ -13,6 +13,7 @@
 #include "correlations.h"
 #include "scaling.h"
 #include "tensors.h"
+#include "strings_utilities.h"
 
 using namespace tinyxml2;
 
@@ -342,7 +343,9 @@ public:
     // Descriptives
 
     vector<Descriptives> calculate_variable_descriptives() const;
-    vector<Descriptives> calculate_used_variable_descriptives() const;
+    //vector<Descriptives> calculate_used_variable_descriptives() const;
+
+    //vector<Descriptives> calculate_raw_variable_descriptives() const;
 
     vector<Descriptives> calculate_raw_variable_descriptives_positive_samples() const;
     vector<Descriptives> calculate_raw_variable_descriptives_negative_samples() const;
@@ -491,6 +494,7 @@ public:
 
     void prepare_line(string&) const;
     void infer_column_types(const vector<vector<string>>&);
+    DateFormat infer_dataset_date_format(const vector<Dataset::RawVariable>&, const vector<vector<string>>&, bool, const string&);
 
     void read_data_file_preview(const vector<vector<string>>&);
 

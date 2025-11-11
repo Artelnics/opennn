@@ -690,7 +690,7 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     const Index output_height = pooling_layer->get_output_height();
     const Index output_width = pooling_layer->get_output_width();
 
-    pooling_mode = (pooling_layer->get_pooling_method() == Pooling::PoolingMethod::MaxPooling)
+    pooling_mode = (pooling_layer->get_pooling_method() == "MaxPooling")
                        ? CUDNN_POOLING_MAX
                        : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 

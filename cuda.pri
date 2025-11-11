@@ -5,14 +5,44 @@ isEmpty(CUDA_PATH_DETECTED) {
 
     message("--- Running CUDA detection from cuda.pri ---")
 
-    CUDA_PATH = $$(CUDA_PATH)
-    isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
+    temp_path = $$(CUDA_PATH)
+    !isEmpty(temp_path) {
+        temp_path = $$clean_path($$temp_path)
+        if(exists($$temp_path)) {
+            CUDA_PATH = $$temp_path
+            message("    -> Detection method: Found valid CUDA_PATH environment variable.")
+        }
+    }
+
+    isEmpty(CUDA_PATH) {
+        temp_path = $$(CUDA_HOME)
+        !isEmpty(temp_path) {
+            temp_path = $$clean_path($$temp_path)
+            if(exists($$temp_path)) {
+                CUDA_PATH = $$temp_path
+                message("    -> Detection method: Found valid CUDA_HOME environment variable.")
+            }
+        }
+    }
 
     win32: isEmpty(CUDA_PATH) {
         CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
-        CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
-        !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+        if(exists($$CUDA_BASE_DIR)) {
+            CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
+            if(!isEmpty(CUDA_VERSIONS_FOUND)) {
+                CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+                message("    -> Detection method: Found installation in default directory.")
+            }
+        }
     }
+
+    unix: isEmpty(CUDA_PATH) {
+        if(exists(/usr/local/cuda)) {
+            CUDA_PATH = /usr/local/cuda
+            message("    -> Detection method: Found installation in /usr/local/cuda.")
+        }
+    }
+
 }
 
 
@@ -29,7 +59,7 @@ if(!isEmpty(CUDA_PATH)) {
 
     if(exists($$NVCC_EXECUTABLE_TEST):exists($$CUDA_INCLUDE_PATH_TEST):exists($$CUDA_LIB_DIR_TEST)) {
 
-        message("    -> CUDA found at: $$CUDA_PATH.")
+        message("    -> CUDA found at: '$$(CUDA_PATH)'")
 
         CUDA_ENABLED = true
         NVCC_EXECUTABLE = $$NVCC_EXECUTABLE_TEST

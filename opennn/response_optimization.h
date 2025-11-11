@@ -26,18 +26,21 @@ public:
 
     ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-   // Get
-
    Tensor<Condition, 1> get_input_conditions() const;
+
    Tensor<Condition, 1> get_output_conditions() const;
+
    Index get_evaluations_number() const;
 
    Tensor<type, 1> get_input_minimums() const;
+
    Tensor<type, 1> get_input_maximums() const;
+
    Tensor<type, 1> get_outputs_minimums() const;
+
    Tensor<type, 1> get_outputs_maximums() const;
 
-   // Set
+   Tensor<Condition, 1> get_conditions(const vector<string>&) const;
 
    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
@@ -49,14 +52,34 @@ public:
    void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   Tensor<Condition, 1> get_conditions(const vector<string>&) const;
-   Tensor<Tensor<type, 1>, 1> get_values_conditions(const Tensor<Condition, 1>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_inputs() const;
 
    Tensor<type, 2> calculate_envelope(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    ResponseOptimizationResults* perform_optimization() const;
+
+
+   struct ParetoResult
+   {
+       Tensor<Index, 1> pareto_indices;
+       Tensor<type, 2>  pareto_objectives;
+       Tensor<type, 2>  pareto_variables;
+       Tensor<type, 2>  pareto_inputs;
+       Tensor<type, 2>  envelope;
+   };
+
+   ParetoResult perform_pareto() const;
+
+   Tensor<type, 1> get_nearest_point_to_utopian(const ParetoResult& pareto_result) const;
+
+   Tensor<type, 1> input_minimums;
+
+   Tensor<type, 1> input_maximums;
+
+   Tensor<type, 1> output_minimums;
+
+   Tensor<type, 1> output_maximums;
 
 private:
 
@@ -65,15 +88,26 @@ private:
     Dataset* dataset = nullptr;
 
     Tensor<Condition, 1> input_conditions;
+
     Tensor<Condition, 1> output_conditions;
 
-    Tensor<type, 1> input_minimums;
-    Tensor<type, 1> input_maximums;
-
-    Tensor<type, 1> output_minimums;
-    Tensor<type, 1> output_maximums;
-
     Index evaluations_number = 1000;
+
+    // ---------- helpers for Pareto ----------
+    static bool dominates_row(const Tensor<type,1>& a,
+                              const Tensor<type,1>& b,
+                              const Tensor<type,1>& sense);
+
+    ParetoResult perform_pareto_analysis(const Tensor<type, 2>& objectives,
+                                         const Tensor<type, 1>& sense,
+                                         const Tensor<type, 2>& inputs,
+                                         const Tensor<type, 2>& envelope) const;
+
+    void build_objectives_from_envelope(const Tensor<type,2>& envelope,
+                                        Tensor<type,2>& objectives,
+                                        Tensor<type,1>& sense,
+                                        Tensor<Index,1>& objective_output_indices) const;
+
 };
 
 

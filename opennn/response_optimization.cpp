@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+
+
 #include "tensors.h"
 #include "response_optimization.h"
 #include "statistics.h"
@@ -27,17 +29,21 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Da
 void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {   
     neural_network = new_neural_network;
+
     dataset = new_dataset;
 
     if(!neural_network) return;
 
     const Index inputs_number = neural_network->get_inputs_number();
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     input_conditions.resize(inputs_number);
+
     input_conditions.setConstant(Condition::None);
 
     output_conditions.resize(outputs_number);
+
     output_conditions.setConstant(Condition::None);
 
     if(neural_network->has("Scaling2d"))
@@ -45,6 +51,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first("Scaling2d"));
 
         input_minimums = scaling_layer_2d->get_minimums();
+
         input_maximums = scaling_layer_2d->get_maximums();
     }
 
@@ -53,14 +60,17 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
         Bounding* bounding_layer = static_cast<Bounding*>(neural_network->get_first("Bounding"));
 
         output_minimums = bounding_layer->get_lower_bounds();
+
         output_maximums = bounding_layer->get_upper_bounds();
     }
     else
     {
         output_minimums.resize(outputs_number);
+
         output_minimums.setZero();
 
         output_maximums.resize(outputs_number);
+
         output_maximums.setConstant(type(1));
     }
 }
@@ -142,22 +152,18 @@ void ResponseOptimization::set_input_condition(const Index& index,
 
     switch(condition)
     {
-    case Condition::Minimum:
-    case Condition::Maximum:
-        if(values.size() != 0)
-            throw runtime_error("For Minimum/Maximum condition, size of values must be 0.\n");
-        return;
-
     case Condition::EqualTo:
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         input_minimums[index] = values[0];
+
         input_maximums[index] = values[0];
 
         return;
 
     case Condition::LessEqualTo:
+
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
@@ -166,6 +172,7 @@ void ResponseOptimization::set_input_condition(const Index& index,
         return;
 
     case Condition::GreaterEqualTo:
+
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
@@ -174,16 +181,23 @@ void ResponseOptimization::set_input_condition(const Index& index,
         return;
 
     case Condition::Between:
+
         if(values.size() != 2)
             throw runtime_error("For Between condition, size of values must be 2.\n");
 
         input_minimums[index] = values[0];
+
         input_maximums[index] = values[1];
 
         return;
 
-    default:
-        return;
+    case Condition::None:
+
+    case Condition::Minimum:
+
+    case Condition::Maximum:
+
+        break;
     }
 }
 
@@ -195,18 +209,16 @@ void ResponseOptimization::set_output_condition(const Index& index,
     output_conditions[index] = condition;
 
     switch(condition)
-    {
-    case Condition::Minimum:
-    case Condition::Maximum:
-        if(values.size() != 0)
-            throw runtime_error("For Minimum/Maximum condition, size of values must be 0.\n");
+    {        
+    case Condition::EqualTo:
+
+        throw runtime_error("EqualTo condition is only available for inputs.\n");
 
         return;
 
-    case Condition::EqualTo:
-        throw runtime_error("EqualTo condition is only available for inputs.\n");
-
     case Condition::LessEqualTo:
+
+        if(values.size() != 1)
         throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
         output_maximums[index] = values[0];
@@ -228,13 +240,18 @@ void ResponseOptimization::set_output_condition(const Index& index,
             throw runtime_error("For Between condition, size of values must be 2.\n");
 
         output_minimums[index] = values[0];
+
         output_maximums[index] = values[1];
 
         return;
 
     case Condition::None:
-    default:
-        return;
+
+    case Condition::Minimum:
+
+    case Condition::Maximum:
+
+        break;
     }
 }
 
@@ -271,68 +288,6 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
 }
 
 
-Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, 
-                                                                       const Tensor<type, 1>& values) const
-{
-    const Index conditions_size = conditions.size();
-
-    Tensor<Tensor<type, 1>, 1> values_conditions(conditions_size);
-
-    Index index = 0;
-    for(Index i = 0; i < conditions_size; i++)
-    {
-        Tensor<type, 1> current_values;
-
-        const Condition current_condition = conditions[i];
-
-        switch(current_condition)
-        {
-        case Condition::Minimum:
-        case Condition::Maximum:
-            values_conditions[i].resize(0);
-            index++;
-            break;
-
-        case Condition::EqualTo:
-        case Condition::LessEqualTo:
-        case Condition::GreaterEqualTo:
-            current_values.resize(1);
-            current_values[0] = values[index++];
-            values_conditions[i] = current_values;
-            break;
-
-        case Condition::Between:
-            current_values.resize(2);
-            current_values[0] = values[index++];
-            current_values[1] = values[index++];
-            values_conditions[i] = current_values;
-            break;
-
-        case Condition::None:
-
-            current_values.resize(2);
-
-            if(i < input_minimums.size())
-            {
-                current_values[0] = input_minimums(i);
-                current_values[1] = input_maximums(i);
-            }
-            else
-            {
-                current_values[0] = output_minimums(i);
-                current_values[1] = output_maximums(i);
-            }
-
-            values_conditions[i] = current_values;
-            index++;
-            break;
-        }
-    }
-
-    return values_conditions;
-}
-
-
 Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
     const Index inputs_number = neural_network->get_inputs_number();
@@ -341,6 +296,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     inputs.setZero();
 
     const Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
+
     vector<Index> used_raw_variables_indices = dataset->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
@@ -402,25 +358,84 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 }
 
 
-Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& inputs, const Tensor<type, 2>& outputs) const
+Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& inputs, const Tensor<type,2>& outputs) const
 {
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    Tensor<type, 2> envelope = assemble_matrix_matrix(inputs,outputs);
+    Tensor<type, 2> envelope = assemble_matrix_matrix(inputs, outputs);
 
-    for(Index i = 0; i < outputs_number; i++)
-        if(envelope.size() != 0)
-            envelope = filter_column_minimum_maximum(envelope, inputs_number + i, output_minimums(i), output_maximums(i));
-        else
-            return Tensor<type,2>();
+    if(envelope.size() == 0)
+        return Tensor<type,2>();
 
-    return envelope;
+
+    struct Constraint { Index col; type min; type max; };
+
+    vector<Constraint> constraints;
+
+    constraints.reserve(inputs_number + outputs_number);
+
+    for(Index j = 0; j < outputs_number; ++j)
+        constraints.push_back({ inputs_number + j, output_minimums(j), output_maximums(j) });
+
+    const Index rows_number = envelope.dimension(0);
+
+    const Index columns_number = envelope.dimension(1);
+
+    vector<bool> rows_to_keep_mask;
+
+    rows_to_keep_mask.resize(static_cast<size_t>(rows_number));
+
+    Index kept_count = 0;
+
+    for(Index i = 0; i < rows_number; ++i)
+    {
+        bool fits_the_constrain = true;
+
+        for(const auto &current_constrain : constraints)
+        {
+            const type v = envelope(i, current_constrain.col);
+
+            if(v < current_constrain.min || v > current_constrain.max)
+            {
+                fits_the_constrain = false;
+
+                break;
+            }
+        }
+        rows_to_keep_mask[static_cast<size_t>(i)] = fits_the_constrain ? 1 : 0;
+
+        if(fits_the_constrain)
+            ++kept_count;
+    }
+
+    if(kept_count == 0)
+        return Tensor<type,2>();
+
+
+    Tensor<type,2> filtered(kept_count, columns_number);
+
+    Index adding_row = 0;
+
+    for(Index i = 0; i < rows_number; ++i)
+    {
+        if(rows_to_keep_mask[static_cast<size_t>(i)])
+        {
+            const Tensor<type,1> row = envelope.chip(i, 0);
+
+            set_row(filtered, row, adding_row);
+
+            ++adding_row;
+        }
+    }
+
+    return filtered;
 }
-
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
+    //@simone try to make one funcion for tabling the optimal point
+
     ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
 
     const Tensor<type, 2> inputs = calculate_inputs();
@@ -432,9 +447,11 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     const Index samples_number = envelope.dimension(0);
 
     const Index inputs_number = neural_network->get_inputs_number();
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 1> objective(samples_number);
+
     objective.setZero();
 
     for(Index i = 0; i < samples_number; i++)
@@ -461,6 +478,311 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     return results;
 }
 
+// -------------------- PARETO helpers --------------------
+bool ResponseOptimization::dominates_row(const Tensor<type,1>& first_row_to_compare,
+                                         const Tensor<type,1>& second_row_to_compare,
+                                         const Tensor<type,1>& sense)
+{
+    bool strictly_better = false;
+
+    for(Index j = 0; j < first_row_to_compare.size(); ++j)
+    {
+        const type first_row_oriented = first_row_to_compare(j) * sense(j);
+
+        const type second_row_oriented = second_row_to_compare(j) * sense(j);
+
+        if(first_row_oriented > second_row_oriented)
+            return false;
+        else
+            strictly_better = true;
+    }
+    return strictly_better;
+}
+
+void ResponseOptimization::build_objectives_from_envelope(const Tensor<type,2>& envelope,
+                                                          Tensor<type,2>& objectives,
+                                                          Tensor<type,1>& sense,
+                                                          Tensor<Index,1>& objective_indices) const
+{
+    const Index inputs_number  = neural_network->get_inputs_number();
+
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    Index objectives_number = 0;
+
+    for (Index i = 0; i < inputs_number; ++i)
+        if (input_conditions(i) == Condition::Minimum || input_conditions(i) == Condition::Maximum)
+            ++objectives_number;
+
+    for(Index j = 0; j<outputs_number; ++j)
+        if(output_conditions(j) == Condition::Minimum || output_conditions(j) == Condition::Maximum)
+            ++objectives_number;
+
+    objectives.resize(envelope.dimension(0), objectives_number);
+
+    sense.resize(objectives_number);
+
+    objective_indices.resize(objectives_number);
+
+    Index counter_objectives = 0;
+
+    for (Index i = 0; i < inputs_number; ++i)
+    {
+        if (input_conditions(i) != Condition::Minimum && input_conditions(i) != Condition::Maximum)
+            continue;
+
+        for (Index j = 0; j < envelope.dimension(0); ++j)
+            objectives(j, counter_objectives) = envelope(j, i);
+
+        sense(counter_objectives) = (input_conditions(i) == Condition::Maximum) ? type(-1) : type(1);
+
+        objective_indices(counter_objectives) = i;
+
+        ++counter_objectives;
+    }
+
+
+    for(Index j = 0; j<outputs_number; ++j)
+    {
+        if(output_conditions(j) != Condition::Minimum && output_conditions(j) != Condition::Maximum)
+            continue;
+
+        for(Index i = 0; i < envelope.dimension(0); ++i)
+            objectives(i, counter_objectives) = envelope(i, inputs_number + j);
+
+        sense(counter_objectives) = (output_conditions(j) == Condition::Maximum) ? type(-1) : type(1);
+
+        objective_indices(counter_objectives) =inputs_number + j;
+
+        ++counter_objectives;
+    }
+}
+
+
+ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto_analysis(const Tensor<type, 2>& objectives,
+                                                                                 const Tensor<type, 1>& sense,
+                                                                                 const Tensor<type, 2>& inputs,
+                                                                                 const Tensor<type, 2>& envelope) const
+{
+    const Index rows_number = envelope.dimension(0);
+
+    const Index objectives_number = objectives.dimension(1);
+
+    Tensor<char,1> is_dominated(rows_number);
+
+    is_dominated.setZero();
+
+    for(Index i = 0; i < rows_number; ++i)
+    {
+        if(is_dominated(i))
+            continue;
+
+        for(Index k = 0; k < rows_number; ++k)
+        {
+            if(i == k || is_dominated(k))
+                continue;
+
+            Tensor<type,1> row_i(objectives_number);
+
+            Tensor<type,1> row_k(objectives_number);
+
+            for(Index j=0; j < objectives_number; ++j)
+            {
+                row_i(j)=objectives(i,j);
+
+                row_k(j)=objectives(k,j);
+            }
+
+            if(dominates_row(row_k, row_i, sense))
+            {
+                is_dominated(i)=1;
+                break;
+            }
+            if(dominates_row(row_i, row_k, sense))
+                is_dominated(k)=1;
+        }
+    }
+
+    vector<Index> idexes_non_dominate_rows;
+
+    idexes_non_dominate_rows.reserve(rows_number);
+
+    for(Index i = 0; i < rows_number; ++i)
+        if(!is_dominated(i))
+            idexes_non_dominate_rows.push_back(i);
+
+    Tensor<Index,1> pareto_indices(idexes_non_dominate_rows.size());
+
+    for(Index i = 0; i < pareto_indices.size(); ++i)
+        pareto_indices(i)=idexes_non_dominate_rows[i];
+
+    const Index pareto_points_number = pareto_indices.size();
+
+    const Index envelope_variables_number = envelope.dimension(1);
+
+    Tensor<type,2> pareto_objective_values(pareto_points_number, objectives_number);
+
+    Tensor<type,2> pareto_candidate_variables(pareto_points_number, envelope_variables_number);
+
+    Tensor<type,2> pareto_input_vectors(pareto_points_number, inputs.dimension(1));
+
+    for(Index current_pareto_index = 0; current_pareto_index < pareto_points_number; ++current_pareto_index)
+    {
+        const Index i = pareto_indices(current_pareto_index);
+
+        for(Index j = 0; j < objectives_number; ++j)
+            pareto_objective_values(current_pareto_index,j)  = objectives(i,j);
+
+        for(Index j = 0; j < envelope_variables_number; ++j)
+            pareto_candidate_variables(current_pareto_index,j) = envelope(i,j);
+
+        for(Index j = 0; j < inputs.dimension(1); ++j)
+            pareto_input_vectors(current_pareto_index,j) = inputs(i,j);
+    }
+
+    ParetoResult res;
+
+    res.pareto_indices   = std::move(pareto_indices);
+
+    res.pareto_objectives= std::move(pareto_objective_values);
+
+    res.pareto_variables = std::move(pareto_candidate_variables);
+
+    res.pareto_inputs    = std::move(pareto_input_vectors);
+
+    res.envelope = std::move(envelope);
+
+    return res;
+}
+
+// -------------------- Public entry: build, then Pareto --------------------
+ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto() const
+{
+    const Tensor<type, 2> inputs  = calculate_inputs();
+
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
+
+    const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
+
+    if(envelope.size() == 0)
+        //message more evaluation number or less constraints
+        return ParetoResult{};
+
+    Tensor<type,2> objectives;
+
+    Tensor<type,1> sense;
+
+    Tensor<Index,1> objectives_indices;
+
+    build_objectives_from_envelope(envelope, objectives, sense, objectives_indices);
+
+    if(objectives_indices.dimension(1) < 1)
+        return ParetoResult{};
+
+    const Index Pareto_rows_dimension = envelope.dimension(0);
+
+    const Index input_number_dimension  = neural_network->get_inputs_number();
+
+    Tensor<type,2> inputs_filtered(Pareto_rows_dimension, input_number_dimension);
+
+    for(Index r = 0; r < Pareto_rows_dimension; ++r)
+        for(Index c = 0; c < input_number_dimension; ++c)
+            inputs_filtered(r,c) = envelope(r,c);
+
+    return perform_pareto_analysis(objectives, sense, inputs_filtered, envelope);
+}
+
+Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const ResponseOptimization::ParetoResult& pareto_result) const
+{
+    const Index num_pareto_points = pareto_result.pareto_objectives.dimension(0);
+
+    const Index num_objectives = pareto_result.pareto_objectives.dimension(1);
+
+    // Calculate the utopian point (ideal best outcomes for each objective)
+
+    Tensor<type, 1> utopian_point(num_objectives);
+
+    Tensor<type, 1> objectives_maximums(num_objectives);
+
+    Tensor<type, 1> objectives_minimums(num_objectives);
+
+    utopian_point.setZero();
+
+    int output_number = neural_network->get_outputs_number();
+
+    int input_number = neural_network->get_inputs_number();
+
+    int j = 0;
+
+    for (Index i = 0; i < input_number; ++i)
+    {
+        if (get_input_conditions()(i) == ResponseOptimization::Condition::Minimum)
+        {
+            objectives_minimums(j)=input_minimums[i];
+
+            utopian_point(j) = 0;
+
+            j++;
+        }
+        else if (get_input_conditions()(i) == ResponseOptimization::Condition::Maximum)
+        {
+            objectives_maximums(j)=input_maximums[i];
+
+            utopian_point(j) = 1;
+
+            j++;
+        }
+    }
+
+    for (Index i = 0; i < output_number; ++i)
+    {
+        if (get_output_conditions()(i) == ResponseOptimization::Condition::Minimum)
+        {
+            objectives_minimums(j) = output_minimums[i];
+
+            utopian_point(j) = 0;
+
+            j++;
+        }
+        else if (get_output_conditions()(i) == ResponseOptimization::Condition::Maximum)
+        {
+            objectives_maximums(j) = output_maximums[i];
+
+            utopian_point(j) = 1;
+
+            j++;
+        }
+    }
+
+    Tensor<type,2> scaled_pareto_points = pareto_result.pareto_objectives;
+
+    #pragma omp parallel for
+    for (Index j = 0; j < num_objectives; j++)
+    {
+        for(Index i = 0; i < num_pareto_points; i++)
+           scaled_pareto_points(i, j) = (pareto_result.pareto_objectives(i, j) - objectives_minimums(j)) / (objectives_maximums(j) - objectives_minimums(j));
+    }
+
+    Tensor<type, 1> distances(num_pareto_points);
+
+    for (Index i = 0; i < num_pareto_points; ++i)
+    {
+        type distance = 0;
+
+        for (Index j = 0; j < num_objectives; ++j)
+            distance += pow(scaled_pareto_points(i, j) - utopian_point(j), 2);
+
+        distances(i) = sqrt(distance);
+    }
+
+    Index nearest_point_index = minimal_index(distances);
+
+    Tensor<type, 1> best_point;
+
+    best_point = pareto_result.envelope.chip(pareto_result.pareto_indices(nearest_point_index),0) ;
+
+    return best_point;
+}
 
 ResponseOptimizationResults::ResponseOptimizationResults(NeuralNetwork* new_neural_network)
 {
@@ -471,9 +793,11 @@ ResponseOptimizationResults::ResponseOptimizationResults(NeuralNetwork* new_neur
 void ResponseOptimizationResults::print() const
 {
     const Index inputs_number = neural_network->get_inputs_number();
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     const vector<string> input_names = neural_network->get_input_names();
+
     const vector<string> output_names = neural_network->get_output_names();
 
     cout << "\nResponse optimization results: " << endl;

@@ -587,49 +587,55 @@ void GeneticAlgorithm::perform_mutation()
                 population(i,j) = !population(i,j);
     */
 
-    
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
     mt19937 gen(rd());
 
-    for (Index i = 0; i < individuals_number; i++)
+    for (Index i = 0; i < individuals_number; ++i)
     {
-        if (get_random_type(0, 1) >= mutation_rate)
-            continue;
-
         Tensor<bool, 1> individual = population.chip(i, 0);
-        Index current_inputs = count(individual.data(), individual.data() + genes_number, true);
+        Index current_inputs_number = count(individual.data(), individual.data() + genes_number, true);
 
-        vector<Index> true_indices, false_indices;
-        for(Index j = 0; j < genes_number; ++j) 
+        vector<Index> to_true_mutations; 
+        vector<Index> to_false_mutations;
+
+        for (Index j = 0; j < genes_number; ++j)
+            if (get_random_type(0.0, 1.0) < mutation_rate)
+                if (individual(j))
+                    to_false_mutations.push_back(j);
+                else
+                    to_true_mutations.push_back(j);
+
+        shuffle(to_true_mutations.begin(), to_true_mutations.end(), gen);
+        shuffle(to_false_mutations.begin(), to_false_mutations.end(), gen);
+
+        Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        for (Index k = 0; k < swap_count; ++k)
         {
-            if (individual(j)) true_indices.push_back(j);
-            else false_indices.push_back(j);
+            individual(to_true_mutations[k]) = true;
+            individual(to_false_mutations[k]) = false;
         }
 
-        bool try_add = get_random_bool();
-
-        if (try_add && current_inputs < maximum_inputs_number && !false_indices.empty()) 
+        for (Index k = swap_count; k < to_true_mutations.size(); ++k)
         {
-            shuffle(false_indices.begin(), false_indices.end(), gen);
-            individual(false_indices[0]) = true;
-        } 
-        else if (!try_add && current_inputs > minimum_inputs_number && !true_indices.empty()) 
-        {
-            shuffle(true_indices.begin(), true_indices.end(), gen);
-            individual(true_indices[0]) = false;
+            if (current_inputs_number < maximum_inputs_number)
+            {
+                individual(to_true_mutations[k]) = true;
+                current_inputs_number++;
+            }
         }
-        else if (!true_indices.empty() && !false_indices.empty()) 
+
+        for (Index k = swap_count; k < to_false_mutations.size(); ++k)
         {
-            shuffle(true_indices.begin(), true_indices.end(), gen);
-            shuffle(false_indices.begin(), false_indices.end(), gen);
-            individual(true_indices[0]) = false;
-            individual(false_indices[0]) = true;
+            if (current_inputs_number > minimum_inputs_number)
+            {
+                individual(to_false_mutations[k]) = false;
+                current_inputs_number--;
+            }
         }
 
         population.chip(i, 0) = individual;
     }
-    
 }
 
 

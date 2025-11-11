@@ -210,38 +210,37 @@ bool is_date_time_string(const string& text)
     if(is_numeric_string(text))
         return false;
 
-    const string year = "(19[0-9][0-9]|20[0-9][0-9])";
-    const string month = "(0[1-9]|1[0-2])";
-    const string day = "(0[1-9]|[12][0-9]|3[01])";
-    const string hour = "([01]?[0-9]|2[0-3])";
-    const string minute = "([0-5][0-9])";
-    const string second = "([0-5][0-9])";
-    const string delimiter = "[-|/|.|\\s]";
-    const string am_pm = "[AP]M";
-    const string full_month = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:ust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)";
+    const static vector<regex> date_regexes = {
+        // YMD
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))"), // yyyy/mm/dd hh:mm:ss.sss
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))"), // yyyy/mm/dd hh:mm:ss
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))"), // yyyy/mm/dd hh:mm
+        regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))"), // yyyy/mm/dd
+        regex(R"((\d{4})[-/.](\d{1,2}))"), // yyyy/mm
+        // DMY/MDY
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}))"), // dd/mm/yyyy hh:mm:ss
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}))"), // dd/mm/yyyy hh:mm
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))"), // dd/mm/yyyy
+        regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{2}):(\d{2}) ([AP]M))"), // dd/mm/yyyy hh:mm:ss AM/PM
+        // HMS
+        regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))") // hh:mm:ss
+    };
 
-    // Combine the formats into a single regex
-    const regex regular_expression(
-        year + delimiter + month + delimiter + day + "(\\s+" + hour + ":" + minute + "(:" + second + ")?)?|"
-        + day + delimiter + month + delimiter + year + "(\\s+" + hour + ":" + minute + "(:" + second + ")?(\\s+" + am_pm + ")?)?|"
-        + year + delimiter + full_month + delimiter + day + "(\\s+" + hour + ":" + minute + "(:" + second + ")?)?|"
-        + full_month + "\\s+" + day + "[,\\.]?\\s+" + year + "(\\s+" + hour + ":" + minute + ")?|"
-        + day + delimiter + month + delimiter + year + "\\s+" + hour + ":" + minute + ":" + second + "\\.\\d{6}|"
-        + year + delimiter + month + delimiter + day + "\\s+" + hour + ":" + minute + ":" + second + "\\.\\d{6}|"
-        + "^\\d{1,2}/\\d{1,2}/\\d{4}$|"
-        + "^" + hour + ":" + minute + ":" + second + "$");
+    for(const regex& r : date_regexes)
+        if(regex_match(text, r))
+            return true;
 
-    return regex_match(text, regular_expression);
+    return false;
 }
 
 
-time_t date_to_timestamp(const string& date, const Index& gmt)
+time_t date_to_timestamp(const string& date, const Index& gmt, const DateFormat& format)
 {
     struct tm time_structure = {};
     smatch matches;
 
-    // yyyy-mm-dd hh:mm:ss.sss
-    if (regex_match(date, matches, regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+))")))
+    // yyyy/mm/dd hh:mm:ss.sss
+    if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})\.(\d+))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -252,7 +251,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         return mktime(&time_structure);
     }
     // yyyy/mm/dd hh:mm:ss
-    else if (regex_match(date, matches, regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}):(\d{2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -263,7 +262,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         return mktime(&time_structure);
     }
     // yyyy/mm/dd hh:mm
-    else if (regex_match(date, matches, regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}) (\d{1,2}):(\d{1,2}))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
@@ -273,42 +272,99 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         return mktime(&time_structure);
     }
     // yyyy/mm/dd
-    else if (regex_match(date, matches, regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2})[-/.](\d{1,2}))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
         time_structure.tm_mday = stoi(matches[3].str());
         return mktime(&time_structure);
     }
-    // dd/mm/yyyy hh:mm:ss
-    else if (regex_match(date, matches, regex(R"((\d{2})[-/.](\d{2})[-/.](\d{4}) (\d{2}):(\d{2}):(\d{2}))")))
-    {
-        time_structure.tm_mday = stoi(matches[1].str());
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
-        time_structure.tm_min = stoi(matches[5].str());
-        time_structure.tm_sec = stoi(matches[6].str());
-        return mktime(&time_structure);
-    }
-    // dd/mm/yyyy
-    else if (regex_match(date, matches, regex(R"((\d{2})[-/.](\d{2})[-/.](\d{4}))")))
-    {
-        time_structure.tm_mday = stoi(matches[1].str());
-        time_structure.tm_mon = stoi(matches[2].str()) - 1;
-        time_structure.tm_year = stoi(matches[3].str()) - 1900;
-        return mktime(&time_structure);
-    }
     // yyyy/mm
-    else if (regex_match(date, matches, regex(R"((\d{4})[-/.](\d{2}))")))
+    else if((format == YMD || format == AUTO) && regex_match(date, matches, regex(R"((\d{4})[-/.](\d{1,2}))")))
     {
         time_structure.tm_year = stoi(matches[1].str()) - 1900;
         time_structure.tm_mon = stoi(matches[2].str()) - 1;
         time_structure.tm_mday = 1;
         return mktime(&time_structure);
     }
+    // dd/mm/yyyy hh:mm:ss
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)")))
+    {
+        int part1 = stoi(matches[1].str()); int part2 = stoi(matches[2].str());
+
+        if(format == DMY || (format == AUTO && part1 > 12))
+        {
+            time_structure.tm_mday = part1;
+            time_structure.tm_mon = part2 - 1;
+        }
+        else if(format == MDY || (format == AUTO && part2 > 12))
+        {
+            time_structure.tm_mon = part1 - 1;
+            time_structure.tm_mday = part2;
+        }
+        else
+        {
+            time_structure.tm_mday = part1;
+            time_structure.tm_mon = part2 - 1;
+        }
+
+        time_structure.tm_year = stoi(matches[3].str()) - 1900;
+        int hour = stoi(matches[4].str());
+
+        if(matches[7].matched)
+        {
+            const string& ampm = matches[7].str();
+            if(ampm == "PM" && hour < 12)
+                hour += 12;
+            if(ampm == "AM" && hour == 12)
+                hour = 0;
+        }
+
+        time_structure.tm_hour = hour - gmt;
+        time_structure.tm_min = stoi(matches[5].str());
+        time_structure.tm_sec = stoi(matches[6].str());
+        return mktime(&time_structure);
+    }
+    // dd/mm/yyyy hh:mm
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))")))
+    {
+        int part1 = stoi(matches[1].str()); int part2 = stoi(matches[2].str());
+
+        if
+            (format == DMY || (format == AUTO && part1 > 12))
+        {
+            time_structure.tm_mday = part1;
+            time_structure.tm_mon = part2 - 1;
+        }
+        else if(format == MDY || (format == AUTO && part2 > 12))
+        {
+            time_structure.tm_mon = part1 - 1;
+            time_structure.tm_mday = part2;
+        }
+        else
+        {
+            time_structure.tm_mday = part1;
+            time_structure.tm_mon = part2 - 1;
+        }
+
+        time_structure.tm_year = stoi(matches[3].str()) - 1900;
+        time_structure.tm_hour = stoi(matches[4].str()) - gmt;
+        time_structure.tm_min = stoi(matches[5].str());
+        time_structure.tm_sec = 0;
+        return mktime(&time_structure);
+    }
+    // dd/mm/yyyy
+    else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))")))
+    {
+        int part1 = stoi(matches[1].str()); int part2 = stoi(matches[2].str());
+        if (format == DMY || (format == AUTO && part1 > 12)) { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; }
+        else if (format == MDY || (format == AUTO && part2 > 12)) { time_structure.tm_mon = part1 - 1; time_structure.tm_mday = part2; }
+        else { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; } // Default
+        time_structure.tm_year = stoi(matches[3].str()) - 1900;
+        return mktime(&time_structure);
+    }
     // hh:mm:ss
-    else if (regex_match(date, matches, regex(R"((\d{2}):(\d{2}):(\d{2}))")))
+    else if (format == AUTO && regex_match(date, matches, regex(R"((\d{1,2}):(\d{1,2}):(\d{1,2}))")))
     {
         time_structure.tm_hour = stoi(matches[1].str()) - gmt;
         time_structure.tm_min = stoi(matches[2].str());

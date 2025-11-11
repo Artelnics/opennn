@@ -28,28 +28,6 @@ win32 {
     DEFINES += WIN32_LEAN_AND_MEAN
 }
 
-CUDA_PATH = $$(CUDA_PATH)
-isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
-win32: isEmpty(CUDA_PATH) {
-    CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
-    CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
-    !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
-}
-
-if(!isEmpty(CUDA_PATH)) {
-    CUDA_PATH = $$clean_path($$CUDA_PATH)
-    CUDA_INCLUDE_PATH = $$CUDA_PATH/include
-    CUDA_LIB_DIR = $$CUDA_PATH/lib/x64
-
-    INCLUDEPATH += $$CUDA_INCLUDE_PATH
-    DEPENDPATH += $$CUDA_INCLUDE_PATH
-    LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
-
-    exists($$CUDA_INCLUDE_PATH/cudnn.h) {
-        LIBS += -lcudnn
-    }
-}
-
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../opennn/debug/ -lopennn
 else:unix: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
@@ -62,6 +40,10 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../open
 else:win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
 else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
+
+#Cuda
+
+include(../cuda.pri)
 
 #OpenMP
 
