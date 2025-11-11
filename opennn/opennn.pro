@@ -35,16 +35,11 @@ SOURCES += $$files($$PWD/*.cpp)
 
 # CUDA
 
-win32-msvc* {
+if($$CUDA_ENABLED) {
     CUDA_SOURCES += kernel.cu
 }
 
 include(../cuda.pri)
-
-win32 {
-    DEFINES += _HAS_STD_BYTE=0
-    DEFINES += WIN32_LEAN_AND_MEAN
-}
 
 #OpenMP
 include(../opennmp.pri)

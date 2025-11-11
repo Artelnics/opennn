@@ -20,6 +20,11 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES = main.cpp
 
+win32 {
+    DEFINES += _HAS_STD_BYTE=0
+    DEFINES += WIN32_LEAN_AND_MEAN
+}
+
 win32-g++{
 QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
@@ -41,6 +46,10 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../o
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/release/opennn.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
+
+#Cuda
+
+include(../../cuda.pri)
 
 # OpenMP library
 

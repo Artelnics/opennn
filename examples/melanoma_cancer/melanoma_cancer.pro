@@ -24,6 +24,11 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES = main.cpp
 
+win32 {
+    DEFINES += _HAS_STD_BYTE=0
+    DEFINES += WIN32_LEAN_AND_MEAN
+}
+
 win32-g++{
 QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
@@ -48,15 +53,10 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 
 INCLUDEPATH += D:/OpenNN/eigen
 
+#Cuda
+
+include(../../cuda.pri)
+
 # OpenMP library
 
-win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
-QMAKE_LFLAGS += -fopenmp -lgomp
-LIBS += -fopenmp -pthread -lgomp
-}else: macx{
-INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
+include(../../opennmp.pri)

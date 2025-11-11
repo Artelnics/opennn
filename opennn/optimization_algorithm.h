@@ -29,11 +29,11 @@ public:
     OptimizationAlgorithm(const LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
-                                   MinimumLossDecrease,
-                                   LossGoal,
-                                   MaximumSelectionErrorIncreases,
-                                   MaximumEpochsNumber,
-                                   MaximumTime};
+                                 MinimumLossDecrease,
+                                 LossGoal,
+                                 MaximumSelectionErrorIncreases,
+                                 MaximumEpochsNumber,
+                                 MaximumTime};
 
     LossIndex* get_loss_index() const;
 
