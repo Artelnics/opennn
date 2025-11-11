@@ -31,11 +31,11 @@ int main()
     try
     {
         cout << "Blank Testing OpenNN" << endl;
-        
+
         // Data set
 
-        //Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/test.csv", ",", true, true);
-        Dataset dataset("C:/Users/davidgonzalez/Documents/test.csv", ",", true, true);
+        Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/test.csv", ",", true, true);
+        //Dataset dataset("C:/Users/davidgonzalez/Documents/test.csv", ",", true, true);
 
         const Index inputs_number = dataset.get_variables_number("Input");
         const Index targets_number = dataset.get_variables_number("Target");
@@ -84,7 +84,7 @@ int main()
         cout << "Final number of inputs in the neural network: " << classification_network.get_input_dimensions()[0] << endl;
 
         cout << "Completed." << endl;
-        
+
         return 0;
     }
     catch (const exception &e)

@@ -280,6 +280,7 @@ TEST(GeneticAlgorithmTest, Mutation)
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
     genetic_algorithm.set_individuals_number(individuals_number);
+    genetic_algorithm.set_maximum_inputs_number(inputs_number);
 
     Tensor<bool, 2> population(individuals_number, inputs_number);
     population.setRandom();
