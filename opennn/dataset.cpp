@@ -643,7 +643,9 @@ Index Dataset::get_used_variables_number() const
 
     const Index unused_variables_number = get_variables_number("None");
 
-    return variables_number - unused_variables_number;
+    const Index time_variables_number = get_variables_number("Time");
+
+    return variables_number - unused_variables_number - time_variables_number;
 }
 
 
@@ -845,11 +847,11 @@ vector<Index> Dataset::get_used_variable_indices() const
     Index variable_index = 0;
     Index used_variable_index = 0;
 
-    for (const Dataset::RawVariable& raw_variable : raw_variables)
+    for(const Dataset::RawVariable& raw_variable : raw_variables)
     {
         const Index categories_number = raw_variable.get_categories_number();
 
-        if (raw_variable.use == "None")
+        if(raw_variable.use == "None" || raw_variable.use == "Time")
         {
             variable_index += (raw_variable.type == RawVariableType::Categorical)
             ? raw_variable.get_categories_number()
