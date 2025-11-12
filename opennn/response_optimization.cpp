@@ -698,6 +698,12 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     const Index num_objectives = pareto_result.pareto_objectives.dimension(1);
 
+    dataset->load_data_binary();
+
+    const vector<Descriptives> input_variables_descriptives = dataset->calculate_variable_descriptives("Input");
+
+    const vector<Descriptives> output_variables_descriptives = dataset->calculate_variable_descriptives("Target");
+
     // Calculate the utopian point (ideal best outcomes for each objective)
 
     Tensor<type, 1> utopian_point(num_objectives);
@@ -708,17 +714,21 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     utopian_point.setZero();
 
-    int output_number = neural_network->get_outputs_number();
+    const int output_number = neural_network->get_outputs_number();
 
-    int input_number = neural_network->get_inputs_number();
+    const int input_number = neural_network->get_inputs_number();
 
-    int j = 0;
+    Index j = 0;
 
     for (Index i = 0; i < input_number; ++i)
     {
+        const Descriptives& desc = input_variables_descriptives[i];
+
         if (get_input_conditions()(i) == ResponseOptimization::Condition::Minimum)
-        {
-            objectives_minimums(j)=input_minimums[i];
+        {            
+            objectives_minimums(j)=desc.minimum;
+
+            objectives_maximums(j)=desc.maximum;
 
             utopian_point(j) = 0;
 
@@ -726,7 +736,9 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
         }
         else if (get_input_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            objectives_maximums(j)=input_maximums[i];
+            objectives_minimums(j)=desc.minimum;
+
+            objectives_maximums(j)=desc.maximum;
 
             utopian_point(j) = 1;
 
@@ -736,9 +748,14 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     for (Index i = 0; i < output_number; ++i)
     {
+        const Descriptives& desc = output_variables_descriptives[i];
+
         if (get_output_conditions()(i) == ResponseOptimization::Condition::Minimum)
         {
-            objectives_minimums(j) = output_minimums[i];
+            objectives_minimums(j) = desc.minimum;
+
+            objectives_maximums(j) = desc.maximum;
+
 
             utopian_point(j) = 0;
 
@@ -746,7 +763,9 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
         }
         else if (get_output_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            objectives_maximums(j) = output_maximums[i];
+            objectives_minimums(j) = desc.minimum;
+
+            objectives_maximums(j) = desc.maximum;
 
             utopian_point(j) = 1;
 
@@ -765,19 +784,69 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     Tensor<type, 1> distances(num_pareto_points);
 
+    #pragma omp parallel for
     for (Index i = 0; i < num_pareto_points; ++i)
-    {
-        type distance = 0;
-
-        for (Index j = 0; j < num_objectives; ++j)
-            distance += pow(scaled_pareto_points(i, j) - utopian_point(j), 2);
-
-        distances(i) = sqrt(distance);
-    }
+            distances(i) = l2_distance(scaled_pareto_points.chip(i,0),utopian_point);
 
     Index nearest_point_index = minimal_index(distances);
 
-    Tensor<type, 1> best_point;
+    // ---------------------
+    // DIAGNOSTIC PRINTS
+    // ---------------------
+    {
+        std::cout << std::fixed << std::setprecision(6);
+
+        // Utopian point
+        std::cout << "[Diag] Utopian point (" << num_objectives << "): [";
+        for (Index k = 0; k < num_objectives; ++k)
+        {
+            std::cout << utopian_point(k);
+            if (k + 1 < num_objectives) std::cout << ", ";
+        }
+        std::cout << "]\n";
+
+        // Bounds (optional but useful)
+        std::cout << "[Diag] Objective minima: [";
+        for (Index k = 0; k < num_objectives; ++k)
+        {
+            std::cout << objectives_minimums(k);
+            if (k + 1 < num_objectives) std::cout << ", ";
+        }
+        std::cout << "]\n";
+
+        std::cout << "[Diag] Objective maxima: [";
+        for (Index k = 0; k < num_objectives; ++k)
+        {
+            std::cout << objectives_maximums(k);
+            if (k + 1 < num_objectives) std::cout << ", ";
+        }
+        std::cout << "]\n";
+
+        // Print first few scaled Pareto points
+        const Index show_n = std::min<Index>(num_pareto_points, 5);
+        for (Index i = 0; i < show_n; ++i)
+        {
+            std::cout << "[Diag] Scaled Pareto point " << i << ": [";
+            for (Index k = 0; k < num_objectives; ++k)
+            {
+                std::cout << scaled_pareto_points(i, k);
+                if (k + 1 < num_objectives) std::cout << ", ";
+            }
+            std::cout << "]\n";
+        }
+        if (num_pareto_points > show_n)
+            std::cout << "[Diag] ... (" << (num_pareto_points - show_n) << " more scaled points not shown)\n";
+
+        // Distances
+        for (Index i = 0; i < num_pareto_points; ++i)
+            std::cout << "[Diag] Distance[" << i << "] = " << distances(i) << "\n";
+
+        std::cout << "[Diag] Nearest index = " << nearest_point_index
+                  << ", min distance = " << distances(nearest_point_index) << "\n";
+    }
+    // ---------------------
+
+    Tensor<type, 1> best_point(input_number+output_number);
 
     best_point = pareto_result.envelope.chip(pareto_result.pareto_indices(nearest_point_index),0) ;
 
