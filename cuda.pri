@@ -1,5 +1,3 @@
-# cuda.pri
-
 isEmpty(CUDA_PATH_DETECTED) {
     CUDA_PATH_DETECTED = true
 
@@ -42,46 +40,42 @@ isEmpty(CUDA_PATH_DETECTED) {
             message("    -> Detection method: Found installation in /usr/local/cuda.")
         }
     }
-
 }
 
-
 if(!isEmpty(CUDA_PATH)) {
-    CUDA_PATH = $$clean_path($$CUDA_PATH)
+    if(exists($$CUDA_PATH)) {
+        CUDA_PATH = $$clean_path($$CUDA_PATH)
 
-    win32: NVCC_EXECUTABLE_TEST = $$CUDA_PATH/bin/nvcc.exe
-    else:  NVCC_EXECUTABLE_TEST = $$CUDA_PATH/bin/nvcc
+        win32: NVCC_EXECUTABLE_TEST = $$CUDA_PATH/bin/nvcc.exe
+        else:  NVCC_EXECUTABLE_TEST = $$CUDA_PATH/bin/nvcc
 
-    CUDA_INCLUDE_PATH_TEST = $$CUDA_PATH/include
+        CUDA_INCLUDE_PATH_TEST = $$CUDA_PATH/include
 
-    win32: CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib/x64
-    else:  CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib64
+        win32: CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib/x64
+        else:  CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib64
 
-    if(exists($$NVCC_EXECUTABLE_TEST):exists($$CUDA_INCLUDE_PATH_TEST):exists($$CUDA_LIB_DIR_TEST)) {
+        if(exists($$NVCC_EXECUTABLE_TEST):exists($$CUDA_INCLUDE_PATH_TEST):exists($$CUDA_LIB_DIR_TEST)) {
+            message("    -> CUDA found at: '$$CUDA_PATH'")
 
-        message("    -> CUDA found at: '$$(CUDA_PATH)'")
+            CUDA_ENABLED = true
+            NVCC_EXECUTABLE = $$NVCC_EXECUTABLE_TEST
+            CUDA_INCLUDE_PATH = $$CUDA_INCLUDE_PATH_TEST
+            CUDA_LIB_DIR = $$CUDA_LIB_DIR_TEST
 
-        CUDA_ENABLED = true
-        NVCC_EXECUTABLE = $$NVCC_EXECUTABLE_TEST
-        CUDA_INCLUDE_PATH = $$CUDA_INCLUDE_PATH_TEST
-        CUDA_LIB_DIR = $$CUDA_LIB_DIR_TEST
+            DEFINES += WITH_CUDA
 
-        DEFINES += WITH_CUDA
+            INCLUDEPATH += $$CUDA_INCLUDE_PATH
+            DEPENDPATH += $$CUDA_INCLUDE_PATH
+            LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
 
-        INCLUDEPATH += $$CUDA_INCLUDE_PATH
-        DEPENDPATH += $$CUDA_INCLUDE_PATH
-        LIBS += -L$$CUDA_LIB_DIR -lcudart -lcublas
+            exists($$CUDA_INCLUDE_PATH/cudnn.h) {
+                message("    -> cuDNN found. Adding to build.")
+                DEFINES += HAVE_CUDNN
+                LIBS += -lcudnn
+            }
 
-        exists($$CUDA_INCLUDE_PATH/cudnn.h) {
-            message("    -> cuDNN found. Adding to build.")
-            DEFINES += HAVE_CUDNN
-            LIBS += -lcudnn
-        }
-
-        if(!isEmpty(CUDA_SOURCES)) {
             message("    -> Configuring NVCC for CUDA sources (.cu files)...")
 
-            # Flags para el compilador de CUDA (NVCC)
             NVCC_FLAGS = --use_fast_math
             NVCC_FLAGS += --std=c++17
             NVCC_FLAGS += --expt-relaxed-constexpr
@@ -89,16 +83,17 @@ if(!isEmpty(CUDA_PATH)) {
             NVCC_FLAGS += -gencode arch=compute_75,code=sm_75
             NVCC_FLAGS += -gencode arch=compute_86,code=sm_86
 
-            win32: NVCC_FLAGS += -Xcompiler "/MD"
+            win32-msvc*: NVCC_FLAGS += -Xcompiler "/MD"
+            win32-g++: {
+                NVCC_FLAGS += -ccbin "C:/Qt/Tools/mingw1310_64/bin/g++.exe"
+            }
             unix: NVCC_FLAGS += -Xcompiler -fPIC
 
-            debug:   NVCC_FLAGS_DEBUG   = -g -G
-            release: NVCC_FLAGS_RELEASE = --ptxas-options=-v
+            NVCC_MODE_FLAGS =
+            release: NVCC_MODE_FLAGS += --ptxas-options=-v
+            debug:   NVCC_MODE_FLAGS += -g -G
 
-            cuda.commands = $$NVCC_EXECUTABLE -c $$NVCC_FLAGS \
-                            $$join(NVCC_FLAGS_RELEASE, " ", "", " ") \
-                            $$join(NVCC_FLAGS_DEBUG, " ", "", " ") \
-                            ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT}
+            cuda.commands = $$NVCC_EXECUTABLE -c $$NVCC_FLAGS $$NVCC_MODE_FLAGS ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT}
 
             isEmpty(OBJECTS_DIR) {
                 CONFIG(debug, debug|release) {
@@ -113,7 +108,7 @@ if(!isEmpty(CUDA_PATH)) {
             }
 
             win32: cuda.output = $$shell_path($$OBJECTS_DIR)/${QMAKE_FILE_BASE}.obj
-            else:  cuda.output = $$OBJECTS_DIR/${QMAKE_FILE_BASE}.o
+            else:  cuda.output = $$OUT_PWD/${QMAKE_FILE_BASE}.o
 
             cuda.input = CUDA_SOURCES
             cuda.variable_out = OBJECTS
@@ -121,10 +116,15 @@ if(!isEmpty(CUDA_PATH)) {
             cuda.clean = $$OBJECTS_DIR\\${QMAKE_FILE_BASE}.obj $$OBJECTS_DIR/${QMAKE_FILE_BASE}.o
 
             QMAKE_EXTRA_COMPILERS += cuda
+        } else {
+            message("--- CUDA path '$$CUDA_PATH' seems valid, but essential directories/files are missing. CUDA support disabled. ---")
+            CUDA_ENABLED = false
         }
     } else {
-        message("--- CUDA path found, but essential directories/files are missing. CUDA support disabled. ---")
+        message("--- CUDA path '$$CUDA_PATH' is set, but the directory does not exist. CUDA support disabled. ---")
+        CUDA_ENABLED = false
     }
 } else {
     message("--- CUDA not found. Building without CUDA support. ---")
+    CUDA_ENABLED = false
 }
