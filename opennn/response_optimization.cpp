@@ -702,6 +702,10 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     Tensor<type, 1> utopian_point(num_objectives);
 
+    Tensor<type, 1> objectives_maximums(num_objectives);
+
+    Tensor<type, 1> objectives_minimums(num_objectives);
+
     utopian_point.setZero();
 
     int output_number = neural_network->get_outputs_number();
@@ -714,12 +718,18 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
     {
         if (get_input_conditions()(i) == ResponseOptimization::Condition::Minimum)
         {
-            utopian_point(j) = input_minimums[i];
+            objectives_minimums(j)=input_minimums[i];
+
+            utopian_point(j) = 0;
+
             j++;
         }
         else if (get_input_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            utopian_point(j) = input_maximums[i];
+            objectives_maximums(j)=input_maximums[i];
+
+            utopian_point(j) = 1;
+
             j++;
         }
     }
@@ -728,14 +738,29 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
     {
         if (get_output_conditions()(i) == ResponseOptimization::Condition::Minimum)
         {
-            utopian_point(j) = output_minimums[i];
+            objectives_minimums(j) = output_minimums[i];
+
+            utopian_point(j) = 0;
+
             j++;
         }
         else if (get_output_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            utopian_point(j) = output_maximums[i];
+            objectives_maximums(j) = output_maximums[i];
+
+            utopian_point(j) = 1;
+
             j++;
         }
+    }
+
+    Tensor<type,2> scaled_pareto_points = pareto_result.pareto_objectives;
+
+    #pragma omp parallel for
+    for (Index j = 0; j < num_objectives; j++)
+    {
+        for(Index i = 0; i < num_pareto_points; i++)
+           scaled_pareto_points(i, j) = (pareto_result.pareto_objectives(i, j) - objectives_minimums(j)) / (objectives_maximums(j) - objectives_minimums(j));
     }
 
     Tensor<type, 1> distances(num_pareto_points);
@@ -745,7 +770,7 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
         type distance = 0;
 
         for (Index j = 0; j < num_objectives; ++j)
-            distance += pow(pareto_result.pareto_objectives(i, j) - utopian_point(j), 2);
+            distance += pow(scaled_pareto_points(i, j) - utopian_point(j), 2);
 
         distances(i) = sqrt(distance);
     }
