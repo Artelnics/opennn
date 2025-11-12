@@ -27,9 +27,7 @@ int main()
     {   
         cout << "OpenNN. Melanoma Cancer CUDA Example." << endl;
 
-        #ifndef OPENNN_CUDA
-            throw runtime_error("CUDA is required for this example. Enable in pch.h");
-        #endif      
+        #ifdef OPENNN_CUDA
 
         // Data set
 
@@ -57,15 +55,16 @@ int main()
         adam->set_batch_size(16);
         adam->set_maximum_epochs_number(5);
 
-        #ifdef OPENNN_CUDA
-            training_strategy.train_cuda();
-        #endif
+        training_strategy.train_cuda();
+
 
         // Testing analysis
 
         cout << "Calculating Binary classification tests..." << endl;
         const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
         testing_analysis.print_binary_classification_tests();
+
+        #endif
 
         cout << "Bye!" << endl;
         
