@@ -1,23 +1,23 @@
-# cuda.pri
-
 isEmpty(CUDA_PATH_DETECTED) {
     CUDA_PATH_DETECTED = true
 
-    win32-g++ {
-        error("OPENNN ERROR: CUDA is not supported with the MinGW compiler on Windows. Please switch your project's Kit to use an MSVC compiler (e.g., MSVC2022 64bit).")
-    }
     message("--- Running CUDA detection from cuda.pri ---")
 
-    CUDA_PATH = $$(CUDA_PATH)
-    isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
+    win32-msvc {
+        message("    -> Compiler is MSVC, proceeding with CUDA detection...")
+        CUDA_PATH = $$(CUDA_PATH)
+        isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
 
-    win32: isEmpty(CUDA_PATH) {
-        CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
-        CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
-        !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+        isEmpty(CUDA_PATH) {
+            CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
+            CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
+            !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
+        }
+    } else:win32 {
+        message("    -> Compiler is not MSVC (e.g., MinGW). Disabling CUDA support as it is incompatible.")
+        CUDA_PATH = ""
     }
 }
-
 
 if(!isEmpty(CUDA_PATH)) {
     CUDA_PATH = $$clean_path($$CUDA_PATH)
@@ -31,7 +31,6 @@ if(!isEmpty(CUDA_PATH)) {
     else:  CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib64
 
     if(exists($$NVCC_EXECUTABLE_TEST):exists($$CUDA_INCLUDE_PATH_TEST):exists($$CUDA_LIB_DIR_TEST)) {
-
         message("    -> CUDA found at: $$CUDA_PATH")
 
         CUDA_ENABLED = true
@@ -54,7 +53,6 @@ if(!isEmpty(CUDA_PATH)) {
         if(!isEmpty(CUDA_SOURCES)) {
             message("    -> Configuring NVCC for CUDA sources (.cu files)...")
 
-            # Flags para el compilador de CUDA (NVCC)
             NVCC_FLAGS = --use_fast_math
             NVCC_FLAGS += --std=c++17
             NVCC_FLAGS += --expt-relaxed-constexpr
@@ -99,5 +97,6 @@ if(!isEmpty(CUDA_PATH)) {
         message("--- CUDA path found, but essential directories/files are missing. CUDA support disabled. ---")
     }
 } else {
-    message("--- CUDA not found. Building without CUDA support. ---")
+    CUDA_ENABLED = false
+    message("--- CUDA not found or incompatible compiler detected. Building without CUDA support. ---")
 }
