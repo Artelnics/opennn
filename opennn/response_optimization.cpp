@@ -375,6 +375,9 @@ Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& in
 
     constraints.reserve(inputs_number + outputs_number);
 
+    for(Index j = 0; j < inputs_number; ++j)
+        constraints.push_back({ j, input_minimums(j), input_maximums(j) });
+
     for(Index j = 0; j < outputs_number; ++j)
         constraints.push_back({ inputs_number + j, output_minimums(j), output_maximums(j) });
 
@@ -434,8 +437,6 @@ Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& in
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
-    //@simone try to make one funcion for tabling the optimal point
-
     ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
 
     const Tensor<type, 2> inputs = calculate_inputs();
@@ -450,30 +451,72 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     const Index outputs_number = neural_network->get_outputs_number();
 
+    // --- Single-objective detection ---
+    int objective_column = -1;
+
+    type sign   = type(1);
+
+    int count   = 0;
+
+    for(Index j = 0; j < inputs_number; ++j)
+    {
+        if(input_conditions[j] == Condition::Minimum)
+        {
+            objective_column = static_cast<int>(j);
+
+            sign = type( 1);
+
+            ++count;
+        }
+        else if(input_conditions[j] == Condition::Maximum)
+        {
+            objective_column = static_cast<int>(j);
+
+            sign = type(-1);
+
+            ++count;
+        }
+    }
+    for(Index j = 0; j < outputs_number; ++j)
+    {
+        if(output_conditions[j] == Condition::Minimum)
+        {
+            objective_column = static_cast<int>(inputs_number + j);
+
+            sign = type( 1);
+
+            ++count;
+        }
+        else if(output_conditions[j] == Condition::Maximum)
+        {
+            objective_column = static_cast<int>(inputs_number + j);
+
+            sign = type(-1);
+
+            ++count;
+        }
+    }
+
+    if(count != 1)
+        throw runtime_error("perform_optimization: expected exactly one objective (single-objective mode).");
+
+
     Tensor<type, 1> objective(samples_number);
 
-    objective.setZero();
+    auto column_exctracted = envelope.chip(objective_column, 1);
 
-    for(Index i = 0; i < samples_number; i++)
-    {
-        for(Index j = 0; j < inputs_number; j++)
-            if(input_conditions[j] == Condition::Minimum)
-                objective[i] += envelope(i, j);
-            else if(input_conditions[j] == Condition::Maximum)
-                objective[i] += -envelope(i, j);
+    Tensor<type, 1> column_to_check = column_exctracted.eval();
 
-        for(Index j = 0; j < outputs_number; j++)
-            if(output_conditions[j] == Condition::Minimum)
-                objective[i] += envelope(i, inputs_number+j);
-            else if(output_conditions[j] == Condition::Maximum)
-                objective[i] += -envelope(i, inputs_number+j);
-    }
+    if(sign > type(0))
+        objective = column_to_check;
+    else
+        objective = (column_to_check * type(-1));
 
     const Index optimal_index = minimal_index(objective);
 
     results->optimal_variables = (envelope.size() != 0)
-        ? envelope.chip(optimal_index, 0)
-        : Tensor<type, 1>();
+                                     ? envelope.chip(optimal_index, 0)  // row slice
+                                     : Tensor<type, 1>();
 
     return results;
 }
@@ -775,76 +818,9 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     Tensor<type,2> scaled_pareto_points = pareto_result.pareto_objectives;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < num_objectives; j++)
-    {
-        for(Index i = 0; i < num_pareto_points; i++)
-           scaled_pareto_points(i, j) = (pareto_result.pareto_objectives(i, j) - objectives_minimums(j)) / (objectives_maximums(j) - objectives_minimums(j));
-    }
+    Tensor<Index, 1> nearest_indices = get_n_nearest_points(scaled_pareto_points, utopian_point, 1);
 
-    Tensor<type, 1> distances(num_pareto_points);
-
-    #pragma omp parallel for
-    for (Index i = 0; i < num_pareto_points; ++i)
-            distances(i) = l2_distance(scaled_pareto_points.chip(i,0),utopian_point);
-
-    Index nearest_point_index = minimal_index(distances);
-
-    // ---------------------
-    // DIAGNOSTIC PRINTS
-    // ---------------------
-    {
-        std::cout << std::fixed << std::setprecision(6);
-
-        // Utopian point
-        std::cout << "[Diag] Utopian point (" << num_objectives << "): [";
-        for (Index k = 0; k < num_objectives; ++k)
-        {
-            std::cout << utopian_point(k);
-            if (k + 1 < num_objectives) std::cout << ", ";
-        }
-        std::cout << "]\n";
-
-        // Bounds (optional but useful)
-        std::cout << "[Diag] Objective minima: [";
-        for (Index k = 0; k < num_objectives; ++k)
-        {
-            std::cout << objectives_minimums(k);
-            if (k + 1 < num_objectives) std::cout << ", ";
-        }
-        std::cout << "]\n";
-
-        std::cout << "[Diag] Objective maxima: [";
-        for (Index k = 0; k < num_objectives; ++k)
-        {
-            std::cout << objectives_maximums(k);
-            if (k + 1 < num_objectives) std::cout << ", ";
-        }
-        std::cout << "]\n";
-
-        // Print first few scaled Pareto points
-        const Index show_n = std::min<Index>(num_pareto_points, 5);
-        for (Index i = 0; i < show_n; ++i)
-        {
-            std::cout << "[Diag] Scaled Pareto point " << i << ": [";
-            for (Index k = 0; k < num_objectives; ++k)
-            {
-                std::cout << scaled_pareto_points(i, k);
-                if (k + 1 < num_objectives) std::cout << ", ";
-            }
-            std::cout << "]\n";
-        }
-        if (num_pareto_points > show_n)
-            std::cout << "[Diag] ... (" << (num_pareto_points - show_n) << " more scaled points not shown)\n";
-
-        // Distances
-        for (Index i = 0; i < num_pareto_points; ++i)
-            std::cout << "[Diag] Distance[" << i << "] = " << distances(i) << "\n";
-
-        std::cout << "[Diag] Nearest index = " << nearest_point_index
-                  << ", min distance = " << distances(nearest_point_index) << "\n";
-    }
-    // ---------------------
+    Index nearest_point_index = nearest_indices(0);
 
     Tensor<type, 1> best_point(input_number+output_number);
 
