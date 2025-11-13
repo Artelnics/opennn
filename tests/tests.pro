@@ -23,6 +23,9 @@ SOURCES += $$files($$PWD/*.cpp)
 win32 {
     DEFINES += _HAS_STD_BYTE=0
     DEFINES += WIN32_LEAN_AND_MEAN
+}
+
+win32-g++ {
     LIBS += -lwinpthread
 }
 
@@ -52,6 +55,9 @@ win32-msvc {
     }
 }
 LIBS += -L$$OPENNN_LIB_PATH -lopennn
+
+# CUDA
+include(../cuda.pri)
 
 # OpenMP
 include(../opennmp.pri)
