@@ -317,6 +317,61 @@ void BoundingForwardPropagation::print() const
 REGISTER(Layer, Bounding, "Bounding")
 REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
 
+
+#ifdef OPENNN_CUDA
+
+void Bounding::forward_propagate_cuda(const vector<float*>& inputs_device,
+                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                      const bool&)
+{
+    BoundingForwardPropagationCuda* this_forward_propagation =
+        static_cast<BoundingForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    const size_t size = get_outputs_number() * this_forward_propagation->batch_size * sizeof(float);
+
+    // @todo Implement bounding in CUDA
+}
+
+
+BoundingForwardPropagationCuda::BoundingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void BoundingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (!new_layer) return;
+
+    layer = new_layer;
+    batch_size = new_batch_size;
+
+    const size_t size = layer->get_outputs_number() * batch_size;
+
+    //cudaMalloc(&outputs, size * sizeof(float));
+}
+
+
+void BoundingForwardPropagationCuda::print() const
+{
+    const Index outputs_number = layer->get_outputs_number();
+
+    cout << "Bounding CUDA Outputs (pass-through):" << endl
+        << matrix_from_device(outputs, batch_size, outputs_number) << endl;
+}
+
+
+void BoundingForwardPropagationCuda::free()
+{
+    cudaFree(outputs);
+    outputs = nullptr;
+}
+
+REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding")
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.
