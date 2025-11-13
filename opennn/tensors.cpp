@@ -317,6 +317,45 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
     return distance(0);
 }
 
+Tensor<Index, 1> get_n_nearest_points(const Tensor<type, 2>& matrix,const Tensor<type,1>& point, int n = 1)
+{
+    const Index number_points_to_compare = matrix.dimension(0);
+
+    const Index coordinates_number = matrix.dimension(1);
+
+    if(point.size() != coordinates_number)
+        throw runtime_error("get_n_nearest_points : Matrix row dimension and point size must match.\n");
+
+    if(n <= 0)
+        throw runtime_error("get_n_nearest_points : n must be positive.\n");
+
+    if(n > number_points_to_compare)
+        n = number_points_to_compare;
+
+    vector<std::pair<type, Index>> dist_index(number_points_to_compare);
+
+#pragma omp parallel for
+    for(Index i = 0; i < number_points_to_compare; ++i)
+    {
+        Tensor<type, 1> row = matrix.chip(i, 0);
+
+        type dist = l2_distance(row, point);
+
+        dist_index[i] = make_pair(dist, i);
+    }
+
+    std::partial_sort(
+        dist_index.begin(),
+        dist_index.begin() + n,
+        dist_index.end(),
+        [](const auto& a, const auto& b){ return a.first < b.first; });
+
+    Tensor<Index, 1> nearest_indices(n);
+    for(int i = 0; i < n; ++i)
+        nearest_indices(i) = dist_index[i].second;
+
+    return nearest_indices;
+}
 
 void set_identity(Tensor<type, 2>& matrix)
 {

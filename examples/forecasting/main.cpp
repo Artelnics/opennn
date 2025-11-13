@@ -36,6 +36,8 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
+        throw runtime_error("Forecasting Example is not yet implemented. Please check back in a future version.");
+
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting_copy.csv", ",", true, false);
         // TimeSeriesDataset time_series_dataset("../data/madridNO2forecasting.csv", ",", true, false);

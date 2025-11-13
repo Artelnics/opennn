@@ -19,8 +19,7 @@ SUBDIRS += iris_plant
 SUBDIRS += mnist
 SUBDIRS += translation
 
-if($$CUDA_ENABLED)
-{
+if($$CUDA_ENABLED) {
     SUBDIRS += melanoma_cancer
 }
 

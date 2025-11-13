@@ -25,8 +25,7 @@ CONFIG += ordered
 
 include(cuda.pri)
 
-if($$CUDA_ENABLED)
-{
+if($$CUDA_ENABLED) {
     SUBDIRS += blank_cuda
     blank_cuda.depends = opennn
 }

@@ -47,6 +47,11 @@ public:
     void forward_propagate(const vector<TensorView>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
+#ifdef OPENNN_CUDA
+    void forward_propagate_cuda(const vector<float*>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
+#endif
 
     void print() const override;
 
@@ -78,6 +83,22 @@ struct UnscalingForwardPropagation final : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
 };
+
+
+#ifdef OPENNN_CUDA
+
+struct UnscalingForwardPropagationCuda final : public LayerForwardPropagationCuda
+{
+    UnscalingForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+
+    void set(const Index & = 0, Layer* = nullptr) override;
+
+    void print() const override;
+
+    void free() override;
+};
+
+#endif
 
 }
 

@@ -56,6 +56,12 @@ public:
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
 
+#ifdef OPENNN_CUDA
+    void forward_propagate_cuda(const vector<float*>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
+#endif
+
     // Expression
 
     string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
@@ -90,6 +96,22 @@ struct BoundingForwardPropagation final : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
 };
+
+
+#ifdef OPENNN_CUDA
+
+struct BoundingForwardPropagationCuda final : public LayerForwardPropagationCuda
+{
+    BoundingForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+
+    void set(const Index & = 0, Layer* = nullptr) override;
+
+    void print() const override;
+
+    void free() override;
+};
+
+#endif
 
 }
 

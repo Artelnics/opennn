@@ -1,50 +1,23 @@
-# cuda.pri
-
 isEmpty(CUDA_PATH_DETECTED) {
     CUDA_PATH_DETECTED = true
 
     message("--- Running CUDA detection from cuda.pri ---")
 
-    temp_path = $$(CUDA_PATH)
-    !isEmpty(temp_path) {
-        temp_path = $$clean_path($$temp_path)
-        if(exists($$temp_path)) {
-            CUDA_PATH = $$temp_path
-            message("    -> Detection method: Found valid CUDA_PATH environment variable.")
-        }
-    }
+    win32-msvc {
+        message("    -> Compiler is MSVC, proceeding with CUDA detection...")
+        CUDA_PATH = $$(CUDA_PATH)
+        isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
 
-    isEmpty(CUDA_PATH) {
-        temp_path = $$(CUDA_HOME)
-        !isEmpty(temp_path) {
-            temp_path = $$clean_path($$temp_path)
-            if(exists($$temp_path)) {
-                CUDA_PATH = $$temp_path
-                message("    -> Detection method: Found valid CUDA_HOME environment variable.")
-            }
-        }
-    }
-
-    win32: isEmpty(CUDA_PATH) {
-        CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
-        if(exists($$CUDA_BASE_DIR)) {
+        isEmpty(CUDA_PATH) {
+            CUDA_BASE_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA"
             CUDA_VERSIONS_FOUND = $$files($$CUDA_BASE_DIR/v*, true)
-            if(!isEmpty(CUDA_VERSIONS_FOUND)) {
-                CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
-                message("    -> Detection method: Found installation in default directory.")
-            }
+            !isEmpty(CUDA_VERSIONS_FOUND): CUDA_PATH = $$last(CUDA_VERSIONS_FOUND)
         }
+    } else:win32 {
+        message("    -> Compiler is not MSVC (e.g., MinGW). Disabling CUDA support as it is incompatible.")
+        CUDA_PATH = ""
     }
-
-    unix: isEmpty(CUDA_PATH) {
-        if(exists(/usr/local/cuda)) {
-            CUDA_PATH = /usr/local/cuda
-            message("    -> Detection method: Found installation in /usr/local/cuda.")
-        }
-    }
-
 }
-
 
 if(!isEmpty(CUDA_PATH)) {
     CUDA_PATH = $$clean_path($$CUDA_PATH)
@@ -58,8 +31,7 @@ if(!isEmpty(CUDA_PATH)) {
     else:  CUDA_LIB_DIR_TEST = $$CUDA_PATH/lib64
 
     if(exists($$NVCC_EXECUTABLE_TEST):exists($$CUDA_INCLUDE_PATH_TEST):exists($$CUDA_LIB_DIR_TEST)) {
-
-        message("    -> CUDA found at: '$$(CUDA_PATH)'")
+        message("    -> CUDA found at: $$CUDA_PATH")
 
         CUDA_ENABLED = true
         NVCC_EXECUTABLE = $$NVCC_EXECUTABLE_TEST
@@ -81,7 +53,6 @@ if(!isEmpty(CUDA_PATH)) {
         if(!isEmpty(CUDA_SOURCES)) {
             message("    -> Configuring NVCC for CUDA sources (.cu files)...")
 
-            # Flags para el compilador de CUDA (NVCC)
             NVCC_FLAGS = --use_fast_math
             NVCC_FLAGS += --std=c++17
             NVCC_FLAGS += --expt-relaxed-constexpr
@@ -126,5 +97,6 @@ if(!isEmpty(CUDA_PATH)) {
         message("--- CUDA path found, but essential directories/files are missing. CUDA support disabled. ---")
     }
 } else {
-    message("--- CUDA not found. Building without CUDA support. ---")
+    CUDA_ENABLED = false
+    message("--- CUDA not found or incompatible compiler detected. Building without CUDA support. ---")
 }

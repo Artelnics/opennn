@@ -3871,7 +3871,14 @@ void Dataset::read_csv()
                 if(token.empty() || token == missing_values_label)
                     data(sample_index, variable_indices[0]) = NAN;
                 else
-                    data(sample_index, variable_indices[0]) = time_t(date_to_timestamp(token, gmt, date_format));
+                {
+                    time_t timestamp = date_to_timestamp(token, gmt, date_format);
+
+                    if(timestamp == -1)
+                        throw runtime_error("Date format is unsupported or date is prior to 1970.");
+                    else
+                        data(sample_index, variable_indices[0]) = timestamp;
+                }
                 break;
             case RawVariableType::Categorical:
                 if(token.empty() || token == missing_values_label)

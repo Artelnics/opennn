@@ -340,6 +340,62 @@ void UnscalingForwardPropagation::print() const
 REGISTER(Layer, Unscaling, "Unscaling")
 REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
 
+
+#ifdef OPENNN_CUDA
+
+void Unscaling::forward_propagate_cuda(const vector<float*>& inputs_device,
+                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                       const bool&)
+{
+    UnscalingForwardPropagationCuda* this_forward_propagation =
+        static_cast<UnscalingForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    const size_t size = get_outputs_number() * this_forward_propagation->batch_size * sizeof(float);
+
+    // @todo: implement unscaling on GPU
+}
+
+
+UnscalingForwardPropagationCuda::UnscalingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void UnscalingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    if (!new_layer) return;
+
+    layer = new_layer;
+    batch_size = new_batch_size;
+
+    const size_t size = layer->get_outputs_number() * batch_size;
+
+    //cudaMalloc(&outputs, size * sizeof(float));
+}
+
+
+void UnscalingForwardPropagationCuda::print() const
+{
+    const Index outputs_number = layer->get_outputs_number();
+
+    cout << "Unscaling CUDA Outputs (pass-through):" << endl
+        << matrix_from_device(outputs, batch_size, outputs_number) << endl;
+}
+
+
+void UnscalingForwardPropagationCuda::free()
+{
+    cudaFree(outputs);
+    outputs = nullptr;
+}
+
+
+REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscaling")
+
+#endif
+
 }
 
 

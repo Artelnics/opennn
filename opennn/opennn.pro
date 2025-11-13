@@ -35,7 +35,7 @@ SOURCES += $$files($$PWD/*.cpp)
 
 # CUDA
 
-if($$CUDA_ENABLED) {
+win32-msvc* | linux-g++ {
     CUDA_SOURCES += kernel.cu
 }
 

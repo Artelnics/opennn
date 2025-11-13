@@ -375,6 +375,9 @@ Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& in
 
     constraints.reserve(inputs_number + outputs_number);
 
+    for(Index j = 0; j < inputs_number; ++j)
+        constraints.push_back({ j, input_minimums(j), input_maximums(j) });
+
     for(Index j = 0; j < outputs_number; ++j)
         constraints.push_back({ inputs_number + j, output_minimums(j), output_maximums(j) });
 
@@ -434,8 +437,6 @@ Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& in
 
 ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 {
-    //@simone try to make one funcion for tabling the optimal point
-
     ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
 
     const Tensor<type, 2> inputs = calculate_inputs();
@@ -450,30 +451,72 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 
     const Index outputs_number = neural_network->get_outputs_number();
 
+    // --- Single-objective detection ---
+    int objective_column = -1;
+
+    type sign   = type(1);
+
+    int count   = 0;
+
+    for(Index j = 0; j < inputs_number; ++j)
+    {
+        if(input_conditions[j] == Condition::Minimum)
+        {
+            objective_column = static_cast<int>(j);
+
+            sign = type( 1);
+
+            ++count;
+        }
+        else if(input_conditions[j] == Condition::Maximum)
+        {
+            objective_column = static_cast<int>(j);
+
+            sign = type(-1);
+
+            ++count;
+        }
+    }
+    for(Index j = 0; j < outputs_number; ++j)
+    {
+        if(output_conditions[j] == Condition::Minimum)
+        {
+            objective_column = static_cast<int>(inputs_number + j);
+
+            sign = type( 1);
+
+            ++count;
+        }
+        else if(output_conditions[j] == Condition::Maximum)
+        {
+            objective_column = static_cast<int>(inputs_number + j);
+
+            sign = type(-1);
+
+            ++count;
+        }
+    }
+
+    if(count != 1)
+        throw runtime_error("perform_optimization: expected exactly one objective (single-objective mode).");
+
+
     Tensor<type, 1> objective(samples_number);
 
-    objective.setZero();
+    auto column_exctracted = envelope.chip(objective_column, 1);
 
-    for(Index i = 0; i < samples_number; i++)
-    {
-        for(Index j = 0; j < inputs_number; j++)
-            if(input_conditions[j] == Condition::Minimum)
-                objective[i] += envelope(i, j);
-            else if(input_conditions[j] == Condition::Maximum)
-                objective[i] += -envelope(i, j);
+    Tensor<type, 1> column_to_check = column_exctracted.eval();
 
-        for(Index j = 0; j < outputs_number; j++)
-            if(output_conditions[j] == Condition::Minimum)
-                objective[i] += envelope(i, inputs_number+j);
-            else if(output_conditions[j] == Condition::Maximum)
-                objective[i] += -envelope(i, inputs_number+j);
-    }
+    if(sign > type(0))
+        objective = column_to_check;
+    else
+        objective = (column_to_check * type(-1));
 
     const Index optimal_index = minimal_index(objective);
 
     results->optimal_variables = (envelope.size() != 0)
-        ? envelope.chip(optimal_index, 0)
-        : Tensor<type, 1>();
+                                     ? envelope.chip(optimal_index, 0)  // row slice
+                                     : Tensor<type, 1>();
 
     return results;
 }
@@ -698,6 +741,12 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     const Index num_objectives = pareto_result.pareto_objectives.dimension(1);
 
+    dataset->load_data_binary();
+
+    const vector<Descriptives> input_variables_descriptives = dataset->calculate_variable_descriptives("Input");
+
+    const vector<Descriptives> output_variables_descriptives = dataset->calculate_variable_descriptives("Target");
+
     // Calculate the utopian point (ideal best outcomes for each objective)
 
     Tensor<type, 1> utopian_point(num_objectives);
@@ -708,17 +757,21 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     utopian_point.setZero();
 
-    int output_number = neural_network->get_outputs_number();
+    const int output_number = neural_network->get_outputs_number();
 
-    int input_number = neural_network->get_inputs_number();
+    const int input_number = neural_network->get_inputs_number();
 
-    int j = 0;
+    Index j = 0;
 
     for (Index i = 0; i < input_number; ++i)
     {
+        const Descriptives& desc = input_variables_descriptives[i];
+
         if (get_input_conditions()(i) == ResponseOptimization::Condition::Minimum)
-        {
-            objectives_minimums(j)=input_minimums[i];
+        {            
+            objectives_minimums(j)=desc.minimum;
+
+            objectives_maximums(j)=desc.maximum;
 
             utopian_point(j) = 0;
 
@@ -726,7 +779,9 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
         }
         else if (get_input_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            objectives_maximums(j)=input_maximums[i];
+            objectives_minimums(j)=desc.minimum;
+
+            objectives_maximums(j)=desc.maximum;
 
             utopian_point(j) = 1;
 
@@ -736,9 +791,14 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     for (Index i = 0; i < output_number; ++i)
     {
+        const Descriptives& desc = output_variables_descriptives[i];
+
         if (get_output_conditions()(i) == ResponseOptimization::Condition::Minimum)
         {
-            objectives_minimums(j) = output_minimums[i];
+            objectives_minimums(j) = desc.minimum;
+
+            objectives_maximums(j) = desc.maximum;
+
 
             utopian_point(j) = 0;
 
@@ -746,7 +806,9 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
         }
         else if (get_output_conditions()(i) == ResponseOptimization::Condition::Maximum)
         {
-            objectives_maximums(j) = output_maximums[i];
+            objectives_minimums(j) = desc.minimum;
+
+            objectives_maximums(j) = desc.maximum;
 
             utopian_point(j) = 1;
 
@@ -756,28 +818,11 @@ Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const Respons
 
     Tensor<type,2> scaled_pareto_points = pareto_result.pareto_objectives;
 
-    #pragma omp parallel for
-    for (Index j = 0; j < num_objectives; j++)
-    {
-        for(Index i = 0; i < num_pareto_points; i++)
-           scaled_pareto_points(i, j) = (pareto_result.pareto_objectives(i, j) - objectives_minimums(j)) / (objectives_maximums(j) - objectives_minimums(j));
-    }
+    Tensor<Index, 1> nearest_indices = get_n_nearest_points(scaled_pareto_points, utopian_point, 1);
 
-    Tensor<type, 1> distances(num_pareto_points);
+    Index nearest_point_index = nearest_indices(0);
 
-    for (Index i = 0; i < num_pareto_points; ++i)
-    {
-        type distance = 0;
-
-        for (Index j = 0; j < num_objectives; ++j)
-            distance += pow(scaled_pareto_points(i, j) - utopian_point(j), 2);
-
-        distances(i) = sqrt(distance);
-    }
-
-    Index nearest_point_index = minimal_index(distances);
-
-    Tensor<type, 1> best_point;
+    Tensor<type, 1> best_point(input_number+output_number);
 
     best_point = pareto_result.envelope.chip(pareto_result.pareto_indices(nearest_point_index),0) ;
 

@@ -358,6 +358,8 @@ Tensor<type,2> filter_column_minimum_maximum(const Tensor<type,2>&, const Index&
 //type l2_distance(const type&, const TensorMap<Tensor<type, 0> > &);
 type l2_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
+Tensor<Index, 1> get_n_nearest_points(const Tensor<type, 2>& ,const Tensor<type,1>& , int );
+
 void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 
 void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
