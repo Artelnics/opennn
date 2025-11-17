@@ -2003,10 +2003,6 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
     const Tensor<Index, 2> confusion = calculate_confusion();
 
-    Index true_positives = 0;
-    Index false_positives = 0;
-    Index false_negatives = 0;
-
     type total_precision = type(0);
     type total_recall = type(0);
     type total_f1_score= type(0);
@@ -2019,27 +2015,25 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
 
     for(Index target_index = 0; target_index < targets_number; target_index++)
     {
-        true_positives = confusion(target_index, target_index);
+        const Index true_positives = confusion(target_index, target_index);
 
-        const Tensor<Index,0> row_sum = confusion.chip(target_index,0).sum();
-        const Tensor<Index,0> column_sum = confusion.chip(target_index,1).sum();
+        const Index row_sum = confusion(target_index, targets_number);
+        const Index column_sum = confusion(targets_number, target_index);
 
-        false_negatives = row_sum(0) - true_positives;
-        false_positives= column_sum(0) - true_positives;
+        const Index false_negatives = row_sum - true_positives;
+        const Index false_positives = column_sum - true_positives;
 
         const type precision = (true_positives + false_positives == 0)
-                                   ? type(0)
+                                   ? type(1.0)
                                    : type(true_positives) / type(true_positives + false_positives);
 
         const type recall = (true_positives + false_negatives == 0)
-                                ? type(0)
+                                ? type(1.0)
                                 : type(true_positives) / type(true_positives + false_negatives);
 
         const type f1_score = (precision + recall == 0)
                                   ? type(0)
                                   : type(2 * precision * recall) / type(precision + recall);
-
-        // Save results
 
         multiple_classification_tests(target_index, 0) = precision;
         multiple_classification_tests(target_index, 1) = recall;
@@ -2049,22 +2043,28 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_tests() const
         total_recall += recall;
         total_f1_score += f1_score;
 
-        total_weighted_precision += precision * type(row_sum(0));
-        total_weighted_recall += recall * type(row_sum(0));
-        total_weighted_f1_score += f1_score * type(row_sum(0));
+        total_weighted_precision += precision * type(row_sum);
+        total_weighted_recall += recall * type(row_sum);
+        total_weighted_f1_score += f1_score * type(row_sum);
 
-        total_samples += row_sum(0);
+        total_samples += row_sum;
     }
 
     // Averages
 
-    multiple_classification_tests(targets_number, 0) = total_precision/targets_number;
-    multiple_classification_tests(targets_number, 1) = total_recall/targets_number;
-    multiple_classification_tests(targets_number, 2) = total_f1_score/targets_number;
+    if (targets_number > 0)
+    {
+        multiple_classification_tests(targets_number, 0) = total_precision / targets_number;
+        multiple_classification_tests(targets_number, 1) = total_recall / targets_number;
+        multiple_classification_tests(targets_number, 2) = total_f1_score / targets_number;
+    }
 
-    multiple_classification_tests(targets_number + 1, 0) = total_weighted_precision/total_samples;
-    multiple_classification_tests(targets_number + 1, 1) = total_weighted_recall/total_samples;
-    multiple_classification_tests(targets_number + 1, 2) = total_weighted_f1_score/total_samples;
+    if (total_samples > 0)
+    {
+        multiple_classification_tests(targets_number + 1, 0) = total_weighted_precision / total_samples;
+        multiple_classification_tests(targets_number + 1, 1) = total_weighted_recall / total_samples;
+        multiple_classification_tests(targets_number + 1, 2) = total_weighted_f1_score / total_samples;
+    }
 
     return multiple_classification_tests;
 }
