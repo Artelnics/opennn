@@ -125,9 +125,9 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
     vector<string> output_names;
 
     for(const Dataset::RawVariable& raw_variable : raw_variables)
-        if(raw_variable.use == "Input")
+        if(raw_variable.role == "Input")
             input_names.push_back(raw_variable.name);
-        else if(raw_variable.use == "Target")
+        else if(raw_variable.role == "Target")
             output_names.push_back(raw_variable.name);
 
     vector<string> fixed_output_names = fix_output_names(output_names);
@@ -152,7 +152,7 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
 
     for (const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if (raw_var.use != "Input")
+        if (raw_var.role != "Input")
             continue;
 
         if (raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
@@ -203,7 +203,7 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
 
     for (const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if (raw_var.use == "Input")
+        if (raw_var.role == "Input")
         {
             if (raw_var.type == Dataset::RawVariableType::Categorical)
                 for (const string& cat : raw_var.categories)
@@ -253,7 +253,7 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
 
     for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if (raw_var.use != "Input")
+        if (raw_var.role != "Input")
             continue;
 
         if (raw_var.type == Dataset::RawVariableType::Categorical)
@@ -302,7 +302,7 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
     input_index = 0;
     for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if (raw_var.use != "Input")
+        if (raw_var.role != "Input")
             continue;
 
         if (raw_var.type == Dataset::RawVariableType::Categorical)
@@ -476,7 +476,7 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
     vector<string> output_names = neural_network->get_output_names();
 
     for(const Dataset::RawVariable& var : raw_variables)
-        if(var.use == "Input")
+        if(var.role == "Input")
             original_inputs.push_back(var.name);
 
     const vector<string> fixed_input_names = fix_input_names(original_inputs);
@@ -531,7 +531,7 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
 
     for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if(raw_var.use != "Input")
+        if(raw_var.role != "Input")
             continue;
 
         if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
@@ -573,7 +573,7 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
 
     for(const Dataset::RawVariable& var : raw_variables)
     {
-        if(var.use == "Input")
+        if(var.role == "Input")
         {
             if(var.type == Dataset::RawVariableType::Categorical)
                 for (const string& cat : var.categories) all_possible_vars.push_back(cat);
@@ -880,9 +880,9 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     vector<string> output_names;
 
     for(const Dataset::RawVariable& raw_variable : raw_variables)
-        if(raw_variable.use == "Input")
+        if(raw_variable.role == "Input")
             input_names.push_back(raw_variable.name);
-        else if(raw_variable.use == "Target")
+        else if(raw_variable.role == "Target")
             output_names.push_back(raw_variable.name);
 
 
@@ -897,7 +897,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     for (const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if(raw_var.use != "Input")
+        if(raw_var.role != "Input")
             continue;
 
         if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
@@ -970,7 +970,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
         for(size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k)
         {
-            if(raw_variables[k].use != "Input")
+            if(raw_variables[k].role != "Input")
                 continue;
 
             const vector<string> raw_variable_categories = raw_variables[k].categories;
@@ -1178,7 +1178,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     for(size_t k = 0; k < raw_variables.size() && inputs_processed < inputs_number; ++k)
     {
-        if(raw_variables[k].use != "Input")
+        if(raw_variables[k].role != "Input")
             continue;
 
         const vector<string> raw_variable_categories = raw_variables[k].categories;
@@ -1419,7 +1419,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     vector<string> original_inputs;
 
     for(const Dataset::RawVariable& var : raw_variables)
-        if (var.use == "Input")
+        if (var.role == "Input")
             original_inputs.push_back(var.name);
 
     vector<string> original_outputs = neural_network->get_output_names();
@@ -1445,7 +1445,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
     for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if(raw_var.use != "Input")
+        if(raw_var.role != "Input")
             continue;
 
         if(raw_var.type == Dataset::RawVariableType::Binary || raw_var.type == Dataset::RawVariableType::Categorical)
@@ -1496,7 +1496,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
     for(const Dataset::RawVariable& raw_var : raw_variables)
     {
-        if(raw_var.use == "Input")
+        if(raw_var.role == "Input")
         {
             if(raw_var.type == Dataset::RawVariableType::Categorical)
                 for(const string& cat : raw_var.categories)
@@ -1534,7 +1534,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     Index total_input_vars = 0;
     for(const Dataset::RawVariable& var : raw_variables)
     {
-        if(var.use == "Input")
+        if(var.role == "Input")
         {
             if(var.type == Dataset::RawVariableType::Categorical)
             {
@@ -1601,7 +1601,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     Index input_idx = 0;
     for(const Dataset::RawVariable& var : raw_variables)
     {
-        if(var.use == "Input")
+        if(var.role == "Input")
         {
             if(var.type == Dataset::RawVariableType::Categorical)
                 for(const string& cat : var.categories)

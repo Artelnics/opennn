@@ -63,7 +63,7 @@ public:
 
         string name;
 
-        string use = "None";
+        string role = "None";
 
         Dataset::RawVariableType type = Dataset::RawVariableType::None;
 
@@ -73,14 +73,14 @@ public:
 
         // Methods
 
-        string get_use() const;
+        string get_role() const;
         string get_type_string() const;
 
         Index get_categories_number() const;
 
         void set_scaler(const string&);
 
-        void set_use(const string&);
+        void set_role(const string&);
 
         void set_type(const string&);
 
@@ -247,16 +247,16 @@ public:
 
     void set_default_raw_variable_names();
 
-    void set_default_raw_variables_uses();
-    void set_default_raw_variables_uses_forecasting();
-    virtual void set_raw_variable_uses(const vector<string>&);
+    void set_default_raw_variables_roles();
+    void set_default_raw_variables_roles_forecasting();
+    virtual void set_raw_variable_roles(const vector<string>&);
 
     void set_raw_variables(const string&);
     void set_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_raw_variables_unused();
 
-    void set_raw_variable_use(const Index&, const string&);
-    void set_raw_variable_use(const string&, const string&);
+    void set_raw_variable_role(const Index&, const string&);
+    void set_raw_variable_role(const string&, const string&);
 
     void set_raw_variable_type(const Index&, const RawVariableType&);
     void set_raw_variable_type(const string&, const RawVariableType&);
@@ -278,7 +278,7 @@ public:
 
     void set_variable_names(const vector<string>&);
 
-    void set_variable_uses(const string&);
+    void set_variable_roles(const string&);
 
     void set_dimensions(const string&, const dimensions&);
 

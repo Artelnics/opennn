@@ -9,6 +9,7 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
+#include <variant>
 namespace opennn
 {
 
@@ -57,8 +58,6 @@ public:
 
    Tensor<type, 2> calculate_envelope(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   ResponseOptimizationResults* perform_optimization() const;
-
 
    struct ParetoResult
    {
@@ -80,6 +79,20 @@ public:
    Tensor<type, 1> output_minimums;
 
    Tensor<type, 1> output_maximums;
+
+   using SingleOrPareto = std::variant<Tensor<type,1>, ParetoResult>;
+
+   SingleOrPareto iterative_optimization(int objective_count);
+
+   void set_iterative_max_iterations(Index max_it)          { iterative_max_iterations = max_it; }
+   void set_iterative_zoom_factor(type z)                   { iterative_zoom_factor = z; }
+   void set_iterative_min_span_eps(type eps)                { iterative_min_span_eps = eps; }
+   void set_iterative_improvement_tolerance(type tol)       { iterative_improvement_tolerance = tol; }
+
+   Index get_iterative_max_iterations() const               { return iterative_max_iterations; }
+   type  get_iterative_zoom_factor() const                  { return iterative_zoom_factor; }
+   type  get_iterative_min_span_eps() const                 { return iterative_min_span_eps; }
+   type  get_iterative_improvement_tolerance() const        { return iterative_improvement_tolerance; }
 
 private:
 
@@ -108,20 +121,11 @@ private:
                                         Tensor<type,1>& sense,
                                         Tensor<Index,1>& objective_output_indices) const;
 
-};
+    Index iterative_max_iterations            = 12;
+    type  iterative_zoom_factor               = type(0.45);
+    type  iterative_min_span_eps              = type(1e-9);
+    type  iterative_improvement_tolerance     = type(1e-6);
 
-
-struct ResponseOptimizationResults
-{
-    ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
-
-    Dataset* dataset = nullptr;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    Tensor<type, 1> optimal_variables;
-
-    void print() const;
 };
 
 }

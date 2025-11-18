@@ -175,12 +175,12 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         }
 
         const Index current_raw_var_index = correlations_rank_descending[raw_variable_index];
-        const string current_use = dataset->get_raw_variables()[current_raw_var_index].use;
+        const string current_use = dataset->get_raw_variables()[current_raw_var_index].role;
 
         if(current_use == "InputTarget")
-            dataset->set_raw_variable_use(current_raw_var_index, "InputTarget");
+            dataset->set_raw_variable_role(current_raw_var_index, "InputTarget");
         else
-            dataset->set_raw_variable_use(current_raw_var_index, "Input");
+            dataset->set_raw_variable_role(current_raw_var_index, "Input");
 
         const Index input_raw_variables_number = dataset->get_raw_variables_number("Input");
         const Index input_variables_number = dataset->get_variables_number("Input");
@@ -248,10 +248,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             if(display) cout << "Selection failure" << endl;
             selection_failures++;
 
-            if(dataset->get_raw_variables()[current_raw_var_index].use == "InputTarget")
-                dataset->set_raw_variable_use(current_raw_var_index, "Target");
+            if(dataset->get_raw_variables()[current_raw_var_index].role == "InputTarget")
+                dataset->set_raw_variable_role(current_raw_var_index, "Target");
             else
-                dataset->set_raw_variable_use(current_raw_var_index, "None");
+                dataset->set_raw_variable_role(current_raw_var_index, "None");
         }
         else
         {
@@ -319,7 +319,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_dimensions({ past_time_steps, optimal_processed_variables_number });
 
         if(time_raw_variable_indices.size() == 1)
-            dataset->set_raw_variable_use(time_raw_variable_indices[0], "Time");
+            dataset->set_raw_variable_role(time_raw_variable_indices[0], "Time");
     }
     else
     {

@@ -59,23 +59,23 @@ dimensions Dataset::get_target_dimensions() const
 
 
 Dataset::RawVariable::RawVariable(const string& new_name,
-                                  const string& new_raw_variable_use,
+                                  const string& new_raw_variable_role,
                                   const RawVariableType& new_type,
                                   const string& new_scaler,
                                   const vector<string>& new_categories)
 {
-    set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
+    set(new_name, new_raw_variable_role, new_type, new_scaler, new_categories);
 }
 
 
 void Dataset::RawVariable::set(const string& new_name,
-                               const string& new_raw_variable_use,
+                               const string& new_raw_variable_role,
                                const RawVariableType& new_type,
                                const string& new_scaler,
                                const vector<string>& new_categories)
 {
     name = new_name;
-    use = new_raw_variable_use;
+    role = new_raw_variable_role;
     type = new_type;
     scaler = new_scaler;
     categories = new_categories;
@@ -88,9 +88,9 @@ void Dataset::RawVariable::set_scaler(const string& new_scaler)
 }
 
 
-void Dataset::RawVariable::set_use(const string& new_raw_variable_use)
+void Dataset::RawVariable::set_role(const string& new_raw_variable_role)
 {
-    use = new_raw_variable_use;
+    role = new_raw_variable_role;
 }
 
 
@@ -121,7 +121,7 @@ void Dataset::RawVariable::from_XML(const XMLDocument& document)
 {
     name = read_xml_string(document.FirstChildElement(), "Name");
     set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
-    set_use(read_xml_string(document.FirstChildElement(), "Use"));
+    set_role(read_xml_string(document.FirstChildElement(), "Role"));
     set_type(read_xml_string(document.FirstChildElement(), "Type"));
 
     if (type == RawVariableType::Categorical)
@@ -136,7 +136,7 @@ void Dataset::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "Scaler", scaler);
-    add_xml_element(printer, "Use", get_use());
+    add_xml_element(printer, "Role", get_role());
     add_xml_element(printer, "Type", get_type_string());
 
     if (type == RawVariableType::Categorical || type == RawVariableType::Binary)
@@ -148,7 +148,7 @@ void Dataset::RawVariable::print() const
 {
     cout << "Raw variable" << endl
          << "Name: " << name << endl
-         << "Use: " << get_use() << endl
+         << "Role: " << get_role() << endl
          << "Type: " << get_type_string() << endl
          << "string: " << scaler << endl;
 
@@ -162,9 +162,9 @@ void Dataset::RawVariable::print() const
 }
 
 
-string Dataset::RawVariable::get_use() const
+string Dataset::RawVariable::get_role() const
 {
-    return use;
+    return role;
 }
 
 
@@ -478,7 +478,7 @@ void Dataset::set_raw_variables(const vector<RawVariable>& new_raw_variables)
 }
 
 
-void Dataset::set_default_raw_variables_uses()
+void Dataset::set_default_raw_variables_roles()
 {
     const Index raw_variables_number = raw_variables.size();
 
@@ -487,11 +487,11 @@ void Dataset::set_default_raw_variables_uses()
 
     if (raw_variables_number == 1)
     {
-        raw_variables[0].set_use("None");
+        raw_variables[0].set_role("None");
         return;
     }
 
-    set_variable_uses("Input");
+    set_variable_roles("Input");
 
     for (Index i = raw_variables_number - 1; i >= 0; i--)
     {
@@ -499,20 +499,20 @@ void Dataset::set_default_raw_variables_uses()
         if (raw_variable.type == RawVariableType::Constant ||
             raw_variable.type == RawVariableType::DateTime)
         {
-            raw_variable.set_use("None");
+            raw_variable.set_role("None");
         }
         //else if (model_type != ModelType::Classification ||
         //    raw_variable.type == RawVariableType::Binary ||
         //    raw_variable.type == RawVariableType::Categorical))
         {
-            raw_variable.set_use("Target");
+            raw_variable.set_role("Target");
             break;
         }
     }
 }
 
 
-void Dataset::set_default_raw_variables_uses_forecasting()
+void Dataset::set_default_raw_variables_roles_forecasting()
 {
     const Index raw_variables_number = raw_variables.size();
 
@@ -524,17 +524,17 @@ void Dataset::set_default_raw_variables_uses_forecasting()
 
     if (raw_variables_number == 1)
     {
-        raw_variables[0].set_use("None");
+        raw_variables[0].set_role("None");
         return;
     }
 
-    set_variable_uses("Input");
+    set_variable_roles("Input");
 
     for (Index i = raw_variables.size() - 1; i >= 0; i--)
     {
         if (raw_variables[i].type == RawVariableType::DateTime && !timeRawVariable)
         {
-            raw_variables[i].set_use("Time");
+            raw_variables[i].set_role("Time");
 
             timeRawVariable = true;
             continue;
@@ -542,13 +542,13 @@ void Dataset::set_default_raw_variables_uses_forecasting()
 
         if (raw_variables[i].type == RawVariableType::Constant)
         {
-            raw_variables[i].set_use("None");
+            raw_variables[i].set_role("None");
             continue;
         }
 
         if (!target)
         {
-            raw_variables[i].set_use("Target");
+            raw_variables[i].set_role("Target");
 
             target = true;
 
@@ -586,9 +586,9 @@ vector<string> Dataset::get_variable_names() const
 }
 
 
-vector<string> Dataset::get_variable_names(const string& variable_use) const
+vector<string> Dataset::get_variable_names(const string& variable_role) const
 {
-    const Index variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_role);
 
     vector<string> variable_names(variables_number);
 
@@ -596,8 +596,8 @@ vector<string> Dataset::get_variable_names(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (!((raw_variable.use == variable_use) ||
-              ((variable_use == "Input" || variable_use == "Target") && raw_variable.use == "InputTarget")))
+        if (!((raw_variable.role == variable_role) ||
+              ((variable_role == "Input" || variable_role == "Target") && raw_variable.role == "InputTarget")))
             continue;
 
         if (raw_variable.type == RawVariableType::Categorical)
@@ -611,29 +611,29 @@ vector<string> Dataset::get_variable_names(const string& variable_use) const
 }
 
 
-dimensions Dataset::get_dimensions(const string& variable_use) const
+dimensions Dataset::get_dimensions(const string& variable_role) const
 {
-    if (variable_use == "Input")
+    if (variable_role == "Input")
         return input_dimensions;
-    else if (variable_use == "Target")
+    else if (variable_role == "Target")
         return target_dimensions;
-    // else if (variable_use == "Decoder")
+    // else if (variable_role == "Decoder")
     //     return decoder_dimensions;
     else
-        throw invalid_argument("get_dimensions: Invalid variable use string: " + variable_use);
+        throw invalid_argument("get_dimensions: Invalid variable role string: " + variable_role);
 }
 
 
-void Dataset::set_dimensions(const string& variable_use, const dimensions& new_dimensions)
+void Dataset::set_dimensions(const string& variable_role, const dimensions& new_dimensions)
 {
-    if (variable_use == "Input")
+    if (variable_role == "Input")
         input_dimensions = new_dimensions;
-    else if (variable_use == "Target")
+    else if (variable_role == "Target")
         target_dimensions = new_dimensions;
-    // else if (variable_use == "Decoder")
+    // else if (variable_role == "Decoder")
     //     decoder_dimensions = new_dimensions;
     else
-        throw invalid_argument("set_dimensions: Invalid variable use string: " + variable_use);
+        throw invalid_argument("set_dimensions: Invalid variable role string: " + variable_role);
 }
 
 
@@ -649,9 +649,9 @@ Index Dataset::get_used_variables_number() const
 }
 
 
-vector<Index> Dataset::get_variable_indices(const string& variable_use) const
+vector<Index> Dataset::get_variable_indices(const string& variable_role) const
 {
-    const Index this_variables_number = get_variables_number(variable_use);
+    const Index this_variables_number = get_variables_number(variable_role);
     vector<Index> this_variable_indices(this_variables_number);
 
     Index variable_index = 0;
@@ -659,7 +659,7 @@ vector<Index> Dataset::get_variable_indices(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use.find(variable_use) == string::npos)
+        if (raw_variable.role.find(variable_role) == string::npos)
         {
             raw_variable.type == RawVariableType::Categorical
                 ? variable_index += raw_variable.get_categories_number()
@@ -679,9 +679,9 @@ vector<Index> Dataset::get_variable_indices(const string& variable_use) const
 }
 
 
-vector<Index> Dataset::get_raw_variable_indices(const string& variable_use) const
+vector<Index> Dataset::get_raw_variable_indices(const string& variable_role) const
 {
-    const Index count = get_raw_variables_number(variable_use);
+    const Index count = get_raw_variables_number(variable_role);
 
     vector<Index> indices(count);
 
@@ -690,7 +690,7 @@ vector<Index> Dataset::get_raw_variable_indices(const string& variable_use) cons
     Index index = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use.find(variable_use) != string::npos)
+        if (raw_variables[i].role.find(variable_role) != string::npos)
             indices[index++] = i;
 
     return indices;
@@ -708,22 +708,22 @@ vector<Index> Dataset::get_used_raw_variables_indices() const
     Index index = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use == "Input"
-            || raw_variables[i].use == "Target"
-            || raw_variables[i].use == "Time"
-            || raw_variables[i].use == "InputTarget")
+        if (raw_variables[i].role == "Input"
+            || raw_variables[i].role == "Target"
+            || raw_variables[i].role == "Time"
+            || raw_variables[i].role == "InputTarget")
             used_indices[index++] = i;
 
     return used_indices;
 }
 
 
-vector<string> Dataset::get_variable_scalers(const string& variable_use) const
+vector<string> Dataset::get_variable_scalers(const string& variable_role) const
 {
-    const Index input_raw_variables_number = get_raw_variables_number(variable_use);
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index input_raw_variables_number = get_raw_variables_number(variable_role);
+    const Index input_variables_number = get_variables_number(variable_role);
 
-    const vector<RawVariable> input_raw_variables = get_raw_variables(variable_use);
+    const vector<RawVariable> input_raw_variables = get_raw_variables(variable_role);
 
     vector<string> input_variable_scalers(input_variables_number);
 
@@ -753,9 +753,9 @@ vector<string> Dataset::get_raw_variable_names() const
 }
 
 
-vector<string> Dataset::get_raw_variable_names(const string& variable_use) const
+vector<string> Dataset::get_raw_variable_names(const string& variable_role) const
 {
-    const Index count = get_raw_variables_number(variable_use);
+    const Index count = get_raw_variables_number(variable_role);
 
     vector<string> names(count);
 
@@ -763,8 +763,8 @@ vector<string> Dataset::get_raw_variable_names(const string& variable_use) const
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (!((raw_variable.use == variable_use) ||
-              ((variable_use == "Input" || variable_use == "Target") && raw_variable.use == "InputTarget")))
+        if (!((raw_variable.role == variable_role) ||
+              ((variable_role == "Input" || variable_role == "Target") && raw_variable.role == "InputTarget")))
             continue;
 
         names[index++] = raw_variable.name;
@@ -774,12 +774,12 @@ vector<string> Dataset::get_raw_variable_names(const string& variable_use) const
 }
 
 
-Index Dataset::get_raw_variables_number(const string& variable_use) const
+Index Dataset::get_raw_variables_number(const string& variable_role) const
 {
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) != string::npos)
+        if (raw_variable.role.find(variable_role) != string::npos)
             count++;
 
     return count;
@@ -790,7 +790,7 @@ Index Dataset::get_used_raw_variables_number() const
 {
     return count_if(raw_variables.begin(), raw_variables.end(),
                     [](const RawVariable& var) {
-                          return var.use != "None";
+                          return var.role != "None";
                     });
 }
 
@@ -801,15 +801,15 @@ const vector<Dataset::RawVariable>& Dataset::get_raw_variables() const
 }
 
 
-vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_use) const
+vector<Dataset::RawVariable> Dataset::get_raw_variables(const string& variable_role) const
 {
-    const Index count = get_raw_variables_number(variable_use);
+    const Index count = get_raw_variables_number(variable_role);
 
     vector<RawVariable> this_raw_variables(count);
     Index index = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) != string::npos)
+        if (raw_variable.role.find(variable_role) != string::npos)
             this_raw_variables[index++] = raw_variable;
 
     return this_raw_variables;
@@ -825,12 +825,12 @@ Index Dataset::get_variables_number() const
 }
 
 
-Index Dataset::get_variables_number(const string& variable_use) const
+Index Dataset::get_variables_number(const string& variable_role) const
 {
     Index count = 0;
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
-        if (raw_variable.use.find(variable_use) != string::npos)
+        if (raw_variable.role.find(variable_role) != string::npos)
             count += (raw_variable.type == RawVariableType::Categorical)
                          ? raw_variable.get_categories_number()
                          : 1;
@@ -851,7 +851,7 @@ vector<Index> Dataset::get_used_variable_indices() const
     {
         const Index categories_number = raw_variable.get_categories_number();
 
-        if(raw_variable.use == "None" || raw_variable.use == "Time")
+        if(raw_variable.role == "None" || raw_variable.role == "Time")
         {
             variable_index += (raw_variable.type == RawVariableType::Categorical)
             ? raw_variable.get_categories_number()
@@ -870,25 +870,25 @@ vector<Index> Dataset::get_used_variable_indices() const
 }
 
 
-void Dataset::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
+void Dataset::set_raw_variable_roles(const vector<string>& new_raw_variables_roles)
 {
-    const size_t new_raw_variables_uses_size = new_raw_variables_uses.size();
+    const size_t new_raw_variables_roles_size = new_raw_variables_roles.size();
 
-    if (new_raw_variables_uses_size != raw_variables.size())
-        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
+    if (new_raw_variables_roles_size != raw_variables.size())
+        throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_roles_size) + ") "
                                                                                                       "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
-    for (size_t i = 0; i < new_raw_variables_uses.size(); i++)
-        raw_variables[i].set_use(new_raw_variables_uses[i]);
+    for (size_t i = 0; i < new_raw_variables_roles.size(); i++)
+        raw_variables[i].set_role(new_raw_variables_roles[i]);
 }
 
 
-void Dataset::set_raw_variables(const string& variable_use)
+void Dataset::set_raw_variables(const string& variable_role)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
     for (Index i = 0; i < raw_variables_number; i++)
-        set_raw_variable_use(i, variable_use);
+        set_raw_variable_role(i, variable_role);
 }
 
 
@@ -898,14 +898,14 @@ void Dataset::set_raw_variable_indices(const vector<Index>& input_raw_variables,
     set_raw_variables("None");
 
     for(const Index& index : input_raw_variables)
-        set_raw_variable_use(index, "Input");
+        set_raw_variable_role(index, "Input");
 
     for(const Index& index : target_raw_variables)
     {
-        if(raw_variables[index].use == "Input")
-            set_raw_variable_use(index, "InputTarget");
+        if(raw_variables[index].role == "Input")
+            set_raw_variable_role(index, "InputTarget");
         else
-            set_raw_variable_use(index, "Target");
+            set_raw_variable_role(index, "Target");
     }
 
     const Index input_dimensions_num = get_variables_number("Input");
@@ -927,12 +927,12 @@ void Dataset::set_input_raw_variables_unused()
     const Index raw_variables_number = get_raw_variables_number();
 
     for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use == "Input")
-            set_raw_variable_use(i, "None");
+        if (raw_variables[i].role == "Input")
+            set_raw_variable_role(i, "None");
 }
 
 
-void Dataset::set_raw_variable_use(const Index& index, const string& new_use)
+void Dataset::set_raw_variable_role(const Index& index, const string& new_use)
 {
     static const unordered_set<string> valid_strings
         = {"Id", "Input", "Target", "InputTarget", "Time", "None", "Decoder"};
@@ -940,15 +940,15 @@ void Dataset::set_raw_variable_use(const Index& index, const string& new_use)
     if(valid_strings.count(new_use) <= 0)
         throw runtime_error("Invalid raw variable use: " + new_use);
 
-    raw_variables[index].use = new_use;
+    raw_variables[index].role = new_use;
 }
 
 
-void Dataset::set_raw_variable_use(const string& name, const string& new_use)
+void Dataset::set_raw_variable_role(const string& name, const string& new_use)
 {
     const Index index = get_raw_variable_index(name);
 
-    set_raw_variable_use(index, new_use);
+    set_raw_variable_role(index, new_use);
 }
 
 
@@ -1000,16 +1000,16 @@ void Dataset::set_raw_variable_names(const vector<string>& new_names)
 }
 
 
-void Dataset::set_variable_uses(const string& variable_use)
+void Dataset::set_variable_roles(const string& variable_role)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
         if (raw_variables[i].type == RawVariableType::Constant || raw_variables[i].type == RawVariableType::DateTime)
-            raw_variables[i].set_use("None");
+            raw_variables[i].set_role("None");
         else
-            raw_variables[i].set_use(variable_use);
+            raw_variables[i].set_role(variable_role);
     }
 }
 
@@ -1255,14 +1255,14 @@ Tensor<type, 2> Dataset::get_data_samples(const string& sample_use) const
 }
 
 
-Tensor<type, 2> Dataset::get_data_variables(const string& variable_use) const
+Tensor<type, 2> Dataset::get_data_variables(const string& variable_role) const
 {
     const Index samples_number = get_samples_number();
 
     vector<Index> indices(samples_number);
     iota(indices.begin(), indices.end(), 0);
 
-    const vector<Index> variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variable_indices = get_variable_indices(variable_role);
 
     Tensor<type, 2> this_data(indices.size(), variable_indices.size());
 
@@ -1272,11 +1272,11 @@ Tensor<type, 2> Dataset::get_data_variables(const string& variable_use) const
 }
 
 
-Tensor<type, 2> Dataset::get_data(const string& sample_use, const string& variable_use) const
+Tensor<type, 2> Dataset::get_data(const string& sample_use, const string& variable_role) const
 {
     const vector<Index> sample_indices = get_sample_indices(sample_use);
 
-    const vector<Index> variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variable_indices = get_variable_indices(variable_role);
 
     Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
 
@@ -1492,14 +1492,13 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     set_codification(new_codification);
 
-
     read_csv();
 
     set_default_raw_variables_scalers();
 
-    set_default_raw_variables_uses();
+    set_default_raw_variables_roles();
 
-    missing_values_method = MissingValuesMethod::Mean;
+    missing_values_method = MissingValuesMethod::Unuse;
 
     input_dimensions = { get_variables_number("Input") };
     target_dimensions = { get_variables_number("Target") };
@@ -1546,7 +1545,7 @@ void Dataset::set(const Index& new_samples_number,
         raw_variable.type = RawVariableType::Numeric;
         raw_variable.name = "variable_" + to_string(i + 1);
 
-        raw_variable.use = (i < new_inputs_number)
+        raw_variable.role = (i < new_inputs_number)
                                ? "Input"
                                : "Target";
     }
@@ -1726,9 +1725,9 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
         {
             const type r = correlations(i, j).r;
 
-            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].use != "None")
+            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].role != "None")
             {
-                raw_variables[input_raw_variable_index].set_use("None");
+                raw_variables[input_raw_variable_index].set_role("None");
                 unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
             }
         }
@@ -1803,9 +1802,9 @@ vector<string> Dataset::unuse_collinear_raw_variables(const type& maximum_correl
         {
             const Index global_raw_index = input_raw_variable_indices[i];
 
-            if (raw_variables[global_raw_index].use != "None")
+            if (raw_variables[global_raw_index].role != "None")
             {
-                raw_variables[global_raw_index].set_use("None");
+                raw_variables[global_raw_index].set_role("None");
                 unused_raw_variables.push_back(raw_variables[global_raw_index].name);
             }
         }
@@ -1828,7 +1827,7 @@ vector<Histogram> Dataset::calculate_raw_variable_distributions(const Index& bin
 
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
-        if (raw_variable.use == "None")
+        if (raw_variable.role == "None")
         {
             variable_index += (raw_variable.type == RawVariableType::Categorical)
             ? raw_variable.get_categories_number()
@@ -1927,7 +1926,7 @@ vector<BoxPlot> Dataset::calculate_raw_variables_box_plots() const
         if (raw_variable.type == RawVariableType::Numeric
             || raw_variable.type == RawVariableType::Binary)
         {
-            if (raw_variable.use != "None")
+            if (raw_variable.role != "None")
             {
                 box_plots[i] = box_plot(data.chip(variable_index, 1), used_sample_indices);
 
@@ -2126,11 +2125,11 @@ vector<Descriptives> Dataset::calculate_raw_variable_descriptives_categories(con
 }
 
 
-vector<Descriptives> Dataset::calculate_variable_descriptives(const string& variable_use) const
+vector<Descriptives> Dataset::calculate_variable_descriptives(const string& variable_role) const
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+    const vector<Index> input_variable_indices = get_variable_indices(variable_role);
 
     return descriptives(data, used_sample_indices, input_variable_indices);
 }
@@ -2153,11 +2152,11 @@ vector<Descriptives> Dataset::calculate_testing_target_variable_descriptives() c
 
 
 Tensor<type, 1> Dataset::calculate_means(const string& sample_use,
-                                         const string& variable_use) const
+                                         const string& variable_role) const
 {
     const vector<Index> sample_indices = get_sample_indices(sample_use);
 
-    const vector<Index> variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variable_indices = get_variable_indices(variable_role);
 
     return mean(data, sample_indices, variable_indices);
 }
@@ -2270,7 +2269,7 @@ void Dataset::print_missing_values_information() const
     const Index samples_with_missing_values = count_rows_with_nan();
 
     cout << "Missing values number: " << missing_values_number << " (" << missing_values_number * 100 / data.size() << "%)" << endl
-         << "Raw variables with missing values: " << missing_raw_variables_number
+         << "Variables with missing values: " << missing_raw_variables_number
          << " (" << missing_raw_variables_number * 100 / data.dimension(1) << "%)" << endl
          << "Samples with missing values: "
          << samples_with_missing_values << " (" << samples_with_missing_values * 100 / data.dimension(0) << "%)" << endl;
@@ -2516,14 +2515,14 @@ vector<Descriptives> Dataset::scale_data()
 }
 
 
-vector<Descriptives> Dataset::scale_variables(const string& variable_use)
+vector<Descriptives> Dataset::scale_variables(const string& variable_role)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index input_variables_number = get_variables_number(variable_role);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<string> input_variable_scalers = get_variable_scalers(variable_use);
+    const vector<Index> input_variable_indices = get_variable_indices(variable_role);
+    const vector<string> input_variable_scalers = get_variable_scalers(variable_role);
 
-    const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
+    const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_role);
 
     for (Index i = 0; i < input_variables_number; i++)
     {
@@ -2547,14 +2546,14 @@ vector<Descriptives> Dataset::scale_variables(const string& variable_use)
 }
 
 
-void Dataset::unscale_variables(const string& variable_use,
+void Dataset::unscale_variables(const string& variable_role,
                                 const vector<Descriptives>& input_variable_descriptives)
 {
-    const Index variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_role);
 
-    const vector<Index> variables_indices = get_variable_indices(variable_use);
+    const vector<Index> variables_indices = get_variable_indices(variable_role);
 
-    const vector<string> variables_scalers = get_variable_scalers(variable_use);
+    const vector<string> variables_scalers = get_variable_scalers(variable_role);
 
     for (Index i = 0; i < variables_number; i++)
     {
@@ -2714,7 +2713,7 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_role(read_xml_string(raw_variable_element, "Role"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
@@ -3123,13 +3122,13 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type& cleaning_par
     {
         const RawVariable& raw_variable = raw_variables[i];
 
-        if (raw_variable.use == "None"
+        if (raw_variable.role == "None"
             && raw_variable.type == RawVariableType::Categorical)
         {
             variable_index += raw_variable.get_categories_number();
             continue;
         }
-        else if (raw_variable.use == "None") // Numeric, Binary or DateTime
+        else if (raw_variable.role == "None") // Numeric, Binary or DateTime
         {
             variable_index++;
             continue;
@@ -3210,13 +3209,13 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type& clean
     {
         const RawVariable& raw_variable = raw_variables[i];
 
-        if (raw_variable.use == "None"
+        if (raw_variable.role == "None"
             && raw_variable.type == RawVariableType::Categorical)
         {
             variable_index += raw_variable.get_categories_number();
             continue;
         }
-        else if (raw_variable.use == "None") // Numeric, Binary or DateTime
+        else if (raw_variable.role == "None") // Numeric, Binary or DateTime
         {
             variable_index++;
             continue;
@@ -4053,7 +4052,7 @@ bool Dataset::has_binary_or_categorical_raw_variables() const
 bool Dataset::has_time_raw_variable() const
 {
     return any_of(raw_variables.begin(), raw_variables.end(),
-                  [](const RawVariable& raw_variable) { return raw_variable.use == "Time"; });
+                  [](const RawVariable& raw_variable) { return raw_variable.role == "Time"; });
 }
 
 

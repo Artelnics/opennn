@@ -817,7 +817,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     if(time_series_dataset)
     {
         if(time_raw_variable_indices.size() == 1)
-            dataset->set_raw_variable_use(time_raw_variable_indices[0], "Time");
+            dataset->set_raw_variable_role(time_raw_variable_indices[0], "Time");
 
         const Index past_time_steps = time_series_dataset->get_past_time_steps();
         neural_network->set_input_dimensions({ past_time_steps, optimal_variables_number });
