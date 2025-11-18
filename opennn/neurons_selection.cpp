@@ -94,7 +94,7 @@ void NeuronsSelection::set_default()
     if (!(training_strategy && training_strategy->get_neural_network()))
         return;
 
-    const Index inputs_number = training_strategy->get_neural_network()->get_inputs_number();
+    const Index inputs_number = training_strategy->get_neural_network()->get_features_number();
     const Index outputs_number = training_strategy->get_neural_network()->get_outputs_number();
 
     minimum_neurons = 1;

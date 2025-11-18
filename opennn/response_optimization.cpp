@@ -36,7 +36,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_d
 
     if(!neural_network) return;
 
-    const Index inputs_number = neural_network->get_inputs_number();
+    const Index inputs_number = neural_network->get_features_number();
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -292,7 +292,7 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
 
 Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
-    const Index inputs_number = neural_network->get_inputs_number();
+    const Index inputs_number = neural_network->get_features_number();
 
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
@@ -362,7 +362,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
 Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& inputs, const Tensor<type,2>& outputs) const
 {
-    const Index inputs_number = neural_network->get_inputs_number();
+    const Index inputs_number = neural_network->get_features_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 2> envelope = assemble_matrix_matrix(inputs, outputs);
@@ -463,7 +463,7 @@ void ResponseOptimization::build_objectives_from_envelope(const Tensor<type,2>& 
                                                           Tensor<type,1>& sense,
                                                           Tensor<Index,1>& objective_indices) const
 {
-    const Index inputs_number  = neural_network->get_inputs_number();
+    const Index inputs_number  = neural_network->get_features_number();
 
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -638,7 +638,7 @@ ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto() const
 
     const Index Pareto_rows_dimension = envelope.dimension(0);
 
-    const Index input_number_dimension  = neural_network->get_inputs_number();
+    const Index input_number_dimension  = neural_network->get_features_number();
 
     Tensor<type,2> inputs_filtered(Pareto_rows_dimension, input_number_dimension);
 
@@ -659,7 +659,7 @@ ResponseOptimization::SingleOrPareto ResponseOptimization::iterative_optimizatio
 
     const type  improvement_tolerance = iterative_improvement_tolerance;
 
-    const Index inputs_number  = neural_network->get_inputs_number();
+    const Index inputs_number  = neural_network->get_features_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
     // Save original bounds (RAII guard)

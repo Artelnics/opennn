@@ -484,12 +484,12 @@ void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationL
 }
 
 
-string Dense2d::get_expression(const vector<string>& new_input_names,
+string Dense2d::get_expression(const vector<string>& new_feature_names,
                                const vector<string>& new_output_names) const
 {
-    const vector<string> input_names = new_input_names.empty()
-                                           ? get_default_input_names()
-                                           : new_input_names;
+    const vector<string> feature_names = new_feature_names.empty()
+                                           ? get_default_feature_names()
+                                           : new_feature_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
@@ -507,9 +507,9 @@ string Dense2d::get_expression(const vector<string>& new_input_names,
         buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " + ";
 
         for(Index i = 0; i < inputs_number - 1; i++)
-            buffer << "(" << weights_column(i) << "*" << input_names[i] << ") + ";
+            buffer << "(" << weights_column(i) << "*" << feature_names[i] << ") + ";
 
-        buffer << "(" << weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1] << ") );\n";
+        buffer << "(" << weights_column(inputs_number - 1) << "*" << feature_names[inputs_number - 1] << ") );\n";
     }
 
     return buffer.str();

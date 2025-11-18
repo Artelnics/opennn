@@ -274,7 +274,7 @@ void Scaling2d::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inp
         throw runtime_error("Input dimension must be 2 or 4.\n");
 }
 
-string Scaling2d::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_no_scaling_expression(const vector<string>& feature_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -283,13 +283,13 @@ string Scaling2d::write_no_scaling_expression(const vector<string>& input_names,
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names[i] << " = " << input_names[i] << ";\n";
+        buffer << output_names[i] << " = " << feature_names[i] << ";\n";
 
     return buffer.str();
 }
 
 
-string Scaling2d::write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_minimum_maximum_expression(const vector<string>& feature_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -298,13 +298,13 @@ string Scaling2d::write_minimum_maximum_expression(const vector<string>& input_n
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
+        buffer << output_names[i] << " = 2*(" << feature_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
 
     return buffer.str();
 }
 
 
-string Scaling2d::write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_mean_standard_deviation_expression(const vector<string>& feature_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_inputs_number();
 
@@ -313,13 +313,13 @@ string Scaling2d::write_mean_standard_deviation_expression(const vector<string>&
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
+        buffer << output_names[i] << " = (" << feature_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
 
     return buffer.str();
 }
 
 
-string Scaling2d::write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_standard_deviation_expression(const vector<string>& feature_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -328,17 +328,17 @@ string Scaling2d::write_standard_deviation_expression(const vector<string>& inpu
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
+        buffer << output_names[i] << " = " << feature_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
 
     return buffer.str();
 }
 
 
-string Scaling2d::get_expression(const vector<string>& new_input_names, const vector<string>&) const
+string Scaling2d::get_expression(const vector<string>& new_feature_names, const vector<string>&) const
 {
-    const vector<string> input_names = new_input_names.empty()
-                                           ? get_default_input_names()
-                                           : new_input_names;
+    const vector<string> feature_names = new_feature_names.empty()
+                                           ? get_default_feature_names()
+                                           : new_feature_names;
 
     const Index outputs_number = get_outputs_number();
 
@@ -351,19 +351,19 @@ string Scaling2d::get_expression(const vector<string>& new_input_names, const ve
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";
+            buffer << "scaled_" << feature_names[i] << " = " << feature_names[i] << ";\n";
         else if(scaler == "MinimumMaximum")
-            buffer << "scaled_" << input_names[i]
-                   << " = " << input_names[i] << "*(" << max_range << "-" << min_range << ")/("
+            buffer << "scaled_" << feature_names[i]
+                   << " = " << feature_names[i] << "*(" << max_range << "-" << min_range << ")/("
                    << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-" << descriptives[i].minimum << "*("
                    << max_range << "-" << min_range << ")/("
                    << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << min_range << ";\n";
         else if(scaler == "MeanStandardDeviation")
-            buffer << "scaled_" << input_names[i] << " = (" << input_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
+            buffer << "scaled_" << feature_names[i] << " = (" << feature_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
         else if(scaler == "StandardDeviation")
-            buffer << "scaled_" << input_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
+            buffer << "scaled_" << feature_names[i] << " = " << feature_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
         else if(scaler == "Logarithm")
-            buffer << "scaled_" << input_names[i] << " = log(" << input_names[i] << ");\n";
+            buffer << "scaled_" << feature_names[i] << " = log(" << feature_names[i] << ");\n";
         else
             throw runtime_error("Unknown inputs scaling method.\n");
     }

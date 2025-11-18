@@ -93,7 +93,7 @@ public:
 
     virtual void print() const {}
 
-    vector<string> get_default_input_names() const;
+    vector<string> get_default_feature_names() const;
 
     vector<string> get_default_output_names() const;
 

@@ -219,7 +219,7 @@ void OptimizationAlgorithm::set_names()
 {
     Dataset* dataset = loss_index->get_dataset();
 
-    const vector<string> input_names = dataset->get_variable_names("Input");
+    const vector<string> feature_names = dataset->get_variable_names("Input");
     const vector<string> target_names = dataset->get_variable_names("Target");
 
     const Index input_variables_number = dataset->get_variables_number("Input");
@@ -242,19 +242,19 @@ void OptimizationAlgorithm::set_names()
         {
             const Index time_steps = time_series_dataset->get_past_time_steps();
 
-            if(input_names[i] == "")
+            if(feature_names[i] == "")
                 for(Index j = 0; j < time_steps; j++)
                     input_variable_names.push_back("variable_" + to_string(i + 1) + "_lag" + to_string(j));
             else
                 for(Index j = 0; j < time_steps; j++)
-                    input_variable_names.push_back(input_names[i] + "_lag" + to_string(j));
+                    input_variable_names.push_back(feature_names[i] + "_lag" + to_string(j));
         }
         else
         {
-            if(input_names[i] == "")
+            if(feature_names[i] == "")
                 input_variable_names.push_back("variable_" + to_string(i + 1));
             else
-                input_variable_names.push_back(input_names[i]);
+                input_variable_names.push_back(feature_names[i]);
         }
     }
 
@@ -273,7 +273,7 @@ void OptimizationAlgorithm::set_names()
             target_variable_names.push_back(target_names[i]);
     }
 
-    neural_network->set_input_names(input_variable_names);
+    neural_network->set_feature_names(input_variable_names);
     neural_network->set_output_names(target_variable_names);
 }
 
