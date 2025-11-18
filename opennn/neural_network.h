@@ -68,7 +68,7 @@ public:
 
     bool is_empty() const;
 
-    const vector<string>& get_input_names() const;
+    const vector<string>& get_feature_names() const;
     Index get_input_index(const string&) const;
 
     const vector<string>& get_output_names() const;
@@ -102,7 +102,7 @@ public:
     void set_layer_inputs_indices(const string&, const initializer_list<string>&);
     void set_layer_inputs_indices(const string&, const string&);
 
-    void set_input_names(const vector<string>&);
+    void set_feature_names(const vector<string>&);
     void set_output_names(const vector<string>&);
 
     void set_input_dimensions(const dimensions&);
@@ -123,7 +123,7 @@ public:
 
     // Architecture
 
-    Index get_inputs_number() const;
+    Index get_features_number() const;
     Index get_outputs_number() const;
 
     dimensions get_input_dimensions() const;
@@ -222,7 +222,7 @@ public:
     Tensor<string, 2> get_probabilistic_layer_information() const;
 
     void from_XML(const XMLDocument&);
-    void inputs_from_XML(const XMLElement*);
+    void features_from_XML(const XMLElement*);
     void layers_from_XML(const XMLElement*);
     void outputs_from_XML(const XMLElement*);
 
@@ -280,7 +280,7 @@ protected:
 
     string name = "neural_network";
 
-    vector<string> input_names;
+    vector<string> feature_names;
 
     vector<string> output_names;
 

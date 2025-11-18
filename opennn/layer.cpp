@@ -117,16 +117,16 @@ string Layer::get_expression(const vector<string> &, const vector<string> &) con
 }
 
 
-vector<string> Layer::get_default_input_names() const
+vector<string> Layer::get_default_feature_names() const
 {
     const Index inputs_number = get_inputs_number();
 
-    vector<string> input_names(inputs_number);
+    vector<string> feature_names(inputs_number);
 
     for(Index i = 0; i < inputs_number; i++)
-        input_names[i] = "input_" + to_string(i);
+        feature_names[i] = "input_" + to_string(i);
 
-    return input_names;
+    return feature_names;
 }
 
 

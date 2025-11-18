@@ -249,7 +249,7 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
 }
 
 
-string Recurrent::get_expression(const vector<string>& input_names,
+string Recurrent::get_expression(const vector<string>& feature_names,
                                  const vector<string>& output_names) const
 {
     ostringstream buffer;
@@ -260,10 +260,10 @@ string Recurrent::get_expression(const vector<string>& input_names,
 
         buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " +";
 
-        for(size_t i = 0; i < input_names.size() - 1; i++)
-            buffer << " (" << input_names[i] << "*" << weights_column(i) << ") +";
+        for(size_t i = 0; i < feature_names.size() - 1; i++)
+            buffer << " (" << feature_names[i] << "*" << weights_column(i) << ") +";
 
-        buffer << " (" << input_names[input_names.size() - 1] << "*" << weights_column[input_names.size() - 1] << "));\n";
+        buffer << " (" << feature_names[feature_names.size() - 1] << "*" << weights_column[feature_names.size() - 1] << "));\n";
     }
 
     return buffer.str();

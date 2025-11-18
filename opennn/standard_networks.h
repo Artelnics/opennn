@@ -58,8 +58,8 @@ public:
 
         add_layer(make_unique<Bounding>(output_dimensions));
 
-        const Index inputs_number = get_inputs_number();
-        input_names.resize(inputs_number);
+        const Index features_number = get_features_number();
+        feature_names.resize(features_number);
 
         const Index outputs_number = get_outputs_number();
         output_names.resize(outputs_number);
@@ -92,8 +92,8 @@ public:
                                        false,
                                        "classification_layer"));
 
-        const Index inputs_number = get_inputs_number();
-        input_names.resize(inputs_number);
+        const Index features_number = get_features_number();
+        feature_names.resize(features_number);
 
         const Index outputs_number = get_outputs_number();
         output_names.resize(outputs_number);
@@ -123,8 +123,8 @@ public:
 
         add_layer(make_unique<Bounding>(output_dimensions));
 
-        const Index inputs_number = get_inputs_number();
-        input_names.resize(inputs_number);
+        const Index features_number = get_features_number();
+        feature_names.resize(features_number);
 
         const Index outputs_number = get_outputs_number();
         output_names.resize(outputs_number);
@@ -224,8 +224,8 @@ public:
                                        false, // Batch normalization
                                        "dense_2d_layer"));
 
-        const Index inputs_number = get_inputs_number();
-        input_names.resize(inputs_number);
+        const Index features_number = get_features_number();
+        feature_names.resize(features_number);
 
         const Index outputs_number = get_outputs_number();
         output_names.resize(outputs_number);

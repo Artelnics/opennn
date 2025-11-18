@@ -819,7 +819,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_deltas()
     const Index samples_number = dataset->get_samples_number("Training");
     const dimensions inputs_dimensions = dataset->get_dimensions("Input");
 
-    const Index values_number = neural_network->get_inputs_number()*samples_number;
+    const Index values_number = neural_network->get_features_number()*samples_number;
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");

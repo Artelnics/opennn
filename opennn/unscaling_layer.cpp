@@ -77,12 +77,12 @@ vector<string> Unscaling::get_scalers() const
 }
 
 
-string Unscaling::get_expression(const vector<string>& new_input_names,
+string Unscaling::get_expression(const vector<string>& new_feature_names,
                                  const vector<string>& new_output_names) const
 {
-    const vector<string> input_names = new_input_names.empty()
-                                           ? get_default_input_names()
-                                           : new_input_names;
+    const vector<string> feature_names = new_feature_names.empty()
+                                           ? get_default_feature_names()
+                                           : new_feature_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
@@ -99,19 +99,19 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
         const string& scaler = scalers[i];
 
         if(scaler == "None")
-            buffer << output_names[i] << " = " << input_names[i] << ";\n";
+            buffer << output_names[i] << " = " << feature_names[i] << ";\n";
         else if(scaler == "MinimumMaximum")
             if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
             else
-                buffer << output_names[i] << "=" << input_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
+                buffer << output_names[i] << "=" << feature_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
                 << ")+" << (descriptives[i].minimum - min_range*(descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)) << ";\n";
         else if(scaler == "MeanStandardDeviation")
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
+            buffer << output_names[i] << "=" << feature_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
         else if(scaler == "StandardDeviation")
-            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
+            buffer << output_names[i] << "=" <<  feature_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
         else if(scaler == "Logarithm")
-            buffer << output_names[i] << "=" << "exp(" << input_names[i] << ");\n";
+            buffer << output_names[i] << "=" << "exp(" << feature_names[i] << ");\n";
         else
             throw runtime_error("Unknown inputs scaling method.\n");
     }

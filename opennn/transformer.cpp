@@ -59,7 +59,7 @@ void Transformer::set(const Index& new_decoder_length,
     if (input_length == 0 || decoder_length == 0)
         return;
 
-    input_names.resize(input_length + decoder_length);
+    feature_names.resize(input_length + decoder_length);
 
     // Embedding Layers
 

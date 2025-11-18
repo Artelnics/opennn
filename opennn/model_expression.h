@@ -62,7 +62,7 @@ public:
     // other functions
     string replace_reserved_keywords(const string&) const;
     vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&) const;
-    vector<string> fix_input_names(const vector<string>&) const;
+    vector<string> fix_feature_names(const vector<string>&) const;
     vector<string> fix_output_names(const vector<string>& ) const;
 
     void save_python(const filesystem::path&, const vector<Dataset::RawVariable>&) const;

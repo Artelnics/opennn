@@ -345,26 +345,26 @@ void GeneticAlgorithm::evaluate_population()
             neural_network->set_input_dimensions({ past_time_steps, input_variables_number });
             dataset->set_dimensions("Input", { past_time_steps, input_variables_number });
 
-            vector<string> final_input_names;
+            vector<string> final_feature_names;
             const vector<string> base_names = dataset->get_raw_variable_names("Input");
             const Index time_steps = time_series_dataset->get_past_time_steps();
-            final_input_names.reserve(base_names.size() * time_steps);
+            final_feature_names.reserve(base_names.size() * time_steps);
             for(const string& base_name : base_names)
             {
                 for(Index j = 0; j < time_steps; j++)
                 {
                     string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
-                    final_input_names.push_back(name);
+                    final_feature_names.push_back(name);
                 }
             }
-            neural_network->set_input_names(final_input_names);
+            neural_network->set_feature_names(final_feature_names);
         }
         else
         {
             neural_network->set_input_dimensions({input_variables_number});
             dataset->set_dimensions("Input", { input_variables_number });
 
-            neural_network->set_input_names(dataset->get_variable_names("Input"));
+            neural_network->set_feature_names(dataset->get_variable_names("Input"));
         }
 
         neural_network->set_parameters_random();
@@ -823,26 +823,26 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         neural_network->set_input_dimensions({ past_time_steps, optimal_variables_number });
         dataset->set_dimensions("Input", { past_time_steps, optimal_variables_number });
 
-        vector<string> final_input_names;
+        vector<string> final_feature_names;
         const vector<string> base_names = dataset->get_raw_variable_names("Input");
         const Index time_steps = time_series_dataset->get_past_time_steps();
-        final_input_names.reserve(base_names.size() * time_steps);
+        final_feature_names.reserve(base_names.size() * time_steps);
         for(const string& base_name : base_names)
         {
             for(Index j = 0; j < time_steps; j++)
             {
                 string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
-                final_input_names.push_back(name);
+                final_feature_names.push_back(name);
             }
         }
-        neural_network->set_input_names(final_input_names);
+        neural_network->set_feature_names(final_feature_names);
     }
     else
     {
         neural_network->set_input_dimensions({optimal_variables_number});
         dataset->set_dimensions("Input", { optimal_variables_number });
 
-        neural_network->set_input_names(dataset->get_variable_names("Input"));
+        neural_network->set_feature_names(dataset->get_variable_names("Input"));
     }
 
     if(neural_network->has("Scaling2d"))
