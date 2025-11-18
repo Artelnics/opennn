@@ -11,10 +11,12 @@
 #include "tensors.h"
 #include "response_optimization.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "scaling_layer_2d.h"
 #include "bounding_layer.h"
 #include "dataset.h"
 #include "neural_network.h"
+#include <variant>
 
 namespace opennn
 {
@@ -435,93 +437,7 @@ Tensor<type,2> ResponseOptimization::calculate_envelope(const Tensor<type,2>& in
     return filtered;
 }
 
-ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
-{
-    ResponseOptimizationResults* results = new ResponseOptimizationResults(neural_network);
-
-    const Tensor<type, 2> inputs = calculate_inputs();
-
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs<2,2>(inputs);
-
-    const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
-
-    const Index samples_number = envelope.dimension(0);
-
-    const Index inputs_number = neural_network->get_inputs_number();
-
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    // --- Single-objective detection ---
-    int objective_column = -1;
-
-    type sign   = type(1);
-
-    int count   = 0;
-
-    for(Index j = 0; j < inputs_number; ++j)
-    {
-        if(input_conditions[j] == Condition::Minimum)
-        {
-            objective_column = static_cast<int>(j);
-
-            sign = type( 1);
-
-            ++count;
-        }
-        else if(input_conditions[j] == Condition::Maximum)
-        {
-            objective_column = static_cast<int>(j);
-
-            sign = type(-1);
-
-            ++count;
-        }
-    }
-    for(Index j = 0; j < outputs_number; ++j)
-    {
-        if(output_conditions[j] == Condition::Minimum)
-        {
-            objective_column = static_cast<int>(inputs_number + j);
-
-            sign = type( 1);
-
-            ++count;
-        }
-        else if(output_conditions[j] == Condition::Maximum)
-        {
-            objective_column = static_cast<int>(inputs_number + j);
-
-            sign = type(-1);
-
-            ++count;
-        }
-    }
-
-    if(count != 1)
-        throw runtime_error("perform_optimization: expected exactly one objective (single-objective mode).");
-
-
-    Tensor<type, 1> objective(samples_number);
-
-    auto column_exctracted = envelope.chip(objective_column, 1);
-
-    Tensor<type, 1> column_to_check = column_exctracted.eval();
-
-    if(sign > type(0))
-        objective = column_to_check;
-    else
-        objective = (column_to_check * type(-1));
-
-    const Index optimal_index = minimal_index(objective);
-
-    results->optimal_variables = (envelope.size() != 0)
-                                     ? envelope.chip(optimal_index, 0)  // row slice
-                                     : Tensor<type, 1>();
-
-    return results;
-}
-
-// -------------------- PARETO helpers --------------------
+//Pareto helpers
 bool ResponseOptimization::dominates_row(const Tensor<type,1>& first_row_to_compare,
                                          const Tensor<type,1>& second_row_to_compare,
                                          const Tensor<type,1>& sense)
@@ -698,7 +614,6 @@ ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto_analysis
     return res;
 }
 
-// -------------------- Public entry: build, then Pareto --------------------
 ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto() const
 {
     const Tensor<type, 2> inputs  = calculate_inputs();
@@ -708,7 +623,6 @@ ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto() const
     const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
 
     if(envelope.size() == 0)
-        //message more evaluation number or less constraints
         return ParetoResult{};
 
     Tensor<type,2> objectives;
@@ -728,146 +642,381 @@ ResponseOptimization::ParetoResult ResponseOptimization::perform_pareto() const
 
     Tensor<type,2> inputs_filtered(Pareto_rows_dimension, input_number_dimension);
 
-    for(Index r = 0; r < Pareto_rows_dimension; ++r)
-        for(Index c = 0; c < input_number_dimension; ++c)
-            inputs_filtered(r,c) = envelope(r,c);
+    for(Index i = 0; i < Pareto_rows_dimension; ++i)
+        for(Index j = 0; j < input_number_dimension; ++j)
+            inputs_filtered(i,j) = envelope(i,j);
 
     return perform_pareto_analysis(objectives, sense, inputs_filtered, envelope);
 }
 
-Tensor<type, 1> ResponseOptimization::get_nearest_point_to_utopian(const ResponseOptimization::ParetoResult& pareto_result) const
+ResponseOptimization::SingleOrPareto ResponseOptimization::iterative_optimization(int objective_count)
 {
-    const Index num_pareto_points = pareto_result.pareto_objectives.dimension(0);
+    const Index max_iterations      = iterative_max_iterations;
 
-    const Index num_objectives = pareto_result.pareto_objectives.dimension(1);
+    const type  zoom_factor         = iterative_zoom_factor;
 
-    dataset->load_data_binary();
+    const type  min_span_eps        = iterative_min_span_eps;
 
-    const vector<Descriptives> input_variables_descriptives = dataset->calculate_variable_descriptives("Input");
+    const type  improvement_tolerance = iterative_improvement_tolerance;
 
-    const vector<Descriptives> output_variables_descriptives = dataset->calculate_variable_descriptives("Target");
-
-    // Calculate the utopian point (ideal best outcomes for each objective)
-
-    Tensor<type, 1> utopian_point(num_objectives);
-
-    Tensor<type, 1> objectives_maximums(num_objectives);
-
-    Tensor<type, 1> objectives_minimums(num_objectives);
-
-    utopian_point.setZero();
-
-    const int output_number = neural_network->get_outputs_number();
-
-    const int input_number = neural_network->get_inputs_number();
-
-    Index j = 0;
-
-    for (Index i = 0; i < input_number; ++i)
-    {
-        const Descriptives& desc = input_variables_descriptives[i];
-
-        if (get_input_conditions()(i) == ResponseOptimization::Condition::Minimum)
-        {            
-            objectives_minimums(j)=desc.minimum;
-
-            objectives_maximums(j)=desc.maximum;
-
-            utopian_point(j) = 0;
-
-            j++;
-        }
-        else if (get_input_conditions()(i) == ResponseOptimization::Condition::Maximum)
-        {
-            objectives_minimums(j)=desc.minimum;
-
-            objectives_maximums(j)=desc.maximum;
-
-            utopian_point(j) = 1;
-
-            j++;
-        }
-    }
-
-    for (Index i = 0; i < output_number; ++i)
-    {
-        const Descriptives& desc = output_variables_descriptives[i];
-
-        if (get_output_conditions()(i) == ResponseOptimization::Condition::Minimum)
-        {
-            objectives_minimums(j) = desc.minimum;
-
-            objectives_maximums(j) = desc.maximum;
-
-
-            utopian_point(j) = 0;
-
-            j++;
-        }
-        else if (get_output_conditions()(i) == ResponseOptimization::Condition::Maximum)
-        {
-            objectives_minimums(j) = desc.minimum;
-
-            objectives_maximums(j) = desc.maximum;
-
-            utopian_point(j) = 1;
-
-            j++;
-        }
-    }
-
-    Tensor<type,2> scaled_pareto_points = pareto_result.pareto_objectives;
-
-    Tensor<Index, 1> nearest_indices = get_n_nearest_points(scaled_pareto_points, utopian_point, 1);
-
-    Index nearest_point_index = nearest_indices(0);
-
-    Tensor<type, 1> best_point(input_number+output_number);
-
-    best_point = pareto_result.envelope.chip(pareto_result.pareto_indices(nearest_point_index),0) ;
-
-    return best_point;
-}
-
-ResponseOptimizationResults::ResponseOptimizationResults(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
-}
-
-
-void ResponseOptimizationResults::print() const
-{
-    const Index inputs_number = neural_network->get_inputs_number();
-
+    const Index inputs_number  = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const vector<string> input_names = neural_network->get_input_names();
+    // Save original bounds (RAII guard)
+    Tensor<type,1> original_input_minimums  = input_minimums;
+    Tensor<type,1>  original_input_maximums  = input_maximums;
+    Tensor<type,1> original_output_minimums = output_minimums;
+    Tensor<type,1> original_output_maximums = output_maximums;
 
-    const vector<string> output_names = neural_network->get_output_names();
+    struct BoundsGuard
+    {
+        ResponseOptimization* self;
 
-    cout << "\nResponse optimization results: " << endl;
+        Tensor<type,1> saved_input_minimums;
 
-    if(optimal_variables.size() == 0)
-        throw runtime_error("Optimal variables vector is empty.\n");
+        Tensor<type,1> saved_input_maximums;
 
-    for(Index i = 0; i < inputs_number; i++)
-        cout << input_names[i] << ": " << optimal_variables[i] << endl;
+        Tensor<type,1> saved_output_minimums;
 
-    for(Index i = 0; i < outputs_number; i++)
-        cout << output_names[i] << ": " << optimal_variables[inputs_number + i] << endl;
+        Tensor<type,1> saved_output_maximums;
+
+        ~BoundsGuard(){
+            self->input_minimums  = saved_input_minimums;
+            self->input_maximums  = saved_input_maximums;
+            self->output_minimums = saved_output_minimums;
+            self->output_maximums = saved_output_maximums;
+        }
+    } guard{ this, original_input_minimums,  original_input_maximums, original_output_minimums, original_output_maximums };
+
+    auto clampv = [&](const type& current_limit, const type& low_limit, const type& high_limit)
+    {
+        return current_limit < low_limit ? low_limit : (current_limit > high_limit ? high_limit : current_limit);
+    };
+
+    auto append_rows = [](Tensor<type,2>& acc, const Tensor<type,2>& block)
+    {
+        if(block.size() == 0) return;
+
+        if(acc.size() == 0)
+        {
+            acc = block;
+            return;
+        }
+
+        const Index old_rows = acc.dimension(0);
+        const Index cols     = acc.dimension(1);
+        const Index new_rows = block.dimension(0);
+
+        Tensor<type,2> tmp(old_rows + new_rows, cols);
+
+        for(Index i = 0; i < old_rows; ++i)
+            for(Index j = 0; j < cols; ++j)
+                tmp(i,j) = acc(i,j);
+
+        for(Index i = 0; i < new_rows; ++i)
+            for(Index j = 0; j < cols; ++j)
+                tmp(old_rows + i, j) = block(i,j);
+
+        acc = std::move(tmp);
+    };
+
+    if (objective_count <= 1)
+    {
+        auto search_best = [&](Tensor<type,1>& best_row, type& best_val_signed)->bool
+        {
+            const Tensor<type,2> inputs  = calculate_inputs();
+
+            const Tensor<type,2> outputs = neural_network->calculate_outputs<2,2>(inputs);
+
+            const Tensor<type,2> envelope     = calculate_envelope(inputs, outputs);
+
+            if (envelope.size() == 0)
+                return false;
+
+            int objective_column = -1;
+
+            type sign = type(1);
+
+            int count = 0;
+
+            for (Index j = 0; j < inputs_number; ++j)
+            {
+                if      (input_conditions(j) == Condition::Minimum)
+                {
+                    objective_column = int(j);
+
+                    sign =  type(1);
+
+                    ++count;
+                }
+                else if (input_conditions(j) == Condition::Maximum)
+                {
+                    objective_column = int(j);
+
+                    sign = -type(1);
+
+                    ++count;
+                }
+            }
+            for (Index j = 0; j < outputs_number; ++j)
+            {
+                if      (output_conditions(j) == Condition::Minimum)
+                {
+                    objective_column = int(inputs_number + j);
+
+                    sign =  type(1);
+
+                    ++count;
+                }
+                else if (output_conditions(j) == Condition::Maximum)
+                {
+                    objective_column = int(inputs_number + j);
+
+                    sign = -type(1);
+
+                    ++count;
+                }
+            }
+
+            if (count != 1)
+                throw runtime_error("iterative_optimization: expected single objective.");
+
+            Tensor<type,1> objective_column_from_envelope = envelope.chip(objective_column, 1).eval();
+
+            const type orientation = (sign > type(0)) ? type(1) : type(-1);
+
+            Tensor<type,1> objective_column_oriented = (objective_column_from_envelope * orientation).eval();
+
+            const Index best_idx = minimal_index(objective_column_oriented);
+
+            best_val_signed = objective_column_oriented(best_idx);
+
+            best_row = envelope.chip(best_idx, 0);
+
+            return true;
+        };
+
+        Tensor<type,1> best_row = Tensor<type,1>();
+
+        type best_value = std::numeric_limits<double>::infinity();
+        {
+            Tensor<type,1> vacuum_row;
+
+            type vacuum_value;
+
+            if (!search_best(vacuum_row, vacuum_value))
+                return Tensor<type,1>();
+
+            best_row = vacuum_row;
+
+            best_value = vacuum_value;
+        }
+
+        Tensor<type,1> current_input_minimums = input_minimums;
+        Tensor<type,1> current_input_maximums = input_maximums;
+
+        for (Index iteration = 0; iteration < max_iterations; ++iteration)
+        {
+            // Compute new box centered at best_row (inputs part only)
+            bool collapsed = true;
+
+            for (Index j = 0; j < inputs_number; ++j)
+            {
+                const type span = current_input_maximums(j) - current_input_minimums(j);
+
+                const type new_span = span * zoom_factor;
+
+                const type center = best_row(j);
+
+                type new_min = center - new_span * type(0.5);
+
+                type new_max = center + new_span * type(0.5);
+
+                // Respect original global bounds
+                new_min = clampv(new_min, original_input_minimums(j),  original_input_maximums(j));
+                new_max = clampv(new_max, original_input_minimums(j),  original_input_maximums(j));
+
+                // Avoid inverted intervals
+                if (new_max <= new_min)
+                {
+                    const type epsilon = max(type(1e-12), span * type(1e-6));
+
+                    new_min = clampv(center - epsilon, original_input_minimums(j),  original_input_maximums(j));
+                    new_max = clampv(center + epsilon, original_input_minimums(j),  original_input_maximums(j));
+                }
+
+                current_input_minimums(j) = new_min;
+
+                current_input_maximums(j) = new_max;
+
+                if ((new_max - new_min) > min_span_eps)
+                    collapsed = false;
+            }
+            if (collapsed) break;
+
+            // Temporarily set class bounds to the shrunken box
+            input_minimums  = current_input_minimums;
+
+            input_maximums  = current_input_maximums;
+
+            // Re-run pass
+            Tensor<type,1> candidate_row;
+
+            type candidate_value;
+
+            if (!search_best(candidate_row, candidate_value))
+                break;
+
+            const type gain = best_value - candidate_value;
+
+            const type module_biggest_value = max(std::abs(best_value), type(1));
+
+            const type real_improvement = gain / module_biggest_value;
+
+            if (real_improvement > improvement_tolerance)
+            {
+                best_value = candidate_value;
+
+                best_row = candidate_row;
+            }
+            else
+            {
+                // Little to gain: one last micro-zoom and exit
+                for (Index j = 0; j < inputs_number; ++j)
+                {
+                    const type span = current_input_maximums(j) - current_input_minimums(j);
+
+                    const type new_span = max(span * type(0.2), type(1e-12));
+
+                    const type center = best_row(j);
+
+                    current_input_minimums(j) = clampv(center - new_span*type(0.5), original_input_minimums(j),  original_input_maximums(j));
+
+                    current_input_maximums(j) = clampv(center + new_span*type(0.5), original_input_minimums(j),  original_input_maximums(j));
+                }
+                input_minimums = current_input_minimums;
+
+                input_maximums = current_input_maximums;
+
+                Tensor<type,1> final_row;
+
+                type final_val;
+                if (search_best(final_row, final_val) && final_val < best_value)
+                {
+                    best_value = final_val;
+
+                    best_row = final_row;
+                }
+                break;
+            }
+        }
+
+        return best_row;
+    }
+
+    ParetoResult first = perform_pareto();
+
+    if(first.pareto_variables.size() == 0)
+        first = perform_pareto();
+
+    if(first.pareto_variables.size() == 0)
+        return first;
+
+    Tensor<type,2> all_envelope = first.pareto_variables;
+
+    const Index pareto_points_number = first.pareto_variables.dimension(0);
+
+    for(Index current_pareto_point = 0; current_pareto_point < pareto_points_number; ++current_pareto_point)
+    {
+        Tensor<type,1> center_row = first.pareto_variables.chip(current_pareto_point, 0);
+
+        Tensor<type,1> current_input_minimums = original_input_minimums;
+
+        Tensor<type,1> current_input_maximums = original_input_maximums;
+
+
+        for(Index current_iteration = 0; current_iteration < max_iterations; ++current_iteration)
+        {
+            bool collapsed = true;
+
+            for(Index j = 0; j < inputs_number; ++j)
+            {
+                const type span     = current_input_maximums(j) - current_input_minimums(j);
+                const type new_span = span * zoom_factor;
+
+                const type center   = center_row(j);
+
+                type new_min = center - new_span * type(0.5);
+                type new_max = center + new_span * type(0.5);
+
+                new_min = clampv(new_min, original_input_minimums(j), original_input_maximums(j));
+                new_max = clampv(new_max, original_input_minimums(j), original_input_maximums(j));
+
+                if(new_max <= new_min)
+                {
+                    const type epsilon = max(type(1e-12), span * type(1e-6));
+
+                    new_min = clampv(center - epsilon, original_input_minimums(j), original_input_maximums(j));
+                    new_max = clampv(center + epsilon, original_input_minimums(j), original_input_maximums(j));
+                }
+
+                current_input_minimums(j) = new_min;
+                current_input_maximums(j) = new_max;
+
+                if((new_max - new_min) > min_span_eps)
+                    collapsed = false;
+            }
+
+            if(collapsed)
+                break;
+
+            input_minimums = current_input_minimums;
+            input_maximums = current_input_maximums;
+
+            ParetoResult local_pareto = perform_pareto();
+
+            if(local_pareto.pareto_variables.size() != 0)
+                append_rows(all_envelope, local_pareto.pareto_variables);
+        }
+    }
+
+    Tensor<type,2> all_objectives;
+    Tensor<type,1> sense;
+    Tensor<Index,1> objective_indices;
+
+    build_objectives_from_envelope(all_envelope, all_objectives, sense, objective_indices);
+
+    if(objective_indices.size() < 1)
+        return ParetoResult{};
+
+    const Index all_rows = all_envelope.dimension(0);
+
+    Tensor<type,2> inputs_filtered(all_rows, inputs_number);
+
+    for(Index i = 0; i < all_rows; ++i)
+        for(Index j = 0; j < inputs_number; ++j)
+            inputs_filtered(i,j) = all_envelope(i,j);
+
+    ParetoResult final_res = perform_pareto_analysis(all_objectives, sense, inputs_filtered, all_envelope);
+
+    return final_res;
+
 }
 
-}
 
+
+
+
+}
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
+// This library is free software; you can redistribute iteration and/or
+// modify iteration under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This library is distributed in the hope that iteration will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
