@@ -20,13 +20,18 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
     const type mean = column_descriptives.mean;
     const type standard_deviation = column_descriptives.standard_deviation;
 
-    // if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
-    //     throw runtime_error("Standard deviation is zero.");
-    const type epsilon = type(1e-7);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < matrix.dimension(0); i++)
-        matrix(i, column_index) = (matrix(i, column_index) - mean)/(standard_deviation + epsilon);
+    if(standard_deviation > NUMERIC_LIMITS_MIN)
+    {
+        #pragma omp parallel for
+        for(Index i = 0; i < matrix.dimension(0); i++)
+            matrix(i, column_index) = (matrix(i, column_index) - mean) / standard_deviation;
+    }
+    else
+    {
+        #pragma omp parallel for
+        for(Index i = 0; i < matrix.dimension(0); i++)
+            matrix(i, column_index) = type(0);
+    }
 }
 
 
@@ -34,9 +39,9 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
                               const Index& column_index,
                               const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
-            ? type(1)
-            : type(1)/column_descriptives.standard_deviation;
+    const type slope = (column_descriptives.standard_deviation > NUMERIC_LIMITS_MIN)
+        ? type(1) / column_descriptives.standard_deviation
+        : type(0);
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -50,19 +55,25 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
                            const type& min_range,
                            const type& max_range)
 {
-
     const type minimum = column_descriptives.minimum;
     const type maximum = column_descriptives.maximum;
-
-    if(abs(maximum - minimum) < NUMERIC_LIMITS_MIN)
-        //throw runtime_error("The difference between the maximum and minimum value is too small.");
+    const type range = maximum - minimum;
 
     if(max_range - min_range < NUMERIC_LIMITS_MIN)
-        throw runtime_error("The range values are not valid.");
+        throw runtime_error("The range values for scaling are not valid.");
 
-    #pragma omp parallel for
-    for(Index i = 0; i < matrix.dimension(0); i++)
-        matrix(i, column_index) = (matrix(i, column_index) - minimum) / (maximum - minimum);
+    if(range > NUMERIC_LIMITS_MIN)
+    {
+        #pragma omp parallel for
+        for(Index i = 0; i < matrix.dimension(0); i++)
+            matrix(i, column_index) = (matrix(i, column_index) - minimum) / range;
+    }
+    else
+    {
+        #pragma omp parallel for
+        for(Index i = 0; i < matrix.dimension(0); i++)
+            matrix(i, column_index) = type(0);
+    }
 }
 
 
@@ -135,22 +146,31 @@ void scale_minimum_maximum_3d(Tensor<type, 3>& tensor,
     const type maximum = feature_descriptives.maximum;
     const type range_diff = maximum - minimum;
 
-    if(abs(range_diff) < NUMERIC_LIMITS_MIN)
-        return;
-
     if(max_range - min_range < NUMERIC_LIMITS_MIN)
         throw runtime_error("The range values are not valid.");
 
     const Index batch_size = tensor.dimension(0);
     const Index time_steps = tensor.dimension(1);
 
-    #pragma omp parallel for
-    for(Index b = 0; b < batch_size; b++)
-        for(Index t = 0; t < time_steps; t++)
-        {
-            type scaled_01 = (tensor(b, t, feature_index) - minimum) / range_diff;
-            tensor(b, t, feature_index) = scaled_01 * (max_range - min_range) + min_range;
-        }
+    if(range_diff > NUMERIC_LIMITS_MIN)
+    {
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; b++)
+            for(Index t = 0; t < time_steps; t++)
+            {
+                type scaled_01 = (tensor(b, t, feature_index) - minimum) / range_diff;
+                tensor(b, t, feature_index) = scaled_01 * (max_range - min_range) + min_range;
+            }
+    }
+    else
+    {
+        const type mid_range = min_range + (max_range - min_range) / 2.0;
+
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; b++)
+            for(Index t = 0; t < time_steps; t++)
+                tensor(b, t, feature_index) = mid_range;
+    }
 }
 
 
@@ -177,7 +197,6 @@ void scale_logarithmic_3d(Tensor<type, 3>& tensor, const Index& feature_index)
     for(Index b = 0; b < batch_size; b++)
         for(Index t = 0; t < time_steps; t++)
             tensor(b, t, feature_index) = log(tensor(b, t, feature_index));
-
 }
 
 
@@ -197,7 +216,6 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i,column_index) = (matrix(i, column_index)*(maximum-minimum)+minimum);
-
 }
 
 
@@ -206,14 +224,18 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
     const type mean = column_descriptives.mean;
     type standard_deviation = column_descriptives.standard_deviation;
 
-    if(abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN)
+    if(standard_deviation < NUMERIC_LIMITS_MIN)
+    {
+        #pragma omp parallel for
+        for(Index i = 0; i < matrix.dimension(0); i++)
+            matrix(i, column_index) = mean;
+
         return;
-        // throw runtime_error("Standard deviation is zero.");
+    }
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
-
 }
 
 
@@ -235,19 +257,16 @@ void unscale_logarithmic(Tensor<type, 2>& matrix, const Index& column_index)
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, column_index) = exp(matrix(i, column_index));
-    }
 }
+
 
 void unscale_image_minimum_maximum(Tensor<type, 2>& matrix, const Index& column_index)
 {
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, column_index) *= type(255);
-    }
 }
 
 }

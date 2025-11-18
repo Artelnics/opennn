@@ -1492,14 +1492,13 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     set_codification(new_codification);
 
-
     read_csv();
 
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
 
-    missing_values_method = MissingValuesMethod::Mean;
+    missing_values_method = MissingValuesMethod::Unuse;
 
     input_dimensions = { get_variables_number("Input") };
     target_dimensions = { get_variables_number("Target") };
@@ -2270,7 +2269,7 @@ void Dataset::print_missing_values_information() const
     const Index samples_with_missing_values = count_rows_with_nan();
 
     cout << "Missing values number: " << missing_values_number << " (" << missing_values_number * 100 / data.size() << "%)" << endl
-         << "Raw variables with missing values: " << missing_raw_variables_number
+         << "Variables with missing values: " << missing_raw_variables_number
          << " (" << missing_raw_variables_number * 100 / data.dimension(1) << "%)" << endl
          << "Samples with missing values: "
          << samples_with_missing_values << " (" << samples_with_missing_values * 100 / data.dimension(0) << "%)" << endl;
