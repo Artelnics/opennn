@@ -34,11 +34,11 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     const Index variables_number = get_variables_number();
 
     if(variables_number == 1)
-        set_raw_variable_use(0, "InputTarget");
+        set_raw_variable_role(0, "InputTarget");
     else
     {
         const vector<Index> target_index = get_variable_indices("Target");
-        set_raw_variable_use(target_index[0], "InputTarget");
+        set_raw_variable_role(target_index[0], "InputTarget");
     }
 
     input_dimensions = {past_time_steps, get_variables_number("Input")};
@@ -304,7 +304,7 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_role(read_xml_string(raw_variable_element, "Role"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
@@ -418,12 +418,12 @@ void TimeSeriesDataset::read_csv()
 {
     Dataset::read_csv();
 
-    set_default_raw_variables_uses_forecasting();
+    set_default_raw_variables_roles_forecasting();
 
     const Index variables_number = get_variables_number();
 
     if (variables_number == 1)
-        set_raw_variable_use(0, "InputTarget");
+        set_raw_variable_role(0, "InputTarget");
     else
     {
         const vector<Index> target_indices = get_variable_indices("Target");
@@ -431,7 +431,7 @@ void TimeSeriesDataset::read_csv()
         if (!target_indices.empty())
         {
             const Index raw_variable_target_index = get_raw_variable_index(target_indices[0]);
-            set_raw_variable_use(raw_variable_target_index, "InputTarget");
+            set_raw_variable_role(raw_variable_target_index, "InputTarget");
         }
     }
 
@@ -665,7 +665,7 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& past_
     const vector<Index> target_raw_variable_indices = get_raw_variable_indices("Target");
 
     for(Index i = 0; i < target_raw_variables_number; i++)
-        if(raw_variables[target_raw_variable_indices[i]].use != "InputTarget")
+        if(raw_variables[target_raw_variable_indices[i]].role != "InputTarget")
             input_target_raw_variables_number++;
 
     Index input_target_numeric_raw_variables_number = 0;
@@ -708,7 +708,7 @@ Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& past_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use == "None" || raw_variables[i].type != RawVariableType::Numeric)
+        if(raw_variables[i].role == "None" || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
         input_i = get_raw_variable_data(i);
@@ -765,7 +765,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 
             const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
-            if(target_raw_variable_type == RawVariableType::Numeric && raw_variables[raw_variable_index].use != "InputTarget")
+            if(target_raw_variable_type == RawVariableType::Numeric && raw_variables[raw_variable_index].role != "InputTarget")
                 input_target_numeric_raw_variables_number++;
 
             count++;
@@ -790,7 +790,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables[i].use == "None" || raw_variables[i].type != RawVariableType::Numeric)
+        if(raw_variables[i].role == "None" || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
         input_i = get_raw_variable_data(i);
@@ -801,7 +801,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& pas
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(raw_variables[j].use == "None"
+            if(raw_variables[j].role == "None"
             || raw_variables[j].type != RawVariableType::Numeric)
                 continue;
 
@@ -837,7 +837,7 @@ Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations_spearman(const I
     vector<Index> numeric_vars_indices;
 
     for(size_t i = 0; i < raw_variables.size(); ++i)
-        if(raw_variables[i].use != "None" && raw_variables[i].type == RawVariableType::Numeric)
+        if(raw_variables[i].role != "None" && raw_variables[i].type == RawVariableType::Numeric)
             numeric_vars_indices.push_back(i);
 
     const Index numeric_vars_count = numeric_vars_indices.size();

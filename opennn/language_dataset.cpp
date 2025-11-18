@@ -45,7 +45,7 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
         raw_variable.type = RawVariableType::Numeric;
         raw_variable.name = "variable_" + to_string(i + 1);
 
-        raw_variable.use = (i < input_sequence_length)
+        raw_variable.role = (i < input_sequence_length)
                                ? "Input"
                                : "Target";
     }
@@ -449,7 +449,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
         RawVariable& raw_variable = raw_variables[i];
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_role(read_xml_string(raw_variable_element, "Role"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
@@ -762,10 +762,10 @@ void LanguageDataset::read_csv()
     raw_variables.resize(variables_number);
 
     for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_length,
-             [](auto& var) {var.use = "Input";});
+             [](auto& var) {var.role = "Input";});
 
     for_each(raw_variables.begin() + maximum_input_length, raw_variables.begin() + maximum_input_length + maximum_target_length,
-             [](auto& var) { var.use = "Target"; });
+             [](auto& var) { var.role = "Target"; });
 
     // set data
 

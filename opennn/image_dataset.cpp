@@ -460,7 +460,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
         raw_variable.name = read_xml_string(start_element, "Name");
         raw_variable.set_scaler(read_xml_string(start_element, "Scaler"));
-        raw_variable.set_use(read_xml_string(start_element, "Use"));
+        raw_variable.set_role(read_xml_string(start_element, "Role"));
         raw_variable.set_type(read_xml_string(start_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
