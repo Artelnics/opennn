@@ -3748,6 +3748,8 @@ void Dataset::read_csv()
     if(!file.is_open())
         throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
+    // BOM
+
     char bom[3] = {0};
     file.read(bom, 3);
 
@@ -3756,11 +3758,13 @@ void Dataset::read_csv()
         || static_cast<unsigned char>(bom[2]) != 0xBF)
         file.seekg(0);
 
+    // Read file
+
     vector<vector<string>> raw_file_content;
     string line;
     const string separator_string = get_separator_string();
 
-    while (getline(file, line))
+    while(getline(file, line))
     {
         if(!line.empty() && line.back() == '\r')
             line.pop_back();
@@ -3794,7 +3798,32 @@ void Dataset::read_csv()
     if(raw_file_content.empty())
         throw runtime_error("Data file only contains a header.");
 
+    // Check Id
+
     const Index samples_number = raw_file_content.size();
+
+    if(!has_sample_ids && samples_number > 0)
+    {
+        std::set<string> unique_elements;
+        bool possible_id = true;
+
+        for(const vector<string>& row : raw_file_content)
+        {
+            if(row.empty()) continue;
+
+            if(!unique_elements.insert(row[0]).second)
+            {
+                possible_id = false;
+                break;
+            }
+        }
+
+        if(possible_id && unique_elements.size() == static_cast<size_t>(samples_number))
+            has_sample_ids = true;
+    }
+
+    // Variables
+
     const size_t columns_number = header_tokens.size();
     const Index raw_variables_number = has_sample_ids ? columns_number - 1 : columns_number;
     raw_variables.resize(raw_variables_number);
@@ -3819,6 +3848,8 @@ void Dataset::read_csv()
         if(raw_variable.type == RawVariableType::Categorical && raw_variable.get_categories_number() == 2)
             raw_variable.type = RawVariableType::Binary;
 
+    // Samples data
+
     sample_uses.resize(samples_number);
     sample_ids.resize(samples_number);
 
@@ -3834,7 +3865,6 @@ void Dataset::read_csv()
     raw_variables_missing_values_number.resize(raw_variables_number);
     raw_variables_missing_values_number.setZero();
 
-    // #pragma omp parallel for
     for(Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         const vector<string>& tokens = raw_file_content[sample_index];
