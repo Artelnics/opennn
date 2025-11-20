@@ -1717,21 +1717,40 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
-    for (Index i = 0; i < input_raw_variables_number; i++)
+    for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
-        for (Index j = 0; j < target_raw_variables_number; j++)
+        bool has_significant_correlation = false;
+
+        for(Index j = 0; j < target_raw_variables_number; j++)
         {
             const type r = correlations(i, j).r;
 
-            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].role != "None")
+            if(!isnan(r) && abs(r) >= minimum_correlation)
             {
-                raw_variables[input_raw_variable_index].set_role("None");
-                unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
+                has_significant_correlation = true;
+                break;
             }
         }
+
+        if(!has_significant_correlation && raw_variables[input_raw_variable_index].role != "None")
+        {
+            raw_variables[input_raw_variable_index].set_role("None");
+            unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
+        }
     }
+
+    const Index new_input_variables_number = get_variables_number("Input");
+    const Index new_target_variables_number = get_variables_number("Target");
+
+    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+    if(ts_dataset)
+        set_dimensions("Input", {ts_dataset->get_past_time_steps(), new_input_variables_number});
+    else
+        set_dimensions("Input", {new_input_variables_number});
+
+    set_dimensions("Target", {new_target_variables_number});
 
     return unused_raw_variables;
 }
