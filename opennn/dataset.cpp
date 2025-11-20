@@ -1717,21 +1717,40 @@ vector<string> Dataset::unuse_uncorrelated_raw_variables(const type& minimum_cor
 
     const vector<Index> input_raw_variable_indices = get_raw_variable_indices("Input");
 
-    for (Index i = 0; i < input_raw_variables_number; i++)
+    for(Index i = 0; i < input_raw_variables_number; i++)
     {
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
-        for (Index j = 0; j < target_raw_variables_number; j++)
+        bool has_significant_correlation = false;
+
+        for(Index j = 0; j < target_raw_variables_number; j++)
         {
             const type r = correlations(i, j).r;
 
-            if ((isnan(r) || abs(r) < minimum_correlation) && raw_variables[input_raw_variable_index].role != "None")
+            if(!isnan(r) && abs(r) >= minimum_correlation)
             {
-                raw_variables[input_raw_variable_index].set_role("None");
-                unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
+                has_significant_correlation = true;
+                break;
             }
         }
+
+        if(!has_significant_correlation && raw_variables[input_raw_variable_index].role != "None")
+        {
+            raw_variables[input_raw_variable_index].set_role("None");
+            unused_raw_variables.push_back(raw_variables[input_raw_variable_index].name);
+        }
     }
+
+    const Index new_input_variables_number = get_variables_number("Input");
+    const Index new_target_variables_number = get_variables_number("Target");
+
+    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+    if(ts_dataset)
+        set_dimensions("Input", {ts_dataset->get_past_time_steps(), new_input_variables_number});
+    else
+        set_dimensions("Input", {new_input_variables_number});
+
+    set_dimensions("Target", {new_target_variables_number});
 
     return unused_raw_variables;
 }
@@ -3748,6 +3767,8 @@ void Dataset::read_csv()
     if(!file.is_open())
         throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
+    // BOM
+
     char bom[3] = {0};
     file.read(bom, 3);
 
@@ -3756,11 +3777,13 @@ void Dataset::read_csv()
         || static_cast<unsigned char>(bom[2]) != 0xBF)
         file.seekg(0);
 
+    // Read file
+
     vector<vector<string>> raw_file_content;
     string line;
     const string separator_string = get_separator_string();
 
-    while (getline(file, line))
+    while(getline(file, line))
     {
         if(!line.empty() && line.back() == '\r')
             line.pop_back();
@@ -3794,7 +3817,48 @@ void Dataset::read_csv()
     if(raw_file_content.empty())
         throw runtime_error("Data file only contains a header.");
 
+    // Check Id
+
     const Index samples_number = raw_file_content.size();
+
+    if(!has_sample_ids && samples_number > 0)
+    {
+        std::set<string> unique_elements;
+        bool possible_id = true;
+
+        bool is_date_column = true;
+        Index date_check_count = 0;
+        const Index max_date_checks = 20;
+
+        for(const vector<string>& row : raw_file_content)
+        {
+            if(row.empty()) continue;
+            const string& token = row[0];
+
+            if(!unique_elements.insert(token).second)
+            {
+                possible_id = false;
+                break;
+            }
+
+            if(is_date_column && date_check_count < max_date_checks && !token.empty() && token != missing_values_label)
+            {
+                if(!is_date_time_string(token))
+                    is_date_column = false;
+
+                date_check_count++;
+            }
+        }
+
+        if(is_date_column && date_check_count > 0)
+            possible_id = false;
+
+        if(possible_id && unique_elements.size() == static_cast<size_t>(samples_number))
+            has_sample_ids = true;
+    }
+
+    // Variables
+
     const size_t columns_number = header_tokens.size();
     const Index raw_variables_number = has_sample_ids ? columns_number - 1 : columns_number;
     raw_variables.resize(raw_variables_number);
@@ -3819,6 +3883,8 @@ void Dataset::read_csv()
         if(raw_variable.type == RawVariableType::Categorical && raw_variable.get_categories_number() == 2)
             raw_variable.type = RawVariableType::Binary;
 
+    // Samples data
+
     sample_uses.resize(samples_number);
     sample_ids.resize(samples_number);
 
@@ -3834,7 +3900,6 @@ void Dataset::read_csv()
     raw_variables_missing_values_number.resize(raw_variables_number);
     raw_variables_missing_values_number.setZero();
 
-    // #pragma omp parallel for
     for(Index sample_index = 0; sample_index < samples_number; ++sample_index)
     {
         const vector<string>& tokens = raw_file_content[sample_index];
