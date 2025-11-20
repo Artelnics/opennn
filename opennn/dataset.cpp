@@ -3807,16 +3807,32 @@ void Dataset::read_csv()
         std::set<string> unique_elements;
         bool possible_id = true;
 
+        bool is_date_column = true;
+        Index date_check_count = 0;
+        const Index max_date_checks = 20;
+
         for(const vector<string>& row : raw_file_content)
         {
             if(row.empty()) continue;
+            const string& token = row[0];
 
-            if(!unique_elements.insert(row[0]).second)
+            if(!unique_elements.insert(token).second)
             {
                 possible_id = false;
                 break;
             }
+
+            if(is_date_column && date_check_count < max_date_checks && !token.empty() && token != missing_values_label)
+            {
+                if(!is_date_time_string(token))
+                    is_date_column = false;
+
+                date_check_count++;
+            }
         }
+
+        if(is_date_column && date_check_count > 0)
+            possible_id = false;
 
         if(possible_id && unique_elements.size() == static_cast<size_t>(samples_number))
             has_sample_ids = true;
