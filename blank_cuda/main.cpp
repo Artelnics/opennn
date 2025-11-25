@@ -65,6 +65,11 @@ int main()
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        //training_strategy.set_loss_index("MeanSquaredError");
+        training_strategy.set_loss_index("CrossEntropyError2d");
+
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(4000);
 
         TrainingResults training_results = training_strategy.train_cuda();
 

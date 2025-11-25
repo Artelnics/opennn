@@ -281,13 +281,13 @@ TEST(Transformer, ForwardPropagate)
     dataset.set_sample_uses("Training");
 
     for(Index i = 0; i < context_length; i++)
-        dataset.set_raw_variable_use(i, string::Context);
+        dataset.set_raw_variable_role(i, string::Context);
 
     for(Index i = 0; i < input_length; i++)
-        dataset.set_raw_variable_use(i + context_length, "Input");
+        dataset.set_raw_variable_role(i + context_length, "Input");
 
     for(Index i = 0; i < input_length; i++)
-        dataset.set_raw_variable_use(i + context_length + input_length, "Target");
+        dataset.set_raw_variable_role(i + context_length + input_length, "Target");
 
     training_samples_indices = dataset.get_sample_indices("Training");
     decoder_variables_indices = dataset.get_variable_indices(string::Context);
@@ -350,13 +350,13 @@ TEST(Transformer, ForwardPropagate)
         dataset.set_sample_uses("Training");
 
         for(Index i = 0; i < context_length; i++)
-            dataset.set_raw_variable_use(i, string::Context);
+            dataset.set_raw_variable_role(i, string::Context);
 
         for(Index i = 0; i < input_length; i++)
-            dataset.set_raw_variable_use(i + context_length, "Input");
+            dataset.set_raw_variable_role(i + context_length, "Input");
 
         for(Index i = 0; i < input_length; i++)
-            dataset.set_raw_variable_use(i + context_length + input_length, "Target");
+            dataset.set_raw_variable_role(i + context_length + input_length, "Target");
 
         training_samples_indices = dataset.get_sample_indices("Training");
         decoder_variables_indices = dataset.get_variable_indices(string::Context);

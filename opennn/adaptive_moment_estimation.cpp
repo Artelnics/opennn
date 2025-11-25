@@ -804,10 +804,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         if (epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    set_unscaling();
-
     neural_network->copy_parameters_host();
     neural_network->free_parameters_device();
+
+    set_unscaling();
 
     if (display) results.print();
 

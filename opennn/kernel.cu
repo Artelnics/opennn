@@ -478,13 +478,16 @@ void sgd_update_device(
 }
 
 
-__global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+__global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_results, const float* targets, const float* outputs, const float epsilon)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < n) {
-        const type out = outputs[i];
-        const type tgt = targets[i];
+        float out = outputs[i];
+        const float tgt = targets[i];
+
+        if (out > 1.0f) out = 1.0f;
+        if (out < 0.0f) out = 0.0f;
 
         term_results[i] = tgt * logf(out + epsilon) + (1.0f - tgt) * logf(1.0f - out + epsilon);
     }
