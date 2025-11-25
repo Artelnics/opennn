@@ -50,7 +50,7 @@ int main()
 
         // DataSet
 
-        Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/airfoil_self_noise.csv", ";", true, false);
+        Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/breast_cancer.csv", ";", true, false);
 
         dataset.split_samples_random(type(0.8), type(0), type(0.2));
 
@@ -71,7 +71,8 @@ int main()
         // Testing analysis
 
         TestingAnalysis testing_analysis(&approximation_network, &dataset);
-        testing_analysis.print_goodness_of_fit_analysis();
+        //testing_analysis.print_goodness_of_fit_analysis();
+        cout << testing_analysis.calculate_confusion() << endl;
 
 
         cout << "Bye!" << endl;
