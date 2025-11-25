@@ -243,11 +243,78 @@ Tensor<type, 3> Scaling3d::calculate_outputs(const Tensor<type, 3>& inputs) cons
 }
 
 
-string Scaling3d::get_expression(const vector<string>&, const vector<string>&) const
+string Scaling3d::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
-    // This method might need a more complex implementation depending on how expressions
-    // are handled for time series data. For now, returning an informative message.
-    return "Expression generation for Scaling3d is not implemented yet.\n";
+    const Index time_steps = input_dimensions[0];
+    const Index features_number = input_dimensions[1];
+
+    const Index total_inputs_size = time_steps * features_number;
+
+    vector<string> final_input_names = input_names;
+    if(final_input_names.empty())
+    {
+        final_input_names.resize(total_inputs_size);
+
+        for(Index i = 0; i < total_inputs_size; i++)
+            final_input_names[i] = "input_" + to_string(i);
+    }
+    else if(static_cast<Index>(final_input_names.size()) != total_inputs_size)
+        throw runtime_error("Scaling3d::get_expression: Input names vector size does not match total flattened size.");
+
+    vector<string> final_output_names = output_names;
+
+    if(final_output_names.empty())
+    {
+        final_output_names.resize(total_inputs_size);
+
+        for(Index i = 0; i < total_inputs_size; i++)
+            final_output_names[i] = "scaling_layer_3d_output_" + to_string(i);
+    }
+    else if(static_cast<Index>(final_output_names.size()) != total_inputs_size)
+        throw runtime_error("Scaling3d::get_expression: Output names vector size does not match total flattened size.");
+
+    ostringstream buffer;
+    buffer.precision(10);
+
+    Index linear_index = 0;
+
+    for(Index f = 0; f < features_number; f++)
+    {
+        const string& scaler = scalers[f];
+        const Descriptives& desc = descriptives[f];
+
+        for(Index t = 0; t < time_steps; t++)
+        {
+            const string& in_name = final_input_names[linear_index];
+            const string& out_name = final_output_names[linear_index];
+
+            if(scaler == "None")
+                buffer << out_name << " = " << in_name << ";\n";
+            else if(scaler == "MinimumMaximum")
+                buffer << out_name
+                       << " = " << in_name << "*(" << max_range << "-" << min_range << ")/("
+                       << desc.maximum << "-(" << desc.minimum << "))-" << desc.minimum << "*("
+                       << max_range << "-" << min_range << ")/("
+                       << desc.maximum << "-" << desc.minimum << ")+" << min_range << ";\n";
+            else if(scaler == "MeanStandardDeviation")
+                buffer << out_name << " = (" << in_name << "-" << desc.mean << ")/" << desc.standard_deviation << ";\n";
+            else if(scaler == "StandardDeviation")
+                buffer << out_name << " = " << in_name << "/(" << desc.standard_deviation << ");\n";
+            else if(scaler == "Logarithm")
+                buffer << out_name << " = log(" << in_name << ");\n";
+            else
+                throw runtime_error("Scaling3d::get_expression: Unknown scaling method for feature " + to_string(f) + ".\n");
+
+            linear_index++;
+        }
+    }
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    replace(expression, "--", "+");
+
+    return expression;
 }
 
 
