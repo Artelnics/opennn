@@ -252,18 +252,50 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
 string Recurrent::get_expression(const vector<string>& feature_names,
                                  const vector<string>& output_names) const
 {
+    const Index time_steps = input_dimensions[0];
+    const Index inputs_number = input_dimensions[1];
+    const Index outputs_number = get_outputs_number();
+
     ostringstream buffer;
+    buffer.precision(10);
 
-    for(size_t j = 0; j < output_names.size(); j++)
+    for(Index t = 0; t < time_steps; t++)
     {
-        const Tensor<type, 1> weights_column =  recurrent_weights.chip(j,1);
+        for(Index j = 0; j < outputs_number; j++)
+        {
+            string current_var_name;
 
-        buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " +";
+            if(t == time_steps - 1)
+            {
+                if(j < static_cast<Index>(output_names.size()))
+                    current_var_name = output_names[j];
+                else
+                    current_var_name = "recurrent_out_" + to_string(j);
+            }
+            else
+                current_var_name = "recurrent_hidden_t" + to_string(t) + "_" + to_string(j);
 
-        for(size_t i = 0; i < feature_names.size() - 1; i++)
-            buffer << " (" << feature_names[i] << "*" << weights_column(i) << ") +";
+            buffer << current_var_name << " = " << activation_function << "( " << biases(j);
 
-        buffer << " (" << feature_names[feature_names.size() - 1] << "*" << weights_column[feature_names.size() - 1] << "));\n";
+            for(Index i = 0; i < inputs_number; i++)
+            {
+                Index feature_index = i * time_steps + t;
+
+                if(feature_index < static_cast<Index>(feature_names.size()))
+                    buffer << " + (" << feature_names[feature_index] << "*" << input_weights(i,j) << ")";
+            }
+
+            if(t > 0)
+            {
+                for(Index prev_j = 0; prev_j < outputs_number; prev_j++)
+                {
+                    string prev_var_name = "recurrent_hidden_t" + to_string(t-1) + "_" + to_string(prev_j);
+                    buffer << " + (" << prev_var_name << "*" << recurrent_weights(prev_j, j) << ")";
+                }
+            }
+
+            buffer << " );\n";
+        }
     }
 
     return buffer.str();
