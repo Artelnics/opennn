@@ -22,6 +22,7 @@
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/stochastic_gradient_descent.h"
 #include "../opennn/mean_squared_error.h"
+#include "../opennn/cross_entropy_error.h"
 #include "../opennn/testing_analysis.h"
 #include "../opennn/image_dataset.h"
 #include "../opennn/scaling_layer_4d.h"
@@ -52,33 +53,27 @@ int main()
 
         Dataset dataset("/mnt/c/Users/davidgonzalez/Documents/breast_cancer.csv", ";", true, false);
 
-        dataset.split_samples_random(type(0.8), type(0), type(0.2));
-
         // Neural Network
 
-        ApproximationNetwork approximation_network(dataset.get_input_dimensions(), { neurons_number }, dataset.get_target_dimensions());
+        ClassificationNetwork neural_network(dataset.get_input_dimensions(), { neurons_number }, dataset.get_target_dimensions());
 
         // Training strategy
 
-        MeanSquaredError loss(&approximation_network, &dataset);
-        loss.set_regularization_method("none");
-
-        TrainingStrategy training_strategy(&approximation_network, &dataset);
+        TrainingStrategy training_strategy(&neural_network, &dataset);
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         //training_strategy.set_loss_index("MeanSquaredError");
         training_strategy.set_loss_index("CrossEntropyError2d");
+        training_strategy.get_loss_index()->set_regularization_method("L2");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(4000);
+        adam->set_maximum_epochs_number(5000);
 
         TrainingResults training_results = training_strategy.train_cuda();
 
         // Testing analysis
 
-        TestingAnalysis testing_analysis(&approximation_network, &dataset);
-        //testing_analysis.print_goodness_of_fit_analysis();
+        TestingAnalysis testing_analysis(&neural_network, &dataset);
         cout << testing_analysis.calculate_confusion() << endl;
-
 
         cout << "Bye!" << endl;
 

@@ -201,7 +201,7 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
 
     cublasSdot(cublas_handle, samples_number * outputs_number, errors_device, 1, errors_device, 1, &error(0));
 
-    const type coefficient = type(2.0)/type(samples_number * outputs_number);
+    const type coefficient = type(1.0)/type(samples_number * outputs_number);
 
     error(0) = error(0) * coefficient;
 

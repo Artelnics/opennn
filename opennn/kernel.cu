@@ -486,9 +486,6 @@ __global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_r
         float out = outputs[i];
         const float tgt = targets[i];
 
-        if (out > 1.0f) out = 1.0f;
-        if (out < 0.0f) out = 0.0f;
-
         term_results[i] = tgt * logf(out + epsilon) + (1.0f - tgt) * logf(1.0f - out + epsilon);
     }
 }
@@ -574,9 +571,16 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+
+    if (i < n) 
+    {
         const float param_val = params[i];
-        const float sign = (param_val > 0.0f) ? 1.0f : ((param_val < 0.0f) ? -1.0f : 0.0f);
+
+        float sign = 0.0f;
+
+        if (param_val > 0.0f) sign = 1.0f;
+        else if (param_val < 0.0f) sign = -1.0f;
+
         deltas[i] += weight * sign;
     }
 }

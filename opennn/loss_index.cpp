@@ -146,7 +146,11 @@ void LossIndex::back_propagate(const Batch& batch,
 
     back_propagation.loss = back_propagation.error();
 
+    // Regularization
+
     add_regularization(back_propagation);
+
+    add_regularization_to_deltas(back_propagation);
 }
 
 
@@ -1406,7 +1410,7 @@ void LossIndex::calculate_layers_error_gradient_cuda(const BatchCuda& batch_cuda
 
 void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cuda) const
 {
-    if (regularization_method == "None")
+    if (regularization_method == "None" || regularization_weight == 0.0f)
     {
         back_propagation_cuda.regularization = 0.0f;
         return;
@@ -1416,7 +1420,8 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
 
     const Index layers_number = neural_network->get_layers_number();
 
-    type total_regularization_value = 0.0f;
+    type total_sum_squares = 0.0f;
+    type total_l1_norm = 0.0f;
 
     cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
 
@@ -1444,43 +1449,54 @@ void LossIndex::add_regularization_cuda(BackPropagationCuda& back_propagation_cu
             {
                 type l1_norm = 0.0f;
                 cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_norm);
-                total_regularization_value += l1_norm;
+                total_l1_norm += l1_norm;
 
                 apply_l1_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight);
             }
             else if (regularization_method == "L2")
             {
-                type l2_norm = 0.0f;
+                type sum_squares = 0.0f;
 
-                cublasSnrm2(cublas_handle, param_size, param_device_ptr, 1, &l2_norm);
+                cublasSdot(cublas_handle, param_size, param_device_ptr, 1, param_device_ptr, 1, &sum_squares);
 
-                total_regularization_value += l2_norm;
+                total_sum_squares += sum_squares;
 
-                if (l2_norm >= static_cast<type>(NUMERIC_LIMITS_MIN))
-                {
-                    const type alpha = regularization_weight / l2_norm;
+                const type alpha = regularization_weight;
 
-                    cublasSaxpy(cublas_handle, param_size, &alpha, param_device_ptr, 1, delta_device_ptr, 1);
-                }
+                cublasSaxpy(cublas_handle, param_size, &alpha, param_device_ptr, 1, delta_device_ptr, 1);
             }
             else if (regularization_method == "ElasticNet")
             {
-                const type mix_factor = 0.5;
-                type l1_norm = 0.0f;
-                type l2_norm = 0.0f;
+                const type mix_factor = 0.5f;
+                type l1_sum_abs = 0.0f;
+                type l2_sum_sq = 0.0f;
 
-                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_norm);
-                cublasSnrm2(cublas_handle, param_size, param_device_ptr, 1, &l2_norm);
+                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_sum_abs);
 
-                total_regularization_value += mix_factor * l1_norm + (1.0f - mix_factor) * l2_norm;
+                cublasSdot(cublas_handle, param_size, param_device_ptr, 1, param_device_ptr, 1, &l2_sum_sq);
+
+                const type term_l1 = mix_factor * l1_sum_abs;
+                const type term_l2 = (1.0f - mix_factor) * 0.5f * l2_sum_sq;
 
                 apply_elastic_net_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight, mix_factor);
             }
         }
     }
 
-    back_propagation_cuda.regularization = total_regularization_value;
-    back_propagation_cuda.loss += regularization_weight * total_regularization_value;
+    if (regularization_method == "L2")
+    {
+        const type regularization_term = 0.5f * regularization_weight * total_sum_squares;
+
+        back_propagation_cuda.regularization = regularization_term;
+        back_propagation_cuda.loss += regularization_term;
+    }
+    else if (regularization_method == "L1")
+    {
+        const type regularization_term = regularization_weight * total_l1_norm;
+
+        back_propagation_cuda.regularization = regularization_term;
+        back_propagation_cuda.loss += regularization_term;
+    }
 }
 
 
