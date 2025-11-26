@@ -478,13 +478,13 @@ void sgd_update_device(
 }
 
 
-__global__ void calculate_binary_cross_entropy_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type epsilon)
+__global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_results, const float* targets, const float* outputs, const float epsilon)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < n) {
-        const type out = outputs[i];
-        const type tgt = targets[i];
+        float out = outputs[i];
+        const float tgt = targets[i];
 
         term_results[i] = tgt * logf(out + epsilon) + (1.0f - tgt) * logf(1.0f - out + epsilon);
     }
@@ -571,9 +571,16 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+
+    if (i < n) 
+    {
         const float param_val = params[i];
-        const float sign = (param_val > 0.0f) ? 1.0f : ((param_val < 0.0f) ? -1.0f : 0.0f);
+
+        float sign = 0.0f;
+
+        if (param_val > 0.0f) sign = 1.0f;
+        else if (param_val < 0.0f) sign = -1.0f;
+
         deltas[i] += weight * sign;
     }
 }

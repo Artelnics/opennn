@@ -250,8 +250,6 @@ TrainingResults AdaptiveMomentEstimation::train()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            loss_index->add_regularization_to_deltas(training_back_propagation);
-
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -804,10 +802,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         if (epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    set_unscaling();
-
     neural_network->copy_parameters_host();
     neural_network->free_parameters_device();
+
+    set_unscaling();
 
     if (display) results.print();
 

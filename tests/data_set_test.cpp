@@ -291,7 +291,7 @@ TEST(Dataset, ReadCSV_Basic)
 
     ASSERT_NO_THROW(dataset.read_csv());
 
-    dataset.set_default_raw_variables_uses();
+    dataset.set_default_raw_variables_roles();
 
     dataset.set_dimensions("Input", { dataset.get_variables_number("Input") });
     dataset.set_dimensions("Target", { dataset.get_variables_number("Target") });
@@ -311,9 +311,9 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_EQ(raw_vars[1].type, Dataset::RawVariableType::Numeric);
     EXPECT_EQ(raw_vars[2].type, Dataset::RawVariableType::Binary);
 
-    EXPECT_EQ(raw_vars[0].use, "Input");
-    EXPECT_EQ(raw_vars[1].use, "Input");
-    EXPECT_EQ(raw_vars[2].use, "Target");
+    EXPECT_EQ(raw_vars[0].role, "Input");
+    EXPECT_EQ(raw_vars[1].role, "Input");
+    EXPECT_EQ(raw_vars[2].role, "Target");
 
     // Data Tensor Content
     const Tensor<type, 2>& data = dataset.get_data();
@@ -1193,10 +1193,10 @@ TEST(Dataset, test_unuse_uncorrelated_raw_variables)
     EXPECT_EQ(unused[1], "C");
 
     const auto& raw_vars = dataset.get_raw_variables();
-    EXPECT_EQ(raw_vars[0].use, "Input");
-    EXPECT_EQ(raw_vars[1].use, "None");
-    EXPECT_EQ(raw_vars[2].use, "None");
-    EXPECT_EQ(raw_vars[3].use, "Target");
+    EXPECT_EQ(raw_vars[0].role, "Input");
+    EXPECT_EQ(raw_vars[1].role, "None");
+    EXPECT_EQ(raw_vars[2].role, "None");
+    EXPECT_EQ(raw_vars[3].role, "Target");
 }
 
 TEST(Dataset,CalculateNegatives)

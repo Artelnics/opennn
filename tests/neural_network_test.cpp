@@ -256,7 +256,7 @@ TEST(NeuralNetworkTest, TestSaveLoad)
 
     NeuralNetwork loaded_empty_net(file_path);
 
-    EXPECT_EQ(loaded_empty_net.get_inputs_number(), 0);
+    EXPECT_EQ(loaded_empty_net.get_features_number(), 0);
     EXPECT_EQ(loaded_empty_net.get_layers_number(), 0);
     EXPECT_EQ(loaded_empty_net.get_outputs_number(), 0);
 
@@ -267,7 +267,7 @@ TEST(NeuralNetworkTest, TestSaveLoad)
 
     NeuralNetwork loaded_neural_approx1_network(file_path);
 
-    EXPECT_EQ(neural_approx1_network.get_inputs_number(), loaded_neural_approx1_network.get_inputs_number());
+    EXPECT_EQ(neural_approx1_network.get_features_number(), loaded_neural_approx1_network.get_features_number());
 
     EXPECT_EQ(neural_approx1_network.get_layers_number(), loaded_neural_approx1_network.get_layers_number());
     EXPECT_EQ(neural_approx1_network.get_layer(0)->get_name(), loaded_neural_approx1_network.get_layer(0)->get_name());

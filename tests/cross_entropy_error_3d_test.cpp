@@ -49,11 +49,11 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     vector<opennn::Dataset::RawVariable> raw_variables(2);
 
     raw_variables[0].name = "input";
-    raw_variables[0].use = opennn::"Input";
+    raw_variables[0].role = opennn::"Input";
     raw_variables[0].type = opennn::Dataset::RawVariableType::Numeric;
 
     raw_variables[1].name = "target";
-    raw_variables[1].use = opennn::"Target";
+    raw_variables[1].role = opennn::"Target";
     raw_variables[1].type = opennn::Dataset::RawVariableType::Numeric;
 
     language_dataset.set_raw_variables(raw_variables);
@@ -121,10 +121,10 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     dataset.set_data(data);
 
     for (Index i = 0; i < inputs_number; i++)
-        dataset.set_raw_variable_use(i, "Input");
+        dataset.set_raw_variable_role(i, "Input");
 
     for (Index i = 0; i < inputs_number; i++)
-        dataset.set_raw_variable_use(i + inputs_number, "Target");
+        dataset.set_raw_variable_role(i + inputs_number, "Target");
 
     dataset.set_sample_uses("Training");
 
