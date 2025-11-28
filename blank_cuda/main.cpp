@@ -69,6 +69,7 @@ int main()
         adam->set_maximum_epochs_number(5000);
 
         TrainingResults training_results = training_strategy.train_cuda();
+        //TrainingResults training_results = training_strategy.train();
 
         // Testing analysis
 
