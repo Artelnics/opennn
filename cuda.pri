@@ -16,6 +16,16 @@ isEmpty(CUDA_PATH_DETECTED) {
     } else:win32 {
         message("    -> Compiler is not MSVC (e.g., MinGW). Disabling CUDA support as it is incompatible.")
         CUDA_PATH = ""
+    } else:unix:!macx {
+        message("    -> System is Linux. Searching for CUDA...")
+        CUDA_PATH = $$(CUDA_PATH)
+        isEmpty(CUDA_PATH): CUDA_PATH = $$(CUDA_HOME)
+
+        isEmpty(CUDA_PATH) {
+            exists(/usr/local/cuda) {
+                CUDA_PATH = /usr/local/cuda
+            }
+        }
     }
 }
 
@@ -48,6 +58,15 @@ if(!isEmpty(CUDA_PATH)) {
             message("    -> cuDNN found. Adding to build.")
             DEFINES += HAVE_CUDNN
             LIBS += -lcudnn
+        }else:exists(/usr/include/cudnn.h) {
+            message("    -> cuDNN found. Adding to build.")
+            DEFINES += HAVE_CUDNN
+            LIBS += -L/usr/lib/x86_64-linux-gnu -lcudnn
+        }
+        else:exists(/usr/include/x86_64-linux-gnu/cudnn.h) {
+            message("    -> cuDNN found. Adding to build.")
+            DEFINES += HAVE_CUDNN
+            LIBS += -L/usr/lib/x86_64-linux-gnu -lcudnn
         }
 
         if(!isEmpty(CUDA_SOURCES)) {
