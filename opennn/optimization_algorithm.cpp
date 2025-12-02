@@ -260,17 +260,24 @@ void OptimizationAlgorithm::set_names()
 
     for(Index i = 0; i < target_variables_number; i++)
     {
+        string current_target_name;
+
         if(target_names[i] == "")
         {
             auto input_iterator = find(input_variable_indices.begin(), input_variable_indices.end(), target_variable_indices[i]);
 
             if(input_iterator == input_variable_indices.end())
-                target_variable_names.push_back("variable_" + to_string(input_variables_number + i + 1));
+                current_target_name = "variable_" + to_string(input_variables_number + i + 1);
             else
-                target_variable_names.push_back("variable_" + to_string(int(*input_iterator) + 1));
+                current_target_name = "variable_" + to_string(int(*input_iterator) + 1);
         }
         else
-            target_variable_names.push_back(target_names[i]);
+            current_target_name = target_names[i];
+
+        if(time_series_dataset)
+            current_target_name += "_ahead";
+
+        target_variable_names.push_back(current_target_name);
     }
 
     neural_network->set_feature_names(input_variable_names);
@@ -321,8 +328,33 @@ void OptimizationAlgorithm::set_scaling()
     const vector<Index> input_variable_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
 
-    vector<Descriptives> target_variable_descriptives = dataset->scale_variables("Target");
-    vector<string> target_variable_scalers = dataset->get_variable_scalers("Target");
+    bool has_pure_targets = false;
+    for(const Index& t_idx : target_variable_indices)
+    {
+        bool is_input = false;
+        for(const Index& i_idx : input_variable_indices)
+        {
+            if(t_idx == i_idx)
+            {
+                is_input = true;
+                break;
+            }
+        }
+        if(!is_input)
+        {
+            has_pure_targets = true;
+            break;
+        }
+    }
+
+    vector<Descriptives> target_variable_descriptives;
+    vector<string> target_variable_scalers;
+
+    if(has_pure_targets)
+    {
+        target_variable_descriptives = dataset->scale_variables("Target");
+        target_variable_scalers = dataset->get_variable_scalers("Target");
+    }
 
     vector<Descriptives> unscaling_layer_descriptives;
     vector<string> unscaling_layer_scalers;
@@ -411,7 +443,7 @@ void OptimizationAlgorithm::set_unscaling()
     }
 
     if(!unscaled_targets_descriptives.empty())
-        dataset->unscale_variables("Target", unscaling_layer->get_descriptives());
+        dataset->unscale_variables("Target", unscaled_targets_descriptives);
 }
 
 

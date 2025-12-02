@@ -235,6 +235,55 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
     if (new_activation_function == "Softmax" && get_outputs_number() == 1)
         activation_function = "Logistic";
+	
+	#ifdef OPENNN_CUDA
+
+    if (activation_function != "Softmax")
+    {
+        if (activation_descriptor == nullptr)
+            cudnnCreateActivationDescriptor(&activation_descriptor);
+
+        cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
+
+        if (activation_function == "Linear")
+        {
+            activation = CUDNN_ACTIVATION_IDENTITY;
+            use_combinations = false;
+        }
+        else if (activation_function == "Logistic")
+        {
+            activation = CUDNN_ACTIVATION_SIGMOID;
+            use_combinations = false;
+        }
+        else if (activation_function == "HyperbolicTangent")
+        {
+            activation = CUDNN_ACTIVATION_TANH;
+            use_combinations = false;
+        }
+        else if (activation_function == "RectifiedLinear")
+        {
+            activation = CUDNN_ACTIVATION_RELU;
+            use_combinations = false;
+        }
+        else if (activation_function == "ScaledExponentialLinear")
+        {
+            activation = CUDNN_ACTIVATION_ELU;
+            use_combinations = true;
+        }
+        else if (activation_function == "ClippedRelu")
+        {
+            activation = CUDNN_ACTIVATION_CLIPPED_RELU;
+            use_combinations = true;
+        }
+        else if (activation_function == "Swish")
+        {
+            activation = CUDNN_ACTIVATION_SWISH;
+            use_combinations = true;
+        }
+
+        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, relu_ceiling);
+    }
+#endif
 }
 
 

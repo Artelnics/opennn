@@ -438,6 +438,12 @@ void TimeSeriesDataset::read_csv()
     input_dimensions = {past_time_steps, get_variables_number("Input")};
     target_dimensions = {get_variables_number("Target")};
 
+    const Index samples_number = get_samples_number();
+
+    if(samples_number > past_time_steps)
+        for(Index i = samples_number - past_time_steps; i < samples_number; i++)
+            set_sample_use(i, "None");
+
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
