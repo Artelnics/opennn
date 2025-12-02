@@ -235,13 +235,12 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
     if (new_activation_function == "Softmax" && get_outputs_number() == 1)
         activation_function = "Logistic";
-	
-	#ifdef OPENNN_CUDA
+
+#ifdef OPENNN_CUDA
 
     if (activation_function != "Softmax")
     {
-        if (activation_descriptor == nullptr)
-            cudnnCreateActivationDescriptor(&activation_descriptor);
+        cudnnCreateActivationDescriptor(&activation_descriptor);
 
         cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
 
@@ -281,8 +280,9 @@ void Dense2d::set_activation_function(const string& new_activation_function)
             use_combinations = true;
         }
 
-        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, relu_ceiling);
+        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
+
 #endif
 }
 
