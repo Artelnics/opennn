@@ -264,7 +264,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     check();
 
-    if(display) cout << "Training with quasi-Newton method..." << endl;;
+    if(display) cout << "Training with quasi-Newton method..." << endl;
 
     // Dataset
 
