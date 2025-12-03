@@ -3817,22 +3817,25 @@ void Dataset::read_csv()
     if(raw_file_content.empty())
         throw runtime_error("Data file only contains a header.");
 
-    // Check Id
+    // Id detection
 
     const Index samples_number = raw_file_content.size();
 
     if(!has_sample_ids && samples_number > 0)
     {
         std::set<string> unique_elements;
-        bool possible_id = true;
 
+        bool possible_id = true;
+        bool is_numeric_column = true;
         bool is_date_column = true;
         Index date_check_count = 0;
         const Index max_date_checks = 20;
 
         for(const vector<string>& row : raw_file_content)
         {
-            if(row.empty()) continue;
+            if(row.empty())
+                continue;
+
             const string& token = row[0];
 
             if(!unique_elements.insert(token).second)
@@ -3840,6 +3843,10 @@ void Dataset::read_csv()
                 possible_id = false;
                 break;
             }
+
+            if(is_numeric_column && !token.empty() && token != missing_values_label)
+                if(!is_numeric_string(token))
+                    is_numeric_column = false;
 
             if(is_date_column && date_check_count < max_date_checks && !token.empty() && token != missing_values_label)
             {
@@ -3853,7 +3860,7 @@ void Dataset::read_csv()
         if(is_date_column && date_check_count > 0)
             possible_id = false;
 
-        if(possible_id && unique_elements.size() == static_cast<size_t>(samples_number))
+        if(possible_id && !is_numeric_column && unique_elements.size() == static_cast<size_t>(samples_number))
             has_sample_ids = true;
     }
 
