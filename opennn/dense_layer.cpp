@@ -794,12 +794,21 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     const cudnnTensorDescriptor_t& output_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
 
+    const cudnnTensorDescriptor_t& biases_add_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_add_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
     type* outputs_buffer = use_combinations ? combinations : outputs;
-    
+
+    // --- DEBUG GPU ---
+    cout << "\n>>> [CUDA] Layer: " << get_name() << " (" << activation_function << ")" << endl;
+    print_gpu_matrix_preview("  [CUDA] Inputs", inputs_device[0], batch_size, inputs_number);
+    print_gpu_matrix_preview("  [CUDA] Weights", weights_device, inputs_number, outputs_number);
+    Tensor<type, 1> gpu_biases = vector_from_device(biases_device, outputs_number);
+    cout << "  [GPU] Biases stored: " << gpu_biases << endl;
+    // -----------------
+
     // Combinations
-    
+
     cublasSgemm(cublas_handle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 batch_size, outputs_number, inputs_number,
@@ -817,7 +826,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                                           biases_tensor_descriptor,
                                           biases_device,
                                           &beta_add,
-                                          output_tensor_descriptor,
+                                          biases_add_tensor_descriptor,
                                           outputs_buffer);
 
     if (status != CUDNN_STATUS_SUCCESS)
@@ -874,6 +883,10 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         }
     }
 
+    // --- DEBUG GPU ---
+    // Imprimimos 'outputs_buffer' que tiene el resultado de W*x + b
+    print_gpu_matrix_preview("  [CUDA] Combinations (Pre-Activation)", outputs_buffer, batch_size, outputs_number);
+    // -----------------
     // Activations
 
     if (activation_function == "Linear")
@@ -914,6 +927,10 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
     }
+
+    // --- DEBUG GPU ---
+    print_gpu_matrix_preview("  [CUDA] Final Outputs", outputs, batch_size, outputs_number);
+    // -----------------
 }
 
 
@@ -1052,7 +1069,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
                 &beta,
                 bias_deltas,
                 outputs_number);
-    
+
     // Weight derivatives
 
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
@@ -1212,18 +1229,25 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     Dense2d* dense2d_layer = static_cast<Dense2d*>(layer);
 
     const Index outputs_number = dense2d_layer->get_outputs_number();
-//    const Index inputs_number = dense2d_layer->get_input_dimensions()[0];
 
     // Biases
 
     cudnnCreateTensorDescriptor(&biases_tensor_descriptor);
-
     cudnnSetTensor4dDescriptor(biases_tensor_descriptor,
                                CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
                                1,
                                outputs_number,
                                1,
+                               1);
+
+    cudnnCreateTensorDescriptor(&biases_add_tensor_descriptor);
+    cudnnSetTensor4dDescriptor(biases_add_tensor_descriptor,
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               1,
+                               outputs_number,
+                               batch_size,
                                1);
 
     // Outputs
@@ -1328,6 +1352,7 @@ void Dense2dForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(biases_add_tensor_descriptor);
 
     if (dropout_reserve_space)
         cudaFree(dropout_reserve_space);
