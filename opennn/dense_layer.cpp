@@ -799,14 +799,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     type* outputs_buffer = use_combinations ? combinations : outputs;
 
-    // --- DEBUG GPU ---
-    cout << "\n>>> [CUDA] Layer: " << get_name() << " (" << activation_function << ")" << endl;
-    print_gpu_matrix_preview("  [CUDA] Inputs", inputs_device[0], batch_size, inputs_number);
-    print_gpu_matrix_preview("  [CUDA] Weights", weights_device, inputs_number, outputs_number);
-    Tensor<type, 1> gpu_biases = vector_from_device(biases_device, outputs_number);
-    cout << "  [GPU] Biases stored: " << gpu_biases << endl;
-    // -----------------
-
     // Combinations
 
     cublasSgemm(cublas_handle,
@@ -883,10 +875,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         }
     }
 
-    // --- DEBUG GPU ---
-    // Imprimimos 'outputs_buffer' que tiene el resultado de W*x + b
-    print_gpu_matrix_preview("  [CUDA] Combinations (Pre-Activation)", outputs_buffer, batch_size, outputs_number);
-    // -----------------
     // Activations
 
     if (activation_function == "Linear")
@@ -927,10 +915,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
     }
-
-    // --- DEBUG GPU ---
-    print_gpu_matrix_preview("  [CUDA] Final Outputs", outputs, batch_size, outputs_number);
-    // -----------------
 }
 
 
