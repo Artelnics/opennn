@@ -142,53 +142,6 @@ void Dense2d::set(const dimensions& new_input_dimensions,
                                    1, outputs_number, 1, 1);
     }
 
-    // Activations
-
-    if (activation_function != "Softmax")
-    {
-        cudnnCreateActivationDescriptor(&activation_descriptor);
-
-        cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
-
-        if (activation_function == "Linear")
-        {
-            activation = CUDNN_ACTIVATION_IDENTITY;
-            use_combinations = false;
-        }
-        else if (activation_function == "Logistic")
-        {
-            activation = CUDNN_ACTIVATION_SIGMOID;
-            use_combinations = false;
-        }
-        else if (activation_function == "HyperbolicTangent")
-        {
-            activation = CUDNN_ACTIVATION_TANH;
-            use_combinations = false;
-        }
-        else if (activation_function == "RectifiedLinear")
-        {
-            activation = CUDNN_ACTIVATION_RELU;
-            use_combinations = false;
-        }
-        else if (activation_function == "ScaledExponentialLinear")
-        {
-            activation = CUDNN_ACTIVATION_ELU;
-            use_combinations = true;
-        }
-        else if (activation_function == "ClippedRelu")
-        {
-            activation = CUDNN_ACTIVATION_CLIPPED_RELU;
-            use_combinations = true;
-        }
-        else if (activation_function == "Swish")
-        {
-            activation = CUDNN_ACTIVATION_SWISH;
-            use_combinations = true;
-        }
-
-        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
-    }
-
 #endif
 }
 
@@ -238,50 +191,53 @@ void Dense2d::set_activation_function(const string& new_activation_function)
 
 #ifdef OPENNN_CUDA
 
-    if (activation_function != "Softmax")
-    {
+    if (activation_descriptor == nullptr && activation_function != "Softmax")
         cudnnCreateActivationDescriptor(&activation_descriptor);
 
-        cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
+    cudnnActivationMode_t activation_mode = CUDNN_ACTIVATION_IDENTITY;
+    double relu_ceiling = 0.0;
 
-        if (activation_function == "Linear")
-        {
-            activation = CUDNN_ACTIVATION_IDENTITY;
-            use_combinations = false;
-        }
-        else if (activation_function == "Logistic")
-        {
-            activation = CUDNN_ACTIVATION_SIGMOID;
-            use_combinations = false;
-        }
-        else if (activation_function == "HyperbolicTangent")
-        {
-            activation = CUDNN_ACTIVATION_TANH;
-            use_combinations = false;
-        }
-        else if (activation_function == "RectifiedLinear")
-        {
-            activation = CUDNN_ACTIVATION_RELU;
-            use_combinations = false;
-        }
-        else if (activation_function == "ScaledExponentialLinear")
-        {
-            activation = CUDNN_ACTIVATION_ELU;
-            use_combinations = true;
-        }
-        else if (activation_function == "ClippedRelu")
-        {
-            activation = CUDNN_ACTIVATION_CLIPPED_RELU;
-            use_combinations = true;
-        }
-        else if (activation_function == "Swish")
-        {
-            activation = CUDNN_ACTIVATION_SWISH;
-            use_combinations = true;
-        }
-
-        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
+    if (activation_function == "Linear")
+    {
+        activation_mode = CUDNN_ACTIVATION_IDENTITY;
+        use_combinations = false;
     }
+    else if (activation_function == "Logistic")
+    {
+        activation_mode = CUDNN_ACTIVATION_SIGMOID;
+        use_combinations = false;
+    }
+    else if (activation_function == "HyperbolicTangent")
+    {
+        activation_mode = CUDNN_ACTIVATION_TANH;
+        use_combinations = false;
+    }
+    else if (activation_function == "RectifiedLinear")
+    {
+        activation_mode = CUDNN_ACTIVATION_RELU;
+        use_combinations = false;
+    }
+    else if (activation_function == "ScaledExponentialLinear")
+    {
+        activation_mode = CUDNN_ACTIVATION_ELU;
+        use_combinations = true;
+    }
+    else if (activation_function == "ClippedRelu")
+    {
+        activation_mode = CUDNN_ACTIVATION_CLIPPED_RELU;
+        use_combinations = true;
+        relu_ceiling = 6.0;
+    }
+    else if (activation_function == "Swish")
+    {
+        activation_mode = CUDNN_ACTIVATION_SWISH;
+        use_combinations = true;
+    }
+    else if (activation_function == "Softmax")
+        use_combinations = true;
+
+    if (activation_function != "Softmax")
+        cudnnSetActivationDescriptor(activation_descriptor, activation_mode, CUDNN_PROPAGATE_NAN, relu_ceiling);
 
 #endif
 }
@@ -838,12 +794,13 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     const cudnnTensorDescriptor_t& output_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
 
+    const cudnnTensorDescriptor_t& biases_add_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_add_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
     type* outputs_buffer = use_combinations ? combinations : outputs;
-    
+
     // Combinations
-    
+
     cublasSgemm(cublas_handle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 batch_size, outputs_number, inputs_number,
@@ -861,7 +818,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                                           biases_tensor_descriptor,
                                           biases_device,
                                           &beta_add,
-                                          output_tensor_descriptor,
+                                          biases_add_tensor_descriptor,
                                           outputs_buffer);
 
     if (status != CUDNN_STATUS_SUCCESS)
@@ -1096,7 +1053,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
                 &beta,
                 bias_deltas,
                 outputs_number);
-    
+
     // Weight derivatives
 
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
@@ -1256,18 +1213,25 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     Dense2d* dense2d_layer = static_cast<Dense2d*>(layer);
 
     const Index outputs_number = dense2d_layer->get_outputs_number();
-//    const Index inputs_number = dense2d_layer->get_input_dimensions()[0];
 
     // Biases
 
     cudnnCreateTensorDescriptor(&biases_tensor_descriptor);
-
     cudnnSetTensor4dDescriptor(biases_tensor_descriptor,
                                CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
                                1,
                                outputs_number,
                                1,
+                               1);
+
+    cudnnCreateTensorDescriptor(&biases_add_tensor_descriptor);
+    cudnnSetTensor4dDescriptor(biases_add_tensor_descriptor,
+                               CUDNN_TENSOR_NCHW,
+                               CUDNN_DATA_FLOAT,
+                               1,
+                               outputs_number,
+                               batch_size,
                                1);
 
     // Outputs
@@ -1372,6 +1336,7 @@ void Dense2dForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(biases_add_tensor_descriptor);
 
     if (dropout_reserve_space)
         cudaFree(dropout_reserve_space);
