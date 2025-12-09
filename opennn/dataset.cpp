@@ -501,9 +501,7 @@ void Dataset::set_default_raw_variables_roles()
         {
             raw_variable.set_role("None");
         }
-        //else if (model_type != ModelType::Classification ||
-        //    raw_variable.type == RawVariableType::Binary ||
-        //    raw_variable.type == RawVariableType::Categorical))
+        else
         {
             raw_variable.set_role("Target");
             break;
