@@ -931,7 +931,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
     if(total_negatives == 0)
         throw runtime_error("Number of negative samples (" + to_string(total_negatives) + ") must be greater than zero.\n");
 
-    const Index maximum_points_number = 200;
+    const Index maximum_points_number = 100;
 
     Index points_number;
 
