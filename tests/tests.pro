@@ -7,7 +7,8 @@
 #   artelnics@artelnics.com
 
 TEMPLATE = app
-CONFIG += console c++17
+
+CONFIG += c++17
 
 TARGET = run_tests
 DESTDIR = "$$PWD/bin"

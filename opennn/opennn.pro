@@ -11,6 +11,8 @@ QT = # Do not use qt
 TARGET = opennn
 TEMPLATE = lib
 
+CONFIG += c++17
+
 CONFIG += staticlib
 CONFIG += precompile_header
 CONFIG += jumbo_build

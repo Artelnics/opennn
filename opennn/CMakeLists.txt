@@ -4,7 +4,10 @@ project(opennn_library LANGUAGES CXX)
 
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
 add_library(opennn STATIC ${CPP_SOURCES})
-target_link_libraries(opennn PUBLIC stdc++fs)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(opennn PUBLIC stdc++fs)
+endif()
 
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -16,7 +19,9 @@ if(OpenMP_FOUND)
     target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-add_compile_options(-Wno-interference-size)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-interference-size)
+endif()
 
 if(OPENNN_WITH_CUDA)
     file(GLOB_RECURSE CUDA_SOURCES CONFIGURE_DEPENDS "*.cu" "*.cuh")

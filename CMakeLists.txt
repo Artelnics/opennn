@@ -8,7 +8,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-Wno-interference-size)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-interference-size)
+endif()
+
+if(APPLE)
+    find_program(BREW_PROG brew)
+    if(BREW_PROG)
+        execute_process(COMMAND ${BREW_PROG} --prefix libomp
+                        OUTPUT_VARIABLE LIBOMP_PREFIX
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        ERROR_QUIET)
+        if(LIBOMP_PREFIX)
+            list(APPEND CMAKE_PREFIX_PATH "${LIBOMP_PREFIX}")
+        endif()
+    endif()
+endif()
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -42,12 +57,12 @@ if(OpenNN_BUILD_BLANK)
     add_subdirectory(blank)
 endif()
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" OFF)
+option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
