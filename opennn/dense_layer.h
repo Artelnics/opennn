@@ -150,6 +150,7 @@ private:
 struct Dense2dForwardPropagation final : LayerForwardPropagation
 {
     Dense2dForwardPropagation(const Index& = 0, Layer* = nullptr);
+    virtual ~Dense2dForwardPropagation() = default;
 
     TensorView get_output_pair() const override;
 
@@ -170,6 +171,7 @@ struct Dense2dForwardPropagation final : LayerForwardPropagation
 struct Dense2dBackPropagation final : LayerBackPropagation
 {
     Dense2dBackPropagation(const Index& = 0, Layer* = nullptr);
+    virtual ~Dense2dBackPropagation() = default;
 
     vector<TensorView> get_input_derivative_views() const override;
 

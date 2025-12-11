@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-if(UNIX)
+if(UNIX AND NOT APPLE)
 	option(USE_OpenMP "Use OpenMP" ON)
 	if(USE_OpenMP)
 		find_package(OpenMP)

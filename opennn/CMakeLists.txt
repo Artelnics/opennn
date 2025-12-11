@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.18)
 
 project(opennn_library LANGUAGES CXX)
 
-file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
-add_library(opennn STATIC ${CPP_SOURCES})
+file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
+file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
+
+add_library(opennn STATIC ${CPP_SOURCES} ${HEADER_FILES})
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(opennn PUBLIC stdc++fs)
@@ -14,13 +16,15 @@ target_include_directories(opennn PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-find_package(OpenMP)
-if(OpenMP_FOUND)
-    target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
+if(APPLE)
+    target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
+elseif(OpenMP_FOUND)
+    target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(opennn PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-Wno-interference-size)
+    target_compile_options(opennn PRIVATE -Wno-interference-size)
 endif()
 
 if(OPENNN_WITH_CUDA)
@@ -33,3 +37,8 @@ if(OPENNN_WITH_CUDA)
         target_include_directories(opennn PUBLIC ${CUDNN_INCLUDE_DIR})
     endif()
 endif()
+
+target_compile_options(opennn PRIVATE
+    $<$<CONFIG:DEBUG>:-O0 -g>
+    $<$<NOT:$<CONFIG:DEBUG>>:-O2>
+)

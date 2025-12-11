@@ -20,6 +20,7 @@ Layer::Layer()
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
+Layer::~Layer() = default;
 
 const bool& Layer::get_display() const
 {

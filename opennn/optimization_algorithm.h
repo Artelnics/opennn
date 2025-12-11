@@ -27,6 +27,7 @@ class OptimizationAlgorithm
 public:
 
     OptimizationAlgorithm(const LossIndex* = nullptr);
+    virtual ~OptimizationAlgorithm() = default;
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
@@ -148,6 +149,7 @@ public:
 struct OptimizationAlgorithmData
 {
     OptimizationAlgorithmData();
+    virtual ~OptimizationAlgorithmData() = default;
 
     virtual void print() const;
 
@@ -161,6 +163,7 @@ struct OptimizationAlgorithmData
 struct TrainingResults
 {
     TrainingResults(const Index& = 0);
+    virtual ~TrainingResults() = default;
 
     string write_stopping_condition() const;
 
