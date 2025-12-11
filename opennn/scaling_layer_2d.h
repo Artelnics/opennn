@@ -91,6 +91,7 @@ private:
 struct Scaling2dForwardPropagation final : LayerForwardPropagation
 {
     Scaling2dForwardPropagation(const Index& = 0, Layer* = nullptr);
+    virtual ~Scaling2dForwardPropagation() = default;
 
     TensorView get_output_pair() const override;
 

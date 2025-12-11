@@ -7,7 +7,8 @@
 #   artelnics@artelnics.com
 
 TEMPLATE = app
-CONFIG += console c++17
+
+CONFIG += c++17
 
 TARGET = run_tests
 DESTDIR = "$$PWD/bin"
@@ -45,7 +46,9 @@ win32-msvc {
         OPENNN_LIB_PATH = $$OUT_PWD/../opennn/release
         PRE_TARGETDEPS += $$OPENNN_LIB_PATH/opennn.lib
     }
-} else:unix|win32-g++ {
+}
+
+else:win32-g++ {
     CONFIG(debug, debug|release) {
         OPENNN_LIB_PATH = $$OUT_PWD/../opennn/debug
         PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
@@ -54,6 +57,12 @@ win32-msvc {
         PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
     }
 }
+
+else:unix {
+    OPENNN_LIB_PATH = $$OUT_PWD/../opennn
+    PRE_TARGETDEPS += $$OPENNN_LIB_PATH/libopennn.a
+}
+
 LIBS += -L$$OPENNN_LIB_PATH -lopennn
 
 # CUDA

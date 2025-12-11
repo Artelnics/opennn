@@ -30,6 +30,7 @@ class Layer
 public:
 
     Layer();
+    virtual ~Layer();
 
     const string& get_label() const;
 
@@ -310,6 +311,7 @@ protected:
 struct LayerForwardPropagation
 {
     LayerForwardPropagation() {}
+    virtual ~LayerForwardPropagation() = default;
 
     void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
     {
@@ -334,6 +336,7 @@ struct LayerForwardPropagation
 struct LayerBackPropagation
 {
     LayerBackPropagation() {}
+    virtual ~LayerBackPropagation() = default;
 
     void set(const Index& new_batch_size = 0, Layer* new_layer = nullptr)
     {
@@ -365,6 +368,7 @@ struct LayerBackPropagation
 struct LayerBackPropagationLM
 {
     LayerBackPropagationLM() {}
+    virtual ~LayerBackPropagationLM() = default;
 
     virtual vector<TensorView> get_input_derivative_views() const = 0;
 
@@ -385,7 +389,6 @@ struct LayerBackPropagationLM
 struct LayerForwardPropagationCuda
 {
     explicit LayerForwardPropagationCuda() {}
-
     virtual ~LayerForwardPropagationCuda() {}
 
     virtual void set(const Index& = 0, Layer* = nullptr) = 0;

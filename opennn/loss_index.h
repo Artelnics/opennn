@@ -37,14 +37,7 @@ class LossIndex
 public:
 
     LossIndex(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
-
-    ~LossIndex()
-    {
-        if(thread_pool != nullptr)
-            thread_pool.reset();
-        if(thread_pool_device != nullptr)
-            thread_pool_device.reset();
-    }
+    virtual ~LossIndex() = default;
 
     enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
@@ -232,6 +225,7 @@ protected:
 struct BackPropagationLM
 {
     BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
+    virtual ~BackPropagationLM() = default;
 
     void set(const Index& = 0, LossIndex* = nullptr);
 
@@ -270,6 +264,7 @@ struct BackPropagationLM
 struct BackPropagation
 {
     BackPropagation(const Index& = 0, const LossIndex* = nullptr);
+    virtual ~BackPropagation() = default;
 
     void set(const Index& = 0, const LossIndex* = nullptr);
 
