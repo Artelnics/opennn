@@ -96,6 +96,16 @@ string ModelExpression::write_selu_c() const
         "}\n\n";
 }
 
+
+string ModelExpression::write_softmax_c() const
+{
+    return
+        "float Softmax(float x) {\n"
+        "\treturn expf(x);\n"
+        "}\n\n";
+}
+
+
 string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw_variables) const
 {
     // Data
@@ -125,6 +135,7 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
     bool exp_linear = false;
     bool selu = false;
     bool tanh = false;
+    bool softmax = false;
 
     buffer << write_comments_c();
 
@@ -165,12 +176,14 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
     if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
     if(expression.find("SELU") != string::npos) selu = true;
     if(expression.find("HyperbolicTangent") != string::npos) tanh = true;
+    if(expression.find("Softmax") != string::npos) softmax = true;
 
     buffer << "float Linear (float x) {\n\treturn x;\n}\n\n";
     if(logistic) buffer << write_logistic_c();
     if(relu) buffer << write_relu_c();
     if(exp_linear) buffer << write_exponential_linear_c();
     if(selu) buffer << write_selu_c();
+    if(softmax) buffer << write_softmax_c();
     if(tanh) buffer << "float HyperbolicTangent(float x) {\n\treturn tanhf(x);\n}\n\n";
 
     // Calculate outputs function
@@ -185,6 +198,9 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
     for(const string& l : lines)
     {
         string processed_line = l;
+
+        replace_all_appearances(processed_line, "[", "_");
+        replace_all_appearances(processed_line, "]", "_");
 
         for(Index i = 0; i < inputs_number; i++)
             replace_all_word_appearances(processed_line, feature_names[i], fixed_feature_names[i]);
@@ -210,6 +226,14 @@ string ModelExpression::get_expression_c(const vector<Dataset::RawVariable>& raw
 
     for(Index i = 0; i < outputs_number; i++)
         buffer << "\tout[" << i << "] = " << fixed_output_names[i] << ";\n";
+
+    if(softmax)
+    {
+        buffer << "\n\t// Softmax Normalization\n";
+        buffer << "\tfloat sum = 0.0f;\n";
+        buffer << "\tfor(int i = 0; i < " << outputs_number << "; i++) sum += out[i];\n";
+        buffer << "\tfor(int i = 0; i < " << outputs_number << "; i++) out[i] /= sum;\n";
+    }
 
     buffer << "\n\treturn out;\n}\n\n";
 
@@ -299,86 +323,6 @@ string ModelExpression::write_subheader_api() const{
 }
 
 
-void ModelExpression::autoassociation_api() const
-{
-    string expression;
-
-    size_t index = 0;
-
-    index = expression.find("sample_autoassociation_distance =");
-
-    if (index != string::npos)
-        expression.erase(index, string::npos);
-
-    index = expression.find("sample_autoassociation_variables_distance =");
-
-    if (index != string::npos)
-        expression.erase(index, string::npos);
-}
-
-
-string ModelExpression::logistic_api() const
-{
-    return
-        "<?php"
-        "function Logistic(float $x) {"
-        "$z = 1/(1+exp(-$x));"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-
-string ModelExpression::relu_api() const
-{
-    return
-        "<?php"
-        "function RectifiedLinear(int $x) {"
-        "$z = max(0, $x);"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-string ModelExpression::exponential_linear_api() const
-{
-    return
-        "<?php"
-        "function ExponentialLinear(int $x) {"
-        "$alpha = 1.6732632423543772848170429916717;"
-        "if($x>0){"
-        "$z=$x;"
-        "}else{"
-        "$z=$alpha*(exp($x)-1);"
-        "}"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-
-string ModelExpression::scaled_exponential_linear_api() const
-{
-    return
-        "<?php"
-        "function SELU(int $x) {"
-        "$alpha  = 1.67326;"
-        "$lambda = 1.05070;"
-        "if($x>0){"
-        "$z=$lambda*$x;"
-        "}else{"
-        "$z=$lambda*$alpha*(exp($x)-1);"
-        "}"
-        "return $z;"
-        "}"
-        "?>"
-        "\n";
-}
-
-
 string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& raw_variables) const
 {
     // Data
@@ -412,6 +356,9 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
 
     string expression = neural_network->get_expression();
 
+    bool softmax = false;
+    if(expression.find("Softmax") != string::npos) softmax = true;
+
     if(expression.find("Linear") != string::npos)
         buffer << "function Linear($x) { return $x; }\n";
     if(expression.find("Logistic") != string::npos)
@@ -424,6 +371,8 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
         buffer << "function ExponentialLinear($x) { $alpha = 1.67326; return ($x > 0) ? $x : $alpha * (exp($x) - 1); }\n";
     if(expression.find("SELU") != string::npos)
         buffer << "function SELU($x) { $alpha = 1.67326; $lambda = 1.05070; return $lambda * (($x > 0) ? $x : $alpha * (exp($x) - 1)); }\n";
+    if(softmax)
+        buffer << "function Softmax($x) { return exp($x); }\n";
 
     buffer << "\nsession_start();\n";
     buffer << "if(isset($_GET['num0'])) { \n";
@@ -460,10 +409,24 @@ string ModelExpression::get_expression_api(const vector<Dataset::RawVariable>& r
         if(line.find("{") != string::npos)
             break;
 
+        replace_all_appearances(line, "[", "_");
+        replace_all_appearances(line, "]", "_");
+
         if(line.back() != ';')
             line += ';';
 
         buffer << line << "\n";
+    }
+
+    if(softmax)
+    {
+        buffer << "\n// Softmax Normalization\n";
+        buffer << "$sum = 0;\n";
+        for(Index i = 0; i < outputs_number; i++)
+            buffer << "$sum += $" << fixed_output_names[i] << ";\n";
+
+        for(Index i = 0; i < outputs_number; i++)
+            buffer << "$" << fixed_output_names[i] << " /= $sum;\n";
     }
 
     // Response
@@ -541,6 +504,15 @@ string ModelExpression::hyperbolic_tangent_javascript() const
     return
         "function HyperbolicTangent(x) {\n"
         "\treturn Math.tanh(x);\n"
+        "}\n";
+}
+
+
+string ModelExpression::softmax_javascript() const
+{
+    return
+        "function Softmax(x) {\n"
+        "\treturn Math.exp(x);\n"
         "}\n";
 }
 
@@ -740,6 +712,9 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     for(int i = 0 ; i < outputs_number; i++)
         replace_all_word_appearances(expression, output_names[i], fixes_output_names[i]);
 
+    replace_all_appearances(expression, "[", "_");
+    replace_all_appearances(expression, "]", "_");
+
     vector<string> lines;
     stringstream ss(expression);
     string token;
@@ -763,12 +738,13 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     bool ReLU         = false;
     bool ExpLinear    = false;
     bool SExpLinear   = false;
+    bool Softmax      = false;
 
     if(expression.find("Logistic") != string::npos) logistic = true;
     if(expression.find("RectifiedLinear") != string::npos) ReLU = true;
     if(expression.find("ExponentialLinear") != string::npos) ExpLinear = true;
     if(expression.find("SELU") != string::npos) SExpLinear = true;
-
+    if(expression.find("Softmax") != string::npos) Softmax = true;
 
     // HTML
 
@@ -963,6 +939,7 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
     if(ReLU) buffer << relu_javascript();
     if(ExpLinear) buffer << exponential_linear_javascript();
     if(SExpLinear) buffer << selu_javascript();
+    if(Softmax) buffer << softmax_javascript();
     if(buffer.str().find("HyperbolicTangent") == string::npos) buffer << hyperbolic_tangent_javascript(); // Asegurar que se incluye si se usa en la expresión
     buffer << "\n";
 
@@ -1004,12 +981,16 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
         for(Index j = 0; j < inputs_number; ++j)
             replace_all_word_appearances(line, feature_names[j], fixes_feature_names[j]);
 
+        if(Softmax) replace_all_appearances(line, "Softmax", "___SOFTMAX_TOKEN___");
+
         for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
             string key_word = found_mathematical_expressions[j];
             string new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
+
+        if(Softmax) replace_all_appearances(line, "___SOFTMAX_TOKEN___", "Softmax");
 
         replace_all_appearances(line, "nan", "0");
         replace_all_appearances(line, "NaN", "0");
@@ -1029,6 +1010,14 @@ string ModelExpression::get_expression_javascript(const vector<Dataset::RawVaria
 
     for(Index i = 0; i < outputs_number; i++)
         buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
+
+    if(Softmax)
+    {
+        buffer << "\n\t// Softmax Normalization" << endl;
+        buffer << "\tvar sum = 0;" << endl;
+        buffer << "\tfor(var i = 0; i < out.length; i++) sum += out[i];" << endl;
+        buffer << "\tfor(var i = 0; i < out.length; i++) out[i] /= sum;" << endl;
+    }
 
     buffer << "\n\t" << "return out;" << endl
            << "}\n" << endl;
@@ -1094,11 +1083,12 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     const Index inputs_number = feature_names.size();
     const Index outputs_number = outputs.size();
 
-    bool logistic     = false;
-    bool relu         = false;
-    bool exp_linear    = false;
-    bool selu   = false;
-    bool hyper_tan     = false;
+    bool logistic = false;
+    bool relu = false;
+    bool exp_linear = false;
+    bool selu = false;
+    bool hyper_tan = false;
+    bool softmax = false;
 
     buffer << write_header_python();
 
@@ -1130,6 +1120,7 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     if(expression.find("ExponentialLinear") != string::npos) exp_linear = true;
     if(expression.find("SELU") != string::npos) selu = true;
     if(expression.find("HyperbolicTangent") != string::npos) hyper_tan = true;
+    if(expression.find("Softmax") != string::npos) softmax = true;
 
     buffer << "import numpy as np\n"
            << "import pandas as pd\n\n"
@@ -1183,6 +1174,11 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
                << "\tdef HyperbolicTangent(x):\n"
                << "\t\t" << "return np.tanh(x)\n\n";
 
+    if(softmax)
+        buffer << "\t@staticmethod\n"
+               << "\tdef Softmax(x):\n"
+               << "\t\t"   << "return np.exp(x)\n\n";
+
     buffer << "\t" << "def calculate_outputs(self, inputs):\n";
 
     Index input_idx = 0;
@@ -1194,6 +1190,9 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
     for(const string& l : lines)
     {
         string processed_line = l;
+
+        replace_all_appearances(processed_line, "[", "_");
+        replace_all_appearances(processed_line, "]", "_");
 
         for(const string& fname : feature_names)
             replace_all_word_appearances(processed_line, fname, replace_reserved_keywords(fname));
@@ -1218,7 +1217,14 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
             return_list += ", ";
     }
     return_list += "]";
-    buffer << "\t\treturn " << return_list << "\n\n";
+
+    buffer << "\t\toutputs = " << return_list << "\n";
+    if(softmax)
+    {
+        buffer << "\t\tsum_val = np.sum(outputs)\n";
+        buffer << "\t\toutputs = [x / sum_val for x in outputs]\n";
+    }
+    buffer << "\t\treturn outputs\n\n";
 
     // Calculate outputs function
 

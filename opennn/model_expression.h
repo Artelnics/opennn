@@ -30,6 +30,7 @@ public:
     string write_relu_c() const;
     string write_exponential_linear_c() const;
     string write_selu_c() const;
+    string write_softmax_c() const;
     //void auto_association_c() const;
     string get_expression_c(const vector<Dataset::RawVariable>&) const;
 
@@ -41,11 +42,6 @@ public:
     // php
     string write_header_api() const;
     string write_subheader_api() const;
-    void autoassociation_api() const;
-    string logistic_api() const;
-    string relu_api() const;
-    string exponential_linear_api() const;
-    string scaled_exponential_linear_api() const;
     string get_expression_api(const vector<Dataset::RawVariable>&) const;
 
     // javascript
@@ -55,6 +51,7 @@ public:
     string exponential_linear_javascript() const;
     string selu_javascript() const;
     string hyperbolic_tangent_javascript() const;
+    string softmax_javascript() const;
     string header_javascript() const;
     string subheader_javascript() const;
     string get_expression_javascript(const vector<Dataset::RawVariable>&) const;
