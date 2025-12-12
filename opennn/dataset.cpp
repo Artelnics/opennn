@@ -173,6 +173,25 @@ Index Dataset::RawVariable::get_categories_number() const
     return categories.size();
 }
 
+void Dataset::get_categorical_info(const string& variable_role, vector<Index>& raw_indices, vector<Index>& number_categories) const
+{
+    raw_indices.clear();
+    number_categories.clear();
+
+    const vector<RawVariable> raw_variables = get_raw_variables(variable_role);
+
+    const Index number_raw_variables = raw_variables.size();
+
+    for(Index i = 0; i < number_raw_variables; ++i)
+    {
+        if(raw_variables[i].is_categorical())
+        {
+            raw_indices.push_back(i);
+
+            number_categories.push_back(raw_variables[i].get_categories_number());
+        }
+    }
+}
 
 bool Dataset::is_sample_used(const Index& index) const
 {

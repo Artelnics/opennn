@@ -87,18 +87,23 @@ public:
         void set_categories(const vector<string>&);
 
         virtual void from_XML(const XMLDocument&);
+
         virtual void to_XML(XMLPrinter&) const;
 
         bool is_binary() const
         {
-            if(type == Dataset::RawVariableType::Binary) return true;
-            else return false;
+            if(type == Dataset::RawVariableType::Binary)
+                return true;
+            else
+                return false;
         }
 
         bool is_categorical() const
         {
-            if(type == Dataset::RawVariableType::Categorical) return true;
-            else return false;
+            if(type == Dataset::RawVariableType::Categorical)
+                return true;
+            else
+                return false;
         }
 
         void print() const;
@@ -215,6 +220,8 @@ public:
 
     dimensions get_input_dimensions() const;
     dimensions get_target_dimensions() const;
+
+    void get_categorical_info(const string&, vector<Index>&, vector<Index>&) const;
 
     // Set
 
