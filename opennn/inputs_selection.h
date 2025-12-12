@@ -35,6 +35,7 @@ public:
     };
 
     InputsSelection(const TrainingStrategy* = nullptr);
+    virtual ~InputsSelection() = default;
 
     TrainingStrategy* get_training_strategy() const;
 
