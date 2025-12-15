@@ -186,9 +186,6 @@ void Dense2d::set_activation_function(const string& new_activation_function)
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 
-    if (new_activation_function == "Softmax" && get_outputs_number() == 1)
-        activation_function = "Logistic";
-
 #ifdef OPENNN_CUDA
 
     if (activation_descriptor == nullptr && activation_function != "Softmax")

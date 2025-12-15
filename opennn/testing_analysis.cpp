@@ -840,6 +840,27 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_multiple_classification(co
 }
 
 
+vector<Tensor<Index, 2>> TestingAnalysis::calculate_multilabel_confusion(const type& decision_threshold) const
+{
+    check();
+
+    auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    vector<Tensor<Index, 2>> confusion_matrices(outputs_number);
+
+    for(Index j = 0; j < outputs_number; j++)
+    {
+        Tensor<type, 2> target_col = targets.chip(j, 1).reshape(array<Index, 2>{targets.dimension(0), 1});
+        Tensor<type, 2> output_col = outputs.chip(j, 1).reshape(array<Index, 2>{outputs.dimension(0), 1});
+
+        confusion_matrices[j] = calculate_confusion_binary_classification(target_col, output_col, decision_threshold);
+    }
+
+    return confusion_matrices;
+}
+
+
 Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs) const
 {
     const Tensor<Index, 2> confusion = calculate_confusion_binary_classification(targets, outputs, type(0.5));
