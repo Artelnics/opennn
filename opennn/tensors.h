@@ -266,9 +266,6 @@ void batch_matrix_multiplication(const ThreadPoolDevice* device,
         batch_number *= A.dimension(rank_index);
     }
 
-
-    cout << batch_number << endl;
-
     const Index A_matrix_size = A_rows * A_cols;
     const Index B_matrix_size = B_rows * B_cols;
     const Index C_matrix_size = C_rows * C_cols;
@@ -277,17 +274,11 @@ void batch_matrix_multiplication(const ThreadPoolDevice* device,
     const T* B_data = B.data();
     T* C_data = C.data();
 
-    cout << "C_rows: " << C_rows << endl;
-    cout << "C_cols: " << C_cols << endl;
-
 #pragma omp parallel for
     for (Index batch_index = 0; batch_index < batch_number; ++batch_index)
     {
         const TensorMap<const Tensor<T, 2>> A_mat(A_data + batch_index * A_matrix_size, A_rows, A_cols);
         const TensorMap<const Tensor<T, 2>> B_mat(B_data + batch_index * B_matrix_size, B_rows, B_cols);
-
-        cout << "A_mat" << A_mat.dimensions() << endl;
-        cout << "B_mat" << B_mat.dimensions() << endl;
 
         TensorMap<Tensor<T, 2>> C_mat(C_data + batch_index * C_matrix_size, C_rows, C_cols);
 

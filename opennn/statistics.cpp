@@ -56,13 +56,13 @@ void Descriptives::print(const string& title) const
 
 
 BoxPlot::BoxPlot(const type& new_minimum,
-                 const type& new_first_cuartile,
+                 const type& new_first_quartile,
                  const type& new_median,
                  const type& new_third_quartile,
                  const type& new_maximum)
 {
     minimum = new_minimum;
-    first_quartile = new_first_cuartile;
+    first_quartile = new_first_quartile;
     median = new_median;
     third_quartile = new_third_quartile;
     maximum = new_maximum;
@@ -70,13 +70,13 @@ BoxPlot::BoxPlot(const type& new_minimum,
 
 
 void BoxPlot::set(const type& new_minimum,
-                  const type& new_first_cuartile,
+                  const type& new_first_quartile,
                   const type& new_median,
                   const type& new_third_quartile,
                   const type& new_maximum)
 {
     minimum = new_minimum;
-    first_quartile = new_first_cuartile;
+    first_quartile = new_first_quartile;
     median = new_median;
     third_quartile = new_third_quartile;
     maximum = new_maximum;

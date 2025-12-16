@@ -102,7 +102,7 @@ const vector<string>& NeuralNetwork::get_output_names() const
 
 Index NeuralNetwork::get_output_index(const string& output_name) const
 {
-    for(size_t i = 0; i < output_names.size(); i++)
+    for(Index i = 0; i < Index(output_names.size()); i++)
         if(output_names[i] == output_name)
             return i;
 
@@ -126,7 +126,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
     const vector<string> labels = get_layer_labels();
 
-    for(size_t i = 0; i < labels.size(); i++)
+    for(Index i = 0; i < Index(labels.size()); i++)
         if(labels[i] == label)
             return layers[i];
 
@@ -539,7 +539,7 @@ string NeuralNetwork::get_expression() const
     const Index inputs_number = feature_names.size();
     const Index outputs_number = output_names.size();
 
-    for (int i = 0; i < inputs_number; i++)
+    for (Index i = 0; i < inputs_number; i++)
         feature_names[i].empty()
             ? new_feature_names[i] = "input_" + to_string(i)
             : new_feature_names[i] = feature_names[i];
@@ -550,7 +550,7 @@ string NeuralNetwork::get_expression() const
     {
         if (i == layers_number - 1)
         {
-            for (int j = 0; j < outputs_number; j++)
+            for (Index j = 0; j < outputs_number; j++)
                 new_output_names[j] = !output_names[j].empty()
                       ? output_names[j]
                       : "output_" + to_string(i);
