@@ -20,7 +20,7 @@ if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
 elseif(OpenMP_FOUND)
     target_compile_options(opennn PRIVATE ${OpenMP_CXX_FLAGS})
-    target_link_libraries(opennn PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(opennn PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -1,5 +1,4 @@
 //   OpenNN: Open Neural Networks Library
-//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R

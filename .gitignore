@@ -285,3 +285,13 @@ tests/data/*.xml
 
 #SonarCloud
 .scannerwork
+
+# Build artifacts in source directories (qmake/MSVC generated)
+**/.qmake.stash
+**/Makefile
+**/Makefile.Debug
+**/Makefile.Release
+**/debug/
+**/release/
+**/*.dir/
+**/vc*.pdb
