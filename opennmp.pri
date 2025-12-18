@@ -17,8 +17,9 @@ macx {
     }
 }
 
-unix:g++|win32-g++ {
+unix:!macx|win32-g++ {
     message("OpenMP: Enabled for GCC (Linux/MinGW)")
     QMAKE_CXXFLAGS += -fopenmp
     QMAKE_LFLAGS   += -fopenmp
+    LIBS += -fopenmp
 }

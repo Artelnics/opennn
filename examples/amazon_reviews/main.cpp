@@ -19,7 +19,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../opennn/mean_squared_error.h"
+#include "../../opennn/mean_squared_error.h"
 
 using namespace opennn;
 

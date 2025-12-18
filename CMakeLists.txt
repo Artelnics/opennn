@@ -48,6 +48,17 @@ if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     set(OPENNN_WITH_CUDA ON CACHE BOOL "")
+
+    find_library(CUDNN_LIBRARY NAMES cudnn 
+                 HINTS ${CUDAToolkit_LIBRARY_DIR} 
+                 PATHS /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu)
+
+    if(CUDNN_LIBRARY)
+        message(STATUS "Found cuDNN: ${CUDNN_LIBRARY}")
+        link_libraries(${CUDNN_LIBRARY}) 
+    else()
+        message(FATAL_ERROR "cuDNN library not found! Please install cuDNN or check paths.")
+    endif()
 else()
     set(OPENNN_WITH_CUDA OFF CACHE BOOL "")
 endif()
@@ -57,6 +68,10 @@ add_subdirectory(opennn)
 option(OpenNN_BUILD_BLANK "Build OpenNN blank" ON)
 if(OpenNN_BUILD_BLANK)
     add_subdirectory(blank)
+endif()
+
+if(OPENNN_WITH_CUDA)
+    add_subdirectory(blank_cuda)
 endif()
 
 option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
