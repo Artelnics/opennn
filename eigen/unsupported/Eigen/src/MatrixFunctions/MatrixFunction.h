@@ -86,7 +86,7 @@ MatrixType MatrixFunctionAtomic<MatrixType>::compute(const MatrixType& A) {
         for (Index i = 0; i < rows; i++)
           mx = (std::max)(mx, std::abs(m_f(Ashifted(i, i) + avgEival, static_cast<int>(s + r))));
         if (r != 0) rfactorial *= RealScalar(r);
-        delta = (std::max)(delta, mx / rfactorial);
+        delta = (std::max)(delta, RealScalar(mx / rfactorial));
       }
       const RealScalar P_norm = P.cwiseAbs().rowwise().sum().maxCoeff();
       if (mu * delta * P_norm < NumTraits<Scalar>::epsilon() * F_norm)  // series converged

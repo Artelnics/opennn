@@ -58,8 +58,6 @@ int main()
             output_dimensions
             );
 
-
-
         // Training Strategy
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
@@ -68,7 +66,6 @@ int main()
         adam->set_display_period(2);
         adam->set_maximum_epochs_number(20);
         adam->set_batch_size(100);
-
 
         training_strategy.train();
 

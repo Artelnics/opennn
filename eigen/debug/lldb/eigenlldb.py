@@ -3,6 +3,7 @@
 # for linear algebra.
 #
 # Copyright (C) 2021 Huang, Zhaoquan <zhaoquan2008@hotmail.com>
+# Copyright (C) 2025 Prince Mathew, Joseph <josephrpincemathew@outlook.com
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,48 +24,101 @@ import bisect
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand("type synthetic add -x Eigen::Matrix<.*> --python-class eigenlldb.EigenMatrixChildProvider")
     debugger.HandleCommand(
-        "type synthetic add -x Eigen::SparseMatrix<.*> --python-class eigenlldb.EigenSparseMatrixChildProvider")
+        "type synthetic add -x ^Eigen::Matrix<.*> --python-class eigenlldb.EigenMatrixChildProvider")
+    debugger.HandleCommand(
+        "type summary add -e -x ^Eigen::Matrix<.*> --python-function eigenlldb.eigen_matrix_summary_provider")
+    debugger.HandleCommand(
+        "type synthetic add -x ^Eigen::SparseMatrix<.*> --python-class eigenlldb.EigenSparseMatrixChildProvider")
 
+class EigenMatrixProvider:
+    def __init__(self, valobj: lldb.SBValue, internal_dict):
 
-class EigenMatrixChildProvider:
-    _valobj: lldb.SBValue
-    _scalar_type: lldb.SBType
-    _scalar_size: int
-    _rows_compile_time: int
-    _cols_compile_time: int
-    _row_major: bool
-    _fixed_storage: bool
+        if valobj.IsSynthetic():
+            self._valobj: lldb.SBValue = valobj.GetNonSyntheticValue()
+        else:
+            self._valobj: lldb.SBValue = valobj
 
-    def __init__(self, valobj, internal_dict):
-        self._valobj = valobj
-        valtype = valobj.GetType().GetCanonicalType()
+        _valtype = self._valobj.GetType().GetCanonicalType()
 
-        scalar_type = valtype.GetTemplateArgumentType(0)
+        scalar_type = _valtype.GetTemplateArgumentType(0)
         if not scalar_type.IsValid():
             # In the case that scalar_type is invalid on LLDB 9.0 on Windows with CLion
-            storage = valobj.GetChildMemberWithName("m_storage")
+            storage = self._valobj.GetChildMemberWithName("m_storage")
             data = storage.GetChildMemberWithName("m_data")
             data_type = data.GetType()
             if data_type.IsPointerType():
                 scalar_type = data.GetType().GetPointeeType()
             else:
                 scalar_type = data.GetChildMemberWithName("array").GetType().GetArrayElementType()
-        self._scalar_type = scalar_type
-        self._scalar_size = self._scalar_type.GetByteSize()
+        self._scalar_type: lldb.SBType = scalar_type
+        self._scalar_size: int = self._scalar_type.GetByteSize()
 
-        name = valtype.GetName()
+        name = _valtype.GetName()
         template_begin = name.find("<")
-        template_end = name.find(">")
+        template_end = name.rfind(">")
         template_args = name[(template_begin + 1):template_end].split(",")
-        self._rows_compile_time = int(template_args[1])
-        self._cols_compile_time = int(template_args[2])
-        self._row_major = (int(template_args[3]) & 1) != 0
 
-        max_rows = int(template_args[4])
-        max_cols = int(template_args[5])
-        self._fixed_storage = (max_rows != -1 and max_cols != -1)
+        template_args = [arg.strip() for arg in template_args]
+
+        # Provide default values for missing template arguments
+        # Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>
+        try:
+            self._rows_compile_time: int = int(template_args[1]) if len(template_args) > 1 else -1
+        except (ValueError, IndexError):
+            self._rows_compile_time: int = -1
+
+        try:
+            self._cols_compile_time: int = int(template_args[2]) if len(template_args) > 2 else -1
+        except (ValueError, IndexError):
+            self._cols_compile_time: int = -1
+
+        try:
+            self._options: int = int(template_args[3]) if len(template_args) > 3 else 0
+            self._row_major: bool = (self._options & 1) != 0
+        except (ValueError, IndexError):
+            self._options = 0
+            self._row_major: bool = False
+
+        try:
+            max_rows = int(template_args[4]) if len(template_args) > 4 else self._rows_compile_time
+        except (ValueError, IndexError):
+            max_rows = self._rows_compile_time
+
+        try:
+            max_cols = int(template_args[5]) if len(template_args) > 5 else self._cols_compile_time
+        except (ValueError, IndexError):
+            max_cols = self._cols_compile_time
+
+        self._fixed_storage: bool = (max_rows != -1 and max_cols != -1)
+
+    def _cols(self):
+        if self._cols_compile_time == -1:
+            storage = self._valobj.GetChildMemberWithName("m_storage")
+            cols = storage.GetChildMemberWithName("m_cols").GetValueAsUnsigned()
+            return cols
+        else:
+            return self._cols_compile_time
+
+    def _rows(self):
+        if self._rows_compile_time == -1:
+            storage = self._valobj.GetChildMemberWithName("m_storage")
+            rows = storage.GetChildMemberWithName("m_rows").GetValueAsUnsigned()
+            return rows
+        else:
+            return self._rows_compile_time
+    def get_summary(self):
+        if self._rows() == 0 or self._cols() == 0:
+            return f"size=[0x0, order={'row_major' if self._row_major else 'column_major'}]"
+        else:
+            return f"size=[{self._rows()}x{self._cols()}, order={'row_major' if self._row_major else 'column_major'}] "
+
+
+def eigen_matrix_summary_provider(valobj, dict):
+    prov = EigenMatrixProvider(valobj, dict)
+    return prov.get_summary()
+
+class EigenMatrixChildProvider(EigenMatrixProvider):
 
     def num_children(self):
         return self._cols() * self._rows()
@@ -94,23 +148,6 @@ class EigenMatrixChildProvider:
         return data.CreateChildAtOffset(
             name, offset, self._scalar_type
         )
-
-    def _cols(self):
-        if self._cols_compile_time == -1:
-            storage = self._valobj.GetChildMemberWithName("m_storage")
-            cols = storage.GetChildMemberWithName("m_cols")
-            return cols.GetValueAsUnsigned()
-        else:
-            return self._cols_compile_time
-
-    def _rows(self):
-        if self._rows_compile_time == -1:
-            storage = self._valobj.GetChildMemberWithName("m_storage")
-            rows = storage.GetChildMemberWithName("m_rows")
-            return rows.GetValueAsUnsigned()
-        else:
-            return self._rows_compile_time
-
 
 class EigenSparseMatrixChildProvider:
     _valobj: lldb.SBValue

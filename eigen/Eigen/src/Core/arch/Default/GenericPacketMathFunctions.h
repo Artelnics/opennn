@@ -4,6 +4,7 @@
 // Copyright (C) 2007 Julien Pommier
 // Copyright (C) 2014 Pedro Gonnet (pedro.gonnet@gmail.com)
 // Copyright (C) 2009-2019 Gael Guennebaud <gael.guennebaud@inria.fr>
+// Copyright (C) 2018-2025 Rasmus Munk Larsen <rmlarsen@gmail.com>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
@@ -641,7 +642,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_expm1(const P
 // "m = floor(x/log(2)+1/2)" and "r" is the remainder. The result is then
 // "exp(x) = 2^m*exp(r)" where exp(r) is in the range [-1,1).
 // exp(r) is computed using a 6th order minimax polynomial approximation.
-template <typename Packet>
+template <typename Packet, bool IsFinite>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_float(const Packet _x) {
   const Packet cst_zero = pset1<Packet>(0.0f);
   const Packet cst_one = pset1<Packet>(1.0f);
@@ -656,10 +657,15 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_float(const Pack
   const Packet cst_p4 = pset1<Packet>(4.166965186595916748046875e-2f);
   const Packet cst_p5 = pset1<Packet>(8.36894474923610687255859375e-3f);
   const Packet cst_p6 = pset1<Packet>(1.37449637986719608306884765625e-3f);
-
-  // Clamp x.
-  Packet zero_mask = pcmp_lt(_x, cst_exp_lo);
-  Packet x = pmin(_x, cst_exp_hi);
+  Packet zero_mask;
+  Packet x;
+  if (!IsFinite) {
+    // Clamp x.
+    zero_mask = pcmp_lt(_x, cst_exp_lo);
+    x = pmin(_x, cst_exp_hi);
+  } else {
+    x = _x;
+  }
 
   // Express exp(x) as exp(m*ln(2) + r), start by extracting
   // m = floor(x/ln(2) + 0.5).
@@ -682,7 +688,9 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_float(const Pack
   const Packet p_low = padd(r, cst_one);
   Packet y = pmadd(r, p_odd, p_even);
   y = pmadd(r2, y, p_low);
-
+  if (IsFinite) {
+    return pldexp_fast(y, m);
+  }
   // Return 2^m * exp(r).
   const Packet fast_pldexp_unsafe = pcmp_lt(cst_pldexp_threshold, pabs(x));
   if (!predux_any(fast_pldexp_unsafe)) {
@@ -695,7 +703,6 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_float(const Pack
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_double(const Packet _x) {
-  Packet x = _x;
   const Packet cst_zero = pset1<Packet>(0.0);
   const Packet cst_1 = pset1<Packet>(1.0);
   const Packet cst_2 = pset1<Packet>(2.0);
@@ -719,7 +726,8 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_double(const Pac
 
   // clamp x
   Packet zero_mask = pcmp_lt(_x, cst_exp_lo);
-  x = pmin(x, cst_exp_hi);
+  Packet x = pmin(_x, cst_exp_hi);
+
   // Express exp(x) as exp(g + n*log(2)).
   fx = pmadd(cst_cephes_LOG2EF, x, cst_half);
 
@@ -764,6 +772,11 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_double(const Pac
   }
   return pselect(zero_mask, cst_zero, pmax(pldexp(x, fx), _x));
 }
+
+// Enum for selecting which function to compute. SinCos is intended to compute
+// pairs of Sin and Cos of the even entries in the packet, e.g.
+// SinCos([a, *, b, *]) = [sin(a), cos(a), sin(b), cos(b)].
+enum class TrigFunction : uint8_t { Sin, Cos, Tan, SinCos };
 
 // The following code is inspired by the following stack-overflow answer:
 //   https://stackoverflow.com/questions/30463616/payne-hanek-algorithm-implementation-in-c/30465751#30465751
@@ -821,7 +834,7 @@ inline float trig_reduce_huge(float xf, Eigen::numext::int32_t* quadrant) {
   return float(double(int64_t(p)) * pio2_62);
 }
 
-template <bool ComputeSine, typename Packet, bool ComputeBoth = false>
+template <TrigFunction Func, typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 #if EIGEN_COMP_GNUC_STRICT
     __attribute__((optimize("-fno-unsafe-math-optimizations")))
@@ -851,7 +864,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 #if defined(EIGEN_VECTORIZE_FMA)
   // This version requires true FMA for high accuracy.
   // It provides a max error of 1ULP up to (with absolute_error < 5.9605e-08):
-  const float huge_th = ComputeSine ? 117435.992f : 71476.0625f;
+  constexpr float huge_th = (Func == TrigFunction::Sin) ? 117435.992f : 71476.0625f;
   x = pmadd(y, pset1<Packet>(-1.57079601287841796875f), x);
   x = pmadd(y, pset1<Packet>(-3.1391647326017846353352069854736328125e-07f), x);
   x = pmadd(y, pset1<Packet>(-5.390302529957764765544681040410068817436695098876953125e-15f), x);
@@ -862,7 +875,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 
   // The following set of coefficients maintain 1ULP up to 9.43 and 14.16 for sin and cos respectively.
   // and 2 ULP up to:
-  const float huge_th = ComputeSine ? 25966.f : 18838.f;
+  constexpr float huge_th = (Func == TrigFunction::Sin) ? 25966.f : 18838.f;
   x = pmadd(y, pset1<Packet>(-1.5703125), x);  // = 0xbfc90000
   EIGEN_OPTIMIZATION_BARRIER(x)
   x = pmadd(y, pset1<Packet>(-0.000483989715576171875), x);  // = 0xb9fdc000
@@ -900,13 +913,6 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
     y_int = ploadu<PacketI>(y_int2);
   }
 
-  // Compute the sign to apply to the polynomial.
-  // sin: sign = second_bit(y_int) xor signbit(_x)
-  // cos: sign = second_bit(y_int+1)
-  Packet sign_bit = ComputeSine ? pxor(_x, preinterpret<Packet>(plogical_shift_left<30>(y_int)))
-                                : preinterpret<Packet>(plogical_shift_left<30>(padd(y_int, csti_1)));
-  sign_bit = pand(sign_bit, cst_sign_mask);  // clear all but left most bit
-
   // Get the polynomial selection mask from the second bit of y_int
   // We'll calculate both (sin and cos) polynomials and then select from the two.
   Packet poly_mask = preinterpret<Packet>(pcmp_eq(pand(y_int, csti_1), pzero(y_int)));
@@ -935,7 +941,15 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
   y2 = pmadd(y2, x, x);
 
   // Select the correct result from the two polynomials.
-  if (ComputeBoth) {
+  // Compute the sign to apply to the polynomial.
+  // sin: sign = second_bit(y_int) xor signbit(_x)
+  // cos: sign = second_bit(y_int+1)
+  Packet sign_bit = (Func == TrigFunction::Sin) ? pxor(_x, preinterpret<Packet>(plogical_shift_left<30>(y_int)))
+                                                : preinterpret<Packet>(plogical_shift_left<30>(padd(y_int, csti_1)));
+  sign_bit = pand(sign_bit, cst_sign_mask);  // clear all but left most bit
+
+  if ((Func == TrigFunction::SinCos) || (Func == TrigFunction::Tan)) {
+    // TODO(rmlarsen): Add single polynomial for tan(x) instead of paying for sin+cos+div.
     Packet peven = peven_mask(x);
     Packet ysin = pselect(poly_mask, y2, y1);
     Packet ycos = pselect(poly_mask, y1, y2);
@@ -943,23 +957,28 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
     Packet sign_bit_cos = preinterpret<Packet>(plogical_shift_left<30>(padd(y_int, csti_1)));
     sign_bit_sin = pand(sign_bit_sin, cst_sign_mask);  // clear all but left most bit
     sign_bit_cos = pand(sign_bit_cos, cst_sign_mask);  // clear all but left most bit
-    y = pselect(peven, pxor(ysin, sign_bit_sin), pxor(ycos, sign_bit_cos));
+    y = (Func == TrigFunction::SinCos) ? pselect(peven, pxor(ysin, sign_bit_sin), pxor(ycos, sign_bit_cos))
+                                       : pdiv(pxor(ysin, sign_bit_sin), pxor(ycos, sign_bit_cos));
   } else {
-    y = ComputeSine ? pselect(poly_mask, y2, y1) : pselect(poly_mask, y1, y2);
+    y = (Func == TrigFunction::Sin) ? pselect(poly_mask, y2, y1) : pselect(poly_mask, y1, y2);
     y = pxor(y, sign_bit);
   }
-  // Update the sign and filter huge inputs
   return y;
 }
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psin_float(const Packet& x) {
-  return psincos_float<true>(x);
+  return psincos_float<TrigFunction::Sin>(x);
 }
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcos_float(const Packet& x) {
-  return psincos_float<false>(x);
+  return psincos_float<TrigFunction::Cos>(x);
+}
+
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet ptan_float(const Packet& x) {
+  return psincos_float<TrigFunction::Tan>(x);
 }
 
 // Trigonometric argument reduction for double for inputs smaller than 15.
@@ -999,7 +1018,7 @@ Packet trig_reduce_medium_double(const Packet& x, const Packet& q_high, const Pa
   return t;
 }
 
-template <bool ComputeSine, typename Packet, bool ComputeBoth = false>
+template <TrigFunction Func, typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 #if EIGEN_COMP_GNUC_STRICT
     __attribute__((optimize("-fno-unsafe-math-optimizations")))
@@ -1086,19 +1105,26 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
   Packet sign_sin = pxor(x, preinterpret<Packet>(plogical_shift_left<62>(q_int)));
   Packet sign_cos = preinterpret<Packet>(plogical_shift_left<62>(padd(q_int, cst_one)));
   Packet sign_bit, sFinalRes;
-  if (ComputeBoth) {
+  if (Func == TrigFunction::Sin) {
+    sign_bit = sign_sin;
+    sFinalRes = pselect(poly_mask, ssin, scos);
+  } else if (Func == TrigFunction::Cos) {
+    sign_bit = sign_cos;
+    sFinalRes = pselect(poly_mask, scos, ssin);
+  } else if (Func == TrigFunction::Tan) {
+    // TODO(rmlarsen): Add single polynomial for tan(x) instead of paying for sin+cos+div.
+    sign_bit = pxor(sign_sin, sign_cos);
+    sFinalRes = pdiv(pselect(poly_mask, ssin, scos), pselect(poly_mask, scos, ssin));
+  } else if (Func == TrigFunction::SinCos) {
     Packet peven = peven_mask(x);
     sign_bit = pselect((s), sign_sin, sign_cos);
     sFinalRes = pselect(pxor(peven, poly_mask), ssin, scos);
-  } else {
-    sign_bit = ComputeSine ? sign_sin : sign_cos;
-    sFinalRes = ComputeSine ? pselect(poly_mask, ssin, scos) : pselect(poly_mask, scos, ssin);
   }
   sign_bit = pand(sign_bit, cst_sign_mask);  // clear all but left most bit
   sFinalRes = pxor(sFinalRes, sign_bit);
 
   // If the inputs values are higher than that a value that the argument reduction can currently address, compute them
-  // using std::sin and std::cos
+  // using the C++ standard library.
   // TODO Remove it when huge angle argument reduction is implemented
   if (EIGEN_PREDICT_FALSE(predux_any(pcmp_le(pset1<Packet>(huge_th), x_abs)))) {
     const int PacketSize = unpacket_traits<Packet>::size;
@@ -1109,10 +1135,15 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
     for (int k = 0; k < PacketSize; ++k) {
       double val = x_cpy[k];
       if (std::abs(val) > huge_th && (numext::isfinite)(val)) {
-        if (ComputeBoth)
+        if (Func == TrigFunction::Sin) {
+          sincos_vals[k] = std::sin(val);
+        } else if (Func == TrigFunction::Cos) {
+          sincos_vals[k] = std::cos(val);
+        } else if (Func == TrigFunction::Tan) {
+          sincos_vals[k] = std::tan(val);
+        } else if (Func == TrigFunction::SinCos) {
           sincos_vals[k] = k % 2 == 0 ? std::sin(val) : std::cos(val);
-        else
-          sincos_vals[k] = ComputeSine ? std::sin(val) : std::cos(val);
+        }
       }
     }
     sFinalRes = ploadu<Packet>(sincos_vals);
@@ -1122,12 +1153,31 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psin_double(const Packet& x) {
-  return psincos_double<true>(x);
+  return psincos_double<TrigFunction::Sin>(x);
 }
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcos_double(const Packet& x) {
-  return psincos_double<false>(x);
+  return psincos_double<TrigFunction::Cos>(x);
+}
+
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet ptan_double(const Packet& x) {
+  return psincos_double<TrigFunction::Tan>(x);
+}
+
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
+    std::enable_if_t<std::is_same<typename unpacket_traits<Packet>::type, float>::value, Packet>
+    psincos_selector(const Packet& x) {
+  return psincos_float<TrigFunction::SinCos, Packet>(x);
+}
+
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS
+    std::enable_if_t<std::is_same<typename unpacket_traits<Packet>::type, double>::value, Packet>
+    psincos_selector(const Packet& x) {
+  return psincos_double<TrigFunction::SinCos, Packet>(x);
 }
 
 // Generic implementation of acos(x).
@@ -1278,6 +1328,8 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_atan(const Pa
   return pxor(result, x_signmask);
 }
 
+#ifdef EIGEN_FAST_MATH
+
 /** \internal \returns the hyperbolic tan of \a a (coeff-wise)
     Doesn't do anything fancy, just a 9/8-degree rational interpolant which
     is accurate up to a couple of ulps in the (approximate) range [-8, 8],
@@ -1329,6 +1381,55 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS T ptanh_float(const T& a_x) 
   return pdiv(p, q);
 }
 
+#else
+
+/** \internal \returns the hyperbolic tan of \a a (coeff-wise).
+    On the domain [-1.25:1.25] we use an approximation of the form
+    tanh(x) ~= x^3 * (P(x) / Q(x)) + x, where P and Q are polynomials in x^2.
+    For |x| > 1.25, tanh is implememented as tanh(x) = 1 - (2 / (1 + exp(2*x))).
+
+    This implementation has a maximum error of 1 ULP (measured with AVX2+FMA).
+
+    This implementation works on both scalars and packets.
+*/
+template <typename T>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS T ptanh_float(const T& x) {
+  // The polynomial coefficients were computed using Rminimax:
+  // % ./ratapprox --function="tanh(x)-x" --dom='[-1.25,1.25]' --num="[x^3,x^5]" --den="even"
+  //     --type="[3,4]" --numF="[SG]" --denF="[SG]" --log --dispCoeff="dec" --output=tanhf.solly
+  constexpr float alpha[] = {-1.46725140511989593505859375e-02f, -3.333333432674407958984375e-01f};
+  constexpr float beta[] = {1.570280082523822784423828125e-02, 4.4401752948760986328125e-01, 1.0f};
+  const T x2 = pmul(x, x);
+  const T x3 = pmul(x2, x);
+  const T p = ppolevl<T, 1>::run(x2, alpha);
+  const T q = ppolevl<T, 2>::run(x2, beta);
+  const T small_tanh = pmadd(x3, pdiv(p, q), x);
+
+  const T sign_mask = pset1<T>(-0.0f);
+  const T abs_x = pandnot(x, sign_mask);
+  constexpr float kSmallThreshold = 1.25f;
+  const T large_mask = pcmp_lt(pset1<T>(kSmallThreshold), abs_x);
+  // Fast exit if all elements are small.
+  if (!predux_any(large_mask)) {
+    return small_tanh;
+  }
+
+  //  Compute as 1 - (2 / (1 + exp(2*x)))
+  const T one = pset1<T>(1.0f);
+  const T two = pset1<T>(2.0f);
+  const T s = pexp_float<T, true>(pmul(two, abs_x));
+  const T abs_tanh = psub(one, pdiv(two, padd(s, one)));
+
+  // Handle infinite inputs and set sign bit.
+  constexpr float kHugeThreshold = 16.0f;
+  const T huge_mask = pcmp_lt(pset1<T>(kHugeThreshold), abs_x);
+  const T x_sign = pand(sign_mask, x);
+  const T large_tanh = por(x_sign, pselect(huge_mask, one, abs_tanh));
+  return pselect(large_mask, large_tanh, small_tanh);
+}
+
+#endif  // EIGEN_FAST_MATH
+
 /** \internal \returns the hyperbolic tan of \a a (coeff-wise)
     This uses a 19/18-degree rational interpolant which
     is accurate up to a couple of ulps in the (approximate) range [-18.7, 18.7],
@@ -1352,7 +1453,6 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS T ptanh_double(const T& a_x)
   const T minus_clamp = pset1<T>(-17.714196154005176);
 #endif
   const T x = pmax(pmin(a_x, plus_clamp), minus_clamp);
-
   // The following rational approximation was generated by rminimax
   // (https://gitlab.inria.fr/sfilip/rminimax) using the following
   // command:
@@ -1471,13 +1571,23 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pdiv_complex(const Pa
 }
 
 template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pmul_complex(const Packet& x, const Packet& y) {
+  // In the following we annotate the code for the case where the inputs
+  // are a pair length-2 SIMD vectors representing a single pair of complex
+  // numbers x = a + i*b, y = c + i*d.
+  Packet x_re = pdupreal(x);                  // a, a
+  Packet x_im = pdupimag(x);                  // b, b
+  Packet tmp_re = Packet(pmul(x_re.v, y.v));  // a*c, a*d
+  Packet tmp_im = Packet(pmul(x_im.v, y.v));  // b*c, b*d
+  tmp_im = pcplxflip(pconj(tmp_im));          // -b*d, d*c
+  return padd(tmp_im, tmp_re);                // a*c - b*d, a*d + b*c
+}
+
+template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet plog_complex(const Packet& x) {
   typedef typename unpacket_traits<Packet>::type Scalar;
   typedef typename Scalar::value_type RealScalar;
   typedef typename unpacket_traits<Packet>::as_real RealPacket;
-
-  RealPacket real_mask_rp = peven_mask(x.v);
-  Packet real_mask(real_mask_rp);
 
   // Real part
   RealPacket x_flip = pcplxflip(x).v;  // b, a
@@ -1494,12 +1604,12 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet plog_complex(const Pa
   RealPacket is_any_inf = por(is_x_pos_inf, is_y_pos_inf);
   RealPacket xreal = pselect(is_any_inf, cst_pos_inf, xlogr);
 
-  Packet xres = pselect(real_mask, Packet(xreal), Packet(ximg));  // log(sqrt(a^2 + b^2)), atan2(b, a)
-  return xres;
+  return Packet(pselect(peven_mask(xreal), xreal, ximg));  // log(sqrt(a^2 + b^2)), atan2(b, a)
 }
 
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_complex(const Packet& a) {
+  // FIXME(rmlarsen): This does not work correctly for Packets of std::complex<double>.
   typedef typename unpacket_traits<Packet>::as_real RealPacket;
   typedef typename unpacket_traits<Packet>::type Scalar;
   typedef typename Scalar::value_type RealScalar;
@@ -1517,7 +1627,7 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_complex(const Pa
   // cis(y):
   RealPacket y = pand(odd_mask, a.v);
   y = por(y, pcplxflip(Packet(y)).v);
-  RealPacket cisy = psincos_float<false, RealPacket, true>(y);
+  RealPacket cisy = psincos_selector<RealPacket>(y);
   cisy = pcplxflip(Packet(cisy)).v;  // cos(y) + i * sin(y)
 
   const RealPacket cst_pos_inf = pset1<RealPacket>(NumTraits<RealScalar>::infinity());

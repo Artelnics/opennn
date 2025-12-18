@@ -565,7 +565,9 @@ void ComplexQZ<MatrixType_>::push_down_zero_ST(Index k, Index l) {
   for (Index j = k + 1; j <= l; j++) {
     // Create a 0 at _T(j, j)
     J.makeGivens(m_T(j - 1, j), m_T(j, j), &m_T.coeffRef(j - 1, j));
-    m_T.rightCols(m_n - j - 1).applyOnTheLeft(j - 1, j, J.adjoint());
+    if (m_n - j - 1 > 0) {
+      m_T.rightCols(m_n - j - 1).applyOnTheLeft(j - 1, j, J.adjoint());
+    }
     m_T.coeffRef(j, j) = Scalar(0);
 
     m_S.applyOnTheLeft(j - 1, j, J.adjoint());

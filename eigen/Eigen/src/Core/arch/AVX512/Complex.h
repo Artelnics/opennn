@@ -184,7 +184,7 @@ EIGEN_STRONG_INLINE std::complex<float> predux_mul<Packet8cf>(const Packet8cf& a
 }
 
 template <>
-EIGEN_STRONG_INLINE Packet4cf predux_half_dowto4<Packet8cf>(const Packet8cf& a) {
+EIGEN_STRONG_INLINE Packet4cf predux_half<Packet8cf>(const Packet8cf& a) {
   __m256 lane0 = extract256<0>(a.v);
   __m256 lane1 = extract256<1>(a.v);
   __m256 res = _mm256_add_ps(lane0, lane1);

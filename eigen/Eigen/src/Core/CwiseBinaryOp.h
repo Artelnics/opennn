@@ -145,7 +145,7 @@ class CwiseBinaryOpImpl : public internal::generic_xpr_base<CwiseBinaryOp<Binary
  */
 template <typename Derived>
 template <typename OtherDerived>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& MatrixBase<Derived>::operator-=(const MatrixBase<OtherDerived>& other) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Derived& MatrixBase<Derived>::operator-=(const MatrixBase<OtherDerived>& other) {
   call_assignment(derived(), other.derived(), internal::sub_assign_op<Scalar, typename OtherDerived::Scalar>());
   return derived();
 }
@@ -156,7 +156,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& MatrixBase<Derived>::operator-=(c
  */
 template <typename Derived>
 template <typename OtherDerived>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& MatrixBase<Derived>::operator+=(const MatrixBase<OtherDerived>& other) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Derived& MatrixBase<Derived>::operator+=(const MatrixBase<OtherDerived>& other) {
   call_assignment(derived(), other.derived(), internal::add_assign_op<Scalar, typename OtherDerived::Scalar>());
   return derived();
 }

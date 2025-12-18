@@ -110,7 +110,9 @@ if (EIGEN_BUILD_SHARED_LIBS)
   # Build LAPACK but link BLAS.
   target_compile_definitions(eigen_lapack PUBLIC "EIGEN_BLAS_LINK_DLL" "EIGEN_LAPACK_BUILD_DLL")
   target_link_libraries(eigen_lapack  eigen_blas)
-  set_target_properties(eigen_lapack PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(eigen_lapack PROPERTIES CXX_VISIBILITY_PRESET hidden
+    VERSION ${EIGEN_VERSION_NUMBER}
+    SOVERSION ${EIGEN_MAJOR_VERSION})
   list(APPEND EIGEN_LAPACK_TARGETS eigen_lapack)
 endif()
 

@@ -280,6 +280,11 @@ class RandomSetter {
     return m_hashmaps[outerMajor][key].value;
   }
 
+#ifdef EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
+  /** \returns a reference to the coefficient at given coordinates \a row, \a col */
+  Scalar& operator[](Index row, Index col) { return operator()(row, col); }
+#endif
+
   /** \returns the number of non zero coefficients
    *
    * \note According to the underlying map/hash_map implementation,

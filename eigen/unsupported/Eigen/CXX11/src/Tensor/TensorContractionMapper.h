@@ -117,6 +117,10 @@ class SimpleTensorContractionMapper {
     return m_tensor.coeff(computeIndex(row, col));
   }
 
+#ifdef EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar operator[](Index row, Index col) const { return operator()(row, col); }
+#endif
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index computeIndex(Index row, Index col) const {
     const bool left = (side == Lhs);
     EIGEN_UNUSED_VARIABLE(left);  // annoying bug in g++8.1: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85963

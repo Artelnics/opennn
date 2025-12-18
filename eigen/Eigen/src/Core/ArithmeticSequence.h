@@ -182,7 +182,7 @@ namespace placeholders {
  * \returns a symbolic ArithmeticSequence representing the last \a size elements with increment \a incr.
  *
  * It is a shortcut for: \code seqN(last-(size-fix<1>)*incr, size, incr) \endcode
- *
+ * \anchor Eigen_placeholders_lastN
  * \sa lastN(SizeType), seqN(FirstType,SizeType), seq(FirstType,LastType,IncrType) */
 template <typename SizeType, typename IncrType>
 auto lastN(SizeType size, IncrType incr)

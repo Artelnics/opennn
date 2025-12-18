@@ -113,6 +113,16 @@ class DenseCoeffsBase<Derived, ReadOnlyAccessors> : public EigenBase<Derived> {
     return coeff(row, col);
   }
 
+#ifdef EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
+  /** \returns the coefficient at given the given row and column.
+   *
+   * \sa operator[](Index,Index), operator[](Index)
+   */
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr CoeffReturnType operator[](Index row, Index col) const {
+    return operator()(row, col);
+  }
+#endif
+
   /** Short version: don't use this function, use
    * \link operator[](Index) const \endlink instead.
    *
@@ -316,11 +326,20 @@ class DenseCoeffsBase<Derived, WriteAccessors> : public DenseCoeffsBase<Derived,
    *
    * \sa operator[](Index)
    */
-
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Scalar& operator()(Index row, Index col) {
     eigen_assert(row >= 0 && row < rows() && col >= 0 && col < cols());
     return coeffRef(row, col);
   }
+
+#ifdef EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
+  /** \returns a reference to the coefficient at given the given row and column.
+   *
+   * \sa operator[](Index)
+   */
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Scalar& operator[](Index row, Index col) {
+    return operator()(row, col);
+  }
+#endif
 
   /** Short version: don't use this function, use
    * \link operator[](Index) \endlink instead.

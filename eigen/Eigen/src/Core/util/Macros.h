@@ -420,6 +420,13 @@
 #define EIGEN_ARCH_PPC 0
 #endif
 
+/// \internal EIGEN_ARCH_RISCV set to 1 if the architecture is RISC-V.
+#if defined(__riscv)
+#define EIGEN_ARCH_RISCV 1
+#else
+#define EIGEN_ARCH_RISCV 0
+#endif
+
 //------------------------------------------------------------------------------------------
 // Operating system identification, EIGEN_OS_*
 //------------------------------------------------------------------------------------------
@@ -700,6 +707,13 @@
 #define EIGEN_HAS_BUILTIN(x) 0
 #endif
 
+// Cross compiler wrapper around LLVM's __has_attribute
+#ifdef __has_attribute
+#define EIGEN_HAS_ATTRIBUTE(x) __has_attribute(x)
+#else
+#define EIGEN_HAS_ATTRIBUTE(x) 0
+#endif
+
 // A Clang feature extension to determine compiler features.
 // We use it to determine 'cxx_rvalue_references'
 #ifndef __has_feature
@@ -828,6 +842,18 @@
 #else
 #define EIGEN_HAS_BUILTIN_INT128 0
 #endif
+#endif
+
+// Does the compiler support vector types?
+#if EIGEN_HAS_ATTRIBUTE(ext_vector_type) && EIGEN_HAS_BUILTIN(__builtin_vectorelements)
+#define EIGEN_ARCH_VECTOR_EXTENSIONS 1
+#else
+#define EIGEN_ARCH_VECTOR_EXTENSIONS 0
+#endif
+
+// Multidimensional subscript operator feature test
+#if defined(__cpp_multidimensional_subscript) && __cpp_multidimensional_subscript >= 202110L
+#define EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
 #endif
 
 //------------------------------------------------------------------------------------------
@@ -1004,7 +1030,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void ignore_unused_variable(cons
 #define EIGEN_UNUSED_VARIABLE(var) Eigen::internal::ignore_unused_variable(var);
 
 #if !defined(EIGEN_ASM_COMMENT)
-#if EIGEN_COMP_GNUC && (EIGEN_ARCH_i386_OR_x86_64 || EIGEN_ARCH_ARM_OR_ARM64)
+#if EIGEN_COMP_GNUC && (EIGEN_ARCH_i386_OR_x86_64 || EIGEN_ARCH_ARM_OR_ARM64 || EIGEN_ARCH_RISCV)
 #define EIGEN_ASM_COMMENT(X) __asm__("#" X)
 #else
 #define EIGEN_ASM_COMMENT(X)

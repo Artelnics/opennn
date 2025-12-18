@@ -42,7 +42,6 @@ struct packet_traits<half> : default_packet_traits {
     HasDiv = 1,
     HasNegate = 1,
     HasAbs = 1,
-    HasAbs2 = 0,
     HasMin = 1,
     HasMax = 1,
     HasConj = 1,
@@ -60,7 +59,6 @@ struct packet_traits<half> : default_packet_traits {
     HasCos = EIGEN_FAST_MATH,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = 0,  // EIGEN_FAST_MATH,
-    HasBlend = 0
   };
 };
 

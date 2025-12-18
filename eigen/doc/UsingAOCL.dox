@@ -1,0 +1,289 @@
+/*
+ Copyright (c) 2025, AMD Inc. All rights reserved.
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ * Neither the name of AMD nor the names of its contributors may
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ********************************************************************************
+ * Content : Documentation on the use of AMD AOCL through Eigen
+ ********************************************************************************
+*/
+
+namespace Eigen {
+
+/** \page TopicUsingAOCL Using AMD® AOCL from %Eigen
+
+Since %Eigen version 3.4 and later, users can benefit from built-in AMD® Optimizing CPU Libraries (AOCL) optimizations with an installed copy of AOCL 5.0 (or later).
+
+<a href="https://www.amd.com/en/developer/aocl.html"> AMD AOCL </a> provides highly optimized, multi-threaded mathematical routines for x86-64 processors with a focus on AMD "Zen"-based architectures. AOCL is available on Linux and Windows for x86-64 architectures.
+
+\note
+AMD® AOCL is freely available software, but it is the responsibility of users to download, install, and ensure their product's license allows linking to the AOCL libraries. AOCL is distributed under a permissive license that allows commercial use.
+
+Using AMD AOCL through %Eigen is straightforward:
+-# export \c AOCL_ROOT into your environment 
+-# define one of the AOCL macros before including any %Eigen headers (see table below)
+-# link your program to AOCL libraries (BLIS, FLAME, LibM)
+-# ensure your system supports the target architecture optimizations
+
+When doing so, a number of %Eigen's algorithms are silently substituted with calls to AMD AOCL routines.
+These substitutions apply only for \b Dynamic \b or \b large \b enough objects with one of the following standard scalar types: \c float, \c double, \c complex<float>, and \c complex<double>.
+Operations on other scalar types or mixing reals and complexes will continue to use the built-in algorithms.
+
+The AOCL integration targets three core components:
+- **BLIS**: High-performance BLAS implementation optimized for modern cache hierarchies
+- **FLAME**: Dense linear algebra algorithms providing LAPACK functionality  
+- **LibM**: Optimized standard math routines with vectorized implementations
+
+\section TopicUsingAOCL_Macros Configuration Macros
+
+You can choose which parts will be substituted by defining one or multiple of the following macros:
+
+<table class="manual">
+<tr><td>\c EIGEN_USE_BLAS </td><td>Enables the use of external BLAS level 2 and 3 routines (AOCL-BLIS)</td></tr>
+<tr class="alt"><td>\c EIGEN_USE_LAPACKE </td><td>Enables the use of external LAPACK routines via the LAPACKE C interface (AOCL-FLAME)</td></tr>
+<tr><td>\c EIGEN_USE_LAPACKE_STRICT </td><td>Same as \c EIGEN_USE_LAPACKE but algorithms of lower robustness are disabled. \n This currently concerns only JacobiSVD which would be replaced by \c gesvd.</td></tr>
+<tr class="alt"><td>\c EIGEN_USE_AOCL_VML </td><td>Enables the use of AOCL LibM vector math operations for coefficient-wise functions</td></tr>
+<tr><td>\c EIGEN_USE_AOCL_ALL </td><td>Defines \c EIGEN_USE_BLAS, \c EIGEN_USE_LAPACKE, and \c EIGEN_USE_AOCL_VML</td></tr>
+<tr class="alt"><td>\c EIGEN_USE_AOCL_MT </td><td>Equivalent to \c EIGEN_USE_AOCL_ALL, but ensures multi-threaded BLIS (\c libblis-mt) is used. \n \b Recommended for most applications.</td></tr>
+</table>
+
+\note The AOCL integration automatically enables optimizations when the matrix/vector size exceeds \c EIGEN_AOCL_VML_THRESHOLD (default: 128 elements). For smaller operations, Eigen's built-in vectorization may be faster due to function call overhead.
+
+\section TopicUsingAOCL_Performance Performance Considerations
+
+The \c EIGEN_USE_BLAS and \c EIGEN_USE_LAPACKE macros can be combined with AOCL-specific optimizations:
+
+- **Multi-threading**: Use \c EIGEN_USE_AOCL_MT to automatically select the multi-threaded BLIS library
+- **Architecture targeting**: AOCL libraries are optimized for AMD Zen architectures (Zen, Zen2, Zen3, Zen4, Zen5)
+- **Vector Math Library**: AOCL LibM provides vectorized implementations that can operate on entire arrays simultaneously
+- **Memory layout**: Eigen's column-major storage directly matches AOCL's expected data layout for zero-copy operation
+
+\section TopicUsingAOCL_Types Supported Data Types and Sizes
+
+AOCL acceleration is applied to:
+- **Scalar types**: \c float, \c double, \c complex<float>, \c complex<double>
+- **Matrix/Vector sizes**: Dynamic size or compile-time size ≥ \c EIGEN_AOCL_VML_THRESHOLD  
+- **Storage order**: Both column-major (default) and row-major layouts
+- **Memory alignment**: Eigen's data pointers are directly compatible with AOCL function signatures
+
+The current AOCL Vector Math Library integration is specialized for \c double precision, with automatic fallback to scalar implementations for \c float.
+
+\section TopicUsingAOCL_Functions Vector Math Functions
+
+The following table summarizes coefficient-wise operations accelerated by \c EIGEN_USE_AOCL_VML:
+
+<table class="manual">
+<tr><th>Code example</th><th>AOCL routines</th></tr>
+<tr><td>\code
+v2 = v1.array().exp();
+v2 = v1.array().sin();
+v2 = v1.array().cos();
+v2 = v1.array().tan();
+v2 = v1.array().log();
+v2 = v1.array().log10();
+v2 = v1.array().log2();
+v2 = v1.array().sqrt();
+v2 = v1.array().pow(1.5);
+v2 = v1.array() + v2.array();
+\endcode</td><td>\code
+amd_vrda_exp
+amd_vrda_sin
+amd_vrda_cos
+amd_vrda_tan
+amd_vrda_log
+amd_vrda_log10
+amd_vrda_log2
+amd_vrda_sqrt
+amd_vrda_pow
+amd_vrda_add
+\endcode</td></tr>
+</table>
+
+In the examples, v1 and v2 are dense vectors of type \c VectorXd with size ≥ \c EIGEN_AOCL_VML_THRESHOLD.
+
+\section TopicUsingAOCL_Example Complete Example
+
+\code
+#define EIGEN_USE_AOCL_MT
+#include <iostream>
+#include <Eigen/Dense>
+
+int main() {
+    const int n = 2048;
+    
+    // Large matrices automatically use AOCL-BLIS for multiplication
+    Eigen::MatrixXd A = Eigen::MatrixXd::Random(n, n);
+    Eigen::MatrixXd B = Eigen::MatrixXd::Random(n, n);
+    Eigen::MatrixXd C = A * B;  // Dispatched to dgemm
+    
+    // Large vectors automatically use AOCL LibM for math functions
+    Eigen::VectorXd v = Eigen::VectorXd::LinSpaced(10000, 0, 10);
+    Eigen::VectorXd result = v.array().sin();  // Dispatched to amd_vrda_sin
+    
+    // LAPACK decompositions use AOCL-FLAME
+    Eigen::LLT<Eigen::MatrixXd> llt(A);  // Dispatched to dpotrf
+    
+    std::cout << "Matrix norm: " << C.norm() << std::endl;
+    std::cout << "Vector result norm: " << result.norm() << std::endl;
+    
+    return 0;
+}
+\endcode
+
+\section TopicUsingAOCL_Building Building and Linking
+
+To compile with AOCL support, set the \c AOCL_ROOT environment variable and link against the required libraries:
+
+\code
+export AOCL_ROOT=/path/to/aocl
+clang++ -O3 -g -DEIGEN_USE_AOCL_ALL \
+        -I./install/include -I${AOCL_ROOT}/include \
+        -Wno-parentheses my_app.cpp \
+        -L${AOCL_ROOT} -lamdlibm -lflame -lblis \
+        -lpthread -lrt -lm -lomp \
+        -o eigen_aocl_example
+\endcode
+
+For multi-threaded performance, use the multi-threaded BLIS library:
+\code
+clang++ -O3 -g -DEIGEN_USE_AOCL_MT \
+        -I./install/include -I${AOCL_ROOT}/include \
+        -Wno-parentheses my_app.cpp \
+        -L${AOCL_ROOT} -lamdlibm -lflame -lblis-mt \
+        -lpthread -lrt -lm -lomp \
+        -o eigen_aocl_example
+\endcode
+
+Key compiler and linker flags:
+- \c -DEIGEN_USE_AOCL_ALL: Enable all AOCL accelerations (BLAS, LAPACK, VML)
+- \c -DEIGEN_USE_AOCL_MT: Enable multi-threaded version (uses \c -lblis-mt)
+- \c -lblis: Single-threaded BLIS library
+- \c -lblis-mt: Multi-threaded BLIS library (recommended for performance)
+- \c -lflame: FLAME LAPACK implementation  
+- \c -lamdlibm: AMD LibM vector math library
+- \c -lomp: OpenMP runtime for multi-threading support
+- \c -lpthread -lrt: System threading and real-time libraries
+- \c -Wno-parentheses: Suppress common warnings when using AOCL headers
+
+\subsection TopicUsingAOCL_EigenBuild Building Eigen with AOCL Support
+
+To build Eigen with AOCL Support, use the following CMake configuration:
+
+\code
+cmake .. -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_C_COMPILER=clang \
+         -DCMAKE_CXX_COMPILER=clang++ \
+         -DCMAKE_INSTALL_PREFIX=$PWD/install \
+         -DINCLUDE_INSTALL_DIR=$PWD/install/include \
+      && make install -j$(nproc)
+\endcode
+
+
+To build Eigen with AOCL integration and benchmarking capabilities, use the following CMake configuration:
+
+\code
+cmake .. -DEIGEN_BUILD_AOCL_BENCH=ON \
+         -DEIGEN_AOCL_BENCH_FLAGS="-O3 -mavx512f -fveclib=AMDLIBM" \
+         -DEIGEN_AOCL_BENCH_USE_MT=OFF \
+         -DEIGEN_AOCL_BENCH_ARCH=znver5 \
+         -DCMAKE_BUILD_TYPE=Debug \
+         -DCMAKE_C_COMPILER=clang \
+         -DCMAKE_CXX_COMPILER=clang++ \
+         -DCMAKE_INSTALL_PREFIX=$PWD/install \
+         -DINCLUDE_INSTALL_DIR=$PWD/install/include \
+      && make install -j$(nproc)
+\endcode
+
+**CMake Configuration Parameters:**
+
+<table class="manual">
+<tr><th>Parameter</th><th>Expected Values</th><th>Description</th></tr>
+<tr><td>\c EIGEN_BUILD_AOCL_BENCH</td><td>\c ON, \c OFF</td><td>Enable/disable AOCL benchmark compilation</td></tr>
+<tr class="alt"><td>\c EIGEN_AOCL_BENCH_FLAGS</td><td>Compiler flags string</td><td>Additional compiler optimizations: \c "-O3 -mavx512f -fveclib=AMDLIBM"</td></tr>
+<tr><td>\c EIGEN_AOCL_BENCH_USE_MT</td><td>\c ON, \c OFF</td><td>Use multi-threaded AOCL libraries (\c ON recommended for performance)</td></tr>
+<tr class="alt"><td>\c EIGEN_AOCL_BENCH_ARCH</td><td>\c znver3, \c znver4, \c znver5, \c native, \c generic</td><td>Target AMD architecture (match your CPU generation)</td></tr>
+<tr><td>\c CMAKE_BUILD_TYPE</td><td>\c Release, \c Debug, \c RelWithDebInfo</td><td>Build configuration (\c Release recommended for benchmarks)</td></tr>
+<tr class="alt"><td>\c CMAKE_C_COMPILER</td><td>\c clang, \c gcc</td><td>C compiler (clang recommended for AOCL)</td></tr>
+<tr><td>\c CMAKE_CXX_COMPILER</td><td>\c clang++, \c g++</td><td>C++ compiler (clang++ recommended for AOCL)</td></tr>
+<tr class="alt"><td>\c CMAKE_INSTALL_PREFIX</td><td>Installation path</td><td>Where to install Eigen headers</td></tr>
+<tr><td>\c INCLUDE_INSTALL_DIR</td><td>Header path</td><td>Specific path for Eigen headers</td></tr>
+</table>
+
+**Architecture Selection Guide:**
+- \c znver3: AMD Zen 3 (EPYC 7003, Ryzen 5000 series)
+- \c znver4: AMD Zen 4 (EPYC 9004, Ryzen 7000 series)  
+- \c znver5: AMD Zen 5 (EPYC 9005, Ryzen 9000 series)
+- \c native: Auto-detect current CPU architecture
+- \c generic: Generic x86-64 without specific optimizations
+
+**Custom Compiler Flags Explanation:**
+- \c -O3: Maximum optimization level
+- \c -mavx512f: Enable AVX-512 instruction set (if supported)
+- \c -fveclib=AMDLIBM: Use AMD LibM for vectorized math functions
+
+\subsection TopicUsingAOCL_Benchmark Building the AOCL Benchmark
+
+After configuring Eigen, build the AOCL benchmark executable:
+
+\code
+cmake --build . --target benchmark_aocl -j$(nproc)
+\endcode
+
+This creates the \c benchmark_aocl executable that demonstrates AOCL acceleration with various matrix sizes and operations.
+
+**Running the Benchmark:**
+\code
+./benchmark_aocl
+\endcode
+
+The benchmark will automatically compare:
+- Eigen's native performance vs AOCL-accelerated operations
+- Matrix multiplication performance (BLIS vs Eigen)
+- Vector math functions performance (LibM vs Eigen)
+- Memory bandwidth utilization and cache efficiency
+
+\section TopicUsingAOCL_CMake CMake Integration
+
+When using CMake, you can use a FindAOCL module:
+
+\code
+find_package(AOCL REQUIRED)
+target_compile_definitions(my_target PRIVATE EIGEN_USE_AOCL_MT)
+target_link_libraries(my_target PRIVATE AOCL::BLIS_MT AOCL::FLAME AOCL::LIBM)
+\endcode
+
+\section TopicUsingAOCL_Troubleshooting Troubleshooting
+
+Common issues and solutions:
+
+- **Link errors**: Ensure \c AOCL_ROOT is set and libraries are in \c LD_LIBRARY_PATH
+- **Performance not improved**: Verify you're using matrices/vectors larger than the threshold
+- **Thread contention**: Set \c OMP_NUM_THREADS to match your CPU core count
+- **Architecture mismatch**: Use appropriate \c -march flag for your AMD processor
+
+\section TopicUsingAOCL_Links Links
+
+- AMD AOCL can be downloaded for free <a href="https://www.amd.com/en/developer/aocl.html">here</a>
+- AOCL User Guide and documentation available on the AMD Developer Portal
+- AOCL is also available through package managers and containerized environments
+
+*/
+
+}

@@ -53,3 +53,56 @@ $ ./bench_multi_compilers.sh ompbench.cxxlist ompbenchmark.cpp
 
 
 
+************************
+* benchmark_aocl       *
+************************
+
+This benchmark exercises Eigen operations using AMD Optimized Libraries
+(AOCL). It is disabled by default and can be enabled when configuring the
+build:
+
+  cmake .. -DEIGEN_BUILD_AOCL_BENCH=ON
+
+The resulting `benchmark_aocl` target is compiled with `-O3` and, if the
+compiler supports it, `-march=znver5` for optimal performance on AMD
+processors.
+
+The benchmark also links to `libblis-mt.so` and `libflame.so` so BLAS and
+LAPACK operations run with multithreaded AOCL when available.
+
+By default the CMake build defines `EIGEN_USE_AOCL_MT` via the option
+`EIGEN_AOCL_BENCH_USE_MT` (enabled).  Set this option to `OFF` if you want
+to build the benchmark using the single-threaded AOCL libraries instead,
+in which case `EIGEN_USE_AOCL_ALL` is defined.
+
+
+
+Alternatively you can build the same benchmark using the
+`Makefile` in this directory. This allows experimenting with
+different compiler flags without reconfiguring CMake:
+
+```
+cd bench && make       # builds with -O3 -march=znver5 by default
+make clean && make CXX="clang++" ## For differnt compiler apart from g++
+make clean && make MARCH="" CXXFLAGS="-O2"  # example of custom flags
+make AOCL_ROOT=/opt/aocl            # use AOCL from a custom location
+
+This Makefile links against `libblis-mt.so` and `libflame.so` so the
+matrix multiplication benchmark exercises multithreaded BLIS when
+`EIGEN_USE_AOCL_MT` is defined (enabled by default in the Makefile).
+
+If you prefer to compile manually, ensure that the Eigen include path
+points to the directory where `AOCL_Support.h` resides. For example:
+
+
+clang++ -O3 -std=c++14 -I../build/install/include \
+        -march=znver5 -DEIGEN_USE_AOCL_MT \
+        benchmark_aocl.cpp -o benchmark_aocl \
+        -lblis-mt -lflame -lamdlibm -lpthread -lm
+```
+Replace `../install/include` with your actual Eigen install path.
+
+When invoking `make`, you can point `AOCL_ROOT` to your AOCL
+installation directory so the Makefile links against `$(AOCL_ROOT)/lib`.
+
+

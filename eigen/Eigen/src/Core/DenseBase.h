@@ -367,11 +367,11 @@ class DenseBase
   EIGEN_DEVICE_FUNC inline bool allFinite() const;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& operator*=(const Scalar& other);
-  template <bool Enable = !internal::is_same<Scalar, RealScalar>::value, typename = std::enable_if_t<Enable>>
+  template <bool Enable = internal::complex_array_access<Scalar>::value, typename = std::enable_if_t<Enable>>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& operator*=(const RealScalar& other);
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& operator/=(const Scalar& other);
-  template <bool Enable = !internal::is_same<Scalar, RealScalar>::value, typename = std::enable_if_t<Enable>>
+  template <bool Enable = internal::complex_array_access<Scalar>::value, typename = std::enable_if_t<Enable>>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& operator/=(const RealScalar& other);
 
   typedef internal::add_const_on_value_type_t<typename internal::eval<Derived>::type> EvalReturnType;

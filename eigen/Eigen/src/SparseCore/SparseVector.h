@@ -177,7 +177,7 @@ class SparseVector : public SparseCompressedBase<SparseVector<Scalar_, Options_,
       --p;
     }
     m_data.index(p + 1) = convert_index(i);
-    m_data.value(p + 1) = 0;
+    m_data.value(p + 1) = Scalar(0);
     return m_data.value(p + 1);
   }
 
