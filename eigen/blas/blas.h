@@ -59,6 +59,19 @@ EIGEN_BLAS_API void BLASFUNC(caxpyc)(const int *, const float *, const float *, 
 EIGEN_BLAS_API void BLASFUNC(zaxpyc)(const int *, const double *, const double *, const int *, double *, const int *);
 EIGEN_BLAS_API void BLASFUNC(xaxpyc)(const int *, const double *, const double *, const int *, double *, const int *);
 
+EIGEN_BLAS_API void BLASFUNC(saxpby)(const int *, const float *, const float *, const int *, const float *, float *,
+                                     const int *);
+EIGEN_BLAS_API void BLASFUNC(daxpby)(const int *, const double *, const double *, const int *, const double *, double *,
+                                     const int *);
+EIGEN_BLAS_API void BLASFUNC(qaxpby)(const int *, const double *, const double *, const int *, const double *, double *,
+                                     const int *);
+EIGEN_BLAS_API void BLASFUNC(caxpby)(const int *, const float *, const float *, const int *, const float *, float *,
+                                     const int *);
+EIGEN_BLAS_API void BLASFUNC(zaxpby)(const int *, const double *, const double *, const int *, const double *, double *,
+                                     const int *);
+EIGEN_BLAS_API void BLASFUNC(xaxpby)(const int *, const double *, const double *, const int *, const double *, double *,
+                                     const int *);
+
 EIGEN_BLAS_API void BLASFUNC(scopy)(int *, float *, int *, float *, int *);
 EIGEN_BLAS_API void BLASFUNC(dcopy)(int *, double *, int *, double *, int *);
 EIGEN_BLAS_API void BLASFUNC(qcopy)(int *, double *, int *, double *, int *);

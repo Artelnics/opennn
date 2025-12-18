@@ -36,6 +36,11 @@ EIGEN_STRONG_INLINE PacketXf pcos<PacketXf>(const PacketXf& x) {
   return pcos_float(x);
 }
 
+template <>
+EIGEN_STRONG_INLINE PacketXf ptan<PacketXf>(const PacketXf& x) {
+  return ptan_float(x);
+}
+
 // Hyperbolic Tangent function.
 template <>
 EIGEN_STRONG_INLINE PacketXf ptanh<PacketXf>(const PacketXf& x) {

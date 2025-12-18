@@ -36,8 +36,11 @@
 #include "src/LU/Determinant.h"
 #include "src/LU/InverseImpl.h"
 
+#ifndef EIGEN_VECTORIZE_GENERIC
+// TODO(rmlarsen): Make these work with generic vectorization if possible.
 #if defined EIGEN_VECTORIZE_SSE || defined EIGEN_VECTORIZE_NEON
 #include "src/LU/arch/InverseSize4.h"
+#endif
 #endif
 // IWYU pragma: end_exports
 

@@ -1357,6 +1357,12 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE constexpr T round_down(T a, U b) {
   return ub * (ua / ub);
 }
 
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE T log2(T x) {
+  EIGEN_USING_STD(log2);
+  return log2(x);
+}
+
 /** Log base 2 for 32 bits positive integers.
  * Conveniently returns 0 for x==0. */
 constexpr int log2(int x) {
@@ -1436,9 +1442,9 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double log(const double& x) {
 #endif
 
 template <typename T>
-EIGEN_DEVICE_FUNC
-EIGEN_ALWAYS_INLINE std::enable_if_t<NumTraits<T>::IsSigned || NumTraits<T>::IsComplex, typename NumTraits<T>::Real>
-abs(const T& x) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+    std::enable_if_t<NumTraits<T>::IsSigned || NumTraits<T>::IsComplex, typename NumTraits<T>::Real>
+    abs(const T& x) {
   EIGEN_USING_STD(abs);
   return abs(x);
 }

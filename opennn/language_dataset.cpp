@@ -50,7 +50,6 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
                                : "Target";
     }
 
-
     sample_uses.resize(samples_number);
     split_samples_random();
 
@@ -63,9 +62,8 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
     for (Index i = 0; i < data.dimension(0); ++i)
     {
         for (Index j = 0; j < target_column_index; ++j)
-        {
             data(i, j) = static_cast<type>(dist_main(generator));
-        }
+
         data(i, target_column_index) = static_cast<type>(dist_binary(generator));
     }
 
@@ -335,6 +333,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
     else
     {
         unordered_map<string, Index> target_vocabulary_map;
+
         for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
             target_vocabulary_map[target_vocabulary[i]] = i;
 
@@ -737,19 +736,12 @@ void LanguageDataset::read_csv()
 
     maximum_input_length = get_maximum_size(input_document_tokens) + 2;
 
-
     if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() == 6)
-    {
         maximum_target_length = 1;
-    }
     else if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() > 6)
-    {
         maximum_target_length = target_vocabulary.size() - 4;
-    }
     else
-    {
         get_maximum_size(target_document_tokens) + 2;
-    }
 
     // maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
     //     ? 1

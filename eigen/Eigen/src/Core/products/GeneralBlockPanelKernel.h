@@ -642,25 +642,21 @@ DoublePacket<Packet> padd(const DoublePacket<Packet>& a, const DoublePacket<Pack
   return res;
 }
 
-// note that for DoublePacket<RealPacket> the "4" in "downto4"
-// corresponds to the number of complexes, so it means "8"
-// it terms of real coefficients.
-
 template <typename Packet>
-const DoublePacket<Packet>& predux_half_dowto4(const DoublePacket<Packet>& a,
-                                               std::enable_if_t<unpacket_traits<Packet>::size <= 8>* = 0) {
+const DoublePacket<Packet>& predux_half(const DoublePacket<Packet>& a,
+                                        std::enable_if_t<unpacket_traits<Packet>::size <= 8>* = 0) {
   return a;
 }
 
 template <typename Packet>
-DoublePacket<typename unpacket_traits<Packet>::half> predux_half_dowto4(
+DoublePacket<typename unpacket_traits<Packet>::half> predux_half(
     const DoublePacket<Packet>& a, std::enable_if_t<unpacket_traits<Packet>::size == 16>* = 0) {
   // yes, that's pretty hackish :(
   DoublePacket<typename unpacket_traits<Packet>::half> res;
   typedef std::complex<typename unpacket_traits<Packet>::type> Cplx;
   typedef typename packet_traits<Cplx>::type CplxPacket;
-  res.first = predux_half_dowto4(CplxPacket(a.first)).v;
-  res.second = predux_half_dowto4(CplxPacket(a.second)).v;
+  res.first = predux_half(CplxPacket(a.first)).v;
+  res.second = predux_half(CplxPacket(a.second)).v;
   return res;
 }
 
@@ -1067,7 +1063,7 @@ struct last_row_process_16_packets<LhsScalar, RhsScalar, Index, DataMapper, mr, 
     if (depth - endk > 0) {
       // We have to handle the last row(s) of the rhs, which
       // correspond to a half-packet
-      SAccPacketQuarter c0 = predux_half_dowto4(predux_half_dowto4(C0));
+      SAccPacketQuarter c0 = predux_half(predux_half(C0));
 
       for (Index kk = endk; kk < depth; kk++) {
         SLhsPacketQuarter a0;
@@ -1080,7 +1076,7 @@ struct last_row_process_16_packets<LhsScalar, RhsScalar, Index, DataMapper, mr, 
       }
       straits.acc(c0, alphav, R);
     } else {
-      straits.acc(predux_half_dowto4(predux_half_dowto4(C0)), alphav, R);
+      straits.acc(predux_half(predux_half(C0)), alphav, R);
     }
     res.scatterPacket(i, j2, R);
   }
@@ -1109,7 +1105,7 @@ struct lhs_process_one_packet {
     EIGEN_ASM_COMMENT("end step of gebp micro kernel 1X4");
   }
 
-  EIGEN_STRONG_INLINE void operator()(const DataMapper& res, const LhsScalar* blockA, const RhsScalar* blockB,
+  EIGEN_ALWAYS_INLINE void operator()(const DataMapper& res, const LhsScalar* blockA, const RhsScalar* blockB,
                                       ResScalar alpha, Index peelStart, Index peelEnd, Index strideA, Index strideB,
                                       Index offsetA, Index offsetB, int prefetch_res_offset, Index peeled_kc, Index pk,
                                       Index cols, Index depth, Index packet_cols4) {
@@ -2473,11 +2469,11 @@ EIGEN_DONT_INLINE void gebp_kernel<LhsScalar, RhsScalar, Index, DataMapper, mr, 
               SRhsPacketHalf b0;
               straits.loadLhsUnaligned(blB, a0);
               straits.loadRhs(blA, b0);
-              SAccPacketHalf c0 = predux_half_dowto4(C0);
+              SAccPacketHalf c0 = predux_half(C0);
               straits.madd(a0, b0, c0, b0, fix<0>);
               straits.acc(c0, alphav, R);
             } else {
-              straits.acc(predux_half_dowto4(C0), alphav, R);
+              straits.acc(predux_half(C0), alphav, R);
             }
             res.scatterPacket(i, j2, R);
           } else if (SwappedTraits::LhsProgress == 16) {

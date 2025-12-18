@@ -305,7 +305,7 @@ struct apply_rotation_in_the_plane_selector<Scalar, OtherScalar, SizeAtCompileTi
     typedef typename packet_traits<OtherScalar>::type OtherPacket;
 
     constexpr int RequiredAlignment =
-        (std::max)(unpacket_traits<Packet>::alignment, unpacket_traits<OtherPacket>::alignment);
+        (std::max<int>)(unpacket_traits<Packet>::alignment, unpacket_traits<OtherPacket>::alignment);
     constexpr Index PacketSize = packet_traits<Scalar>::size;
 
     /*** dynamic-size vectorized paths ***/

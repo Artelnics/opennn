@@ -197,6 +197,29 @@ test:linux:x86-64:clang-12:avx512dq:unsupported:
   variables:
     EIGEN_CI_CTEST_LABEL: Unsupported
 
+# Generic vector extension backend.
+.test:linux:x86-64:clang-19:generic:avx512dq:
+  image: ubuntu:24.04
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:clang-19:generic:avx512dq ]
+  variables:
+    EIGEN_CI_INSTALL: clang-19
+  tags:
+    - eigen-runner
+    - linux
+    - x86-64
+    - avx512
+
+test:linux:x86-64:clang-19:generic:avx512dq:official:
+  extends: .test:linux:x86-64:clang-19:generic:avx512dq
+  variables:
+    EIGEN_CI_CTEST_LABEL: Official
+
+test:linux:x86-64:clang-19:generic:avx512dq:unsupported:
+  extends: .test:linux:x86-64:clang-19:generic:avx512dq
+  variables:
+    EIGEN_CI_CTEST_LABEL: Unsupported
+
 ##### CUDA #####################################################################
 .test:linux:cuda:
   extends: .test:linux

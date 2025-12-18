@@ -26,7 +26,7 @@ static void test_parallel_for(int granularity) {
   TestData test_data = make_test_data(/*num_threads=*/4, kNumTasks);
   std::atomic<uint64_t> sum(0);
   std::function<void(Index, Index)> binary_do_fn = [&](Index i, Index j) {
-    for (int k = i; k < j; ++k)
+    for (Index k = i; k < j; ++k)
       for (uint64_t new_sum = sum; !sum.compare_exchange_weak(new_sum, new_sum + test_data.data[k]);) {
       };
   };

@@ -95,7 +95,7 @@ template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet generic_exp2(const Packet& x);
 
 /** \internal \returns exp(x) for single precision float */
-template <typename Packet>
+template <typename Packet, bool IsFinite = false>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pexp_float(const Packet _x);
 
 /** \internal \returns exp(x) for double precision real numbers */
@@ -110,6 +110,10 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psin_float(const Pack
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcos_float(const Packet& x);
 
+/** \internal \returns tan(x) for single precision float */
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet ptan_float(const Packet& x);
+
 /** \internal \returns sin(x) for double precision float */
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psin_double(const Packet& x);
@@ -117,6 +121,10 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psin_double(const Pac
 /** \internal \returns cos(x) for double precision float */
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pcos_double(const Packet& x);
+
+/** \internal \returns tan(x) for double precision float */
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet ptan_double(const Packet& x);
 
 /** \internal \returns asin(x) for single precision float */
 template <typename Packet>
@@ -149,6 +157,10 @@ EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet psqrt_complex(const P
 /** \internal \returns x / y for complex types */
 template <typename Packet>
 EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pdiv_complex(const Packet& x, const Packet& y);
+
+/** \internal \returns x * y for complex types */
+template <typename Packet>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS Packet pmul_complex(const Packet& x, const Packet& y);
 
 template <typename Packet, int N>
 struct ppolevl;
@@ -196,6 +208,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet generic_round(const Packet& a);
 #define EIGEN_INSTANTIATE_GENERIC_MATH_FUNCS_FLOAT(PACKET) \
   EIGEN_FLOAT_PACKET_FUNCTION(sin, PACKET)                 \
   EIGEN_FLOAT_PACKET_FUNCTION(cos, PACKET)                 \
+  EIGEN_FLOAT_PACKET_FUNCTION(tan, PACKET)                 \
   EIGEN_FLOAT_PACKET_FUNCTION(asin, PACKET)                \
   EIGEN_FLOAT_PACKET_FUNCTION(acos, PACKET)                \
   EIGEN_FLOAT_PACKET_FUNCTION(tanh, PACKET)                \
@@ -210,16 +223,19 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet generic_round(const Packet& a);
   EIGEN_GENERIC_PACKET_FUNCTION(atan, PACKET)
 
 #define EIGEN_INSTANTIATE_GENERIC_MATH_FUNCS_DOUBLE(PACKET) \
-  EIGEN_DOUBLE_PACKET_FUNCTION(atanh, PACKET)               \
-  EIGEN_DOUBLE_PACKET_FUNCTION(log, PACKET)                 \
   EIGEN_DOUBLE_PACKET_FUNCTION(sin, PACKET)                 \
   EIGEN_DOUBLE_PACKET_FUNCTION(cos, PACKET)                 \
+  EIGEN_DOUBLE_PACKET_FUNCTION(tan, PACKET)                 \
+  EIGEN_DOUBLE_PACKET_FUNCTION(log, PACKET)                 \
   EIGEN_DOUBLE_PACKET_FUNCTION(log2, PACKET)                \
   EIGEN_DOUBLE_PACKET_FUNCTION(exp, PACKET)                 \
   EIGEN_DOUBLE_PACKET_FUNCTION(tanh, PACKET)                \
+  EIGEN_DOUBLE_PACKET_FUNCTION(atanh, PACKET)               \
   EIGEN_DOUBLE_PACKET_FUNCTION(cbrt, PACKET)                \
-  EIGEN_GENERIC_PACKET_FUNCTION(atan, PACKET)               \
-  EIGEN_GENERIC_PACKET_FUNCTION(exp2, PACKET)
+  EIGEN_GENERIC_PACKET_FUNCTION(expm1, PACKET)              \
+  EIGEN_GENERIC_PACKET_FUNCTION(exp2, PACKET)               \
+  EIGEN_GENERIC_PACKET_FUNCTION(log1p, PACKET)              \
+  EIGEN_GENERIC_PACKET_FUNCTION(atan, PACKET)
 
 }  // end namespace internal
 }  // end namespace Eigen

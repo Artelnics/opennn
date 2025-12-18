@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+New features:
+- ComplexQZ implementation [!1962]
+- Generic clang vector extension backend [!2051]
+
+## [5.0.1] - 2025-11-11
+
+A few bug-fixes from the master branch, including
+- Dirty git state [#2995]
+- Failing geo_homogeneous tests [#2977]
+- Alignment issues [#2982, #2984]
+- Missing C++20 `<version>` header [#2986]
+- BLAS/LAPACK build on windows [#2980]
+
+See the full lists of [addressed bugs](https://gitlab.com/libeigen/eigen/-/issues?state=all&label_name%5B%5D=release%3A%3A5.0.1) and [merge requests](https://gitlab.com/libeigen/eigen/-/merge_requests?state=all&label_name%5B%5D=release%3A%3A5.0.1) for more details.
+
 ## [5.0.0] - 2025-09-30
 
 Eigen 5.0 provides many new features, performance enhancements, and bugfixes throughout Eigen’s core template expression infrastructure and linear algebra facilities.  The full set of changes and related issues are too large to list here, but can be accessed via the release milestone %"5.0".

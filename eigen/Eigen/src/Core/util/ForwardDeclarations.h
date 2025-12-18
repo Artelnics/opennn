@@ -517,6 +517,9 @@ struct eigen_zero_impl;
 
 template <typename Packet>
 struct has_packet_segment : std::false_type {};
+
+template <typename T>
+struct complex_array_access;
 }  // namespace internal
 
 }  // end namespace Eigen

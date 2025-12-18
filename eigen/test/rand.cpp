@@ -30,12 +30,10 @@ EIGEN_DONT_INLINE Scalar check_in_range(Scalar x, Scalar y) {
 template <typename Scalar>
 void check_all_in_range(Scalar x, Scalar y) {
   constexpr int repeats = 32;
-  uint64_t count = static_cast<uint64_t>(y) - static_cast<uint64_t>(x) + 1;
+  Index count = static_cast<Index>(y) - static_cast<Index>(x) + 1;
   ArrayX<bool> mask(count);
-  // ensure that `count` does not overflow the return type of `mask.size()`
-  VERIFY(count == static_cast<uint64_t>(mask.size()));
   mask.setConstant(false);
-  for (uint64_t k = 0; k < count; k++)
+  for (Index k = 0; k < count; k++)
     for (int repeat = 0; repeat < repeats; repeat++) {
       Scalar r = check_in_range(x, y);
       Index i = static_cast<Index>(r) - static_cast<Index>(x);
