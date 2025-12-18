@@ -6,23 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "../opennn/pch.h"
-#include "../opennn/dataset.h"
-#include "../opennn/adaptive_moment_estimation.h"
-#include "../opennn/addition_layer.h"
-#include "../opennn/neural_network.h"
-#include "../opennn/standard_networks.h"
-#include "../opennn/scaling_layer_2d.h"
-#include "../opennn/scaling_layer_4d.h"
-#include "../opennn/training_strategy.h"
-#include "../opennn/testing_analysis.h"
-#include "../opennn/normalized_squared_error.h"
-#include "../opennn/optimization_algorithm.h"
-#include "../opennn/genetic_algorithm.h"
-#include "../opennn/growing_inputs.h"
-#include "../opennn/weighted_squared_error.h"
-#include "../opennn/cross_entropy_error.h"
-#include "../opennn/image_dataset.h"
+#include "../opennn/opennn.h"
 
 using namespace opennn;
 
