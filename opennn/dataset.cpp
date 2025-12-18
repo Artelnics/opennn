@@ -4236,7 +4236,6 @@ Index Dataset::count_nan() const
     return count_NAN(data);
 }
 
-
 void Dataset::fix_repeated_names()
 {
     map<string, Index> raw_variables_count_map;
@@ -4244,7 +4243,6 @@ void Dataset::fix_repeated_names()
     for (const Dataset::RawVariable& raw_variable : raw_variables)
     {
         auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variable.name, 1));
-
         if (!result.second)
             result.first->second++;
     }
@@ -4254,7 +4252,6 @@ void Dataset::fix_repeated_names()
         if (element.second > 1)
         {
             const string repeated_name = element.first;
-
             Index repeated_index = 1;
 
             for (Dataset::RawVariable& raw_variable : raw_variables)
@@ -4263,48 +4260,54 @@ void Dataset::fix_repeated_names()
         }
     }
 
-    // Fix variables names
-
     if (has_categorical_raw_variables() || has_binary_raw_variables())
     {
-        vector<string> variable_names = get_variable_names();
+        vector<string> all_variable_names = get_variable_names();
+        map<string, Index> global_names_count;
 
-        const Index variables_number = variable_names.size();
+        for (const string& name : all_variable_names)
+            global_names_count[name]++;
 
-        map<string, Index> variables_count_map;
-
-        for (Index i = 0; i < variables_number; i++)
+        for (Dataset::RawVariable& raw_variable : raw_variables)
         {
-            auto result = variables_count_map.insert(pair<string, Index>(variable_names[i], 1));
+            bool needs_disambiguation = false;
 
-            if (!result.second) result.first->second++;
-        }
-
-        for (const auto& element : variables_count_map)
-        {
-            if (element.second > 1)
+            if (raw_variable.type == RawVariableType::Categorical)
             {
-                const string repeated_name = element.first;
-
-                for (Index i = 0; i < variables_number; i++)
+                for (const string& category : raw_variable.categories)
                 {
-                    if (variable_names[i] == repeated_name)
+                    if (global_names_count[category] > 1)
                     {
-                        const Index raw_variable_index = get_raw_variable_index(i);
-
-                        if (raw_variables[raw_variable_index].type != RawVariableType::Categorical)
-                            continue;
-
-                        variable_names[i] += "_" + raw_variables[raw_variable_index].name;
+                        needs_disambiguation = true;
+                        break;
                     }
                 }
+
+                if (needs_disambiguation)
+                    for (string& category : raw_variable.categories)
+                        category += "_" + raw_variable.name;
+
+            }
+            else if (raw_variable.type == RawVariableType::Binary)
+            {
+                for (const string& category : raw_variable.categories)
+                {
+                    if (global_names_count[category] > 1)
+                    {
+                        needs_disambiguation = true;
+                        break;
+                    }
+                }
+
+                if (needs_disambiguation)
+                    for (string& category : raw_variable.categories)
+                        category += "_" + raw_variable.name;
+
+
             }
         }
-
-        set_variable_names(variable_names);
     }
 }
-
 
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
 {
