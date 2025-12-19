@@ -312,6 +312,9 @@ static void test_select() {
   }
 }
 
+// Nan propagation does currently not work like one would expect from std::max/std::min,
+// so we disable it for now
+#if !EIGEN_ARCH_ARM_OR_ARM64
 template <typename Scalar>
 void test_minmax_nan_propagation_templ() {
   for (int size = 1; size < 17; ++size) {
@@ -430,6 +433,10 @@ void test_minmax_nan_propagation_templ() {
     VERIFY_IS_EQUAL(val(), (size == 1 ? -kInf : kZero));
   }
 }
+#else
+template <typename Scalar>
+void test_minmax_nan_propagation_templ() {}
+#endif
 
 static void test_clip() {
   Tensor<float, 1> vec(6);
@@ -465,10 +472,5 @@ EIGEN_DECLARE_TEST(cxx11_tensor_expr) {
   CALL_SUBTEST(test_type_casting());
   CALL_SUBTEST(test_select());
   CALL_SUBTEST(test_clip());
-
-// Nan propagation does currently not work like one would expect from std::max/std::min,
-// so we disable it for now
-#if !EIGEN_ARCH_ARM_OR_ARM64
   CALL_SUBTEST(test_minmax_nan_propagation());
-#endif
 }

@@ -22,11 +22,42 @@ EIGEN_BLAS_FUNC(axpy)
   else if (*incx > 0 && *incy > 0)
     make_vector(y, *n, *incy) += alpha * make_vector(x, *n, *incx);
   else if (*incx > 0 && *incy < 0)
-    make_vector(y, *n, -*incy).reverse() += alpha * make_vector(x, *n, *incx);
+    make_vector(y, *n, -*incy) += alpha * make_vector(x, *n, *incx).reverse();
   else if (*incx < 0 && *incy > 0)
     make_vector(y, *n, *incy) += alpha * make_vector(x, *n, -*incx).reverse();
   else if (*incx < 0 && *incy < 0)
-    make_vector(y, *n, -*incy).reverse() += alpha * make_vector(x, *n, -*incx).reverse();
+    make_vector(y, *n, -*incy) += alpha * make_vector(x, *n, -*incx);
+}
+
+EIGEN_BLAS_FUNC(axpby)
+(const int *pn, const RealScalar *palpha, const RealScalar *px, const int *pincx, const RealScalar *pbeta,
+ RealScalar *py, const int *pincy) {
+  const Scalar *x = reinterpret_cast<const Scalar *>(px);
+  Scalar *y = reinterpret_cast<Scalar *>(py);
+  const Scalar alpha = *reinterpret_cast<const Scalar *>(palpha);
+  const Scalar beta = *reinterpret_cast<const Scalar *>(pbeta);
+  const int n = *pn;
+
+  if (n <= 0) return;
+
+  if (Eigen::numext::equal_strict(beta, Scalar(1))) {
+    EIGEN_BLAS_FUNC_NAME(axpy)(pn, palpha, px, pincx, py, pincy);
+    return;
+  }
+
+  const int incx = *pincx;
+  const int incy = *pincy;
+
+  if (incx == 1 && incy == 1)
+    make_vector(y, n) = alpha * make_vector(x, n) + beta * make_vector(y, n);
+  else if (incx > 0 && incy > 0)
+    make_vector(y, n, incy) = alpha * make_vector(x, n, incx) + beta * make_vector(y, n, incy);
+  else if (incx > 0 && incy < 0)
+    make_vector(y, n, -incy) = alpha * make_vector(x, n, incx).reverse() + beta * make_vector(y, n, -incy);
+  else if (incx < 0 && incy > 0)
+    make_vector(y, n, incy) = alpha * make_vector(x, n, -incx).reverse() + beta * make_vector(y, n, incy);
+  else if (incx < 0 && incy < 0)
+    make_vector(y, n, -incy) = alpha * make_vector(x, n, -incx) + beta * make_vector(y, n, -incy);
 }
 
 EIGEN_BLAS_FUNC(copy)(int *n, RealScalar *px, int *incx, RealScalar *py, int *incy) {

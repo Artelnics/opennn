@@ -77,6 +77,8 @@ namespace Eigen {
 #include "src/SpecialFunctions/SpecialFunctionsFunctors.h"
 #include "src/SpecialFunctions/SpecialFunctionsArrayAPI.h"
 
+#ifndef EIGEN_VECTORIZE_GENERIC
+// TODO(rmlarsen): Make these work with generic vectorization if possible.
 #if defined EIGEN_VECTORIZE_AVX512
 #include "src/SpecialFunctions/arch/AVX/BesselFunctions.h"
 #include "src/SpecialFunctions/arch/AVX/SpecialFunctions.h"
@@ -92,6 +94,7 @@ namespace Eigen {
 
 #if defined EIGEN_VECTORIZE_GPU
 #include "src/SpecialFunctions/arch/GPU/SpecialFunctions.h"
+#endif
 #endif
 // IWYU pragma: end_exports
 

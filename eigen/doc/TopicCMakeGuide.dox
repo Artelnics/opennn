@@ -36,9 +36,9 @@ option in `find_package`:
 ```
 find_package(Eigen3 3.4 REQUIRED NO_MODULE)  # Restricts to 3.4.z
 ```
-or to support a range of versions:
+Starting with Eigen 3.4.1, we also support a range spanning major versions:
 ```
-find_package(Eigen3 3.4...5 REQUIRED NO_MODULE)  # Any version >=3.4.0 but <6.0.0.
+find_package(Eigen3 3.4...5 REQUIRED NO_MODULE)  # Any version >=3.4.1 but <6.0.0.
 ```
 
 Do not forget to set the <a href="https://cmake.org/cmake/help/v3.7/variable/CMAKE_PREFIX_PATH.html">\c CMAKE_PREFIX_PATH </a> variable if Eigen is not installed in a default location or if you want to pick a specific version. For instance:

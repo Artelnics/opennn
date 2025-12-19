@@ -91,7 +91,6 @@ struct packet_traits<float> : default_packet_traits {
     HasExp = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
-    HasBlend = 1
   };
 };
 
@@ -105,7 +104,6 @@ struct packet_traits<int32_t> : default_packet_traits {
     size = 4,
     // FIXME check the Has*
     HasDiv = 1,
-    HasBlend = 1
   };
 };
 
@@ -802,22 +800,6 @@ EIGEN_STRONG_INLINE Packet4f pround<Packet4f>(const Packet4f& a) {
   return v;
 }
 
-template <>
-EIGEN_STRONG_INLINE Packet4f pblend(const Selector<4>& ifPacket, const Packet4f& thenPacket,
-                                    const Packet4f& elsePacket) {
-  Packet4ui select = {ifPacket.select[0], ifPacket.select[1], ifPacket.select[2], ifPacket.select[3]};
-  Packet4i mask = __builtin_msa_ceqi_w((Packet4i)select, 0);
-  return (Packet4f)__builtin_msa_bsel_v((v16u8)mask, (v16u8)thenPacket, (v16u8)elsePacket);
-}
-
-template <>
-EIGEN_STRONG_INLINE Packet4i pblend(const Selector<4>& ifPacket, const Packet4i& thenPacket,
-                                    const Packet4i& elsePacket) {
-  Packet4ui select = {ifPacket.select[0], ifPacket.select[1], ifPacket.select[2], ifPacket.select[3]};
-  Packet4i mask = __builtin_msa_ceqi_w((Packet4i)select, 0);
-  return (Packet4i)__builtin_msa_bsel_v((v16u8)mask, (v16u8)thenPacket, (v16u8)elsePacket);
-}
-
 //---------- double ----------
 
 typedef v2f64 Packet2d;
@@ -856,7 +838,6 @@ struct packet_traits<double> : default_packet_traits {
     HasExp = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
-    HasBlend = 1
   };
 };
 
@@ -1220,14 +1201,6 @@ EIGEN_STRONG_INLINE Packet2d pround<Packet2d>(const Packet2d& a) {
       :  // clobbers
   );
   return v;
-}
-
-template <>
-EIGEN_STRONG_INLINE Packet2d pblend(const Selector<2>& ifPacket, const Packet2d& thenPacket,
-                                    const Packet2d& elsePacket) {
-  Packet2ul select = {ifPacket.select[0], ifPacket.select[1]};
-  Packet2l mask = __builtin_msa_ceqi_d((Packet2l)select, 0);
-  return (Packet2d)__builtin_msa_bsel_v((v16u8)mask, (v16u8)thenPacket, (v16u8)elsePacket);
 }
 
 }  // end namespace internal

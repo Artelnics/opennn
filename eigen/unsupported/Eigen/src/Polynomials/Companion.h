@@ -63,6 +63,10 @@ class companion {
     }
   }
 
+#ifdef EIGEN_MULTIDIMENSIONAL_SUBSCRIPT
+  EIGEN_STRONG_INLINE const Scalar_ operator[](Index row, Index col) const { return operator()(row, col); }
+#endif
+
  public:
   template <typename VectorType>
   void setPolynomial(const VectorType& poly) {

@@ -551,7 +551,6 @@ Read-write access to sub-vectors:
 <tr>
 <th>Default versions</th>
 <th>Optimized versions when the size \n is known at compile time</th></tr>
-<th></th>
 
 <tr><td>\code vec1.head(n)\endcode</td><td>\code vec1.head<n>()\endcode</td><td>the first \c n coeffs </td></tr>
 <tr><td>\code vec1.tail(n)\endcode</td><td>\code vec1.tail<n>()\endcode</td><td>the last \c n coeffs </td></tr>

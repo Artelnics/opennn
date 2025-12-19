@@ -84,7 +84,6 @@ struct packet_traits<half> : default_packet_traits {
     HasDiv = 1,
     HasNegate = 1,
     HasAbs = 1,
-    HasAbs2 = 0,
     HasMin = 1,
     HasMax = 1,
     HasConj = 1,
@@ -101,7 +100,6 @@ struct packet_traits<half> : default_packet_traits {
     HasCos = EIGEN_FAST_MATH,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
-    HasBlend = 0
   };
 };
 #endif
@@ -119,9 +117,9 @@ struct packet_traits<float> : default_packet_traits {
     HasMin = 1,
     HasMax = 1,
     HasConj = 1,
-    HasBlend = 1,
     HasSin = EIGEN_FAST_MATH,
     HasCos = EIGEN_FAST_MATH,
+    HasTan = EIGEN_FAST_MATH,
     HasACos = 1,
     HasASin = 1,
     HasATan = 1,
@@ -152,14 +150,16 @@ struct packet_traits<double> : default_packet_traits {
     Vectorizable = 1,
     AlignedOnScalar = 1,
     size = 8,
-    HasBlend = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
     HasCbrt = 1,
     HasSin = EIGEN_FAST_MATH,
     HasCos = EIGEN_FAST_MATH,
+    HasTan = EIGEN_FAST_MATH,
     HasLog = 1,
     HasExp = 1,
+    HasLog1p = 1,
+    HasExpm1 = 1,
     HasPow = 1,
     HasATan = 1,
     HasTanh = EIGEN_FAST_MATH,
@@ -175,7 +175,7 @@ template <>
 struct packet_traits<int> : default_packet_traits {
   typedef Packet16i type;
   typedef Packet8i half;
-  enum { Vectorizable = 1, AlignedOnScalar = 1, HasBlend = 0, HasCmp = 1, HasDiv = 1, size = 16 };
+  enum { Vectorizable = 1, AlignedOnScalar = 1, HasCmp = 1, HasDiv = 1, size = 16 };
 };
 
 template <>
@@ -1497,7 +1497,7 @@ EIGEN_STRONG_INLINE Packet8d pldexp<Packet8d>(const Packet8d& a, const Packet8d&
 #endif
 
 template <>
-EIGEN_STRONG_INLINE Packet8f predux_half_dowto4<Packet16f>(const Packet16f& a) {
+EIGEN_STRONG_INLINE Packet8f predux_half<Packet16f>(const Packet16f& a) {
 #ifdef EIGEN_VECTORIZE_AVX512DQ
   __m256 lane0 = _mm512_extractf32x8_ps(a, 0);
   __m256 lane1 = _mm512_extractf32x8_ps(a, 1);
@@ -1513,13 +1513,13 @@ EIGEN_STRONG_INLINE Packet8f predux_half_dowto4<Packet16f>(const Packet16f& a) {
 #endif
 }
 template <>
-EIGEN_STRONG_INLINE Packet4d predux_half_dowto4<Packet8d>(const Packet8d& a) {
+EIGEN_STRONG_INLINE Packet4d predux_half<Packet8d>(const Packet8d& a) {
   __m256d lane0 = _mm512_extractf64x4_pd(a, 0);
   __m256d lane1 = _mm512_extractf64x4_pd(a, 1);
   return _mm256_add_pd(lane0, lane1);
 }
 template <>
-EIGEN_STRONG_INLINE Packet8i predux_half_dowto4<Packet16i>(const Packet16i& a) {
+EIGEN_STRONG_INLINE Packet8i predux_half<Packet16i>(const Packet16i& a) {
 #ifdef EIGEN_VECTORIZE_AVX512DQ
   __m256i lane0 = _mm512_extracti32x8_epi32(a, 0);
   __m256i lane1 = _mm512_extracti32x8_epi32(a, 1);
@@ -1536,7 +1536,7 @@ EIGEN_STRONG_INLINE Packet8i predux_half_dowto4<Packet16i>(const Packet16i& a) {
 }
 
 template <>
-EIGEN_STRONG_INLINE Packet4l predux_half_dowto4<Packet8l>(const Packet8l& a) {
+EIGEN_STRONG_INLINE Packet4l predux_half<Packet8l>(const Packet8l& a) {
   __m256i lane0 = _mm512_extracti64x4_epi64(a, 0);
   __m256i lane1 = _mm512_extracti64x4_epi64(a, 1);
   return _mm256_add_epi64(lane0, lane1);
@@ -2057,27 +2057,6 @@ EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet16i, 4>& kernel) {
   PACK_OUTPUT_I32_2(kernel.packet, tmp.packet, 3, 1);
 }
 
-template <size_t N>
-EIGEN_STRONG_INLINE int avx512_blend_mask(const Selector<N>& ifPacket) {
-  alignas(__m128i) uint8_t aux[sizeof(__m128i)];
-  for (size_t i = 0; i < N; i++) aux[i] = static_cast<uint8_t>(ifPacket.select[i]);
-  __m128i paux = _mm_sub_epi8(_mm_setzero_si128(), _mm_load_si128(reinterpret_cast<const __m128i*>(aux)));
-  return _mm_movemask_epi8(paux);
-}
-
-template <>
-EIGEN_STRONG_INLINE Packet16f pblend(const Selector<16>& ifPacket, const Packet16f& thenPacket,
-                                     const Packet16f& elsePacket) {
-  __mmask16 m = avx512_blend_mask(ifPacket);
-  return _mm512_mask_blend_ps(m, elsePacket, thenPacket);
-}
-template <>
-EIGEN_STRONG_INLINE Packet8d pblend(const Selector<8>& ifPacket, const Packet8d& thenPacket,
-                                    const Packet8d& elsePacket) {
-  __mmask8 m = avx512_blend_mask(ifPacket);
-  return _mm512_mask_blend_pd(m, elsePacket, thenPacket);
-}
-
 // Packet math for Eigen::half
 #ifndef EIGEN_VECTORIZE_AVX512FP16
 template <>
@@ -2305,7 +2284,7 @@ EIGEN_STRONG_INLINE Packet16h pnmsub<Packet16h>(const Packet16h& a, const Packet
 }
 
 template <>
-EIGEN_STRONG_INLINE Packet8h predux_half_dowto4<Packet16h>(const Packet16h& a) {
+EIGEN_STRONG_INLINE Packet8h predux_half<Packet16h>(const Packet16h& a) {
   Packet8h lane0 = _mm256_extractf128_si256(a, 0);
   Packet8h lane1 = _mm256_extractf128_si256(a, 1);
   return padd<Packet8h>(lane0, lane1);
@@ -2532,7 +2511,6 @@ struct packet_traits<bfloat16> : default_packet_traits {
     Vectorizable = 1,
     AlignedOnScalar = 1,
     size = 16,
-    HasBlend = 0,
     HasInsert = 1,
     HasSin = EIGEN_FAST_MATH,
     HasCos = EIGEN_FAST_MATH,
@@ -2811,7 +2789,7 @@ EIGEN_STRONG_INLINE Packet16bf plset<Packet16bf>(const bfloat16& a) {
 }
 
 template <>
-EIGEN_STRONG_INLINE Packet8bf predux_half_dowto4<Packet16bf>(const Packet16bf& a) {
+EIGEN_STRONG_INLINE Packet8bf predux_half<Packet16bf>(const Packet16bf& a) {
   Packet8bf lane0 = _mm256_extractf128_si256(a, 0);
   Packet8bf lane1 = _mm256_extractf128_si256(a, 1);
   return padd<Packet8bf>(lane0, lane1);

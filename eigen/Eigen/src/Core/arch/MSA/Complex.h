@@ -105,7 +105,6 @@ struct packet_traits<std::complex<float> > : default_packet_traits {
     HasMin = 0,
     HasMax = 0,
     HasSetLinear = 0,
-    HasBlend = 1
   };
 };
 
@@ -312,12 +311,6 @@ EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet2cf, 2>& kernel) {
   Packet4f tmp = (Packet4f)__builtin_msa_ilvl_d((v2i64)kernel.packet[1].v, (v2i64)kernel.packet[0].v);
   kernel.packet[0].v = (Packet4f)__builtin_msa_ilvr_d((v2i64)kernel.packet[1].v, (v2i64)kernel.packet[0].v);
   kernel.packet[1].v = tmp;
-}
-
-template <>
-EIGEN_STRONG_INLINE Packet2cf pblend(const Selector<2>& ifPacket, const Packet2cf& thenPacket,
-                                     const Packet2cf& elsePacket) {
-  return (Packet2cf)(Packet4f)pblend<Packet2d>(ifPacket, (Packet2d)thenPacket.v, (Packet2d)elsePacket.v);
 }
 
 //---------- double ----------

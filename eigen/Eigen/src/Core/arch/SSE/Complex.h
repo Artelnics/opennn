@@ -49,7 +49,6 @@ struct packet_traits<std::complex<float> > : default_packet_traits {
     HasMin = 0,
     HasMax = 0,
     HasSetLinear = 0,
-    HasBlend = 1
   };
 };
 #endif
@@ -411,13 +410,6 @@ template <>
 EIGEN_STRONG_INLINE Packet1cd pcmp_eq(const Packet1cd& a, const Packet1cd& b) {
   __m128d eq = _mm_cmpeq_pd(a.v, b.v);
   return Packet1cd(pand<Packet2d>(eq, vec2d_swizzle1(eq, 1, 0)));
-}
-
-template <>
-EIGEN_STRONG_INLINE Packet2cf pblend(const Selector<2>& ifPacket, const Packet2cf& thenPacket,
-                                     const Packet2cf& elsePacket) {
-  __m128d result = pblend<Packet2d>(ifPacket, _mm_castps_pd(thenPacket.v), _mm_castps_pd(elsePacket.v));
-  return Packet2cf(_mm_castpd_ps(result));
 }
 
 template <>

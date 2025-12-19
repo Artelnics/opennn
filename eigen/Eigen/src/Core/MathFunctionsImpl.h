@@ -37,15 +37,16 @@ struct generic_reciprocal_newton_step {
   static_assert(Steps > 0, "Steps must be at least 1.");
   EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE Packet run(const Packet& a, const Packet& approx_a_recip) {
     using Scalar = typename unpacket_traits<Packet>::type;
-    const Packet two = pset1<Packet>(Scalar(2));
+    const Packet one = pset1<Packet>(Scalar(1));
     // Refine the approximation using one Newton-Raphson step:
     //   x_{i} = x_{i-1} * (2 - a * x_{i-1})
     const Packet x = generic_reciprocal_newton_step<Packet, Steps - 1>::run(a, approx_a_recip);
-    const Packet tmp = pnmadd(a, x, two);
+    const Packet tmp = pnmadd(a, x, one);
     // If tmp is NaN, it means that a is either +/-0 or +/-Inf.
     // In this case return the approximation directly.
     const Packet is_not_nan = pcmp_eq(tmp, tmp);
-    return pselect(is_not_nan, pmul(x, tmp), x);
+    // Use two FMAs instead of FMA+FMUL to improve precision.
+    return pselect(is_not_nan, pmadd(x, tmp, x), x);
   }
 };
 

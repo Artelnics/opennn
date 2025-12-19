@@ -20,10 +20,7 @@ namespace internal {
 template <typename Derived, typename Scalar = typename traits<Derived>::Scalar>
 struct squared_norm_impl {
   using Real = typename NumTraits<Scalar>::Real;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Real run(const Derived& a) {
-    Scalar result = a.unaryExpr(squared_norm_functor<Scalar>()).sum();
-    return numext::real(result) + numext::imag(result);
-  }
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Real run(const Derived& a) { return a.realView().cwiseAbs2().sum(); }
 };
 
 template <typename Derived>

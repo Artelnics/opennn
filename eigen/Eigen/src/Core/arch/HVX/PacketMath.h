@@ -152,16 +152,12 @@ struct packet_traits<float> : default_packet_traits {
     HasNegate = 1,
     HasAbs = 1,
     HasArg = 0,
-    HasAbs2 = 0,
     HasAbsDiff = 0,
     HasMin = 1,
     HasMax = 1,
     HasConj = 0,
     HasSetLinear = 0,
-    HasBlend = 0,
-
     HasDiv = 0,
-
     HasSin = 0,
     HasCos = 0,
     HasACos = 0,
@@ -241,18 +237,18 @@ EIGEN_STRONG_INLINE Packet8f pzero<Packet8f>(const Packet8f&) {
 }
 
 template <HVXPacketSize T>
-EIGEN_STRONG_INLINE typename unpacket_traits<HVXPacket<T>>::half predux_half_dowto4_hvx(const HVXPacket<T>& a) {
+EIGEN_STRONG_INLINE typename unpacket_traits<HVXPacket<T>>::half predux_half_hvx(const HVXPacket<T>& a) {
   const Index packet_size = unpacket_traits<HVXPacket<T>>::size;
   return unpacket_traits<HVXPacket<T>>::half::Create(
       Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_vror_VR(a.Get(), sizeof(float) * packet_size / 2), a.Get())));
 }
 template <>
-EIGEN_STRONG_INLINE Packet16f predux_half_dowto4(const Packet32f& a) {
-  return predux_half_dowto4_hvx(a);
+EIGEN_STRONG_INLINE Packet16f predux_half(const Packet32f& a) {
+  return predux_half_hvx(a);
 }
 template <>
-EIGEN_STRONG_INLINE Packet8f predux_half_dowto4(const Packet16f& a) {
-  return predux_half_dowto4_hvx(a);
+EIGEN_STRONG_INLINE Packet8f predux_half(const Packet16f& a) {
+  return predux_half_hvx(a);
 }
 
 template <HVXPacketSize T>

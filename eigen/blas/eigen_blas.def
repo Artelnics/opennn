@@ -13,6 +13,10 @@ EXPORTS
     zaxpy_
     ; caxpyc_
     ; zaxpyc_
+    saxpby_,
+    daxpby_,
+    caxpby_,
+    zaxpby_,
     scopy_
     dcopy_
     ccopy_
@@ -91,8 +95,8 @@ EXPORTS
     ; dmin_
     ; cmin_
     ; zmin_
-    
-    
+
+
     ; Level 2
     sgemv_
     dgemv_

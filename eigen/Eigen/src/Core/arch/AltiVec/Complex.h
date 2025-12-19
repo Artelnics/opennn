@@ -109,9 +109,6 @@ struct packet_traits<std::complex<float> > : default_packet_traits {
     HasSqrt = 1,
     HasLog = 1,
     HasExp = 1,
-#ifdef EIGEN_VECTORIZE_VSX
-    HasBlend = 1,
-#endif
     HasSetLinear = 0
   };
 };
@@ -363,17 +360,6 @@ EIGEN_STRONG_INLINE Packet2cf pcmp_eq(const Packet2cf& a, const Packet2cf& b) {
   Packet4f eq = reinterpret_cast<Packet4f>(vec_cmpeq(a.v, b.v));
   return Packet2cf(vec_and(eq, vec_perm(eq, eq, p16uc_COMPLEX32_REV)));
 }
-
-#ifdef EIGEN_VECTORIZE_VSX
-template <>
-EIGEN_STRONG_INLINE Packet2cf pblend(const Selector<2>& ifPacket, const Packet2cf& thenPacket,
-                                     const Packet2cf& elsePacket) {
-  Packet2cf result;
-  result.v = reinterpret_cast<Packet4f>(
-      pblend<Packet2d>(ifPacket, reinterpret_cast<Packet2d>(thenPacket.v), reinterpret_cast<Packet2d>(elsePacket.v)));
-  return result;
-}
-#endif
 
 template <>
 EIGEN_STRONG_INLINE Packet2cf psqrt<Packet2cf>(const Packet2cf& a) {

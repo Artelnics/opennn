@@ -622,6 +622,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bfloat16 log2(const bfloat16& a) {
   return bfloat16(static_cast<float>(EIGEN_LOG2E) * ::logf(float(a)));
 }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bfloat16 sqrt(const bfloat16& a) { return bfloat16(::sqrtf(float(a))); }
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bfloat16 cbrt(const bfloat16& a) { return bfloat16(::cbrtf(float(a))); }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bfloat16 pow(const bfloat16& a, const bfloat16& b) {
   return bfloat16(::powf(float(a), float(b)));
 }
@@ -794,8 +795,10 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bfloat16 nextafter(const bfloat16& from, c
 }
 
 // Specialize multiply-add to match packet operations and reduce conversions to/from float.
-template<>
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::bfloat16 madd<Eigen::bfloat16>(const Eigen::bfloat16& x, const Eigen::bfloat16& y, const Eigen::bfloat16& z) {
+template <>
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::bfloat16 madd<Eigen::bfloat16>(const Eigen::bfloat16& x,
+                                                                            const Eigen::bfloat16& y,
+                                                                            const Eigen::bfloat16& z) {
   return Eigen::bfloat16(static_cast<float>(x) * static_cast<float>(y) + static_cast<float>(z));
 }
 

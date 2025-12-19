@@ -809,7 +809,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void resize_if_allowed(DstXprTyp
 }
 
 template <typename DstXprType, typename SrcXprType, typename Functor>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src,
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE constexpr void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src,
                                                                                 const Functor& func) {
   typedef evaluator<DstXprType> DstEvaluatorType;
   typedef evaluator<SrcXprType> SrcEvaluatorType;
@@ -829,7 +829,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void call_dense_assignment_loop(
 }
 
 template <typename DstXprType, typename SrcXprType>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src) {
   call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
 }
 

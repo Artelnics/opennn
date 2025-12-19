@@ -18,11 +18,9 @@
 
 template <typename MatrixType>
 void generate_random_matrix_pair(const Index dim, MatrixType& A, MatrixType& B) {
-  A.resize(dim, dim);
-  B.resize(dim, dim);
-  A.setRandom();
-  B.setRandom();
-  // Set each row of B with a probability of 10% to 0
+  A.setRandom(dim, dim);
+  B.setRandom(dim, dim);
+  // Zero out each row of B to with a probability of 10%.
   for (int i = 0; i < dim; i++) {
     if (internal::random<int>(0, 10) == 0) B.row(i).setZero();
   }
@@ -59,8 +57,6 @@ void complex_qz(const MatrixType& A, const MatrixType& B) {
 }
 
 EIGEN_DECLARE_TEST(complex_qz) {
-  // const Index dim1 = 15;
-  // const Index dim2 = 80;
   for (int i = 0; i < g_repeat; i++) {
     // Check for very small, fixed-sized double- and float complex matrices
     Eigen::Matrix2cd A_2x2, B_2x2;
@@ -71,16 +67,18 @@ EIGEN_DECLARE_TEST(complex_qz) {
     A_3x3.setRandom();
     B_3x3.setRandom();
     B_3x3.col(i % 3).setRandom();
-    // Test for small float complex matrices
-    Eigen::MatrixXcf A_float, B_float;
-    const Index dim1 = internal::random<Index>(15, 80), dim2 = internal::random<Index>(15, 80);
-    generate_random_matrix_pair(dim1, A_float, B_float);
-    // Test for a bit larger double complex matrices
-    Eigen::MatrixXcd A_double, B_double;
-    generate_random_matrix_pair(dim2, A_double, B_double);
     CALL_SUBTEST_1(complex_qz(A_2x2, B_2x2));
     CALL_SUBTEST_2(complex_qz(A_3x3, B_3x3));
+
+    // Test for float complex matrices
+    const Index dim = internal::random<Index>(15, 80);
+    Eigen::MatrixXcf A_float, B_float;
+    generate_random_matrix_pair(dim, A_float, B_float);
     CALL_SUBTEST_3(complex_qz(A_float, B_float));
+
+    // Test for double complex matrices
+    Eigen::MatrixXcd A_double, B_double;
+    generate_random_matrix_pair(dim, A_double, B_double);
     CALL_SUBTEST_4(complex_qz(A_double, B_double));
   }
 }

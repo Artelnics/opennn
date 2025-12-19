@@ -114,8 +114,7 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
 
 As seen in the last example, referencing the <i> last n </i> elements (or rows/columns) is a bit cumbersome to write.
 This becomes even more tricky and error prone with a non-default increment.
-Here comes \link Eigen::placeholders::lastN(SizeType) Eigen::placeholders::lastN(size) \endlink, and
-\link Eigen::placeholders::lastN(SizeType,IncrType) Eigen::placeholders::lastN(size,incr) \endlink:
+Here comes \ref Eigen_placeholders_lastN :
 
 <table class="manual">
 <tr>

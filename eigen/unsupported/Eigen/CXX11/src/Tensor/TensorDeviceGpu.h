@@ -44,68 +44,40 @@ class StreamInterface {
 
 class GpuDeviceProperties {
  public:
-  GpuDeviceProperties() : initialized_(false), first_(true), device_properties_(nullptr) {}
+  static const GpuDeviceProperties& instance() {
+    static const GpuDeviceProperties& kInstance = *new GpuDeviceProperties();
 
-  ~GpuDeviceProperties() {
-    if (device_properties_) {
-      delete[] device_properties_;
-    }
+    return kInstance;
   }
 
   EIGEN_STRONG_INLINE const gpuDeviceProp_t& get(int device) const { return device_properties_[device]; }
 
-  EIGEN_STRONG_INLINE bool isInitialized() const { return initialized_; }
+ private:
+  GpuDeviceProperties() = default;
 
-  void initialize() {
-    if (!initialized_) {
-      // Attempts to ensure proper behavior in the case of multiple threads
-      // calling this function simultaneously. This would be trivial to
-      // implement if we could use std::mutex, but unfortunately mutex don't
-      // compile with nvcc, so we resort to atomics and thread fences instead.
-      // Note that if the caller uses a compiler that doesn't support c++11 we
-      // can't ensure that the initialization is thread safe.
-      if (first_.exchange(false)) {
-        // We're the first thread to reach this point.
-        int num_devices;
-        gpuError_t status = gpuGetDeviceCount(&num_devices);
-        if (status != gpuSuccess) {
-          std::cerr << "Failed to get the number of GPU devices: " << gpuGetErrorString(status) << std::endl;
-          gpu_assert(status == gpuSuccess);
-        }
-        device_properties_ = new gpuDeviceProp_t[num_devices];
-        for (int i = 0; i < num_devices; ++i) {
-          status = gpuGetDeviceProperties(&device_properties_[i], i);
-          if (status != gpuSuccess) {
-            std::cerr << "Failed to initialize GPU device #" << i << ": " << gpuGetErrorString(status) << std::endl;
-            gpu_assert(status == gpuSuccess);
-          }
-        }
-
-        std::atomic_thread_fence(std::memory_order_release);
-        initialized_ = true;
-      } else {
-        // Wait for the other thread to inititialize the properties.
-        while (!initialized_) {
-          std::atomic_thread_fence(std::memory_order_acquire);
-          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
+  static std::vector<gpuDeviceProp_t> GetDeviceProperties() {
+    int num_devices = 0;
+    gpuError_t status = gpuGetDeviceCount(&num_devices);
+    if (status != gpuSuccess) {
+      std::cerr << "Failed to get the number of GPU devices: " << gpuGetErrorString(status) << std::endl;
+      gpu_assert(status == gpuSuccess);
+    }
+    std::vector<gpuDeviceProp_t> device_properties(num_devices);
+    for (int i = 0; i < num_devices; ++i) {
+      status = gpuGetDeviceProperties(&device_properties_[i], i);
+      if (status != gpuSuccess) {
+        std::cerr << "Failed to initialize GPU device #" << i << ": " << gpuGetErrorString(status) << std::endl;
+        gpu_assert(status == gpuSuccess);
       }
     }
+
+    return device_properties;
   }
 
- private:
-  volatile bool initialized_;
-  std::atomic<bool> first_;
-  gpuDeviceProp_t* device_properties_;
+  std::vector<gpuDeviceProp_t> device_properties_ = GetDeviceProperties();
 };
 
-EIGEN_ALWAYS_INLINE const GpuDeviceProperties& GetGpuDeviceProperties() {
-  static GpuDeviceProperties* deviceProperties = new GpuDeviceProperties();
-  if (!deviceProperties->isInitialized()) {
-    deviceProperties->initialize();
-  }
-  return *deviceProperties;
-}
+EIGEN_ALWAYS_INLINE const GpuDeviceProperties& GetGpuDeviceProperties() { return GpuDeviceProperties::instance(); }
 
 EIGEN_ALWAYS_INLINE const gpuDeviceProp_t& GetGpuDeviceProperties(int device) {
   return GetGpuDeviceProperties().get(device);
