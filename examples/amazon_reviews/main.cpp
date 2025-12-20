@@ -8,18 +8,18 @@
 
 #include <cstring>
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <time.h>
+//#include <fstream>
+//#include <sstream>
+//#include <string>
+//#include <time.h>
 
 #include "../../opennn/language_dataset.h"
 #include "../../opennn/standard_networks.h"
-#include "../../opennn/neural_network.h"
+//#include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/mean_squared_error.h"
+//#include "../../opennn/mean_squared_error.h"
 
 using namespace opennn;
 
@@ -36,21 +36,21 @@ int main()
         // Neural Network
 
         const Index embedding_dimension = 64;
-        const Index neurons_number = 8;
+        const Index heads_number = 8/2;
 
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
+        //const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
 
         const Index input_sequence_length = language_dataset.get_input_sequence_length();
         const Index targets_number = language_dataset.get_target_sequence_length();
-        const Index reserved_tokens = language_dataset.reserved_tokens.size();
+        //const Index reserved_tokens = language_dataset.reserved_tokens.size();
 
-        dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
-        dimensions complexity_dimensions = {neurons_number};
+        const dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
+        const dimensions complexity_dimensions = {heads_number};
         //MeanSquaredError: outputs and target dimension 1 do not match: 2 1
 
         //dimensions output_dimensions = { target_vocabulary_size - reserved_tokens };
-        dimensions output_dimensions = { targets_number };
+        const dimensions output_dimensions = { targets_number };
 
         TextClassificationNetwork text_classification_network(
             input_dimensions,
@@ -63,9 +63,9 @@ int main()
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(2);
-        adam->set_maximum_epochs_number(20);
-        adam->set_batch_size(100);
+        adam->set_display_period(10);
+        adam->set_maximum_epochs_number(1000);
+        //adam->set_batch_size(100);
 
         training_strategy.train();
 
@@ -77,12 +77,10 @@ int main()
 
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
-        cout << "perform_roc_analysis:\n"
-            << "  AUC: " << roc_analysis.area_under_curve << "\n"
-            << "  Confidence Limit: " << roc_analysis.confidence_limit << "\n"
-            << "  Optimal Threshold: " << roc_analysis.optimal_threshold << "\n";
+        roc_analysis.print();
 
         cout << "Good bye!" << endl;
+
         return 0;
     }
     catch(const exception& e)

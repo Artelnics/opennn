@@ -2173,9 +2173,9 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
 
 void TestingAnalysis::RocAnalysis::print() const
 {
-    cout << "Roc Curve analysis" << endl;
+    cout << "ROC Curve analysis" << endl;
 
-    cout << "Roc Curve:\n" << roc_curve << endl;
+//    cout << "Roc Curve:\n" << roc_curve << endl;
     cout << "Area Under Curve: " << area_under_curve << endl;
     cout << "Confidence Limit: " << confidence_limit << endl;
     cout << "Optimal Threshold: " << optimal_threshold << endl;
