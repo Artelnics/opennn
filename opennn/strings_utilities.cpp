@@ -11,6 +11,37 @@
 namespace opennn
 {
 
+void prepare_line(string& line)
+{
+    //decode(line);
+    trim(line);
+    erase(line, '"');
+}
+
+
+Index count_non_empty_lines(const filesystem::path& data_path)
+{
+    ifstream file(data_path);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open file: " + data_path.string() + "\n");
+
+    Index count = 0;
+
+    string line;
+
+    while (getline(file, line))
+    {
+        prepare_line(line);
+
+        if (!line.empty())
+            count++;
+    }
+
+    return count;
+}
+
+
 Index count_tokens(const string& text, const string& separator)
 {
     Index tokens_number = 0;

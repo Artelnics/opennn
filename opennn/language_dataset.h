@@ -10,7 +10,7 @@
 #define LANGUAGEDataset_H
 
 #include "dataset.h"
-#include <iostream>
+//#include <iostream>
 
 namespace opennn
 {
@@ -37,8 +37,6 @@ public:
 
     void read_csv() override;
 
-    Index count_non_empty_lines() const;
-
     void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
 
     void encode_input_data(const vector<vector<string>>&);
@@ -49,9 +47,6 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print_input_vocabulary() const;
-    void print_target_vocabulary() const;
-
     inline static const string PAD_TOKEN   = "[PAD]";     // 0
     inline static const string UNK_TOKEN   = "[UNK]";     // 1
     inline static const string START_TOKEN = "[START]";   // 2
@@ -59,17 +54,17 @@ public:
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
 
-    dimensions get_input_dimensions() const
-    {
-        return dimensions({get_input_vocabulary_size(), get_input_sequence_length()});
-    }
+    dimensions get_input_dimensions() const;
 
-    dimensions get_target_dimensions() const
-    {
-        return dimensions({get_variables_number("Target")});
-    }
+    dimensions get_target_dimensions() const;
 
 private:
+
+    unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
+
+
+
+    void vocabulary_from_XML(const XMLElement* element, vector<string>& vocabulary);
 
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;

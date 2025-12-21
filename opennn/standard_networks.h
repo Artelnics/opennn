@@ -416,18 +416,15 @@ public:
 
         add_layer(make_unique<Embedding>(dimensions({vocabulary_size, sequence_length}),
                                          embedding_dimension,
-                                         "embedding_layer"
-                                         ));
+                                         "embedding_layer"));
 
         add_layer(make_unique<MultiHeadAttention>(
             dimensions({sequence_length, embedding_dimension}),
             heads_number,
-            "multihead_attention_layer"
-            ));
+            "multihead_attention_layer"));
 
         add_layer(make_unique<Pooling3d>(
-            get_output_dimensions()
-            ));
+            get_output_dimensions()));
 
         // add_layer(make_unique<Flatten<3>>(
         //     get_output_dimensions()

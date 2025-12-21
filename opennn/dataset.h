@@ -11,7 +11,7 @@
 
 #include "tinyxml2.h"
 #include "correlations.h"
-#include "scaling.h"
+#include "statistics.h"
 #include "tensors.h"
 #include "strings_utilities.h"
 
@@ -443,6 +443,7 @@ public:
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
+
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
@@ -495,11 +496,10 @@ public:
 
     // Reader
 
-    void decode(string&) const;
+    //void decode(string&) const;
 
     virtual void read_csv();
 
-    void prepare_line(string&) const;
     void infer_column_types(const vector<vector<string>>&);
     DateFormat infer_dataset_date_format(const vector<Dataset::RawVariable>&, const vector<vector<string>>&, bool, const string&);
 
@@ -525,6 +525,7 @@ public:
 
 
 protected:
+
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
     unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
@@ -585,6 +586,17 @@ protected:
 
     const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
     const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
+
+    void raw_variables_to_XML(XMLPrinter&) const;
+    void samples_to_XML(XMLPrinter&) const;
+    void missing_values_to_XML(XMLPrinter&) const;
+    void preview_data_to_XML(XMLPrinter&) const;
+
+    void raw_variables_from_XML(const XMLElement*);
+    void samples_from_XML(const XMLElement*);
+    void missing_values_from_XML(const XMLElement*);
+    void preview_data_from_XML(const XMLElement*);
+
 };
 
 
