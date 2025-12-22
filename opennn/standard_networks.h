@@ -400,7 +400,7 @@ public:
     TextClassificationNetwork(const dimensions& input_dimensions,
                               const dimensions& complexity_dimensions,
                               const dimensions& output_dimensions,
-                              const vector<string>& new_input_vocabulary) : NeuralNetwork()
+                              const vector<string>& new_input_vocabulary = vector<string>()) : NeuralNetwork()
     {
         layers.clear();
 

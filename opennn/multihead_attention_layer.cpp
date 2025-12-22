@@ -17,7 +17,8 @@ MultiHeadAttention::MultiHeadAttention(const dimensions& new_input_dimensions,
                                        const Index& new_heads_number,
                                        const string& new_name) : Layer()
 {
-    // self-attention
+    // Self-attention
+
     set(new_input_dimensions[0],    // query_sequence_length
         new_input_dimensions[0],    // source_sequence_length
         new_input_dimensions[1],    // embedding_dimension
@@ -58,7 +59,7 @@ Index MultiHeadAttention::get_source_sequence_length() const
 
 Index MultiHeadAttention::get_embedding_dimension() const
 {
-    return embedding_dimension;
+    return query_biases.dimension(0);
 }
 
 
@@ -73,44 +74,41 @@ type MultiHeadAttention::get_scaling_factor() const
     const Index head_dimension = get_head_dimension();
 
     return (head_dimension == 0)
-               ? 0.25
-               : type(1) / type(sqrt(head_dimension));
+        ? 0.25
+        : type(1) / type(sqrt(head_dimension));
 }
 
 
 Index MultiHeadAttention::get_head_dimension() const
 {
     return (heads_number == 0)
-               ? 0
-               : Index(embedding_dimension / heads_number);
+        ? 0
+        : Index(get_embedding_dimension() / heads_number);
 }
 
 
 dimensions MultiHeadAttention::get_input_dimensions() const
 {
-    return { query_sequence_length, embedding_dimension };
+    return { query_sequence_length, get_embedding_dimension() };
 }
 
 
 dimensions MultiHeadAttention::get_output_dimensions() const
 {
-    return { query_sequence_length, embedding_dimension };
+    return { query_sequence_length, get_embedding_dimension() };
 }
 
 
 vector<ParameterView > MultiHeadAttention::get_parameter_views() const
 {
-
-    return {
-        {(type*)query_weights.data(), query_weights.size()},
-        {(type*)query_biases.data(), query_biases.size()},
-        {(type*)key_weights.data(), key_weights.size()},
-        {(type*)key_biases.data(), key_biases.size()},
-        {(type*)value_weights.data(), value_weights.size()},
-        {(type*)value_biases.data(), value_biases.size()},
-        {(type*)projection_weights.data(), projection_weights.size()},
-        {(type*)projection_biases.data(), projection_biases.size()}
-    };
+    return {{(type*)query_weights.data(), query_weights.size()},
+            {(type*)query_biases.data(), query_biases.size()},
+            {(type*)key_weights.data(), key_weights.size()},
+            {(type*)key_biases.data(), key_biases.size()},
+            {(type*)value_weights.data(), value_weights.size()},
+            {(type*)value_biases.data(), value_biases.size()},
+            {(type*)projection_weights.data(), projection_weights.size()},
+            {(type*)projection_biases.data(), projection_biases.size()}};
 }
 
 
@@ -125,26 +123,22 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
     heads_number = new_heads_number;
-    embedding_dimension = new_embedding_dimension;
     label = new_label;
 
-    if (embedding_dimension > 0 && heads_number > 0 && embedding_dimension % heads_number != 0)
+    if (heads_number <= 0 || new_embedding_dimension % heads_number != 0)
         throw runtime_error("MultiHeadAttention Error: The embedding dimension must be divisible by the number of heads.");
 
-    head_dimension = get_head_dimension();
-    scaling_factor = get_scaling_factor();
+    query_weights.resize(new_embedding_dimension, new_embedding_dimension);
+    query_biases.resize(new_embedding_dimension);
 
-    query_weights.resize(embedding_dimension, embedding_dimension);
-    query_biases.resize(embedding_dimension);
+    key_weights.resize(new_embedding_dimension, new_embedding_dimension);
+    key_biases.resize(new_embedding_dimension);
 
-    key_weights.resize(embedding_dimension, embedding_dimension);
-    key_biases.resize(embedding_dimension);
+    value_weights.resize(new_embedding_dimension, new_embedding_dimension);
+    value_biases.resize(new_embedding_dimension);
 
-    value_weights.resize(embedding_dimension, embedding_dimension);
-    value_biases.resize(embedding_dimension);
-
-    projection_weights.resize(embedding_dimension, embedding_dimension);
-    projection_biases.resize(embedding_dimension);
+    projection_weights.resize(new_embedding_dimension, new_embedding_dimension);
+    projection_biases.resize(new_embedding_dimension);
 
     set_parameters_glorot();
 
@@ -153,9 +147,9 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     if (use_causal_mask)
         causal_mask = Tensor<type, 2>(query_sequence_length, source_sequence_length)
                           .generate([=](const Eigen::array<Index, 2>& idx) -> type {
-                              Index row = idx[0];
-                              Index col = idx[1];
-                              return (col > row) ? minus_inf : 0;
+                              const Index row = idx[0];
+                              const Index column = idx[1];
+                              return (column > row) ? minus_inf : 0;
                           });
 }
 
@@ -163,58 +157,6 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
 void MultiHeadAttention::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
-}
-
-
-void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) const
-{
-    //throw runtime_error("MultiHeadAttention::apply_causal_mask is not yet implemented. Please check back in a future version.");
-    // const Index batch_size = attention_scores.dimension(2);
-
-    // const Index context_input_size = source_sequence_length * query_sequence_length;
-
-    // for(Index head_index = 0; head_index < heads_number; head_index++)
-    // {
-    //     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-    //     {
-    //         type* sample_attention_scores_data = attention_scores.data()
-    //         + (sample_index + head_index * batch_size) * context_input_size;
-
-    //         // + (sample_index + head_index) * context_input_size * batch_size;
-    //         // + (sample_index * heads_number + head_index) * context_input_size * batch_size;
-
-    //         TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data,
-    //                                                            source_sequence_length,
-    //                                                            query_sequence_length);
-
-    //         sample_attention_scores.device(*thread_pool_device) += causal_mask;
-    //     }
-    // }
-}
-
-
-void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_padding_mask,
-                                                Tensor<type, 4>& attention_weights) const
-{
-    // @Todo (I don't know if it is building the mask correctly)
-    const Index batch_size  = attention_weights.dimension(2);
-
-    Tensor<type, 2> key_padding_mask_type(key_padding_mask.dimension(0),key_padding_mask.dimension(1));
-
-    for(Index h = 0; h < heads_number; ++h)
-    {
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_attention_weights = tensor_map(attention_weights,h,b);
-
-            head_sample_attention_weights.device(*thread_pool_device)
-                += key_padding_mask.chip(b, 0)
-                       .cast<type>()
-                       .reshape(array<Index,2>{source_sequence_length, 1})
-                       .broadcast(array<Index,2>{1, query_sequence_length})
-                   * type(-10e9);
-        }
-    }
 }
 
 
@@ -243,23 +185,23 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
-    query.device(*thread_pool_device) = (query_input.contract(query_weights, axes(2,0))
-                                         + query_biases.reshape(array_3(1, 1, embedding_dimension))
-                                         .broadcast(array_3(batch_size, query_sequence_length, 1)))
-                                         .reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
-                                         .shuffle(array_4(0, 2, 1, 3));
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+    const type scaling_factor = get_scaling_factor();
 
-    key.device(*thread_pool_device) = (source_input.contract(key_weights, axes(2,0))
-                                       + key_biases.reshape(array_3(1, 1, embedding_dimension))
-                                       .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                       .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                       .shuffle(array_4(0, 2, 1, 3));
+    auto project = [&](const TensorMap<Tensor<type, 3>>& inputs,
+                       const Tensor<type, 2>& weights, const Tensor<type, 1>& biases,
+                       const Index& sequence_length)
+    {
+        return (inputs.reshape(array_2(batch_size * sequence_length, embedding_dimension)).contract(weights, axes(1,0))
+                + biases.reshape(array_2(1, embedding_dimension)).broadcast(array_2(batch_size * sequence_length, 1)))
+               .reshape(array_4(batch_size, sequence_length, heads_number, head_dimension))
+               .shuffle(array_4(0, 2, 1, 3));
+    };
 
-    value.device(*thread_pool_device) = (source_input.contract(value_weights, axes(2,0))
-                                         + value_biases.reshape(array_3(1, 1, embedding_dimension))
-                                         .broadcast(array_3(batch_size, source_sequence_length, 1)))
-                                         .reshape(array_4(batch_size, source_sequence_length, heads_number, head_dimension))
-                                         .shuffle(array_4(0, 2, 1, 3));
+    query.device(*thread_pool_device) = project(query_input, query_weights, query_biases, query_sequence_length);
+    key.device(*thread_pool_device) = project(source_input, key_weights, key_biases, source_sequence_length);
+    value.device(*thread_pool_device) = project(source_input, value_weights, value_biases, source_sequence_length);
 
     attention_weights.device(*thread_pool_device) =
         (query.reshape(array_5(batch_size, heads_number, query_sequence_length, 1, head_dimension)).broadcast(array_5(1, 1, 1, source_sequence_length, 1))
@@ -274,9 +216,9 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
          .sum(array_1(3));
 
 #pragma omp parallel for
-    for(int head_number = 0; head_number < heads_number; ++head_number)
-        concatenated_attention_outputs.slice(array_3(0, 0, head_number * head_dimension), array_3(batch_size, query_sequence_length, head_dimension)) =
-            attention_outputs.chip(head_number, 1);
+    for(int head_index = 0; head_index < heads_number; ++head_index)
+        concatenated_attention_outputs.slice(array_3(0, 0, head_index * head_dimension), array_3(batch_size, query_sequence_length, head_dimension)) =
+            attention_outputs.chip(head_index, 1);
 
     outputs.device(*thread_pool_device) =
         concatenated_attention_outputs.contract(projection_weights, axes(2, 0))
@@ -336,6 +278,9 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     Tensor<type, 3>& value_deltas_reshaped = this_back_propagation->value_deltas_reshaped;
 
     const Index batch_size = this_forward_propagation->batch_size;
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+    const type scaling_factor = get_scaling_factor();
 
     // Step 1: Derivative of the final projection
     // ∇W_O L = H_concat^T * ΔY
@@ -351,9 +296,9 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     concatenated_attention_output_deltas.device(*thread_pool_device) =
         delta_Y.contract(projection_weights, axes(2, 1));
 
-// Step 2: Split ΔH_concat by heads
+    // Step 2: Split ΔH_concat by heads
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(int head_index = 0; head_index < heads_number; ++head_index)
     {
         attention_output_deltas.slice(array_4(0, head_index, 0, 0), array_4(batch_size, 1, query_sequence_length, head_dimension))
@@ -384,27 +329,12 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     // Step 4: Derivative of softmax
     // For each position in each head in each batch
     // ∇S_i L = diag(A_i) * ΔA_i - A_i * (A_i^T * ΔA_i)
-#pragma omp parallel for collapse(3)
-    for(Index b = 0; b < batch_size; ++b)
-    {
-        for(Index h = 0; h < heads_number; ++h)
-        {
-            for(Index q = 0; q < query_sequence_length; ++q)
-            {
-                type dot_product = 0;
-                for(Index s = 0; s < source_sequence_length; ++s)
-                {
-                    dot_product += attention_weights(b, h, q, s) * attention_weight_deltas_xxx(b, h, q, s);
-                }
 
-                for(Index s = 0; s < source_sequence_length; ++s)
-                {
-                    softmax_deltas(b, h, q, s) = attention_weights(b, h, q, s) *
-                                               (attention_weight_deltas_xxx(b, h, q, s) - dot_product);
-                }
-            }
-        }
-    }
+    auto dot_product = (attention_weights * attention_weight_deltas_xxx).sum(array_1(3));
+
+    softmax_deltas.device(*thread_pool_device) = attention_weights * (attention_weight_deltas_xxx -
+        dot_product.reshape(array_4(batch_size, heads_number, query_sequence_length, 1))
+        .broadcast(array_4(1, 1, 1, source_sequence_length)));
 
     // Step 5: Derivative of scores S_i = Q_i * K_i^T / sqrt(d_k)
     // ∇Q_i L = (1/sqrt(d_k)) * ΔS_i * K_i
@@ -480,38 +410,61 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
         value_deltas_reshaped.contract(value_weights, axes(2, 1));
 
     // For self-attention, accumulate all gradients into input_query_deltas
+
     if(input_views.size() == 1)
-    {
         input_query_deltas.device(*thread_pool_device) += input_source_deltas;
-    }
 }
 
-void MultiHeadAttention::from_XML(const XMLDocument& document)
+
+void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
-    // @todo update notation
+    //throw runtime_error("MultiHeadAttention::apply_causal_mask is not yet implemented. Please check back in a future version.");
+    // const Index batch_size = attention_scores.dimension(2);
 
-    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiHeadAttention");
+    // const Index context_input_size = source_sequence_length * query_sequence_length;
 
-    if(!multihead_attention_layer_element)
-        throw runtime_error("MultiHeadAttention element is nullptr.\n");
+    // for(Index head_index = 0; head_index < heads_number; head_index++)
+    // {
+    //     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    //     {
+    //         type* sample_attention_scores_data = attention_scores.data()
+    //         + (sample_index + head_index * batch_size) * context_input_size;
 
-    const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
-    const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
-    const Index new_context_size = read_xml_index(multihead_attention_layer_element, "ContextSize");
-    const Index new_depth = read_xml_index(multihead_attention_layer_element, "Depth");
-    const Index new_heads_number = read_xml_index(multihead_attention_layer_element, "HeadsNumber");
-    const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
+    //         // + (sample_index + head_index) * context_input_size * batch_size;
+    //         // + (sample_index * heads_number + head_index) * context_input_size * batch_size;
 
-    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
+    //         TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data,
+    //                                                            source_sequence_length,
+    //                                                            query_sequence_length);
 
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "QueryBiases"), query_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "QueryWeights"), query_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "KeyBiases"), key_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "KeyWeights"), key_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ValueBiases"), value_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ValueWeights"), value_weights);
-    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
-    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
+    //         sample_attention_scores.device(*thread_pool_device) += causal_mask;
+    //     }
+    // }
+}
+
+
+void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_padding_mask,
+                                                Tensor<type, 4>& attention_weights) const
+{
+    // @todo (I don't know if it is building the mask correctly)
+    const Index batch_size  = attention_weights.dimension(2);
+
+    Tensor<type, 2> key_padding_mask_type(key_padding_mask.dimension(0),key_padding_mask.dimension(1));
+
+    for(Index h = 0; h < heads_number; ++h)
+    {
+        for(Index b = 0; b < batch_size; ++b)
+        {
+            TensorMap<Tensor<type, 2>> head_sample_attention_weights = tensor_map(attention_weights,h,b);
+
+            head_sample_attention_weights.device(*thread_pool_device)
+                += key_padding_mask.chip(b, 0)
+                       .cast<type>()
+                       .reshape(array<Index,2>{source_sequence_length, 1})
+                       .broadcast(array<Index,2>{1, query_sequence_length})
+                   * type(-10e9);
+        }
+    }
 }
 
 
@@ -549,6 +502,35 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "ProjectionWeights", tensor_to_string<type, 2>(projection_weights));
 
     printer.CloseElement();
+}
+
+
+void MultiHeadAttention::from_XML(const XMLDocument& document)
+{
+    // @todo update notation
+
+    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiHeadAttention");
+
+    if(!multihead_attention_layer_element)
+        throw runtime_error("MultiHeadAttention element is nullptr.\n");
+
+    const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
+    const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
+    const Index new_context_size = read_xml_index(multihead_attention_layer_element, "ContextSize");
+    const Index new_depth = read_xml_index(multihead_attention_layer_element, "Depth");
+    const Index new_heads_number = read_xml_index(multihead_attention_layer_element, "HeadsNumber");
+    const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
+
+    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
+
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "QueryBiases"), query_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "QueryWeights"), query_weights);
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "KeyBiases"), key_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "KeyWeights"), key_weights);
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ValueBiases"), value_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ValueWeights"), value_weights);
+    string_to_tensor<type, 1>(read_xml_string(multihead_attention_layer_element, "ProjectionBiases"), projection_biases);
+    string_to_tensor<type, 2>(read_xml_string(multihead_attention_layer_element, "ProjectionWeights"), projection_weights);
 }
 
 
@@ -673,30 +655,26 @@ vector<TensorView> MultiHeadAttentionBackPropagation::get_input_derivative_views
     const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
     const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
 
-    return
-        {{(type*)(input_query_deltas.data()), {batch_size, query_sequence_length, embedding_dimension}},
-         {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}} };
+    return {{(type*)(input_query_deltas.data()), {batch_size, query_sequence_length, embedding_dimension}},
+            {(type*)(input_source_deltas.data()), {batch_size, source_sequence_length, embedding_dimension}}};
 }
 
 
 vector<ParameterView> MultiHeadAttentionBackPropagation::get_parameter_delta_views() const
 {
-    return {
-        {(type*)query_weight_deltas.data(), query_weight_deltas.size()},
-        {(type*)query_bias_deltas.data(), query_bias_deltas.size()},
-        {(type*)key_weight_deltas.data(), key_weight_deltas.size()},
-        {(type*)key_bias_deltas.data(), key_bias_deltas.size()},
-        {(type*)value_weight_deltas.data(), value_weight_deltas.size()},
-        {(type*)value_bias_deltas.data(), value_bias_deltas.size()},
-        {(type*)projection_weight_deltas.data(), projection_weight_deltas.size()},
-        {(type*)projection_bias_deltas.data(), projection_bias_deltas.size()}
-    };
+    return {{(type*)query_weight_deltas.data(), query_weight_deltas.size()},
+            {(type*)query_bias_deltas.data(), query_bias_deltas.size()},
+            {(type*)key_weight_deltas.data(), key_weight_deltas.size()},
+            {(type*)key_bias_deltas.data(), key_bias_deltas.size()},
+            {(type*)value_weight_deltas.data(), value_weight_deltas.size()},
+            {(type*)value_bias_deltas.data(), value_bias_deltas.size()},
+            {(type*)projection_weight_deltas.data(), projection_weight_deltas.size()},
+            {(type*)projection_bias_deltas.data(), projection_bias_deltas.size()}};
 }
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 REGISTER(LayerForwardPropagation, MultiHeadAttentionForwardPropagation, "MultiHeadAttention")
 REGISTER(LayerBackPropagation, MultiHeadAttentionBackPropagation, "MultiHeadAttention")
-
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -20,7 +20,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 #include "../../opennn/weighted_squared_error.h"
-//#include "../../opennn/mean_squared_error.h"
+#include "../../opennn/mean_squared_error.h"
 
 using namespace opennn;
 
@@ -44,7 +44,7 @@ int main()
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();
 
         // Neural Network
-/*
+
         TextClassificationNetwork text_classification_network({input_vocabulary_size, input_sequence_length, embedding_dimension},
                                                               {heads_number},
                                                               {targets_number});
@@ -54,10 +54,12 @@ int main()
 
         // Training Strategy
 
+        WeightedSquaredError wse;
+
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
-        //training_strategy.train();
-
+        training_strategy.train();
+/*
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -67,13 +69,11 @@ int main()
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         roc_analysis.print();
-*/
 
         // Deployment
 
         string document = "This is great!";
-
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;
