@@ -387,8 +387,8 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
     printer.OpenElement("DataSource");
 
     add_xml_element(printer, "FileType", "csv");
-    add_xml_element(printer, "DataPath", data_path.string());
-    add_xml_element(printer, "Separator", get_separator_string());
+    add_xml_element(printer, "Path", data_path.string());
+    add_xml_element(printer, "Separator", get_separator_name());
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
@@ -397,36 +397,29 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
 
     raw_variables_to_XML(printer);
 
-    if(has_sample_ids)
-        add_xml_element(printer, "SampleIds", vector_to_string(sample_ids));
-
     samples_to_XML(printer);
 
     missing_values_to_XML(printer);
 
+    preview_data_to_XML(printer);
+
+    printer.OpenElement("InputVocabulary");
+    for(const string& word : input_vocabulary)
+        add_xml_element(printer, "Word", word);
+    printer.CloseElement();
+
     printer.OpenElement("TargetVocabulary");
-
-    //    for (const auto& word : target_vocabulary)
-    //        add_xml_element(printer, "Word", word);
-
+    for(const string& word : target_vocabulary)
+        add_xml_element(printer, "Word", word);
     printer.CloseElement();
 
-    printer.OpenElement("DecoderVocabulary");
+    add_xml_element(printer, "InputSequenceLength", to_string(maximum_input_length));
+    add_xml_element(printer, "TargetSequenceLength", to_string(maximum_target_length));
 
-    //    for (const auto& word : input_vocabulary)
-    //        add_xml_element(printer, "Word", word);
-
-    printer.CloseElement();
-
-    // @todo look at this
-
-    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_length));
-    add_xml_element(printer, "targetDimensions", to_string(maximum_input_length));
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
-
-
 
 
 void LanguageDataset::from_XML(const XMLDocument& data_set_document)
@@ -442,7 +435,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Data file element is nullptr.\n");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_string(read_xml_string(data_source_element, "Separator"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_xml_string(data_source_element, "Codification"));
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
@@ -452,9 +445,6 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     raw_variables_from_XML(raw_variables_element);
 
-    if(has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
-
     const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     samples_from_XML(samples_element);
@@ -463,36 +453,67 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     missing_values_from_XML(missing_values_element);
 
-    // Preview data
-
     const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     preview_data_from_XML(preview_data_element);
 
-    // Completion Vocabulary
+    const XMLElement* input_vocab_element = data_set_element->FirstChildElement("InputVocabulary");
+    vocabulary_from_XML(input_vocab_element, input_vocabulary);
 
-    const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");
-    vocabulary_from_XML(completion_vocabulary_element, target_vocabulary);
+    const XMLElement* target_vocab_element = data_set_element->FirstChildElement("TargetVocabulary");
+    vocabulary_from_XML(target_vocab_element, target_vocabulary);
 
-    // Decoder Vocabulary
+    const XMLElement* input_len_element = data_set_element->FirstChildElement("InputSequenceLength");
+    if(input_len_element && input_len_element->GetText())
+        maximum_input_length = atoi(input_len_element->GetText());
 
-    const XMLElement* context_vocabulary_element = data_set_element->FirstChildElement("DecoderVocabulary");
+    const XMLElement* target_len_element = data_set_element->FirstChildElement("TargetSequenceLength");
+    if(target_len_element && target_len_element->GetText())
+        maximum_target_length = atoi(target_len_element->GetText());
 
-    // Decoder Dimensions
+    input_dimensions = { get_input_sequence_length() };
+    target_dimensions = { get_target_sequence_length() };
 
-    const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
-    if (completion_dimensions_element && completion_dimensions_element->GetText())
-        maximum_target_length = atoi(completion_dimensions_element->GetText());
+    set_display(read_xml_bool(data_set_element, "Display"));
 
-    // Decoder Dimensions
+    ifstream file(data_path);
+    if(!file.is_open())
+        throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
-    const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
-    if (decoder_dimensions_element && decoder_dimensions_element->GetText())
-        maximum_input_length = atoi(decoder_dimensions_element->GetText());
+    vector<vector<string>> input_docs_tokens;
+    vector<vector<string>> target_docs_tokens;
 
-    // Display
+    string line;
+    const string separator = get_separator_string();
 
-    // set_display(read_xml_bool(data_set_element, "Display"));
+    if(has_header)
+    {
+        string dummy;
+        getline(file, dummy);
+    }
+
+    while(getline(file, line))
+    {
+        if(line.empty())
+            continue;
+
+        vector<string> tokens = get_tokens(line, separator);
+
+        if(tokens.size() == 2)
+        {
+            input_docs_tokens.push_back(tokenize(tokens[0]));
+            target_docs_tokens.push_back(tokenize(tokens[1]));
+        }
+    }
+
+    if(input_docs_tokens.size() != (size_t)get_samples_number())
+    {
+        cout << "Warning: Loaded samples count (" << get_samples_number()
+        << ") does not match file lines (" << input_docs_tokens.size() << ")." << endl;
+    }
+
+    encode_input_data(input_docs_tokens);
+    encode_target_data(target_docs_tokens);
 }
 
 
@@ -503,10 +524,10 @@ void LanguageDataset::vocabulary_from_XML(const XMLElement *element, vector<stri
 
     vocabulary.clear();
 
-    for (const XMLElement* word_element = element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
+    for(const XMLElement* word_element = element->FirstChildElement("Word"); word_element; word_element = word_element->NextSiblingElement("Word"))
     {
-        //            if (word_element->GetText())
-        //                input_vocabulary.push_back(word_element->GetText());
+        if (word_element->GetText())
+            vocabulary.push_back(word_element->GetText());
     }
 }
 

@@ -418,10 +418,10 @@ public:
                                          embedding_dimension,
                                          "embedding_layer"));
 
-        add_layer(make_unique<MultiHeadAttention>(
-            dimensions({sequence_length, embedding_dimension}),
-            heads_number,
-            "multihead_attention_layer"));
+        // add_layer(make_unique<MultiHeadAttention>(
+        //     dimensions({sequence_length, embedding_dimension}),
+        //     heads_number,
+        //     "multihead_attention_layer"));
 
         add_layer(make_unique<Pooling3d>(
             get_output_dimensions()));

@@ -19,6 +19,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/weighted_squared_error.h"
 //#include "../../opennn/mean_squared_error.h"
 
 using namespace opennn;
@@ -66,6 +67,9 @@ int main()
         adam->set_display_period(10);
         adam->set_maximum_epochs_number(1000);
         //adam->set_batch_size(100);
+
+        WeightedSquaredError wse = WeightedSquaredError(&text_classification_network, &language_dataset);
+        adam->set_loss_index(&wse);
 
         training_strategy.train();
 
