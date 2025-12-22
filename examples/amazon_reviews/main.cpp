@@ -30,48 +30,33 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
+        // Settings
+
+        const Index embedding_dimension = 64;
+        const Index heads_number = 8;
+
         // Data Set
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        // Neural Network
-
-        const Index embedding_dimension = 64;
-        const Index heads_number = 8/2;
-
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        //const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
+        const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
+        const Index targets_number = language_dataset.get_maximum_target_sequence_length();
 
-        const Index input_sequence_length = language_dataset.get_input_sequence_length();
-        const Index targets_number = language_dataset.get_target_sequence_length();
-        //const Index reserved_tokens = language_dataset.reserved_tokens.size();
+        // Neural Network
+/*
+        TextClassificationNetwork text_classification_network({input_vocabulary_size, input_sequence_length, embedding_dimension},
+                                                              {heads_number},
+                                                              {targets_number});
 
-        const dimensions input_dimensions = {input_vocabulary_size, input_sequence_length, embedding_dimension};
-        const dimensions complexity_dimensions = {heads_number};
-        //MeanSquaredError: outputs and target dimension 1 do not match: 2 1
 
-        //dimensions output_dimensions = { target_vocabulary_size - reserved_tokens };
-        const dimensions output_dimensions = { targets_number };
-
-        TextClassificationNetwork text_classification_network(
-            input_dimensions,
-            complexity_dimensions,
-            output_dimensions
-            );
+        text_classification_network.print();
 
         // Training Strategy
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_display_period(10);
-        adam->set_maximum_epochs_number(1000);
-        //adam->set_batch_size(100);
-
-        WeightedSquaredError wse = WeightedSquaredError(&text_classification_network, &language_dataset);
-        adam->set_loss_index(&wse);
-
-        training_strategy.train();
+        //training_strategy.train();
 
         // Testing Analysis
 
@@ -82,6 +67,12 @@ int main()
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         roc_analysis.print();
+*/
+
+        // Deployment
+
+        string document = "This is great!";
+
 
         cout << "Good bye!" << endl;
 

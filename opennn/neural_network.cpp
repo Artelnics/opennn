@@ -320,7 +320,7 @@ Index NeuralNetwork::get_features_number() const
         return 0;
 
     if(has("Embedding"))
-        return feature_names.size();
+        return get_layer(0)->get_inputs_number();
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
@@ -1016,8 +1016,8 @@ void NeuralNetwork::print() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << endl
-             << "Layer " << i << ": " << endl;
+        cout << "\nLayer " << i << ": " << endl;
+
         layers[i]->print();
     }
 

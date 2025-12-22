@@ -42,7 +42,7 @@ public:
     void set_input_length(const Index&);
     void set_decoder_length(const Index&);
 
-    Index get_input_sequence_length() const;
+    Index get_maximum_input_sequence_length() const;
     Index get_decoder_length() const;
 
     string calculate_outputs(const vector<string>&);

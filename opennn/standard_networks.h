@@ -271,7 +271,7 @@ public:
                                                     false, 
                                                     "stem_conv_1");
 
-        add_layer(move(stem_conv), { last_layer_index });
+        add_layer(std::move(stem_conv), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -282,7 +282,7 @@ public:
                                               "MaxPooling",
                                               "stem_pool");
 
-        add_layer(move(stem_pool), { last_layer_index });
+        add_layer(std::move(stem_pool), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -307,7 +307,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-                add_layer(move(conv1), { block_input_index });
+                add_layer(std::move(conv1), { block_input_index });
 
                 Index main_path_index = get_layers_number() - 1;
 
@@ -319,7 +319,7 @@ public:
                                                         false,
                                                         "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
-                add_layer(move(conv2), { main_path_index });
+                add_layer(std::move(conv2), { main_path_index });
 
                 main_path_index = get_layers_number() - 1;
 
@@ -345,7 +345,7 @@ public:
 
                 auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
-                add_layer(move(addition_layer), { main_path_index, skip_path_index });
+                add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
                 last_layer_index = get_layers_number() - 1;
 
@@ -372,13 +372,13 @@ public:
                                                 "AveragePooling",
                                                 "global_avg_pool");
 
-        add_layer(move(global_pool), { last_layer_index });
+        add_layer(std::move(global_pool), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
         auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_dimensions());
 
-        add_layer(move(flatten_layer), { last_layer_index });
+        add_layer(std::move(flatten_layer), { last_layer_index });
 
         last_layer_index = get_layers_number() - 1;
 
@@ -388,7 +388,7 @@ public:
                                                 false,
                                                 "dense_classifier");
 
-        add_layer(move(dense_layer), { last_layer_index });
+        add_layer(std::move(dense_layer), { last_layer_index });
     }
 };
 
@@ -399,7 +399,8 @@ public:
 
     TextClassificationNetwork(const dimensions& input_dimensions,
                               const dimensions& complexity_dimensions,
-                              const dimensions& output_dimensions) : NeuralNetwork()
+                              const dimensions& output_dimensions,
+                              const vector<string>& new_input_vocabulary) : NeuralNetwork()
     {
         layers.clear();
 
@@ -418,10 +419,10 @@ public:
                                          embedding_dimension,
                                          "embedding_layer"));
 
-        // add_layer(make_unique<MultiHeadAttention>(
-        //     dimensions({sequence_length, embedding_dimension}),
-        //     heads_number,
-        //     "multihead_attention_layer"));
+        add_layer(make_unique<MultiHeadAttention>(
+             dimensions({sequence_length, embedding_dimension}),
+             heads_number,
+             "multihead_attention_layer"));
 
         add_layer(make_unique<Pooling3d>(
             get_output_dimensions()));
@@ -435,7 +436,22 @@ public:
             output_dimensions,
             classification_layer_activation,
             "classification_layer"));
+
+        input_vocabulary = new_input_vocabulary;
     }
+
+    Tensor<type, 2> calculate_outputs(const Tensor<string, 1>& input_documents) const
+    {
+        Tensor<type, 2> inputs;
+
+        return Tensor<type, 2>();
+
+        //return calculate_outputs<2,2>(inputs);
+    }
+
+private:
+
+    vector<string> input_vocabulary;
 };
 
 } // namespace opennn

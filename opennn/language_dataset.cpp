@@ -28,8 +28,10 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
                                  const Index& input_sequence_length,
                                  const Index& input_vocabulary_size) : Dataset()
 {
-    maximum_input_length = input_sequence_length;
-    maximum_target_length = 1;
+    // @todo check this code
+
+    maximum_input_sequence_length = input_sequence_length;
+    maximum_target_sequence_length = 1;
 
     const Index variables_number = input_sequence_length + 1;
 
@@ -70,8 +72,8 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
     input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
     target_vocabulary.resize(2);
 
-    input_dimensions = { get_input_sequence_length() };
-    target_dimensions = { get_target_sequence_length() };
+    input_dimensions = { get_maximum_input_sequence_length() };
+    target_dimensions = { get_maximum_target_sequence_length() };
     decoder_dimensions = { 0 };
 
     set_raw_variable_scalers("None");
@@ -98,15 +100,15 @@ Index LanguageDataset::get_input_vocabulary_size() const
 }
 
 
-Index LanguageDataset::get_input_sequence_length() const
+Index LanguageDataset::get_maximum_input_sequence_length() const
 {
-    return maximum_input_length;
+    return maximum_input_sequence_length;
 }
 
 
-Index LanguageDataset::get_target_sequence_length() const
+Index LanguageDataset::get_maximum_target_sequence_length() const
 {
-    return maximum_target_length;
+    return maximum_target_sequence_length;
 }
 
 
@@ -131,32 +133,34 @@ void LanguageDataset::set_target_vocabulary(const vector<string>& new_target_voc
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
                                         vector<string>& vocabulary) const
 {
-    unordered_map<string, size_t> word_counts;
+    unordered_map<string, size_t> token_count;
 
     for (const auto& document : document_tokens)
         for (const auto& token : document)
-            ++word_counts[token];
+            ++token_count[token];
 
-    vector<pair<string, size_t>> sorted_words(word_counts.begin(), word_counts.end());
+    vector<pair<string, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
-    sort(sorted_words.begin(), sorted_words.end(),
-         [](const pair<string, size_t>& a, const pair<string, size_t>& b)
-         {
-             return a.second > b.second;
-         });
+    sort(sorted_tokens.begin(), sorted_tokens.end(),
+         [](const pair<string, size_t>& a, const pair<string, size_t>& b){return a.second > b.second;});
 
     vocabulary.clear();
 
     for (const auto& token : reserved_tokens)
         vocabulary.push_back(token);
 
-    for (const auto& entry : sorted_words)
+    for (const auto& token : sorted_tokens)
     {
-        // if (entry.second < size_t(minimum_word_frequency)) continue;
-        // if (find(reserved_tokens.begin(), reserved_tokens.end(), entry.first) != reserved_tokens.end()) continue;
-        // if (vocabulary.size() >= size_t(maximum_vocabulary_size)) break;
+        if (token.second < size_t(minimum_token_frequency))
+            continue;
 
-        vocabulary.push_back(entry.first);
+        if (find(reserved_tokens.begin(), reserved_tokens.end(), token.first) != reserved_tokens.end())
+            continue;
+
+        if (vocabulary.size() >= size_t(maximum_vocabulary_size))
+            break;
+
+        vocabulary.push_back(token.first);
     }
 }
 
@@ -191,23 +195,23 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
 void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
 {
-    if(maximum_target_length == 1 && target_vocabulary.size() < 6)
+    if(maximum_target_sequence_length == 1 && target_vocabulary.size() < 6)
         throw logic_error("Encode target data: Invalid case");
 
     const size_t target_document_tokens_number = target_document_tokens.size();
 
     // Binary classification
 
-    if(maximum_target_length == 1 && target_vocabulary.size() == 6)
+    if(maximum_target_sequence_length == 1 && target_vocabulary.size() == 6)
     {
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
             const string& token = target_document_tokens[sample_index][0];
 
             if(contains(positive_words, token))
-                data(sample_index, maximum_input_length) = 1;
+                data(sample_index, maximum_input_sequence_length) = 1;
             else if(contains(negative_words, token))
-                data(sample_index, maximum_input_length) = 0;
+                data(sample_index, maximum_input_sequence_length) = 0;
             else
                 throw runtime_error("Unknown target value");
         }
@@ -217,7 +221,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
 
     // Multiple classification
 
-    if(maximum_target_length == 6 && target_vocabulary.size() >= 6)
+    if(maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
         for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
@@ -229,7 +233,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
                                           ? distance(target_vocabulary.begin(), iterator)
                                           : 1;
 
-            data(sample_index, maximum_input_length + token_index - reserved_tokens.size()) = 1;
+            data(sample_index, maximum_input_sequence_length + token_index - reserved_tokens.size()) = 1;
         }
 
         return;
@@ -245,15 +249,15 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
         #pragma omp parallel for
         for (Index sample = 0; sample < samples_number; sample++)
         {
-            data(sample, maximum_input_length) = 2; // start;
+            data(sample, maximum_input_sequence_length) = 2; // start;
 
             const vector<string>& target_tokens = target_document_tokens[sample];
 
-            for (Index variable = maximum_input_length + 1;
-                variable < maximum_input_length + 1 + Index(target_tokens.size());
+            for (Index variable = maximum_input_sequence_length + 1;
+                variable < maximum_input_sequence_length + 1 + Index(target_tokens.size());
                 variable++)
             {
-                const Index token_index = variable - (maximum_input_length + 1);
+                const Index token_index = variable - (maximum_input_sequence_length + 1);
 
                 const string& current_token = target_tokens[token_index];
 
@@ -262,7 +266,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
                 data(sample, variable) = (it != target_vocabulary.end()) ? distance(target_vocabulary.begin(), it) : 1;
             }
 
-            data(sample, maximum_input_length + target_tokens.size() + 1) = 3; // end;
+            data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3; // end;
         }
     }
 }
@@ -270,7 +274,7 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
 
 dimensions LanguageDataset::get_input_dimensions() const
 {
-    return dimensions({get_input_vocabulary_size(), get_input_sequence_length()});
+    return dimensions({get_input_vocabulary_size(), get_maximum_input_sequence_length()});
 }
 
 
@@ -279,15 +283,18 @@ dimensions LanguageDataset::get_target_dimensions() const
     return dimensions({get_variables_number("Target")});
 }
 
+
 // @todo add "decoder variables"
 
 void LanguageDataset::read_csv()
-{   
+{
+    cout << "Reading .txt file..." << endl;
+
     const Index samples_number = count_non_empty_lines(data_path);
 
     ifstream file(data_path);
 
-    cout << "Reading .txt file..." << endl;
+    const string separator = get_separator_string();
 
     vector<vector<string>> input_document_tokens(samples_number);
     vector<vector<string>> target_document_tokens(samples_number);
@@ -295,7 +302,6 @@ void LanguageDataset::read_csv()
     string line;
 
     Index sample_index = 0;
-    const string separator = get_separator_string();
 
     while (getline(file, line))
     {
@@ -315,39 +321,37 @@ void LanguageDataset::read_csv()
     if (sample_index != samples_number)
         throw runtime_error("Error: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " found.");
 
-    // set vocabulary
-
     create_vocabulary(input_document_tokens, input_vocabulary);
     create_vocabulary(target_document_tokens, target_vocabulary);
 
-    // set data size
-
-    maximum_input_length = get_maximum_size(input_document_tokens) + 2;
+    maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
 
     const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
+    const Index target_vocabulary_size = get_target_vocabulary_size();
 
-    if(maximum_target_document_tokens == 1 && target_vocabulary.size() == 6)
-        maximum_target_length = 1;
-    else if(maximum_target_document_tokens == 1 && target_vocabulary.size() > 6)
-        maximum_target_length = target_vocabulary.size() - 4;
-    else
+    if(maximum_target_document_tokens != 1)
         throw runtime_error("Unknown case in read_csv");
 
-    // maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
-    //     ? 1
-    //     : get_maximum_size(target_document_tokens) + 2;
+    maximum_target_sequence_length = (target_vocabulary_size == 6)
+         ? 1
+         : target_vocabulary_size - 4;
 
-    const Index variables_number = maximum_input_length + maximum_target_length;
+    const Index variables_number = maximum_input_sequence_length + maximum_target_sequence_length;
 
     data.resize(samples_number, variables_number);
 
     raw_variables.resize(variables_number);
 
-    for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_length,
-             [](auto& var) {var.role = "Input";});
+    for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_sequence_length,
+             [](auto& raw_variable) {raw_variable.role = "Input";});
 
-    for_each(raw_variables.begin() + maximum_input_length, raw_variables.begin() + maximum_input_length + maximum_target_length,
-             [](auto& var) { var.role = "Target"; });
+    for_each(raw_variables.begin() + maximum_input_sequence_length, raw_variables.begin() + maximum_input_sequence_length + maximum_target_sequence_length,
+             [](auto& raw_variable) {raw_variable.role = "Target";});
+
+    for(Index i = 0; i < maximum_input_sequence_length; i++)
+    {
+        raw_variables[i].name = "token_" + to_string(i+1);
+    }
 
     // set data
 
@@ -356,9 +360,9 @@ void LanguageDataset::read_csv()
 
     sample_uses.resize(samples_number);
 
-    target_dimensions = {get_target_sequence_length()};
-    decoder_dimensions = {get_target_sequence_length()};
-    input_dimensions = {get_input_sequence_length()};
+    input_dimensions = {get_maximum_input_sequence_length()};
+    target_dimensions = {get_maximum_target_sequence_length()};
+    decoder_dimensions = {get_maximum_target_sequence_length()};
 
     set_raw_variable_scalers("None");
     set_default_raw_variable_names();
@@ -403,18 +407,13 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
 
     preview_data_to_XML(printer);
 
-    printer.OpenElement("InputVocabulary");
-    for(const string& word : input_vocabulary)
-        add_xml_element(printer, "Word", word);
-    printer.CloseElement();
+    const string separator_string = get_separator_string();
 
-    printer.OpenElement("TargetVocabulary");
-    for(const string& word : target_vocabulary)
-        add_xml_element(printer, "Word", word);
-    printer.CloseElement();
+    add_xml_element(printer, "InputVocabulary", vector_to_string(input_vocabulary, separator_string));
+    add_xml_element(printer, "TargetVocabulary", vector_to_string(target_vocabulary, separator_string));
 
-    add_xml_element(printer, "InputSequenceLength", to_string(maximum_input_length));
-    add_xml_element(printer, "TargetSequenceLength", to_string(maximum_target_length));
+    add_xml_element(printer, "MaximumInputSequenceLength", to_string(maximum_input_sequence_length));
+    add_xml_element(printer, "MaximumTargetSequenceLength", to_string(maximum_target_sequence_length));
 
     add_xml_element(printer, "Display", to_string(display));
 
@@ -457,22 +456,21 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     preview_data_from_XML(preview_data_element);
 
-    const XMLElement* input_vocab_element = data_set_element->FirstChildElement("InputVocabulary");
-    vocabulary_from_XML(input_vocab_element, input_vocabulary);
+    const string separator_string = get_separator_string();
 
-    const XMLElement* target_vocab_element = data_set_element->FirstChildElement("TargetVocabulary");
-    vocabulary_from_XML(target_vocab_element, target_vocabulary);
+    input_vocabulary = get_tokens(read_xml_string(data_set_element, "InputVocabulary"), separator_string);
+    target_vocabulary = get_tokens(read_xml_string(data_set_element, "TargetVocabulary"), separator_string);
 
-    const XMLElement* input_len_element = data_set_element->FirstChildElement("InputSequenceLength");
+    const XMLElement* input_len_element = data_set_element->FirstChildElement("MaximumInputSequenceLength");
     if(input_len_element && input_len_element->GetText())
-        maximum_input_length = atoi(input_len_element->GetText());
+        maximum_input_sequence_length = atoi(input_len_element->GetText());
 
-    const XMLElement* target_len_element = data_set_element->FirstChildElement("TargetSequenceLength");
+    const XMLElement* target_len_element = data_set_element->FirstChildElement("MaximumTargetSequenceLength");
     if(target_len_element && target_len_element->GetText())
-        maximum_target_length = atoi(target_len_element->GetText());
+        maximum_target_sequence_length = atoi(target_len_element->GetText());
 
-    input_dimensions = { get_input_sequence_length() };
-    target_dimensions = { get_target_sequence_length() };
+    input_dimensions = { get_maximum_input_sequence_length() };
+    target_dimensions = { get_maximum_target_sequence_length() };
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
@@ -517,30 +515,13 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-void LanguageDataset::vocabulary_from_XML(const XMLElement *element, vector<string> &vocabulary)
-{
-    if(!element)
-        return;
-
-    vocabulary.clear();
-
-    for(const XMLElement* word_element = element->FirstChildElement("Word"); word_element; word_element = word_element->NextSiblingElement("Word"))
-    {
-        if (word_element->GetText())
-            vocabulary.push_back(word_element->GetText());
-    }
-}
-
-
 void LanguageDataset::print() const
 {
     cout << "Language dataset" << endl
          << "Input vocabulary size: " << get_input_vocabulary_size() << endl
          << "Target vocabulary size: " << get_target_vocabulary_size() << endl
-         << "Input length: " << get_input_sequence_length() << endl
-         << "Target length: " << get_target_sequence_length() << endl
-         << "Input variables number: " << get_variables_number("Input") << endl
-         << "Target variables number: " << get_variables_number("Target") << endl;
+         << "Maximum input sequence length: " << get_maximum_input_sequence_length() << endl
+         << "Maximum target sequence length: " << get_maximum_target_sequence_length() << endl;
 }
 
 }

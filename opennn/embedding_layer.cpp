@@ -84,7 +84,6 @@ void Embedding::set(const Index& new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
-
 }
 
 

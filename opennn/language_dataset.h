@@ -29,8 +29,8 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
-    Index get_input_sequence_length() const;
-    Index get_target_sequence_length() const;
+    Index get_maximum_input_sequence_length() const;
+    Index get_maximum_target_sequence_length() const;
 
     void set_input_vocabulary(const vector<string>&);
     void set_target_vocabulary(const vector<string>&);
@@ -62,18 +62,14 @@ private:
 
     unordered_map<string, Index> create_vocabulary_map(const vector<string>& vocabulary);
 
-
-
-    void vocabulary_from_XML(const XMLElement* element, vector<string>& vocabulary);
-
     vector<string> input_vocabulary;
     vector<string> target_vocabulary;
 
-    Index maximum_input_length = 0;
-    Index maximum_target_length = 0;
+    Index maximum_input_sequence_length = 0;
+    Index maximum_target_sequence_length = 0;
 
-    Index minimum_word_frequency = 1;
-    Index maximum_vocabulary_size = 1000;
+    Index minimum_token_frequency = 2;
+    Index maximum_vocabulary_size = 20000;
 };
 
 }

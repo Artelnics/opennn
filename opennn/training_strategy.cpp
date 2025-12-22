@@ -105,7 +105,22 @@ void TrainingStrategy::set_default()
 {
     if(!has_neural_network()) return;
 
-    set_loss_index("MeanSquaredError");
+    // @todo
+
+    // Approximation
+
+    // set_loss_index("MeanSquaredError");
+    // set_optimization_algorithm("AdaptiveMomentEstimation");
+
+    // Classification
+
+    // Forecasting
+
+    // Image classification
+
+    // Text classification
+
+    set_loss_index("WeightedSquaredError");
     set_optimization_algorithm("AdaptiveMomentEstimation");
 }
 

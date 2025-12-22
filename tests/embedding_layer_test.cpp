@@ -92,7 +92,7 @@ TEST(Embedding, BackPropagate)
 
     const Index embedding_dimension = get_random_index(1,10);
     const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
-    const Index sequence_length = language_dataset.get_input_sequence_length();
+    const Index sequence_length = language_dataset.get_maximum_input_sequence_length();
 
     dimensions input_dimensions = { vocabulary_size, sequence_length };
 

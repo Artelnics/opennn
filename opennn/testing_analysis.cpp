@@ -155,10 +155,10 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
 void TestingAnalysis::print_goodness_of_fit_analysis() const
 {
-    const Tensor<GoodnessOfFitAnalysis, 1> linear_regression_analysis = perform_goodness_of_fit_analysis();
+    const Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = perform_goodness_of_fit_analysis();
 
-    for(Index i = 0; i < linear_regression_analysis.size(); i++)
-        linear_regression_analysis(i).print();
+    for(Index i = 0; i < goodness_of_fit_analysis.size(); i++)
+        goodness_of_fit_analysis(i).print();
 }
 
 
