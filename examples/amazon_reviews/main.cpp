@@ -43,19 +43,26 @@ int main()
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();
 
+        const vector<string> input_vocabulary = language_dataset.get_input_vocabulary();
+
         // Neural Network
 
         TextClassificationNetwork text_classification_network({input_vocabulary_size, input_sequence_length, embedding_dimension},
                                                               {heads_number},
-                                                              {targets_number});
+                                                              {targets_number},
+                                                              input_vocabulary);
 
-        text_classification_network.print();
-/*
+        //text_classification_network.print();
+
         // Training Strategy
-
+/*
         WeightedSquaredError wse;
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(1000);
+        adam->set_display_period(5);
 
         training_strategy.train();
 
