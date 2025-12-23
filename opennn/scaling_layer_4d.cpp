@@ -60,9 +60,8 @@ void Scaling4d::forward_propagate(const vector<TensorView>& input_views,
 
 void Scaling4d::print() const
 {
-    cout << "Scaling layer 4D" << endl;
-
-    print_vector(input_dimensions);
+    cout << "Scaling layer 4D" << endl
+         << input_dimensions;
 }
 
 

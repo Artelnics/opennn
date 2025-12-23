@@ -84,7 +84,6 @@ void Embedding::set(const Index& new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
-
 }
 
 
@@ -212,11 +211,11 @@ void Embedding::print() const
     cout << "Label: " << label << endl;
     cout << "Type: Embedding" << endl;
 
-    cout << "Input dimensions: ";
-    print_vector(get_input_dimensions());
+    cout << "Input dimensions: "
+         << get_input_dimensions();
 
-    cout << "Output dimensions: ";
-    print_vector(get_output_dimensions());
+    cout << "Output dimensions: "
+         << get_output_dimensions();
 
     cout << "Vocabulary size: " << get_vocabulary_size() << endl;
     cout << "Sequence length: " << get_sequence_length() << endl;

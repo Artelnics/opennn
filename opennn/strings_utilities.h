@@ -16,6 +16,10 @@ using namespace Eigen;
 
 namespace opennn
 {
+
+    void prepare_line(string&);
+    Index count_non_empty_lines(const filesystem::path&);
+
     Index count_tokens(const string&, const string&);
 
     vector<string> get_tokens(const string&, const string&);
@@ -63,8 +67,6 @@ namespace opennn
     void set_language(const Language&);
 
     void set_language(const string&);
-
-    void print_tokens(const vector<vector<string>>&);
 }
 
 #endif // OPENNNSTRINGS_H

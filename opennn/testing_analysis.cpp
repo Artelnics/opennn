@@ -155,10 +155,10 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
 void TestingAnalysis::print_goodness_of_fit_analysis() const
 {
-    const Tensor<GoodnessOfFitAnalysis, 1> linear_regression_analysis = perform_goodness_of_fit_analysis();
+    const Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = perform_goodness_of_fit_analysis();
 
-    for(Index i = 0; i < linear_regression_analysis.size(); i++)
-        linear_regression_analysis(i).print();
+    for(Index i = 0; i < goodness_of_fit_analysis.size(); i++)
+        goodness_of_fit_analysis(i).print();
 }
 
 
@@ -2173,9 +2173,9 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
 
 void TestingAnalysis::RocAnalysis::print() const
 {
-    cout << "Roc Curve analysis" << endl;
+    cout << "ROC Curve analysis" << endl;
 
-    cout << "Roc Curve:\n" << roc_curve << endl;
+//    cout << "Roc Curve:\n" << roc_curve << endl;
     cout << "Area Under Curve: " << area_under_curve << endl;
     cout << "Confidence Limit: " << confidence_limit << endl;
     cout << "Optimal Threshold: " << optimal_threshold << endl;

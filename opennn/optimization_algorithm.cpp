@@ -6,16 +6,17 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
 #include "image_dataset.h"
 #include "time_series_dataset.h"
-#include "pch.h"
-#include "optimization_algorithm.h"
+#include "language_dataset.h"
 #include "scaling_layer_2d.h"
 #include "scaling_layer_3d.h"
 #include "unscaling_layer.h"
-#include "language_dataset.h"
-#include "transformer.h"
+#include "embedding_layer.h"
+//#include "transformer.h"
 #include "loss_index.h"
+#include "optimization_algorithm.h"
 
 namespace opennn
 {
@@ -456,7 +457,7 @@ void OptimizationAlgorithm::set_vocabularies()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!is_instance_of<Transformer>(neural_network))
+    if(!neural_network->has("Embedding"))
         return;
 
     LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
@@ -464,10 +465,8 @@ void OptimizationAlgorithm::set_vocabularies()
     const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
     const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
 
-    Transformer* transformer = static_cast<Transformer*>(neural_network);
-
-    transformer->set_input_vocabulary(input_vocabulary);
-    transformer->set_output_vocabulary(target_vocabulary);
+    neural_network->set_input_vocabulary(input_vocabulary);
+    neural_network->set_output_vocabulary(target_vocabulary);
 }
 
 

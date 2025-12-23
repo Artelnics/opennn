@@ -28,8 +28,10 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
                                  const Index& input_sequence_length,
                                  const Index& input_vocabulary_size) : Dataset()
 {
-    maximum_input_length = input_sequence_length;
-    maximum_target_length = 1;
+    // @todo check this code
+
+    maximum_input_sequence_length = input_sequence_length;
+    maximum_target_sequence_length = 1;
 
     const Index variables_number = input_sequence_length + 1;
 
@@ -70,8 +72,8 @@ LanguageDataset::LanguageDataset(const Index& samples_number,
     input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
     target_vocabulary.resize(2);
 
-    input_dimensions = { get_input_sequence_length() };
-    target_dimensions = { get_target_sequence_length() };
+    input_dimensions = { get_maximum_input_sequence_length() };
+    target_dimensions = { get_maximum_target_sequence_length() };
     decoder_dimensions = { 0 };
 
     set_raw_variable_scalers("None");
@@ -98,15 +100,15 @@ Index LanguageDataset::get_input_vocabulary_size() const
 }
 
 
-Index LanguageDataset::get_input_sequence_length() const
+Index LanguageDataset::get_maximum_input_sequence_length() const
 {
-    return maximum_input_length;
+    return maximum_input_sequence_length;
 }
 
 
-Index LanguageDataset::get_target_sequence_length() const
+Index LanguageDataset::get_maximum_target_sequence_length() const
 {
-    return maximum_target_length;
+    return maximum_target_sequence_length;
 }
 
 
@@ -128,144 +130,44 @@ void LanguageDataset::set_target_vocabulary(const vector<string>& new_target_voc
 }
 
 
-void LanguageDataset::to_XML(XMLPrinter& printer) const
-{
-    ostringstream buffer;
-
-    time_t start, finish;
-    time(&start);
-
-    printer.OpenElement("Dataset");
-
-    // Data file
-
-    printer.OpenElement("DataSource");
-
-    add_xml_element(printer, "FileType", "csv");
-    add_xml_element(printer, "DataPath", data_path.string());
-    add_xml_element(printer, "Separator", get_separator_string());
-    add_xml_element(printer, "HasHeader", to_string(has_header));
-    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
-    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "Codification", get_codification_string());
-    printer.CloseElement();
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    printer.OpenElement("RawVariables");
-    add_xml_element(printer, "RawVariablesNumber", to_string(raw_variables_number));
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        printer.OpenElement("RawVariable");
-        printer.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables[i].to_XML(printer);
-        printer.CloseElement();
-    }
-
-    printer.CloseElement();
-
-    // Samples id
-
-    if(has_sample_ids)
-        add_xml_element(printer, "SampleIds", vector_to_string(sample_ids));
-
-    // Samples
-
-    printer.OpenElement("Samples");
-    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
-    printer.CloseElement();
-
-    printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
-
-    if (missing_values_number > 0)
-    {
-        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string<Index, 1>(raw_variables_missing_values_number));
-        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
-    }
-
-    printer.CloseElement();
-
-    printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
-
-    if (missing_values_number > 0)
-    {
-        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string<Index, 1>(raw_variables_missing_values_number));
-        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
-    }
-
-    printer.CloseElement();
-
-    // Completion Vocabulary
-
-    printer.OpenElement("TargetVocabulary");
-
-//    for (const auto& word : target_vocabulary)
-//        add_xml_element(printer, "Word", word);
-
-    printer.CloseElement();
-
-    // Decoder Vocabulary
-    printer.OpenElement("DecoderVocabulary");
-
-//    for (const auto& word : input_vocabulary)
-//        add_xml_element(printer, "Word", word);
-
-    printer.CloseElement();
-
-    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_length));
-    add_xml_element(printer, "targetDimensions", to_string(maximum_input_length));
-
-    printer.CloseElement();
-
-    time(&finish);
-}
-
-
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
                                         vector<string>& vocabulary) const
 {
-    unordered_map<string, size_t> word_counts;
+    unordered_map<string, size_t> token_count;
 
     for (const auto& document : document_tokens)
         for (const auto& token : document)
-            ++word_counts[token];
+            ++token_count[token];
 
-    vector<pair<string, size_t>> sorted_words(word_counts.begin(), word_counts.end());
+    vector<pair<string, size_t>> sorted_tokens(token_count.begin(), token_count.end());
 
-    sort(sorted_words.begin(), sorted_words.end(),
-         [](const pair<string, size_t>& a, const pair<string, size_t>& b)
-         {
-             return a.second > b.second;
-         });
+    sort(sorted_tokens.begin(), sorted_tokens.end(),
+         [](const pair<string, size_t>& a, const pair<string, size_t>& b){return a.second > b.second;});
 
     vocabulary.clear();
 
     for (const auto& token : reserved_tokens)
         vocabulary.push_back(token);
 
-    for (const auto& entry : sorted_words)
+    for (const auto& token : sorted_tokens)
     {
-        // if (entry.second < size_t(minimum_word_frequency)) continue;
-        // if (find(reserved_tokens.begin(), reserved_tokens.end(), entry.first) != reserved_tokens.end()) continue;
-        // if (vocabulary.size() >= size_t(maximum_vocabulary_size)) break;
+        if (token.second < size_t(minimum_token_frequency))
+            continue;
 
-        vocabulary.push_back(entry.first);
+        if (find(reserved_tokens.begin(), reserved_tokens.end(), token.first) != reserved_tokens.end())
+            continue;
+
+        if (vocabulary.size() >= size_t(maximum_vocabulary_size))
+            break;
+
+        vocabulary.push_back(token.first);
     }
 }
 
 
 void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
 {
-    unordered_map<string, Index> input_vocabulary_map;
-
-    for (size_t i = 0; i < input_vocabulary.size(); ++i)
-        input_vocabulary_map[input_vocabulary[i]] = i;
+    const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
 
     const Index samples_number = get_samples_number();
 
@@ -277,47 +179,51 @@ void LanguageDataset::encode_input_data(const vector<vector<string>>& input_docu
 
         const vector<string>& input_tokens = input_document_tokens[sample];
 
-        for (Index variable = 0; variable < Index(input_tokens.size()); variable++)
+        const size_t input_tokens_number = input_tokens.size();
+
+        for (size_t variable = 0; variable < input_tokens_number; variable++)
         {
             auto it = find(input_vocabulary.begin(), input_vocabulary.end(), input_tokens[variable]);
 
             data(sample, 1+variable) = (it != input_vocabulary.end()) ? it - input_vocabulary.begin() : 1;
         }
 
-        data(sample, input_tokens.size() + 1) = 3; // end
+        data(sample, input_tokens_number + 1) = 3; // end
     }
 }
 
 
 void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
 {
-    if(maximum_target_length == 1 && target_vocabulary.size() < 6)
-    {
+    if(maximum_target_sequence_length == 1 && target_vocabulary.size() < 6)
         throw logic_error("Encode target data: Invalid case");
-    }
-    else if(maximum_target_length == 1 && target_vocabulary.size() == 6) // Binary classification
-    {
-        // Binary classification
 
-        for(size_t sample_index = 0; sample_index < target_document_tokens.size(); sample_index++)
+    const size_t target_document_tokens_number = target_document_tokens.size();
+
+    // Binary classification
+
+    if(maximum_target_sequence_length == 1 && target_vocabulary.size() == 6)
+    {
+        for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
             const string& token = target_document_tokens[sample_index][0];
 
-            if (contains(positive_words, token) || contains(negative_words, token))
-            {
-                data(sample_index, maximum_input_length) = contains(positive_words, token)
-                ? 1
-                : 0;
-            }
+            if(contains(positive_words, token))
+                data(sample_index, maximum_input_sequence_length) = 1;
+            else if(contains(negative_words, token))
+                data(sample_index, maximum_input_sequence_length) = 0;
             else
-            {
-                // @todo
-            }
+                throw runtime_error("Unknown target value");
         }
+
+        return;
     }
-    else if(maximum_target_length == 6 && target_vocabulary.size() >= 6) // Multiple classification
+
+    // Multiple classification
+
+    if(maximum_target_sequence_length == 6 && target_vocabulary.size() >= 6)
     {
-        for(size_t sample_index = 0; sample_index < target_document_tokens.size(); sample_index++)
+        for(size_t sample_index = 0; sample_index < target_document_tokens_number; sample_index++)
         {
             const string& token = target_document_tokens[sample_index][0];
 
@@ -327,30 +233,31 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
                                           ? distance(target_vocabulary.begin(), iterator)
                                           : 1;
 
-            data(sample_index, maximum_input_length + token_index - reserved_tokens.size()) = 1;
+            data(sample_index, maximum_input_sequence_length + token_index - reserved_tokens.size()) = 1;
         }
-    }
-    else
-    {
-        unordered_map<string, Index> target_vocabulary_map;
 
-        for (Index i = 0; i < Index(target_vocabulary.size()); ++i)
-            target_vocabulary_map[target_vocabulary[i]] = i;
+        return;
+    }
+
+    // Other
+
+    {
+        const unordered_map<string, Index> target_vocabulary_map = create_vocabulary_map(target_vocabulary);
 
         const Index samples_number = get_samples_number();
 
         #pragma omp parallel for
         for (Index sample = 0; sample < samples_number; sample++)
         {
-            data(sample, maximum_input_length) = 2; // start;
+            data(sample, maximum_input_sequence_length) = 2; // start;
 
             const vector<string>& target_tokens = target_document_tokens[sample];
 
-            for (Index variable = maximum_input_length + 1;
-                variable < maximum_input_length + 1 + Index(target_tokens.size());
+            for (Index variable = maximum_input_sequence_length + 1;
+                variable < maximum_input_sequence_length + 1 + Index(target_tokens.size());
                 variable++)
             {
-                const Index token_index = variable - (maximum_input_length + 1);
+                const Index token_index = variable - (maximum_input_sequence_length + 1);
 
                 const string& current_token = target_tokens[token_index];
 
@@ -359,35 +266,159 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
                 data(sample, variable) = (it != target_vocabulary.end()) ? distance(target_vocabulary.begin(), it) : 1;
             }
 
-            data(sample, maximum_input_length + target_tokens.size() + 1) = 3; // end;
+            data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3; // end;
         }
     }
 }
 
 
-void LanguageDataset::print_input_vocabulary() const
+dimensions LanguageDataset::get_input_dimensions() const
 {
-    for(size_t i = 0; i < input_vocabulary.size(); i++)
-        cout << i << " : " << input_vocabulary[i] << endl;
+    return dimensions({get_input_vocabulary_size(), get_maximum_input_sequence_length()});
 }
 
 
-void LanguageDataset::print_target_vocabulary() const
+dimensions LanguageDataset::get_target_dimensions() const
 {
-    for(size_t i = 0; i < target_vocabulary.size(); i++)
-        cout << i << " : " << target_vocabulary[i] << endl;
+    return dimensions({get_variables_number("Target")});
 }
 
 
-void LanguageDataset::print() const
+// @todo add "decoder variables"
+
+void LanguageDataset::read_csv()
 {
-    cout << "Language dataset" << endl
-         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
-         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
-         << "Input length: " << get_input_sequence_length() << endl
-         << "Target length: " << get_target_sequence_length() << endl
-         << "Input variables number: " << get_variables_number("Input") << endl
-         << "Target variables number: " << get_variables_number("Target") << endl;
+    cout << "Reading .txt file..." << endl;
+
+    const Index samples_number = count_non_empty_lines(data_path);
+
+    ifstream file(data_path);
+
+    const string separator = get_separator_string();
+
+    vector<vector<string>> input_document_tokens(samples_number);
+    vector<vector<string>> target_document_tokens(samples_number);
+
+    string line;
+
+    Index sample_index = 0;
+
+    while (getline(file, line))
+    {
+        if (line.empty()) continue;
+
+        const vector<string> tokens = get_tokens(line, separator);
+
+        if (tokens.size() != 2)
+            throw runtime_error("Line must contain two tokens");
+
+        input_document_tokens[sample_index] = tokenize(tokens[0]);
+        target_document_tokens[sample_index] = tokenize(tokens[1]);
+
+        sample_index++;
+    }
+
+    if (sample_index != samples_number)
+        throw runtime_error("Error: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " found.");
+
+    create_vocabulary(input_document_tokens, input_vocabulary);
+    create_vocabulary(target_document_tokens, target_vocabulary);
+
+    maximum_input_sequence_length = get_maximum_size(input_document_tokens) + 2;
+
+    const Index maximum_target_document_tokens = get_maximum_size(target_document_tokens);
+    const Index target_vocabulary_size = get_target_vocabulary_size();
+
+    if(maximum_target_document_tokens != 1)
+        throw runtime_error("Unknown case in read_csv");
+
+    maximum_target_sequence_length = (target_vocabulary_size == 6)
+         ? 1
+         : target_vocabulary_size - 4;
+
+    const Index variables_number = maximum_input_sequence_length + maximum_target_sequence_length;
+
+    data.resize(samples_number, variables_number);
+    data.setZero();
+
+    raw_variables.resize(variables_number);
+
+    for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_sequence_length,
+             [](auto& raw_variable) {raw_variable.role = "Input";});
+
+    for_each(raw_variables.begin() + maximum_input_sequence_length, raw_variables.begin() + maximum_input_sequence_length + maximum_target_sequence_length,
+             [](auto& raw_variable) {raw_variable.role = "Target";});
+
+    for(Index i = 0; i < maximum_input_sequence_length; i++)
+    {
+        raw_variables[i].name = "token_" + to_string(i+1);
+    }
+
+    // set data
+
+    encode_input_data(input_document_tokens);
+    encode_target_data(target_document_tokens);
+
+    sample_uses.resize(samples_number);
+
+    input_dimensions = {get_maximum_input_sequence_length()};
+    target_dimensions = {get_maximum_target_sequence_length()};
+    decoder_dimensions = {get_maximum_target_sequence_length()};
+
+    set_raw_variable_scalers("None");
+    set_default_raw_variable_names();
+    split_samples_random();
+    set_binary_raw_variables();
+
+    cout << "Reading finished" << endl;
+}
+
+
+unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string> &vocabulary)
+{
+    unordered_map<string, Index> vocabulary_map;
+
+    for (Index i = 0; i < Index(vocabulary.size()); ++i)
+        vocabulary_map[vocabulary[i]] = i;
+
+    return vocabulary_map;
+}
+
+
+void LanguageDataset::to_XML(XMLPrinter& printer) const
+{
+    printer.OpenElement("Dataset");
+
+    printer.OpenElement("DataSource");
+
+    add_xml_element(printer, "FileType", "csv");
+    add_xml_element(printer, "Path", data_path.string());
+    add_xml_element(printer, "Separator", get_separator_name());
+    add_xml_element(printer, "HasHeader", to_string(has_header));
+    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
+    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
+    add_xml_element(printer, "Codification", get_codification_string());
+    printer.CloseElement();
+
+    raw_variables_to_XML(printer);
+
+    samples_to_XML(printer);
+
+    missing_values_to_XML(printer);
+
+    preview_data_to_XML(printer);
+
+    const string separator_string = get_separator_string();
+
+    add_xml_element(printer, "InputVocabulary", vector_to_string(input_vocabulary, separator_string));
+    add_xml_element(printer, "TargetVocabulary", vector_to_string(target_vocabulary, separator_string));
+
+    add_xml_element(printer, "MaximumInputSequenceLength", to_string(maximum_input_sequence_length));
+    add_xml_element(printer, "MaximumTargetSequenceLength", to_string(maximum_target_sequence_length));
+
+    add_xml_element(printer, "Display", to_string(display));
+
+    printer.CloseElement();
 }
 
 
@@ -404,378 +435,94 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Data file element is nullptr.\n");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_string(read_xml_string(data_source_element, "Separator"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_xml_string(data_source_element, "Codification"));
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    // RawVariables
-
     const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
-    if(!raw_variables_element)
-        throw runtime_error("RawVariables element is nullptr.\n");
-
-    // Raw variables number
-
-    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-
-    if(!raw_variables_number_element)
-        throw runtime_error("RawVariablesNumber element is nullptr.\n");
-
-    Index new_raw_variables_number = 0;
-
-    if(raw_variables_number_element->GetText())
-    {
-        new_raw_variables_number = Index(atoi(raw_variables_number_element->GetText()));
-
-        set_raw_variables_number(new_raw_variables_number);
-    }
-
-    // Raw variables
-
-    const XMLElement* start_element = raw_variables_number_element;
-
-    for(Index i = 0; i < new_raw_variables_number; i++)
-    {
-        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
-        start_element = raw_variable_element;
-
-        if(raw_variable_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Raw_variable item number (" + to_string(i + 1) + ") exception.\n");
-
-        RawVariable& raw_variable = raw_variables[i];
-        raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_role(read_xml_string(raw_variable_element, "Role"));
-        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
-
-        if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
-            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
-
-        //        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
-    }
-
-    // Rows label
-
-    if(has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
-
-    // Samples
+    raw_variables_from_XML(raw_variables_element);
 
     const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
-    if(!samples_element)
-        throw runtime_error("Samples element is nullptr.\n");
-
-    // Samples number
-
-    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
-
-    if(!samples_number_element)
-        throw runtime_error("Samples number element is nullptr.\n");
-
-    if(samples_number_element->GetText())
-    {
-        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
-
-        sample_uses.resize(new_samples_number);
-
-        set_sample_uses("Training");
-    }
-
-    // Samples uses
-
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
-
-    if(!samples_uses_element)
-        throw runtime_error("Samples uses element is nullptr.\n");
-
-    if(samples_uses_element->GetText())
-        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
-
-    // Missing values
+    samples_from_XML(samples_element);
 
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
-    if(!missing_values_element)
-        throw runtime_error("Missing values element is nullptr.\n");
-
-    // Missing values method
-
-    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
-
-    if(!missing_values_method_element)
-        throw runtime_error("Missing values method element is nullptr.\n");
-
-    if(missing_values_method_element->GetText())
-        set_missing_values_method(missing_values_method_element->GetText());
-
-    // Missing values number
-
-    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
-
-    if(!missing_values_number_element)
-        throw runtime_error("Missing values number element is nullptr.\n");
-
-    if(missing_values_number_element->GetText())
-        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
-
-    if(missing_values_number > 0)
-    {
-        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("");
-
-        if(!raw_variables_missing_values_number_element)
-            throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
-
-        if(raw_variables_missing_values_number_element->GetText())
-        {
-            const vector<string> new_raw_variables_missing_values_number
-                = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
-
-            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
-
-            for(size_t i = 0; i < new_raw_variables_missing_values_number.size(); i++)
-                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number[i].c_str());
-        }
-
-        // Rows missing values number
-
-        const XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
-
-        if(!rows_missing_values_number_element)
-            throw runtime_error("Rows missing values number element is nullptr.\n");
-
-        if(rows_missing_values_number_element->GetText())
-            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
-    }
-
-    // Preview data
+    missing_values_from_XML(missing_values_element);
 
     const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
-    if(!preview_data_element)
-        throw runtime_error("Preview data element is nullptr.\n");
+    preview_data_from_XML(preview_data_element);
 
-    // Preview size
+    const string separator_string = get_separator_string();
 
-    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    input_vocabulary = get_tokens(read_xml_string(data_set_element, "InputVocabulary"), separator_string);
+    target_vocabulary = get_tokens(read_xml_string(data_set_element, "TargetVocabulary"), separator_string);
 
-    if(!preview_size_element)
-        throw runtime_error("Preview size element is nullptr.\n");
+    const XMLElement* input_len_element = data_set_element->FirstChildElement("MaximumInputSequenceLength");
+    if(input_len_element && input_len_element->GetText())
+        maximum_input_sequence_length = atoi(input_len_element->GetText());
 
-    Index new_preview_size = 0;
+    const XMLElement* target_len_element = data_set_element->FirstChildElement("MaximumTargetSequenceLength");
+    if(target_len_element && target_len_element->GetText())
+        maximum_target_sequence_length = atoi(target_len_element->GetText());
 
-    if(preview_size_element->GetText())
-    {
-        new_preview_size = Index(atoi(preview_size_element->GetText()));
+    input_dimensions = { get_maximum_input_sequence_length() };
+    target_dimensions = { get_maximum_target_sequence_length() };
 
-        if(new_preview_size > 0)
-            data_file_preview.resize(new_preview_size);
-    }
-
-    // Preview data
-
-    start_element = preview_size_element;
-/*
-    if(model_type != ModelType::TextClassification)
-    {
-        for(Index i = 0; i < new_preview_size; i++)
-        {
-            const XMLElement* row_element = start_element->NextSiblingElement("Row");
-            start_element = row_element;
-
-            if(row_element->Attribute("Item") != to_string(i+1))
-                throw runtime_error("Row item number (" + to_string(i + 1) + ") exception.\n");
-
-            if(row_element->GetText())
-                data_file_preview[i] = get_tokens(row_element->GetText(), ",");
-        }
-    }
-    else
-    {
-        for(Index i = 0; i < new_preview_size; i++)
-        {
-            const XMLElement* row_element = start_element->NextSiblingElement("Row");
-            start_element = row_element;
-
-            if(row_element->Attribute("Item") != to_string(i+1))
-                throw runtime_error("Row item number (" + to_string(i + 1) + ") exception.\n");
-
-            if(row_element->GetText())
-                data_file_preview[i][0] = row_element->GetText();
-        }
-
-        for(Index i = 0; i < new_preview_size; i++)
-        {
-            const XMLElement* row_element = start_element->NextSiblingElement("Target");
-            start_element = row_element;
-
-            if(row_element->Attribute("Item") != to_string(i+1))
-                throw runtime_error("Target item number (" + to_string(i + 1) + ") exception.\n");
-
-            if(row_element->GetText())
-                data_file_preview[i][1] = row_element->GetText();
-        }
-    }
-*/
-    // Completion Vocabulary
-
-    const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");
-    if(completion_vocabulary_element)
-    {
-        target_vocabulary.clear();
-
-        for (const XMLElement* word_element = completion_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
-        {
-//            if (word_element->GetText())
-//                target_vocabulary.push_back(word_element->GetText());
-        }
-    }
-
-    // Decoder Vocabulary
-
-    const XMLElement* context_vocabulary_element = data_set_element->FirstChildElement("DecoderVocabulary");
-    if(context_vocabulary_element)
-    {
-        input_vocabulary.clear();
-
-        for (const XMLElement* word_element = context_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
-        {
-//            if (word_element->GetText())
-//                input_vocabulary.push_back(word_element->GetText());
-        }
-    }
-
-    // Decoder Dimensions
-
-    const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
-    if (completion_dimensions_element && completion_dimensions_element->GetText())
-        maximum_target_length = atoi(completion_dimensions_element->GetText());
-
-    // Decoder Dimensions
-
-    const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
-    if (decoder_dimensions_element && decoder_dimensions_element->GetText())
-        maximum_input_length = atoi(decoder_dimensions_element->GetText());
-
-    // Display
-
-    // set_display(read_xml_bool(data_set_element, "Display"));
-}
-
-
-Index LanguageDataset::count_non_empty_lines() const
-{
-    ifstream file(data_path);
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file: " + data_path.string() + "\n");
-
-    Index count = 0;
-
-    string line;
-
-    while (getline(file, line))
-    {
-        prepare_line(line);
-
-        if (!line.empty())
-            count++;
-    }
-
-    return count;
-}
-
-
-// @todo add "decoder variables"
-
-void LanguageDataset::read_csv()
-{
-    const Index samples_number = count_non_empty_lines();
+    set_display(read_xml_bool(data_set_element, "Display"));
 
     ifstream file(data_path);
+    if(!file.is_open())
+        throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
-    if (!file.is_open())
-        throw runtime_error("Cannot open data file: " + data_path.string());
-
-    cout << "Reading .txt file..." << endl;
-
-    vector<vector<string>> input_document_tokens(samples_number);
-    vector<vector<string>> target_document_tokens(samples_number);
+    vector<vector<string>> input_docs_tokens;
+    vector<vector<string>> target_docs_tokens;
 
     string line;
-    Index sample_index = 0;
     const string separator = get_separator_string();
 
-    while (getline(file, line))
+    if(has_header)
     {
-        if (line.empty()) continue;
-
-        const vector<string> tokens = get_tokens(line, separator);
-
-        if (tokens.size() != 2)
-            throw runtime_error("Line must contain exactly 2 fields");
-
-        input_document_tokens[sample_index] = tokenize(tokens[0]);
-        target_document_tokens[sample_index] = tokenize(tokens[1]);
-
-        sample_index++;
+        string dummy;
+        getline(file, dummy);
     }
 
-    if (sample_index != samples_number)
-        throw runtime_error("Error: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " found.");
+    while(getline(file, line))
+    {
+        if(line.empty())
+            continue;
 
-    // set vocabulary
+        vector<string> tokens = get_tokens(line, separator);
 
-    create_vocabulary(input_document_tokens, input_vocabulary);
-    create_vocabulary(target_document_tokens, target_vocabulary);
+        if(tokens.size() == 2)
+        {
+            input_docs_tokens.push_back(tokenize(tokens[0]));
+            target_docs_tokens.push_back(tokenize(tokens[1]));
+        }
+    }
 
-    // set data size
+    if(input_docs_tokens.size() != (size_t)get_samples_number())
+    {
+        cout << "Warning: Loaded samples count (" << get_samples_number()
+        << ") does not match file lines (" << input_docs_tokens.size() << ")." << endl;
+    }
 
-    maximum_input_length = get_maximum_size(input_document_tokens) + 2;
+    encode_input_data(input_docs_tokens);
+    encode_target_data(target_docs_tokens);
+}
 
-    if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() == 6)
-        maximum_target_length = 1;
-    else if(get_maximum_size(target_document_tokens) == 1 && target_vocabulary.size() > 6)
-        maximum_target_length = target_vocabulary.size() - 4;
-    else
-        get_maximum_size(target_document_tokens) + 2;
 
-    // maximum_target_length = (get_maximum_size(target_document_tokens) == 1)
-    //     ? 1
-    //     : get_maximum_size(target_document_tokens) + 2;
-
-    const Index variables_number = maximum_input_length + maximum_target_length;
-
-    data.resize(samples_number, variables_number);
-
-    raw_variables.resize(variables_number);
-
-    for_each(raw_variables.begin(), raw_variables.begin() + maximum_input_length,
-             [](auto& var) {var.role = "Input";});
-
-    for_each(raw_variables.begin() + maximum_input_length, raw_variables.begin() + maximum_input_length + maximum_target_length,
-             [](auto& var) { var.role = "Target"; });
-
-    // set data
-
-    encode_input_data(input_document_tokens);
-    encode_target_data(target_document_tokens);
-
-    sample_uses.resize(samples_number);
-
-    target_dimensions = {get_target_sequence_length()};
-    decoder_dimensions = {get_target_sequence_length()};
-    input_dimensions = {get_input_sequence_length()};
-
-    set_raw_variable_scalers("None");
-    set_default_raw_variable_names();
-    split_samples_random();
-    set_binary_raw_variables();
-
-    cout << "Reading finished" << endl;
+void LanguageDataset::print() const
+{
+    cout << "Language dataset" << endl
+         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
+         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
+         << "Maximum input sequence length: " << get_maximum_input_sequence_length() << endl
+         << "Maximum target sequence length: " << get_maximum_target_sequence_length() << endl;
 }
 
 }

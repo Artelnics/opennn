@@ -672,13 +672,6 @@ TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index
 }
 
 
-void print_pairs(const vector<pair<string, Index>>& pairs)
-{
-    for (size_t i = 0; i < pairs.size(); i++)
-        cout << pairs[i].first << ": " << pairs[i].second << endl;
-}
-
-
 Index get_size(const dimensions &d)
 {
     return accumulate(d.begin(), d.end(), 1, multiplies<Index>());

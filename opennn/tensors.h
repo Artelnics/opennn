@@ -186,56 +186,6 @@ void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
-
-// template <typename T, Index Rank, typename CTensor>
-// void batch_matrix_multiplication(const ThreadPoolDevice* device,
-//                                  const Tensor<T, Rank>& A,
-//                                  const Tensor<T, Rank>& B,
-//                                  CTensor& C,
-//                                  const Eigen::array<IndexPair<Index>, 1>& contraction_axes)
-// {
-//     static_assert(Rank >= 2 && Rank <= 4, "Tensor rank isn't supported");
-
-//     if constexpr (Rank == 2)
-//     {
-//         C.device(*device) = A.contract(B, contraction_axes);
-//         return;
-//     }
-
-//     const Index A_rows = A.dimension(0);
-//     const Index A_columns = A.dimension(1);
-
-//     const Index B_rows = B.dimension(0);
-//     const Index B_columns = B.dimension(1);
-
-//     const Index C_rows = contraction_axes[0].first == 0 ? A_columns : A_rows;
-//     const Index C_columns = contraction_axes[0].second == 1 ? B_rows : B_columns;
-
-//     // const Index batch_number = (Rank == 3) ? A.dimension(2) : A.dimension(2) * A.dimension(3);
-//     Index batch_number = 1;
-//     for (Index rank_index = 2; rank_index < Rank; ++rank_index)
-//         batch_number *= A.dimension(rank_index);
-
-//     const Index A_matrix_size = A_rows * A_columns;
-//     const Index B_matrix_size = B_rows * B_columns;
-//     const Index C_matrix_size = C_rows * C_columns;
-
-//     const T* A_data = A.data();
-//     const T* B_data = B.data();
-//     T* C_data = C.data();
-
-// #pragma omp parallel for
-//     for (Index batch_index = 0; batch_index < batch_number; ++batch_index)
-//     {
-//         const TensorMap<const Tensor<T, 2>> A_mat(A_data + batch_index * A_matrix_size, A_rows, A_columns);
-//         const TensorMap<const Tensor<T, 2>> B_mat(B_data + batch_index * B_matrix_size, B_rows, B_columns);
-
-//         TensorMap<Tensor<T, 2>> C_mat(C_data + batch_index * C_matrix_size, C_rows, C_columns);
-
-//         C_mat = A_mat.contract(B_mat, contraction_axes);
-//     }
-// }
-
 template <typename T, Index Rank, typename CTensor>
 void batch_matrix_multiplication(const ThreadPoolDevice* device,
                                  const Tensor<T, Rank>& A,
@@ -488,7 +438,6 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 {
     size_t maximum_size = 0;
 
-    //#pragma omp parallel for reduction(max : maximum_size)
     for (size_t i = 0; i < v.size(); i++)
         if (v[i].size() > maximum_size)
             maximum_size = v[i].size();
@@ -498,36 +447,21 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 
 
 template <typename T>
-void print_vector(const vector<T>& vec)
+ostream& operator << (ostream& os, const vector<T>& vec)
 {
-    cout << "[ ";
-
-    for (size_t i = 0; i < vec.size(); ++i) {
-        cout << vec[i];
-        if (i < vec.size() - 1)
-            cout << ";";
-    }
-
-    cout << " ]\n";
-}
-
-
-template <typename T>
-void print_vector(const vector<vector<T>>& vec)
-{
-    cout << "[ ";
+    os << "[ ";
 
     for (size_t i = 0; i < vec.size(); ++i)
     {
-        print_vector(vec[i]);
-        if (i < vec.size() - 1)
-            cout << ";";
+        os << vec[i];
+        if (i + 1 < vec.size())
+            os << "; ";
     }
 
-    cout << " ]\n";
+    os << " ]";
+    return os;
 }
 
-void print_pairs(const vector<pair<string, Index>>&);
 
 
 template<class T, int n>

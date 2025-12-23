@@ -1371,10 +1371,10 @@ string ModelExpression::get_expression_python(const vector<Dataset::RawVariable>
 
 string ModelExpression::replace_reserved_keywords(const string& s) const
 {
-    string out = "";
+    string out;
 
     if(s[0] == '$')
-        out=s;
+        out = s;
 
     for (char c : s)
     {
@@ -1399,14 +1399,14 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
     if(!out.empty() && isdigit(out[0]))
         out = '_' + out;
 
-    unordered_map<string, string> sprcialWords = {
+    unordered_map<string, string> special_words = {
         {"min", "mi_n"},
         {"max", "ma_x"},
         {"exp", "ex_p"},
         {"tanh", "ta_nh"}
     };
 
-    for (const auto& pair : sprcialWords)
+    for (const auto& pair : special_words)
     {
         size_t position = 0;
 

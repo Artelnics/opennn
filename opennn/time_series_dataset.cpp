@@ -157,16 +157,10 @@ void TimeSeriesDataset::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input variables dimensions: ";
-
-    print_vector(get_dimensions("Input"));
-
-    cout << "Target variables dimensions: ";
-
-    print_vector(get_dimensions("Target"));
-
-    cout << "Past time steps: " << get_past_time_steps() << endl;
-    cout << "Future time steps: " << get_future_time_steps() << endl;
+         << "Input variables dimensions: " << get_dimensions("Input")
+         << "Target variables dimensions: " << get_dimensions("Target")
+         << "Past time steps: " << get_past_time_steps() << endl
+         << "Future time steps: " << get_future_time_steps() << endl;
 }
 
 
@@ -187,67 +181,13 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
 
-    // Raw variables
+    raw_variables_to_XML(printer);
 
-    printer.OpenElement("RawVariables");
-    add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
+    samples_to_XML(printer);
 
-    const Index raw_variables_number = get_raw_variables_number();
+    missing_values_to_XML(printer);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        printer.OpenElement("RawVariable");
-        printer.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables[i].to_XML(printer);
-        printer.CloseElement();
-    }
-
-    printer.CloseElement();
-
-    // Samples
-
-    printer.OpenElement("Samples");
-
-    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-
-    if(has_sample_ids)
-        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
-
-    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
-
-    printer.CloseElement();
-
-    // Missing values
-
-    printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
-
-    if(missing_values_number > 0)
-    {
-        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
-        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string<Index, 1>(raw_variables_missing_values_number));
-        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
-    }
-
-    printer.CloseElement();
-
-    // Preview data
-
-    printer.OpenElement("PreviewData");
-
-    add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
-
-    vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
-
-    for(size_t i = 0; i < data_file_preview.size(); i++)
-    {
-        printer.OpenElement("Row");
-        printer.PushAttribute("Item", to_string(i + 1).c_str());
-        printer.PushText(vector_data_file_preview[i].data());
-        printer.CloseElement();
-    }
-
-    printer.CloseElement();
+    preview_data_to_XML(printer);
 
     add_xml_element(printer, "Display", to_string(display));
 
@@ -281,131 +221,29 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
-
     // Raw variables
 
     const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
-    if(!raw_variables_element)
-        throw runtime_error("RawVariables element is nullptr.\n");
-
-    set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
-
-    const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-
-    for(size_t i = 0; i < raw_variables.size(); i++)
-    {
-        RawVariable& raw_variable = raw_variables[i];
-        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
-        start_element = raw_variable_element;
-
-        if(raw_variable_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
-
-        raw_variable.name = read_xml_string(raw_variable_element, "Name");
-        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
-        raw_variable.set_role(read_xml_string(raw_variable_element, "Role"));
-        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
-
-        if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
-        {
-            const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
-
-            if (categories_element)
-                raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
-            else if (raw_variable.type == RawVariableType::Binary)
-                raw_variable.categories = { "0", "1" };
-            else
-                throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
-        }
-    }
+    raw_variables_from_XML(raw_variables_element);
 
     // Samples
 
     const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
-    if(!samples_element)
-        throw runtime_error("Samples element is nullptr.\n");
-
-    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
-
-    if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), " ");
-
-    if (raw_variables.size() != 0)
-    {
-        const vector<vector<Index>> all_variable_indices = get_variable_indices();
-
-        data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
-        data.setZero();
-
-        sample_uses.resize(samples_number);
-        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
-    }
-    else
-        data.resize(0, 0);
+    samples_from_XML(samples_element);
 
     // Missing values
 
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
-    if(!missing_values_element)
-        throw runtime_error("Missing values element is nullptr.\n");
-
-    missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
-
-    if (missing_values_number > 0)
-    {
-        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
-
-        const string raw_string = read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber");
-        const vector<string> tokens = get_tokens(raw_string, " ");
-
-        vector<Index> valid_numbers;
-        valid_numbers.reserve(tokens.size());
-
-        for (const string& token : tokens)
-            if (!token.empty())
-                valid_numbers.push_back(stoi(token));
-
-        raw_variables_missing_values_number.resize(valid_numbers.size());
-        for (size_t i = 0; i < valid_numbers.size(); ++i)
-            raw_variables_missing_values_number(i) = valid_numbers[i];
-
-        rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
-    }
+    missing_values_from_XML(missing_values_element);
 
     // Preview data
 
     const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
-    if(!preview_data_element)
-        throw runtime_error("Preview data element is nullptr.\n");
-
-    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
-
-    if(!preview_size_element)
-        throw runtime_error("Preview size element is nullptr.\n");
-
-    Index preview_size = 0;
-    if (preview_size_element->GetText())
-        preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
-
-    start_element = preview_size_element;
-    if(preview_size > 0){
-        data_file_preview.resize(preview_size);
-
-        for (Index i = 0; i < preview_size; ++i) {
-            const XMLElement* row_data = start_element->NextSiblingElement("Row");
-            start_element = row_data;
-
-            if (row_data->Attribute("Item") != to_string(i + 1))
-                throw runtime_error("Row item number (" + to_string(i + 1) + ") does not match (" + row_data->Attribute("Item") + ").\n");
-
-            if(row_data->GetText())
-                data_file_preview[i] = get_tokens(row_data->GetText(), ",");
-        }
-    }
+    preview_data_from_XML(preview_data_element);
 
     set_display(read_xml_bool(data_set_element, "Display"));
 

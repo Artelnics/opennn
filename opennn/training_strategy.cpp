@@ -11,6 +11,7 @@
 #include "optimization_algorithm.h"
 #include "training_strategy.h"
 #include "quasi_newton_method.h"
+#include "dense_layer.h"
 
 namespace opennn
 {
@@ -103,10 +104,75 @@ void TrainingStrategy::set_neural_network(const NeuralNetwork* new_neural_networ
 
 void TrainingStrategy::set_default()
 {
-    if(!has_neural_network()) return;
+    if(!has_neural_network())
+        return;
 
-    set_loss_index("MeanSquaredError");
-    set_optimization_algorithm("AdaptiveMomentEstimation");
+    // Forecasting
+
+    if(neural_network->has("Recurrent"))
+    {
+        set_loss_index("MeanSquaredError");
+        set_optimization_algorithm("AdaptiveMomentEstimation");
+        return;
+    }
+
+    // Image Classification
+
+    if(neural_network->has("Convolutional"))
+    {
+        set_loss_index("CrossEntropyError2d");
+        set_optimization_algorithm("AdaptiveMomentEstimation");
+        return;
+    }
+
+    // Text Classification
+
+    if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
+    {
+        set_loss_index("WeightedSquaredError");
+        set_optimization_algorithm("AdaptiveMomentEstimation");
+        return;
+    }
+
+    string output_activation = "Linear";
+
+    const Index layers_number = neural_network->get_layers_number();
+
+    for(Index i = layers_number - 1; i >= 0; i--)
+    {
+        const unique_ptr<Layer>& layer = neural_network->get_layer(i);
+
+        if(layer->get_name() == "Dense2d")
+        {
+            const Dense2d* dense_layer = static_cast<const Dense2d*>(layer.get());
+            output_activation = dense_layer->get_activation_function();
+            break;
+        }
+    }
+
+    // Multiple classification
+
+    if(output_activation == "Softmax")
+    {
+        set_loss_index("CrossEntropyError2d");
+        set_optimization_algorithm("QuasiNewtonMethod");
+    }
+
+    // Binary classification
+
+    else if(output_activation == "Logistic")
+    {
+        set_loss_index("WeightedSquaredError");
+        set_optimization_algorithm("QuasiNewtonMethod");
+    }
+
+    // Approximation
+
+    else
+    {
+        set_loss_index("MeanSquaredError");
+        set_optimization_algorithm("QuasiNewtonMethod");
+    }
 }
 
 

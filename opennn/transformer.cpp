@@ -265,7 +265,7 @@ void Transformer::set_decoder_length(const Index& new_decoder_length)
 }
 
 
-Index Transformer::get_input_sequence_length() const
+Index Transformer::get_maximum_input_sequence_length() const
 {
     return input_length;
 }

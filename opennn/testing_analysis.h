@@ -166,8 +166,6 @@ public:
     Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.50) const;
     Tensor<Index, 2> calculate_confusion(const type& = 0.50) const;
 
-    Tensor<Index, 2> calculate_sentimental_analysis_transformer_confusion() const;
-
     Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
     // ROC curve

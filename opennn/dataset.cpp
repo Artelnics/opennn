@@ -8,8 +8,9 @@
 
 #include "dataset.h"
 #include "time_series_dataset.h"
-#include "image_dataset.h"
+//#include "image_dataset.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "correlations.h"
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -154,8 +155,8 @@ void Dataset::RawVariable::print() const
 
     if (categories.size() != 0)
     {
-        cout << "Categories: " << endl;
-        print_vector(categories);
+        cout << "Categories: " << endl
+             << categories;
     }
 
     cout << endl;
@@ -2652,6 +2653,22 @@ void Dataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
 
+    raw_variables_to_XML(printer);
+
+    samples_to_XML(printer);
+
+    missing_values_to_XML(printer);
+
+    preview_data_to_XML(printer);
+
+    add_xml_element(printer, "Display", to_string(display));
+
+    printer.CloseElement();
+}
+
+
+void Dataset::raw_variables_to_XML(XMLPrinter &printer) const
+{
     printer.OpenElement("RawVariables");
     add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
 
@@ -2664,7 +2681,11 @@ void Dataset::to_XML(XMLPrinter& printer) const
     }
 
     printer.CloseElement();
+}
 
+
+void Dataset::samples_to_XML(XMLPrinter &printer) const
+{
     printer.OpenElement("Samples");
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
@@ -2676,7 +2697,11 @@ void Dataset::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();
+}
 
+
+void Dataset::missing_values_to_XML(XMLPrinter &printer) const
+{
     printer.OpenElement("MissingValues");
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
@@ -2688,12 +2713,17 @@ void Dataset::to_XML(XMLPrinter& printer) const
     }
 
     printer.CloseElement();
+}
 
+
+void Dataset::preview_data_to_XML(XMLPrinter &printer) const
+{
     printer.OpenElement("PreviewData");
 
     add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
     vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
+
     for(size_t i = 0; i < data_file_preview.size(); i++){
         printer.OpenElement("Row");
         printer.PushAttribute("Item", to_string(i + 1).c_str());
@@ -2702,35 +2732,12 @@ void Dataset::to_XML(XMLPrinter& printer) const
     }
 
     printer.CloseElement();
-
-    add_xml_element(printer, "Display", to_string(display));
-
-    printer.CloseElement();
 }
 
 
-void Dataset::from_XML(const XMLDocument& data_set_document)
+
+void Dataset::raw_variables_from_XML(const XMLElement *raw_variables_element)
 {
-    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
-    if (!data_set_element)
-        throw runtime_error("Dataset element is nullptr.\n");
-
-    // Data Source
-    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-
-    if (!data_source_element)
-        throw runtime_error("Data source element is nullptr.\n");
-
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_name(read_xml_string(data_source_element, "Separator"));
-    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
-    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_codification(read_xml_string(data_source_element, "Codification"));
-
-    // Raw Variables
-    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
-
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
@@ -2764,10 +2771,11 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
                 throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
         }
     }
+}
 
-    // Samples
-    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
+void Dataset::samples_from_XML(const XMLElement *samples_element)
+{
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
@@ -2791,10 +2799,11 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     }
     else
         data.resize(0, 0);
+}
 
-    // Missing values
-    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
+void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
+{
     if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
@@ -2820,10 +2829,10 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
 
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
+}
 
-    //preview data
-    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
-
+void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
+{
     if (!preview_data_element)
         throw runtime_error("Preview data element is nullptr. \n ");
 
@@ -2836,7 +2845,8 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     if (preview_size_element->GetText())
         preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 
-    start_element = preview_size_element;
+    const XMLElement* start_element = preview_size_element;
+
     if(preview_size > 0){
         data_file_preview.resize(preview_size);
 
@@ -2851,6 +2861,45 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
                 data_file_preview[i] = get_tokens(row_data->GetText(), ",");
         }
     }
+}
+
+void Dataset::from_XML(const XMLDocument& data_set_document)
+{
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
+    if (!data_set_element)
+        throw runtime_error("Dataset element is nullptr.\n");
+
+    // Data Source
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+
+    if (!data_source_element)
+        throw runtime_error("Data source element is nullptr.\n");
+
+    set_data_path(read_xml_string(data_source_element, "Path"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
+
+    // Raw Variables
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+
+    raw_variables_from_XML(raw_variables_element);
+
+    // Samples
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+
+    samples_from_XML(samples_element);
+
+
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+
+    missing_values_from_XML(missing_values_element);
+
+    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+
+    preview_data_from_XML(preview_data_element);
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
@@ -2877,13 +2926,8 @@ void Dataset::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input dimensions: ";
-
-    print_vector(get_dimensions("Input"));
-
-    cout << "Target dimensions: ";
-
-    print_vector(get_dimensions("Target"));
+         << "Input dimensions: " << get_dimensions("Input") << "\n"
+         << "Target dimensions: " << get_dimensions("Target");
 
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -3655,14 +3699,6 @@ void Dataset::calculate_missing_values_statistics()
 }
 
 
-void Dataset::prepare_line(string& line) const
-{
-    decode(line);
-    trim(line);
-    erase(line, '"');
-}
-
-
 void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 {
     const Index raw_variables_number = raw_variables.size();
@@ -4261,7 +4297,8 @@ void Dataset::fix_repeated_names()
 
     if (has_categorical_raw_variables() || has_binary_raw_variables())
     {
-        vector<string> all_variable_names = get_variable_names();
+        const vector<string> all_variable_names = get_variable_names();
+
         map<string, Index> global_names_count;
 
         for (const string& name : all_variable_names)
@@ -4301,12 +4338,11 @@ void Dataset::fix_repeated_names()
                 if (needs_disambiguation)
                     for (string& category : raw_variable.categories)
                         category += "_" + raw_variable.name;
-
-
             }
         }
     }
 }
+
 
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
 {
@@ -4344,17 +4380,17 @@ bool Dataset::get_has_rows_labels() const
 }
 
 
-void Dataset::decode(string&) const
-{
-    switch (codification)
-    {
-    case Dataset::Codification::SHIFT_JIS:
-        //        input_string = sj2utf8(input_string);
-        break;
-    default:
-        break;
-    }
-}
+// void Dataset::decode(string&) const
+// {
+//     switch (codification)
+//     {
+//     case Dataset::Codification::SHIFT_JIS:
+//         //        input_string = sj2utf8(input_string);
+//         break;
+//     default:
+//         break;
+//     }
+// }
 
 
 void Batch::fill(const vector<Index>& sample_indices,
@@ -4438,9 +4474,7 @@ void Batch::print() const
 {
     cout << "Batch" << endl
          << "Inputs:" << endl
-         << "Input dimensions:" << endl;
-
-    print_vector(input_dimensions);
+         << "Input dimensions:" << input_dimensions << endl;
 
     if (input_dimensions.size() == 4)
         cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
@@ -4461,14 +4495,10 @@ void Batch::print() const
     cout << endl;
 
     // cout << "Decoder:" << endl
-    //      << "Decoder dimensions:" << endl;
-
-    // print_vector(decoder_dimensions);
+    //      << "Decoder dimensions:" << decoder_dimensions << endl;
 
     cout << "Targets:" << endl
-         << "Target dimensions:" << endl;
-
-    print_vector(target_dimensions);
+         << "Target dimensions:" << target_dimensions << endl;
 
     cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
                                        target_dimensions[0],

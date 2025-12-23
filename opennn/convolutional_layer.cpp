@@ -685,14 +685,12 @@ Index Convolutional::get_input_channels() const
 
 void Convolutional::print() const
 {
-    cout << "Convolutional layer" << endl;
-    cout << "Input dimensions: " << endl;
-    print_vector(input_dimensions);
-    cout << "Output dimensions: " << endl;
-    print_vector(get_output_dimensions());
-    cout << "Biases dimensions: " << biases.dimensions() << endl;
-    cout << "Weights dimensions: " << weights.dimensions() << endl;
-    cout << "biases:" << endl;
+    cout << "Convolutional layer" << endl
+         << "Input dimensions: " << input_dimensions
+         << "Output dimensions: " << get_output_dimensions()
+         << "Biases dimensions: " << biases.dimensions() << endl
+         << "Weights dimensions: " << weights.dimensions() << endl
+         << "biases:" << endl;
     //cout << biases << endl;
     cout << "Weights:" << endl;
     //cout << weights << endl;
