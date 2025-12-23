@@ -22,6 +22,7 @@
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
+#include "standard_networks.h"
 
 namespace opennn
 {
