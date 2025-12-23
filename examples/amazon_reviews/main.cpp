@@ -43,14 +43,16 @@ int main()
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();
 
+        const vector<string> input_vocabulary = language_dataset.get_input_vocabulary();
+
         // Neural Network
 
         TextClassificationNetwork text_classification_network({input_vocabulary_size, input_sequence_length, embedding_dimension},
                                                               {heads_number},
-                                                              {targets_number});
+                                                              {targets_number},
+                                                              input_vocabulary);
 
-
-        text_classification_network.print();
+        //text_classification_network.print();
 
         // Training Strategy
 
@@ -58,8 +60,12 @@ int main()
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs_number(1000);
+        adam->set_display_period(5);
+
         training_strategy.train();
-/*
+
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -72,8 +78,26 @@ int main()
 
         // Deployment
 
-        string document = "This is great!";
-*/
+        cout << "\n--- Testing calculate_outputs ---" << endl;
+
+        Tensor<string, 1> input_documents(2);
+        input_documents(0) = "This product is great and works perfectly!";
+        input_documents(1) = "I hate this item, it is terrible and broken.";
+
+        cout << "Input 1: " << input_documents(0) << endl;
+        cout << "Input 2: " << input_documents(1) << endl;
+
+        Tensor<type, 2> outputs = text_classification_network.calculate_outputs(input_documents);
+
+        cout << "\nOutputs (Probabilities):" << endl;
+        cout << outputs << endl;
+
+        for(Index i = 0; i < outputs.dimension(0); i++)
+        {
+            cout << "Sample " << i << ": " << (outputs(i, 0) > 0.5 ? "Positive" : "Negative")
+            << " (Raw: " << outputs(i, 0) << ")" << endl;
+        }
+
         cout << "Good bye!" << endl;
 
         return 0;

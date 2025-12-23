@@ -339,6 +339,7 @@ void LanguageDataset::read_csv()
     const Index variables_number = maximum_input_sequence_length + maximum_target_sequence_length;
 
     data.resize(samples_number, variables_number);
+    data.setZero();
 
     raw_variables.resize(variables_number);
 

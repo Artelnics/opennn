@@ -10,6 +10,10 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/mean_squared_error.h"
 #include "../opennn/standard_networks.h"
+#include "../opennn/recurrent_layer.h"
+#include "../opennn/flatten_layer.h"
+#include "../opennn/embedding_layer.h"
+#include "../opennn/multihead_attention_layer.h"
 
 using namespace opennn;
 
