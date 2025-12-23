@@ -202,6 +202,17 @@ const bool& NeuralNetwork::get_display() const
     return display;
 }
 
+const vector<string> &NeuralNetwork::get_input_vocabulary() const
+{
+    return input_vocabulary;
+}
+
+
+const vector<string> &NeuralNetwork::get_output_vocabulary() const
+{
+    return output_vocabulary;
+}
+
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -430,6 +441,18 @@ void NeuralNetwork::set_display(const bool& new_display)
 }
 
 
+void NeuralNetwork::set_input_vocabulary(const vector<string>& new_input_vocabulary)
+{
+    input_vocabulary = new_input_vocabulary;
+}
+
+
+void NeuralNetwork::set_output_vocabulary(const vector<string>& new_output_vocabulary)
+{
+    output_vocabulary = new_output_vocabulary;
+}
+
+
 Index NeuralNetwork::get_layers_number() const
 {
     return layers.size();
@@ -573,10 +596,7 @@ string NeuralNetwork::get_expression() const
         }
     }
 
-    string expression = buffer.str();
-
-    //replace(expression, "+-", "-");
-    return expression;
+    return buffer.str();
 }
 
 
@@ -664,7 +684,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
     {
         return Tensor<type, 2>();
     }
-
 }
 
 
@@ -1008,7 +1027,7 @@ void NeuralNetwork::print() const
 
     cout << "Features number: " << get_features_number() << endl;
 
-    print_vector(get_feature_names());
+    cout << get_feature_names() << endl;
 
     const Index layers_number = get_layers_number();
 
@@ -1023,10 +1042,14 @@ void NeuralNetwork::print() const
 
     cout << "Outputs number: " << get_outputs_number() << endl;
 
-    cout << "Outputs:" << endl;
-    print_vector(get_output_names());
+    cout << "Outputs:" << endl
+         << get_output_names();
 
     cout << "Parameters number: " << get_parameters_number() << endl;
+
+    // if(!input_vocabulary.empty())
+    //     cout << "Input vocabulary" << input_vocabulary <<
+
 }
 
 

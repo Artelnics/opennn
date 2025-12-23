@@ -447,36 +447,21 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 
 
 template <typename T>
-void print_vector(const vector<T>& vec)
+ostream& operator << (ostream& os, const vector<T>& vec)
 {
-    cout << "[ ";
-
-    for (size_t i = 0; i < vec.size(); ++i) {
-        cout << vec[i];
-        if (i < vec.size() - 1)
-            cout << ";";
-    }
-
-    cout << " ]\n";
-}
-
-
-template <typename T>
-void print_vector(const vector<vector<T>>& vec)
-{
-    cout << "[ ";
+    os << "[ ";
 
     for (size_t i = 0; i < vec.size(); ++i)
     {
-        print_vector(vec[i]);
-        if (i < vec.size() - 1)
-            cout << ";";
+        os << vec[i];
+        if (i + 1 < vec.size())
+            os << "; ";
     }
 
-    cout << " ]\n";
+    os << " ]";
+    return os;
 }
 
-void print_pairs(const vector<pair<string, Index>>&);
 
 
 template<class T, int n>

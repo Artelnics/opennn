@@ -155,8 +155,8 @@ void Dataset::RawVariable::print() const
 
     if (categories.size() != 0)
     {
-        cout << "Categories: " << endl;
-        print_vector(categories);
+        cout << "Categories: " << endl
+             << categories;
     }
 
     cout << endl;
@@ -2927,13 +2927,8 @@ void Dataset::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input dimensions: ";
-
-    print_vector(get_dimensions("Input"));
-
-    cout << "Target dimensions: ";
-
-    print_vector(get_dimensions("Target"));
+         << "Input dimensions: " << get_dimensions("Input") << "\n"
+         << "Target dimensions: " << get_dimensions("Target");
 
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -4480,9 +4475,7 @@ void Batch::print() const
 {
     cout << "Batch" << endl
          << "Inputs:" << endl
-         << "Input dimensions:" << endl;
-
-    print_vector(input_dimensions);
+         << "Input dimensions:" << input_dimensions << endl;
 
     if (input_dimensions.size() == 4)
         cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
@@ -4503,14 +4496,10 @@ void Batch::print() const
     cout << endl;
 
     // cout << "Decoder:" << endl
-    //      << "Decoder dimensions:" << endl;
-
-    // print_vector(decoder_dimensions);
+    //      << "Decoder dimensions:" << decoder_dimensions << endl;
 
     cout << "Targets:" << endl
-         << "Target dimensions:" << endl;
-
-    print_vector(target_dimensions);
+         << "Target dimensions:" << target_dimensions << endl;
 
     cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
                                        target_dimensions[0],

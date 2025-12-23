@@ -34,7 +34,7 @@ int main()
 
         language_dataset.print();
 
-//        print_vector(language_dataset.get_input_vocabulary());
+        cout << language_dataset.get_input_vocabulary();
 
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();

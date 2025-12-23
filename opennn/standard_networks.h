@@ -237,16 +237,6 @@ class SimpleResNet : public NeuralNetwork
 {
 public:
 
-    void print_dim(const dimensions& dims) const
-    {
-        cout << "{ ";
-        for (size_t i = 0; i < dims.size(); ++i)
-        {
-            cout << dims[i] << (i == dims.size() - 1 ? " " : ", ");
-        }
-        cout << "}";
-    }
-
     SimpleResNet(const dimensions& input_dimensions,
                  const vector<Index>& blocks_per_stage, // e.g., {2, 2, 2, 2} for a ResNet-18 like structure
                  const dimensions& initial_filters,    // e.g., {64, 128, 256, 512}

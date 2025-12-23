@@ -64,9 +64,6 @@ private:
     Index decoder_length = 0;
 
     type dropout_rate = type(0.1);
-
-    vector<string> input_vocabulary;
-    vector<string> output_vocabulary;
 };
 
 };

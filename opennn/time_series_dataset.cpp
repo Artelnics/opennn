@@ -157,16 +157,10 @@ void TimeSeriesDataset::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input variables dimensions: ";
-
-    print_vector(get_dimensions("Input"));
-
-    cout << "Target variables dimensions: ";
-
-    print_vector(get_dimensions("Target"));
-
-    cout << "Past time steps: " << get_past_time_steps() << endl;
-    cout << "Future time steps: " << get_future_time_steps() << endl;
+         << "Input variables dimensions: " << get_dimensions("Input")
+         << "Target variables dimensions: " << get_dimensions("Target")
+         << "Past time steps: " << get_past_time_steps() << endl
+         << "Future time steps: " << get_future_time_steps() << endl;
 }
 
 

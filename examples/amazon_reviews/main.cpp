@@ -49,9 +49,8 @@ int main()
                                                               {heads_number},
                                                               {targets_number});
 
-
         text_classification_network.print();
-
+/*
         // Training Strategy
 
         WeightedSquaredError wse;
@@ -59,7 +58,7 @@ int main()
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
         training_strategy.train();
-/*
+
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -72,7 +71,12 @@ int main()
 
         // Deployment
 
-        string document = "This is great!";
+        Tensor<string, 1> documents(1);
+        documents[0] = "This is great!";
+
+        Tensor<type, 2> outputs = text_classification_network.calculate_outputs(documents);
+
+        cout << outputs << endl;
 */
         cout << "Good bye!" << endl;
 

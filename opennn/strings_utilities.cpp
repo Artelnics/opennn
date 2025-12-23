@@ -710,18 +710,6 @@ void display_progress_bar(const int& completed, const int& total)
     cout.flush();
 }
 
-
-void print_tokens(const vector<vector<string>>& tokens)
-{
-    for (const auto& row : tokens)
-    {
-        for (const auto& token : row)
-            cout << token << " - ";
-
-        cout << endl;
-    }
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.

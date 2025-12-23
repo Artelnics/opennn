@@ -473,11 +473,8 @@ void MultiHeadAttention::print() const
     cout << "Multi-head attention Layer" << endl
          << "Label: " << label << endl
          << "Type: Embedding" << endl
-         << "Input dimensions: ";
-    print_vector(get_input_dimensions());
-
-    cout << "Output dimensions: ";
-    print_vector(get_output_dimensions());
+         << "Input dimensions: " << get_input_dimensions()
+         << "Output dimensions: " << get_output_dimensions();
 }
 
 

@@ -211,7 +211,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 << "Inputs: " << endl;
 
             input_raw_variable_names = dataset->get_raw_variable_names("Input");
-            print_vector(input_raw_variable_names);
+            cout << input_raw_variable_names;
         }
 
         type minimum_training_error = numeric_limits<type>::max();
