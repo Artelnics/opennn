@@ -2863,7 +2863,6 @@ void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
     }
 }
 
-
 void Dataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");

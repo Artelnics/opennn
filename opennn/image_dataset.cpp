@@ -283,9 +283,6 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     raw_variables_to_XML(printer);
 
-    if(has_sample_ids)
-        add_xml_element(printer, "Ids", vector_to_string(sample_ids));
-
     samples_to_XML(printer);
 
     printer.CloseElement();
@@ -423,21 +420,11 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     raw_variables_from_XML(raw_variables_element);
 
-/*
-    const Index targets_number = (target_count == 2) ? 1 : target_count;
-
-    target_dimensions = { targets_number };
-
     // Samples
-
-    if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
 
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     samples_from_XML(samples_element);
-
-*/
 }
 
 
