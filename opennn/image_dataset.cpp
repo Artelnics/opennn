@@ -299,14 +299,16 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    if(has_sample_ids)
-        add_xml_element(printer, "Ids", vector_to_string(sample_ids));
-
     printer.OpenElement("Samples");
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
 
+    const string separator_string = get_separator_string();
+
+    if (has_sample_ids)
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids, separator_string));
+
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();
 
     printer.CloseElement();
@@ -476,9 +478,6 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     // Samples
 
-    if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
-
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     if (!samples_element)
@@ -486,9 +485,24 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
-    sample_uses.resize(samples_number);
-    data.resize(samples_number, (Index)raw_variables.size());
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    if (has_sample_ids)
+    {
+        const string separator_string = get_separator_string();
+        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), separator_string);
+    }
+
+    if (raw_variables.size() != 0)
+    {
+        const vector<vector<Index>> all_variable_indices = get_variable_indices();
+
+        data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
+        data.setZero();
+
+        sample_uses.resize(samples_number);
+        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    }
+    else
+        data.resize(0, 0);
 }
 
 

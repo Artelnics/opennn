@@ -2852,7 +2852,6 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
         }
     }
 
-
     set_display(read_xml_bool(data_set_element, "Display"));
 
     input_dimensions = { get_variables_number("Input") };
