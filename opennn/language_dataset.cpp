@@ -459,8 +459,17 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     const string separator_string = get_separator_string();
 
-    input_vocabulary = get_tokens(read_xml_string(data_set_element, "InputVocabulary"), separator_string);
-    target_vocabulary = get_tokens(read_xml_string(data_set_element, "TargetVocabulary"), separator_string);
+    const XMLElement* inputVocabElement = data_set_element->FirstChildElement("InputVocabulary");
+    if(inputVocabElement && inputVocabElement->GetText())
+        input_vocabulary = get_tokens(inputVocabElement->GetText(), separator_string);
+    else
+        input_vocabulary.clear();
+
+    const XMLElement* targetVocabElement = data_set_element->FirstChildElement("TargetVocabulary");
+    if(targetVocabElement && targetVocabElement->GetText())
+        target_vocabulary = get_tokens(targetVocabElement->GetText(), separator_string);
+    else
+        target_vocabulary.clear();
 
     const XMLElement* input_len_element = data_set_element->FirstChildElement("MaximumInputSequenceLength");
     if(input_len_element && input_len_element->GetText())
