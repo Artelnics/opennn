@@ -18,7 +18,7 @@ LossIndex::LossIndex(const NeuralNetwork* new_neural_network, const Dataset* new
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_neural_network, new_dataset);
 }
@@ -67,11 +67,11 @@ void LossIndex::set_threads_number(const int& new_threads_number)
 {
     if(thread_pool != nullptr)
         thread_pool.reset();
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    if(device != nullptr)
+        device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -118,7 +118,7 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map<2>(targets_view);
 
-    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+    back_propagation.errors.device(*device) = outputs - targets;
 }
 
 
@@ -130,7 +130,7 @@ void LossIndex::calculate_squared_errors_lm(const Batch&,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*thread_pool_device) = errors.square().sum(array_1(1)).sqrt();
+    squared_errors.device(*device) = errors.square().sum(array_1(1)).sqrt();
 }
 
 
@@ -195,7 +195,7 @@ void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) co
 
         loss += regularization_weight*norm(0);
         gradient += parameters*(regularization_weight/norm(0));
-        hessian += self_kronecker_product(thread_pool_device.get(), parameters)/(norm(0)*norm(0)*norm(0));
+        hessian += self_kronecker_product(device.get(), parameters)/(norm(0)*norm(0)*norm(0));
     }
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
@@ -282,7 +282,7 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0));
+    gradient.device(*device) = squared_errors_jacobian.contract(squared_errors, axes(1,0));
 }
 
 
@@ -388,7 +388,7 @@ void LossIndex::add_regularization_gradient(Tensor<type, 1>& gradient) const
     }
     else if (regularization_method == "L2")
     {
-        gradient.device(*thread_pool_device) += parameters * regularization_weight;
+        gradient.device(*device) += parameters * regularization_weight;
     }
     else
     {
@@ -427,9 +427,9 @@ void LossIndex::add_regularization_to_deltas(BackPropagation& back_propagation) 
             TensorMap<Tensor<type, 1>> delta_map(delta_data, parameter_size);
 
             if(regularization_method == "L1")
-                delta_map.device(*thread_pool_device) += regularization_weight * parameters_map.sign();
+                delta_map.device(*device) += regularization_weight * parameters_map.sign();
             else if(regularization_method == "L2")
-                delta_map.device(*thread_pool_device) += parameters_map * regularization_weight;
+                delta_map.device(*device) += parameters_map * regularization_weight;
             else
                 throw runtime_error("Unknown regularization method: " + regularization_method);
         }

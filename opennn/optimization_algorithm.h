@@ -96,7 +96,7 @@ public:
 protected:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     LossIndex* loss_index = nullptr;
 

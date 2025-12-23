@@ -277,7 +277,7 @@ private:
 private:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

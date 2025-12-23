@@ -148,7 +148,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         const vector<ParameterView> layer_parameter_pairs = layer->get_parameter_views();
         const vector<ParameterView> layer_parameter_delta_pairs = layer_back_propagation->get_parameter_delta_views();
 
-        // #pragma omp parallel for #@todo check pragma vs thread_pool_device
+        // #pragma omp parallel for #@todo check pragma vs device
         for(Index j = 0; j < Index(layer_parameter_pairs.size()); j++)
         {
             type* parameter_data = layer_parameter_pairs[j].data;
@@ -163,22 +163,22 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
             if (momentum <= type(0))
             {
-                parameters_increment.device(*thread_pool_device) = gradient * (-learning_rate);
-                parameters.device(*thread_pool_device) += parameters_increment;
+                parameters_increment.device(*device) = gradient * (-learning_rate);
+                parameters.device(*device) += parameters_increment;
             }
             else if (momentum > type(0) && !nesterov)
             {
-                parameters_increment.device(*thread_pool_device) =
+                parameters_increment.device(*device) =
                     gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment;
+                last_parameters_increment.device(*device) = parameters_increment;
+                parameters.device(*device) += parameters_increment;
             }
             else if (momentum > type(0) && nesterov)
             {
-                parameters_increment.device(*thread_pool_device)
+                parameters_increment.device(*device)
                     = gradient * (-learning_rate) + momentum * last_parameters_increment;
-                last_parameters_increment.device(*thread_pool_device) = parameters_increment;
-                parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
+                last_parameters_increment.device(*device) = parameters_increment;
+                parameters.device(*device) += parameters_increment * momentum - gradient * learning_rate;
             }
         }
     }

@@ -109,7 +109,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     new_normalization_coefficient.setZero();
 
     for(Index i = 0; i < rows_number; i++)
-        new_normalization_coefficient.device(*thread_pool_device)
+        new_normalization_coefficient.device(*device)
             += (targets.chip(i, 0) - targets_mean).square().sum();
 
     return new_normalization_coefficient() < NUMERIC_LIMITS_MIN
@@ -144,11 +144,11 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     Tensor<type,0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    errors.device(*device) = outputs - targets;
 
     const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
-    error.device(*thread_pool_device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
+    error.device(*device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -162,7 +162,7 @@ void NormalizedSquaredError::calculate_error_lm(const Batch&,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() * type(0.5);
+    error.device(*device) = squared_errors.square().sum() * type(0.5);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -190,7 +190,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     const type coefficient = type(2*total_samples_number) / (type(samples_number)*normalization_coefficient);
 
-    deltas.device(*thread_pool_device) = coefficient*errors;
+    deltas.device(*device) = coefficient*errors;
 }
 
 
@@ -205,8 +205,8 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    output_deltas.device(*device) = errors;
+    divide_columns(device.get(), output_deltas, squared_errors);
 }
 
 
@@ -219,7 +219,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch&,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
+    gradient.device(*device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
 }
 
 
@@ -230,7 +230,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch&,
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
+    hessian.device(*device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
 }
 
 

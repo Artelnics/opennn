@@ -27,8 +27,7 @@ struct TensorView
     {}
 
     Index rank() const { return dims.size(); }
-    //Index size() const { return get_size(dims); }
-
+/*
     template <int Rank>
     auto to_tensor_map() const
     {
@@ -64,7 +63,7 @@ struct TensorView
         else
             static_assert(Rank >= 1 && Rank <= 4, "Unsupported TensorMap Rank requested.");
     }
-
+*/
 };
 
 
@@ -172,7 +171,6 @@ void set_random_integers(TensorMap<Tensor<type, rank>>& tensor, const Index& min
         tensor(i) = static_cast<type>(distribution(gen));
 }
 
-
 type bound(const type& value, const type& minimum, const type& maximum);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
@@ -185,57 +183,6 @@ void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<t
 void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
-
-template <typename T, Index Rank, typename CTensor>
-void batch_matrix_multiplication(const ThreadPoolDevice* device,
-                                 const Tensor<T, Rank>& A,
-                                 const Tensor<T, Rank>& B,
-                                 CTensor& C,
-                                 const Eigen::array<IndexPair<Index>, 1>& contraction_axes)
-{
-    static_assert(Rank >= 2 && Rank <= 4, "Tensor rank isn't supported");
-
-    if constexpr (Rank == 2)
-    {
-        C.device(*device) = A.contract(B, contraction_axes);
-        return;
-    }
-
-    const Index A_rows = A.dimension(Rank - 2);
-    const Index A_cols = A.dimension(Rank - 1);
-
-    const Index B_rows = B.dimension(Rank - 2);
-    const Index B_cols = B.dimension(Rank - 1);
-
-    const Index C_rows = A_rows;
-    const Index C_cols = B_rows;
-
-    Index batch_number = 1;
-    for (Index rank_index = 0; rank_index < Rank - 2; ++rank_index)
-    {
-        batch_number *= A.dimension(rank_index);
-    }
-
-    const Index A_matrix_size = A_rows * A_cols;
-    const Index B_matrix_size = B_rows * B_cols;
-    const Index C_matrix_size = C_rows * C_cols;
-
-    const T* A_data = A.data();
-    const T* B_data = B.data();
-    T* C_data = C.data();
-
-#pragma omp parallel for
-    for (Index batch_index = 0; batch_index < batch_number; ++batch_index)
-    {
-        const TensorMap<const Tensor<T, 2>> A_mat(A_data + batch_index * A_matrix_size, A_rows, A_cols);
-        const TensorMap<const Tensor<T, 2>> B_mat(B_data + batch_index * B_matrix_size, B_rows, B_cols);
-
-        TensorMap<Tensor<T, 2>> C_mat(C_data + batch_index * C_matrix_size, C_rows, C_cols);
-
-        // Realiza la contracción para el par de matrices actual
-        C_mat.device(*device) = A_mat.contract(B_mat, contraction_axes);
-    }
-}
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 

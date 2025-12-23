@@ -163,11 +163,11 @@ vector<ParameterView > Probabilistic3d::get_parameter_views() const
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                              Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
+    combinations.device(*device) = inputs.contract(weights, axes(2,0))
                                                + biases.reshape(array<Index, 3>{1, 1, biases.dimension(0)})
                                                      .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
 
-    //sum_matrices(thread_pool_device.get(), biases, combinations);
+    //sum_matrices(device.get(), biases, combinations);
 }
 
 
@@ -235,24 +235,24 @@ void Probabilistic3d::back_propagate(const vector<TensorView>& input_views,
 
     // if(!built_mask)
     // {
-    mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
+    mask.device(*device) = (targets != targets.constant(0)).cast<type>();
 
     const Tensor<type, 0> mask_sum = mask.sum();
 
-    mask.device(*thread_pool_device) = mask / type(samples_number)/*mask_sum(0)*/;
+    mask.device(*device) = mask / type(samples_number)/*mask_sum(0)*/;
 
     built_mask = true;
     // }
 
     calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
-    bias_deltas.device(*thread_pool_device)
+    bias_deltas.device(*device)
         = combination_deltas.sum(array<Index, 2>({0,1}));
 
-    weight_deltas.device(*thread_pool_device)
+    weight_deltas.device(*device)
         = inputs.contract(combination_deltas, axes(0,0,1,1));
 
-    input_deltas.device(*thread_pool_device)
+    input_deltas.device(*device)
         = combination_deltas.contract(weights, axes(2,1));
 }
 
@@ -273,7 +273,7 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
         for(Index j = 0; j < outputs_number; j++)
             combination_deltas(i, j, Index(targets(i, j)))--;
 
-    multiply_matrices(thread_pool_device.get(), combination_deltas, mask);
+    multiply_matrices(device.get(), combination_deltas, mask);
 }
 
 

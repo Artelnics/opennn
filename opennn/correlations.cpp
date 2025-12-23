@@ -27,7 +27,7 @@
 namespace opennn
 {
 
-Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
+Tensor<type, 1> autocorrelations(const ThreadPoolDevice* device,
                                  const Tensor<type, 1>& x,
                                  const Index& past_time_steps)
 {
@@ -44,14 +44,14 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
             column_x(j) = x(j);
             column_y(j) = x(j + i);
         }
-        autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y).r;
+        autocorrelation(i) = linear_correlation(device, column_x, column_y).r;
     }
 
     return autocorrelation;
 }
 
 
-Correlation correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation correlation(const ThreadPoolDevice* device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
 {
@@ -75,16 +75,16 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         if(!x_binary && !y_binary)
         {
             const Correlation linear_correlation
-                = opennn::linear_correlation(thread_pool_device, x_vector, y_vector);
+                = opennn::linear_correlation(device, x_vector, y_vector);
 
             const Correlation exponential_correlation
-                = opennn::exponential_correlation(thread_pool_device, x_vector, y_vector);
+                = opennn::exponential_correlation(device, x_vector, y_vector);
 
             const Correlation logarithmic_correlation
-                = opennn::logarithmic_correlation(thread_pool_device, x_vector, y_vector);
+                = opennn::logarithmic_correlation(device, x_vector, y_vector);
 
             const Correlation power_correlation
-                = opennn::power_correlation(thread_pool_device, x_vector, y_vector);
+                = opennn::power_correlation(device, x_vector, y_vector);
 
             return max({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation},
                        [](const Correlation& a, const Correlation& b) {
@@ -93,23 +93,23 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
         }
 
         if(!x_binary && y_binary)
-            return logistic_correlation_vector_vector(thread_pool_device, x_vector, y_vector);
+            return logistic_correlation_vector_vector(device, x_vector, y_vector);
 
         if(x_binary && !y_binary)
-            return logistic_correlation_vector_vector(thread_pool_device, y_vector, x_vector);
+            return logistic_correlation_vector_vector(device, y_vector, x_vector);
 
         if(x_binary && y_binary)
-            return opennn::linear_correlation(thread_pool_device, x_vector, y_vector);
+            return opennn::linear_correlation(device, x_vector, y_vector);
     }
 
     if(x_columns != 1 && y_columns == 1)
-        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+        return logistic_correlation_matrix_vector(device, x, y.reshape(vector));
 
     if(x_columns == 1 && y_columns != 1)
-        return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+        return logistic_correlation_vector_matrix(device, x.reshape(vector), y);
 
     if(x_columns != 1 && y_columns != 1)
-        return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+        return logistic_correlation_matrix_matrix(device, x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 
@@ -117,7 +117,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
+Correlation correlation_spearman(const ThreadPoolDevice* device,
                                  const Tensor<type, 2>& x,
                                  const Tensor<type, 2>& y)
 {
@@ -136,29 +136,29 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
         const Tensor<type, 1> y_vector = y.reshape(vector);
 
         if(!x_binary && !y_binary)
-            return linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
+            return linear_correlation_spearman(device, x_vector, y_vector);
         else if(!x_binary && y_binary)
-            return logistic_correlation_vector_vector_spearman(thread_pool_device, x_vector, y_vector);
+            return logistic_correlation_vector_vector_spearman(device, x_vector, y_vector);
         else if(x_binary && !y_binary)
-            return logistic_correlation_vector_vector_spearman(thread_pool_device, y_vector, x_vector);
+            return logistic_correlation_vector_vector_spearman(device, y_vector, x_vector);
         else if(x_binary && y_binary)
-            return linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
+            return linear_correlation_spearman(device, x_vector, y_vector);
     }
 
     if(x_columns == 1 && y_columns != 1)
-        return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+        return logistic_correlation_vector_matrix(device, x.reshape(vector), y);
 
     if(x_columns != 1 && y_columns == 1)
-        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
+        return logistic_correlation_matrix_vector(device, x, y.reshape(vector));
 
     if(x_columns != 1 && y_columns != 1)
-        return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
+        return logistic_correlation_matrix_matrix(device, x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 }
 
 
-Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
+Tensor<type, 1> cross_correlations(const ThreadPoolDevice* device,
                                    const Tensor<type, 1>& x,
                                    const Tensor<type, 1>& y,
                                    const Index& maximum_past_time_steps)
@@ -181,14 +181,14 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
             column_y(j) = y(j + i);
         }
 
-        cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y).r;
+        cross_correlation[i] = linear_correlation(device, column_x, column_y).r;
     }
 
     return cross_correlation;
 }
 
 
-Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation exponential_correlation(const ThreadPoolDevice* device,
                                     const Tensor<type, 1>& x,
                                     const Tensor<type, 1>& y)
 {
@@ -204,7 +204,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
-    exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
+    exponential_correlation = linear_correlation(device, x, y.log());
 
     exponential_correlation.form = Correlation::Form::Exponential;
     exponential_correlation.a = exp(exponential_correlation.a);
@@ -361,7 +361,7 @@ Tensor<type, 2> get_correlation_values(const Tensor<Correlation, 2>& correlation
 }
 
 
-Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation linear_correlation(const ThreadPoolDevice* device,
                                const Tensor<type, 1>& x,
                                const Tensor<type, 1>& y)
 {
@@ -382,19 +382,19 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
         return Correlation();
 
     Tensor<double, 0> s_x;
-    s_x.device(*thread_pool_device) = x_filter.sum();
+    s_x.device(*device) = x_filter.sum();
 
     Tensor<double, 0> s_y;
-    s_y.device(*thread_pool_device) = y_filter.sum();
+    s_y.device(*device) = y_filter.sum();
 
     Tensor<double, 0> s_xx;
-    s_xx.device(*thread_pool_device) = x_filter.square().sum();
+    s_xx.device(*device) = x_filter.square().sum();
 
     Tensor<double, 0> s_yy;
-    s_yy.device(*thread_pool_device) = y_filter.square().sum();
+    s_yy.device(*device) = y_filter.square().sum();
 
     Tensor<double, 0> s_xy;
-    s_xy.device(*thread_pool_device) = (y_filter*x_filter).sum();
+    s_xy.device(*device) = (y_filter*x_filter).sum();
 
     const double denominator = sqrt((double(n) * s_xx() - s_x() * s_x()) * (double(n) * s_yy() - s_y() * s_y()));
 
@@ -481,7 +481,7 @@ Tensor<type, 1> calculate_spearman_ranks(const Tensor<type, 1> & x)
 }
 
 
-Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+Correlation linear_correlation_spearman(const ThreadPoolDevice* device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x, y);
@@ -492,13 +492,13 @@ Correlation linear_correlation_spearman(const ThreadPoolDevice* thread_pool_devi
     const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filter);
     const Tensor<type, 1> y_rank = calculate_spearman_ranks(y_filter);
 
-    Correlation result = linear_correlation(thread_pool_device, x_rank, y_rank);
+    Correlation result = linear_correlation(device, x_rank, y_rank);
 
     return result;
 }
 
 
-Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation logarithmic_correlation(const ThreadPoolDevice* device,
                                     const Tensor<type, 1>& x,
                                     const Tensor<type, 1>& y)
 {
@@ -514,7 +514,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
-    logarithmic_correlation = linear_correlation(thread_pool_device, x.log(), y);
+    logarithmic_correlation = linear_correlation(device, x.log(), y);
 
     logarithmic_correlation.form = Correlation::Form::Logarithmic;
 
@@ -524,7 +524,7 @@ Correlation logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
 
 
 
-Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_pool_device,
+Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 1>& y)
 {
@@ -570,7 +570,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     // Logistic correlation
     const array<Index, 1> vector{{x_filtered.size()}};
 
-    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+    correlation.r = linear_correlation(device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -600,7 +600,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 }
 
 
-Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* thread_pool_device,
+Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* device,
                                                         const Tensor<type, 1>& x,
                                                         const Tensor<type, 1>& y)
 {
@@ -650,7 +650,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     const array<Index, 1> vector{{x_filtered.size()}};
 
-    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+    correlation.r = linear_correlation(device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -680,7 +680,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 }
 
 
-Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_pool_device,
+Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* device,
                                                const Tensor<type, 1>& x,
                                                const Tensor<type, 2>& y)
 {
@@ -760,7 +760,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const array<Index, 1> vector{{targets.size()}};
 
-    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+    correlation.r = linear_correlation(device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -774,15 +774,15 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 }
 
 
-Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* thread_pool_device,
+Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice* device,
                                                const Tensor<type, 2>& y,
                                                const Tensor<type, 1>& x)
 {
-    return logistic_correlation_vector_matrix(thread_pool_device, x,y);
+    return logistic_correlation_vector_matrix(device, x,y);
 }
 
 
-Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_pool_device,
+Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* device,
                                                const Tensor<type, 2>& x,
                                                const Tensor<type, 2>& y)
 {
@@ -874,7 +874,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const array<Index, 1> vector{{targets.size()}};
 
-    correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
+    correlation.r = linear_correlation(device, outputs.reshape(vector), targets.reshape(vector)).r;
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
@@ -890,7 +890,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 }
 
 
-Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
+Correlation power_correlation(const ThreadPoolDevice* device,
                               const Tensor<type, 1>& x,
                               const Tensor<type, 1>& y)
 {
@@ -907,7 +907,7 @@ Correlation power_correlation(const ThreadPoolDevice* thread_pool_device,
         }
     }
 
-    power_correlation = linear_correlation(thread_pool_device, x.log(), y.log());
+    power_correlation = linear_correlation(device, x.log(), y.log());
 
     power_correlation.form = Correlation::Form::Power;
 

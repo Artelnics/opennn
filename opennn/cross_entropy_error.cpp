@@ -55,7 +55,7 @@ void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device)
+    error.device(*device)
         = ((targets * (outputs + epsilon).log() + (type(1) - targets) * ((type(1) - outputs + epsilon).log())).sum()) / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
@@ -84,7 +84,7 @@ void CrossEntropyError2d::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*(outputs + epsilon).log()).sum() / type(-samples_number);
+    error.device(*device) = (targets*(outputs + epsilon).log()).sum() / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -126,7 +126,7 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device)
+    output_deltas.device(*device)
         = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);
 }
 
@@ -155,7 +155,7 @@ void CrossEntropyError2d::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = (outputs - targets) / type(samples_number);
+    output_deltas.device(*device) = (outputs - targets) / type(samples_number);
 }
 
 

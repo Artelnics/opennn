@@ -266,7 +266,7 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 5>& image_patches = this_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
-    image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
+    image_patches.device(*device) = inputs.extract_image_patches(
         pool_height,
         pool_width,
         row_stride,
@@ -277,7 +277,7 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
         type(padding_width)
         );
 
-    outputs.device(*thread_pool_device) = image_patches
+    outputs.device(*device) = image_patches
                                               .mean(array_2(1, 2))
                                               .reshape(array_4(outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)));
 }
@@ -298,7 +298,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index output_height = outputs.dimension(2);
     const Index channels = outputs.dimension(3);
 
-    image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
+    image_patches.device(*device) = inputs.extract_image_patches(
         pool_height,
         pool_width,
         row_stride,
@@ -307,7 +307,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         PADDING_VALID,
         type(padding_width));
 
-    outputs.device(*thread_pool_device) = image_patches
+    outputs.device(*device) = image_patches
                                               .maximum(array_2(1, 2))
                                               .reshape(array_4(batch_size, output_width, output_height, channels));
 
@@ -426,7 +426,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     Tensor<type, 4>& deltas_by_pool_size = pooling_layer_back_propagation->deltas_by_pool_size;
 
-    deltas_by_pool_size.device(*thread_pool_device) = deltas / type(pool_size);
+    deltas_by_pool_size.device(*device) = deltas / type(pool_size);
 
     // Input derivatives
 

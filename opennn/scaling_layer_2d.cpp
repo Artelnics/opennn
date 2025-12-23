@@ -203,7 +203,7 @@ void Scaling2d::forward_propagate(const vector<TensorView>& input_views,
         else if(scaler == "Logarithm")
             scale_logarithmic(outputs, i);
         else if(scaler == "ImageMinMax")
-            outputs.chip(i,1).device(*thread_pool_device) =  outputs.chip(i,1) / type(255);
+            outputs.chip(i,1).device(*device) =  outputs.chip(i,1) / type(255);
         else
             throw runtime_error("Unknown scaling method.\n");
     }

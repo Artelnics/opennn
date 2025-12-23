@@ -434,16 +434,16 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             Tensor<type, 1>& gradient_exponential_decay = optimization_data.gradient_exponential_decay[layer_index][parameter_index];
             Tensor<type, 1>& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay[layer_index][parameter_index];
 
-            gradient_exponential_decay.device(*thread_pool_device)
+            gradient_exponential_decay.device(*device)
                 = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
 
-            square_gradient_exponential_decay.device(*thread_pool_device)
+            square_gradient_exponential_decay.device(*device)
                 = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
 
             Tensor<type, 1> corrected_gradient_exponential_decay = gradient_exponential_decay / bias_correction_1;
             Tensor<type, 1> corrected_square_gradient_exponential_decay = square_gradient_exponential_decay / bias_correction_2;
 
-            parameters.device(*thread_pool_device)
+            parameters.device(*device)
                 -= learning_rate * corrected_gradient_exponential_decay / (corrected_square_gradient_exponential_decay.sqrt() + epsilon);
 
         }

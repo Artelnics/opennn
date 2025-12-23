@@ -111,7 +111,7 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        outputs.device(*thread_pool_device) =
+        outputs.device(*device) =
             inputs.mean(array_1(1))
                 .reshape(array_2(batch_size, features));
     }
@@ -153,7 +153,7 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        backward_layer->input_derivatives.device(*thread_pool_device) +=
+        backward_layer->input_derivatives.device(*device) +=
             delta_tensor_map.reshape(array_3(batch_size, 1, number_of_features))
                 .broadcast(array_3(1, sequence_length, 1))
             / static_cast<type>(sequence_length);

@@ -58,7 +58,7 @@ Index get_random_element(const vector<Index>& values)
 }
 
 
-void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
+void multiply_matrices(const ThreadPoolDevice* device,
                        Tensor<type, 3>& tensor,
                        const Tensor<type, 1>& vector)
 {
@@ -68,12 +68,12 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
     {
         TensorMap<Tensor<type, 2>> matrix = tensor_map(tensor, i);
 
-        matrix.device(*thread_pool_device) = matrix * vector(i);
+        matrix.device(*device) = matrix * vector(i);
     }
 }
 
 
-void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
+void multiply_matrices(const ThreadPoolDevice* device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 {
     const Index depth = tensor.dimension(2);
 
@@ -81,12 +81,12 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 
     {
         TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
 
-        slice.device(*thread_pool_device) = slice * matrix;
+        slice.device(*device) = slice * matrix;
     }
 }
 
 
-Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* device, const Tensor<type, 1>& vector)
 {
     const Index columns_number = vector.size();
 
@@ -96,14 +96,14 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = vector * vector(i);
+        column.device(*device) = vector * vector(i);
     }
 
     return matrix;
 }
 
 
-void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
+void divide_columns(const ThreadPoolDevice* device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
     const Index columns_number = matrix.dimension(1);
@@ -118,12 +118,12 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
             if(vector(j) == 0)
                 corrected_vector(j) = 1;
 
-        column.device(*thread_pool_device) = column / corrected_vector;
+        column.device(*device) = column / corrected_vector;
     }
 }
 
 
-void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
+void sum_matrices(const ThreadPoolDevice* device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
     const Index depth = tensor.dimension(2);
 
@@ -131,7 +131,7 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
     {
         TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
 
-        matrix.device(*thread_pool_device) = matrix + vector(i);
+        matrix.device(*device) = matrix + vector(i);
     }
 }
 

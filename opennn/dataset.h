@@ -528,7 +528,7 @@ protected:
 
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     // DATA
 
@@ -636,7 +636,7 @@ struct Batch
     Tensor<type, 1> target_tensor;
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 };
 
 #ifdef OPENNN_CUDA

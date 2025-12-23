@@ -103,7 +103,7 @@ public:
 protected:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     string label = "my_layer";
 
@@ -142,7 +142,7 @@ protected:
     template <int Rank>
     void binary(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type threshold) const
     {
-        y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
+        y.device(*device) = (y < threshold).select(type(0), type(1));
 
         if (dy_dx.size() == 0) return;
 
@@ -164,55 +164,55 @@ protected:
     {
         const type alpha = type(1);
 
-        y.device(*thread_pool_device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
+        y.device(*device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
+        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
     }
 
 
     template <int Rank>
     void hyperbolic_tangent(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = y.tanh();
+        y.device(*device) = y.tanh();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (type(1) - y.square()).eval();
+        dy_dx.device(*device) = (type(1) - y.square()).eval();
     }
 
 
     template <int Rank>
     void logistic(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = (type(1) + (-y).exp()).inverse();
+        y.device(*device) = (type(1) + (-y).exp()).inverse();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y * (type(1) - y)).eval();
+        dy_dx.device(*device) = (y * (type(1) - y)).eval();
     }
 
 
     template <int Rank>
     void rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = y.cwiseMax(type(0));
+        y.device(*device) = y.cwiseMax(type(0));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
+        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
     }
 
 
     template <int Rank>
     void leaky_rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type slope) const
     {
-        y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
+        y.device(*device) = (y > type(0)).select(y, slope * y);
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
+        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
     }
 
 
@@ -223,11 +223,11 @@ protected:
 
         const type alpha = type(1.6733);
 
-        y.device(*thread_pool_device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+        y.device(*device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
+        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
     }
 
     void softmax(Tensor<type, 2>&) const;

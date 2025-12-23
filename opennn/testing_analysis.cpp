@@ -25,7 +25,7 @@ TestingAnalysis::TestingAnalysis(const NeuralNetwork* new_neural_network, const 
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
@@ -49,10 +49,10 @@ const bool& TestingAnalysis::get_display() const
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
     thread_pool.reset();
-    thread_pool_device.reset();
+    device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -99,7 +99,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        linear_correlation(i) = opennn::linear_correlation(thread_pool_device.get(), output.chip(i,1), target.chip(i,1));
+        linear_correlation(i) = opennn::linear_correlation(device.get(), output.chip(i,1), target.chip(i,1));
 
     return linear_correlation;
 }
@@ -482,7 +482,7 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
     const type predictions_number = static_cast<type>(targets.size());
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    mean_squared_error.device(*device) = (outputs - targets).square().sum();
 
     Tensor<type, 1> errors(5);
     errors(0) = mean_squared_error(0);
@@ -516,7 +516,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const st
     // Results
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum();
+    mean_squared_error.device(*device) = (outputs-targets).square().sum();
 
     errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
@@ -541,7 +541,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
     // Results
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    mean_squared_error.device(*device) = (outputs-targets).square().sum().sqrt();
 
     errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
@@ -560,7 +560,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
     const Tensor<type, 1> targets_mean = mean(targets);
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    mean_squared_error.device(*device) = (outputs - targets).square().sum();
 
     type normalization_coefficient = type(0);
 
@@ -568,7 +568,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     for(Index i = 0; i < samples_number; i++)
     {
-        norm.device(*thread_pool_device) = (targets.chip(i, 0) - targets_mean).square().sum();
+        norm.device(*device) = (targets.chip(i, 0) - targets_mean).square().sum();
 
         normalization_coefficient += norm(0);
     }
@@ -671,14 +671,14 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
     Tensor<type, 2> f_2(targets.dimension(0), targets.dimension(1));
     Tensor<type, 2> f_3(targets.dimension(0), targets.dimension(1));
 
-    f_1.device(*thread_pool_device) = (targets - outputs).square() * positives_weight;
+    f_1.device(*device) = (targets - outputs).square() * positives_weight;
 
-    f_2.device(*thread_pool_device) = (targets - outputs).square()*negatives_weight;
+    f_2.device(*device) = (targets - outputs).square()*negatives_weight;
 
-    f_3.device(*thread_pool_device) = targets.constant(type(0));
+    f_3.device(*device) = targets.constant(type(0));
 
     Tensor<type, 0> mean_squared_error;
-    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    mean_squared_error.device(*device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     Index negatives = 0;
 
@@ -705,7 +705,7 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
 
     Tensor<type, 0> minkowski_error;
 
-    minkowski_error.device(*thread_pool_device) =
+    minkowski_error.device(*device) =
         (((outputs - targets).abs().pow(minkowski_parameter).sum()) / predictions_number).pow(type(1.0) / minkowski_parameter);
 
     return minkowski_error();
@@ -742,16 +742,16 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
 {
     Tensor<type, 0> targets_mean;
-    targets_mean.device(*thread_pool_device) = targets.mean();
+    targets_mean.device(*device) = targets.mean();
 
     Tensor<type, 0> outputs_mean;
-    outputs_mean.device(*thread_pool_device) = outputs.mean();
+    outputs_mean.device(*device) = outputs.mean();
 
     Tensor<type,0> numerator;
-    numerator.device(*thread_pool_device) = ((-targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
+    numerator.device(*device) = ((-targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
 
     Tensor<type,0> denominator;
-    denominator.device(*thread_pool_device) = ((-targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
+    denominator.device(*device) = ((-targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
 
     if(denominator(0) == type(0))
         denominator(0) = 1;
@@ -1791,7 +1791,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_past_time_steps);
+        error_autocorrelations[i] = autocorrelations(device.get(), error.chip(i,1), maximum_past_time_steps);
 
     return error_autocorrelations;
 }
@@ -1812,7 +1812,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(),
+        inputs_errors_cross_correlation[i] = cross_correlations(device.get(),
                                                                 inputs.chip(i,1), errors.chip(i,1), past_time_steps);
 
     return inputs_errors_cross_correlation;

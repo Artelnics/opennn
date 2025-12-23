@@ -69,9 +69,9 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets + epsilon;
+    errors.device(*device) = outputs - targets + epsilon;
 
-    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
+    error.device(*device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -91,7 +91,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     const type coefficient = type(1.0 / samples_number);
 
-    deltas.device(*thread_pool_device) = errors*((errors.abs() + epsilon).pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+    deltas.device(*device) = errors*((errors.abs() + epsilon).pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
 }
 
 

@@ -138,7 +138,7 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index batch_size = embeddings.dimension(0);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    embeddings.device(*thread_pool_device) += positional_encoding
+    embeddings.device(*device) += positional_encoding
       .reshape(array_3(1, sequence_length, embedding_dimension))
       .broadcast(array_3(batch_size, 1, 1));
 }
@@ -190,7 +190,7 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
     weight_deltas.setZero();
 
     if(scale_embedding)
-        deltas.device(*thread_pool_device) = deltas*sqrt(type(embedding_dimension));
+        deltas.device(*device) = deltas*sqrt(type(embedding_dimension));
 
 #pragma omp parallel for
 

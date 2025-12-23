@@ -53,9 +53,9 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     if(outputs.dimension(1) != targets.dimension(1))
         throw runtime_error("MeanSquaredError: outputs and target dimension 1 do not match: " + to_string(outputs.dimension(1)) + " " + to_string(targets.dimension(1)));
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    errors.device(*device) = outputs - targets;
 
-    error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
+    error.device(*device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -69,7 +69,7 @@ void MeanSquaredError::calculate_error_lm(const Batch&,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() * type(0.5);
+    error.device(*device) = squared_errors.square().sum() * type(0.5);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -93,7 +93,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * samples_number);
+    output_deltas.device(*device) = errors / type(0.5 * outputs_number * samples_number);
 }
 
 
@@ -108,8 +108,8 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map<2>(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    output_deltas.device(*device) = errors;
+    divide_columns(device.get(), output_deltas, squared_errors);
 }
 
 
@@ -122,7 +122,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch&,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
+    gradient.device(*device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
 }
 
 
@@ -133,7 +133,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch&,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
+    hessian.device(*device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
 }
 
 

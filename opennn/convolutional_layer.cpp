@@ -55,7 +55,7 @@ void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
     if (convolution_type == "Same")
         preprocessed_inputs = inputs.pad(get_paddings());
     else
-        preprocessed_inputs.device(*thread_pool_device) = inputs;
+        preprocessed_inputs.device(*device) = inputs;
 }
 
 
@@ -69,7 +69,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
         const TensorMap<Tensor<type, 3>> kernel_weights = tensor_map(weights, kernel_index);
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
-        kernel_convolutions.device(*thread_pool_device) =
+        kernel_convolutions.device(*device) =
             (inputs.convolve(kernel_weights, array_3( 1, 2, 3)))
                 .reshape(kernel_convolutions.dimensions()) + biases(kernel_index);
     }
@@ -93,24 +93,24 @@ void Convolutional::apply_batch_normalization(unique_ptr<LayerForwardPropagation
         Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
         const array<Index, 3> reduction_axes = { 0, 1, 2 };
-        means.device(*thread_pool_device) = outputs.mean(reduction_axes);
+        means.device(*device) = outputs.mean(reduction_axes);
 
         Tensor<type, 4> centered_outputs = outputs - means.reshape(reshape_dims).broadcast(broadcast_dims);
         Tensor<type, 1> variances = centered_outputs.square().mean(reduction_axes);
-        standard_deviations.device(*thread_pool_device) = variances.sqrt();
+        standard_deviations.device(*device) = variances.sqrt();
 
-        outputs.device(*thread_pool_device) = centered_outputs / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
+        outputs.device(*device) = centered_outputs / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
 
-        moving_means.device(*thread_pool_device) = moving_means * momentum + means * (type(1) - momentum);
-        moving_standard_deviations.device(*thread_pool_device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
+        moving_means.device(*device) = moving_means * momentum + means * (type(1) - momentum);
+        moving_standard_deviations.device(*device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
     }
     else
     {
-        outputs.device(*thread_pool_device) = (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+        outputs.device(*device) = (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
                                               (moving_standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
     }
 
-    outputs.device(*thread_pool_device) = outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
+    outputs.device(*device) = outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
                                           offsets.reshape(reshape_dims).broadcast(broadcast_dims);
 }
 
@@ -166,10 +166,10 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
     const Index batch_size = inputs.dimension(0);
 
     // --- 2. APPLY ACTIVATION DERIVATIVE ---
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    deltas.device(*device) = deltas * activation_derivatives;
 
     // --- 3. CALCULATE BIAS GRADIENTS ---
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 3>({0, 1, 2}));
+    bias_deltas.device(*device) = deltas.sum(array<Index, 3>({0, 1, 2}));
 
     // --- 4. CALCULATE WEIGHT GRADIENTS (REFACTORED) ---
     const array<Index, 2> deltas_matrix_dims = {
@@ -211,7 +211,7 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
     Tensor<type, 4> padded_deltas = deltas.pad(full_paddings);
 
     const array<Index, 3> convolution_axes = {1, 2, 3};
-    input_deltas.device(*thread_pool_device) = padded_deltas.convolve(weights_transformed, convolution_axes);
+    input_deltas.device(*device) = padded_deltas.convolve(weights_transformed, convolution_axes);
 }
 */
 
@@ -279,11 +279,11 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
 
     // Convolution deltas
 
-    deltas.device(*thread_pool_device) = deltas*activation_derivatives;
+    deltas.device(*device) = deltas*activation_derivatives;
 
     // Biases derivatives
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 3>({0, 1, 2}));
+    bias_deltas.device(*device) = deltas.sum(array<Index, 3>({0, 1, 2}));
 
     // Weigth derivatives
 
@@ -300,7 +300,7 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
 
     // Input derivatives
 
-    rotated_weights.device(*thread_pool_device) = weights.reverse(array<Index, 4>({1, 1, 0, 0}));
+    rotated_weights.device(*device) = weights.reverse(array<Index, 4>({1, 1, 0, 0}));
 
 #pragma omp parallel for //schedule(static)
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
