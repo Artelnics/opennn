@@ -208,7 +208,6 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
          * key.reshape(array_5(batch_size, heads_number, 1, source_sequence_length, head_dimension)).broadcast(array_5(1, 1, query_sequence_length, 1, 1)))
          .sum(array_1(4)) * scaling_factor;
 
-
     softmax(attention_weights);
 
     attention_outputs.device(*device) =

@@ -27,43 +27,6 @@ struct TensorView
     {}
 
     Index rank() const { return dims.size(); }
-/*
-    template <int Rank>
-    auto to_tensor_map() const
-    {
-        if (dims.size() != Rank)
-            throw runtime_error("TensorView Error: Requested TensorMap rank " + to_string(Rank) +
-                                " does not match stored dimensions size " + to_string(dims.size()));
-        if constexpr (Rank == 1)
-            return TensorMap<const Tensor<const type, 1>>(data, dims[0]);
-        else if constexpr (Rank == 2)
-            return TensorMap<const Tensor<const type, 2>>(data, dims[0], dims[1]);
-        else if constexpr (Rank == 3)
-            return TensorMap<const Tensor<const type, 3>>(data, dims[0], dims[1], dims[2]);
-        else if constexpr (Rank == 4)
-            return TensorMap<const Tensor<const type, 4>>(data, dims[0], dims[1], dims[2], dims[3]);
-        else
-            static_assert(Rank >= 1 && Rank <= 4, "Unsupported TensorMap Rank requested.");
-    }
-
-    template <int Rank>
-    auto to_tensor_map()
-    {
-        if (dims.size() != Rank)
-            throw runtime_error("TensorView Error: Requested TensorMap rank " + to_string(Rank) +
-                                " does not match stored dimensions size " + to_string(dims.size()));
-        if constexpr (Rank == 1)
-            return TensorMap<const Tensor<const type, 1>>(data, dims[0]);
-        else if constexpr (Rank == 2)
-            return TensorMap<const Tensor<const type, 2>>(data, dims[0], dims[1]);
-        else if constexpr (Rank == 3)
-            return TensorMap<const Tensor<const type, 3>>(data, dims[0], dims[1], dims[2]);
-        else if constexpr (Rank == 4)
-            return TensorMap<const Tensor<const type, 4>>(data, dims[0], dims[1], dims[2], dims[3]);
-        else
-            static_assert(Rank >= 1 && Rank <= 4, "Unsupported TensorMap Rank requested.");
-    }
-*/
 };
 
 
