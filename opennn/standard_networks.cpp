@@ -300,7 +300,7 @@ SimpleResNet::SimpleResNet(const dimensions& input_dimensions,
                                                             false,
                                                             "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
-                add_layer(move(skip_conv), { block_input_index });
+                add_layer(std::move(skip_conv), { block_input_index });
 
                 skip_path_index = get_layers_number() - 1;
             }
@@ -356,17 +356,6 @@ SimpleResNet::SimpleResNet(const dimensions& input_dimensions,
 }
 
 
-void SimpleResNet::print_dim(const dimensions& dims) const
-{
-    cout << "{ ";
-    for (size_t i = 0; i < dims.size(); ++i)
-    {
-        cout << dims[i] << (i == dims.size() - 1 ? " " : ", ");
-    }
-    cout << "}";
-}
-
-
 TextClassificationNetwork::TextClassificationNetwork(const dimensions& input_dimensions,
                                                      const dimensions& complexity_dimensions,
                                                      const dimensions& output_dimensions,
@@ -389,10 +378,10 @@ TextClassificationNetwork::TextClassificationNetwork(const dimensions& input_dim
                                      embedding_dimension,
                                      "embedding_layer"));
 
-    // add_layer(make_unique<MultiHeadAttention>(
-    //     dimensions({sequence_length, embedding_dimension}),
-    //     heads_number,
-    //     "multihead_attention_layer"));
+    add_layer(make_unique<MultiHeadAttention>(
+         dimensions({sequence_length, embedding_dimension}),
+         heads_number,
+         "multihead_attention_layer"));
 
     add_layer(make_unique<Pooling3d>(
         get_output_dimensions()));
@@ -408,59 +397,6 @@ TextClassificationNetwork::TextClassificationNetwork(const dimensions& input_dim
         "classification_layer"));
 
     input_vocabulary = new_input_vocabulary;
-}
-
-
-Tensor<type, 2> TextClassificationNetwork::calculate_outputs(const Tensor<string, 1>& input_documents) const
-{
-    const Index batch_size = input_documents.dimension(0);
-
-    const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
-    const Index sequence_length = embedding_layer->get_sequence_length();
-
-    unordered_map<string, Index> vocabulary_map;
-    vocabulary_map.reserve(input_vocabulary.size());
-    for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
-        vocabulary_map[input_vocabulary[i]] = i;
-
-    Tensor<type, 2> encoded_inputs(batch_size, sequence_length);
-    encoded_inputs.setConstant(0.0);
-
-#pragma omp parallel for
-    for(Index i = 0; i < batch_size; ++i)
-    {
-        const vector<string> tokens = tokenize(input_documents(i));
-
-        Index current_index = 0;
-
-        // Start
-        if(current_index < sequence_length)
-        {
-            encoded_inputs(i, current_index) = 2;
-            current_index++;
-        }
-
-        // Tokens
-        for(const string& token : tokens)
-        {
-            if(current_index >= sequence_length - 1)
-                break;
-
-            auto it = vocabulary_map.find(token);
-            if(it != vocabulary_map.end())
-                encoded_inputs(i, current_index) = (type)it->second;
-            else
-                encoded_inputs(i, current_index) = 1;
-
-            current_index++;
-        }
-
-        // End
-        if(current_index < sequence_length)
-            encoded_inputs(i, current_index) = 3;
-    }
-
-    return const_cast<TextClassificationNetwork*>(this)->NeuralNetwork::calculate_outputs<2, 2>(encoded_inputs);
 }
 
 } // namespace opennn

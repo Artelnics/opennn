@@ -207,23 +207,16 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
 
 void Embedding::print() const
 {
-    cout << "Embedding Layer" << endl;
-    cout << "Label: " << label << endl;
-    cout << "Type: Embedding" << endl;
-
-    cout << "Input dimensions: "
-         << get_input_dimensions();
-
-    cout << "Output dimensions: "
-         << get_output_dimensions();
-
-    cout << "Vocabulary size: " << get_vocabulary_size() << endl;
-    cout << "Sequence length: " << get_sequence_length() << endl;
-    cout << "Embedding dimension: " << get_embedding_dimension() << endl;
-
-    cout << "Dropout rate: " << dropout_rate << endl;
-
-    cout << "Weights dimensions: " << weights.dimensions() << endl;
+    cout << "Embedding Layer" << endl
+         << "Label: " << label << endl
+         << "Type: Embedding" << endl
+         << "Input dimensions: " << get_input_dimensions() << endl
+         << "Output dimensions: " << get_output_dimensions() << endl
+         << "Vocabulary size: " << get_vocabulary_size() << endl
+         << "Sequence length: " << get_sequence_length() << endl
+         << "Embedding dimension: " << get_embedding_dimension() << endl
+         << "Dropout rate: " << dropout_rate << endl
+         << "Weights dimensions: " << weights.dimensions() << endl;
 
     //cout << "Weights:\n " << weights << endl;
     //cout << "Positional encoding:\n" << positional_encoding << endl;

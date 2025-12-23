@@ -223,6 +223,9 @@ public:
 
     Index calculate_image_output(const filesystem::path&);
 
+    Tensor<type, 2> calculate_text_outputs(const Tensor<string, 1>& input_documents) const;
+
+
     // Serialization
 
     Tensor<string, 2> get_dense2d_layers_information() const;

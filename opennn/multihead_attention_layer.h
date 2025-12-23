@@ -97,7 +97,6 @@ private:
     Tensor<bool,2> key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
-//    type scaling_factor = 0;
 
     const type minus_inf = -numeric_limits<float>::infinity();
 };
@@ -127,7 +126,7 @@ struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
 
     Tensor<type, 3> outputs;
 
-    Tensor<type, 2> sample_matrix;
+//    Tensor<type, 2> sample_matrix;
 };
 
 

@@ -78,8 +78,6 @@ public:
                  const std::vector<Index>& blocks_per_stage,
                  const dimensions& initial_filters,
                  const dimensions& output_dimensions);
-
-    void print_dim(const dimensions& dims) const;
 };
 
 
@@ -92,12 +90,6 @@ public:
                               const dimensions& complexity_dimensions,
                               const dimensions& output_dimensions,
                               const vector<string>& new_input_vocabulary = vector<string>());
-
-    Tensor<type, 2> calculate_outputs(const Tensor<string, 1>& input_documents) const;
-
-private:
-
-    vector<string> input_vocabulary;
 };
 
 } // namespace opennn

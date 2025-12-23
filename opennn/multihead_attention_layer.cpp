@@ -473,7 +473,7 @@ void MultiHeadAttention::print() const
     cout << "Multi-head attention Layer" << endl
          << "Label: " << label << endl
          << "Type: Embedding" << endl
-         << "Input dimensions: " << get_input_dimensions()
+         << "Input dimensions: " << get_input_dimensions() << endl
          << "Output dimensions: " << get_output_dimensions();
 }
 
@@ -572,15 +572,14 @@ void MultiHeadAttentionForwardPropagation::initialize()
 
     // Auxiliar
 
-    sample_matrix.resize(query_sequence_length, head_dimension);
+    //sample_matrix.resize(query_sequence_length, head_dimension);
 }
 
 
 void MultiHeadAttentionForwardPropagation::print() const
 {
-    cout << "Outputs dimensions:" << endl;
-    //cout << output_dimensions << endl;
-    cout << "Outputs:" << endl;
+//    cout << "Outputs dimensions:" << output_dimensions << endl
+//    cout << "Outputs:" << endl;
     //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
 }
 

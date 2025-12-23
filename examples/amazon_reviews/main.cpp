@@ -55,17 +55,13 @@ int main()
         //text_classification_network.print();
 
         // Training Strategy
-/*
+
         WeightedSquaredError wse;
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs_number(1000);
-        adam->set_display_period(5);
-
         training_strategy.train();
-
+/*
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -75,16 +71,16 @@ int main()
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         roc_analysis.print();
-
+*/
         // Deployment
 
         Tensor<string, 1> documents(1);
         documents[0] = "This is great!";
 
-        Tensor<type, 2> outputs = text_classification_network.calculate_outputs(documents);
+        Tensor<type, 2> outputs = text_classification_network.calculate_text_outputs(documents);
 
         cout << outputs << endl;
-*/
+
         cout << "Good bye!" << endl;
 
         return 0;

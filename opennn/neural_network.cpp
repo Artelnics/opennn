@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "strings_utilities.h"
 #include "images.h"
 #include "neural_network.h"
 #include "dense_layer.h"
@@ -14,6 +15,7 @@
 #include "scaling_layer_3d.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
+#include "embedding_layer.h"
 
 namespace opennn
 {
@@ -763,6 +765,62 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     // return predicted_index;
     return 0;
+}
+
+Tensor<type, 2> NeuralNetwork::calculate_text_outputs(const Tensor<string, 1> &input_documents) const
+{
+    const Index batch_size = input_documents.dimension(0);
+
+    const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
+
+    const Index sequence_length = embedding_layer->get_sequence_length();
+
+    unordered_map<string, Index> vocabulary_map;
+    vocabulary_map.reserve(input_vocabulary.size());
+    for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
+        vocabulary_map[input_vocabulary[i]] = i;
+
+    Tensor<type, 2> inputs(batch_size, sequence_length);
+    inputs.setConstant(0.0);
+
+#pragma omp parallel for
+    for(Index i = 0; i < batch_size; ++i)
+    {
+        const vector<string> tokens = tokenize(input_documents(i));
+
+        Index current_index = 0;
+
+        // Start
+        if(current_index < sequence_length)
+        {
+            inputs(i, current_index) = 2;
+            current_index++;
+        }
+
+        // Tokens
+        for(const string& token : tokens)
+        {
+            if(current_index >= sequence_length - 1)
+                break;
+
+            auto it = vocabulary_map.find(token);
+
+            if(it != vocabulary_map.end())
+                inputs(i, current_index) = (type)it->second;
+            else
+                inputs(i, current_index) = 1;
+
+            current_index++;
+        }
+
+        // End
+        if(current_index < sequence_length)
+            inputs(i, current_index) = 3;
+    }
+
+//    return calculate_outputs<2, 2>(encoded_inputs);
+
+    return Tensor<type, 2>();
 }
 
 

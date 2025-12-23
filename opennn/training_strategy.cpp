@@ -11,6 +11,7 @@
 #include "optimization_algorithm.h"
 #include "training_strategy.h"
 #include "quasi_newton_method.h"
+#include "adaptive_moment_estimation.h"
 #include "dense_layer.h"
 
 namespace opennn
@@ -122,15 +123,11 @@ void TrainingStrategy::set_default()
     {
         set_loss_index("CrossEntropyError2d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-        return;
-    }
 
-    // Text Classification
+        AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
+        adaptive_moment_estimation->set_display_period(10);
 
-    if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
-    {
-        set_loss_index("WeightedSquaredError");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
         return;
     }
 
@@ -148,6 +145,24 @@ void TrainingStrategy::set_default()
             output_activation = dense_layer->get_activation_function();
             break;
         }
+    }
+
+    // Text Classification
+
+    if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
+    {
+        if(output_activation == "Softmax")
+            set_loss_index("CrossEntropyError2d");
+        else
+            set_loss_index("WeightedSquaredError");
+
+        set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
+        adaptive_moment_estimation->set_display_period(10);
+
+        return;
     }
 
     // Multiple classification

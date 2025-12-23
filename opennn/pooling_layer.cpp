@@ -122,10 +122,8 @@ dimensions Pooling::get_input_dimensions() const
 void Pooling::print() const
 {
     cout << "Pooling layer" << endl
-         << "Input dimensions: " << endl
-         << input_dimensions
-         << "Output dimensions: " << endl
-         << get_output_dimensions();
+         << "Input dimensions: " << input_dimensions << endl
+         << "Output dimensions: " << get_output_dimensions() << endl;
 }
 
 

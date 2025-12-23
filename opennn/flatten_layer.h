@@ -161,8 +161,8 @@ public:
     void print() const override
     {
         cout << "Flatten layer" << endl
-             << "Input dimensions: " << input_dimensions
-             << "Output dimensions: " << get_output_dimensions();
+             << "Input dimensions: " << input_dimensions << endl
+             << "Output dimensions: " << get_output_dimensions() << endl;
     }
 
 #ifdef OPENNN_CUDA
