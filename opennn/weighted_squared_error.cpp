@@ -192,7 +192,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    errors.device(*device) = outputs - targets;
 
 //    errors_weights = targets;
 
@@ -203,7 +203,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
-    error.device(*thread_pool_device)
+    error.device(*device)
         = (errors.square() * errors_weights).sum()*coefficient;
 }
 
@@ -232,7 +232,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 
-    deltas.device(*thread_pool_device) = coefficient * (errors_weights * errors);
+    deltas.device(*device) = coefficient * (errors_weights * errors);
 }
 
 

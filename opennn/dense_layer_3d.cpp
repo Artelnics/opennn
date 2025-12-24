@@ -110,7 +110,7 @@ void Dense3d::set_activation_function(const string& new_activation_function)
 void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                      Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0))
+    combinations.device(*device) = inputs.contract(weights, axes(2,0))
                                                + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
                                                      .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
 }
@@ -168,13 +168,13 @@ void Dense3d::back_propagate(const vector<TensorView>& input_views,
 
     Tensor<type, 3>& input_deltas = dense3d_back_propagation->input_deltas;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    deltas.device(*device) = deltas * activation_derivatives;
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
+    bias_deltas.device(*device) = deltas.sum(array<Index, 2>({0,1}));
 
-    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
+    weight_deltas.device(*device) = inputs.contract(deltas, axes(0,0,1,1));
 
-    input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
+    input_deltas.device(*device) = deltas.contract(weights, axes(2,1));
 }
 
 

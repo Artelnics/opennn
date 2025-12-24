@@ -459,20 +459,6 @@ vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 
 Tensor<bool, 1> GeneticAlgorithm::cross(const Tensor<bool, 1>& parent_1, const Tensor<bool, 1>& parent_2)
 {
-    /*
-    const Index genes_number = get_genes_number();
-
-    Tensor<bool, 1> descendent(genes_number);
-
-    for (Index i = 0; i < genes_number; i++)
-        descendent(i) = (parent_1(i) == parent_2(i)) ? parent_1(i) : get_random_bool();
-
-    if (is_equal(descendent, false))
-        descendent(get_random_index(0, genes_number - 1)) = true;
-
-    return descendent;
-    */
-    
     const Index genes_number = get_genes_number();
     Tensor<bool, 1> descendent(genes_number);
     descendent.setConstant(false);

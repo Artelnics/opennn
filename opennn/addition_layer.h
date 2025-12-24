@@ -76,7 +76,7 @@ public:
             static_cast<AdditionForwardPropagation<Rank>*>(layer_forward_propagation.get());
 
         Tensor<type, Rank>& outputs = this_forward_propagation->outputs;
-        outputs.device(*thread_pool_device) = input_1 + input_2;
+        outputs.device(*device) = input_1 + input_2;
 
     }
 
@@ -93,8 +93,8 @@ public:
         AdditionBackPropagation<Rank>* this_back_propagation =
             static_cast<AdditionBackPropagation<Rank>*>(back_propagation.get());
 
-        this_back_propagation->input_1_derivatives.device(*thread_pool_device) = deltas;
-        this_back_propagation->input_2_derivatives.device(*thread_pool_device) = deltas;
+        this_back_propagation->input_1_derivatives.device(*device) = deltas;
+        this_back_propagation->input_2_derivatives.device(*device) = deltas;
     }
 
     void from_XML(const XMLDocument& document) override

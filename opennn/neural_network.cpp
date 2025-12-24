@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
+#include "strings_utilities.h"
 #include "images.h"
 #include "neural_network.h"
 #include "dense_layer.h"
@@ -14,6 +15,7 @@
 #include "scaling_layer_3d.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
+#include "embedding_layer.h"
 
 namespace opennn
 {
@@ -202,6 +204,17 @@ const bool& NeuralNetwork::get_display() const
     return display;
 }
 
+const vector<string> &NeuralNetwork::get_input_vocabulary() const
+{
+    return input_vocabulary;
+}
+
+
+const vector<string> &NeuralNetwork::get_output_vocabulary() const
+{
+    return output_vocabulary;
+}
+
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -320,7 +333,7 @@ Index NeuralNetwork::get_features_number() const
         return 0;
 
     if(has("Embedding"))
-        return feature_names.size();
+        return get_layer(0)->get_inputs_number();
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
@@ -427,6 +440,18 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 void NeuralNetwork::set_display(const bool& new_display)
 {
     display = new_display;
+}
+
+
+void NeuralNetwork::set_input_vocabulary(const vector<string>& new_input_vocabulary)
+{
+    input_vocabulary = new_input_vocabulary;
+}
+
+
+void NeuralNetwork::set_output_vocabulary(const vector<string>& new_output_vocabulary)
+{
+    output_vocabulary = new_output_vocabulary;
 }
 
 
@@ -573,10 +598,7 @@ string NeuralNetwork::get_expression() const
         }
     }
 
-    string expression = buffer.str();
-
-    //replace(expression, "+-", "-");
-    return expression;
+    return buffer.str();
 }
 
 
@@ -664,7 +686,6 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
     {
         return Tensor<type, 2>();
     }
-
 }
 
 
@@ -744,6 +765,62 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     // return predicted_index;
     return 0;
+}
+
+Tensor<type, 2> NeuralNetwork::calculate_text_outputs(const Tensor<string, 1> &input_documents) const
+{
+    const Index batch_size = input_documents.dimension(0);
+
+    const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
+
+    const Index sequence_length = embedding_layer->get_sequence_length();
+
+    unordered_map<string, Index> vocabulary_map;
+    vocabulary_map.reserve(input_vocabulary.size());
+    for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
+        vocabulary_map[input_vocabulary[i]] = i;
+
+    Tensor<type, 2> inputs(batch_size, sequence_length);
+    inputs.setConstant(0.0);
+
+#pragma omp parallel for
+    for(Index i = 0; i < batch_size; ++i)
+    {
+        const vector<string> tokens = tokenize(input_documents(i));
+
+        Index current_index = 0;
+
+        // Start
+        if(current_index < sequence_length)
+        {
+            inputs(i, current_index) = 2;
+            current_index++;
+        }
+
+        // Tokens
+        for(const string& token : tokens)
+        {
+            if(current_index >= sequence_length - 1)
+                break;
+
+            auto it = vocabulary_map.find(token);
+
+            if(it != vocabulary_map.end())
+                inputs(i, current_index) = (type)it->second;
+            else
+                inputs(i, current_index) = 1;
+
+            current_index++;
+        }
+
+        // End
+        if(current_index < sequence_length)
+            inputs(i, current_index) = 3;
+    }
+
+//    return calculate_outputs<2, 2>(encoded_inputs);
+
+    return Tensor<type, 2>();
 }
 
 
@@ -1008,7 +1085,7 @@ void NeuralNetwork::print() const
 
     cout << "Features number: " << get_features_number() << endl;
 
-    print_vector(get_feature_names());
+    cout << get_feature_names() << endl;
 
     const Index layers_number = get_layers_number();
 
@@ -1016,17 +1093,21 @@ void NeuralNetwork::print() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        cout << endl
-             << "Layer " << i << ": " << endl;
+        cout << "\nLayer " << i << ": " << endl;
+
         layers[i]->print();
     }
 
     cout << "Outputs number: " << get_outputs_number() << endl;
 
-    cout << "Outputs:" << endl;
-    print_vector(get_output_names());
+    cout << "Outputs:" << endl
+         << get_output_names();
 
     cout << "Parameters number: " << get_parameters_number() << endl;
+
+    // if(!input_vocabulary.empty())
+    //     cout << "Input vocabulary" << input_vocabulary <<
+
 }
 
 

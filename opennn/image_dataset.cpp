@@ -283,9 +283,6 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     raw_variables_to_XML(printer);
 
-    if(has_sample_ids)
-        add_xml_element(printer, "Ids", vector_to_string(sample_ids));
-
     samples_to_XML(printer);
 
     printer.CloseElement();
@@ -323,27 +320,27 @@ Tensor<type, 2> ImageDataset::perform_augmentation(const Tensor<type, 2>& input_
         Tensor<type, 3> image = inputs.chip(batch_index, 0);
 
         if(random_reflection_axis_x)
-            reflect_image_x(thread_pool_device.get(),
+            reflect_image_x(device.get(),
                             image);
 
         if(random_reflection_axis_y)
-            reflect_image_y(thread_pool_device.get(),
+            reflect_image_y(device.get(),
                             image);
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-            rotate_image(thread_pool_device.get(),
+            rotate_image(device.get(),
                          image,
                          image,
                          get_random_type(random_rotation_minimum, random_rotation_maximum));
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-            translate_image_x(thread_pool_device.get(),
+            translate_image_x(device.get(),
                               image,
                               image,
                               get_random_type(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
 
         if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-            translate_image_y(thread_pool_device.get(),
+            translate_image_y(device.get(),
                               image,
                               image,
                               get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
@@ -423,21 +420,11 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     raw_variables_from_XML(raw_variables_element);
 
-/*
-    const Index targets_number = (target_count == 2) ? 1 : target_count;
-
-    target_dimensions = { targets_number };
-
     // Samples
-
-    if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
 
     const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     samples_from_XML(samples_element);
-
-*/
 }
 
 
@@ -449,7 +436,7 @@ vector<Descriptives> ImageDataset::scale_variables(const string&)
                                            input_dimensions[1],
                                            input_dimensions[2]);
 
-    inputs_data.device(*thread_pool_device) = inputs_data / type(255);
+    inputs_data.device(*device) = inputs_data / type(255);
 
     return vector<Descriptives>();
 }
@@ -463,7 +450,7 @@ void ImageDataset::unscale_variables(const string&)
                                            input_dimensions[1],
                                            input_dimensions[2]);
 
-    inputs_data.device(*thread_pool_device) = inputs_data * type(255);
+    inputs_data.device(*device) = inputs_data * type(255);
 }
 
 

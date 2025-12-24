@@ -166,8 +166,6 @@ public:
     Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.50) const;
     Tensor<Index, 2> calculate_confusion(const type& = 0.50) const;
 
-    Tensor<Index, 2> calculate_sentimental_analysis_transformer_confusion() const;
-
     Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
     // ROC curve
@@ -279,7 +277,7 @@ private:
 private:
 
     unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> thread_pool_device = nullptr;
+    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

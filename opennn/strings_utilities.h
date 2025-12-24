@@ -67,8 +67,6 @@ namespace opennn
     void set_language(const Language&);
 
     void set_language(const string&);
-
-    void print_tokens(const vector<vector<string>>&);
 }
 
 #endif // OPENNNSTRINGS_H

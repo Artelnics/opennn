@@ -45,7 +45,7 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device)
+    error.device(*device)
         = ((targets * (outputs + epsilon).log() + (type(1) - targets) * ((type(1) - outputs + epsilon).log())).sum()) / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");

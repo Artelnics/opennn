@@ -155,8 +155,8 @@ void Dataset::RawVariable::print() const
 
     if (categories.size() != 0)
     {
-        cout << "Categories: " << endl;
-        print_vector(categories);
+        cout << "Categories: " << endl
+             << categories;
     }
 
     cout << endl;
@@ -1590,7 +1590,7 @@ void Dataset::set_default()
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     has_header = false;
 
@@ -1717,10 +1717,10 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
 void Dataset::set_threads_number(const int& new_threads_number)
 {
     thread_pool.reset();
-    thread_pool_device.reset();
+    device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -2053,24 +2053,6 @@ vector<Descriptives> Dataset::calculate_variable_descriptives() const
 }
 
 
-//vector<Descriptives> Dataset::calculate_used_variable_descriptives() const
-//{
-//    const vector<Index> used_sample_indices = get_used_sample_indices();
-//    const vector<Index> used_variable_indices = get_used_variable_indices();
-
-//    return descriptives(data, used_sample_indices, used_variable_indices);
-//}
-/*
-vector<Descriptives> Dataset::calculate_raw_variable_descriptives() const
-{
-    ffgf
-    raw_variables
-            get_raw_variable_data
-
-    return minmax_raw_variables;
-}
-*/
-
 vector<Descriptives> Dataset::calculate_raw_variable_descriptives_positive_samples() const
 {
     const Index target_index = get_variable_indices("Target")[0];
@@ -2235,7 +2217,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_pearson_corr
         {
             const Index target_raw_variable_index = target_raw_variable_indices[j];
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
-            correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation(device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2267,7 +2249,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_raw_variable_spearman_cor
         {
             const Index target_index = target_raw_variable_indices[j];
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_sample_indices);
-            correlations(i, j) = correlation_spearman(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
+            correlations(i, j) = correlation_spearman(device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
 
@@ -2384,7 +2366,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-            correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
+            correlations_pearson(i, j) = correlation(device.get(), input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_pearson(i, j).r = type(1);
@@ -2426,7 +2408,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_spearman_correlatio
 
             const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
 
-            correlations_spearman(i, j) = correlation_spearman(thread_pool_device.get(), input_i, input_j);
+            correlations_spearman(i, j) = correlation_spearman(device.get(), input_i, input_j);
 
             if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
                 correlations_spearman(i, j).r = type(1);
@@ -2863,7 +2845,6 @@ void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
     }
 }
 
-
 void Dataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
@@ -2927,13 +2908,8 @@ void Dataset::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input dimensions: ";
-
-    print_vector(get_dimensions("Input"));
-
-    cout << "Target dimensions: ";
-
-    print_vector(get_dimensions("Target"));
+         << "Input dimensions: " << get_dimensions("Input") << "\n"
+         << "Target dimensions: " << get_dimensions("Target");
 
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -4424,7 +4400,7 @@ Batch::Batch(const Index& new_samples_number, const Dataset* new_dataset)
 {
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_dataset);
 }
@@ -4480,9 +4456,7 @@ void Batch::print() const
 {
     cout << "Batch" << endl
          << "Inputs:" << endl
-         << "Input dimensions:" << endl;
-
-    print_vector(input_dimensions);
+         << "Input dimensions:" << input_dimensions << endl;
 
     if (input_dimensions.size() == 4)
         cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
@@ -4503,14 +4477,10 @@ void Batch::print() const
     cout << endl;
 
     // cout << "Decoder:" << endl
-    //      << "Decoder dimensions:" << endl;
-
-    // print_vector(decoder_dimensions);
+    //      << "Decoder dimensions:" << decoder_dimensions << endl;
 
     cout << "Targets:" << endl
-         << "Target dimensions:" << endl;
-
-    print_vector(target_dimensions);
+         << "Target dimensions:" << target_dimensions << endl;
 
     cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
                                        target_dimensions[0],

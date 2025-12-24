@@ -246,7 +246,7 @@ void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
     const Index batch_size = combinations.dimension(0);
     const Index outputs_number = biases.size();
 
-    combinations.device(*thread_pool_device)
+    combinations.device(*device)
         = inputs.contract(weights, axes(1,0))
           + biases.reshape(array_2(1, outputs_number))
                 .broadcast(array_2(batch_size, 1));
@@ -272,29 +272,29 @@ void Dense2d::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& lay
 
     if (is_training)
     {
-        means.device(*thread_pool_device) = outputs.mean(reduction_axes);
+        means.device(*device) = outputs.mean(reduction_axes);
 
-        standard_deviations.device(*thread_pool_device) = (
+        standard_deviations.device(*device) = (
                                                               (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
                                                                   .square()
                                                                   .mean(reduction_axes) + epsilon
                                                               ).sqrt();
 
-        normalized_outputs.device(*thread_pool_device) =
+        normalized_outputs.device(*device) =
             (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
             standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims);
 
-        moving_means.device(*thread_pool_device) = moving_means * momentum + means * (type(1) - momentum);
-        moving_standard_deviations.device(*thread_pool_device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
+        moving_means.device(*device) = moving_means * momentum + means * (type(1) - momentum);
+        moving_standard_deviations.device(*device) = moving_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
     }
     else
     {
-        normalized_outputs.device(*thread_pool_device) =
+        normalized_outputs.device(*device) =
             (outputs - moving_means.reshape(reshape_dims).broadcast(broadcast_dims)) /
             (moving_standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
     }
 
-    outputs.device(*thread_pool_device) =
+    outputs.device(*device) =
         normalized_outputs * scales.reshape(reshape_dims).broadcast(broadcast_dims) +
         offsets.reshape(reshape_dims).broadcast(broadcast_dims);
 }
@@ -322,12 +322,12 @@ void Dense2d::apply_batch_normalization_backward(TensorMap<Tensor<type, 2>>& del
     const array<Index, 2> reshape_dims = { 1, get_outputs_number() };
     const array<Index, 2> broadcast_dims = { batch_size, 1 };
 
-    bn_offset_deltas.device(*thread_pool_device) = deltas.sum(reduction_axes);
-    bn_scale_deltas.device(*thread_pool_device) = (deltas * normalized_outputs).sum(reduction_axes);
+    bn_offset_deltas.device(*device) = deltas.sum(reduction_axes);
+    bn_scale_deltas.device(*device) = (deltas * normalized_outputs).sum(reduction_axes);
 
     const auto inv_m = type(1) / batch_size;
 
-    deltas.device(*thread_pool_device) =
+    deltas.device(*device) =
         ((deltas * type(batch_size))
          - bn_offset_deltas.reshape(reshape_dims).broadcast(broadcast_dims)
          - normalized_outputs *
@@ -392,17 +392,17 @@ void Dense2d::back_propagate(const vector<TensorView>& input_views,
     Tensor<type, 2>& input_deltas = dense2d_back_propagation->input_deltas;
 
     if(activation_function != "Softmax")
-        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+        deltas.device(*device) = deltas * activation_derivatives;
 
     if (batch_normalization)
         apply_batch_normalization_backward(deltas, forward_propagation, back_propagation);
 
-    bias_deltas.device(*thread_pool_device) = deltas.sum(array_1(0));
+    bias_deltas.device(*device) = deltas.sum(array_1(0));
 
-    weight_deltas.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
+    weight_deltas.device(*device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
+        input_deltas.device(*device) = deltas.contract(weights, axes(1,1));
 }
 
 
@@ -438,10 +438,10 @@ void Dense2d::back_propagate_lm(const vector<TensorView>& input_views,
 
     Tensor<type, 2>& input_deltas = dense2d_layer_back_propagation_lm->input_deltas;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    deltas.device(*device) = deltas * activation_derivatives;
 
     squared_errors_Jacobian.slice(array<Index, 2>{0, 0}, array<Index, 2>{deltas.dimension(0), biases_number})
-        .device(*thread_pool_device) = deltas;
+        .device(*device) = deltas;
 
     for (Index j = 0; j < outputs_number; j++)
     {
@@ -456,14 +456,14 @@ void Dense2d::back_propagate_lm(const vector<TensorView>& input_views,
             const Index weight_column_index = biases_number + (j * inputs_number) + i;
 
             squared_errors_Jacobian.chip(weight_column_index, 1)
-                .device(*thread_pool_device) = derivative;
+                .device(*device) = derivative;
         }
     }
 
     if (!is_first_layer)
     {
         const Tensor<type, 2> weights_transposed = weights.shuffle(array<int, 2>{1, 0});
-        input_deltas.device(*thread_pool_device) = deltas.contract(weights_transposed, axes(1, 0));
+        input_deltas.device(*device) = deltas.contract(weights_transposed, axes(1, 0));
     }
 }
 
@@ -756,9 +756,9 @@ void Dense2d::normalization(Tensor<type, 1> &means,
 
     const array<int, 1> axis_x({0});
 
-    means.device(*thread_pool_device) = outputs.mean(axis_x);
+    means.device(*device) = outputs.mean(axis_x);
 
-    standard_deviations.device(*thread_pool_device)
+    standard_deviations.device(*device)
         = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
 
     outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));

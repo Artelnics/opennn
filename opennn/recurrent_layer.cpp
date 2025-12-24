@@ -147,14 +147,14 @@ void Recurrent::forward_propagate(const vector<TensorView>& input_views,
     for(Index time_step = 0; time_step < past_time_steps; time_step++)
     {
         // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-        outputs.device(*thread_pool_device)
+        outputs.device(*device)
             = inputs.chip(time_step, 1).contract(input_weights, axes(1,0))
               + previous_hidden_states.contract(recurrent_weights, axes(1,0))
               + biases.reshape(Eigen::DSizes<Index,2>{1, output_size}).broadcast(array<Index,2>{batch_size, 1});
 
         //calculate_combinations(inputs.chip(t, 1), previous_hidden_state, outputs);
 
-        current_activation_derivatives.device(*thread_pool_device) =
+        current_activation_derivatives.device(*device) =
             activation_derivatives.chip(time_step, 1);
 
         calculate_activations(activation_function, outputs, current_activation_derivatives);
@@ -218,32 +218,32 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
         else
             current_deltas = current_combination_deltas;
 
-        combination_deltas.device(*thread_pool_device) =
+        combination_deltas.device(*device) =
             current_deltas * activation_derivatives.chip(time_step, 1);
 
         // Need
 
-        input_weight_deltas.device(*thread_pool_device) +=
+        input_weight_deltas.device(*device) +=
             inputs.chip(time_step, 1).contract(combination_deltas, axes(0,0));
 
         if (time_step == 0)
-            previous_hidden_states.device(*thread_pool_device) = initial_hidden_states;
+            previous_hidden_states.device(*device) = initial_hidden_states;
         else
-            previous_hidden_states.device(*thread_pool_device) = hidden_states.chip(time_step - 1, 1);
+            previous_hidden_states.device(*device) = hidden_states.chip(time_step - 1, 1);
 
-        recurrent_weight_deltas.device(*thread_pool_device) +=
+        recurrent_weight_deltas.device(*device) +=
             previous_hidden_states.contract(combination_deltas, axes(0,0));
 
-        bias_deltas.device(*thread_pool_device) +=
+        bias_deltas.device(*device) +=
             combination_deltas.sum(array<Index, 1>({ 0 }));
 
         if(time_step == 0)
             current_combination_deltas.setZero();
         else
-            current_combination_deltas.device(*thread_pool_device)
+            current_combination_deltas.device(*device)
                 = combination_deltas.contract(recurrent_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
 
-        input_deltas.chip(time_step, 1).device(*thread_pool_device)
+        input_deltas.chip(time_step, 1).device(*device)
             = combination_deltas.contract(input_weights.shuffle(array<Index,2>{{1,0}}), axes(1,0));
     }
 }

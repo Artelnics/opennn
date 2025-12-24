@@ -17,7 +17,7 @@ Layer::Layer()
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 Layer::~Layer() = default;
@@ -105,10 +105,10 @@ vector<ParameterView > Layer::get_parameter_views() const
 void Layer::set_threads_number(const int& new_threads_number)
 {
     thread_pool.reset();
-    thread_pool_device.reset();
+    device.reset();
 
     thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -155,7 +155,7 @@ void Layer::add_deltas(const vector<TensorView> &delta_views) const
     TensorMap<Tensor<type, 3>> deltas = tensor_map<3>(delta_views[0]);
 
     for (Index i = 1; i < Index(delta_views.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map<3>(delta_views[i]);
+        deltas.device(*device) += tensor_map<3>(delta_views[i]);
 }
 
 
@@ -200,14 +200,14 @@ void Layer::softmax(Tensor<type, 2>& y) const
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
 
-    y.device(*thread_pool_device) = y - y.maximum(array_1(1))
+    y.device(*device) = y - y.maximum(array_1(1))
                                             .eval()
                                             .reshape(array<Index, 2>({rows_number, 1}))
                                             .broadcast(array<Index, 2>({1, columns_number}));
 
-    y.device(*thread_pool_device) = y.exp();
+    y.device(*device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
+    y.device(*device) = y / y.sum(array<Index, 1>({1}))
                                             .eval()
                                             .reshape(array<Index, 2>({rows_number, 1}))
                                             .broadcast(array<Index, 2>({1, columns_number}));
@@ -220,14 +220,14 @@ void Layer::softmax(Tensor<type, 3>& y) const
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
 
-    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({2}))
+    y.device(*device) = y - y.maximum(array<Index, 1>({2}))
                                             .eval()
                                             .reshape(array<Index, 3>({rows_number, columns_number, 1}))
                                             .broadcast(array<Index, 3>({1, 1, channels}));
 
-    y.device(*thread_pool_device) = y.exp();
+    y.device(*device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({2}))
+    y.device(*device) = y / y.sum(array<Index, 1>({2}))
                                             .eval()
                                             .reshape(array<Index, 3>({rows_number, columns_number, 1}))
                                             .broadcast(array<Index, 3>({1, 1, channels}));
@@ -241,14 +241,14 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels       = y.dimension(2);
     const Index blocks_number  = y.dimension(3);
 
-    y.device(*thread_pool_device) =
+    y.device(*device) =
         y - y.maximum(array_1(3)).eval()
                 .reshape(array_4(rows_number, columns_number, channels, 1))
                 .broadcast(array_4(1, 1, 1, blocks_number));
 
-    y.device(*thread_pool_device) = y.exp();
+    y.device(*device) = y.exp();
 
-    y.device(*thread_pool_device) =
+    y.device(*device) =
         y / y.sum(array_1(3)).eval()
                 .reshape(array_4(rows_number, columns_number, channels, 1))
                 .broadcast(array_4(1, 1, 1, blocks_number));
@@ -284,11 +284,11 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 
             TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows);
 
-            aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
+            aux_rows.device(*device) = softmax_vector * tensor_vector;
 
-            sum.device(*thread_pool_device) = aux_rows.sum();
+            sum.device(*device) = aux_rows.sum();
 
-            result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);
+            result_vector.device(*device) = aux_rows - softmax_vector * sum(0);
         }
     }
 }

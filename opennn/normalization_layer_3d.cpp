@@ -98,24 +98,24 @@ void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
 
     // Standarization
 
-    means.device(*thread_pool_device) = inputs.mean(array<Index, 1>({2}));
+    means.device(*device) = inputs.mean(array<Index, 1>({2}));
 
-    standard_deviations.device(*thread_pool_device)
+    standard_deviations.device(*device)
         = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)).square().mean(array<Index, 1>({2})).sqrt();
 
-    outputs.device(*thread_pool_device)
+    outputs.device(*device)
         = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
           / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
 
     // Affine transformation
 
-    multiply_matrices(thread_pool_device.get(), outputs, gammas);
+    multiply_matrices(device.get(), outputs, gammas);
 
-    outputs.device(*thread_pool_device) = outputs
+    outputs.device(*device) = outputs
                                           + betas.reshape(array<Index, 3>{1, 1, betas.dimension(0)})
                                                 .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
 
-    //sum_matrices(thread_pool_device.get(), betas, outputs);
+    //sum_matrices(device.get(), betas, outputs);
 }
 
 
@@ -153,33 +153,33 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
 
     // Parameters derivatives
 
-    gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(array<Index, 2>({0, 1}));
-    beta_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0, 1}));
+    gamma_derivatives.device(*device) = (outputs * deltas).sum(array<Index, 2>({0, 1}));
+    beta_derivatives.device(*device) = deltas.sum(array<Index, 2>({0, 1}));
 
     // Input derivatives
 
-    scaled_deltas.device(*thread_pool_device) = deltas;
-    multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
+    scaled_deltas.device(*device) = deltas;
+    multiply_matrices(device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(array<Index, 1>({2}))
+    aux_2d.device(*device) = (scaled_deltas * outputs).sum(array<Index, 1>({2}))
                                          / (embedding_dimension * (standard_deviations + epsilon));
 
-    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
-    multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
+    standard_deviation_derivatives.device(*device) = outputs;
+    multiply_matrices(device.get(), standard_deviation_derivatives, aux_2d);
 
-    scaled_deltas.device(*thread_pool_device) = scaled_deltas
+    scaled_deltas.device(*device) = scaled_deltas
                                                 / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
                                                        .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
 
-    input_deltas.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
+    input_deltas.device(*device) = scaled_deltas - standard_deviation_derivatives;
 
-    aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(array<Index, 1>({2}));
+    aux_2d.device(*device) = 1 / type(embedding_dimension) * scaled_deltas.sum(array<Index, 1>({2}));
     /*
-    input_derivatives.device(*thread_pool_device) = input_derivatives
+    input_derivatives.device(*device) = input_derivatives
         - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
                 .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
 */
-    //substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
+    //substract_matrices(device.get(), aux_2d, input_derivatives);
 }
 
 

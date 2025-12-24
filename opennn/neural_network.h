@@ -89,6 +89,10 @@ public:
 
     const bool& get_display() const;
 
+    const vector<string>& get_input_vocabulary() const;
+
+    const vector<string>& get_output_vocabulary() const;
+
     // Set
 
     void set(const filesystem::path&);
@@ -112,6 +116,9 @@ public:
     void set_threads_number(const int&);
 
     void set_display(const bool&);
+
+    void set_input_vocabulary(const vector<string>&);
+    void set_output_vocabulary(const vector<string>&);
 
     // Layers
 
@@ -216,6 +223,9 @@ public:
 
     Index calculate_image_output(const filesystem::path&);
 
+    Tensor<type, 2> calculate_text_outputs(const Tensor<string, 1>& input_documents) const;
+
+
     // Serialization
 
     Tensor<string, 2> get_dense2d_layers_information() const;
@@ -283,6 +293,9 @@ protected:
     vector<string> feature_names;
 
     vector<string> output_names;
+
+    vector<string> input_vocabulary;
+    vector<string> output_vocabulary;
 
     vector<unique_ptr<Layer>> layers;
 

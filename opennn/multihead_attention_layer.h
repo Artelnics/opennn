@@ -75,12 +75,9 @@ public:
 
 private:
 
+    Index heads_number = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
-
-    Index heads_number = 0;
-    Index head_dimension = 0;
-    Index embedding_dimension = 0;
 
     Tensor<type, 2> query_weights;
     Tensor<type, 1> query_biases;
@@ -97,10 +94,9 @@ private:
     bool use_causal_mask = false;
 
     Tensor<type, 2> causal_mask;
-    Tensor<bool,2> key_mask;             //Starting to implement (should be used before softmax so that the probability of the padding is zero)
+    Tensor<bool,2> key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
-    type scaling_factor = 0;
 
     const type minus_inf = -numeric_limits<float>::infinity();
 };
@@ -130,7 +126,7 @@ struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
 
     Tensor<type, 3> outputs;
 
-    Tensor<type, 2> sample_matrix;
+//    Tensor<type, 2> sample_matrix;
 };
 
 

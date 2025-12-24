@@ -163,7 +163,7 @@ void Bounding::forward_propagate(const vector<TensorView>& input_views,
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        outputs.device(*thread_pool_device) = inputs;
+        outputs.device(*device) = inputs;
         return;
     }
 

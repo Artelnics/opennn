@@ -84,7 +84,6 @@ void Embedding::set(const Index& new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
-
 }
 
 
@@ -139,7 +138,7 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
     const Index batch_size = embeddings.dimension(0);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    embeddings.device(*thread_pool_device) += positional_encoding
+    embeddings.device(*device) += positional_encoding
       .reshape(array_3(1, sequence_length, embedding_dimension))
       .broadcast(array_3(batch_size, 1, 1));
 }
@@ -191,7 +190,7 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
     weight_deltas.setZero();
 
     if(scale_embedding)
-        deltas.device(*thread_pool_device) = deltas*sqrt(type(embedding_dimension));
+        deltas.device(*device) = deltas*sqrt(type(embedding_dimension));
 
 #pragma omp parallel for
 
@@ -208,23 +207,16 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
 
 void Embedding::print() const
 {
-    cout << "Embedding Layer" << endl;
-    cout << "Label: " << label << endl;
-    cout << "Type: Embedding" << endl;
-
-    cout << "Input dimensions: ";
-    print_vector(get_input_dimensions());
-
-    cout << "Output dimensions: ";
-    print_vector(get_output_dimensions());
-
-    cout << "Vocabulary size: " << get_vocabulary_size() << endl;
-    cout << "Sequence length: " << get_sequence_length() << endl;
-    cout << "Embedding dimension: " << get_embedding_dimension() << endl;
-
-    cout << "Dropout rate: " << dropout_rate << endl;
-
-    cout << "Weights dimensions: " << weights.dimensions() << endl;
+    cout << "Embedding Layer" << endl
+         << "Label: " << label << endl
+         << "Type: Embedding" << endl
+         << "Input dimensions: " << get_input_dimensions() << endl
+         << "Output dimensions: " << get_output_dimensions() << endl
+         << "Vocabulary size: " << get_vocabulary_size() << endl
+         << "Sequence length: " << get_sequence_length() << endl
+         << "Embedding dimension: " << get_embedding_dimension() << endl
+         << "Dropout rate: " << dropout_rate << endl
+         << "Weights dimensions: " << weights.dimensions() << endl;
 
     //cout << "Weights:\n " << weights << endl;
     //cout << "Positional encoding:\n" << positional_encoding << endl;

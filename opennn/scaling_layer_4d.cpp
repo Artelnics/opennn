@@ -54,15 +54,14 @@ void Scaling4d::forward_propagate(const vector<TensorView>& input_views,
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = inputs/type(255);
+    outputs.device(*device) = inputs/type(255);
 }
 
 
 void Scaling4d::print() const
 {
-    cout << "Scaling layer 4D" << endl;
-
-    print_vector(input_dimensions);
+    cout << "Scaling layer 4D" << endl
+         << input_dimensions;
 }
 
 
