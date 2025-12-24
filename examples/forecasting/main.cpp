@@ -22,11 +22,11 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/normalized_squared_error.h"
 #include "../../opennn/training_strategy.h"
-#include "adaptive_moment_estimation.h"
-#include "quasi_newton_method.h"
-#include "stochastic_gradient_descent.h"
-#include "testing_analysis.h"
-#include "recurrent_layer.h"
+#include "../../opennn/adaptive_moment_estimation.h"
+#include "../../opennn/quasi_newton_method.h"
+#include "../../opennn/stochastic_gradient_descent.h"
+#include "../../opennn/testing_analysis.h"
+#include "../../opennn/recurrent_layer.h"
 
 using namespace opennn;
 
@@ -125,9 +125,9 @@ int main()
         Tensor<type, 3> inputs(1,2,2);
         inputs.setValues({
             {
-                {1.76624, 1.41520},
-                {2.11640, 1.80730},
-               // {1.2405,  2.1018}
+                {1.76624F, 1.41520F},
+                {2.11640F, 1.80730F},
+               // {1.2405F,  2.1018F}
             }
         });
         cout << "Inputs: \n" << inputs << endl;
