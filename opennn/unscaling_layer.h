@@ -75,7 +75,7 @@ struct UnscalingForwardPropagation final : LayerForwardPropagation
 {
     UnscalingForwardPropagation(const Index& = 0, Layer* = 0);
 
-    TensorView get_output_pair() const override;
+    TensorView get_output_view() const override;
 
     void initialize() override;
 

@@ -94,7 +94,7 @@ Scaling4dForwardPropagation::Scaling4dForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView Scaling4dForwardPropagation::get_output_pair() const
+TensorView Scaling4dForwardPropagation::get_output_view() const
 {
     const Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(layer);
 

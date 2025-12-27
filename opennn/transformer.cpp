@@ -8,6 +8,7 @@
 
 #include "transformer.h"
 #include "tensors.h"
+#include "strings_utilities.h"
 #include "embedding_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
@@ -26,8 +27,8 @@ Transformer::Transformer(const Index& decoder_length,
                          const Index& heads_number,
                          const Index& layers_number)
 {
-    set(decoder_length,                           //Bruno's input is the decoder
-        input_length,                             //Bruno's context is the input
+    set(decoder_length, //Bruno's input is the decoder
+        input_length,   //Bruno's context is the input
         decoder_dimensions_xxx,
         input_dimension_xxx,
         embedding_dimension,
@@ -50,16 +51,13 @@ void Transformer::set(const Index& new_decoder_length,
 
     name = "transformer";
 
-    input_length = new_input_length;
-    decoder_length = new_decoder_length;
-
     layers.clear();
     layer_input_indices.clear();
 
-    if (input_length == 0 || decoder_length == 0)
+    if (new_input_length == 0 || new_decoder_length == 0)
         return;
 
-    feature_names.resize(input_length + decoder_length);
+    feature_names.resize(new_input_length + new_decoder_length);
 
     // Embedding Layers
 
@@ -236,7 +234,6 @@ void Transformer::set(const Index& new_decoder_length,
 
 void Transformer::set_dropout_rate(const type& new_dropout_rate)
 {
-    dropout_rate = new_dropout_rate;
 }
 
 
@@ -252,31 +249,36 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
 }
 
 
-void Transformer::set_input_length(const Index& new_input_length)
-{
-    input_length = new_input_length;
+Index Transformer::get_input_sequence_length() const {
+    // We know our architecture: encoder embedding is usually Layer 1
+    // or we can find it by name/type
+    return get_layer("enc_embed")->get_input_dimensions()[0];
 }
 
-
-void Transformer::set_decoder_length(const Index& new_decoder_length)
-{
-    decoder_length = new_decoder_length;
+Index Transformer::get_decoder_sequence_length() const {
+    return get_layer("dec_embed")->get_input_dimensions()[0];
 }
 
-
-Index Transformer::get_maximum_input_sequence_length() const
-{
-    return input_length;
+Index Transformer::get_embedding_dimension() const {
+    // Every layer in a transformer uses the same embedding dimension
+    return get_layer(0)->get_output_dimensions().back();
 }
 
-
-Index Transformer::get_decoder_length() const
-{
-    return decoder_length;
+Index Transformer::get_heads_number() const {
+    // Find the first MultiHeadAttention layer and ask it
+    for(const auto& l : layers) {
+        if(l->get_name() == "MultiHeadAttention") {
+            return static_cast<MultiHeadAttention*>(l.get())->get_heads_number();
+        }
+    }
+    return 0;
 }
+
 
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
+    const Index input_sequence_length = get_input_sequence_length();
+    const Index decoder_sequence_length = get_decoder_sequence_length();
 
     type start_indicator = 2;
     type end_indicator = 3;
@@ -288,29 +290,29 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     const Index samples_number = 1;
 
-    Tensor<type, 2> input(samples_number, input_length);
+    Tensor<type, 2> input(samples_number, input_sequence_length);
     input.setZero();
 
     tokenize_wordpiece(input_tokens[0], input);
 
     cout << "Input codification:\n" << input << endl;
 
-    Tensor<type, 2> decoder(samples_number, decoder_length);
+    Tensor<type, 2> decoder(samples_number, decoder_sequence_length);
 
     decoder.setZero();
     decoder(0) = start_indicator;
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const TensorView input_pair(input.data(), { samples_number, input_length });
-    const TensorView decoder_pair(decoder.data(), { samples_number, decoder_length });
+    const TensorView input_pair(input.data(), { samples_number, input_sequence_length });
+    const TensorView decoder_pair(decoder.data(), { samples_number, decoder_sequence_length });
 
     const vector<TensorView> input_views = {decoder_pair, input_pair};
 
     const Index layers_number = get_layers_number();
 
     const TensorView outputs_view 
-        = forward_propagation.layers[layers_number - 1]->get_output_pair();
+        = forward_propagation.layers[layers_number - 1]->get_output_view();
 
     TensorMap <Tensor<type, 2>> outputs(outputs_view.data, outputs_view.dims[1], outputs_view.dims[2]);
     outputs.setZero();
@@ -322,7 +324,7 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     cout << "Output dimensions: " << outputs.dimensions() << endl;
 
-    for(Index i = 1; i < decoder_length; i++)
+    for(Index i = 1; i < decoder_sequence_length; i++)
     {
         forward_propagate(input_views, forward_propagation, false);
 
@@ -348,55 +350,6 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 }
 
 
-vector<string> Transformer::preprocess_language_document(const string &document, const bool &input)
-{
-    vector<string> tokens;
-
-    // if(!input)
-    tokens.push_back("[START]");
-
-    string currentToken;
-
-    for (char c : document)
-    {
-        if (isalnum(c))
-        {
-            // Add alphanumeric characters to the current token
-            currentToken += tolower(c);
-        }
-        else
-        {
-            // If the current token is not empty, add it to the tokens list
-            if (!currentToken.empty())
-            {
-                tokens.push_back(currentToken);
-                currentToken.clear();
-            }
-            // Treat punctuation as a separate token
-
-            if (ispunct(c))
-            {
-                tokens.push_back(string(1, c));
-            }
-            else if (isspace(c))
-            {
-                // Ignore spaces, they just delimit tokens
-            }
-        }
-    }
-
-    // Add the last token if it's not empty
-    if (!currentToken.empty())
-        tokens.push_back(currentToken);
-
-    // Add [END] token
-    // if(!input)
-    tokens.push_back("[END]");
-
-    return tokens;
-}
-
-
 Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, const Tensor<type, 2>& context)
 {
     const Index samples_number = input.dimension(0);
@@ -415,176 +368,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
     return tensor_map<3>(output_pair);
 }
 
-
-void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
-{
-
-    bool line_ended = false;
-
-    for(Index j = 0; j < input_length - 1; j++)
-    {
-        if(j < Index(context_tokens.size()))
-        {
-/*
-            auto it = input_vocabulary.find(context_tokens[j]);
-
-            const Index word_index = (it != input_vocabulary.end()) ? it->second : 0;
-
-            context(j + 1) = type(word_index);
-*/
-        }
-        else
-        {
-            if(j == Index(context_tokens.size()) || (j == input_length - 2 && !line_ended))
-            {
-                context(j + 1) = 3; // end indicator
-                line_ended = true;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-}
-
-
-void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
-{
-/*
-    // unordered_map<string, type> context_vocabulary_map;
-
-    // for(Index i = 0; i < input_vocabulary.size(); i++)
-    //     context_vocabulary_map[input_vocabulary[i]] = type(i);
-
-    Index token_counter = 0;
-    //bool line_ended = false;
-
-    string word;
-    string wordpiece;
-    string rest;
-
-    auto wordpiece_entry = input_vocabulary.find("");
-    bool tokenized;
-
-    for(Index j = 0; j < input_length - 1; j++)
-    {
-        if(j < Index(context_tokens.size()) && token_counter < input_length - 1)
-        {
-            word = context_tokens[j];
-
-            wordpiece_entry = input_vocabulary.find(word);
-
-            if(wordpiece_entry != input_vocabulary.end())
-            {
-                context(token_counter++) = wordpiece_entry->second;
-                continue;
-            }
-
-            tokenized = false;
-
-            for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
-            {
-                if(token_counter == input_length - 1)
-                {
-                    tokenized = true;
-                    break;
-                }
-
-                wordpiece = word.substr(0, wordpiece_length);
-                wordpiece_entry = input_vocabulary.find(wordpiece);
-
-                if(wordpiece_entry != input_vocabulary.end())
-                {
-                    context(token_counter++) = wordpiece_entry->second;
-
-                    rest = word.substr(wordpiece_length);
-
-                    if(rest.empty())
-                    {
-                        tokenized = true;
-                        break;
-                    }
-
-                    word = "##" + rest;
-                    wordpiece_length = word.length() + 1;
-                }
-            }
-
-            if(!tokenized)
-                context(token_counter++) = 1; // unknown indicator
-        }
-        else
-        {
-            // if(j == Index(context_tokens.size())
-            // || (token_counter == input_length - 1 && !line_ended))
-            // {
-            //     context(token_counter++) = 3; // end indicator
-            //     line_ended = true;
-            // }
-            // else
-            // {
-                break;
-            // }
-        }
-    }
-*/
-}
-
-void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
-{
-/*
-    for(Index i = 1; i < decoder_length; i++)
-    {
-        if(predictions(i) == 2) break;
-
-        for (const auto& pair : output_vocabulary)
-        {
-            if (pair.second == Index(predictions(i)))
-            {
-                output_string << pair.first << " ";
-                break;
-            }
-        }
-    }
-*/
-}
-
-
-void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
-{
-/*
-    for (const auto& pair : output_vocabulary) {
-        if (pair.second == Index(predictions(1))) {
-            buffer << pair.first;
-            break;
-        }
-    }
-
-    string current_prediction;
-
-    for(Index i = 2; i < decoder_length; i++)
-    {
-        if(predictions(i) == 3) // [END] token
-            break;
-
-        for (const auto& pair : output_vocabulary) {
-            if (pair.second == Index(predictions(i))) {
-                current_prediction = pair.first;
-                break;
-            }
-        }
-
-        current_prediction.substr(0, 2) == "##"
-            ? buffer << current_prediction.substr(2)
-            : buffer << " " << current_prediction;
-    }
-*/
-}
-
 };
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

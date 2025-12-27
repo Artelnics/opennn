@@ -325,7 +325,7 @@ struct LayerForwardPropagation
 
     virtual void initialize() = 0;
 
-    virtual TensorView get_output_pair() const = 0;
+    virtual TensorView get_output_view() const = 0;
 
     virtual void print() const {}
 

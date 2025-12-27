@@ -614,7 +614,7 @@ void Dense2dForwardPropagation::initialize()
 }
 
 
-TensorView Dense2dForwardPropagation::get_output_pair() const
+TensorView Dense2dForwardPropagation::get_output_view() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

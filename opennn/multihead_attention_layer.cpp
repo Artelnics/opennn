@@ -482,7 +482,7 @@ MultiHeadAttentionForwardPropagation::MultiHeadAttentionForwardPropagation(const
 }
 
 
-TensorView MultiHeadAttentionForwardPropagation::get_output_pair() const
+TensorView MultiHeadAttentionForwardPropagation::get_output_view() const
 {
     MultiHeadAttention* multihead_attention_layer = static_cast<MultiHeadAttention*>(layer);
 

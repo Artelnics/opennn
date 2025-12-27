@@ -262,7 +262,7 @@ EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView EmbeddingForwardPropagation::get_output_pair() const
+TensorView EmbeddingForwardPropagation::get_output_view() const
 {
     const Embedding* embedding_layer = static_cast<Embedding*>(layer);
 

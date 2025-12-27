@@ -498,7 +498,7 @@ PoolingForwardPropagation::PoolingForwardPropagation(const Index& new_batch_size
 }
 
 
-TensorView PoolingForwardPropagation::get_output_pair() const
+TensorView PoolingForwardPropagation::get_output_view() const
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 

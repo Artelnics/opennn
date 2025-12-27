@@ -785,7 +785,7 @@ ConvolutionalForwardPropagation::ConvolutionalForwardPropagation(const Index& ne
 }
 
 
-TensorView ConvolutionalForwardPropagation::get_output_pair() const
+TensorView ConvolutionalForwardPropagation::get_output_view() const
 {
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 

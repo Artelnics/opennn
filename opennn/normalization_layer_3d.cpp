@@ -221,7 +221,7 @@ Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index
 }
 
 
-TensorView Normalization3dForwardPropagation::get_output_pair() const
+TensorView Normalization3dForwardPropagation::get_output_view() const
 {
     Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 

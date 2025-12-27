@@ -174,7 +174,7 @@ public:
 
         forward_propagate({input_view}, forward_propagation, false);
 
-        const TensorView& output_view = forward_propagation.layers.back()->get_output_pair();
+        const TensorView& output_view = forward_propagation.layers.back()->get_output_view();
 
         if constexpr (output_rank == 2)
            return tensor_map<2>(output_view);
@@ -212,7 +212,7 @@ public:
         const vector<string> layer_labels = get_layer_labels();
 
         const TensorView outputs_view
-           = forward_propagation.layers[layers_number - 1]->get_output_pair();
+           = forward_propagation.layers[layers_number - 1]->get_output_view();
 
         return tensor_map<3>(outputs_view);
     }

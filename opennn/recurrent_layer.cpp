@@ -362,7 +362,7 @@ RecurrentForwardPropagation::RecurrentForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView RecurrentForwardPropagation::get_output_pair() const
+TensorView RecurrentForwardPropagation::get_output_view() const
 {
     const Index outputs_number = layer->get_outputs_number();
 

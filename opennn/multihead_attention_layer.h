@@ -107,7 +107,7 @@ struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
     MultiHeadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                          Layer* new_layer = nullptr);
 
-    TensorView get_output_pair() const override;
+    TensorView get_output_view() const override;
 
     void initialize() override;
 

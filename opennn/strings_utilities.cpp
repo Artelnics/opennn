@@ -710,6 +710,220 @@ void display_progress_bar(const int& completed, const int& total)
     cout.flush();
 }
 
+
+void tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
+{
+/*
+    bool line_ended = false;
+
+    for(Index j = 0; j < input_length - 1; j++)
+    {
+        if(j < Index(context_tokens.size()))
+        {
+            auto it = input_vocabulary.find(context_tokens[j]);
+
+            const Index word_index = (it != input_vocabulary.end()) ? it->second : 0;
+
+            context(j + 1) = type(word_index);
+        }
+        else
+        {
+            if(j == Index(context_tokens.size()) || (j == input_length - 2 && !line_ended))
+            {
+                context(j + 1) = 3; // end indicator
+                line_ended = true;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+*/
+}
+
+
+void tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
+{
+    /*
+    // unordered_map<string, type> context_vocabulary_map;
+
+    // for(Index i = 0; i < input_vocabulary.size(); i++)
+    //     context_vocabulary_map[input_vocabulary[i]] = type(i);
+
+    Index token_counter = 0;
+    //bool line_ended = false;
+
+    string word;
+    string wordpiece;
+    string rest;
+
+    auto wordpiece_entry = input_vocabulary.find("");
+    bool tokenized;
+
+    for(Index j = 0; j < input_length - 1; j++)
+    {
+        if(j < Index(context_tokens.size()) && token_counter < input_length - 1)
+        {
+            word = context_tokens[j];
+
+            wordpiece_entry = input_vocabulary.find(word);
+
+            if(wordpiece_entry != input_vocabulary.end())
+            {
+                context(token_counter++) = wordpiece_entry->second;
+                continue;
+            }
+
+            tokenized = false;
+
+            for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
+            {
+                if(token_counter == input_length - 1)
+                {
+                    tokenized = true;
+                    break;
+                }
+
+                wordpiece = word.substr(0, wordpiece_length);
+                wordpiece_entry = input_vocabulary.find(wordpiece);
+
+                if(wordpiece_entry != input_vocabulary.end())
+                {
+                    context(token_counter++) = wordpiece_entry->second;
+
+                    rest = word.substr(wordpiece_length);
+
+                    if(rest.empty())
+                    {
+                        tokenized = true;
+                        break;
+                    }
+
+                    word = "##" + rest;
+                    wordpiece_length = word.length() + 1;
+                }
+            }
+
+            if(!tokenized)
+                context(token_counter++) = 1; // unknown indicator
+        }
+        else
+        {
+            // if(j == Index(context_tokens.size())
+            // || (token_counter == input_length - 1 && !line_ended))
+            // {
+            //     context(token_counter++) = 3; // end indicator
+            //     line_ended = true;
+            // }
+            // else
+            // {
+                break;
+            // }
+        }
+    }
+*/
+}
+
+void detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
+{
+    /*
+    for(Index i = 1; i < decoder_length; i++)
+    {
+        if(predictions(i) == 2) break;
+
+        for (const auto& pair : output_vocabulary)
+        {
+            if (pair.second == Index(predictions(i)))
+            {
+                output_string << pair.first << " ";
+                break;
+            }
+        }
+    }
+*/
+}
+
+
+void detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
+{
+    /*
+    for (const auto& pair : output_vocabulary) {
+        if (pair.second == Index(predictions(1))) {
+            buffer << pair.first;
+            break;
+        }
+    }
+
+    string current_prediction;
+
+    for(Index i = 2; i < decoder_length; i++)
+    {
+        if(predictions(i) == 3) // [END] token
+            break;
+
+        for (const auto& pair : output_vocabulary) {
+            if (pair.second == Index(predictions(i))) {
+                current_prediction = pair.first;
+                break;
+            }
+        }
+
+        current_prediction.substr(0, 2) == "##"
+            ? buffer << current_prediction.substr(2)
+            : buffer << " " << current_prediction;
+    }
+*/
+}
+
+vector<string> preprocess_language_document(const string& document, const bool& input)
+{
+    vector<string> tokens;
+
+    // if(!input)
+    tokens.push_back("[START]");
+
+    string currentToken;
+
+    for (char c : document)
+    {
+        if (isalnum(c))
+        {
+            // Add alphanumeric characters to the current token
+            currentToken += tolower(c);
+        }
+        else
+        {
+            // If the current token is not empty, add it to the tokens list
+            if (!currentToken.empty())
+            {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            // Treat punctuation as a separate token
+
+            if (ispunct(c))
+            {
+                tokens.push_back(string(1, c));
+            }
+            else if (isspace(c))
+            {
+                // Ignore spaces, they just delimit tokens
+            }
+        }
+    }
+
+    // Add the last token if it's not empty
+    if (!currentToken.empty())
+        tokens.push_back(currentToken);
+
+    // Add [END] token
+    // if(!input)
+    tokens.push_back("[END]");
+
+    return tokens;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -230,7 +230,7 @@ struct FlattenForwardPropagation final : LayerForwardPropagation
     }
 
 
-    TensorView get_output_pair() const override
+    TensorView get_output_view() const override
     {
         const dimensions output_dimensions = layer->get_output_dimensions();
 

@@ -292,7 +292,7 @@ BoundingForwardPropagation::BoundingForwardPropagation(const Index& new_batch_si
 }
 
 
-TensorView BoundingForwardPropagation::get_output_pair() const
+TensorView BoundingForwardPropagation::get_output_view() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

@@ -77,7 +77,7 @@ struct RecurrentForwardPropagation final : LayerForwardPropagation
 {
     RecurrentForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    TensorView get_output_pair() const override;
+    TensorView get_output_view() const override;
 
     void initialize() override;
 

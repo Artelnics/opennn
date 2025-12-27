@@ -36,36 +36,20 @@ public:
              const Index& heads_number = 0,
              const Index& layers_number = 0);
 
+    Index get_input_sequence_length() const;
+    Index get_decoder_sequence_length() const;
+    Index get_embedding_dimension() const;
+    Index get_heads_number() const;
+
     void set_dropout_rate(const type&);
     void set_input_vocabulary(const vector<string>&);
     void set_output_vocabulary(const vector<string>&);
-    void set_input_length(const Index&);
-    void set_decoder_length(const Index&);
-
-    Index get_maximum_input_sequence_length() const;
-    Index get_decoder_length() const;
 
     string calculate_outputs(const vector<string>&);
-    string calculate_outputs(const string&, const bool&);
 
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
-    void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
-    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
-    void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
-
-    vector<string> preprocess_language_document(const string&, const bool&);
-
 private:
-
-    Index input_length = 0;
-    Index decoder_length = 0;
-
-    Index embedding_dimension = 0;
-    Index heads_number = 0;
-    Index layers_number = 0;
-    type dropout_rate = type(0.1);
 
     unordered_map<string, Index> input_vocabulary_map;
     unordered_map<Index, string> output_inverse_vocabulary_map;

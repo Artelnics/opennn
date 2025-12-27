@@ -177,7 +177,7 @@ struct AdditionForwardPropagation final : LayerForwardPropagation
     }
 
 
-    TensorView get_output_pair() const override
+    TensorView get_output_view() const override
     {
         const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -192,7 +192,7 @@ struct AdditionForwardPropagation final : LayerForwardPropagation
     {
         const dimensions output_dimensions = layer->get_output_dimensions();
 
-        DSizes<Index, Rank+1> full_dimensions;   // <-- Rank+1 to include batch
+        DSizes<Index, Rank+1> full_dimensions;   // Rank+1 to include batch
         full_dimensions[0] = batch_size;
 
         for (int i = 0; i < Rank; ++i)

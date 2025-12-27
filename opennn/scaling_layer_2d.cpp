@@ -468,7 +468,7 @@ Scaling2dForwardPropagation::Scaling2dForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView Scaling2dForwardPropagation::get_output_pair() const
+TensorView Scaling2dForwardPropagation::get_output_view() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 

@@ -194,7 +194,7 @@ Pooling3dForwardPropagation::Pooling3dForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView Pooling3dForwardPropagation::get_output_pair() const
+TensorView Pooling3dForwardPropagation::get_output_view() const
 {
     return {(type*)outputs.data(), {batch_size, layer->get_output_dimensions()[0]}};
 }

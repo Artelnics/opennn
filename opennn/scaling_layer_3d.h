@@ -78,7 +78,7 @@ struct Scaling3dForwardPropagation final : LayerForwardPropagation
 {
     Scaling3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    TensorView get_output_pair() const override;
+    TensorView get_output_view() const override;
 
     void initialize() override;
 

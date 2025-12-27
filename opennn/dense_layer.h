@@ -151,7 +151,7 @@ struct Dense2dForwardPropagation final : LayerForwardPropagation
     Dense2dForwardPropagation(const Index& = 0, Layer* = nullptr);
     virtual ~Dense2dForwardPropagation() = default;
 
-    TensorView get_output_pair() const override;
+    TensorView get_output_view() const override;
 
     void initialize() override;
 

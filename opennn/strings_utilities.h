@@ -67,6 +67,13 @@ namespace opennn
     void set_language(const Language&);
 
     void set_language(const string&);
+
+    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
+    void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
+    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
+    void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
+
+    vector<string> preprocess_language_document(const string&, const bool&);
 }
 
 #endif // OPENNNSTRINGS_H

@@ -411,7 +411,7 @@ Scaling3dForwardPropagation::Scaling3dForwardPropagation(const Index& new_batch_
 }
 
 
-TensorView Scaling3dForwardPropagation::get_output_pair() const
+TensorView Scaling3dForwardPropagation::get_output_view() const
 {
     const dimensions output_dims = layer->get_output_dimensions();
     return {(type*)outputs.data(), {batch_size, output_dims[0], output_dims[1]}};

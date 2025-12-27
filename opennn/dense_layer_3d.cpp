@@ -231,7 +231,7 @@ Dense3dForwardPropagation::Dense3dForwardPropagation(const Index& new_batch_size
 }
 
 
-TensorView Dense3dForwardPropagation::get_output_pair() const
+TensorView Dense3dForwardPropagation::get_output_view() const
 {
     Dense3d* dense_3d = static_cast<Dense3d*>(layer);
 
