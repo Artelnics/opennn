@@ -202,15 +202,15 @@ void Layer::softmax(Tensor<type, 2>& y) const
 
     y.device(*device) = y - y.maximum(array_1(1))
                                             .eval()
-                                            .reshape(array<Index, 2>({rows_number, 1}))
-                                            .broadcast(array<Index, 2>({1, columns_number}));
+                                            .reshape(array_2(rows_number, 1))
+                                            .broadcast(array_2(1, columns_number));
 
     y.device(*device) = y.exp();
 
     y.device(*device) = y / y.sum(array<Index, 1>({1}))
                                             .eval()
-                                            .reshape(array<Index, 2>({rows_number, 1}))
-                                            .broadcast(array<Index, 2>({1, columns_number}));
+                                            .reshape(array_2(rows_number, 1))
+                                            .broadcast(array_2(1, columns_number));
 }
 
 

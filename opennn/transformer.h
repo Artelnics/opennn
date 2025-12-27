@@ -60,10 +60,15 @@ public:
 private:
 
     Index input_length = 0;
-
     Index decoder_length = 0;
 
+    Index embedding_dimension = 0;
+    Index heads_number = 0;
+    Index layers_number = 0;
     type dropout_rate = type(0.1);
+
+    unordered_map<string, Index> input_vocabulary_map;
+    unordered_map<Index, string> output_inverse_vocabulary_map;
 };
 
 };

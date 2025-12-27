@@ -13,7 +13,6 @@
 #include "multihead_attention_layer.h"
 #include "addition_layer.h"
 #include "dense_layer_3d.h"
-#include "probabilistic_layer_3d.h"
 
 namespace opennn
 {
@@ -55,7 +54,8 @@ void Transformer::set(const Index& new_decoder_length,
     decoder_length = new_decoder_length;
 
     layers.clear();
-    
+    layer_input_indices.clear();
+
     if (input_length == 0 || decoder_length == 0)
         return;
 
@@ -82,7 +82,6 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-
         add_layer(make_unique<MultiHeadAttention>(dimensions({new_input_length, new_embedding_dimension}),
                                                   new_heads_number,
                                                   "input_self_attention_" + to_string(i+1)));
@@ -226,12 +225,12 @@ void Transformer::set(const Index& new_decoder_length,
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i+1), "decoder_perceptron_addition_" + to_string(i+1));
     }
     
-    add_layer(make_unique<Probabilistic3d>(new_decoder_length,
-                                           new_embedding_dimension,
-                                           new_decoder_dimensions,
-                                           "probabilistic"));
+    add_layer(make_unique<Dense3d>(new_decoder_length,
+                                   new_embedding_dimension,
+                                   new_decoder_dimensions,
+                                   "output"));
 
-    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(new_blocks_number));
+    set_layer_inputs_indices("output", "decoder_perceptron_normalization_" + to_string(new_blocks_number));
 }
 
 

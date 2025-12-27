@@ -128,6 +128,8 @@ protected:
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
             softmax(activations);
+        else if (activation_function == "Competitive")
+            throw runtime_error("Competitive 3d not implemented");
         else if (activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
         else if (activation_function == "RectifiedLinear")

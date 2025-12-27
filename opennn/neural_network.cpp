@@ -861,43 +861,6 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 }
 
 
-Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index probabilistic_layers_number = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_label().find("classification") != string::npos)
-            probabilistic_layers_number++;
-
-    Tensor<string, 2> information(probabilistic_layers_number,4);
-
-    Index probabilistic_layer_index = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        const string& name = layers[i]->get_name();
-        const string label = layers[i]->get_label();
-
-        if (name != "Dense2d" || label.find("dense2d") != string::npos)
-            continue;
-
-        information(probabilistic_layer_index, 0) = label;
-        information(probabilistic_layer_index, 1) = to_string(layers[i]->get_input_dimensions()[0]);
-        information(probabilistic_layer_index, 2) = to_string(layers[i]->get_output_dimensions()[0]);
-
-        const Dense2d* dense_2d = static_cast<Dense2d*>(layers[i].get());
-
-        information(probabilistic_layer_index, 3) = dense_2d->get_activation_function();
-
-        probabilistic_layer_index++;
-    }
-
-    return information;
-}
-
-
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
     const Index features_number = get_features_number();

@@ -111,8 +111,8 @@ void Dense3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                      Tensor<type, 3>& combinations) const
 {
     combinations.device(*device) = inputs.contract(weights, axes(2,0))
-                                               + biases.reshape(array<Index, 3>{1, 1, combinations.dimension(2)})
-                                                     .broadcast(array<Index, 3>{combinations.dimension(0), combinations.dimension(1), 1});
+                                   + biases.reshape(array_3(1, 1, combinations.dimension(2)))
+                                           .broadcast(array_3(combinations.dimension(0), combinations.dimension(1), 1));
 }
 
 
@@ -170,7 +170,7 @@ void Dense3d::back_propagate(const vector<TensorView>& input_views,
 
     deltas.device(*device) = deltas * activation_derivatives;
 
-    bias_deltas.device(*device) = deltas.sum(array<Index, 2>({0,1}));
+    bias_deltas.device(*device) = deltas.sum(array_2(0,1));
 
     weight_deltas.device(*device) = inputs.contract(deltas, axes(0,0,1,1));
 
@@ -272,9 +272,9 @@ void Dense3dBackPropagation::initialize()
 
 void Dense3dBackPropagation::print() const
 {
-    cout << "Biases derivatives:" << endl
+    cout << "Bias deltas:" << endl
          << bias_deltas << endl
-         << "Synaptic weights derivatives:" << endl
+         << "Weight deltas:" << endl
          << weight_deltas << endl;
 }
 

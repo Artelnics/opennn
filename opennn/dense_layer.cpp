@@ -274,11 +274,10 @@ void Dense2d::apply_batch_normalization(unique_ptr<LayerForwardPropagation>& lay
     {
         means.device(*device) = outputs.mean(reduction_axes);
 
-        standard_deviations.device(*device) = (
-                                                              (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
-                                                                  .square()
-                                                                  .mean(reduction_axes) + epsilon
-                                                              ).sqrt();
+        standard_deviations.device(*device) = ((outputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
+                                                .square()
+                                                .mean(reduction_axes) + epsilon
+                                                ).sqrt();
 
         normalized_outputs.device(*device) =
             (outputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
@@ -700,9 +699,9 @@ vector<ParameterView> Dense2dBackPropagation::get_parameter_delta_views() const
 
 void Dense2dBackPropagation::print() const
 {
-    cout << "Biases derivatives:" << endl
+    cout << "Bias deltas:" << endl
          << bias_deltas << endl
-         << "Synaptic weights derivatives:" << endl
+         << "Weight deltas:" << endl
          << weight_deltas << endl;
 }
 
