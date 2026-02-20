@@ -481,7 +481,29 @@ void fill_tensor_data_row_major(const Tensor2& matrix,
                                 const vector<Index>& column_indices,
                                 type* tensor_data)
 {
+/*
+    const Index rows_number = row_indices.size();
+    const Index columns_number = column_indices.size();
 
+    const Index source_rows_count = source.dimension(0);
+
+    const type* const matrix_data = source.data();
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        const Index offset_source = matrix_data + row_indices[i];
+        const Index offset_destination = destination_data + i * columns_number;
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            const type* const matrix_value = offset_source + source_rows_count * column_indices[j];
+            type* tensor_value = offset_destination + j;
+            *tensor_value = *matrix_value;
+        }
+    } 
+*/
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
 

@@ -14,6 +14,35 @@
 namespace opennn
 {
 
+template <typename T>
+class ThreadSafeQueue {
+private:
+    std::queue<T> queue_;
+    std::mutex mutex_;
+    std::condition_variable cond_;
+
+public:
+    void push(T item) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        queue_.push(item);
+        lock.unlock();
+        cond_.notify_one();
+    }
+
+    T pop() {
+        std::unique_lock<std::mutex> lock(mutex_);
+        cond_.wait(lock, [this]() { return !queue_.empty(); });
+        T item = queue_.front();
+        queue_.pop();
+        return item;
+    }
+
+    bool empty() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return queue_.empty();
+    }
+};
+
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -497,26 +526,19 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
-
+    
     check();
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
 
-    // Dataset
-
     Dataset* dataset = loss_index->get_dataset();
-
-    if(!dataset)
-        throw runtime_error("Dataset is null.");
+    if(!dataset) throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();
-
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    //const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-
     const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
 
@@ -524,41 +546,47 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     const Index validation_samples_number = dataset->get_samples_number("Validation");
 
     const Index training_batch_size = min(training_samples_number, batch_size);
+    const Index validation_batch_size = (validation_samples_number != 0) ? min(validation_samples_number, batch_size) : 0;
 
-    const Index validation_batch_size = (validation_samples_number != 0)
-        ? min(validation_samples_number, batch_size)
-        : 0;
-
-    const Index training_batches_number = (training_batch_size != 0)
-        ? training_samples_number / training_batch_size
-        : 0;
-
-    const Index validation_batches_number = (validation_batch_size != 0)
-        ? validation_samples_number / validation_batch_size
-        : 0;
+    const Index training_batches_number = (training_batch_size != 0) ? training_samples_number / training_batch_size : 0;
+    const Index validation_batches_number = (validation_batch_size != 0) ? validation_samples_number / validation_batch_size : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches(validation_batches_number);
 
-    // Neural network
-
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     set_names();
-
     set_scaling();
-
     set_vocabularies();
 
-    BatchCuda training_batch_a(training_batch_size, dataset);
-    BatchCuda training_batch_b(training_batch_size, dataset);
-    BatchCuda* current_training_batch = &training_batch_a;
-    BatchCuda* next_training_batch = &training_batch_b;
+    // 1 Worker en background + 3 Buffers es la configuración óptima para OpenMP + CUDA
+    const int PREFETCH_BATCHES = 3;
+    
+    ThreadSafeQueue<BatchCuda*> empty_training_queue;
+    ThreadSafeQueue<BatchCuda*> ready_training_queue;
+    vector<BatchCuda*> training_batch_pool;
 
-    BatchCuda* validation_batch_a = nullptr;
-    BatchCuda* validation_batch_b = nullptr;
-    BatchCuda* current_validation_batch = nullptr;
-    BatchCuda* next_validation_batch = nullptr;
+    for (int i = 0; i < PREFETCH_BATCHES; i++) 
+    {
+        BatchCuda* b = new BatchCuda(training_batch_size, dataset);
+        training_batch_pool.push_back(b);
+        empty_training_queue.push(b);
+    }
+
+    ThreadSafeQueue<BatchCuda*> empty_validation_queue;
+    ThreadSafeQueue<BatchCuda*> ready_validation_queue;
+    vector<BatchCuda*> validation_batch_pool;
+
+    if (has_validation) 
+    {
+        for (int i = 0; i < PREFETCH_BATCHES; i++) 
+        {
+            BatchCuda* b = new BatchCuda(validation_batch_size, dataset);
+            validation_batch_pool.push_back(b);
+            empty_validation_queue.push(b);
+        }
+    }
 
     cudaStream_t memory_stream;
     cudaStreamCreate(&memory_stream);
@@ -569,188 +597,125 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     unique_ptr<ForwardPropagationCuda> validation_forward_propagation;
 
     neural_network->copy_parameters_device();
-
-    // Loss Index
-
     loss_index->set_normalization_coefficient();
 
     BackPropagationCuda training_back_propagation(training_batch_size, loss_index);
     unique_ptr<BackPropagationCuda> validation_back_propagation;
 
-    if (has_validation)
+    if (has_validation) 
     {
-        validation_batch_a = new BatchCuda(validation_batch_size, dataset);
-        validation_batch_b = new BatchCuda(validation_batch_size, dataset);
-        current_validation_batch = validation_batch_a;
-        next_validation_batch = validation_batch_b;
-    
         validation_forward_propagation = make_unique<ForwardPropagationCuda>(validation_batch_size, neural_network);
         validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss_index);
     }
 
     type training_error = type(0);
     type training_accuracy = type(0);
-
     type validation_error = type(0);
     type validation_accuracy = type(0);
-
     Index validation_failures = 0;
-
-    // Optimization algorithm
 
     ADAMOptimizationDataCuda optimization_data(this);
 
     bool stop_training = false;
     bool is_training = true;
+    bool shuffle = true;
+
+    if(neural_network->has("Recurrent")) shuffle = false;
 
     time_t beginning_time;
     time(&beginning_time);
-
     type elapsed_time = type(0);
-
-    bool shuffle = true;
-
-    if(neural_network->has("Recurrent"))
-        shuffle = false;
-
-    // Main loop
-
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
-
         training_error = type(0);
-
         if (is_classification_model) training_accuracy = type(0);
-
-        if (training_batches_number > 0)
+        
+        std::thread training_worker([&]() 
         {
-            current_training_batch->fill_host(training_batches[0], 
-                                              input_feature_indices,
-                                              target_feature_indices);
-
-            current_training_batch->copy_device_async(training_batches[0].size(), memory_stream);
-            cudaEventRecord(batch_ready_event, memory_stream);
-        }
-
-        if (training_batches_number > 1)
-            next_training_batch->fill_host(training_batches[1],
-                                           input_feature_indices,
-                                           target_feature_indices);
+            for(Index iteration = 0; iteration < training_batches_number; iteration++) 
+            {
+                BatchCuda* batch = empty_training_queue.pop();
+                batch->fill_host(training_batches[iteration], input_feature_indices, target_feature_indices);
+                ready_training_queue.push(batch);
+            }
+        });
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            cudaStreamWaitEvent(0, batch_ready_event, 0);
-            
-            if(iteration + 1 < training_batches_number)
-            {
-                next_training_batch->copy_device_async(training_batches[iteration+1].size(), memory_stream);
-                cudaEventRecord(batch_ready_event, memory_stream);
-            }
+            BatchCuda* current_batch = ready_training_queue.pop();
 
-            neural_network->forward_propagate(current_training_batch->get_inputs_device(),
-                                              training_forward_propagation,
-                                              is_training);
-            
-            loss_index->back_propagate(*current_training_batch,
-                                       training_forward_propagation,
-                                       training_back_propagation);
+            current_batch->copy_device_async(training_batches[iteration].size(), memory_stream);
+            cudaEventRecord(batch_ready_event, memory_stream);
+            cudaStreamWaitEvent(0, batch_ready_event, 0);
+
+            neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
+            loss_index->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
             
             training_error += training_back_propagation.error();
-
-            if (is_classification_model)
-                training_accuracy += training_back_propagation.accuracy();
+            if (is_classification_model) training_accuracy += training_back_propagation.accuracy();
             
             update_parameters(training_back_propagation, optimization_data);
-            
-            if(iteration + 2 < training_batches_number)
-                next_training_batch->fill_host(training_batches[iteration+2],
-                                               input_feature_indices,
-                                               target_feature_indices);
-            
-            swap(current_training_batch, next_training_batch);
+
+            cudaStreamSynchronize(0);
+
+            empty_training_queue.push(current_batch);
         }
 
-        // Loss
+        training_worker.join();
 
         training_error /= type(training_batches_number);
-
-        if (is_classification_model)
-            training_accuracy /= type(training_batches_number);
-
+        if (is_classification_model) training_accuracy /= type(training_batches_number);
         results.training_error_history(epoch) = training_error;
 
         if (has_validation)
         {
             validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
-
             validation_error = type(0);
             if (is_classification_model) validation_accuracy = type(0);
 
-            if (validation_batches_number > 0)
+            std::thread validation_worker([&]() 
             {
-                current_validation_batch->fill_host(validation_batches[0],
-                                                input_feature_indices,
-                                                target_feature_indices);
-                
-                current_validation_batch->copy_device_async(validation_batches[0].size(), memory_stream);
-                cudaEventRecord(batch_ready_event, memory_stream);
-            }
-            
-            if (validation_batches_number > 1)
-            {
-                next_validation_batch->fill_host(validation_batches[1],
-                                                input_feature_indices,
-                                                target_feature_indices);
-            }
+                for(Index iteration = 0; iteration < validation_batches_number; iteration++) 
+                {
+                    BatchCuda* batch = empty_validation_queue.pop();
+                    batch->fill_host(validation_batches[iteration], input_feature_indices, target_feature_indices);
+                    ready_validation_queue.push(batch);
+                }
+            });
 
             for(Index iteration = 0; iteration < validation_batches_number; iteration++)
             {
-                cudaStreamWaitEvent(0, batch_ready_event, 0);
-                
-                if(iteration + 1 < validation_batches_number)
-                {
-                    next_validation_batch->copy_device_async(validation_batches[iteration + 1].size(), memory_stream);
-                    cudaEventRecord(batch_ready_event, memory_stream);
-                }
-                
-                neural_network->forward_propagate(current_validation_batch->get_inputs_device(),
-                                                *validation_forward_propagation,
-                                                is_training);
+                BatchCuda* current_batch = ready_validation_queue.pop();
 
-                loss_index->calculate_error(*current_validation_batch,
-                                        *validation_forward_propagation,
-                                        *validation_back_propagation);
+                current_batch->copy_device_async(validation_batches[iteration].size(), memory_stream);
+                cudaEventRecord(batch_ready_event, memory_stream);
+                cudaStreamWaitEvent(0, batch_ready_event, 0);
+
+                neural_network->forward_propagate(current_batch->get_inputs_device(), *validation_forward_propagation, is_training);
+                loss_index->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
                 validation_error += validation_back_propagation->error();
+                if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
 
-                if (is_classification_model)
-                    validation_accuracy += validation_back_propagation->accuracy();
-                
-                if(iteration + 2 < validation_batches_number)
-                {
-                    next_validation_batch->fill_host(validation_batches[iteration + 2],
-                                                    input_feature_indices,
-                                                    target_feature_indices);
-                }
-                
-                swap(current_validation_batch, next_validation_batch);
+                cudaStreamSynchronize(0);
+
+                empty_validation_queue.push(current_batch);
             }
+
+            validation_worker.join();
 
             validation_error /= type(validation_batches_number);
             if (is_classification_model) validation_accuracy /= type(validation_batches_number);
-
             results.validation_error_history(epoch) = validation_error;
 
             if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1)) 
                 validation_failures++;
         }
-
-        // Elapsed time
 
         elapsed_time = get_elapsed_time(beginning_time);
 
@@ -765,48 +730,41 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         stop_training = true;
 
-        if (epoch == maximum_epochs)
+        if (epoch == maximum_epochs) 
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if (elapsed_time >= maximum_time)
+        } 
+        else if (elapsed_time >= maximum_time) 
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
             results.stopping_condition = StoppingCondition::MaximumTime;
-        }
-        else if (results.training_error_history(epoch) < training_loss_goal)
+        } 
+        else if (results.training_error_history(epoch) < training_loss_goal) 
         {
             results.stopping_condition = StoppingCondition::LossGoal;
             if (display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
-        }
-        else if (training_accuracy >= training_accuracy_goal)
+        } 
+        else if (training_accuracy >= training_accuracy_goal) 
         {
             results.stopping_condition = StoppingCondition::LossGoal;
             if (display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
-        }
-        else if (validation_failures >= maximum_validation_failures)
+        } 
+        else if (validation_failures >= maximum_validation_failures) 
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
-        }
-        else
-        {
+        } 
+        else 
             stop_training = false;
-        }
 
-        if (stop_training)
+        if (stop_training) 
         {
             results.loss = training_back_propagation.loss;
-
             results.validation_failures = validation_failures;
-
             results.resize_training_error_history(epoch + 1);
-
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-
             results.elapsed_time = write_time(elapsed_time);
-
             break;
         }
 
@@ -816,21 +774,17 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event);
 
-    if (has_validation)
-    {
-        delete validation_batch_a;
-        delete validation_batch_b;
-    }
+    for (BatchCuda* b : training_batch_pool) delete b;
+    for (BatchCuda* b : validation_batch_pool) delete b;
 
     neural_network->copy_parameters_host();
-
     set_unscaling();
 
     if (display) results.print();
 
     return results;
-
 }
+
 
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,
