@@ -318,13 +318,16 @@ protected:
         const Index outputs_size = weights.cols();
         const Index total_rows = inputs.size() / inputs_size;
 
-        const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
+        const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
             inputs_matrix(inputs.data(), total_rows, inputs_size);
 
-        Map<Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
+        const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+            weights_matrix(weights.data(), inputs_size, outputs_size);
+
+        Map<Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
             outputs_matrix(outputs.data(), total_rows, outputs_size);
 
-        outputs_matrix.noalias() = (inputs_matrix * weights).rowwise() + biases.transpose();
+        outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases.transpose();
     }
 
 #ifdef OPENNN_CUDA
