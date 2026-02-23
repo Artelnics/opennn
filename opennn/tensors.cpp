@@ -16,26 +16,36 @@ namespace opennn
 
 void multiply_matrices(Tensor3& tensor, const VectorR& vector)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap matrix = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        matrix.device(get_device()) = matrix * vector(i);
+        slice_map *= vector(i);
     }
 }
 
 
 void multiply_matrices(Tensor3& tensor, const Tensor2& matrix)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    const MatrixMap multiplier(const_cast<type*>(matrix.data()), matrix.dimension(0), matrix.dimension(1));
+
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap slice = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        slice.device(get_device()) = slice * matrix;
+        slice_map = slice_map * multiplier;
     }
 }
 
@@ -96,13 +106,19 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
 
 void sum_matrices(const VectorR& vector, Tensor3& tensor)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    if (vector.size() < depth) return;
+
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap matrix = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        matrix.device(get_device()) = matrix + vector(i);
+        slice_map.array() += vector(i);
     }
 }
 
@@ -224,12 +240,11 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-void set_row(Tensor2& matrix, const VectorR& new_row, Index row_index)
+void set_row(MatrixR& matrix, const VectorR& new_row, Index row_index)
 {
     const Index columns_number = new_row.size();
 
-#pragma omp parallel for
-
+    #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
         matrix(row_index, i) = new_row(i);
 }
@@ -355,69 +370,35 @@ void fill_tensor_data(const MatrixR& matrix,
     if(rows_number == 0 || columns_number == 0) return;
 
     const type* matrix_data = matrix.data();
-    const Index matrix_rows_number = matrix.rows();
 
-    vector<const type*> col_ptrs(columns_number);
-
-    for(Index j = 0; j < columns_number; ++j)
-        col_ptrs[j] = matrix_data + matrix_rows_number * column_indices[j];
-
-    #pragma omp parallel for schedule(static)
-    for(Index j = 0; j < columns_number; ++j)
+    if constexpr (Layout == Eigen::RowMajor)
     {
-        const type* src_column = col_ptrs[j];
-        type* dest_column = tensor_data + rows_number*j;
+        const Index matrix_cols_number = matrix.cols();
 
-        //#pragma omp simd
+        #pragma omp parallel for schedule(static)
         for(Index i = 0; i < rows_number; ++i)
-            dest_column[i] = src_column[row_indices[i]];
-    }
-
-/*
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    if(rows_number == 0 || columns_number == 0) return;
-
-    const type* __restrict matrix_data = matrix.data();
-    const Index matrix_rows_number = matrix.dimension(0);
-    const Index* __restrict row_indices_data = row_indices.data();   
-
-    #pragma omp parallel for if(columns_number >= 32) schedule(static)
-    for(Index j = 0; j < columns_number; ++j)
-    {
-        const type* __restrict matrix_column = matrix_data + (matrix_rows_number * column_indices[j]);
-        type* __restrict tensor_value = tensor_data + (rows_number * j);
-
-        for(Index i = 0; i < rows_number; ++i)
-            tensor_value[i] = matrix_column[row_indices_data[i]];
-    }
-*/
-}
-
-
-void fill_tensor_data_row_major(const MatrixR& matrix,
-                                const vector<Index>& row_indices,
-                                const vector<Index>& column_indices,
-                                type* tensor_data)
-{
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    const type* const matrix_data = matrix.data();
-
-#pragma omp parallel for
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        const Index row_index = row_indices[i];
-
-        for(Index j = 0; j < columns_number; j++)
         {
-            const Index column_index = column_indices[j];
-            const type* const matrix_value = matrix_data + row_index + matrix.rows() * column_index;
-            type* tensor_value = tensor_data + i * columns_number + j;
-            *tensor_value = *matrix_value;
+            const Index src_row = row_indices[i];
+            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            type* dest_row_ptr = tensor_data + i * columns_number;
+
+            for(Index j = 0; j < columns_number; ++j)
+                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+        }
+    }
+    else // Eigen::ColMajor
+    {
+        const Index matrix_rows_number = matrix.rows();
+
+        #pragma omp parallel for schedule(static)
+        for(Index j = 0; j < columns_number; ++j)
+        {
+            const Index src_col = column_indices[j];
+            const type* src_col_ptr = matrix_data + src_col * matrix_rows_number;
+            type* dest_col_ptr = tensor_data + j * rows_number;
+
+            for(Index i = 0; i < rows_number; ++i)
+                dest_col_ptr[i] = src_col_ptr[row_indices[i]];
         }
     }
 }
@@ -649,30 +630,20 @@ Index get_size(vector<vector<TensorView*>> views)
     return total_size;
 }
 
-void shuffle_rows(Tensor2& matrix)
+
+void shuffle_rows(MatrixR& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.rows();
 
     if (rows_number <= 1) return;
 
-    type* data = matrix.data();
-
-    for (Index i = rows_number - 1; i > 0; --i)
+    for(Index i = rows_number - 1; i > 0; --i)
     {
         const Index j = random_integer(0, i);
 
         if (i == j) continue;
 
-#pragma omp parallel for schedule(static)
-        for (Index c = 0; c < columns_number; ++c)
-        {
-            const Index offset = c * rows_number;
-
-            const type temp = data[i + offset];
-            data[i + offset] = data[j + offset];
-            data[j + offset] = temp;
-        }
+        matrix.row(i).swap(matrix.row(j));
     }
 }
 
@@ -807,6 +778,19 @@ void Device::set_threads_number(int num_threads)
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
     omp_set_num_threads(num_threads);
+}
+
+
+Device& Device::instance()
+{
+    static Device device;
+    return device;
+}
+
+
+ThreadPoolDevice* Device::get_thread_pool_device()
+{
+    return thread_pool_device.get();
 }
 
 

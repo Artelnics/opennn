@@ -73,50 +73,46 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
                                   bool is_training)
 {
     const TensorMap3 inputs = tensor_map<3>(input_views[0]);
-
     MatrixMap outputs = matrix_map(layer_forward_propagation->outputs);
 
-    Pooling3dForwardPropagation* pooling_forward_propagation =
-        static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
-
-
+    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
     const Index features = inputs.dimension(2);
 
-    if (pooling_method == PoolingMethod::MaxPooling)
+    if(pooling_method == PoolingMethod::MaxPooling)
     {
         MatrixI& maximal_indices = pooling_forward_propagation->maximal_indices;
 
-#pragma omp parallel for
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; ++b)
         {
-            for(Index feature_index = 0; feature_index < features; ++feature_index)
-            {
-                type   max_val = -std::numeric_limits<type>::infinity();
-                Index  max_idx = 0;
+            outputs.row(b).setConstant(-numeric_limits<type>::infinity());
 
-                for(Index seq_index = 0; seq_index < sequence_length; ++seq_index)
+            for(Index s = 0; s < sequence_length; ++s)
+            {
+                for(Index f = 0; f < features; ++f)
                 {
-                    const type value = inputs(batch_index, seq_index, feature_index);
-                    if (value > max_val)
+                    const type value = inputs(b, s, f);
+
+                    if(value > outputs(b, f))
                     {
-                        max_val = value;
-                        max_idx = seq_index;
+                        outputs(b, f) = value;
+                        if(is_training) maximal_indices(b, f) = s;
                     }
                 }
-
-                outputs(batch_index, feature_index) = max_val;
-                if (is_training) maximal_indices(batch_index, feature_index) = max_idx;
             }
         }
     }
     else // AveragePooling
     {
-        outputs.device(get_device()) =
-            inputs.mean(array_1(1))
-                .reshape(array_2(batch_size, features));
+        const type inverse_sequence_length = type(1.0) / static_cast<type>(sequence_length);
+        const MatrixMap inputs_map(inputs.data(), batch_size * sequence_length, features);
+
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; ++b)
+            outputs.row(b).noalias() = inputs_map.block(b * sequence_length, 0, sequence_length, features).colwise().sum() * inverse_sequence_length;
     }
 }
 
@@ -126,40 +122,40 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap3 input_tensor_map  = tensor_map<3>(input_views[0]);
-    const MatrixMap delta_tensor_map  = matrix_map(output_gradient_views[0]);
+    const TensorMap3 inputs = tensor_map<3>(input_views[0]);
+    const MatrixMap delta = matrix_map(output_gradient_views[0]);
 
-    Pooling3dForwardPropagation* forward_layer  =
-        static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
-    Pooling3dBackPropagation* backward_layer =
-        static_cast<Pooling3dBackPropagation*>(back_propagation.get());
+    Pooling3dForwardPropagation* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
+    Pooling3dBackPropagation* pooling_back_propagation = static_cast<Pooling3dBackPropagation*>(back_propagation.get());
 
-    backward_layer->input_derivatives.setZero();
+    pooling_back_propagation->input_derivatives.setZero();
 
-    const Index batch_size = input_tensor_map.dimension(0);
-    const Index sequence_length = input_tensor_map.dimension(1);
-    const Index number_of_features = input_tensor_map.dimension(2);
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index features = inputs.dimension(2);
 
-    if (pooling_method == PoolingMethod::MaxPooling)
+    if(pooling_method == PoolingMethod::MaxPooling)
     {
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        {
-            for(Index feature_index = 0; feature_index < number_of_features; ++feature_index)
-            {
-                const Index maximal_index =
-                    forward_layer->maximal_indices(batch_index, feature_index);
+        const MatrixI& maximal_indices = pooling_forward_propagation->maximal_indices;
 
-                backward_layer->input_derivatives(batch_index, maximal_index, feature_index)
-                    += delta_tensor_map(batch_index, feature_index);
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; ++b)
+        {
+            for(Index f = 0; f < features; ++f)
+            {
+                const Index max_idx = maximal_indices(b, f);
+                pooling_back_propagation->input_derivatives(b, max_idx, f) = delta(b, f);
             }
         }
     }
     else // AveragePooling
     {
-        backward_layer->input_derivatives.device(get_device()) +=
-            delta_tensor_map.reshape(array_3(batch_size, 1, number_of_features))
-                .broadcast(array_3(1, sequence_length, 1))
-            / static_cast<type>(sequence_length);
+        const type inverse_sequence_length = type(1.0) / static_cast<type>(sequence_length);
+        MatrixMap inputs_map(pooling_back_propagation->input_derivatives.data(), batch_size * sequence_length, features);
+
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; ++b)
+            inputs_map.block(b * sequence_length, 0, sequence_length, features).rowwise() = delta.row(b) * inverse_sequence_length;
     }
 }
 

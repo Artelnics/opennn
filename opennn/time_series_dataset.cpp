@@ -399,62 +399,57 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
     TensorMap3 batch(input_data, batch_size, past_time_steps, input_size);
     const type* const matrix_data = data.data();
 
-#pragma omp parallel for
-    for(Index i = 0; i < batch_size; ++i)
+    if constexpr (Layout == Eigen::RowMajor)
     {
-        const Index start_row = sample_indices[i];
+        const Index data_cols = data.cols();
 
-        for(Index j = 0; j < past_time_steps; ++j)
+        #pragma omp parallel for schedule(static)
+        for(Index i = 0; i < batch_size; ++i)
         {
-            const Index actual_row = start_row + j;
+            const Index start_row = sample_indices[i];
 
-            if(actual_row < total_rows_in_data)
+            for(Index j = 0; j < past_time_steps; ++j)
             {
-                const Index row_offset = actual_row;
-                for(Index k = 0; k < input_size; ++k)
+                const Index actual_row = start_row + j;
+
+                if(actual_row < total_rows_in_data)
                 {
-                    const Index column_index = input_indices[k];
-                    batch(i, j, k) = matrix_data[row_offset + total_rows_in_data * column_index];
+                    const type* data_row = matrix_data + actual_row * data_cols;
+                    for(Index k = 0; k < input_size; ++k)
+                    {
+                        const Index column_index = input_indices[k];
+                        batch(i, j, k) = data_row[column_index];
+                    }
+                }
+                else
+                {
+                    for(Index k = 0; k < input_size; ++k)
+                        batch(i, j, k) = static_cast<type>(0);
                 }
             }
-            else
-            {
-                for(Index k = 0; k < input_size; ++k)
-                    batch(i, j, k) = static_cast<type>(0);
-            }
         }
     }
-
-/*
-    if (sample_indices.empty() || input_indices.empty())
-        return;
-
-    const Index batch_size = sample_indices.size();
-    const Index input_size = input_indices.size();
-    const Index total_rows_in_data = data.dimension(0);
-
-    TensorMap3 batch(input_data, batch_size, past_time_steps, input_size);
-    const type* const matrix_data = data.data();
-
-#pragma omp parallel for
-    for(Index i = 0; i < batch_size; ++i)
+    else // Eigen::ColMajor
     {
-        const Index start_row = sample_indices[i];
-        for(Index j = 0; j < past_time_steps; ++j)
+        #pragma omp parallel for collapse(2) schedule(static)
+        for(Index k = 0; k < input_size; ++k)
         {
-            const Index actual_row = start_row + j;
-            for(Index k = 0; k < input_size; ++k)
+            for(Index j = 0; j < past_time_steps; ++j)
             {
                 const Index column_index = input_indices[k];
+                const type* data_row = matrix_data + column_index * total_rows_in_data;
 
-                if (actual_row < total_rows_in_data)
-                    batch(i, j, k) = matrix_data[actual_row + total_rows_in_data * column_index];
-                else
-                    batch(i, j, k) = static_cast<type>(0);
+                for(Index i = 0; i < batch_size; ++i)
+                {
+                    const Index actual_row = sample_indices[i] + j;
+
+                    batch(i, j, k) = (actual_row < total_rows_in_data)
+                                         ? data_row[actual_row]
+                                         : static_cast<type>(0);
+                }
             }
         }
     }
-*/
 }
 
 
@@ -471,53 +466,49 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     MatrixMap targets(target_tensor_data, batch_size, target_size);
     const type* const matrix_data = data.data();
 
-#pragma omp parallel for
-    for(Index i = 0; i < batch_size; ++i)
+    if constexpr (Layout == Eigen::RowMajor)
     {
-        const Index target_row = sample_indices[i] + past_time_steps;
+        const Index data_cols = data.cols();
 
-        if(target_row < total_rows_in_data)
+        #pragma omp parallel for schedule(static)
+        for(Index i = 0; i < batch_size; ++i)
         {
-            const Index row_offset = target_row;
-            for(Index j = 0; j < target_size; ++j)
+            const Index target_row = sample_indices[i] + past_time_steps;
+
+            if(target_row < total_rows_in_data)
             {
-                const Index column_index = target_indices[j];
-                targets(i, j) = matrix_data[row_offset + total_rows_in_data * column_index];
+                const type* data_row = matrix_data + target_row * data_cols;
+                for(Index j = 0; j < target_size; ++j)
+                {
+                    const Index column_index = target_indices[j];
+                    targets(i, j) = data_row[column_index];
+                }
+            }
+            else
+            {
+                for(Index j = 0; j < target_size; ++j)
+                    targets(i, j) = static_cast<type>(0);
             }
         }
-        else
-        {
-            for(Index j = 0; j < target_size; ++j)
-                targets(i, j) = static_cast<type>(0);
-        }
     }
-
-/*
-    if (sample_indices.empty() || target_indices.empty())
-        return;
-
-    const Index batch_size = sample_indices.size();
-    const Index target_size = target_indices.size();
-    const Index total_rows_in_data = data.dimension(0);
-
-    MatrixMap targets(target_tensor_data, batch_size, target_size);
-    const type* const matrix_data = data.data();
-
-#pragma omp parallel for
-    for(Index i = 0; i < batch_size; ++i)
+    else // Eigen::ColMajor
     {
-        const Index target_row = sample_indices[i] + past_time_steps;
+        #pragma omp parallel for schedule(static)
         for(Index j = 0; j < target_size; ++j)
         {
             const Index column_index = target_indices[j];
+            const type* data_row = matrix_data + column_index * total_rows_in_data;
 
-            if (target_row < total_rows_in_data)
-                targets(i, j) = matrix_data[target_row + total_rows_in_data * column_index];
-            else
-                targets(i, j) = static_cast<type>(0);
+            for(Index i = 0; i < batch_size; ++i)
+            {
+                const Index target_row = sample_indices[i] + past_time_steps;
+
+                targets(i, j) = (target_row < total_rows_in_data)
+                                    ? data_row[target_row]
+                                    : static_cast<type>(0);
+            }
         }
     }
-*/
 }
 
 
@@ -790,11 +781,12 @@ vector<vector<Index>> TimeSeriesDataset::get_batches(const vector<Index>& sample
                                                      Index batch_size,
                                                      bool shuffle) const
 {
-    // @todo copied from dataset
-
     if(!shuffle) return split_samples(sample_indices, batch_size);
 
     const Index samples_number = sample_indices.size();
+
+    if (samples_number == 0) return {};
+    if (batch_size <= 0 || batch_size > samples_number) batch_size = samples_number;
 
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
@@ -804,7 +796,7 @@ vector<vector<Index>> TimeSeriesDataset::get_batches(const vector<Index>& sample
 
     shuffle_vector(samples_copy);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < batches_number; i++)
     {
         const Index start_index = i * batch_size;

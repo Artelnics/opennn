@@ -307,17 +307,23 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
                                            bool shuffle) const
 {
     const Index samples_number = sample_indices.size();
+
+    if(samples_number == 0) return {};
+
+    if(batch_size <= 0 || batch_size > samples_number)
+        batch_size = samples_number;
+
     const Index batches_number = (samples_number + batch_size - 1) / batch_size;
 
     vector<Index> indices = sample_indices;
 
-    if (shuffle)
+    if(shuffle)
         shuffle_vector_blocks(indices);
 
     vector<vector<Index>> batches(batches_number);
 
     #pragma omp parallel for if(batches_number > 64)
-    for (Index i = 0; i < batches_number; i++)
+    for(Index i = 0; i < batches_number; i++)
     {
         const auto start_it = indices.begin() + (i * batch_size);
         const auto end_it = indices.begin() + min((i + 1) * batch_size, samples_number);
@@ -4084,12 +4090,6 @@ void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vecto
 }
 
 
-void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
-{
-    fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
-}
-
-
 // void Dataset::fill_decoder_tensor(const vector<Index>& sample_indices, const vector<Index>& decoder_indices, type* decoder_tensor_data) const
 // {
 //     fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor_data);
@@ -4300,10 +4300,13 @@ void Dataset::fix_repeated_names()
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, Index new_batch_size) const
 {
     const Index samples_number = sample_indices.size();
+
+    if(samples_number == 0) return {};
+
     Index batch_size = new_batch_size;
     Index batches_number;
 
-    if (samples_number < batch_size)
+    if(batch_size <= 0 || samples_number < batch_size)
     {
         batches_number = 1;
         batch_size = samples_number;
@@ -4313,7 +4316,7 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
 
     vector<vector<Index>> batches(batches_number);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < batches_number; i++)
     {
         const Index start_index = i * batch_size;

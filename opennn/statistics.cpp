@@ -343,6 +343,34 @@ void Histogram::save(const filesystem::path& histogram_file_name) const
 }
 
 
+type minimum(const MatrixR& matrix)
+{
+    if(matrix.size() == 0) return type(NAN);
+    return matrix.minCoeff();
+}
+
+
+type maximum(const MatrixR& matrix)
+{
+    if(matrix.size() == 0) return type(NAN);
+    return matrix.maxCoeff();
+}
+
+
+type minimum(const VectorR& vector)
+{
+    if(vector.size() == 0) return type(NAN);
+    return vector.minCoeff();
+}
+
+
+type maximum(const VectorR& vector)
+{
+    if(vector.size() == 0) return type(NAN);
+    return vector.maxCoeff();
+}
+
+
 type minimum(const VectorR& data, const vector<Index>& indices)
 {
     const Index size = indices.size();

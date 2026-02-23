@@ -843,7 +843,12 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
     check();
 
     const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
-    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, batch_size, false);
+
+    const Index current_batch_size = (batch_size <= 0 || batch_size > static_cast<Index>(testing_indices.size()))
+                                         ? (testing_indices.empty() ? 1 : testing_indices.size())
+                                         : batch_size;
+
+    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, current_batch_size, false);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -875,7 +880,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
                               input_shape[1],
                               input_shape[2]);
 
-            memcpy(inputs_4d.data(), batch_inputs_flat.data(), 
+            memcpy(inputs_4d.data(), batch_inputs_flat.data(),
                    current_batch_size * batch_inputs_flat.cols() * sizeof(type));
 
             batch_outputs = neural_network->calculate_outputs(inputs_4d);
@@ -887,7 +892,8 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
         total_confusion_matrix += batch_confusion;
     }
 
-    total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
+    if(testing_indices.size() > 0)
+        total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 
     return total_confusion_matrix;
 }
@@ -2166,21 +2172,24 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
     check();
 
     const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
-    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, batch_size, false);
+
+    const Index current_batch_size = (batch_size <= 0 || batch_size > static_cast<Index>(testing_indices.size()))
+                                         ? (testing_indices.empty() ? 1 : testing_indices.size())
+                                         : batch_size;
+
+    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, current_batch_size, false);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    //const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
 
     const Index outputs_number = neural_network->get_outputs_number();
-
     const Index confusion_matrix_size = (outputs_number == 1) ? 3 : (outputs_number + 1);
 
     MatrixI total_confusion_matrix(confusion_matrix_size, confusion_matrix_size);
     total_confusion_matrix.setZero();
 
-    BatchCuda testing_batch(batch_size, dataset);
-    ForwardPropagationCuda testing_forward_propagation(batch_size, neural_network);
+    BatchCuda testing_batch(current_batch_size, dataset);
+    ForwardPropagationCuda testing_forward_propagation(current_batch_size, neural_network);
 
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
@@ -2190,7 +2199,7 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
         const Index current_batch_size = current_batch_indices.size();
         if (current_batch_size == 0) continue;
 
-        if (current_batch_size != batch_size)
+        if (current_batch_size != current_batch_size)
         {
             testing_forward_propagation.free();
             testing_batch.set(current_batch_size, dataset);
@@ -2199,7 +2208,6 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
 
         testing_batch.fill(current_batch_indices,
                            input_feature_indices,
-                           //decoder_feature_indices,
                            target_feature_indices);
 
         neural_network->forward_propagate(testing_batch.get_inputs_device(),
@@ -2216,7 +2224,8 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
         total_confusion_matrix += batch_confusion;
     }
 
-    total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
+    if(testing_indices.size() > 0)
+        total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
 
     return total_confusion_matrix;
 }

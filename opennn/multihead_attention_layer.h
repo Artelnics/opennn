@@ -68,19 +68,31 @@ public:
                               Index batch_size,
                               Tensor4& output) const
     {
-        const Index embed_dim = get_embedding_dimension();
-        const Index h_dim = get_head_dimension();
+        const Index embedding_dimension = get_embedding_dimension();
+        const Index head_dimension = get_head_dimension();
+        const Index heads = heads_number;
+        const Index total_rows = batch_size * sequence_length;
 
-        const MatrixMap W = matrix_map(weights);
-        const VectorMap B = vector_map(biases);
+        const MatrixMap inputs_map(inputs.data(), total_rows, embedding_dimension);
+        const MatrixMap weights_map = matrix_map(weights);
+        const VectorMap biases_map = vector_map(biases);
 
-        output.device(get_device()) =
-            (inputs.reshape(array_2(batch_size * sequence_length, embed_dim))
-                 .contract(W, axes(1, 0))
-             + B.reshape(array_2(1, embed_dim))
-                   .broadcast(array_2(batch_size * sequence_length, 1)))
-                .reshape(array_4(batch_size, sequence_length, heads_number, h_dim))
-                .shuffle(array_4(0, 2, 1, 3));
+        MatrixR projected(total_rows, embedding_dimension);
+        projected.noalias() = (inputs_map * weights_map).rowwise() + biases_map.transpose();
+
+        type* output_data = output.data();
+
+        #pragma omp parallel for collapse(2)
+        for(Index b = 0; b < batch_size; ++b)
+        {
+            for(Index h = 0; h < heads; ++h)
+            {
+                type* destination_block = output_data + (b * heads + h) * (sequence_length * head_dimension);
+                MatrixMap destination_map(destination_block, sequence_length, head_dimension);
+
+                destination_map.noalias() = projected.block(b * sequence_length, h * head_dimension, sequence_length, head_dimension);
+            }
+        }
     }
 
     void calculate_projection_gradient(const Tensor4& d_head,
@@ -92,31 +104,39 @@ public:
                                        Index batch_size,
                                        bool accumulate) const
     {
+        const Index sequence_length = input.dimension(1);
         const Index embedding_dimension = get_embedding_dimension();
+        const Index heads = heads_number;
+        const Index head_dimension = get_head_dimension();
+        const Index total_rows = batch_size * sequence_length;
 
-        // Map parameters view to Eigen TensorMap for calculation
+        MatrixR Delta(total_rows, embedding_dimension);
+
+        #pragma omp parallel for collapse(2)
+        for(Index b = 0; b < batch_size; ++b)
+        {
+            for(Index h = 0; h < heads; ++h)
+            {
+                const type* source_data = d_head.data() + (b * heads + h) * (sequence_length * head_dimension);
+                const MatrixMap source_map(const_cast<type*>(source_data), sequence_length, head_dimension);
+
+                Delta.block(b * sequence_length, h * head_dimension, sequence_length, head_dimension).noalias() = source_map;
+            }
+        }
+
+        const MatrixMap X(input.data(), total_rows, embedding_dimension);
         const MatrixMap W = matrix_map(weights);
 
-        // Reinterpret 4D head gradients as 3D [Batch, Sequence, Embedding]
-        // const_cast is required because TensorMap constructor expects non-const pointer,
-        // even though we treat it as read-only here.
-        TensorMap3 d_reshaped(const_cast<type*>(d_head.data()), d_input.dimensions());
+        d_weights.noalias() = X.transpose() * Delta;
 
-        const array<Index, 2> flat_dims = {batch_size * d_input.dimension(1), embedding_dimension};
+        d_bias.noalias() = Delta.colwise().sum();
 
-        // Calculate Gradients
-        // dW = Input^T * Delta
-        d_weights.device(get_device()) = input.reshape(flat_dims).contract(d_reshaped.reshape(flat_dims), axes(0, 0));
+        MatrixMap dX_mat(d_input.data(), total_rows, embedding_dimension);
 
-        // db = Sum(Delta)
-        d_bias.device(get_device()) = d_reshaped.sum(array_2(0, 1));
-
-        // Calculate Input Delta (Error signal to previous layer)
-        // dX = Delta * W^T
-        if (accumulate)
-            d_input.device(get_device()) += d_reshaped.contract(W, axes(2, 1));
+        if(accumulate)
+            dX_mat.noalias() += Delta * W.transpose();
         else
-            d_input.device(get_device()) = d_reshaped.contract(W, axes(2, 1));
+            dX_mat.noalias() = Delta * W.transpose();
     }
 
     void print() const override;

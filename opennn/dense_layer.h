@@ -683,7 +683,7 @@ public:
         else
         {
             if constexpr(Rank == 2)
-                calculate_activations<Rank>(activation_function, outputs, MatrixMap(empty_2.data(), empty_2.dimensions()));
+                calculate_activations<Rank>(activation_function, outputs, TensorMap2(empty_2.data(), empty_2.dimensions()));
             else if constexpr(Rank == 3)
                 calculate_activations<Rank>(activation_function, outputs, TensorMap3(empty_3.data(), empty_3.dimensions()));
         }
@@ -698,48 +698,51 @@ public:
                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
-        const MatrixMap inputs = matrix_map(input_views[0]);
-        MatrixMap output_gradients = matrix_map(output_gradient_views[0]);
+        const Index inputs_number = get_inputs_number();
+        const Index outputs_number = get_outputs_number();
+        const Index total_rows = input_views[0].size() / inputs_number;
 
-        // Forward propagation
+        const MatrixMap inputs(input_views[0].data, total_rows, inputs_number);
+        const MatrixMap output_gradients(output_gradient_views[0].data, total_rows, outputs_number);
 
-        const DenseForwardPropagation<2>* dense_forward_propagation =
-            static_cast<DenseForwardPropagation<2>*>(forward_propagation.get());
+        const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
-        const MatrixMap activation_derivatives = matrix_map(dense_forward_propagation->activation_derivatives);
+        DenseBackPropagation<Rank>* dense_back_propagation = static_cast<DenseBackPropagation<Rank>*>(back_propagation.get());
 
-        const MatrixMap weights_map = matrix_map(weights);
-
-        // Back propagation
-
-        DenseBackPropagation<2>* dense2d_back_propagation =
-            static_cast<DenseBackPropagation<2>*>(back_propagation.get());
+        MatrixR delta;
 
         if(activation_function != "Softmax")
-            output_gradients.array() *= activation_derivatives.array();
-
-        if (batch_normalization)
         {
-            const MatrixMap normalized_outputs = matrix_map(dense_forward_propagation->normalized_outputs);
+            const MatrixMap activation_derivatives(dense_forward_propagation->activation_derivatives.data, total_rows, outputs_number);
+            delta = output_gradients.array() * activation_derivatives.array();
+        }
+        else
+            delta = output_gradients;
 
-            VectorMap gamma_gradients = vector_map(dense2d_back_propagation->gamma_gradients);
-            VectorMap beta_gradients = vector_map(dense2d_back_propagation->beta_gradients);
+        if(batch_normalization)
+        {
+            const MatrixMap normalized_outputs(dense_forward_propagation->normalized_outputs.data, total_rows, outputs_number);
 
-            beta_gradients.noalias() = output_gradients.colwise().sum();
+            VectorMap gamma_gradients(dense_back_propagation->gamma_gradients.data, dense_back_propagation->gamma_gradients.size());
+            VectorMap beta_gradients(dense_back_propagation->beta_gradients.data, dense_back_propagation->beta_gradients.size());
 
-            gamma_gradients = (output_gradients.array() * normalized_outputs.array()).colwise().sum().transpose();
+            beta_gradients.array() = delta.colwise().sum();
+            gamma_gradients.array() = (delta.array() * normalized_outputs.array()).colwise().sum();
         }
 
-        MatrixMap weight_gradients = matrix_map(dense2d_back_propagation->weight_gradients);
-        VectorMap bias_gradients = vector_map(dense2d_back_propagation->bias_gradients);
-        MatrixMap input_gradients = matrix_map(back_propagation->input_gradients[0]);
+        MatrixMap weight_gradients(dense_back_propagation->weight_gradients.data, inputs_number, outputs_number);
+        VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
 
-        weight_gradients.noalias() = inputs.transpose() * output_gradients;
+        weight_gradients.noalias() = inputs.transpose() * delta;
+        bias_gradients.array() = delta.colwise().sum();
 
-        bias_gradients.noalias() = output_gradients.colwise().sum();
+        if(!dense_back_propagation->is_first_layer)
+        {
+            MatrixMap input_gradients(back_propagation->input_gradients[0].data, total_rows, inputs_number);
+            const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
 
-        if(!dense2d_back_propagation->is_first_layer)
-            input_gradients.noalias() = output_gradients * weights_map.transpose();
+            input_gradients.noalias() = delta * weights_map.transpose();
+        }
     }
 
 
