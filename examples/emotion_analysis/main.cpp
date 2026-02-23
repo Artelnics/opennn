@@ -72,7 +72,7 @@ int main()
         Tensor<string, 1> documents(1);
         documents[0] = "I feel sad";
 
-        Tensor2 outputs = text_classification_network.calculate_text_outputs(documents);
+        MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
         cout << outputs << endl;
 

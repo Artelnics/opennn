@@ -16,26 +16,36 @@ namespace opennn
 
 void multiply_matrices(Tensor3& tensor, const VectorR& vector)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap matrix = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        matrix.device(get_device()) = matrix * vector(i);
+        slice_map *= vector(i);
     }
 }
 
 
 void multiply_matrices(Tensor3& tensor, const Tensor2& matrix)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    const MatrixMap multiplier(const_cast<type*>(matrix.data()), matrix.dimension(0), matrix.dimension(1));
+
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap slice = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        slice.device(get_device()) = slice * matrix;
+        slice_map = slice_map * multiplier;
     }
 }
 
@@ -96,13 +106,19 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
 
 void sum_matrices(const VectorR& vector, Tensor3& tensor)
 {
+    const Index rows = tensor.dimension(0);
+    const Index cols = tensor.dimension(1);
     const Index depth = tensor.dimension(2);
 
+    if (vector.size() < depth) return;
+
+    #pragma omp parallel for
     for(Index i = 0; i < depth; i++)
     {
-        MatrixMap matrix = tensor_map(tensor, i);
+        type* slice = tensor.data() + (i * rows * cols);
+        MatrixMap slice_map(slice, rows, cols);
 
-        matrix.device(get_device()) = matrix + vector(i);
+        slice_map.array() += vector(i);
     }
 }
 
@@ -224,12 +240,11 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-void set_row(Tensor2& matrix, const VectorR& new_row, Index row_index)
+void set_row(MatrixR& matrix, const VectorR& new_row, Index row_index)
 {
     const Index columns_number = new_row.size();
 
-#pragma omp parallel for
-
+    #pragma omp parallel for
     for(Index i = 0; i < columns_number; i++)
         matrix(row_index, i) = new_row(i);
 }
@@ -649,30 +664,20 @@ Index get_size(vector<vector<TensorView*>> views)
     return total_size;
 }
 
-void shuffle_rows(Tensor2& matrix)
+
+void shuffle_rows(MatrixR& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.rows();
 
     if (rows_number <= 1) return;
 
-    type* data = matrix.data();
-
-    for (Index i = rows_number - 1; i > 0; --i)
+    for(Index i = rows_number - 1; i > 0; --i)
     {
         const Index j = random_integer(0, i);
 
         if (i == j) continue;
 
-#pragma omp parallel for schedule(static)
-        for (Index c = 0; c < columns_number; ++c)
-        {
-            const Index offset = c * rows_number;
-
-            const type temp = data[i + offset];
-            data[i + offset] = data[j + offset];
-            data[j + offset] = temp;
-        }
+        matrix.row(i).swap(matrix.row(j));
     }
 }
 
@@ -807,6 +812,19 @@ void Device::set_threads_number(int num_threads)
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), num_threads);
 
     omp_set_num_threads(num_threads);
+}
+
+
+Device& Device::instance()
+{
+    static Device device;
+    return device;
+}
+
+
+ThreadPoolDevice* Device::get_thread_pool_device()
+{
+    return thread_pool_device.get();
 }
 
 

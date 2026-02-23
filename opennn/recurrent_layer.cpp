@@ -110,15 +110,15 @@ void Recurrent::forward_propagate(const vector<TensorView>& input_views,
     const Index input_size = input_views[0].shape[2];
     const Index output_size = biases.shape[0];
 
-    const VectorMap biases_vec = vector_map(biases);
-    const MatrixMap input_weights_mat = matrix_map(input_weights);
-    const MatrixMap recurrent_weights_mat = matrix_map(recurrent_weights);
+    const VectorMap biases_map = vector_map(biases);
+    const MatrixMap input_weights_map = matrix_map(input_weights);
+    const MatrixMap recurrent_weights_map = matrix_map(recurrent_weights);
 
-    RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
     TensorMap3 input_sequences = tensor_map<3>(input_views[0]);
-    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
-    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
+    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
+    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
 
     MatrixR current_hidden_state(batch_size, output_size);
     current_hidden_state.setZero();
@@ -128,46 +128,52 @@ void Recurrent::forward_propagate(const vector<TensorView>& input_views,
 
     for(Index t = 0; t < past_time_steps; t++)
     {
-        MatrixMap(step_input.data(), batch_size, input_size) = input_sequences.chip(t, 1);
+        TensorMap2 step_input_tensor(step_input.data(), batch_size, input_size);
+        TensorMap2 current_hidden_tensor(current_hidden_state.data(), batch_size, output_size);
+
+        step_input_tensor = input_sequences.chip(t, 1);
 
         calculate_combinations<2>(
-            MatrixMap(step_input.data(), batch_size, input_size),
-            input_weights_mat,
-            biases_vec,
-            MatrixMap(current_hidden_state.data(), batch_size, output_size)
+            step_input_tensor,
+            input_weights_map,
+            biases_map,
+            current_hidden_tensor
             );
 
         if(t > 0)
         {
-            MatrixMap(previous_hidden_state.data(), batch_size, output_size) = all_hidden_states.chip(t - 1, 1);
+            TensorMap2(previous_hidden_state.data(), batch_size, output_size) = all_hidden_states.chip(t - 1, 1);
 
-            current_hidden_state.noalias() += previous_hidden_state * recurrent_weights_mat;
+            current_hidden_state.noalias() += previous_hidden_state * recurrent_weights_map;
         }
 
         if(is_training)
         {
             MatrixR step_derivatives(batch_size, output_size);
+            TensorMap2 step_derivatives_tensor(step_derivatives.data(), batch_size, output_size);
 
             calculate_activations<2>(
                 activation_function,
-                MatrixMap(current_hidden_state.data(), batch_size, output_size),
-                MatrixMap(step_derivatives.data(), batch_size, output_size)
+                current_hidden_tensor,
+                step_derivatives_tensor
                 );
 
-            all_activation_derivatives.chip(t, 1) = MatrixMap(step_derivatives.data(), batch_size, output_size);
+            all_activation_derivatives.chip(t, 1) = step_derivatives_tensor;
         }
         else
+        {
             calculate_activations<2>(
                 activation_function,
-                MatrixMap(current_hidden_state.data(), batch_size, output_size),
-                MatrixMap(empty_2.data(), empty_2.dimensions())
+                current_hidden_tensor,
+                TensorMap2(empty_2.data(), empty_2.dimensions())
                 );
+        }
 
-        all_hidden_states.chip(t, 1) = MatrixMap(current_hidden_state.data(), batch_size, output_size);
+        all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-    MatrixMap outputs_mat = matrix_map(recurrent_fp->outputs);
-    MatrixMap(outputs_mat.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
+    MatrixMap outputs_map = matrix_map(recurrent_forward_propagation->outputs);
+    TensorMap2(outputs_map.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
 }
 
 
@@ -178,61 +184,68 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
 {
     const Index batch_size = input_views[0].shape[0];
     const Index past_time_steps = input_views[0].shape[1];
+    const Index input_size = input_views[0].shape[2];
     const Index neurons_number = biases.shape[0];
 
+    const MatrixMap W_in = matrix_map(input_weights);
+    const MatrixMap W_rec = matrix_map(recurrent_weights);
+    const MatrixMap external_output_gradients = matrix_map(output_gradient_views[0]);
+
+    RecurrentBackPropagation* recurrent_bp = static_cast<RecurrentBackPropagation*>(back_propagation.get());
+
+    VectorMap d_biases = vector_map(recurrent_bp->bias_gradients);
+    MatrixMap dW_in = matrix_map(recurrent_bp->input_weight_gradients);
+    MatrixMap dW_rec = matrix_map(recurrent_bp->recurrent_weight_gradients);
+
+    TensorMap3 d_input_seq = tensor_map<3>(recurrent_bp->input_gradients[0]);
+
+    d_biases.setZero();
+    dW_in.setZero();
+    dW_rec.setZero();
+
+    RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
     TensorMap3 input_sequences = tensor_map<3>(input_views[0]);
-    MatrixMap external_output_gradients = matrix_map(output_gradient_views[0]);
+    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
+    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
 
-    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
-    RecurrentBackPropagation* recurrent_back_propagation = static_cast<RecurrentBackPropagation*>(back_propagation.get());
+    MatrixR delta(batch_size, neurons_number);
+    MatrixR next_step_delta(batch_size, neurons_number);
+    next_step_delta.setZero();
 
-    MatrixMap input_to_hidden_weights_map = matrix_map(input_weights);
-    MatrixMap hidden_to_hidden_weights_map = matrix_map(recurrent_weights);
-
-    VectorMap bias_gradients_map = vector_map(recurrent_back_propagation->bias_gradients);
-    MatrixMap input_weight_gradients_map = matrix_map(recurrent_back_propagation->input_weight_gradients);
-    MatrixMap recurrent_weight_gradients_map = matrix_map(recurrent_back_propagation->recurrent_weight_gradients);
-    TensorMap3 input_gradients_map = tensor_map<3>(recurrent_back_propagation->input_gradients[0]);
-
-    bias_gradients_map.setZero();
-    input_weight_gradients_map.setZero();
-    recurrent_weight_gradients_map.setZero();
-
-    TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
-    TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
-
-    Tensor2 current_error_delta(batch_size, neurons_number);
-    current_error_delta.setZero();
-
-    Tensor2 error_delta_from_next_step(batch_size, neurons_number);
-    error_delta_from_next_step.setZero();
+    MatrixR step_input(batch_size, input_size);
+    MatrixR step_derivatives(batch_size, neurons_number);
+    MatrixR step_prev_hidden(batch_size, neurons_number);
 
     for(Index t = past_time_steps - 1; t >= 0; t--)
     {
         if(t == past_time_steps - 1)
-            current_error_delta.device(get_device()) = external_output_gradients;
+            delta = external_output_gradients;
         else
-            current_error_delta.device(get_device()) = error_delta_from_next_step;
+            delta = next_step_delta;
 
-        Tensor2 der_eval = all_activation_derivatives.chip(t, 1);
-        current_error_delta.device(get_device()) = current_error_delta * der_eval;
+        TensorMap2(step_derivatives.data(), batch_size, neurons_number) = all_activation_derivatives.chip(t, 1);
+        delta.array() *= step_derivatives.array();
 
-        Tensor2 input_eval = input_sequences.chip(t, 1);
-        input_weight_gradients_map.device(get_device()) += input_eval.contract(current_error_delta, axes(0, 0));
+        TensorMap2(step_input.data(), batch_size, input_size) = input_sequences.chip(t, 1);
+        dW_in.noalias() += step_input.transpose() * delta;
 
         if(t > 0)
         {
-            Tensor2 h_prev_eval = all_hidden_states.chip(t - 1, 1);
-            recurrent_weight_gradients_map.device(get_device()) += h_prev_eval.contract(current_error_delta, axes(0, 0));
+            TensorMap2(step_prev_hidden.data(), batch_size, neurons_number) = all_hidden_states.chip(t - 1, 1);
+            dW_rec.noalias() += step_prev_hidden.transpose() * delta;
         }
 
-        bias_gradients_map.device(get_device()) += current_error_delta.sum(array_1(0));
+        d_biases.noalias() += delta.colwise().sum();
 
-        if(!recurrent_back_propagation->is_first_layer)
-            input_gradients_map.chip(t, 1).device(get_device()) = current_error_delta.contract(input_to_hidden_weights_map, axes(1, 1));
+        if(!recurrent_bp->is_first_layer)
+        {
+            MatrixR d_input_step = delta * W_in.transpose();
 
-        if (t > 0)
-            error_delta_from_next_step.device(get_device()) = current_error_delta.contract(hidden_to_hidden_weights_map, axes(1, 1));
+            d_input_seq.chip(t, 1) = TensorMap2(d_input_step.data(), batch_size, input_size);
+        }
+
+        if(t > 0)
+            next_step_delta.noalias() = delta * W_rec.transpose();
     }
 }
 

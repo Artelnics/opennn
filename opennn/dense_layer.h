@@ -683,7 +683,7 @@ public:
         else
         {
             if constexpr(Rank == 2)
-                calculate_activations<Rank>(activation_function, outputs, MatrixMap(empty_2.data(), empty_2.dimensions()));
+                calculate_activations<Rank>(activation_function, outputs, TensorMap2(empty_2.data(), empty_2.dimensions()));
             else if constexpr(Rank == 3)
                 calculate_activations<Rank>(activation_function, outputs, TensorMap3(empty_3.data(), empty_3.dimensions()));
         }

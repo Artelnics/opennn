@@ -259,58 +259,36 @@ pair<VectorR, MatrixR> filter_missing_values_vector_matrix(const VectorR& x, con
 }
 
 
-pair<Tensor2, Tensor2> filter_missing_values_matrix_matrix(const Tensor2& x, const Tensor2& y)
+pair<MatrixR, MatrixR> filter_missing_values_matrix_matrix(const MatrixR& x, const MatrixR& y)
 {
-    const Index rows_number = x.dimension(0);
-    const Index x_columns_number = x.dimension(1);
-    const Index y_columns_number = y.dimension(1);
+    const Index rows_number = x.rows();
+    const Index x_columns_number = x.cols();
+    const Index y_columns_number = y.cols();
 
-    Index new_rows_number = 0;
+    if(x.rows() != y.rows())
+        throw runtime_error("filter_missing_values: Matrices must have the same number of rows.");
 
-    VectorB not_NAN_row(rows_number);
+    vector<Index> valid_indices;
+    valid_indices.reserve(rows_number);
 
     for(Index i = 0; i < rows_number; i++)
     {
-        not_NAN_row(i) = true;
+        const bool x_row_ok = x.row(i).array().isFinite().all();
+        const bool y_row_ok = y.row(i).array().isFinite().all();
 
-        if(isnan(y(i)))
-        {
-            not_NAN_row(i) = false;
-        }
-        else
-        {
-            for(Index j = 0; j < x_columns_number; j++)
-            {
-                if(isnan(x(i, j)))
-                {
-                    not_NAN_row(i) = false;
-                    break;
-                }
-            }
-        }
-
-        if(not_NAN_row(i))
-            new_rows_number++;
+        if(x_row_ok && y_row_ok)
+            valid_indices.push_back(i);
     }
 
-    Tensor2 new_x(new_rows_number, x_columns_number);
+    const Index new_rows_number = static_cast<Index>(valid_indices.size());
+    MatrixR new_x(new_rows_number, x_columns_number);
+    MatrixR new_y(new_rows_number, y_columns_number);
 
-    Tensor2 new_y(new_rows_number, y_columns_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < new_rows_number; i++)
     {
-        if(not_NAN_row(i))
-        {
-            for(Index j = 0; j < y_columns_number; j++)
-                new_y(index, j) = y(i, j);
-
-            for(Index j = 0; j < x_columns_number; j++)
-                new_x(index, j) = x(i, j);
-
-            index++;
-        }
+        const Index original_index = valid_indices[i];
+        new_x.row(i) = x.row(original_index);
+        new_y.row(i) = y.row(original_index);
     }
 
     return {new_x, new_y};

@@ -70,7 +70,7 @@ int main()
 
         optimizer.set_zoom_factor(0.8);
 
-        optimizer.set_threads_number(1);
+        //optimizer.set_threads_number(1);
 
         cout << "\n[Single Objective Experiment] Maximizing Compressive Strength..." << endl;
 
@@ -80,7 +80,7 @@ int main()
 
         optimizer.set_condition("Compressive Strength (28-day)(Mpa)", ResponseOptimization::ConditionType::Maximize);
 
-        Tensor2 single_results = optimizer.perform_response_optimization();
+        MatrixR single_results = optimizer.perform_response_optimization();
 
             cout << "Optimal Recipe for Max Strength:" << endl;
 
@@ -90,7 +90,7 @@ int main()
 
             cout << endl;
 
-            for(Index i=0; i<single_results.dimension(1); ++i)
+            for(Index i=0; i<single_results.cols(); ++i)
                 cout << setw(15) << single_results(0, i);
             cout << endl;
 
@@ -107,9 +107,9 @@ int main()
         optimizer.set_condition("Compressive Strength (28-day)(Mpa)", ResponseOptimization::ConditionType::Maximize);
         optimizer.set_condition("Cement", ResponseOptimization::ConditionType::Minimize);
 
-        Tensor2 pareto_results = optimizer.perform_response_optimization();
+        MatrixR pareto_results = optimizer.perform_response_optimization();
 
-        cout << "Pareto Front (Found " << pareto_results.dimension(0) << " optimal trade-offs):" << endl;
+        cout << "Pareto Front (Found " << pareto_results.rows() << " optimal trade-offs):" << endl;
 
         auto variable_names = dataset.get_variable_names();
 
@@ -118,11 +118,11 @@ int main()
         cout << endl;
 
         // Print first 10 points of the Pareto front
-        Index rows_to_show = min((Index)10, (Index)pareto_results.dimension(0));
+        Index rows_to_show = min((Index)10, (Index)pareto_results.rows());
 
         for(Index i=0; i < rows_to_show; ++i)
         {
-            for(Index j=0; j < pareto_results.dimension(1); ++j)
+            for(Index j=0; j < pareto_results.cols(); ++j)
             {
                 cout << setw(14) << fixed << setprecision(2) << pareto_results(i, j);
             }
@@ -140,10 +140,10 @@ int main()
         file << "\n";
 
         // Write Data
-        for(Index i=0; i < pareto_results.dimension(0); ++i)
+        for(Index i=0; i < pareto_results.rows(); ++i)
         {
-            for(Index j=0; j < pareto_results.dimension(1); ++j)
-                file << pareto_results(i, j) << (j == pareto_results.dimension(1)-1 ? "" : ",");
+            for(Index j=0; j < pareto_results.cols(); ++j)
+                file << pareto_results(i, j) << (j == pareto_results.cols()-1 ? "" : ",");
 
             file << "\n";
         }

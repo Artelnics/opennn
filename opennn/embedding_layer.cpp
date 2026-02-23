@@ -130,9 +130,9 @@ void Embedding::set_parameters_glorot()
     MatrixMap weights_map = matrix_map(weights);
 
     weights_map.setRandom();
-    weights_map.device(get_device()) = weights_map * limit;
+    weights_map *= limit;
 
-    weights_map.chip(0, 0).setZero();
+    weights_map.row(0).setZero();
 }
 
 
@@ -140,45 +140,38 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   bool)
 {
-    const MatrixMap inputs = matrix_map(input_views[0]);
+    const Index batch_size = input_views[0].shape[0];
+    const Index sequence_length = input_views[0].shape[1];
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index total_tokens = batch_size * sequence_length;
 
-    TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
-
-    const Index batch_size = outputs.dimension(0);
-    const Index embedding_dimension = outputs.dimension(2);
-
-    const type coefficient = sqrt(type(get_embedding_dimension()));
-
-    if (outputs.dimension(0) != batch_size)
-        throw runtime_error("Batch size mismatch between inputs and outputs: inputs.dimension(0) = "
-                            + to_string(batch_size) + ", outputs.dimension(0) = " + to_string(outputs.dimension(0)));
+    const type* input_indices = input_views[0].data;
+    MatrixMap outputs_map(layer_forward_propagation->outputs.data, total_tokens, embedding_dimension);
 
     const MatrixMap weights_map = matrix_map(weights);
 
     #pragma omp parallel for
-    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    for(Index i = 0; i < total_tokens; i++)
     {
-        auto sample_output = outputs.chip(sample_index, 0);
+        const Index token_id = static_cast<Index>(input_indices[i]);
 
-        for(Index word_index = 0; word_index < sequence_length; word_index++)
-        {
-            const Index token_id = inputs(sample_index, word_index);
+        if(token_id < 0 || token_id >= weights_map.rows())
+            continue;
 
-            if (token_id < 0 || token_id >= weights.shape[0])
-                throw runtime_error("Invalid token_id \n");
-
-            const auto embedding = weights_map.chip(token_id, 0);
-
-            scale_embedding
-                ? sample_output.chip(word_index, 0) = embedding*coefficient
-                : sample_output.chip(word_index, 0) = embedding;
-        }
+        outputs_map.row(i).noalias() = weights_map.row(token_id);
     }
 
+    if(scale_embedding)
+        outputs_map *= sqrt(static_cast<type>(embedding_dimension));
+
     if(add_positional_encoding)
-        outputs.device(get_device()) += positional_encoding
-                                  .reshape(array_3(1, sequence_length, embedding_dimension))
-                                  .broadcast(array_3(batch_size, 1, 1));
+    {
+        const MatrixMap positional_encoding_map(positional_encoding.data(), sequence_length, embedding_dimension);
+
+        #pragma omp parallel for
+        for(Index b = 0; b < batch_size; b++)
+            outputs_map.block(b * sequence_length, 0, sequence_length, embedding_dimension).noalias() += positional_encoding_map;
+    }
 
     //if(is_training && dropout_rate > 0)
     //    dropout(outputs, dropout_rate);
@@ -193,36 +186,30 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
     const Index embedding_dimension = get_embedding_dimension();
     const Index batch_size = input_views[0].shape[0];
     const Index sequence_length = input_views[0].shape[1];
+    const Index total_elements = batch_size * sequence_length;
 
-    const MatrixMap inputs = matrix_map(input_views[0]);
+    const type* input_indices = input_views[0].data;
 
-    if (output_gradient_views.size() > 1)
+    if(output_gradient_views.size() > 1)
         add_gradients(output_gradient_views);
 
-    TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
+    MatrixMap gradients_map(output_gradient_views[0].data, total_elements, embedding_dimension);
 
-    // Back propagation
+    if(scale_embedding)
+        gradients_map *= sqrt(static_cast<type>(embedding_dimension));
 
-    EmbeddingBackPropagation* embedding_back_propagation =
-        static_cast<EmbeddingBackPropagation*>(back_propagation.get());
-
+    EmbeddingBackPropagation* embedding_back_propagation = static_cast<EmbeddingBackPropagation*>(back_propagation.get());
     MatrixMap weight_gradients = matrix_map(embedding_back_propagation->weight_gradients);
     weight_gradients.setZero();
 
-    if(scale_embedding)
-        output_gradients.device(get_device()) = output_gradients*sqrt(type(embedding_dimension));
-
-    #pragma omp parallel for
-    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    for(Index i = 0; i < total_elements; i++)
     {
-        const auto sample_gradients = output_gradients.chip(sample_index, 0);
+        const Index vocabulary_index = static_cast<Index>(input_indices[i]);
 
-        for(Index word_index = 0; word_index < sequence_length; word_index++)
-            weight_gradients.chip(Index(inputs(sample_index, word_index)), 0)
-                += sample_gradients.chip(word_index, 0);
+        weight_gradients.row(vocabulary_index).noalias() += gradients_map.row(i);
     }
 
-    weight_gradients.chip(0, 0).setZero(); // PAD
+    weight_gradients.row(0).setZero();
 }
 
 
