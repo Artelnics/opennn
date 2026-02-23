@@ -576,7 +576,7 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
 
     if constexpr (rank == 2)
         if (tensor_view.rank() == 4)
-            return MatrixMap(tensor_view.data,
+            return TensorMap2(tensor_view.data,
                               tensor_view.shape[0],
                               tensor_view.size() / tensor_view.shape[0]);
 
@@ -584,9 +584,9 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
         throw runtime_error("Dimensions is " + to_string(tensor_view.rank()) + " and must be " + to_string(rank));
 
     if constexpr (rank == 1)
-        return VectorMap(tensor_view.data, tensor_view.shape[0]);
+        return TensorMap1(tensor_view.data, tensor_view.shape[0]);
     else if constexpr (rank == 2)
-        return MatrixMap(tensor_view.data,
+        return TensorMap2(tensor_view.data,
                           tensor_view.shape[0],
                           tensor_view.shape[1]);
     else if constexpr (rank == 3)

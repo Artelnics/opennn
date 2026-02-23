@@ -232,10 +232,12 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     const MatrixMap projection_weights_map = matrix_map(projection_weights);
     const VectorMap projection_biases_map = vector_map(projection_biases);
 
-    outputs.device(get_device()) =
-        concatenated_attention_outputs.contract(projection_weights_map, axes(2, 0))
-        + projection_biases_map.reshape(array_3(1, 1, embedding_dimension))
-        .broadcast(array_3(batch_size, query_sequence_length, 1));
+    const Index total_rows = batch_size * query_sequence_length;
+
+    const MatrixMap concatenated_map(const_cast<type*>(concatenated_attention_outputs.data()), total_rows, embedding_dimension);
+    MatrixMap outputs_map(outputs.data(), total_rows, embedding_dimension);
+
+    outputs_map.noalias() = (concatenated_map * projection_weights_map).rowwise() + projection_biases_map.transpose();
 }
 
 
@@ -293,13 +295,15 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
     const type scaling_factor = get_scaling_factor();
-    const Index total_heads = batch_size * heads_number;
 
-    projection_weight_gradients.device(get_device()) =
-        concatenated_attention_outputs.reshape(array_2(batch_size * query_sequence_length, embedding_dimension))
-        .contract(delta_Y.reshape(array_2(batch_size * query_sequence_length, embedding_dimension)), axes(0, 0));
+    const Index total_rows = batch_size * query_sequence_length;
 
-    projection_bias_gradients.device(get_device()) = delta_Y.sum(array_2(0, 1));
+    const MatrixMap concatenated_map(const_cast<type*>(concatenated_attention_outputs.data()), total_rows, embedding_dimension);
+    const MatrixMap delta_Y_map(const_cast<type*>(delta_Y.data()), total_rows, embedding_dimension);
+
+    projection_weight_gradients.noalias() = concatenated_map.transpose() * delta_Y_map;
+
+    projection_bias_gradients.noalias() = delta_Y_map.colwise().sum();
 /*
     concatenated_attention_output_gradients.device(get_device()) =
         delta_Y.contract(projection_weights, axes(2, 1));
@@ -373,53 +377,44 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
 void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
 {
-    // @todo
+    const Index batch_size = attention_scores.dimension(0);
+    const Index heads = attention_scores.dimension(1);
+    const Index query_sequence_length = attention_scores.dimension(2);
+    const Index source_sequence_length = attention_scores.dimension(3);
 
-    const Index batch_size = attention_scores.dimension(2);
+    const Index matrix_size = query_sequence_length * source_sequence_length;
 
-    const Index context_input_size = source_sequence_length * query_sequence_length;
+    const Index total_matrices = batch_size * heads;
 
-    for(Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            type* sample_attention_scores_data = attention_scores.data()
-             + (sample_index + head_index * batch_size) * context_input_size;
+    MatrixMap scores(attention_scores.data(), total_matrices, matrix_size);
 
-             MatrixMap sample_attention_scores(sample_attention_scores_data,
-                                                source_sequence_length,
-                                                query_sequence_length);
+    const VectorMap causal_mask_map(const_cast<type*>(causal_mask.data()), matrix_size);
 
-             sample_attention_scores.device(get_device()) += causal_mask;
-         }
-    }
+    scores.rowwise() += causal_mask_map.transpose();
 }
 
 
 void MultiHeadAttention::apply_key_padding_mask(const MatrixB& key_padding_mask,
                                                 Tensor4& attention_weights) const
 {
-/*
-    // @todo (I don't know if it is building the mask correctly)
-    const Index batch_size  = attention_weights.dimension(2);
+    if (key_padding_mask.size() == 0) return;
 
-    Tensor2 key_padding_mask_type(key_padding_mask.rows(),key_padding_mask.cols());
+    const Index batch_size = attention_weights.dimension(0);
+    const Index heads = attention_weights.dimension(1);
+    const Index query_sequence_length = attention_weights.dimension(2);
+    const Index source_sequence_length = attention_weights.dimension(3);
 
-    for(Index h = 0; h < heads_number; ++h)
+    const Index rows_per_batch = heads * query_sequence_length;
+    const type mask_penalty = type(-1e9);
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; ++b)
     {
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            MatrixMap head_sample_attention_weights = tensor_map(attention_weights,h,b);
+        type* batch_data = attention_weights.data() + (b * rows_per_batch * source_sequence_length);
+        MatrixMap batch_map(batch_data, rows_per_batch, source_sequence_length);
 
-            head_sample_attention_weights.device(get_device())
-                += key_padding_mask.row(b)
-                       .cast<type>()
-                       .reshape(array<Index,2>{source_sequence_length, 1})
-                       .broadcast(array<Index,2>{1, query_sequence_length})
-                   * type(-10e9);
-        }
+        batch_map.rowwise() += key_padding_mask.row(b).template cast<type>() * mask_penalty;
     }
-*/
 }
 
 

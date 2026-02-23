@@ -351,24 +351,22 @@ void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
     const Index height = input.dimension(0);
     const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
-    const Index input_size = height*width;
 
-    const Index limit_column = width - shift;
+    if (shift >= width) return;
 
-    for(Index i = 0; i < limit_column * channels; i++)
+    const Index channel_size = height * width;
+    const Index remaining_width = width - shift;
+
+    #pragma omp parallel for
+    for (Index c = 0; c < channels; ++c)
     {
-        const Index channel = i % channels;
-        const Index variable = i / channels;
+        const type* input_channel = input.data() + (c * channel_size);
+        type* output_channel = output.data() + (c * channel_size) + (shift * height);
 
-        const TensorMap<const Tensor2> input_column_map(input.data() + variable*height + channel*input_size,
-                                                                height,
-                                                                1);
+        MatrixMap output_block(output_channel, height, remaining_width);
+        const MatrixMap input_block(const_cast<type*>(input_channel), height, remaining_width);
 
-        MatrixMap output_column_map(output.data() + (variable + shift)*height + channel*input_size,
-                                                     height,
-                                                     1);
-
-        output_column_map = input_column_map;
+        output_block.noalias() = input_block;
     }
 }
 

@@ -152,12 +152,12 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
     constexpr type epsilon = numeric_limits<type>::epsilon();
 
     // Parameters derivatives
-
+/*
     gamma_derivatives.device(get_device()) = (outputs * output_gradients).sum(array<Index, 2>({0, 1}));
     beta_derivatives.device(get_device()) = output_gradients.sum(array<Index, 2>({0, 1}));
 
     // Input derivatives
-/*
+
     scaled_gradients.device(get_device()) = output_gradients;
     multiply_matrices(get_device(), scaled_gradients, gammas);
 
