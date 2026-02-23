@@ -465,7 +465,7 @@ void Pooling::forward_propagate(const vector<TensorViewCuda>& inputs,
 
     // Pooling
 
-    CHECK_CUDNN(cudnnPoolingForward(cudnn_handle,
+    CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
         pooling_descriptor,
         &alpha,
         input_tensor_descriptor,
@@ -496,7 +496,7 @@ void Pooling::back_propagate(const vector<TensorViewCuda>& inputs,
 
     // Pooling
 
-    CHECK_CUDNN(cudnnPoolingBackward(cudnn_handle,
+    CHECK_CUDNN(cudnnPoolingBackward(get_cudnn_handle(),
         pooling_descriptor,
         &alpha,
         outputs.get_descriptor(),

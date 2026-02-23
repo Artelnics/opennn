@@ -243,9 +243,9 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
 {
     const Index old_size = neurons_number_history.size();
 
-    const Tensor<Index, 1> old_neurons_number_history(neurons_number_history);
-    const Tensor1 old_training_error_history(training_error_history);
-    const Tensor1 old_validation_error_history(validation_error_history);
+    const VectorI old_neurons_number_history(neurons_number_history);
+    const VectorR old_training_error_history(training_error_history);
+    const VectorR old_validation_error_history(validation_error_history);
 
     neurons_number_history.resize(new_size);
     training_error_history.resize(new_size);

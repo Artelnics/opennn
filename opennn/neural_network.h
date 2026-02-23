@@ -26,8 +26,6 @@ struct NeuralNetworkBackPropagationCuda;
 
 struct ForwardPropagation
 {
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     ForwardPropagation(const Index = 0, NeuralNetwork* = nullptr);
 
     void set(const Index = 0, NeuralNetwork* = nullptr);
@@ -48,7 +46,7 @@ struct ForwardPropagation
 
     vector<unique_ptr<LayerForwardPropagation>> layers;
 
-    Tensor1 workspace;
+    VectorR workspace;
 };
 
 
@@ -94,8 +92,6 @@ class NeuralNetwork
 
 public:
 
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     NeuralNetwork();
 
     NeuralNetwork(const filesystem::path&);
@@ -117,7 +113,7 @@ public:
 
     bool is_empty() const;
 
-    Tensor1& get_parameters()
+    VectorR& get_parameters()
     {
         return parameters;
     }
@@ -167,8 +163,6 @@ public:
 
     void set_default();
 
-    void set_threads_number(const int&);
-
     void set_display(bool);
 
     void set_input_vocabulary(const vector<string>&);
@@ -196,7 +190,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const Tensor1&);
+    void set_parameters(const VectorR&);
 
     // Parameters initialization
 
@@ -204,7 +198,7 @@ public:
     void set_parameters_glorot();
 
     // Output
-
+/*
     template <Index input_rank, Index output_rank>
     Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
     {
@@ -238,10 +232,10 @@ public:
                 if (reinterpret_cast<uintptr_t>(output_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
                     throw runtime_error("tensor_map alignment error: Pointer is not aligned.");
 
-                return TensorMap2(output_view.data, batch_size, features);
+                return MatrixMap(output_view.data, batch_size, features);
             }
 
-            return tensor_map<2>(output_view);
+            return matrix_map(output_view);
         }
         else if constexpr (output_rank == 3)
            return tensor_map<3>(output_view);
@@ -252,16 +246,22 @@ public:
 
         return Tensor<type, output_rank>();
     }
+*/
+    Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
-    Tensor3 calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2);
+    TensorView run_internal_forward_propagation(const type*, const Shape&);
 
-    Tensor2 calculate_scaled_outputs(type*, Tensor<Index, 1>& );
+    MatrixR calculate_outputs(const MatrixR&);
 
-    Tensor2 calculate_directional_inputs(const Index, const Tensor1&, type, type, Index = 101) const;
+    MatrixR calculate_outputs(const Tensor3&);
+
+    MatrixR calculate_outputs(const Tensor4&);
+
+    MatrixR calculate_directional_inputs(const Index, const VectorR&, type, type, Index = 101) const;
 
     Index calculate_image_output(const filesystem::path&);
 
-    Tensor2 calculate_text_outputs(const Tensor<string, 1>& input_documents) const;
+    MatrixR calculate_text_outputs(const Tensor<string, 1>&);
 
     // Serialization
 
@@ -284,7 +284,7 @@ public:
     vector<string> get_layer_labels() const;
     vector<string> get_names_string() const;
 
-    void save_outputs(Tensor2&, const filesystem::path&);
+    void save_outputs(MatrixR&, const filesystem::path&);
     void save_outputs(Tensor3&, const filesystem::path&);
 
     void forward_propagate(const vector<TensorView>&,
@@ -292,7 +292,7 @@ public:
                           bool = false) const;
 
     void forward_propagate(const vector<TensorView>&,
-                          const Tensor1&,
+                          const VectorR&,
                           ForwardPropagation&);
 
     string get_expression() const;
@@ -300,9 +300,6 @@ public:
 #ifdef OPENNN_CUDA
 
 public:
-
-    void create_cuda() const;
-    void destroy_cuda() const;
 
     TensorCuda& get_parameters_device();
 
@@ -319,9 +316,6 @@ public:
     TensorViewCuda calculate_outputs(TensorViewCuda, Index);
 
 protected:
-
-    cublasHandle_t cublas_handle;
-    cudnnHandle_t cudnn_handle;
 
     TensorCuda parameters_device;
 
@@ -344,7 +338,7 @@ protected:
 
     bool display = true;
 
-    Tensor1 parameters;
+    VectorR parameters;
 };
 
 
@@ -368,10 +362,10 @@ struct NeuralNetworkBackPropagation
 
     vector<unique_ptr<LayerBackPropagation>> layers;
 
-    Tensor1 gradient;
+    VectorR gradient;
 
     // @todo
-    //Tensor1 input_gradients;
+    //VectorR input_gradients;
 };
 
 
@@ -423,7 +417,7 @@ struct NeuralNetworkBackPropagationLM
 
     vector<unique_ptr<LayerBackPropagationLM>> layers;
 
-    Tensor1 workspace;
+    VectorR workspace;
 };
 
 }

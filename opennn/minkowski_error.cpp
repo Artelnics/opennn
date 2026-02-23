@@ -52,28 +52,24 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      BackPropagation& back_propagation) const
 {
     // Batch
-
     const Index samples_number = batch.get_samples_number();
-
-    const TensorView targets_view = batch.get_targets();
-
-    const TensorMap2 targets = tensor_map<2>(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
-
     const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
+    const MatrixMap outputs = matrix_map(outputs_view);
 
-    const TensorMap2 outputs = tensor_map<2>(outputs_view);
+    MatrixR& errors = back_propagation.errors;
 
-    Tensor2& errors = back_propagation.errors;
+    errors = outputs - targets;
 
-    Tensor<type, 0>& error = back_propagation.error;
+    const type epsilon = numeric_limits<type>::epsilon();
 
-    errors.device(*device) = outputs - targets + numeric_limits<type>::epsilon();
+    const type minkowski_sum = (errors.array().abs() + epsilon).pow(minkowski_parameter).sum();
 
-    error.device(*device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
+    back_propagation.error = minkowski_sum / static_cast<type>(samples_number);
 
-    if(isnan(error())) throw runtime_error("\nError is NAN.");
+    if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -85,14 +81,14 @@ void MinkowskiError::calculate_output_gradients(const Batch& batch,
 
     const TensorView output_gradient_views = back_propagation.get_output_gradients();
 
-    TensorMap2 output_gradients = tensor_map<2>(output_gradient_views);
+    MatrixMap output_gradients = matrix_map(output_gradient_views);
 
-    const Tensor2& errors = back_propagation.errors;
+    const MatrixR& errors = back_propagation.errors;
 
-    const type coefficient = type(1.0 / samples_number);
+    const type epsilon = numeric_limits<type>::epsilon();
 
-    output_gradients.device(*device) = errors*((errors.abs() + numeric_limits<type>::epsilon())
-                                           .pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+    output_gradients.array() = errors.array()
+        * (errors.array().abs() + epsilon).pow(minkowski_parameter - 2.0f)/ samples_number;
 }
 
 

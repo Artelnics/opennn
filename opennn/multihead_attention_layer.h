@@ -71,10 +71,10 @@ public:
         const Index embed_dim = get_embedding_dimension();
         const Index h_dim = get_head_dimension();
 
-        const TensorMap2 W = tensor_map<2>(weights);
-        const TensorMap1 B = tensor_map<1>(biases);
+        const MatrixMap W = matrix_map(weights);
+        const VectorMap B = vector_map(biases);
 
-        output.device(*device) =
+        output.device(get_device()) =
             (inputs.reshape(array_2(batch_size * sequence_length, embed_dim))
                  .contract(W, axes(1, 0))
              + B.reshape(array_2(1, embed_dim))
@@ -86,8 +86,8 @@ public:
     void calculate_projection_gradient(const Tensor4& d_head,
                                        const TensorMap3 input,
                                        const TensorView& weights,
-                                       TensorMap1 d_bias,
-                                       TensorMap2 d_weights,
+                                       VectorMap d_bias,
+                                       MatrixMap d_weights,
                                        TensorMap3 d_input,
                                        Index batch_size,
                                        bool accumulate) const
@@ -95,7 +95,7 @@ public:
         const Index embedding_dimension = get_embedding_dimension();
 
         // Map parameters view to Eigen TensorMap for calculation
-        const TensorMap2 W = tensor_map<2>(weights);
+        const MatrixMap W = matrix_map(weights);
 
         // Reinterpret 4D head gradients as 3D [Batch, Sequence, Embedding]
         // const_cast is required because TensorMap constructor expects non-const pointer,
@@ -106,17 +106,17 @@ public:
 
         // Calculate Gradients
         // dW = Input^T * Delta
-        d_weights.device(*device) = input.reshape(flat_dims).contract(d_reshaped.reshape(flat_dims), axes(0, 0));
+        d_weights.device(get_device()) = input.reshape(flat_dims).contract(d_reshaped.reshape(flat_dims), axes(0, 0));
 
         // db = Sum(Delta)
-        d_bias.device(*device) = d_reshaped.sum(array_2(0, 1));
+        d_bias.device(get_device()) = d_reshaped.sum(array_2(0, 1));
 
         // Calculate Input Delta (Error signal to previous layer)
         // dX = Delta * W^T
         if (accumulate)
-            d_input.device(*device) += d_reshaped.contract(W, axes(2, 1));
+            d_input.device(get_device()) += d_reshaped.contract(W, axes(2, 1));
         else
-            d_input.device(*device) = d_reshaped.contract(W, axes(2, 1));
+            d_input.device(get_device()) = d_reshaped.contract(W, axes(2, 1));
     }
 
     void print() const override;
@@ -124,7 +124,7 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    void apply_key_padding_mask(const Tensor<bool, 2>&,Tensor4&) const;
+    void apply_key_padding_mask(const MatrixB&,Tensor4&) const;
 
 #ifdef OPENNN_CUDA
         // @todo
@@ -207,7 +207,7 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
     TensorView value_bias_gradients;
     TensorView projection_bias_gradients;
 
-    Tensor1 aux_rows;
+    VectorR aux_rows;
 
 //    Tensor3 input_query_gradients;
 //    Tensor3 input_source_gradients;

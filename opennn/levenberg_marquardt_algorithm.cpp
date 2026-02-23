@@ -260,7 +260,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         loss_index->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-        results.training_error_history(epoch) = training_back_propagation.error();
+        results.training_error_history(epoch) = training_back_propagation.error;
 
         if(has_validation)
         {
@@ -271,7 +271,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
             loss_index->calculate_error(validation_batch, validation_forward_propagation, validation_back_propagation);
 
-            results.validation_error_history(epoch) = validation_back_propagation.error();
+            results.validation_error_history(epoch) = validation_back_propagation.error;
 
             if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
                 validation_failures++;
@@ -359,16 +359,16 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    Tensor1& parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
 
-    type& error = back_propagation_lm.error();
+    type& error = back_propagation_lm.error;
     type& loss = back_propagation_lm.loss;
 
-    const Tensor1& gradient = back_propagation_lm.gradient;
-    Tensor2& hessian = back_propagation_lm.hessian;
+    const VectorR& gradient = back_propagation_lm.gradient;
+    MatrixR& hessian = back_propagation_lm.hessian;
 
-    Tensor1& potential_parameters = optimization_data.potential_parameters;
-    Tensor1& parameter_updates = optimization_data.parameter_updates;
+    VectorR& potential_parameters = optimization_data.potential_parameters;
+    VectorR& parameter_updates = optimization_data.parameter_updates;
 
     const Index parameters_number = parameters.size();
 
@@ -376,11 +376,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     do
     {
-        sum_diagonal(hessian, damping_parameter);
+        hessian.diagonal().array() += damping_parameter;
 
         parameter_updates = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
 
-        potential_parameters.device(*device) = parameters + parameter_updates;
+        potential_parameters = parameters + parameter_updates;
 
         neural_network->forward_propagate(batch.get_inputs(),
                                           potential_parameters,
@@ -417,7 +417,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         }
         else
         {
-            sum_diagonal(hessian, -damping_parameter);
+            hessian.diagonal().array() -= damping_parameter;
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
@@ -518,7 +518,7 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     //parameters.resize(parameters_number);
     old_parameters.resize(parameters_number);
 
-    parameters_difference.resize(parameters_number);
+    parameter_differences.resize(parameters_number);
 
     potential_parameters.resize(parameters_number);
     parameter_updates.resize(parameters_number);

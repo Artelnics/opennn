@@ -79,7 +79,7 @@ bool random_bool(type probability)
 }
 
 
-void set_random_uniform(Tensor1& tensor, type min, type max)
+void set_random_uniform(VectorR& tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
 
@@ -89,7 +89,7 @@ void set_random_uniform(Tensor1& tensor, type min, type max)
 }
 
 
-void set_random_uniform(Tensor2& tensor, type min, type max)
+void set_random_uniform(MatrixR& tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
 
@@ -99,7 +99,7 @@ void set_random_uniform(Tensor2& tensor, type min, type max)
 }
 
 
-void set_random_uniform(TensorMap1 tensor, type min, type max)
+void set_random_uniform(VectorMap tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
 
@@ -109,7 +109,7 @@ void set_random_uniform(TensorMap1 tensor, type min, type max)
 }
 
 
-void set_random_uniform(TensorMap2 tensor, type min, type max)
+void set_random_uniform(MatrixMap tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
 
@@ -152,20 +152,16 @@ void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
 }
 
 
-template<typename T>
-void shuffle_tensor(Tensor<T, 1>& vec)
+void shuffle(VectorB& v)
 {
-    shuffle(vec.data(), vec.data() + vec.size(), get_generator());
+    shuffle(v.data(), v.data() + v.size(), get_generator());
 }
-
-template void shuffle_tensor<bool>(Tensor<bool, 1>&);
 
 
 Index get_random_element(const vector<Index>&values)
 {
     if (values.empty())
         throw runtime_error("get_random_element: Input vector is empty.");
-
 
     uniform_int_distribution<size_t> distribution(0, values.size() - 1);
 
@@ -176,6 +172,16 @@ Index get_random_element(const vector<Index>&values)
 
 
 void set_random_integer(Tensor2& tensor, Index min, Index max)
+{
+    uniform_int_distribution<Index> distribution(min, max);
+
+#pragma omp parallel for
+    for(Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(get_generator());
+}
+
+
+void set_random_integer(MatrixR &tensor, Index min, Index max)
 {
     uniform_int_distribution<Index> distribution(min, max);
 

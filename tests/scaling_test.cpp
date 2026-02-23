@@ -94,9 +94,9 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 {
     Index samples_number = 10 + rand() % 10;
 
-    Tensor2 matrix(samples_number, 1);
-    Tensor2 scaled_matrix;
-    Tensor2 solution_matrix;
+    MatrixR matrix(samples_number, 1);
+    MatrixR scaled_matrix;
+    MatrixR solution_matrix;
 
     matrix.setRandom();
 
@@ -108,7 +108,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
     scaled_matrix = dataset.get_data();
 
-    solution_matrix.resize(matrix.dimension(0),1);
+    solution_matrix.resize(matrix.rows(),1);
 
     for(Index i = 0; i < matrix.size() ; i++)
         solution_matrix(i) = log(matrix(i));

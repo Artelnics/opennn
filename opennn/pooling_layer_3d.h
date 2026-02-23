@@ -59,7 +59,7 @@ struct Pooling3dForwardPropagation final : LayerForwardPropagation
 
     void initialize() override;
 
-    Tensor<Index, 2> maximal_indices;
+    MatrixI maximal_indices;
 };
 
 

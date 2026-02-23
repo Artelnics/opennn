@@ -92,7 +92,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
     const Tensor1 gradient_lm = normalized_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient_lm, numerical_gradient_lm, type(1.0e-3)), true);
-    EXPECT_NEAR(back_propagation_lm.error(), back_propagation.error(), type(1.0e-3));
+    EXPECT_NEAR(back_propagation_lm.error, back_propagation.error, type(1.0e-3));
     EXPECT_TRUE(are_equal(back_propagation_lm.gradient, numerical_gradient_lm, type(1e-2)));
     EXPECT_TRUE(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian_lm, type(1e-2)));
     Tensor2 expected_hessian_gn = numerical_jacobian_lm.contract(numerical_jacobian_lm, axes(0, 0));

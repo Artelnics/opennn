@@ -74,7 +74,7 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
 {
     const TensorMap3 inputs = tensor_map<3>(input_views[0]);
 
-    TensorMap2 outputs = tensor_map<2>(layer_forward_propagation->outputs);
+    MatrixMap outputs = matrix_map(layer_forward_propagation->outputs);
 
     Pooling3dForwardPropagation* pooling_forward_propagation =
         static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
@@ -87,7 +87,7 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
 
     if (pooling_method == PoolingMethod::MaxPooling)
     {
-        Tensor<Index, 2>& maximal_indices = pooling_forward_propagation->maximal_indices;
+        MatrixI& maximal_indices = pooling_forward_propagation->maximal_indices;
 
 #pragma omp parallel for
         for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
@@ -114,7 +114,7 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        outputs.device(*device) =
+        outputs.device(get_device()) =
             inputs.mean(array_1(1))
                 .reshape(array_2(batch_size, features));
     }
@@ -127,7 +127,7 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap3 input_tensor_map  = tensor_map<3>(input_views[0]);
-    const TensorMap2 delta_tensor_map  = tensor_map<2>(output_gradient_views[0]);
+    const MatrixMap delta_tensor_map  = matrix_map(output_gradient_views[0]);
 
     Pooling3dForwardPropagation* forward_layer  =
         static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
@@ -156,7 +156,7 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        backward_layer->input_derivatives.device(*device) +=
+        backward_layer->input_derivatives.device(get_device()) +=
             delta_tensor_map.reshape(array_3(batch_size, 1, number_of_features))
                 .broadcast(array_3(1, sequence_length, 1))
             / static_cast<type>(sequence_length);

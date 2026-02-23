@@ -13,6 +13,7 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
+
 namespace opennn
 {
 
@@ -116,7 +117,7 @@ public:
 
     // Samples get
 
-    inline Index get_samples_number() const {return data.dimension(0);}
+    inline Index get_samples_number() const {return data.rows();}
 
     Index get_samples_number(const string&) const;
 
@@ -131,7 +132,7 @@ public:
 
     vector<Index> get_sample_roles_vector() const;
 
-    Tensor<Index, 1> get_sample_role_numbers() const;
+    VectorI get_sample_role_numbers() const;
 
     inline Index get_variables_number() const { return variables.size(); }
     Index get_variables_number(const string&) const;
@@ -178,25 +179,24 @@ public:
 
     virtual vector<vector<Index>> get_batches(const vector<Index>&, Index, bool) const;
 
-    const Tensor2& get_data() const;
-    Tensor2* get_data_p();
-    Tensor2 get_data_samples(const string&) const;
-    Tensor2 get_feature_data(const string&) const;
-    Tensor2 get_data(const string&, const string&) const;
-    Tensor2 get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
+    const MatrixR& get_data() const;
+    MatrixR get_data_samples(const string&) const;
+    MatrixR get_feature_data(const string&) const;
+    MatrixR get_data(const string&, const string&) const;
+    MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
-    Tensor1 get_sample_data(const Index) const;
-    Tensor1 get_sample_data(const Index, const vector<Index>&) const;
-    Tensor2 get_sample_input_data(const Index) const;
-    Tensor2 get_sample_target_data(const Index) const;
+    VectorR get_sample_data(const Index) const;
+    VectorR get_sample_data(const Index, const vector<Index>&) const;
+    MatrixR get_sample_input_data(const Index) const;
+    MatrixR get_sample_target_data(const Index) const;
 
-    Tensor2 get_variable_data(const Index) const;
-    Tensor2 get_variable_data(const Index, const vector<Index>&) const;
-    //Tensor2 get_variable_data(const Tensor<Index, 1>&) const;
-    Tensor2 get_variable_data(const string&) const;
+    MatrixR get_variable_data(const Index) const;
+    MatrixR get_variable_data(const Index, const vector<Index>&) const;
+    //Tensor2 get_variable_data(const VectorI&) const;
+    MatrixR get_variable_data(const string&) const;
 
     string get_sample_category(const Index, Index) const;
-    Tensor1 get_sample(const Index) const;
+    VectorR get_sample(const Index) const;
 
     const vector<vector<string>>& get_data_file_preview() const;
 
@@ -248,8 +248,6 @@ public:
     void set(const filesystem::path&);
 
     void set_default();
-
-    void set_threads_number(const int&);
 
     // Samples set
 
@@ -303,7 +301,7 @@ public:
 
     // Dataset
 
-    void set_data(const Tensor2&);
+    void set_data(const MatrixR&);
 
     // Members set
 
@@ -350,7 +348,7 @@ public:
 
     // Unusing
 
-    //Tensor<Index, 1> unuse_repeated_samples();
+    //VectorI unuse_repeated_samples();
 
     vector<string> unuse_uncorrelated_variables(const type = type(0.25));
     vector<string> unuse_collinear_variables(const type = type(0.95));
@@ -372,9 +370,9 @@ public:
 
     vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
-    //Tensor1 calculate_used_variables_minimums() const;
+    //VectorR calculate_used_variables_minimums() const;
 
-    Tensor1 calculate_means(const string& , const string&) const;
+    VectorR calculate_means(const string& , const string&) const;
 
     Index calculate_used_negatives(const Index) const;
     Index calculate_negatives(const Index, const string&) const;
@@ -402,7 +400,7 @@ public:
     Tensor<Correlation, 2> calculate_input_target_variable_pearson_correlations() const;
     Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
-    Tensor<Index, 1> calculate_correlations_rank() const;
+    VectorI calculate_correlations_rank() const;
 
     void print_input_target_variables_correlations() const;
 
@@ -410,7 +408,7 @@ public:
 
     // Filtering
 
-    Tensor<Index, 1> filter_data(const Tensor1&, const Tensor1&);
+    VectorI filter_data(const VectorR&, const VectorR&);
 
     // Scaling2d
 
@@ -428,7 +426,7 @@ public:
 
     // Classification
 
-    Tensor<Index, 1> calculate_target_distribution() const;
+    VectorI calculate_target_distribution() const;
 
     // Tuckey outlier detection
 
@@ -487,7 +485,7 @@ public:
     void scrub_missing_values();
     void calculate_missing_values_statistics();
 
-    Tensor<Index, 1> count_nans_per_variable() const;
+    VectorI count_nans_per_variable() const;
     Index count_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
@@ -535,13 +533,9 @@ public:
 
 protected:
 
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
-
     // DATA
 
-    Tensor2 data;
+    MatrixR data;
 
     // Dimensions
 
@@ -567,7 +561,7 @@ protected:
 
     string missing_values_label = "NA";
 
-    Tensor<bool, 1> nans_variables;
+    VectorB nans_variables;
 
     bool has_header = false;
 
@@ -585,7 +579,7 @@ protected:
 
     Index missing_values_number = 0;
 
-    Tensor<Index, 1> variables_missing_values_number;
+    VectorI variables_missing_values_number;
 
     Index rows_missing_values_number = 0;
 
@@ -636,16 +630,13 @@ struct Batch
     Dataset* dataset = nullptr;
 
     Shape input_shape;
-    Tensor1 input_tensor;
+    VectorR input_tensor;
 
     Shape decoder_shape;
-    Tensor1 decoder_tensor;
+    VectorR decoder_tensor;
 
     Shape target_shape;
-    Tensor1 target_tensor;
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
+    VectorR target_tensor;
 };
 
 

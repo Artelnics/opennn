@@ -51,7 +51,7 @@ TEST(GeneticAlgorithmTest, InitializePopulationRandom)
 
     genetic_algorithm.initialize_population_random();
     
-    Tensor<bool, 2> population = genetic_algorithm.get_population();
+    MatrixB population = genetic_algorithm.get_population();
 
     EXPECT_EQ(population.dimension(0), individuals_number);
     EXPECT_EQ(population.dimension(1), inputs_number);
@@ -120,7 +120,7 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
     genetic_algorithm.set_maximum_inputs_number(max_features_to_select);
     genetic_algorithm.initialize_population_correlations();
 
-    Tensor<bool, 2> population = genetic_algorithm.get_population();
+    MatrixB population = genetic_algorithm.get_population();
 
     EXPECT_EQ(population.dimension(0), individuals_number);
     EXPECT_EQ(population.dimension(1), inputs_number);
@@ -191,7 +191,7 @@ TEST(GeneticAlgorithmTest, Selection)
     for (int i = 0; i < num_trials; ++i) {
         genetic_algorithm.perform_selection();
 
-        Tensor<bool, 1> current_selection = genetic_algorithm.get_selection();
+        VectorB current_selection = genetic_algorithm.get_selection();
 
         ASSERT_EQ(current_selection.dimension(0), individuals_number);
 
@@ -211,7 +211,7 @@ TEST(GeneticAlgorithmTest, Selection)
 
     genetic_algorithm.perform_selection();
 
-    Tensor<bool, 1> selection_with_elitism = genetic_algorithm.get_selection();
+    VectorB selection_with_elitism = genetic_algorithm.get_selection();
 
     EXPECT_TRUE(selection_with_elitism(2));
 }
@@ -231,23 +231,23 @@ TEST(GeneticAlgorithmTest, Crossover)
     genetic_algorithm.set_individuals_number(individuals_number);
     genetic_algorithm.set_elitism_size(elitism_size);
     
-    Tensor<bool, 2> initial_population(individuals_number, inputs_number);
+    MatrixB initial_population(individuals_number, inputs_number);
     initial_population.setValues({ {true, true, true, true, true, true, true, true},
                                    {false, false, false, false, false, false, false, false},
                                    {false, false, false, false, false, false, false, false},
                                    {false, false, false, false, false, false, false, false} });
     genetic_algorithm.set_population(initial_population);
     
-    Tensor<bool, 1> forced_selection(individuals_number);
+    VectorB forced_selection(individuals_number);
     forced_selection.setValues({false, true, false, true}); 
     genetic_algorithm.set_selection(forced_selection); 
 
     genetic_algorithm.perform_crossover();
 
-    Tensor<bool, 2> new_population = genetic_algorithm.get_population();
-    const Tensor<bool, 1> child = new_population.chip(0, 0);
-    const Tensor<bool, 1> parent1 = initial_population.chip(0, 0);
-    const Tensor<bool, 1> parent2 = initial_population.chip(1, 0);
+    MatrixB new_population = genetic_algorithm.get_population();
+    const VectorB child = new_population.chip(0, 0);
+    const VectorB parent1 = initial_population.chip(0, 0);
+    const VectorB parent2 = initial_population.chip(1, 0);
 
     bool is_valid_crossover = true;
     bool is_clone_p1 = true;
@@ -282,14 +282,14 @@ TEST(GeneticAlgorithmTest, Mutation)
     genetic_algorithm.set_individuals_number(individuals_number);
     genetic_algorithm.set_maximum_inputs_number(inputs_number);
 
-    Tensor<bool, 2> population(individuals_number, inputs_number);
+    MatrixB population(individuals_number, inputs_number);
     population.setRandom();
-    Tensor<bool, 2> original_population = population;
+    MatrixB original_population = population;
     genetic_algorithm.set_population(original_population);
 
     genetic_algorithm.set_mutation_rate(0.0);
     genetic_algorithm.perform_mutation();
-    Tensor<bool, 2> mutated_population_zero_rate = genetic_algorithm.get_population();
+    MatrixB mutated_population_zero_rate = genetic_algorithm.get_population();
 
     bool are_equal = true;
     for (Index i = 0; i < individuals_number; ++i) 
@@ -310,7 +310,7 @@ TEST(GeneticAlgorithmTest, Mutation)
     genetic_algorithm.set_population(original_population);
     genetic_algorithm.set_mutation_rate(0.5);
     genetic_algorithm.perform_mutation();
-    Tensor<bool, 2> mutated_population_high_rate = genetic_algorithm.get_population();
+    MatrixB mutated_population_high_rate = genetic_algorithm.get_population();
 
     Index mutated_genes = 0;
     for (Index i = 0; i < individuals_number; i++)

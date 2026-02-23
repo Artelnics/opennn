@@ -889,7 +889,11 @@ string Transformer::calculate_outputs(const string& source)
         // GREEDY SELECTION:
         // The prediction for the "next" word is found at the output of the current word's index.
         // We look at the distribution for position i-1 to pick word for position i.
-        const Tensor1 current_distribution = probabilities.chip(0, 0).chip(i - 1, 0);
+        //const VectorR current_distribution = probabilities.chip(0, 0).chip(i-1, 0);
+
+        type* distribution_ptr = output_view.data + (i - 1) * vocabulary_size;
+
+        const Map<const VectorR> current_distribution(distribution_ptr, vocabulary_size);
 
         const Index best_id = maximal_index(current_distribution);
 

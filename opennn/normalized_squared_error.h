@@ -26,11 +26,9 @@ public:
 
     void set_default();
 
-    void set_dataset(const Dataset* new_dataset) override;
+    void set_dataset(const Dataset*) override;
 
-    type calculate_normalization_coefficient(const Tensor2&, const Tensor1&) const;
-
-    type calculate_time_series_normalization_coefficient(const Tensor2&, const Tensor2&) const;
+    type calculate_normalization_coefficient(const MatrixR&, const VectorR&) const;
 
     void calculate_error(const Batch&,
                          const ForwardPropagation&,

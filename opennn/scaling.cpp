@@ -13,29 +13,18 @@ namespace opennn
 {
 
 
-void scale_mean_standard_deviation(TensorMap2 matrix,
+void scale_mean_standard_deviation(MatrixMap matrix,
                                    Index column_index,
                                    const Descriptives& column_descriptives)
 {
-    const type mean = column_descriptives.mean;
-    const type standard_deviation = column_descriptives.standard_deviation;
-
-    if(standard_deviation > NUMERIC_LIMITS_MIN)
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < matrix.dimension(0); i++)
-            matrix(i, column_index) = (matrix(i, column_index) - mean) / standard_deviation;
-    }
+    if(column_descriptives.standard_deviation > NUMERIC_LIMITS_MIN)
+        matrix.col(column_index).array() = (matrix.col(column_index).array() - column_descriptives.mean) / column_descriptives.standard_deviation;
     else
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < matrix.dimension(0); i++)
-            matrix(i, column_index) = type(0);
-    }
+        matrix.col(column_index).setZero();
 }
 
 
-void scale_standard_deviation(TensorMap2 matrix,
+void scale_standard_deviation(MatrixMap matrix,
                               Index column_index,
                               const Descriptives& column_descriptives)
 {
@@ -44,12 +33,12 @@ void scale_standard_deviation(TensorMap2 matrix,
         : type(0);
 
     #pragma omp parallel for
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) = (matrix(i, column_index)) * slope;
 }
 
 
-void scale_minimum_maximum(TensorMap2 matrix,
+void scale_minimum_maximum(MatrixMap matrix,
                            Index column_index,
                            const Descriptives& column_descriptives,
                            type min_range,
@@ -65,23 +54,23 @@ void scale_minimum_maximum(TensorMap2 matrix,
     if(range > NUMERIC_LIMITS_MIN)
     {
         #pragma omp parallel for
-        for(Index i = 0; i < matrix.dimension(0); i++)
+        for(Index i = 0; i < matrix.rows(); i++)
             matrix(i, column_index) = (matrix(i, column_index) - minimum) / range;
     }
     else
     {
         #pragma omp parallel for
-        for(Index i = 0; i < matrix.dimension(0); i++)
+        for(Index i = 0; i < matrix.rows(); i++)
             matrix(i, column_index) = type(0);
     }
 }
 
 
-void scale_logarithmic(TensorMap2 matrix, Index column_index)
+void scale_logarithmic(MatrixMap matrix, Index column_index)
 {
     type min_value = numeric_limits<type>::max();
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         if(!isnan(matrix(i, column_index)) && matrix(i,column_index) < min_value)
             min_value = matrix(i,column_index);
 
@@ -89,42 +78,42 @@ void scale_logarithmic(TensorMap2 matrix, Index column_index)
     {
         const type offset = abs(min_value) + type(1) + NUMERIC_LIMITS_MIN;
 
-        for(Index i = 0; i < matrix.dimension(0); i++)
+        for(Index i = 0; i < matrix.rows(); i++)
             if(!isnan(matrix(i,column_index)))
                 matrix(i, column_index) += offset;
     }
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) = log(matrix(i, column_index));
 }
 
 
-void scale_mean_standard_deviation(Tensor2& matrix, Index column_index, const Descriptives& column_descriptives)
+void scale_mean_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
     // Create a Map view of the Tensor and call the implementation
-    TensorMap2 map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_mean_standard_deviation(map, column_index, column_descriptives);
 }
 
 
-void scale_minimum_maximum(Tensor2& matrix, Index column_index, const Descriptives& column_descriptives, type min_range, type max_range)
+void scale_minimum_maximum(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives, type min_range, type max_range)
 {
-    TensorMap2 map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_minimum_maximum(map, column_index, column_descriptives, min_range, max_range);
 }
 
-void scale_logarithmic(Tensor2& matrix, Index column_index)
+void scale_logarithmic(MatrixR& matrix, Index column_index)
 {
-    TensorMap2 map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_logarithmic(map, column_index);
 }
 
 
-void scale_standard_deviation(Tensor2& matrix, Index column_index, const Descriptives& column_descriptives)
+void scale_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    TensorMap2 map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_standard_deviation(map, column_index, column_descriptives);
 }
 
@@ -230,7 +219,7 @@ void scale_logarithmic_3d(Tensor3& tensor, Index feature_index)
 }
 
 
-void unscale_minimum_maximum(TensorMap2 matrix,
+void unscale_minimum_maximum(MatrixMap matrix,
                              Index column_index,
                              const Descriptives& column_descriptives,
                              type min_range,
@@ -244,12 +233,12 @@ void unscale_minimum_maximum(TensorMap2 matrix,
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i,column_index) = (matrix(i, column_index)*(maximum-minimum)+minimum);
 }
 
 
-void unscale_mean_standard_deviation(TensorMap2 matrix, Index column_index, const Descriptives& column_descriptives)
+void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const type mean = column_descriptives.mean;
     type standard_deviation = column_descriptives.standard_deviation;
@@ -257,19 +246,19 @@ void unscale_mean_standard_deviation(TensorMap2 matrix, Index column_index, cons
     if(standard_deviation < NUMERIC_LIMITS_MIN)
     {
         #pragma omp parallel for
-        for(Index i = 0; i < matrix.dimension(0); i++)
+        for(Index i = 0; i < matrix.rows(); i++)
             matrix(i, column_index) = mean;
 
         return;
     }
 
     #pragma omp parallel for
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
 }
 
 
-void unscale_standard_deviation(TensorMap2 matrix, Index column_index, const Descriptives& column_descriptives)
+void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const type slope = abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(1)
@@ -277,61 +266,61 @@ void unscale_standard_deviation(TensorMap2 matrix, Index column_index, const Des
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) = matrix(i, column_index) * slope;
 }
 
 
-void unscale_logarithmic(TensorMap2 matrix, Index column_index)
+void unscale_logarithmic(MatrixMap matrix, Index column_index)
 {
     #pragma omp parallel for
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) = exp(matrix(i, column_index));
 }
 
 
-void unscale_image_minimum_maximum(TensorMap2 matrix, Index column_index)
+void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
 {
     #pragma omp parallel for
 
-    for(Index i = 0; i < matrix.dimension(0); i++)
+    for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) *= type(255);
 }
 
 
-void unscale_minimum_maximum(Tensor2& matrix,
+void unscale_minimum_maximum(MatrixR& matrix,
                              Index column_index,
                              const Descriptives& column_descriptives,
                              type min_range,
                              type max_range)
 {
-    TensorMap2 map(matrix.data(), matrix.dimension(0), matrix.dimension(1));
+    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     unscale_minimum_maximum(map, column_index, column_descriptives, min_range, max_range);
 }
 
 
-void unscale_mean_standard_deviation(Tensor2& matrix, Index column_index, const Descriptives& column_descriptives)
+void unscale_mean_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    unscale_mean_standard_deviation(TensorMap2(matrix.data(), matrix.dimension(0), matrix.dimension(1)), column_index, column_descriptives);
+    unscale_mean_standard_deviation(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index, column_descriptives);
 }
 
 
-void unscale_standard_deviation(Tensor2& matrix, Index column_index, const Descriptives& descriptives)
+void unscale_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& descriptives)
 {
-    unscale_standard_deviation(TensorMap2(matrix.data(), matrix.dimension(0), matrix.dimension(1)), column_index, descriptives);
+    unscale_standard_deviation(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index, descriptives);
 }
 
 
-void unscale_logarithmic(Tensor2& matrix, Index column_index)
+void unscale_logarithmic(MatrixR& matrix, Index column_index)
 {
-    unscale_logarithmic(TensorMap2(matrix.data(), matrix.dimension(0), matrix.dimension(1)), column_index);
+    unscale_logarithmic(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index);
 }
 
 
-void unscale_image_minimum_maximum(Tensor2& matrix, Index column_index)
+void unscale_image_minimum_maximum(MatrixR& matrix, Index column_index)
 {
-    unscale_image_minimum_maximum(TensorMap2(matrix.data(), matrix.dimension(0), matrix.dimension(1)), column_index);
+    unscale_image_minimum_maximum(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index);
 }
 
 }

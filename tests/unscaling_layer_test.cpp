@@ -145,7 +145,7 @@ TEST(UnscalingTest, ForwardPropagate)
         Scaling<2> helper_scaling_layer({ inputs_number });
         Unscaling unscaling_layer_msd({ inputs_number });
 
-        Tensor2 original_data(samples_number, inputs_number);
+        MatrixR original_data(samples_number, inputs_number);
         original_data.setValues({ {type(0), type(10)},
                                   {type(2), type(30)} });
 
@@ -205,7 +205,7 @@ TEST(UnscalingTest, ForwardPropagate)
         Scaling<2> helper_scaling_layer({ inputs_number });
         Unscaling unscaling_layer_std({ inputs_number });
 
-        Tensor2 original_data(samples_number, inputs_number);
+        MatrixR original_data(samples_number, inputs_number);
         original_data.setValues({ {type(1),type(10)},
                                   {type(3),type(50)} });
         // Col 0: {1,3} -> std=sqrt( ((1-2)^2 + (3-2)^2) / 1 ) = sqrt(1+1) = sqrt(2)
@@ -247,10 +247,10 @@ TEST(UnscalingTest, ForwardPropagate)
         TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
         unscaling_layer_std.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
-        Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
+        MatrixR unscaled_data = matrix_map(output_pair_unscale);
 
-        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
-        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_EQ(unscaled_data.rows(), samples_number);
+        EXPECT_EQ(unscaled_data.cols(), inputs_number);
         EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN);
         EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), NUMERIC_LIMITS_MIN);
         EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);

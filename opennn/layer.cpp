@@ -135,10 +135,6 @@ vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() cons
 
 Layer::Layer()
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
@@ -181,7 +177,7 @@ void Layer::set_parameters_random()
 
     for(const auto& view : parameter_views)
     {
-        TensorMap1 this_parameters(view->data, view->size());
+        VectorMap this_parameters(view->data, view->size());
 
         set_random_uniform(this_parameters);
     }
@@ -199,7 +195,7 @@ void Layer::set_parameters_glorot()
 
     for(const TensorView* view : parameter_views)
     {
-        TensorMap1 this_parameters(view->data, view->size());
+        VectorMap this_parameters(view->data, view->size());
 
         set_random_uniform(this_parameters, -limit, limit);
     }
@@ -216,16 +212,6 @@ Index Layer::get_parameters_number()
         parameters_number += view->size();
 
     return parameters_number;
-}
-
-
-void Layer::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -267,12 +253,12 @@ bool Layer::get_is_trainable() const
 }
 
 
-void Layer::add_gradients(const vector<TensorView>&output_gradient_views) const
+void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
 
     for(Index i = 1; i < Index(output_gradient_views.size()); i++)
-        output_gradients.device(*device) += tensor_map<3>(output_gradient_views[i]);
+        output_gradients.device(get_device()) += tensor_map<3>(output_gradient_views[i]);
 }
 
 
@@ -312,34 +298,13 @@ void Layer::set_output_shape(const Shape&)
 }
 
 
-void Layer::softmax(TensorMap2 y) const
+void Layer::softmax(MatrixMap y) const
 {
-    const Index rows_number = y.dimension(0);
-    const Index columns_number = y.dimension(1);
+    y.colwise() -= y.rowwise().maxCoeff();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < rows_number; i++)
-    {
-        type max_value = -numeric_limits<type>::infinity();
-        for(Index j = 0; j < columns_number; j++)
-            if(y(i, j) > max_value)
-                max_value = y(i, j);
+    y = y.array().exp();
 
-        type sum = 0.0;
-        for(Index j = 0; j < columns_number; j++)
-        {
-            y(i, j) = exp(y(i, j) - max_value);
-            sum += y(i, j);
-        }
-
-        if(sum > 0.0)
-        {
-            const type inv_sum = type(1.0) / sum;
-
-            for(Index j = 0; j < columns_number; j++)
-                y(i, j) *= inv_sum;
-        }
-    }
+    y.array().colwise() /= y.rowwise().sum().array();
 }
 
 
@@ -421,86 +386,33 @@ void Layer::softmax(TensorMap4 y) const
 
 void Layer::softmax_derivatives_times_tensor(const TensorMap3 softmax,
                                              TensorMap3 result,
-                                             TensorMap1 aux_rows) const
+                                             VectorMap aux_rows) const
 {
     const Index rows = softmax.dimension(0);
     const Index columns = softmax.dimension(1);
     const Index depth = softmax.dimension(2);
 
-
-    type* softmax_data = (type*)softmax.data();
+    type* softmax_data = const_cast<type*>(softmax.data());
     type* result_data = result.data();
-
-    type* softmax_vector_data = nullptr;
-    type* result_vector_data = nullptr;
-
-    Tensor<type, 0> sum;
 
     for(Index i = 0; i < depth; i++)
     {
         for(Index j = 0; j < columns; j++)
         {
-            softmax_vector_data = softmax_data + rows * (i * columns + j);
-            result_vector_data = result_data + rows * (i * columns + j);
+            const Index offset = rows * (i * columns + j);
 
-            const TensorMap1 softmax_vector(softmax_vector_data, rows);
-            const TensorMap1 tensor_vector(result_vector_data, rows);
+            const VectorMap softmax_vector(softmax_data + offset, rows);
+            const VectorMap tensor_vector(result_data + offset, rows);
+            VectorMap result_vector(result_data + offset, rows);
 
-            TensorMap1 result_vector(result_vector_data, rows);
+            aux_rows.array() = softmax_vector.array() * tensor_vector.array();
 
-            aux_rows.device(*device) = softmax_vector * tensor_vector;
+            const type sum_val = aux_rows.sum();
 
-            sum.device(*device) = aux_rows.sum();
-
-            result_vector.device(*device) = aux_rows - softmax_vector * sum(0);
+            result_vector.array() = aux_rows.array() - (softmax_vector.array() * sum_val);
         }
     }
 }
-
-
-#ifdef OPENNN_CUDA
-
-void Layer::create_cuda()
-{
-    cublasCreate(&cublas_handle);
-    cudnnCreate(&cudnn_handle);
-
-    // Multiplication
-
-    cudnnCreateOpTensorDescriptor(&operator_multiplication_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_multiplication_descriptor,
-                               CUDNN_OP_TENSOR_MUL,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_NOT_PROPAGATE_NAN);
-
-    // Sum
-
-    cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                               CUDNN_OP_TENSOR_ADD,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_NOT_PROPAGATE_NAN);
-}
-
-
-void Layer::destroy_cuda()
-{
-    cublasDestroy(cublas_handle);
-    cudnnDestroy(cudnn_handle);
-
-    cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
-    cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
-}
-
-
-cudnnHandle_t Layer::get_cudnn_handle()
-{
-    return cudnn_handle;
-}
-
-#endif
 
 } 
 

@@ -205,7 +205,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    cout << "Parameters number: " << neuron_selection_results.optimal_parameters.dimensions() << endl;
+    cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << endl;
 
     neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_shape({ neuron_selection_results.optimal_neurons_number });
     neural_network->get_layer(last_trainable_layer_index).get()->set_input_shape({ neuron_selection_results.optimal_neurons_number });

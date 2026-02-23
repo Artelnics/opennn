@@ -174,8 +174,8 @@ private:
     TensorView gammas;
     TensorView betas;
 
-    Tensor1 running_means;
-    Tensor1 running_standard_deviations;
+    VectorR running_means;
+    VectorR running_standard_deviations;
 
     type momentum = type(0.9);
 

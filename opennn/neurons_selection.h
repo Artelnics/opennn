@@ -81,11 +81,11 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    Tensor<Index, 1> neurons_history;
+    VectorI neurons_history;
 
-    Tensor1 validation_error_history;
+    VectorR validation_error_history;
 
-    Tensor1 training_error_history;
+    VectorR training_error_history;
 
     Index minimum_neurons = 0;
 
@@ -117,17 +117,17 @@ struct NeuronsSelectionResults
 
    // Neural network
 
-   Tensor<Index, 1> neurons_number_history;
+   VectorI neurons_number_history;
 
    Index optimal_neurons_number = 1;
 
-   Tensor1 optimal_parameters;
+   VectorR optimal_parameters;
 
    // Loss index
 
-   Tensor1 training_error_history;
+   VectorR training_error_history;
 
-   Tensor1 validation_error_history;
+   VectorR validation_error_history;
 
    type optimum_training_error = type(10);
 

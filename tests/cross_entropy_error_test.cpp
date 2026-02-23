@@ -100,14 +100,14 @@ TEST(CrossEntropyError2d, calculate_binary_error)
 
     cross_entropy_error.calculate_binary_error(batch, forward_propagation, back_propagation);
 
-    const type binary_error = back_propagation.error();
+    const type binary_error = back_propagation.error;
 
     EXPECT_FALSE(std::isnan(binary_error));
     EXPECT_GE(abs(binary_error), 0.0);
 
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    const type calculate_error = back_propagation.error();
+    const type calculate_error = back_propagation.error;
 
     EXPECT_EQ(binary_error, calculate_error);
 }
@@ -154,13 +154,13 @@ TEST(CrossEntropyError2d, calculate_multiple_error)
 
     cross_entropy_error.calculate_multiple_error(batch, forward_propagation, back_propagation);
 
-    const type multiple_error = back_propagation.error();
+    const type multiple_error = back_propagation.error;
     EXPECT_FALSE(std::isnan(multiple_error));
     EXPECT_GE(abs(multiple_error), 0.0);
 
     cross_entropy_error.calculate_error(batch, forward_propagation, back_propagation);
 
-    const type calculate_error = back_propagation.error();
+    const type calculate_error = back_propagation.error;
     EXPECT_EQ(multiple_error, calculate_error);
 }
 

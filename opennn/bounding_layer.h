@@ -29,10 +29,10 @@ public:
 
     string get_bounding_method_string() const;
 
-    const Tensor1& get_lower_bounds() const;
+    const VectorR& get_lower_bounds() const;
     type get_lower_bound(const Index) const;
 
-    const Tensor1& get_upper_bounds() const;
+    const VectorR& get_upper_bounds() const;
     type get_upper_bound(const Index) const;
 
     void set(const Shape& = { 0 }, const string & = "bounding_layer");
@@ -43,10 +43,10 @@ public:
     void set_bounding_method(const BoundingMethod&);
     void set_bounding_method(const string&);
 
-    void set_lower_bounds(const Tensor1&);
+    void set_lower_bounds(const VectorR&);
     void set_lower_bound(const Index, type);
 
-    void set_upper_bounds(const Tensor1&);
+    void set_upper_bounds(const VectorR&);
     void set_upper_bound(const Index, type);
 
     // Lower and upper bounds
@@ -77,9 +77,9 @@ private:
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 
-    Tensor1 lower_bounds;
+    VectorR lower_bounds;
 
-    Tensor1 upper_bounds;
+    VectorR upper_bounds;
 };
 
 

@@ -26,8 +26,8 @@ public:
 
     vector<Descriptives> get_descriptives() const;
 
-    Tensor1 get_minimums() const;
-    Tensor1 get_maximums() const;
+    VectorR get_minimums() const;
+    VectorR get_maximums() const;
 
     vector<string> get_scalers() const;
 

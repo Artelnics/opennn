@@ -19,21 +19,21 @@ namespace opennn
     Index random_integer(Index, Index);
     bool random_bool(type = 0.5);
 
-    void set_random_uniform(Tensor1&, type = -0.1, type = 0.1);
-    void set_random_uniform(Tensor2&, type = -0.1, type = 0.1);
+    void set_random_uniform(VectorR&, type = -0.1, type = 0.1);
+    void set_random_uniform(MatrixR&, type = -0.1, type = 0.1);
 
-    void set_random_uniform(TensorMap1, type = -0.1, type = 0.1);
-    void set_random_uniform(TensorMap2, type = -0.1, type = 0.1);
+    void set_random_uniform(VectorMap, type = -0.1, type = 0.1);
+    void set_random_uniform(MatrixMap, type = -0.1, type = 0.1);
 
-    void set_random_integer(Tensor2&, Index, Index);
+    void set_random_integer(MatrixR&, Index, Index);
+
+    void shuffle(VectorB& v);
 
     template<typename T>
     void shuffle_vector(vector<T>&);
 
     void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
-    template<typename T>
-    void shuffle_tensor(Tensor<T, 1>&);
 
     Index get_random_element(const vector<Index>&);
 }

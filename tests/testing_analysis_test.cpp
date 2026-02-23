@@ -173,7 +173,7 @@ TEST(TestingAnalysis, ErrorDataHistograms)
 
 TEST(TestingAnalysis, MaximalErrors)
 {
-    Tensor<Tensor<Index, 1>, 1> maximal_errors;
+    Tensor<VectorI, 1> maximal_errors;
 
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -245,7 +245,7 @@ TEST(TestingAnalysis, Confusion)
         {type(0), type(0), type(1)}
     });
     TestingAnalysis testing_analysis;
-    Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
+    MatrixI confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
     Tensor<Index, 0> sum = confusion.sum();
 

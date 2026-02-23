@@ -138,7 +138,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     dataset.set(1, 1, 1);
 
-    Tensor<Index, 1> indices(1, 1, dataset.get_samples_number()-1);
+    VectorI indices(1, 1, dataset.get_samples_number()-1);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
@@ -171,7 +171,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     dataset.set(samples_number, inputs_number, targets_number);
 
-    Tensor<Index, 1> indices(3);
+    VectorI indices(3);
 
     indices.setValues({inputs_number,targets_number,samples_number-1});
 

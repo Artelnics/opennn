@@ -55,9 +55,9 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     sample_roles.resize(samples_number);
     split_samples_random();
 
-    const Index target_column_index = data.dimension(1) - 1;
+    const Index target_column_index = data.cols() - 1;
 
-    for(Index i = 0; i < data.dimension(0); ++i)
+    for(Index i = 0; i < data.rows(); ++i)
     {
         for(Index j = 0; j < target_column_index; ++j)
             data(i, j) = random_integer(0, input_vocabulary_size - 1);

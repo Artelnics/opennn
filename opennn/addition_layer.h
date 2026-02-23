@@ -72,7 +72,7 @@ public:
 
         TensorMapR<Rank> outputs = tensor_map<Rank>(forward_propagation->outputs);
 
-        outputs.device(*device) = input_1 + input_2;
+        outputs.device(get_device()) = input_1 + input_2;
     }
 
 
@@ -89,8 +89,8 @@ public:
         TensorMapR<Rank> input_gradients_0 = tensor_map<Rank>(back_propagation->input_gradients[0]);
         TensorMapR<Rank> input_gradients_1 = tensor_map<Rank>(back_propagation->input_gradients[1]);
 
-        input_gradients_0.device(*device) = output_gradients;
-        input_gradients_1.device(*device) = output_gradients;
+        input_gradients_0.device(get_device()) = output_gradients;
+        input_gradients_1.device(get_device()) = output_gradients;
     }
 
     void from_XML(const XMLDocument& document) override

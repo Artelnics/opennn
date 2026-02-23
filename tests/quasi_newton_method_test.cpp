@@ -52,7 +52,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     neural_network.set_parameters(parameters_next);
     Tensor1 gradient_next = mean_squared_error.calculate_gradient();
 
-    optimization_data.parameters_difference = parameters_next - parameters_k;
+    optimization_data.parameter_differences = parameters_next - parameters_k;
     optimization_data.gradient_difference = gradient_next - gradient_k;
 
     set_identity(optimization_data.old_inverse_hessian);

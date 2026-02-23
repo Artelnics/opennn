@@ -116,21 +116,21 @@ struct InputsSelectionResults
 
     // Neural network
 
-    Tensor1 optimal_parameters;
+    VectorR optimal_parameters;
 
     // Loss index
 
-    Tensor1 training_error_history;
+    VectorR training_error_history;
 
-    Tensor1 validation_error_history;
+    VectorR validation_error_history;
 
     // Mean Validation Error of different neural networks
 
-    Tensor1  mean_validation_error_history;
+    VectorR  mean_validation_error_history;
 
     // Mean Training Error of different neural networks
 
-    Tensor1 mean_training_error_history;
+    VectorR mean_training_error_history;
 
     type optimum_training_error = numeric_limits<type>::max();
 
@@ -140,7 +140,7 @@ struct InputsSelectionResults
 
     vector<Index> optimal_input_variables_indices;
 
-    Tensor<bool, 1> optimal_inputs;
+    VectorB optimal_inputs;
 
     // Model selection
 

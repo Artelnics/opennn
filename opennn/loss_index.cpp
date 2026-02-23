@@ -17,10 +17,6 @@ namespace opennn
 
 Loss::Loss(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     set(new_neural_network, new_dataset);
 }
 
@@ -64,19 +60,6 @@ void Loss::set(const NeuralNetwork* new_neural_network, const Dataset* new_datas
 }
 
 
-void Loss::set_threads_number(const int& new_threads_number)
-{
-    if(thread_pool)
-        thread_pool.reset();
-
-    if(device)
-        device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
 void Loss::set_neural_network(const NeuralNetwork* new_neural_network)
 {
     neural_network = const_cast<NeuralNetwork*>(new_neural_network);
@@ -114,25 +97,25 @@ void Loss::calculate_errors_lm(const Batch& batch,
     const TensorView outputs_view
         = forward_propagation.get_last_trainable_layer_outputs();
 
-    const TensorMap2 outputs = tensor_map<2>(outputs_view);
+    const MatrixMap outputs = matrix_map(outputs_view);
 
     const TensorView targets_view = batch.get_targets();
 
-    const TensorMap2 targets = tensor_map<2>(targets_view);
+    const MatrixMap targets = matrix_map(targets_view);
 
-    back_propagation.errors.device(*device) = outputs - targets;
+    back_propagation.errors = outputs - targets;
 }
 
 
 void Loss::calculate_squared_errors_lm(const Batch&,
-                                            const ForwardPropagation&,
-                                            BackPropagationLM& back_propagation_lm) const
+                                       const ForwardPropagation&,
+                                       BackPropagationLM& back_propagation_lm) const
 {
-    const Tensor2& errors = back_propagation_lm.errors;
+    const MatrixR& errors = back_propagation_lm.errors;
 
-    Tensor1& squared_errors = back_propagation_lm.squared_errors;
+    VectorR& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*device) = errors.square().sum(array_1(1)).sqrt();
+    squared_errors = errors.rowwise().norm();
 }
 
 
@@ -146,7 +129,7 @@ void Loss::back_propagate(const Batch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    back_propagation.loss = back_propagation.error();
+    back_propagation.loss = back_propagation.error;
 
     // Regularization
 
@@ -161,7 +144,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     if(regularization_method == "None" || regularization_weight == 0)
         return;
 
-    const Tensor1& parameters = neural_network->get_parameters();
+    const VectorR& parameters = neural_network->get_parameters();
 
     back_propagation.loss += calculate_regularization(parameters);
 }
@@ -172,29 +155,29 @@ void Loss::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
     if(regularization_method == "None")
         return;
 
-    const Tensor1& parameters = neural_network->get_parameters();
+    const VectorR& parameters = neural_network->get_parameters();
 
     type& loss = back_propagation_lm.loss;
 
-    Tensor1& gradient = back_propagation_lm.gradient;
+    VectorR& gradient = back_propagation_lm.gradient;
 
-    Tensor2& hessian = back_propagation_lm.hessian;
+    MatrixR& hessian = back_propagation_lm.hessian;
 
     if(regularization_method == "L1")
     {
-        const Tensor<type, 0> norm = parameters.abs().sum();
+        loss += regularization_weight * parameters.lpNorm<1>();
 
-        loss += regularization_weight*norm(0);
-        gradient += regularization_weight*parameters.sign();
-
+        gradient.array() += regularization_weight * parameters.array().unaryExpr([](type v) {
+            return (v > 0) ? 1.0f : ((v < 0) ? -1.0f : 0.0f);
+        });
     }
     else if(regularization_method == "L2")
-    {
-        const Tensor<type, 0> squared_norm = parameters.square().sum();
+    {        
+        loss += static_cast<type>(0.5) * regularization_weight * parameters.squaredNorm();
 
-        loss += type(0.5) * regularization_weight * squared_norm(0);
-        gradient.device(*device) += parameters * regularization_weight;
-        sum_diagonal(hessian, regularization_weight);
+        gradient += parameters * regularization_weight;
+
+        hessian.diagonal().array() += regularization_weight;
     }
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
@@ -217,7 +200,7 @@ void Loss::back_propagate_lm(const Batch& batch,
 
     calculate_error_hessian_lm(batch, back_propagation_lm);
 
-    back_propagation_lm.loss = back_propagation_lm.error();
+    back_propagation_lm.loss = back_propagation_lm.error;
 
     add_regularization_lm(back_propagation_lm);
 }
@@ -273,14 +256,14 @@ void Loss::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
 
 
 void Loss::calculate_error_gradient_lm(const Batch&,
-                                            BackPropagationLM& back_propagation_lm) const
+                                       BackPropagationLM& back_propagation_lm) const
 {
-    const Tensor1& squared_errors = back_propagation_lm.squared_errors;
-    const Tensor2& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+    const VectorR& squared_errors = back_propagation_lm.squared_errors;
+    const MatrixR& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    Tensor1& gradient = back_propagation_lm.gradient;
+    VectorR& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
+    gradient.noalias() = squared_errors_jacobian.transpose() * squared_errors;
 }
 
 
@@ -290,28 +273,14 @@ string Loss::get_name() const
 }
 
 
-type Loss::calculate_regularization(const Tensor1& parameters) const
+type Loss::calculate_regularization(const VectorR& parameters) const
 {
     if(regularization_method == "None")
-    {
         return type(0);
-    }
     else if(regularization_method == "L1")
-    {
-        Tensor<type, 0> norm;
-
-        norm.device(*device) = parameters.abs().sum();
-
-        return regularization_weight * norm(0);
-    }
+        return regularization_weight * parameters.lpNorm<1>();
     else if(regularization_method == "L2")
-    {
-        Tensor<type, 0> squared_norm;
-
-        squared_norm.device(*device) = parameters.square().sum();
-
-        return type(0.5) * regularization_weight * squared_norm(0);
-    }
+        return 0.5f * regularization_weight * parameters.squaredNorm();
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
 }
@@ -345,16 +314,16 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 }
 
 
-void Loss::add_regularization_gradient(Tensor1& gradient) const
+void Loss::add_regularization_gradient(VectorR& gradient) const
 {
     if (regularization_method == "None" || regularization_weight == 0)
         return;
 
-    const Tensor1& parameters = neural_network->get_parameters();
+    const VectorR& parameters = neural_network->get_parameters();
 
     if (regularization_method == "L1")
     {
-        Tensor1 l1_gradient = parameters.unaryExpr([](type w) {
+        VectorR l1_gradient = parameters.unaryExpr([](type w) {
             if (w > 0) return type(1);
             if (w < 0) return type(-1);
             return type(0);
@@ -364,7 +333,7 @@ void Loss::add_regularization_gradient(Tensor1& gradient) const
     }
     else if (regularization_method == "L2")
     {
-        gradient.device(*device) += parameters * regularization_weight;
+        gradient += parameters * regularization_weight;
     }
     else
     {
@@ -380,14 +349,14 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
 
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
-    const Tensor1& parameters = neural_network->get_parameters();
+    const VectorR& parameters = neural_network->get_parameters();
 
-    Tensor1& gradient = back_propagation.neural_network.gradient;
+    VectorR& gradient = back_propagation.neural_network.gradient;
 
     if(regularization_method == "L1")
-        gradient.device(*device) += regularization_weight * parameters.sign();
+        gradient.array() += regularization_weight * parameters.array().sign();
     else if(regularization_method == "L2")
-        gradient.device(*device) += parameters*regularization_weight;
+        gradient += parameters*regularization_weight;
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
 }
@@ -597,11 +566,11 @@ type Loss::calculate_numerical_error() const
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    return back_propagation.error();
+    return back_propagation.error;
 }
 
 
-Tensor1 Loss::calculate_gradient()
+VectorR Loss::calculate_gradient()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
@@ -620,7 +589,7 @@ Tensor1 Loss::calculate_gradient()
 
     BackPropagation back_propagation(samples_number, this);
 
-    const Tensor1& parameters = neural_network->get_parameters();
+    const VectorR& parameters = neural_network->get_parameters();
 
     neural_network->forward_propagate(batch.get_inputs(),
                                       parameters,
@@ -632,7 +601,7 @@ Tensor1 Loss::calculate_gradient()
 }
 
 
-Tensor1 Loss::calculate_numerical_gradient()
+VectorR Loss::calculate_numerical_gradient()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
@@ -648,19 +617,19 @@ Tensor1 Loss::calculate_numerical_gradient()
 
     BackPropagation back_propagation(samples_number, this);
 
-    Tensor1& parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
 
     const Index parameters_number = parameters.size();
 
     type h = 0;
 
-    Tensor1 parameters_forward = parameters;
-    Tensor1 parameters_backward = parameters;
+    VectorR parameters_forward = parameters;
+    VectorR parameters_backward = parameters;
 
     type error_forward = 0;
     type error_backward = 0;
 
-    Tensor1 numerical_gradient(parameters_number);
+    VectorR numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));
 
     for(Index i = 0; i < parameters_number; i++)
@@ -675,7 +644,7 @@ Tensor1 Loss::calculate_numerical_gradient()
 
         calculate_error(batch, forward_propagation, back_propagation);
 
-        error_forward = back_propagation.error();
+        error_forward = back_propagation.error;
 
         parameters_forward(i) -= h;
         parameters_backward(i) -= h;
@@ -686,7 +655,7 @@ Tensor1 Loss::calculate_numerical_gradient()
 
         calculate_error(batch, forward_propagation, back_propagation);
 
-        error_backward = back_propagation.error();
+        error_backward = back_propagation.error;
 
         parameters_backward(i) += h;
 
@@ -697,7 +666,7 @@ Tensor1 Loss::calculate_numerical_gradient()
 }
 
 
-Tensor1 Loss::calculate_numerical_gradient_lm()
+VectorR Loss::calculate_numerical_gradient_lm()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
@@ -712,19 +681,19 @@ Tensor1 Loss::calculate_numerical_gradient_lm()
 
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    Tensor1& parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
 
     const Index parameters_number = parameters.size();
 
     type h = 0;
 
-    Tensor1 parameters_forward = parameters;
-    Tensor1 parameters_backward = parameters;
+    VectorR parameters_forward = parameters;
+    VectorR parameters_backward = parameters;
 
     type error_forward = 0;
     type error_backward = 0;
 
-    Tensor1 numerical_gradient_lm(parameters_number);
+    VectorR numerical_gradient_lm(parameters_number);
     numerical_gradient_lm.setConstant(type(0));
 
     for(Index i = 0; i < parameters_number; i++)
@@ -743,7 +712,7 @@ Tensor1 Loss::calculate_numerical_gradient_lm()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        error_forward = back_propagation_lm.error();
+        error_forward = back_propagation_lm.error;
 
         parameters_forward(i) -= h;
 
@@ -759,7 +728,7 @@ Tensor1 Loss::calculate_numerical_gradient_lm()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        error_backward = back_propagation_lm.error();
+        error_backward = back_propagation_lm.error;
 
         parameters_backward(i) += h;
 
@@ -770,9 +739,8 @@ Tensor1 Loss::calculate_numerical_gradient_lm()
 }
 
 
-Tensor1 Loss::calculate_numerical_input_gradients()
+VectorR Loss::calculate_numerical_input_gradients()
 {
-
     const Index samples_number = dataset->get_samples_number("Training");
     const Shape input_shape = dataset->get_shape("Input");
 
@@ -795,8 +763,8 @@ Tensor1 Loss::calculate_numerical_input_gradients()
     type error_forward;
     type error_backward;
 
-    Tensor1 numerical_inputs_derivatives(values_number);
-    numerical_inputs_derivatives.setConstant(type(0));
+    VectorR numerical_inputs_gradients(values_number);
+    numerical_inputs_gradients.setConstant(type(0));
 
     const vector<TensorView>& input_views = batch.get_inputs();
 
@@ -811,25 +779,25 @@ Tensor1 Loss::calculate_numerical_input_gradients()
         neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-        error_forward = back_propagation.error();
+        error_forward = back_propagation.error;
 
         input_views[0].data[i] -= 2*h;
 
         neural_network->forward_propagate(input_views, forward_propagation);
 
         calculate_error(batch, forward_propagation, back_propagation);
-        error_backward = back_propagation.error();
+        error_backward = back_propagation.error;
 
         input_views[0].data[i] += h;
 
-        numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
+        numerical_inputs_gradients(i) = (error_forward - error_backward) / type(2 * h);
     }
 
-    return numerical_inputs_derivatives;
+    return numerical_inputs_gradients;
 }
 
 
-Tensor2 Loss::calculate_numerical_jacobian()
+MatrixR Loss::calculate_numerical_jacobian()
 {
     const Index samples_number = dataset->get_samples_number("Training");
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
@@ -842,20 +810,20 @@ Tensor2 Loss::calculate_numerical_jacobian()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    Tensor1 parameters = neural_network->get_parameters();
+    VectorR parameters = neural_network->get_parameters();
     const Index parameters_number = parameters.size();
 
     const Index total_error_terms = back_propagation_lm.squared_errors.size();
 
     type perturbation;
 
-    Tensor1 parameters_forward(parameters);
-    Tensor1 parameters_backward(parameters);
+    VectorR parameters_forward(parameters);
+    VectorR parameters_backward(parameters);
 
-    Tensor1 error_terms_forward(total_error_terms);
-    Tensor1 error_terms_backward(total_error_terms);
+    VectorR error_terms_forward(total_error_terms);
+    VectorR error_terms_backward(total_error_terms);
 
-    Tensor2 jacobian(total_error_terms, parameters_number);
+    MatrixR jacobian(total_error_terms, parameters_number);
 
     for(Index j = 0; j < parameters_number; j++)
     {
@@ -883,7 +851,7 @@ Tensor2 Loss::calculate_numerical_jacobian()
 }
 
 
-Tensor2 Loss::calculate_numerical_hessian()
+MatrixR Loss::calculate_numerical_hessian()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
@@ -899,7 +867,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    Tensor1& parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
 
     const Index parameters_number = parameters.size();
 
@@ -913,25 +881,25 @@ Tensor2 Loss::calculate_numerical_hessian()
 
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-    const type y = back_propagation_lm.error();
+    const type y = back_propagation_lm.error;
 
-    Tensor2 H(parameters_number, parameters_number);
+    MatrixR H(parameters_number, parameters_number);
     H.setZero();
 
     type h_i;
     type h_j;
 
-    Tensor1 x_backward_2i = parameters;
-    Tensor1 x_backward_i = parameters;
+    VectorR x_backward_2i = parameters;
+    VectorR x_backward_i = parameters;
 
-    Tensor1 x_forward_i = parameters;
-    Tensor1 x_forward_2i = parameters;
+    VectorR x_forward_i = parameters;
+    VectorR x_forward_2i = parameters;
 
-    Tensor1 x_backward_ij = parameters;
-    Tensor1 x_forward_ij = parameters;
+    VectorR x_backward_ij = parameters;
+    VectorR x_forward_ij = parameters;
 
-    Tensor1 x_backward_i_forward_j = parameters;
-    Tensor1 x_forward_i_backward_j = parameters;
+    VectorR x_backward_i_forward_j = parameters;
+    VectorR x_forward_i_backward_j = parameters;
 
     type y_backward_2i;
     type y_backward_i;
@@ -961,7 +929,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        y_backward_2i = back_propagation_lm.error();
+        y_backward_2i = back_propagation_lm.error;
 
         x_backward_2i(i) += static_cast<type>(2.0) * h_i;
 
@@ -977,7 +945,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        y_backward_i = back_propagation_lm.error();
+        y_backward_i = back_propagation_lm.error;
 
         x_backward_i(i) += h_i;
 
@@ -993,7 +961,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        y_forward_i = back_propagation_lm.error();
+        y_forward_i = back_propagation_lm.error;
 
         x_forward_i(i) -= h_i;
 
@@ -1009,7 +977,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
         calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        y_forward_2i = back_propagation_lm.error();
+        y_forward_2i = back_propagation_lm.error;
 
         x_forward_2i(i) -= static_cast<type>(2.0) * h_i;
 
@@ -1035,7 +1003,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
             calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-            y_backward_ij = back_propagation_lm.error();
+            y_backward_ij = back_propagation_lm.error;
 
             x_backward_ij(i) += h_i;
             x_backward_ij(j) += h_j;
@@ -1053,7 +1021,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
             calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-            y_forward_ij = back_propagation_lm.error();
+            y_forward_ij = back_propagation_lm.error;
 
             x_forward_ij(i) -= h_i;
             x_forward_ij(j) -= h_j;
@@ -1071,7 +1039,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
             calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-            y_backward_i_forward_j = back_propagation_lm.error();
+            y_backward_i_forward_j = back_propagation_lm.error;
 
             x_backward_i_forward_j(i) += h_i;
             x_backward_i_forward_j(j) -= h_j;
@@ -1089,7 +1057,7 @@ Tensor2 Loss::calculate_numerical_hessian()
 
             calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-            y_forward_i_backward_j = back_propagation_lm.error();
+            y_forward_i_backward_j = back_propagation_lm.error;
 
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
@@ -1106,10 +1074,10 @@ Tensor2 Loss::calculate_numerical_hessian()
 }
 
 
-Tensor2 Loss::calculate_inverse_hessian()
+MatrixR Loss::calculate_inverse_hessian()
 {
-    Tensor2 numerical_hessian = calculate_numerical_hessian();
-    const Index parameters_number = numerical_hessian.dimension(0);
+    MatrixR numerical_hessian = calculate_numerical_hessian();
+    const Index parameters_number = numerical_hessian.rows();
 
     using MatrixType = Matrix<type, Dynamic, Dynamic, ColMajor>;
     Map<MatrixType> hessian_map(numerical_hessian.data(), parameters_number, parameters_number);
@@ -1124,13 +1092,14 @@ Tensor2 Loss::calculate_inverse_hessian()
 
         MatrixType hessian_map_inverse = hessian_decomposition_damped.inverse();
 
-        Tensor2 hessian_inverse(parameters_number, parameters_number);
+        MatrixR hessian_inverse(parameters_number, parameters_number);
         Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
+
         return hessian_inverse;
     }
 
     MatrixType hessian_map_inverse = hessian_decomposition.inverse();
-    Tensor2 hessian_inverse(parameters_number, parameters_number);
+    MatrixR hessian_inverse(parameters_number, parameters_number);
     Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
 
     return hessian_inverse;
@@ -1311,7 +1280,7 @@ void Loss::back_propagate(const BatchCuda& batch,
 
     // Loss
 
-    back_propagation.loss = back_propagation.error();
+    back_propagation.loss = back_propagation.error;
 
     // Regularization
 
@@ -1441,25 +1410,6 @@ void Loss::add_regularization_cuda(BackPropagationCuda& back_propagation) const
 }
 
 
-void Loss::create_cuda()
-{
-    cublasCreate(&cublas_handle);
-    cudnnCreate(&cudnn_handle);
-}
-
-
-void Loss::destroy_cuda()
-{
-    cublasDestroy(cublas_handle);
-    cudnnDestroy(cudnn_handle);
-}
-
-cudnnHandle_t Loss::get_cudnn_handle()
-{
-    return cudnn_handle;
-}
-
-
 // CUDA structs
 
 BackPropagationCuda::BackPropagationCuda(const Index new_samples_number, Loss* new_loss)
@@ -1488,7 +1438,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
     neural_network.set(samples_number, neural_network_ptr);
 
     loss = type(0);
-    error(0) = type(0);
+    error = type(0);
     regularization = type(0);
 
     CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
@@ -1524,7 +1474,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
                                1,
                                1);
 
-    cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(),
+    cudnnGetReductionWorkspaceSize(get_cudnn_handle(),
                                    reduce_tensor_descriptor,
                                    output_gradients.get_descriptor(),
                                    output_reduce_tensor_descriptor,
@@ -1533,13 +1483,6 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
     CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
 
     // Sum
-
-    cudnnCreateOpTensorDescriptor(&operator_sum_descriptor);
-
-    cudnnSetOpTensorDescriptor(operator_sum_descriptor,
-                               CUDNN_OP_TENSOR_ADD,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_NOT_PROPAGATE_NAN);
 
     //if (is_instance_of<CrossEntropyError3d>(loss_index))
     //{
@@ -1617,7 +1560,6 @@ void BackPropagationCuda::free()
     workspace = nullptr;
 
     cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
-    cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor);
 }
 

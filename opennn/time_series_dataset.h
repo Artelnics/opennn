@@ -47,7 +47,7 @@ public:
     void set_future_time_steps(const Index);
     void set_time_variable_index(const Index);
 
-    Tensor2 calculate_autocorrelations(const Index = 10) const;
+    MatrixR calculate_autocorrelations(const Index = 10) const;
     Tensor3 calculate_cross_correlations(const Index = 10) const;
     Tensor3 calculate_cross_correlations_spearman(const Index = 10) const;
 

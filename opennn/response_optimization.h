@@ -5,16 +5,15 @@
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
+
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
 #pragma once
 
 #include "pch.h"
-//#include "tensors.h"
 #include "dataset.h"
 #include "statistics.h"
-//#include "tinyxml2.h"
 
 namespace opennn
 {
@@ -52,28 +51,28 @@ public:
         void bound(const vector<Index>& feature_dimensions, const vector<Condition>& conditions);
 
         void reshape(const type zoom_factor,
-                     const Tensor1& center,
-                     const Tensor2& subset_optimal_points,
+                     const VectorR& center,
+                     const MatrixR& subset_optimal_points,
                      const vector<Index>& input_feature_dimensions,
                      const vector<Dataset::VariableType>& input_variable_types);
 
-        Tensor1 inferior_frontier;
-        Tensor1 superior_frontier;
+        VectorR inferior_frontier;
+        VectorR superior_frontier;
     };
 
     struct Objectives
     {
         Objectives(const ResponseOptimization& response_optimization);
 
-        Tensor2 objective_sources; //Row 0: if is input or not, Row 1 : feature index in input or target subsets
+        MatrixR objective_sources; //Row 0: if is input or not, Row 1 : feature index in input or target subsets
 
-        Tensor2 utopian_and_senses; // Row 0: Raw Utopian points, Row 1: Senses of optimization (1 for max, -1 for min)
+        MatrixR utopian_and_senses; // Row 0: Utopian point, Row 1: Senses of optimization (1 for max, -1 for min)
 
-        Tensor2 objective_normalizer; // Row 0: Multipliers (1/range), Row 1: Offsets (-inferior/range)
+        MatrixR objective_normalizer; // Row 0: Multipliers (1/range), Row 1: Offsets (-inferior/range)
 
-        Tensor2 extract(const Tensor2& inputs, const Tensor2& output) const;
+        MatrixR extract(const MatrixR& inputs, const MatrixR& output) const;
 
-        void normalize(Tensor2& objective_matrix) const;
+        void normalize(MatrixR& objective_matrix) const;
     };
 
     Objectives build_objectives() const;
@@ -94,25 +93,27 @@ public:
 
     Domain get_original_domain(const string role) const;
 
-    Tensor2 calculate_random_inputs(const Domain& input_domain) const;
+    MatrixR calculate_random_inputs(const Domain& input_domain) const;
 
-    pair<Tensor2, Tensor2> filter_feasible_points(const Tensor2& inputs,
-                                                  const Tensor2& outputs,
+    pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
+                                                  const MatrixR& outputs,
                                                   const Domain& output_domain) const;
 
-    pair<Tensor2, Tensor2> calculate_optimal_points(const Tensor2& feasible_inputs,
-                                                    const Tensor2& feasible_outputs,
+    pair<MatrixR, MatrixR> calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                    const MatrixR& feasible_outputs,
                                                     const Objectives& objectives) const;
 
-    Tensor2 assemble_results(const Tensor2& inputs, const Tensor2& outputs) const;
+    MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
 
-    Tensor2 perform_single_objective_optimization(const Objectives& objectives) const;
+    MatrixR perform_single_objective_optimization(const Objectives& objectives) const;
 
-    pair<type, type> calculate_quality_metrics(const Tensor2& inputs, const Tensor2& outputs, const Objectives& objectives) const;
+    pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
-    Tensor2 perform_multiobjective_optimization(const Objectives& objectives) const;
+    pair<type, type> calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs,const Objectives& objectives) const;
 
-    Tensor2 perform_response_optimization() const;
+    MatrixR perform_multiobjective_optimization(const Objectives& objectives) const;
+
+    MatrixR perform_response_optimization() const;
 
 private:
 
@@ -133,7 +134,6 @@ private:
     type relative_tolerance = type(0.001);
 
     //minimum number of points?
-    //stopping criteria for pareto points, average distance from utopian
 };
 
 }

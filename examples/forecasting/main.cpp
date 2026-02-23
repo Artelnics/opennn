@@ -84,8 +84,8 @@ int main()
         /// Calcular gradiente
         // NormalizedSquaredError normalized_squared_error(&forecasting_network, &time_series_dataset);
 
-        // const Tensor1 gradient = normalized_squared_error.calculate_gradient();
-        // const Tensor1 numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+        // const VectorR gradient = normalized_squared_error.calculate_gradient();
+        // const VectorR numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
         // cout << "Gradient" << endl;
         // cout << gradient << endl;
@@ -131,7 +131,7 @@ int main()
             }
         });
         cout << "Inputs: \n" << inputs << endl;
-        const Tensor2 outputs = forecasting_network.calculate_outputs<3,2>(inputs);
+        const MatrixR outputs = forecasting_network.calculate_outputs(inputs);
         cout << "outputs: " << outputs << endl;
 
         /// Pruebas output funcion seno

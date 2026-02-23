@@ -24,7 +24,7 @@ namespace opennn
 
     vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
 
-    Tensor1 to_type_vector(const string&, const string&);
+    VectorR to_type_vector(const string&, const string&);
 
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);

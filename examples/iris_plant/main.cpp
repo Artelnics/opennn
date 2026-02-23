@@ -46,10 +46,10 @@ int main()
 
         // Deployment
 
-        Tensor<type, 2> input_tensor(1, 4);
-        input_tensor.setValues({{5.1, 3.5, 1.4, 0.2}});
+        MatrixR input_tensor(1, 4);
+        input_tensor << 5.1, 3.5, 1.4, 0.2;
 
-        const Tensor<type, 2> output_tensor = classification_network.calculate_outputs<2, 2>(input_tensor);
+        const MatrixR output_tensor = classification_network.calculate_outputs(input_tensor);
 
         cout << "Class probabilities: " << output_tensor << endl;
 

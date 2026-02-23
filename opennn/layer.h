@@ -34,8 +34,6 @@ class Layer
 
 public:
 
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     Layer();
     virtual ~Layer();
 
@@ -72,8 +70,6 @@ public:
 
     Index get_outputs_number() const;
 
-    void set_threads_number(const int&);
-
     // Forward propagation
 
     virtual void forward_propagate(const vector<TensorView>&,
@@ -94,7 +90,7 @@ public:
 
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    Index,
-                                                   Tensor2&) const {}
+                                                   MatrixR&) const {}
 
     virtual void from_XML(const tinyxml2::XMLDocument&) {}
 
@@ -111,9 +107,6 @@ public:
     bool get_is_trainable() const;
 
 protected:
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     string label = "my_layer";
 
@@ -137,7 +130,15 @@ protected:
         else if (activation_function == "Sigmoid")
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
-            softmax(activations);
+        {
+            if constexpr (Rank == 2)
+            {
+                MatrixMap activations_matrix(activations.data(), activations.dimension(0), activations.dimension(1));
+                softmax(activations_matrix);
+            }
+            else
+                softmax(activations);
+        }
         else if (activation_function == "Competitive")
             throw runtime_error("Competitive 3d not implemented");
         else if (activation_function == "HyperbolicTangent")
@@ -154,7 +155,7 @@ protected:
     template <int Rank>
     FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const
     {
-        y.device(*device) = (y < threshold).select(type(0), type(1));
+        y.device(get_device()) = (y < threshold).select(type(0), type(1));
 
         if (dy_dx.size() == 0) return;
 
@@ -176,55 +177,55 @@ protected:
     {
         const type alpha = type(1);
 
-        y.device(*device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
+        y.device(get_device()) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
     }
 
 
     template <int Rank>
     FORCE_INLINE void hyperbolic_tangent(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*device) = y.tanh();
+        y.device(get_device()) = y.tanh();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (type(1) - y.square()).eval();
+        dy_dx.device(get_device()) = (type(1) - y.square()).eval();
     }
 
 
     template <int Rank>
     FORCE_INLINE void logistic(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*device) = (type(1) + (-y).exp()).inverse();
+        y.device(get_device()) = (type(1) + (-y).exp()).inverse();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (y * (type(1) - y)).eval();
+        dy_dx.device(get_device()) = (y * (type(1) - y)).eval();
     }
 
 
     template <int Rank>
     FORCE_INLINE void rectified_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx) const
     {
-        y.device(*device) = y.cwiseMax(type(0));
+        y.device(get_device()) = y.cwiseMax(type(0));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
     }
 
 
     template <int Rank>
     FORCE_INLINE void leaky_rectified_linear(TensorMapR<Rank> y, TensorMapR<Rank> dy_dx, type slope) const
     {
-        y.device(*device) = (y > type(0)).select(y, slope * y);
+        y.device(get_device()) = (y > type(0)).select(y, slope * y);
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
     }
 
 
@@ -235,66 +236,60 @@ protected:
 
         const type alpha = type(1.6733);
 
-        y.device(*device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+        y.device(get_device()) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
+        dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
     }
 
-    void softmax(TensorMap2) const;
+    void softmax(MatrixMap) const;
     void softmax(TensorMap3) const;
     void softmax(TensorMap4) const;
 
-    void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, TensorMap1) const;
+    void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, VectorMap) const;
 
-    void add_gradients(const vector<TensorView>& output_gradient_views) const;
+    void add_gradients(const vector<TensorView>&) const;
 
     template <int Rank>
     void normalize_batch(
         TensorMapR<Rank> outputs,
         TensorMapR<Rank> normalized_outputs,
-        TensorMap1 batch_means,
-        TensorMap1 batch_variances,
-        Tensor1 running_means,
-        Tensor1 running_variances,
-        const TensorMap1 gammas,
-        const TensorMap1 betas,
+        VectorMap batch_means,
+        VectorMap batch_variances,
+        VectorR running_means,
+        VectorR running_variances,
+        const VectorMap gammas,
+        const VectorMap betas,
         bool is_training,
         const type momentum = type(0.9),
         const type epsilon = type(1e-5)) const
     {
         const Index neurons = running_means.size();
+        const Index total_rows = outputs.size() / neurons;
 
-        array<int, Rank - 1> reduction_axes;
-        iota(reduction_axes.begin(), reduction_axes.end(), 0);
-
-        array<Index, Rank> reshape_dimensions;
-        reshape_dimensions.fill(1);
-        reshape_dimensions.back() = neurons;
-
-        array<Index, Rank> broadcast_dimensions = outputs.dimensions();
-        broadcast_dimensions.back() = 1;
+        MatrixMap outputs_mat(outputs.data(), total_rows, neurons);
+        MatrixMap norm_mat(normalized_outputs.data(), total_rows, neurons);
 
         if(is_training)
         {
-            batch_means.device(*device) = outputs.mean(reduction_axes);
+            batch_means = outputs_mat.colwise().mean();
 
-            normalized_outputs.device(*device) = (outputs - batch_means.reshape(reshape_dimensions).broadcast(broadcast_dimensions));
+            norm_mat = outputs_mat.rowwise() - batch_means.transpose();
 
-            batch_variances.device(*device) = (normalized_outputs.square().mean(reduction_axes) + epsilon).sqrt();
+            batch_variances = (norm_mat.array().square().colwise().mean() + epsilon).sqrt();
 
-            normalized_outputs.device(*device) = normalized_outputs / batch_variances.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
+            norm_mat.array().rowwise() /= batch_variances.transpose().array();
 
-            running_means.device(*device) = running_means * momentum + batch_means * (type(1) - momentum);
-            running_variances.device(*device) = running_variances * momentum + batch_variances * (type(1) - momentum);
+            running_means = running_means * momentum + batch_means * (type(1) - momentum);
+            running_variances = running_variances * momentum + batch_variances * (type(1) - momentum);
         }
         else
-            normalized_outputs.device(*device) = (outputs - running_means.reshape(reshape_dimensions).broadcast(broadcast_dimensions)) /
-                                                 (running_variances.reshape(reshape_dimensions).broadcast(broadcast_dimensions) + epsilon);
+            norm_mat.array() = (outputs_mat.rowwise() - running_means.transpose()).array().rowwise() /
+                               (running_variances.transpose().array() + epsilon);
 
-        outputs.device(*device) = normalized_outputs * gammas.reshape(reshape_dimensions).broadcast(broadcast_dimensions) +
-                                  betas.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
+        outputs_mat.array() = (norm_mat.array().rowwise() * gammas.transpose().array()).rowwise() +
+                              betas.transpose().array();
     }
 
 
@@ -307,87 +302,34 @@ protected:
         {
             for(Index i = 0; i < tensor.size(); i++)
                 tensor(i) = (random_uniform(0, 1) < dropout_rate)
-                                ? 0
-                                : tensor(i) * scaling_factor;
+                    ? 0
+                    : tensor(i) * scaling_factor;
         }
     }
 
 
     template <int Rank>
     void calculate_combinations(const TensorMapR<Rank> inputs,
-                                const TensorMap2 weights,
-                                const TensorMap1 biases,
+                                const MatrixMap weights,
+                                const VectorMap biases,
                                 TensorMapR<Rank> outputs) const
     {
-        const Index inputs_size = weights.dimension(0);
-        const Index outputs_size = weights.dimension(1);
+        const Index inputs_size = weights.rows();
+        const Index outputs_size = weights.cols();
         const Index total_rows = inputs.size() / inputs_size;
 
         const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
             inputs_matrix(inputs.data(), total_rows, inputs_size);
-
-        const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-            weights_matrix(weights.data(), inputs_size, outputs_size);
-
-        const Map<const Eigen::RowVector<type, Dynamic>>
-            biases_vector(biases.data(), outputs_size);
 
         Map<Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
             outputs_matrix(outputs.data(), total_rows, outputs_size);
 
-        outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases_vector;
-    }
-
-
-    template <int Rank>
-    void calculate_gradients(const TensorMapR<Rank> inputs,
-                             const TensorMapR<Rank> output_gradients,
-                             const TensorMap2 weights,
-                             TensorMap2 weight_gradients,
-                             TensorMap1 bias_gradients,
-                             TensorMapR<Rank> input_gradients,
-                             const bool is_first_layer) const
-    {
-        const Index inputs_size = weights.dimension(0);
-        const Index outputs_size = weights.dimension(1);
-        const Index total_rows = inputs.size() / inputs_size;
-
-        const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-            inputs_matrix(inputs.data(), total_rows, inputs_size);
-
-        const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-            gradients_matrix(output_gradients.data(), total_rows, outputs_size);
-
-        Map<Eigen::Vector<type, Dynamic>>
-            bias_gradients_vector(bias_gradients.data(), outputs_size);
-
-        Map<Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-            weight_gradients_matrix(weight_gradients.data(), inputs_size, outputs_size);
-
-        bias_gradients_vector.noalias() = gradients_matrix.colwise().sum();
-
-        weight_gradients_matrix.noalias() = inputs_matrix.transpose() * gradients_matrix;
-
-        if(!is_first_layer)
-        {
-            const Map<const Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-                weights_matrix(weights.data(), inputs_size, outputs_size);
-
-            Map<Matrix<type, Dynamic, Dynamic, ColMajor, AlignedMax>>
-                input_gradients_matrix(input_gradients.data(), total_rows, inputs_size);
-
-            input_gradients_matrix.noalias() = gradients_matrix * weights_matrix.transpose();
-        }
+        outputs_matrix.noalias() = (inputs_matrix * weights).rowwise() + biases.transpose();
     }
 
 #ifdef OPENNN_CUDA
 
 public:
-
-    void create_cuda();
-    void destroy_cuda();
-
-    cudnnHandle_t get_cudnn_handle();
 
     virtual void forward_propagate(const vector<TensorViewCuda>&,
                                    unique_ptr<LayerForwardPropagationCuda>&,
@@ -414,12 +356,6 @@ public:
     virtual void print_parameters_cuda() {}
 
 protected:
-
-    cublasHandle_t cublas_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 
     const float alpha = 1.0f;
     const float beta = 0.0f;
@@ -473,7 +409,7 @@ struct LayerBackPropagation
     bool is_first_layer = false;
 
     vector<TensorView> input_gradients;
-    vector<Tensor1> input_gradients_memory;
+    vector<VectorR> input_gradients_memory;
 };
 
 
@@ -498,7 +434,7 @@ struct LayerBackPropagationLM
     bool is_first_layer = false;
 
     vector<TensorView> input_gradients;
-    vector<Tensor1> input_gradients_memory;
+    vector<VectorR> input_gradients_memory;
 };
 
 

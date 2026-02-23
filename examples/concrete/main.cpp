@@ -68,6 +68,10 @@ int main()
         // 4. RESPONSE OPTIMIZATION
         ResponseOptimization optimizer(&approximation_network, &dataset);
 
+        optimizer.set_zoom_factor(0.8);
+
+        optimizer.set_threads_number(1);
+
         cout << "\n[Single Objective Experiment] Maximizing Compressive Strength..." << endl;
 
         vector<ResponseOptimization::Condition> single_conds(dataset.get_variables_number());

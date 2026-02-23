@@ -55,11 +55,11 @@ public:
     }
 
 
-    Tensor1 get_minimums() const
+    VectorR get_minimums() const
     {
         const Index outputs_number = get_outputs_number();
 
-        Tensor1 minimums(outputs_number);
+        VectorR minimums(outputs_number);
 
         #pragma omp parallel for
         for(Index i = 0; i < outputs_number; i++)
@@ -69,11 +69,11 @@ public:
     }
 
 
-    Tensor1 get_maximums() const
+    VectorR get_maximums() const
     {
         const Index outputs_number = get_outputs_number();
 
-        Tensor1 maximums(outputs_number);
+        VectorR maximums(outputs_number);
 
         #pragma omp parallel for
         for(Index i = 0; i < outputs_number; i++)
@@ -83,11 +83,11 @@ public:
     }
 
 
-    Tensor1 get_means() const
+    VectorR get_means() const
     {
         const Index outputs_number = get_outputs_number();
 
-        Tensor1 means(outputs_number);
+        VectorR means(outputs_number);
 
         #pragma omp parallel for
         for(Index i = 0; i < outputs_number; i++)
@@ -97,11 +97,11 @@ public:
     }
 
 
-    Tensor1 get_standard_deviations() const
+    VectorR get_standard_deviations() const
     {
         const Index outputs_number = get_outputs_number();
 
-        Tensor1 standard_deviations(outputs_number);
+        VectorR standard_deviations(outputs_number);
 
         #pragma omp parallel for
         for(Index i = 0; i < outputs_number; i++)
@@ -192,77 +192,47 @@ public:
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                            bool) override
     {
-        if constexpr (Rank == 3)
+        const Index features = scalers.size();
+        const Index total_rows = input_views[0].size() / features;
+
+        const MatrixMap inputs_mat(input_views[0].data, total_rows, features);
+        MatrixMap outputs_mat(layer_forward_propagation->outputs.data, total_rows, features);
+
+        outputs_mat.noalias() = inputs_mat;
+
+        for(Index i = 0; i < features; i++)
         {
-            const Index time_steps = input_shape[0];
-            const Index features = input_shape[1];
+            const string& scaler = scalers[i];
+            if(scaler == "None") continue;
 
-            TensorMap3 inputs = tensor_map<3>(input_views[0]);
-            TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
+            const Descriptives& desc = descriptives[i];
 
-            for(Index j = 0; j < features; j++)
+            auto col = outputs_mat.col(i).array();
+
+            if(scaler == "MeanStandardDeviation")
             {
-                const string& scaler = scalers[j];
-                const Descriptives& descriptive = descriptives[j];
-
-                if(scaler == "None")
-                {
-                    outputs.chip(j, 2).device(*device) = inputs.chip(j, 2);
-                    continue;
-                }
-
-                for(Index t = 0; t < time_steps; t++)
-                {
-                    auto input_slice = inputs.chip(j, 2).chip(t, 1);
-                    auto output_slice = outputs.chip(j, 2).chip(t, 1);
-
-                    if(scaler == "MeanStandardDeviation")
-                        output_slice.device(*device) = (input_slice - descriptive.mean) / (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
-                    else if(scaler == "MinimumMaximum")
-                    {
-                        const type range = descriptive.maximum - descriptive.minimum;
-                        output_slice.device(*device) = (input_slice - descriptive.minimum) / (range + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
-                    }
-                    else if(scaler == "StandardDeviation")
-                        output_slice.device(*device) = input_slice / (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
-                    else if(scaler == "Logarithm")
-                        output_slice.device(*device) = input_slice.log();
-                    else if(scaler == "ImageMinMax")
-                        output_slice.device(*device) = input_slice / type(255.0);
-                    else
-                        throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
-                }
+                col = (col - desc.mean) / (desc.standard_deviation + NUMERIC_LIMITS_MIN);
             }
-        }
-        else
-        {
-            const Index total_features = get_outputs_number();
-            const TensorMap2 inputs = tensor_map<2>(input_views[0]);
-            TensorMap2 outputs = tensor_map<2>(layer_forward_propagation->outputs);
-
-            outputs.device(*device) = inputs;
-
-            for(Index i = 0; i < total_features; i++)
+            else if(scaler == "MinimumMaximum")
             {
-                const string& scaler = scalers[i];
-
-                if(scaler == "None")
-                    continue;
-                else if(scaler == "MeanStandardDeviation")
-                    scale_mean_standard_deviation(outputs, i, descriptives[i]);
-                else if(scaler == "MinimumMaximum")
-                    scale_minimum_maximum(outputs, i, descriptives[i], min_range, max_range);
-                else if(scaler == "StandardDeviation")
-                    scale_standard_deviation(outputs, i, descriptives[i]);
-                else if(scaler == "Logarithm")
-                    scale_logarithmic(outputs, i);
-                else if(scaler == "ImageMinMax")
-                {
-                    auto column = outputs.chip(i, 1);
-                    column.device(*device) = column / type(255.0);
-                }
-                else
-                    throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
+                const type range = desc.maximum - desc.minimum;
+                col = (col - desc.minimum) / (range + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
+            }
+            else if(scaler == "StandardDeviation")
+            {
+                col /= (desc.standard_deviation + NUMERIC_LIMITS_MIN);
+            }
+            else if(scaler == "Logarithm")
+            {
+                col = col.log();
+            }
+            else if(scaler == "ImageMinMax")
+            {
+                col /= type(255.0);
+            }
+            else
+            {
+                throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
             }
         }
     }
@@ -438,7 +408,7 @@ public:
         {
             printer.OpenElement("ScalingNeuron");
             printer.PushAttribute("Index", int(i + 1));
-            add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
+            add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
             add_xml_element(printer, "Scaler", scalers[i]);
 
             printer.CloseElement();
@@ -536,10 +506,10 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
 
         outputs.set_descriptor({static_cast<int>(batch_size), static_cast<int>(outputs_number), 1, 1});
 
-        const Tensor1 minimums_host = scaling_layer->get_minimums();
-        const Tensor1 maximums_host = scaling_layer->get_maximums();
-        const Tensor1 means_host = scaling_layer->get_means();
-        const Tensor1 std_devs_host = scaling_layer->get_standard_deviations();
+        const VectorR minimums_host = scaling_layer->get_minimums();
+        const VectorR maximums_host = scaling_layer->get_maximums();
+        const VectorR means_host = scaling_layer->get_means();
+        const VectorR std_devs_host = scaling_layer->get_standard_deviations();
         const vector<string> scalers_host_vec = scaling_layer->get_scalers();
 
         Tensor<int, 1> scalers_host_tensor(outputs_number);

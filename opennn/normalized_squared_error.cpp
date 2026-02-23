@@ -41,8 +41,8 @@ void NormalizedSquaredError::set_normalization_coefficient()
         return;
     }
 
-    const Tensor1 training_target_means = dataset->calculate_means("Training", "Target");
-    const Tensor2 training_target_data = dataset->get_data("Training", "Target");
+    const VectorR training_target_means = dataset->calculate_means("Training", "Target");
+    const MatrixR training_target_data = dataset->get_data("Training", "Target");
 
     normalization_coefficient = calculate_normalization_coefficient(training_target_data, training_target_means);
 }
@@ -50,45 +50,11 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
-    const Tensor2 targets = dataset->get_feature_data("Target");
+    const MatrixR targets = dataset->get_feature_data("Target");
+    const Index rows = targets.rows() - 1;
 
-    const Index rows = targets.dimension(0)-1;
-    const Index columns = targets.dimension(1);
-
-    Tensor2 targets_t(rows, columns);
-    Tensor2 targets_t_1(rows, columns);
-
-    for(Index i = 0; i < columns; i++)
-        memcpy(targets_t_1.data() + targets_t_1.dimension(0) * i,
-               targets.data() + targets.dimension(0) * i,
-               rows * sizeof(type));
-
-    for(Index i = 0; i < columns; i++)
-        memcpy(targets_t.data() + targets_t.dimension(0) * i,
-               targets.data() + targets.dimension(0) * i + 1,
-               rows * sizeof(type));
-
-    normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
+    normalization_coefficient = (targets.topRows(rows) - targets.bottomRows(rows)).squaredNorm();
 }
-
-
-type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor2& targets_t_1,
-                                                                             const Tensor2& targets_t) const
-{
-    const Index target_samples_number = targets_t_1.dimension(0);
-    const Index target_features_number = targets_t_1.dimension(1);
-
-    type new_normalization_coefficient = type(0);
-
-#pragma omp parallel for reduction(+:new_normalization_coefficient)
-
-    for(Index i = 0; i < target_samples_number; i++)
-        for(Index j = 0; j < target_features_number; j++)
-            new_normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
-
-    return new_normalization_coefficient;
-}
-
 
 
 void NormalizedSquaredError::set_default()
@@ -100,21 +66,14 @@ void NormalizedSquaredError::set_default()
 }
 
 
-type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor2& targets,
-                                                                 const Tensor1& targets_mean) const
+type NormalizedSquaredError::calculate_normalization_coefficient(const MatrixR& targets,
+                                                                 const VectorR& targets_mean) const
 {
-    const Index rows_number = targets.dimension(0);
+    const type new_normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
 
-    Tensor<type, 0> new_normalization_coefficient;
-    new_normalization_coefficient.setZero();
-
-    for(Index i = 0; i < rows_number; i++)
-        new_normalization_coefficient.device(*device)
-            += (targets.chip(i, 0) - targets_mean).square().sum();
-
-    return new_normalization_coefficient() < NUMERIC_LIMITS_MIN
-               ? type(1)
-               : new_normalization_coefficient();
+    return (new_normalization_coefficient < NUMERIC_LIMITS_MIN)
+               ? static_cast<type>(1)
+               : new_normalization_coefficient;
 }
 
 
@@ -127,30 +86,25 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
     // Batch
 
     const Index samples_number = batch.get_samples_number();
-
-    const TensorView targets_view = batch.get_targets();
-
-    const TensorMap2 targets = tensor_map<2>(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
     const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-
-    const TensorMap2 outputs = tensor_map<2>(outputs_view);
+    const MatrixMap outputs = matrix_map(outputs_view);
 
     // Back propagation
 
-    Tensor2& errors = back_propagation.errors;
+    MatrixR& errors = back_propagation.errors;
 
-    Tensor<type,0>& error = back_propagation.error;
+    errors = outputs - targets;
 
-    errors.device(*device) = outputs - targets;
+    const type coefficient = static_cast<type>(total_samples_number) /
+                             static_cast<type>(samples_number * normalization_coefficient);
 
-    const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
+    back_propagation.error = errors.squaredNorm() * coefficient;
 
-    error.device(*device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
-
-    if(isnan(error())) throw runtime_error("\nError is NAN.");
+    if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
 }
 
 
@@ -158,31 +112,33 @@ void NormalizedSquaredError::calculate_error_lm(const Batch&,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-    Tensor1& squared_errors = back_propagation.squared_errors;
+    VectorR& squared_errors = back_propagation.squared_errors;
 
-    Tensor<type, 0>& error = back_propagation.error;
+    type& error = back_propagation.error;
 
-    error.device(*device) = squared_errors.square().sum() * type(0.5);
+    error = squared_errors.squaredNorm() * static_cast<type>(0.5);
 
-    if(isnan(error())) throw runtime_error("\nError is NAN.");
+    if(isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
 void NormalizedSquaredError::calculate_output_gradients(const Batch& batch,
-                                                    ForwardPropagation&,
-                                                    BackPropagation& back_propagation) const
+                                                        ForwardPropagation&,
+                                                        BackPropagation& back_propagation) const
 {
     const Index total_samples_number = dataset->get_used_samples_number();
-
     const Index samples_number = batch.get_samples_number();
-    const Tensor2& errors = back_propagation.errors;
+
+    const MatrixR& errors = back_propagation.errors;
+
     const TensorView output_gradient_views = back_propagation.get_output_gradients();
 
-    TensorMap2 output_gradients = tensor_map<2>(output_gradient_views);
+    MatrixMap output_gradients = matrix_map(output_gradient_views);
 
-    const type coefficient = type(2.0 * total_samples_number) / (type(samples_number) * normalization_coefficient);
+    const type coefficient = static_cast<type>(2.0 * total_samples_number) /
+                             static_cast<type>(samples_number * normalization_coefficient);
 
-    output_gradients.device(*device) = coefficient * errors;
+    output_gradients = coefficient * errors;
 }
 
 
@@ -191,14 +147,16 @@ void NormalizedSquaredError::calculate_squared_errors_lm(const Batch& batch,
                                                          BackPropagationLM& back_propagation_lm) const
 {
     const Index total_samples_number = dataset->get_used_samples_number();
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index batch_size = batch.get_samples_number();
 
-    const Tensor2& errors = back_propagation_lm.errors;
-    Tensor1& squared_errors = back_propagation_lm.squared_errors;
+    const MatrixR& errors = back_propagation_lm.errors;
 
-    const type coefficient = sqrt(type(2.0 * total_samples_number) / (type(batch_samples_number) * normalization_coefficient));
+    VectorR& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*device) = errors.reshape(array_1(errors.size())) * coefficient;
+    const type coefficient = sqrt(static_cast<type>(2.0 * total_samples_number) /
+                                  static_cast<type>(batch_size * normalization_coefficient));
+
+    squared_errors = errors.reshaped() * coefficient;
 }
 
 
@@ -206,11 +164,12 @@ void NormalizedSquaredError::calculate_output_gradients_lm(const Batch& batch,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & back_propagation) const
 {
+    // @todo Is this correct?
+
     const Index total_samples_number = dataset->get_used_samples_number();
     const Index batch_samples_number = batch.get_samples_number();
 
-    const TensorView output_gradients_view = back_propagation.get_output_gradients();
-    TensorMap2 output_gradients = tensor_map<2>(output_gradients_view);
+    MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
     const type coefficient = sqrt(type(2.0 * total_samples_number) / (type(batch_samples_number) * normalization_coefficient));
 
@@ -221,24 +180,24 @@ void NormalizedSquaredError::calculate_output_gradients_lm(const Batch& batch,
 void NormalizedSquaredError::calculate_error_gradient_lm(const Batch&,
                                                          BackPropagationLM& back_propagation_lm) const
 {
-    Tensor1& gradient = back_propagation_lm.gradient;
+    VectorR& gradient = back_propagation_lm.gradient;
 
-    const Tensor1& squared_errors = back_propagation_lm.squared_errors;
+    const VectorR& squared_errors = back_propagation_lm.squared_errors;
 
-    const Tensor2& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+    const MatrixR& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    gradient.device(*device) = squared_errors_jacobian.contract(squared_errors, axes(0,0));
+    gradient.noalias() = squared_errors_jacobian.transpose() * squared_errors;
 }
 
 
 void NormalizedSquaredError::calculate_error_hessian_lm(const Batch&,
                                                         BackPropagationLM& back_propagation_lm) const
 {
-    const Tensor2& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
+    const MatrixR& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    Tensor2& hessian = back_propagation_lm.hessian;
+    MatrixR& hessian = back_propagation_lm.hessian;
 
-    hessian.device(*device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(0,0));
+    hessian.noalias() = squared_errors_jacobian.transpose() * squared_errors_jacobian;
 }
 
 

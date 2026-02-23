@@ -39,61 +39,55 @@ struct Correlation
 };
 
 
-Correlation linear_correlation(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation linear_correlation(const VectorR&, const VectorR&);
 
-Correlation logarithmic_correlation(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation logarithmic_correlation(const VectorR&, const VectorR&);
 
-Correlation exponential_correlation(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation exponential_correlation(const VectorR&, const VectorR&);
 
-Correlation power_correlation(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation power_correlation(const VectorR&, const VectorR&);
 
-Correlation logistic_correlation_vector_vector(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation logistic_correlation_vector_vector(const VectorR&, const VectorR&);
 
-Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice*, const Tensor1&, const Tensor2&);
+Correlation logistic_correlation_vector_matrix(const VectorR&, const MatrixR&);
 
-Correlation logistic_correlation_matrix_vector(const ThreadPoolDevice*, const Tensor2&, const Tensor1&);
+Correlation logistic_correlation_matrix_vector(const MatrixR&, const VectorR&);
 
-Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice*, const Tensor2&, const Tensor2&);
+Correlation logistic_correlation_matrix_matrix(const MatrixR&, const MatrixR&);
 
-Correlation correlation(const ThreadPoolDevice*, const Tensor2&, const Tensor2&);
+Correlation correlation(const MatrixR&, const MatrixR&);
 
 // Spearman correlation
 
-Correlation linear_correlation_spearman(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation linear_correlation_spearman(const VectorR&, const VectorR&);
 
-Tensor1 calculate_spearman_ranks(const Tensor1&);
+VectorR calculate_spearman_ranks(const VectorR&);
 
-Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice*, const Tensor1&, const Tensor1&);
+Correlation logistic_correlation_vector_vector_spearman(const VectorR&, const VectorR&);
 
-Correlation correlation_spearman(const ThreadPoolDevice*, const Tensor2&, const Tensor2&);
+Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 
 // Confidence interval
 
 type r_correlation_to_z_correlation(const type);
 type z_correlation_to_r_correlation(const type);
 
-Tensor1 confidence_interval_z_correlation(const type, Index);
-
+VectorR confidence_interval_z_correlation(const type, Index);
 
 // Time series correlation
 
-Tensor1 autocorrelations(const ThreadPoolDevice*,
-                                 const Tensor1&,
-                                 Index  = 10);
+VectorR autocorrelations(const VectorR&, Index  = 10);
 
-Tensor1 cross_correlations(const ThreadPoolDevice*,
-                                   const Tensor1&,
-                                   const Tensor1&,
-                                   Index);
+VectorR cross_correlations(const VectorR&, const VectorR&, Index);
 
-Tensor2 get_correlation_values(const Tensor<Correlation, 2>&);
+MatrixR get_correlation_values(const Tensor<Correlation, 2>&);
 
 // Missing values
 
-pair<Tensor1, Tensor1> filter_missing_values_vector_vector(const Tensor1&, const Tensor1&);
-pair<Tensor1, Tensor2> filter_missing_values_vector_matrix(const Tensor1&, const Tensor2&);
-pair<Tensor1, Tensor2> filter_missing_values_matrix_vector(const Tensor2&, const Tensor1&);
-pair<Tensor2, Tensor2> filter_missing_values_matrix_matrix(const Tensor2&, const Tensor2&);
+pair<VectorR, VectorR> filter_missing_values_vector_vector(const VectorR&, const VectorR&);
+pair<VectorR, MatrixR> filter_missing_values_vector_matrix(const VectorR&, const MatrixR&);
+pair<VectorR, MatrixR> filter_missing_values_matrix_vector(const MatrixR&, const VectorR&);
+pair<MatrixR, MatrixR> filter_missing_values_matrix_matrix(const MatrixR&, const MatrixR&);
 
 void register_optimization_algorithms();
 

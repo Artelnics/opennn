@@ -167,9 +167,9 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 {
     NeuralNetwork neural_network;
 
-    Tensor2 inputs;
+    MatrixR inputs;
 
-    const Tensor2 outputs = neural_network.calculate_outputs<2,2>(inputs);
+    const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.size(), 0);
 

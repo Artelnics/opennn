@@ -197,13 +197,13 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
 }
 
 
-Tensor1 to_type_vector(const string& text, const string& separator)
+VectorR to_type_vector(const string& text, const string& separator)
 {
     const vector<string> tokens = get_tokens(text, separator);
 
     const Index tokens_size = tokens.size();
 
-    Tensor1 type_vector(tokens_size);
+    VectorR type_vector(tokens_size);
 
     for(Index i = 0; i < tokens_size; i++)
         try
@@ -614,7 +614,7 @@ string round_to_precision_string(type x, const int& precision)
 }
 
 
-Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const int& precision)
+Tensor<string,2> round_to_precision_string_matrix(Tensor2 matrix, const int& precision)
 {
     Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
 

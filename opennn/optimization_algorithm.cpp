@@ -21,10 +21,6 @@ namespace opennn
 
 Optimizer::Optimizer(const Loss* new_loss)
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = make_unique<ThreadPool>(threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
     set(new_loss);
 }
 
@@ -80,16 +76,6 @@ const string& Optimizer::get_neural_network_file_name() const
 void Optimizer::set(const Loss* new_loss)
 {
     loss_index = const_cast<Loss*>(new_loss);
-}
-
-
-void Optimizer::set_threads_number(const int& new_threads_number)
-{
-    thread_pool.reset();
-    device.reset();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -544,7 +530,7 @@ void TrainingResults::resize_training_error_history(const Index new_size)
         return;
     }
 
-    const Tensor1 old_training_error_history = training_error_history;
+    const VectorR old_training_error_history = training_error_history;
 
     training_error_history.resize(new_size);
 
@@ -563,7 +549,7 @@ void TrainingResults::resize_validation_error_history(const Index new_size)
         return;
     }
 
-    const Tensor1 old_validation_error_history = validation_error_history;
+    const VectorR old_validation_error_history = validation_error_history;
 
     validation_error_history.resize(new_size);
 

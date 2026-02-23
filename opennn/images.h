@@ -24,11 +24,11 @@ Tensor3 load_image(const filesystem::path&);
 
 Tensor3 resize_image(const Tensor3&, Index, Index);
 
-void reflect_image_x(const ThreadPoolDevice*, Tensor3&);
-void reflect_image_y(const ThreadPoolDevice*, Tensor3&);
-void rotate_image(const ThreadPoolDevice*, const Tensor3&, Tensor3&, type);
-void translate_image_x(const ThreadPoolDevice*, const Tensor3&, Tensor3&, Index);
-void translate_image_y(const ThreadPoolDevice*, const Tensor3&, Tensor3&, Index);
+void reflect_image_x(Tensor3&);
+void reflect_image_y(Tensor3&);
+void rotate_image(const Tensor3&, Tensor3&, type);
+void translate_image_x(const Tensor3&, Tensor3&, Index);
+void translate_image_y(const Tensor3&, Tensor3&, Index);
 }
 
 // OpenNN: Open Neural Networks Library.

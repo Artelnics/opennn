@@ -43,11 +43,11 @@ vector<Descriptives> Unscaling::get_descriptives() const
 }
 
 
-Tensor1 Unscaling::get_minimums() const
+VectorR Unscaling::get_minimums() const
 {
     const Index outputs_number = get_outputs_number();
 
-    Tensor1 minimums(outputs_number);
+    VectorR minimums(outputs_number);
 
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
@@ -57,11 +57,11 @@ Tensor1 Unscaling::get_minimums() const
 }
 
 
-Tensor1 Unscaling::get_maximums() const
+VectorR Unscaling::get_maximums() const
 {
     const Index outputs_number = get_outputs_number();
 
-    Tensor1 maximums(outputs_number);
+    VectorR maximums(outputs_number);
 
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
@@ -81,12 +81,12 @@ string Unscaling::get_expression(const vector<string>& new_feature_names,
                                  const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_feature_names.empty()
-                                           ? get_default_feature_names()
-                                           : new_feature_names;
+        ? get_default_feature_names()
+        : new_feature_names;
 
     const vector<string> output_names = new_output_names.empty()
-                                            ? get_default_output_names()
-                                            : new_output_names;
+        ? get_default_output_names()
+        : new_output_names;
 
     const Index outputs_number = get_outputs_number();
 
@@ -188,13 +188,13 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool)
 {
-    TensorMap2 outputs = tensor_map<2>(forward_propagation->outputs);
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     const Index outputs_number = get_outputs_number();
 
-    const TensorMap2 inputs = tensor_map<2>(input_views[0]);
+    const MatrixMap inputs = matrix_map(input_views[0]);
 
-    outputs.device(*device) = inputs;
+    outputs = inputs;
 
     for(Index i = 0; i < outputs_number; i++)
     {
@@ -251,7 +251,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", tensor_to_string<type, 1>(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();

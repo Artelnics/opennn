@@ -401,12 +401,6 @@ TrainingResults TrainingStrategy::train_cuda()
     if(!optimization_algorithm->has_loss_index())
         throw runtime_error("Optimization algorithm is wrong.");
 
-    neural_network->create_cuda();
-
-    get_loss_index()->create_cuda();
-
-    get_optimization_algorithm()->create_cuda();
-
     if (neural_network->has("Recurrent"))
         fix_forecasting();
 

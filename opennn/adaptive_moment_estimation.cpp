@@ -279,7 +279,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            training_error += training_back_propagation.error();
+            training_error += training_back_propagation.error;
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
@@ -324,7 +324,7 @@ TrainingResults AdaptiveMomentEstimation::train()
                                             *validation_forward_propagation,
                                             *validation_back_propagation);
 
-                validation_error += validation_back_propagation->error();
+                validation_error += validation_back_propagation->error;
 
                 if(is_classification_model)
                     validation_accuracy += validation_back_propagation->accuracy(0);
@@ -438,21 +438,22 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
     const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
 
-    Tensor1& parameters = neural_network->get_parameters();
-    const Tensor1& gradient = back_propagation.neural_network.gradient;
+    VectorR& parameters = neural_network->get_parameters();
 
-    Tensor1& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
-    Tensor1& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+    const auto gradient = back_propagation.neural_network.gradient.array();
 
-    gradient_exponential_decay.device(*device)
+    auto gradient_exponential_decay = optimization_data.gradient_exponential_decay.array();
+    auto square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay.array();
+
+    gradient_exponential_decay
         = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
 
-    square_gradient_exponential_decay.device(*device)
-        = square_gradient_exponential_decay * beta_2 + gradient.square() * (type(1) - beta_2);
+    square_gradient_exponential_decay
+        = square_gradient_exponential_decay.array() * beta_2 + gradient.array().square() * (type(1) - beta_2);
 
-    parameters.device(*device)
-        -= learning_rate * (gradient_exponential_decay / bias_correction_1) /
-           ((square_gradient_exponential_decay / bias_correction_2).sqrt() + numeric_limits<type>::epsilon());
+    parameters.array()
+        -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
+           ((square_gradient_exponential_decay.array() / bias_correction_2).array().sqrt() + numeric_limits<type>::epsilon());
 }
 
 
@@ -656,8 +657,15 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
             loss_index->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
             
+<<<<<<< HEAD
             training_error += training_back_propagation.error();
             if (is_classification_model) training_accuracy += training_back_propagation.accuracy();
+=======
+            training_error += training_back_propagation.error;
+
+            if (is_classification_model)
+                training_accuracy += training_back_propagation.accuracy();
+>>>>>>> 9ea53bda3be9dbe241f4acfbfd89cea25ec89eac
             
             update_parameters(training_back_propagation, optimization_data);
 
@@ -699,8 +707,12 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 neural_network->forward_propagate(current_batch->get_inputs_device(), *validation_forward_propagation, is_training);
                 loss_index->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
+<<<<<<< HEAD
                 validation_error += validation_back_propagation->error();
                 if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
+=======
+                validation_error += validation_back_propagation->error;
+>>>>>>> 9ea53bda3be9dbe241f4acfbfd89cea25ec89eac
 
                 cudaStreamSynchronize(0);
 

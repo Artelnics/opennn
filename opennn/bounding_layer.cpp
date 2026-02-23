@@ -27,7 +27,7 @@ const Bounding::BoundingMethod& Bounding::get_bounding_method() const
 
 Shape Bounding::get_input_shape() const
 {
-    return { lower_bounds.dimension(0) };
+    return { lower_bounds.rows() };
 }
 
 
@@ -37,7 +37,7 @@ type Bounding::get_lower_bound(const Index i) const
 }
 
 
-const Tensor1& Bounding::get_lower_bounds() const
+const VectorR& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
 }
@@ -45,7 +45,7 @@ const Tensor1& Bounding::get_lower_bounds() const
 
 Shape Bounding::get_output_shape() const
 {
-    return { lower_bounds.dimension(0) };
+    return { lower_bounds.rows() };
 }
 
 
@@ -55,7 +55,7 @@ type Bounding::get_upper_bound(const Index i) const
 }
 
 
-const Tensor1& Bounding::get_upper_bounds() const
+const VectorR& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
@@ -113,7 +113,7 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
 }
 
 
-void Bounding::set_lower_bounds(const Tensor1& new_lower_bounds)
+void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
     lower_bounds = new_lower_bounds;
 }
@@ -129,7 +129,7 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
 }
 
 
-void Bounding::set_upper_bounds(const Tensor1& new_upper_bounds)
+void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
 {
     upper_bounds = new_upper_bounds;
 }
@@ -153,28 +153,19 @@ void Bounding::forward_propagate(const vector<TensorView>& input_views,
                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
                                  bool)
 {
-    const TensorMap2 inputs = tensor_map<2>(input_views[0]);
-
-    TensorMap2 outputs = tensor_map<2>(forward_propagation->outputs);
+    const MatrixMap inputs = matrix_map(input_views[0]);
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        outputs.device(*device) = inputs;
+        outputs = inputs;
         return;
     }
 
-    const Index rows_number = inputs.dimension(0);
-    const Index columns_number = inputs.dimension(1);
+    const Index columns_number = inputs.cols();
 
-#pragma omp parallel for
     for(Index j = 0; j < columns_number; j++)
-    {
-        type lower_bound = lower_bounds(j);
-        type upper_bound = upper_bounds(j);
-
-        for(Index i = 0; i < rows_number; i++)
-            outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
-    }
+        outputs.col(j).array() = inputs.col(j).array().max(lower_bounds(j)).min(upper_bounds(j));
 }
 
 

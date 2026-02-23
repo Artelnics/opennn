@@ -55,8 +55,6 @@ public:
 
     void set(const Loss* = nullptr);
 
-    virtual void set_threads_number(const int&);
-
     virtual void set_loss_index(Loss*);
 
     virtual void set_display(bool);
@@ -94,9 +92,6 @@ public:
 
 protected:
 
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
-
     Loss* loss_index = nullptr;
 
     Index maximum_epochs = 10000;
@@ -119,24 +114,7 @@ protected:
 
 #ifdef OPENNN_CUDA
 
-protected:
-
-    cublasHandle_t cublas_handle;
-    cudnnHandle_t cudnn_handle;
-
 public:
-
-    void create_cuda()
-    {
-        cublasCreate(&cublas_handle);
-        cudnnCreate(&cudnn_handle);
-    }
-
-    void destroy_cuda()
-    {
-        cublasDestroy(cublas_handle);
-        cudnnDestroy(cudnn_handle);
-    }
 
     virtual TrainingResults train_cuda() = 0;
 
@@ -152,16 +130,14 @@ struct OptimizerData
 
     virtual void print() const;
 
-    Tensor1 potential_parameters;
-    Tensor1 training_direction;
+    VectorR potential_parameters;
+    VectorR training_direction;
     type initial_learning_rate = type(0);
 };
 
 
 struct TrainingResults
 {
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     TrainingResults(const Index = 0);
     virtual ~TrainingResults() = default;
 
@@ -185,9 +161,9 @@ struct TrainingResults
 
     void resize_validation_error_history(const Index);
 
-    Tensor1 training_error_history;
+    VectorR training_error_history;
 
-    Tensor1 validation_error_history;
+    VectorR validation_error_history;
 
     string elapsed_time;
 

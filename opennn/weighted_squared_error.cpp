@@ -99,7 +99,7 @@ void WeightedSquaredError::set_weights()
 
     if(target_variables.size() == 1 && target_variables[0].is_binary())
     {
-        const Tensor<Index, 1> target_distribution = dataset->calculate_target_distribution();
+        const VectorI target_distribution = dataset->calculate_target_distribution();
 
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
@@ -179,22 +179,20 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const TensorView targets_view = batch.get_targets();
 
-    const TensorMap2 targets = tensor_map<2>(targets_view);
+    const MatrixMap targets = matrix_map(targets_view);
 
     // Forward propagation
 
     const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorMap2 outputs = tensor_map<2>(outputs_view);
+    const MatrixMap outputs = matrix_map(outputs_view);
 
     // Back propagation
 
-    Tensor2& errors = back_propagation.errors;
-    Tensor2& errors_weights = back_propagation.errors_weights;
-    Tensor<type, 0>& error = back_propagation.error;
+    MatrixR& errors = back_propagation.errors;
+    MatrixR& errors_weights = back_propagation.errors_weights;
+    type& error = back_propagation.error;
 
-    errors.device(*device) = outputs - targets;
-
-//    errors_weights = targets;
+    errors = outputs - targets;
 
     for(Index i = 0; i < targets.size(); i++)
         errors_weights(i) = (targets(i) == type(0))
@@ -203,8 +201,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
-    error.device(*device)
-        = (errors.square() * errors_weights).sum()*coefficient;
+    error = (errors.array().square() * errors_weights.array()).sum() * coefficient;
 }
 
 
@@ -222,17 +219,17 @@ void WeightedSquaredError::calculate_output_gradients(const Batch& batch,
 
     // Back propagation
 
-    const Tensor2& errors = back_propagation.errors;
+    const MatrixR& errors = back_propagation.errors;
 
-    const Tensor2& errors_weights = back_propagation.errors_weights;
+    const MatrixR& errors_weights = back_propagation.errors_weights;
 
     const TensorView output_gradient_views = back_propagation.get_output_gradients();
 
-    TensorMap2 output_gradients = tensor_map<2>(output_gradient_views);
+    MatrixMap output_gradients = matrix_map(output_gradient_views);
 
     const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 
-    output_gradients.device(*device) = coefficient * (errors_weights * errors);
+    output_gradients = coefficient * (errors_weights * errors);
 }
 
 

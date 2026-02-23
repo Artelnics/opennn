@@ -55,7 +55,7 @@ int main()
 
         testing_analysis.set_batch_size(64);
         cout << "Calculating confusion...." << endl;
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
 #endif
@@ -96,7 +96,7 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
 
         testing_analysis.set_batch_size(64);
         cout << "Calculating confusion...." << endl;
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion_cuda();
+        const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 */
         cout << "Bye!" << endl;

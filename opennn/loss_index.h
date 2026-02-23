@@ -58,8 +58,6 @@ public:
 
     void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
-    void set_threads_number(const int&);
-
     void set_neural_network(const NeuralNetwork*);
 
     virtual void set_dataset(const Dataset*);
@@ -90,7 +88,7 @@ public:
                                          ForwardPropagation&,
                                          BackPropagation&) const;
 
-    void add_regularization_gradient(Tensor1&) const;
+    void add_regularization_gradient(VectorR&) const;
 
     void add_regularization_to_gradients(BackPropagation&) const;
 
@@ -132,7 +130,7 @@ public:
 
     // Regularization
 
-    type calculate_regularization(const Tensor1&) const;
+    type calculate_regularization(const VectorR&) const;
 
     // Serialization
 
@@ -151,23 +149,18 @@ public:
 
     type calculate_numerical_error() const;
 
-    Tensor1 calculate_gradient();
+    VectorR calculate_gradient();
 
-    Tensor1 calculate_numerical_gradient();
-    Tensor1 calculate_numerical_gradient_lm();
-    Tensor2 calculate_numerical_jacobian();
-    Tensor1 calculate_numerical_input_gradients();
-    Tensor2 calculate_numerical_hessian();
-    Tensor2 calculate_inverse_hessian();
+    VectorR calculate_numerical_gradient();
+    VectorR calculate_numerical_gradient_lm();
+    MatrixR calculate_numerical_jacobian();
+    VectorR calculate_numerical_input_gradients();
+    MatrixR calculate_numerical_hessian();
+    MatrixR calculate_inverse_hessian();
 
 #ifdef OPENNN_CUDA
 
 public:
-
-    void create_cuda();
-    void destroy_cuda();
-
-    cudnnHandle_t get_cudnn_handle();
 
     virtual void calculate_error(const BatchCuda&,
                                       const ForwardPropagationCuda&,
@@ -189,9 +182,6 @@ public:
 
 protected:
 
-    cublasHandle_t cublas_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-
     const float alpha = 1.0f;
     const float beta = 0.0f;
 
@@ -200,9 +190,6 @@ protected:
     void print(){}
 
 protected:
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 
@@ -220,8 +207,6 @@ protected:
 
 struct BackPropagationLM
 {
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     BackPropagationLM(const Index = 0, Loss* = nullptr);
     virtual ~BackPropagationLM() = default;
 
@@ -235,33 +220,31 @@ struct BackPropagationLM
 
     Index samples_number = 0;
 
-    Tensor1 output_gradients;
+    VectorR output_gradients;
     Shape output_gradient_dimensions;
 
     Loss* loss_index = nullptr;
 
-    Tensor<type, 0> error;
+    type error;
     type regularization = type(0);
     type loss = type(0);
 
     NeuralNetworkBackPropagationLM neural_network;
 
-    Tensor2 errors;
-    Tensor1 squared_errors;
-    Tensor2 squared_errors_jacobian;
+    VectorR errors;
+    VectorR squared_errors;
+    MatrixR squared_errors_jacobian;
 
-    Tensor1 gradient;
-    Tensor2 hessian;
+    VectorR gradient;
+    MatrixR hessian;
 
-    Tensor1 regularization_gradient;
-    Tensor2 regularization_hessian;
+    VectorR regularization_gradient;
+    MatrixR regularization_hessian;
 };
 
 
 struct BackPropagation
 {
-    //EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     BackPropagation(const Index = 0, const Loss* = nullptr);
     virtual ~BackPropagation() = default;
 
@@ -279,17 +262,17 @@ struct BackPropagation
 
     NeuralNetworkBackPropagation neural_network;
 
-    Tensor<type,0> error;
-    Tensor2 errors;
-    Tensor2 errors_weights;
-    Tensor1 output_gradients;
+    type error;
+    MatrixR errors;
+    MatrixR errors_weights;
+    VectorR output_gradients;
     Shape output_gradient_dimensions;
 
-    Tensor<type, 0> accuracy;
-    Tensor2 predictions;
+    Tensor0 accuracy;
+    MatrixR predictions;
 
-    Tensor<bool, 2> matches;
-    Tensor<bool, 2> mask;
+    MatrixB matches;
+    MatrixB mask;
 
     bool built_mask = false;
     type loss = type(0);
@@ -322,7 +305,7 @@ struct BackPropagationCuda
 
     float* errors = nullptr;
 
-    Tensor<type, 0> error;
+    type error;
     float* error_device = nullptr;
 
     type regularization = type(0);
@@ -337,13 +320,11 @@ struct BackPropagationCuda
 
     TensorCuda output_gradients;
 
-    Tensor<type, 0> accuracy;
+    Tensor0 accuracy;
     float* predictions = nullptr;
     float* matches = nullptr;
     float* mask = nullptr;
     bool built_mask = false;
-
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 };
 
 #endif

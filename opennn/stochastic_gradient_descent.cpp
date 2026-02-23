@@ -136,29 +136,29 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    Tensor1& parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
 
-    Tensor1& gradient = back_propagation.neural_network.gradient;
+    VectorR& gradient = back_propagation.neural_network.gradient;
 
-    Tensor1& parameter_updates = optimization_data.parameter_updates;
-    Tensor1& last_parameter_updates = optimization_data.last_parameter_updates;
+    VectorR& parameter_updates = optimization_data.parameter_updates;
+    VectorR& last_parameter_updates = optimization_data.last_parameter_updates;
 
     if (momentum <= type(0))
     {
-        parameter_updates.device(*device) = gradient * (-learning_rate);
-        parameters.device(*device) += parameter_updates;
+        parameter_updates = gradient * (-learning_rate);
+        parameters += parameter_updates;
     }
     else if (momentum > type(0) && !nesterov)
     {
-        parameter_updates.device(*device) = gradient*(-learning_rate) + momentum*last_parameter_updates;
-        last_parameter_updates.device(*device) = parameter_updates;
-        parameters.device(*device) += parameter_updates;
+        parameter_updates = gradient*(-learning_rate) + momentum*last_parameter_updates;
+        last_parameter_updates = parameter_updates;
+        parameters += parameter_updates;
     }
     else if (momentum > type(0) && nesterov)
     {
-        parameter_updates.device(*device) = gradient*(-learning_rate) + momentum*last_parameter_updates;
-        last_parameter_updates.device(*device) = parameter_updates;
-        parameters.device(*device) += parameter_updates*momentum - gradient*learning_rate;
+        parameter_updates = gradient*(-learning_rate) + momentum*last_parameter_updates;
+        last_parameter_updates = parameter_updates;
+        parameters += parameter_updates*momentum - gradient*learning_rate;
     }
 }
 
@@ -294,9 +294,9 @@ TrainingResults StochasticGradientDescent::train()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            results.training_error_history(epoch) = training_back_propagation.error();
+            results.training_error_history(epoch) = training_back_propagation.error;
 
-            training_error += training_back_propagation.error();
+            training_error += training_back_propagation.error;
             //training_loss += training_back_propagation.loss;
 
             // Gradient
@@ -339,7 +339,7 @@ TrainingResults StochasticGradientDescent::train()
                                             validation_forward_propagation,
                                             validation_back_propagation);
 
-                validation_error += validation_back_propagation.error();
+                validation_error += validation_back_propagation.error;
             }
 
             validation_error /= type(validation_batches_number);
@@ -670,7 +670,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            training_error += training_back_propagation.error();
+            training_error += training_back_propagation.error;
 
             if (is_classification_model)
                 training_accuracy += training_back_propagation.accuracy();
@@ -744,7 +744,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                                             *validation_forward_propagation,
                                             *validation_back_propagation);
 
-                validation_error += validation_back_propagation->error();
+                validation_error += validation_back_propagation->error;
 
                 if (is_classification_model)
                     validation_accuracy += validation_back_propagation->accuracy();

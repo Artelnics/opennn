@@ -286,9 +286,9 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         Index count = 0;
 
-        Tensor<Index, 1> zeroes_indices(0);
+        VectorI zeroes_indices(0);
         zeroes_indices.setZero();
-        Tensor<Index, 1> aux(0);
+        VectorI aux(0);
 
         Index embedding_parameters_number = transformer.get_layer(0)->get_parameters_number() + transformer.get_layer(1)->get_parameters_number();
 
@@ -330,9 +330,9 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
         Index count = 0;
 
-        Tensor<Index, 1> diff_indices(0);
+        VectorI diff_indices(0);
         diff_indices.setZero();
-        Tensor<Index, 1> aux(0);
+        VectorI aux(0);
 
         for(Index i = 0; i < abs_difference.size(); i++)
         {

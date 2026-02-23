@@ -129,7 +129,7 @@ void ImageDataset::set_data_random()
 
     const Index targets_number = target_shape[0];
     const Index inputs_number = height * width * channels;
-    const Index samples_number = data.dimension(0);
+    const Index samples_number = data.rows();
 
     data.setZero();
 
@@ -147,7 +147,7 @@ void ImageDataset::set_data_random()
     }
     else
     {
-        Tensor<Index, 1> images_number(targets_number);
+        VectorI images_number(targets_number);
         images_number.setZero();
 
         const Index images_per_category = samples_number / targets_number;
@@ -292,7 +292,7 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 }
 
 
-Tensor2 ImageDataset::perform_augmentation(const Tensor2& inputs) const
+void ImageDataset::perform_augmentation(type* input_data) const
 {
     throw runtime_error("Image Augmentation is not yet implemented. Please check back in a future version.");
 
@@ -303,72 +303,50 @@ Tensor2 ImageDataset::perform_augmentation(const Tensor2& inputs) const
     const Index input_width = input_shape[1];
     const Index channels = input_shape[2];
 
-    ConstTensorMap4 inputs_map(inputs.data(),
-                               samples_number,
-                               input_height,
-                               input_width,
-                               channels);
+    TensorMap4 inputs(input_data,
+                      samples_number,
+                      input_height,
+                      input_width,
+                      channels);
 
     for(Index batch_index = 0; batch_index < samples_number; batch_index++)
     {
-        Tensor3 image = inputs_map.chip(batch_index, 0);
+        Tensor3 image = inputs.chip(batch_index, 0);
 
         if(random_reflection_axis_x)
-            reflect_image_x(device.get(),
-                            image);
+            reflect_image_x(image);
 
         if(random_reflection_axis_y)
-            reflect_image_y(device.get(),
-                            image);
+            reflect_image_y(image);
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-            rotate_image(device.get(),
-                         image,
-                         image,
-                         random_uniform(random_rotation_minimum, random_rotation_maximum));
+            rotate_image(image, image, random_uniform(random_rotation_minimum, random_rotation_maximum));
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-            translate_image_x(device.get(),
-                              image,
-                              image,
-                              random_uniform(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
+            translate_image_x(image, image, random_uniform(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
 
         if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-            translate_image_y(device.get(),
-                              image,
-                              image,
-                              random_uniform(random_vertical_translation_minimum, random_vertical_translation_maximum));
+            translate_image_y(image, image, random_uniform(random_vertical_translation_minimum, random_vertical_translation_maximum));
     }
-
-    return Tensor2();
 }
 
 
 void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
 {
+    fill_tensor_data(data, sample_indices, input_indices, input_data);
+
     if (augmentation)
-    {
-        const Tensor2 augmented_data = perform_augmentation(data);
-        fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
-    }
-    else
-    {
-        fill_tensor_data(data, sample_indices, input_indices, input_data);
-    }
+        perform_augmentation(input_data);
+
 }
 
 
 void ImageDataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
 {
+    fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
+
     if (augmentation)
-    {
-        Tensor2 augmented_data = perform_augmentation(data);
-        fill_tensor_data_row_major(augmented_data, sample_indices, input_indices, input_data);
-    }
-    else
-    {
-        fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
-    } 
+        perform_augmentation(input_data);
 }
 
 
@@ -428,7 +406,7 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
                            input_shape[1],
                            input_shape[2]);
 
-    inputs_data.device(*device) = inputs_data / type(255);
+    inputs_data.device(get_device()) = inputs_data / type(255);
 
     return vector<Descriptives>();
 }
@@ -442,7 +420,7 @@ void ImageDataset::unscale_features(const string&)
                            input_shape[1],
                            input_shape[2]);
 
-    inputs_data.device(*device) = inputs_data * type(255);
+    inputs_data.device(get_device()) = inputs_data * type(255);
 }
 
 
@@ -458,7 +436,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     const Index folders_number = directory_path.size();
 
-    Tensor<Index, 1> images_number(folders_number + 1);
+    VectorI images_number(folders_number + 1);
     images_number.setZero();
     
     Index samples_number = 0;

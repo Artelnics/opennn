@@ -312,13 +312,6 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_threads_number(const int& new_threads_number)
-{
-    for(const unique_ptr<Layer>& layer : layers)
-        layer->set_threads_number(new_threads_number);
-}
-
-
 void NeuralNetwork::set_layers_number(const Index new_layers_number)
 {
     layers.resize(new_layers_number);
@@ -442,7 +435,7 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 }
 
 
-void NeuralNetwork::set_parameters(const Tensor1& new_parameters)
+void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
     parameters = new_parameters;
 
@@ -524,7 +517,7 @@ void NeuralNetwork::set_parameters_glorot()
 }
 
 
-Tensor3 NeuralNetwork::calculate_outputs(const Tensor3 &inputs_1, const Tensor3 &inputs_2)
+Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
     const Index layers_number = get_layers_number();
 
@@ -545,6 +538,40 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3 &inputs_1, const Tensor3 
     const TensorView outputs_view = forward_propagation.get_outputs();
 
     return tensor_map<3>(outputs_view);
+}
+
+
+TensorView NeuralNetwork::run_internal_forward_propagation(const type *data, const Shape &shape)
+{
+    ForwardPropagation forward_propagation(shape[0], this);
+    TensorView input_view(const_cast<type*>(data), shape);
+
+    forward_propagate({input_view}, forward_propagation, false);
+
+    return forward_propagation.layers.back()->get_outputs();
+}
+
+
+MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
+{
+    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.rows(), inputs.cols()});
+
+    return MatrixMap(out.data, out.shape[0], out.shape[1]);
+}
+
+
+MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
+{
+    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)});
+
+    return MatrixMap(out.data, out.shape[0], out.shape[1]);
+}
+
+
+MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
+{
+    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)});
+    return MatrixMap(out.data, out.shape[0], out.shape[1]);
 }
 
 
@@ -573,10 +600,10 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
 
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
-                                      const Tensor1& new_parameters,
+                                      const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
 {
-    const Tensor1 original_parameters = get_parameters();
+    const VectorR original_parameters = get_parameters();
 
     set_parameters(new_parameters);
 
@@ -636,104 +663,17 @@ string NeuralNetwork::get_expression() const
 }
 
 
-Tensor2 NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& input_shape)
-{
-    const Index input_shape_number = input_shape.size();
-
-    if(input_shape_number == 2)
-    {
-        Tensor2 scaled_outputs;
-        Tensor2 last_layer_outputs;
-
-        Tensor<Index, 1> outputs_dimensions;
-        Tensor<Index, 1> last_layer_outputs_dimensions;
-
-        const Index layers_number = get_layers_number();
-
-        if(layers_number == 0)
-        {
-            scaled_outputs = TensorMap2(scaled_inputs_data, input_shape[0], input_shape[1]);
-            return scaled_outputs;
-        }
-
-        scaled_outputs.resize(input_shape[0], layers[0]->get_outputs_number());
-
-        outputs_dimensions = get_shape(scaled_outputs);
-
-        ForwardPropagation forward_propagation(input_shape[0], this);
-
-        bool is_training = false;
-
-        if(layers[0]->get_name() == "Scaling2d")
-        {
-            TensorView scaled_inputs_tensor(scaled_inputs_data, {input_shape[0], input_shape[1]});
-
-            const Tensor<Index, 0> size = input_shape.prod();
-
-            memcpy(scaled_inputs_tensor.data, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
-
-            layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
-
-            const TensorView outputs_view = forward_propagation.layers[0]->get_outputs();
-            scaled_outputs = tensor_map<2>(outputs_view);
-        }
-        else
-        {
-            scaled_outputs = TensorMap2(scaled_inputs_data, input_shape[0], input_shape[1]);
-        }
-
-        last_layer_outputs = scaled_outputs;
-
-        last_layer_outputs_dimensions = get_shape(last_layer_outputs);
-
-        for(Index i = 1; i < layers_number; i++)
-        {
-            if(layers[i]->get_name() != "Unscaling" && layers[i]->get_name() != "Scaling2d")
-            {
-                scaled_outputs.resize(input_shape[0], layers[0]->get_outputs_number());
-
-                outputs_dimensions = get_shape(scaled_outputs);
-
-                TensorView inputs_tensor(last_layer_outputs.data(), {last_layer_outputs_dimensions[0], last_layer_outputs_dimensions[1]});
-
-                const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
-
-                memcpy(inputs_tensor.data, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
-
-                layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
-
-                scaled_outputs = tensor_map<2>(forward_propagation.layers[i]->get_outputs());
-
-                last_layer_outputs = scaled_outputs;
-                last_layer_outputs_dimensions = get_shape(last_layer_outputs);
-            }
-        }
-
-        return scaled_outputs;
-    }
-    else if(input_shape_number == 4)
-    {
-        /// @todo
-        return Tensor2();
-    }
-    else
-    {
-        return Tensor2();
-    }
-}
-
-
-Tensor2 NeuralNetwork::calculate_directional_inputs(const Index direction,
-                                                    const Tensor1& point,
+MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
+                                                    const VectorR& point,
                                                     type minimum,
                                                     type maximum,
                                                     Index points_number) const
 {
     const Index inputs_number = get_inputs_number();
 
-    Tensor2 directional_inputs(points_number, inputs_number);
+    MatrixR directional_inputs(points_number, inputs_number);
 
-    Tensor1 inputs(inputs_number);
+    VectorR inputs(inputs_number);
 
     inputs = point;
 
@@ -777,7 +717,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     // for(Index j = 0; j < pixels_number; j++)
     //     input_data(j) = image(j);
 
-    // const Tensor2 outputs = calculate_outputs<4,2>(input_data);
+    // const Matrix outputs = calculate_outputs(input_data);
 
     // Index predicted_index = -1;
 
@@ -801,7 +741,8 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     return 0;
 }
 
-Tensor2 NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_documents) const
+
+MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_documents)
 {
     const Index batch_size = input_documents.dimension(0);
 
@@ -814,10 +755,10 @@ Tensor2 NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_docu
     for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
         vocabulary_map[input_vocabulary[i]] = i;
 
-    Tensor2 inputs(batch_size, sequence_length);
+    MatrixR inputs(batch_size, sequence_length);
     inputs.setConstant(0.0);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < batch_size; ++i)
     {
         const vector<string> tokens = tokenize(input_documents(i));
@@ -852,9 +793,7 @@ Tensor2 NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_docu
             inputs(i, current_index) = 3;
     }
 
-//    return calculate_outputs<2, 2>(encoded_inputs);
-
-    return Tensor2();
+    return calculate_outputs(inputs);
 }
 
 
@@ -1147,7 +1086,7 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     const Index parameters_number = parameters.size();
 
-//    Tensor1 new_parameters(parameters_number);
+//    VectorR new_parameters(parameters_number);
 
     file.read(reinterpret_cast<char*>(parameters.data()), parameters_number * sizeof(type));
 
@@ -1158,9 +1097,9 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 }
 
 
-void NeuralNetwork::save_outputs(Tensor2& inputs, const filesystem::path& file_name)
+void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
 {
-    const Tensor2 outputs = calculate_outputs<2,2>(inputs);
+    const MatrixR outputs = calculate_outputs(inputs);
 
     ofstream file(file_name);
 
@@ -1170,7 +1109,7 @@ void NeuralNetwork::save_outputs(Tensor2& inputs, const filesystem::path& file_n
     const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
-    const Index batch_size = inputs.dimension(0);
+    const Index batch_size = inputs.rows();
 
     for(size_t i = 0; i < size_t(outputs_number); i++)
     {
@@ -1201,7 +1140,7 @@ void NeuralNetwork::save_outputs(Tensor2& inputs, const filesystem::path& file_n
 
 void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
 {
-    const Tensor2 outputs = calculate_outputs<3, 2>(inputs_3d);
+    const MatrixR outputs = calculate_outputs(inputs_3d);
 
     const Index batch_size = inputs_3d.dimension(0);
     const Index past_time_steps = inputs_3d.dimension(1);
@@ -1646,23 +1585,6 @@ TensorViewCuda NeuralNetwork::calculate_outputs(TensorViewCuda input_device, Ind
     return forward_propagation.get_last_trainable_layer_outputs_device();
 }
 
-
-void NeuralNetwork::create_cuda() const
-{
-    const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
-
-    for(const unique_ptr<Layer>& layer : neural_network_layers)
-        layer->create_cuda();
-}
-
-
-void NeuralNetwork::destroy_cuda() const
-{
-    const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
-
-    for(const unique_ptr<Layer>& layer : neural_network_layers)
-        layer->destroy_cuda();
-}
 
 TensorCuda &NeuralNetwork::get_parameters_device()
 {

@@ -22,15 +22,15 @@ public:
 
     //enum class InitializationMethod{Random,Correlations};
 
-    const Tensor<bool, 2>& get_population() const;
+    const MatrixB& get_population() const;
 
-    const Tensor1& get_training_errors() const;
+    const VectorR& get_training_errors() const;
 
-    const Tensor1& get_validation_errors() const;
+    const VectorR& get_validation_errors() const;
 
-    const Tensor1& get_fitness() const;
+    const VectorR& get_fitness() const;
 
-    const Tensor<bool, 1>& get_selection() const;
+    const VectorB& get_selection() const;
 
     Index get_individuals_number() const;
 
@@ -50,7 +50,7 @@ public:
     void set_minimum_inputs_number(const Index);
     void set_maximum_inputs_number(const Index);
 
-    void set_population(const Tensor<bool, 2>&);
+    void set_population(const MatrixB&);
 
     void set_individuals_number(const Index new_individuals_number = 4);
 
@@ -62,8 +62,8 @@ public:
 
     void set_maximum_epochs(const Index);
 
-    void set_fitness(const Tensor1&); // Used in testing
-    void set_selection(const Tensor<bool, 1>&); // Used in testing
+    void set_fitness(const VectorR&); // Used in testing
+    void set_selection(const VectorB&); // Used in testing
 
     void initialize_population();
 
@@ -76,7 +76,7 @@ public:
 
     void perform_selection();
 
-    Tensor<bool, 1> cross(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
+    VectorB cross(const VectorB&, const VectorB&);
 
     void perform_crossover();
 
@@ -86,7 +86,7 @@ public:
 
     vector<Index> get_selected_individual_indices() const;
 
-    vector<Index> get_variable_indices(const Tensor<bool, 1>&);
+    vector<Index> get_variable_indices(const VectorB&);
 
     InputsSelectionResults perform_input_selection() override;
 
@@ -104,20 +104,20 @@ public:
 
 private:
 
-    Tensor<Tensor1, 1> parameters;
+    Tensor<VectorR, 1> parameters;
 
     vector<Index> original_input_variable_indices;
     vector<Index> original_target_variable_indices;
     
-    Tensor<bool, 2> population;
+    MatrixB population;
 
-    Tensor1 training_errors;
+    VectorR training_errors;
 
-    Tensor1 validation_errors;
+    VectorR validation_errors;
 
-    Tensor1 fitness;
+    VectorR fitness;
 
-    Tensor<bool, 1> selection;
+    VectorB selection;
 
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number;
@@ -126,7 +126,7 @@ private:
 
     type mean_validation_error;
     
-    Tensor<bool, 2> optimal_individuals_history;
+    MatrixB optimal_individuals_history;
 
     type mutation_rate;
 

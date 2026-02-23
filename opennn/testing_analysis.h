@@ -34,10 +34,10 @@ public:
     {
         type determination = type(0);
 
-        Tensor1 targets;
-        Tensor1 outputs;
+        VectorR targets;
+        VectorR outputs;
 
-        void set(const Tensor1&, const Tensor1&, type);
+        void set(const VectorR&, const VectorR&, type);
 
         void save(const filesystem::path&) const;
 
@@ -47,7 +47,7 @@ public:
 
     struct RocAnalysis
     {
-        Tensor2 roc_curve;
+        MatrixR roc_curve;
 
         type area_under_curve = 0;
 
@@ -61,11 +61,11 @@ public:
 
     struct KolmogorovSmirnovResults
     {
-        Tensor2 positive_cumulative_gain;
+        MatrixR positive_cumulative_gain;
 
-        Tensor2 negative_cumulative_gain;
+        MatrixR negative_cumulative_gain;
 
-        Tensor1 maximum_gain;
+        VectorR maximum_gain;
     };
 
 
@@ -96,8 +96,6 @@ public:
 
     void set_display(bool);
 
-    void set_threads_number(const int&);
-
     void set_batch_size(const Index);
 
     // Checking
@@ -106,50 +104,50 @@ public:
 
     // Error data
 
-    pair<Tensor<type,2>, Tensor<type,2>> get_targets_and_outputs(const string&) const;
+    pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
 
-    Tensor2 calculate_error() const;
+    MatrixR calculate_error() const;
 
     Tensor3 calculate_error_data() const;
-    Tensor2 calculate_percentage_error_data() const;
+    MatrixR calculate_percentage_error_data() const;
 
     vector<Descriptives> calculate_absolute_errors_descriptives() const;
-    vector<Descriptives> calculate_absolute_errors_descriptives(const Tensor2&, const Tensor2&) const;
+    vector<Descriptives> calculate_absolute_errors_descriptives(const MatrixR&, const MatrixR&) const;
 
     vector<Descriptives> calculate_percentage_errors_descriptives() const;
-    vector<Descriptives> calculate_percentage_errors_descriptives(const Tensor2&, const Tensor2&) const;
+    vector<Descriptives> calculate_percentage_errors_descriptives(const MatrixR&, const MatrixR&) const;
 
     vector<vector<Descriptives>> calculate_error_data_descriptives() const;
     void print_error_data_descriptives() const;
 
     vector<Histogram> calculate_error_data_histograms(const Index = 10) const;
 
-    Tensor<Tensor<Index, 1>, 1> calculate_maximal_errors(const Index = 10) const;
+    Tensor<VectorI, 1> calculate_maximal_errors(const Index = 10) const;
 
-    Tensor2 calculate_errors() const;
-    Tensor1 calculate_errors(const Tensor2&, const Tensor2&) const;
-    Tensor1 calculate_errors(const string&) const;
+    MatrixR calculate_errors() const;
+    VectorR calculate_errors(const MatrixR&, const MatrixR&) const;
+    VectorR calculate_errors(const string&) const;
 
-    Tensor2 calculate_binary_classification_errors() const;
-    Tensor1 calculate_binary_classification_errors(const string&) const;
+    MatrixR calculate_binary_classification_errors() const;
+    VectorR calculate_binary_classification_errors(const string&) const;
 
-    Tensor2 calculate_multiple_classification_errors() const;
-    Tensor1 calculate_multiple_classification_errors(const string&) const;
+    MatrixR calculate_multiple_classification_errors() const;
+    VectorR calculate_multiple_classification_errors(const string&) const;
 
-    type calculate_normalized_squared_error(const Tensor2&, const Tensor2&) const;
-    type calculate_cross_entropy_error(const Tensor2&, const Tensor2&) const;
-    type calculate_cross_entropy_error_3d(const Tensor3&, const Tensor2&) const;
-    type calculate_weighted_squared_error(const Tensor2&, const Tensor2&, const Tensor1& = Tensor1()) const;
-    type calculate_Minkowski_error(const Tensor2&, const Tensor2&, const type = type(1.5)) const;
+    type calculate_normalized_squared_error(const MatrixR&, const MatrixR&) const;
+    type calculate_cross_entropy_error(const MatrixR&, const MatrixR&) const;
+    type calculate_cross_entropy_error_3d(const Tensor3&, const MatrixR&) const;
+    type calculate_weighted_squared_error(const MatrixR&, const MatrixR&, const VectorR& = VectorR()) const;
+    type calculate_Minkowski_error(const MatrixR&, const MatrixR&, const type = type(1.5)) const;
 
-    type calculate_masked_accuracy(const Tensor3&, const Tensor2&) const;
+    type calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
 
-    type calculate_determination(const Tensor1&, const Tensor1&) const;
+    type calculate_determination(const VectorR&, const VectorR&) const;
 
     // Goodness-of-fit analysis
 
     Tensor<Correlation, 1> linear_correlation() const;
-    Tensor<Correlation, 1> linear_correlation(const Tensor2&, const Tensor2&) const;
+    Tensor<Correlation, 1> linear_correlation(const MatrixR&, const MatrixR&) const;
 
     void print_linear_correlations() const;
 
@@ -158,69 +156,69 @@ public:
 
     // Binary classifcation
 
-    Tensor1 calculate_binary_classification_tests(const type = 0.50) const;
+    VectorR calculate_binary_classification_tests(const type = 0.50) const;
 
     void print_binary_classification_tests() const;
 
     // Confusion
 
-    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor2&, const Tensor2&, type) const;
-    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor2&, const Tensor2&) const;
-    vector<Tensor<Index, 2>> calculate_multilabel_confusion(const type) const;
-    Tensor<Index, 2> calculate_confusion(const Tensor2&, const Tensor2&, type = 0.50) const;
-    Tensor<Index, 2> calculate_confusion(const type = 0.50) const;
+    MatrixI calculate_confusion_binary_classification(const MatrixR&, const MatrixR&, type) const;
+    MatrixI calculate_confusion_multiple_classification(const MatrixR&, const MatrixR&) const;
+    vector<MatrixI> calculate_multilabel_confusion(const type) const;
+    MatrixI calculate_confusion(const MatrixR&, const MatrixR&, type = 0.50) const;
+    MatrixI calculate_confusion(const type = 0.50) const;
 
-    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor2&, const Tensor2&) const;
+    VectorI calculate_positives_negatives_rate(const MatrixR&, const MatrixR&) const;
 
     // ROC curve
 
     RocAnalysis perform_roc_analysis() const;
 
-    Tensor2 calculate_roc_curve(const Tensor2&, const Tensor2&) const;
+    MatrixR calculate_roc_curve(const MatrixR&, const MatrixR&) const;
 
-    type calculate_area_under_curve(const Tensor2&) const;
-    type calculate_area_under_curve_confidence_limit(const Tensor2&, const Tensor2&) const;
-    type calculate_optimal_threshold(const Tensor2&) const;
+    type calculate_area_under_curve(const MatrixR&) const;
+    type calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
+    type calculate_optimal_threshold(const MatrixR&) const;
 
     // Lift Chart
 
-    Tensor2 perform_cumulative_gain_analysis() const;
-    Tensor2 calculate_cumulative_gain(const Tensor2&, const Tensor2&) const;
-    Tensor2 calculate_negative_cumulative_gain(const Tensor2&, const Tensor2&)const;
+    MatrixR perform_cumulative_gain_analysis() const;
+    MatrixR calculate_cumulative_gain(const MatrixR&, const MatrixR&) const;
+    MatrixR calculate_negative_cumulative_gain(const MatrixR&, const MatrixR&)const;
 
-    Tensor2 perform_lift_chart_analysis() const;
-    Tensor2 calculate_lift_chart(const Tensor2&) const;
+    MatrixR perform_lift_chart_analysis() const;
+    MatrixR calculate_lift_chart(const MatrixR&) const;
 
     KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
-    Tensor1 calculate_maximum_gain(const Tensor2&, const Tensor2&) const;
+    VectorR calculate_maximum_gain(const MatrixR&, const MatrixR&) const;
 
     // Output histogram
 
-    vector<Histogram> calculate_output_histogram(const Tensor2&, Index = 10) const;
+    vector<Histogram> calculate_output_histogram(const MatrixR&, Index = 10) const;
 
     // Binary classification rates
 
     BinaryClassificationRates calculate_binary_classification_rates(const type = 0.50) const;
 
-    vector<Index> calculate_true_positive_samples(const Tensor2&, const Tensor2&, const vector<Index>&, type) const;
-    vector<Index> calculate_false_positive_samples(const Tensor2&, const Tensor2&, const vector<Index>&, type) const;
-    vector<Index> calculate_false_negative_samples(const Tensor2&, const Tensor2&, const vector<Index>&, type) const;
-    vector<Index> calculate_true_negative_samples(const Tensor2&, const Tensor2&, const vector<Index>&, type) const;
+    vector<Index> calculate_true_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
+    vector<Index> calculate_false_positive_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
+    vector<Index> calculate_false_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
+    vector<Index> calculate_true_negative_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type) const;
 
     // Multiple classification tests
 
-    Tensor1 calculate_multiple_classification_precision() const;
-    Tensor2 calculate_multiple_classification_tests() const;
+    VectorR calculate_multiple_classification_precision() const;
+    MatrixR calculate_multiple_classification_tests() const;
 
     // Multiple classification rates
 
-    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates() const;
+    Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
 
-    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor2&, const Tensor2&, const vector<Index>&) const;
+    Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
 
-    Tensor<string, 2> calculate_well_classified_samples(const Tensor2&, const Tensor2&, const vector<string>&) const;
+    Tensor<string, 2> calculate_well_classified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
 
-    Tensor<string, 2> calculate_misclassified_samples(const Tensor2&, const Tensor2&, const vector<string>&) const;
+    Tensor<string, 2> calculate_misclassified_samples(const MatrixR&, const MatrixR&, const vector<string>&) const;
 
     // Save
 
@@ -228,27 +226,27 @@ public:
 
     void save_multiple_classification_tests(const filesystem::path&) const;
 
-    void save_well_classified_samples(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_well_classified_samples(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_misclassified_samples(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_misclassified_samples(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_well_classified_samples_statistics(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_well_classified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_misclassified_samples_statistics(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_misclassified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_well_classified_samples_probability_histogram(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_well_classified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
     void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
-    void save_misclassified_samples_probability_histogram(const Tensor2&, const Tensor2&, const vector<string>&, const filesystem::path&) const;
+    void save_misclassified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
     void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
     // Forecasting
 
-    Tensor<Tensor1, 1> calculate_error_autocorrelation(const Index = 10) const;
+    vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
 
-    Tensor<Tensor1, 1> calculate_inputs_errors_cross_correlation(const Index = 10) const;
+    vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
 
     // Transformer
 
@@ -267,14 +265,11 @@ public:
 
 #ifdef OPENNN_CUDA
 
-    Tensor<Index, 2> calculate_confusion_cuda(const type = 0.50) const;
+    MatrixI calculate_confusion_cuda(const type = 0.50) const;
 
 #endif
 
 private:
-
-    unique_ptr<ThreadPool> thread_pool = nullptr;
-    unique_ptr<ThreadPoolDevice> device = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

@@ -97,20 +97,20 @@ void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
 
     // Standarization
 
-    means.device(*device) = inputs.mean(array<Index, 1>({2}));
+    means.device(get_device()) = inputs.mean(array<Index, 1>({2}));
 
-    standard_deviations.device(*device)
+    standard_deviations.device(get_device())
         = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)).square().mean(array<Index, 1>({2})).sqrt();
 
-    outputs.device(*device)
+    outputs.device(get_device())
         = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
           / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + numeric_limits<type>::epsilon());
 
     // Affine transformation
 /*
-    multiply_matrices(device.get(), outputs, gammas);
+    multiply_matrices(get_device(), outputs, gammas);
 
-    outputs.device(*device) = outputs + betas.reshape(array<Index, 3>{1, 1, betas.dimension(0)})
+    outputs.device(get_device()) = outputs + betas.reshape(array<Index, 3>{1, 1, betas.dimension(0)})
                                              .broadcast(array<Index, 3>{outputs.dimension(0), outputs.dimension(1), 1});
 */
 }
@@ -139,8 +139,8 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
     Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
 
-    TensorMap1 gamma_derivatives = tensor_map<1>(this_back_propagation->gamma_derivatives);
-    TensorMap1 beta_derivatives = tensor_map<1>(this_back_propagation->beta_derivatives);
+    VectorMap gamma_derivatives = vector_map(this_back_propagation->gamma_derivatives);
+    VectorMap beta_derivatives = vector_map(this_back_propagation->beta_derivatives);
 
     Tensor3& scaled_gradients = this_back_propagation->scaled_gradients;
     Tensor3& standard_deviation_derivatives = this_back_propagation->standard_deviation_derivatives;
@@ -153,33 +153,33 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
 
     // Parameters derivatives
 
-    gamma_derivatives.device(*device) = (outputs * output_gradients).sum(array<Index, 2>({0, 1}));
-    beta_derivatives.device(*device) = output_gradients.sum(array<Index, 2>({0, 1}));
+    gamma_derivatives.device(get_device()) = (outputs * output_gradients).sum(array<Index, 2>({0, 1}));
+    beta_derivatives.device(get_device()) = output_gradients.sum(array<Index, 2>({0, 1}));
 
     // Input derivatives
 /*
-    scaled_gradients.device(*device) = output_gradients;
-    multiply_matrices(device.get(), scaled_gradients, gammas);
+    scaled_gradients.device(get_device()) = output_gradients;
+    multiply_matrices(get_device(), scaled_gradients, gammas);
 
-    aux_2d.device(*device) = (scaled_gradients * outputs).sum(array<Index, 1>({2}))
+    aux_2d.device(get_device()) = (scaled_gradients * outputs).sum(array<Index, 1>({2}))
                                          / (embedding_dimension * (standard_deviations + epsilon));
 
-    standard_deviation_derivatives.device(*device) = outputs;
-    multiply_matrices(device.get(), standard_deviation_derivatives, aux_2d);
+    standard_deviation_derivatives.device(get_device()) = outputs;
+    multiply_matrices(get_device(), standard_deviation_derivatives, aux_2d);
 
-    scaled_gradients.device(*device) = scaled_gradients
+    scaled_gradients.device(get_device()) = scaled_gradients
                                                 / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
                                                        .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
 
-    input_gradients.device(*device) = scaled_gradients - standard_deviation_derivatives;
+    input_gradients.device(get_device()) = scaled_gradients - standard_deviation_derivatives;
 
-    aux_2d.device(*device) = 1 / type(embedding_dimension) * scaled_gradients.sum(array<Index, 1>({2}));
+    aux_2d.device(get_device()) = 1 / type(embedding_dimension) * scaled_gradients.sum(array<Index, 1>({2}));
     /*
-    input_derivatives.device(*device) = input_derivatives
+    input_derivatives.device(get_device()) = input_derivatives
         - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
                 .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
 */
-    //substract_matrices(device.get(), aux_2d, input_derivatives);
+    //substract_matrices(get_device(), aux_2d, input_derivatives);
 }
 
 

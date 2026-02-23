@@ -60,7 +60,7 @@ int main()
         const TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
         
         cout << "Calculating confusion...." << endl;
-        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        const MatrixI confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
         cout << "Bye!" << endl;
