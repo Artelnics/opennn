@@ -243,47 +243,6 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 
 
 
-MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
-                                      Index column_index,
-                                      type minimum,
-                                      type maximum)
-{
-    const VectorR column = matrix.col(column_index);
-    const Index new_rows_number = count_between(column, minimum, maximum);
-
-    if(new_rows_number == 0) return MatrixR();
-
-    const Index rows_number = matrix.rows();
-    const Index columns_number = matrix.cols();
-
-    bool check_conditions = false;
-
-    MatrixR new_matrix(new_rows_number, columns_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        if(matrix(i, column_index) >= minimum
-        && matrix(i, column_index) <= maximum)
-        {
-            const VectorR row = matrix.row(i);
-
-            set_row(new_matrix, row, row_index);
-
-            row_index++;
-
-            check_conditions = true;
-        }
-    }
-
-    if(!check_conditions)
-        throw runtime_error("Invalid conditions\n");
-
-    return new_matrix;
-}
-
-
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1)
 {
     const Index number_points_to_compare = matrix.rows();
