@@ -205,35 +205,20 @@ public:
             const string& scaler = scalers[i];
             if(scaler == "None") continue;
 
-            const Descriptives& desc = descriptives[i];
-
-            auto col = outputs_mat.col(i).array();
+            const Descriptives& descriptive = descriptives[i];
 
             if(scaler == "MeanStandardDeviation")
-            {
-                col = (col - desc.mean) / (desc.standard_deviation + NUMERIC_LIMITS_MIN);
-            }
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
             else if(scaler == "MinimumMaximum")
-            {
-                const type range = desc.maximum - desc.minimum;
-                col = (col - desc.minimum) / (range + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
-            }
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
             else if(scaler == "StandardDeviation")
-            {
-                col /= (desc.standard_deviation + NUMERIC_LIMITS_MIN);
-            }
+                outputs_mat.col(i).array() /= (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
             else if(scaler == "Logarithm")
-            {
-                col = col.log();
-            }
+                outputs_mat.col(i).array() = outputs_mat.col(i).array().log();
             else if(scaler == "ImageMinMax")
-            {
-                col /= type(255.0);
-            }
+                outputs_mat.col(i).array() /= type(255.0);
             else
-            {
                 throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
-            }
         }
     }
 

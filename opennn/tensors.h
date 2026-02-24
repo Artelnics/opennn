@@ -403,8 +403,6 @@ MatrixR filter_column_minimum_maximum(const MatrixR&, Index, type, type);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int );
 
-void fill_tensor_data_row_major(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
-
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
 
 //void fill_tensor_sequence(const Tensor2&, const vector<Index>&, const vector<Index>&, Index, type*);
@@ -547,7 +545,7 @@ inline VectorMap vector_map(const TensorView& tensor_view)
         throw runtime_error("tensor_map alignment error: Pointer is not aligned. "
                             "This will cause a crash with AlignedMax TensorMaps.");
 
-    return VectorMap(tensor_view.data, tensor_view.size() / tensor_view.shape[0]);
+    return VectorMap(tensor_view.data, tensor_view.size());
 }
 
 

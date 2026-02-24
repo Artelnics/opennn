@@ -260,6 +260,8 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            training_back_propagation.neural_network.gradient.setZero();
+
             // Dataset
 
             training_batch.fill(training_batches[iteration],
@@ -433,27 +435,22 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     optimization_data.iteration++;
-    Index& iteration = optimization_data.iteration;
+    const type iteration = static_cast<type>(optimization_data.iteration);
 
-    const type bias_correction_1 = type(1) - pow(beta_1, type(iteration));
-    const type bias_correction_2 = type(1) - pow(beta_2, type(iteration));
+    const type bias_correction_1 = type(1) - pow(beta_1, iteration);
+    const type bias_correction_2 = type(1) - pow(beta_2, iteration);
 
     VectorR& parameters = neural_network->get_parameters();
 
-    const auto gradient = back_propagation.neural_network.gradient.array();
+    VectorMap gradient_exponential_decay(optimization_data.gradient_exponential_decay.data(), optimization_data.gradient_exponential_decay.size());
+    VectorMap square_gradient_exponential_decay(optimization_data.square_gradient_exponential_decay.data(), optimization_data.square_gradient_exponential_decay.size());
+    const VectorMap gradient(back_propagation.neural_network.gradient.data(), back_propagation.neural_network.gradient.size());
 
-    auto gradient_exponential_decay = optimization_data.gradient_exponential_decay.array();
-    auto square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay.array();
+    gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
+    square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
 
-    gradient_exponential_decay
-        = gradient_exponential_decay * beta_1 + gradient * (type(1) - beta_1);
-
-    square_gradient_exponential_decay
-        = square_gradient_exponential_decay.array() * beta_2 + gradient.array().square() * (type(1) - beta_2);
-
-    parameters.array()
-        -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
-           ((square_gradient_exponential_decay.array() / bias_correction_2).array().sqrt() + numeric_limits<type>::epsilon());
+    parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
+                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + numeric_limits<type>::epsilon());
 }
 
 

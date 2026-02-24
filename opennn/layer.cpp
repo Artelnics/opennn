@@ -300,11 +300,13 @@ void Layer::set_output_shape(const Shape&)
 
 void Layer::softmax(MatrixMap y) const
 {
-    y.colwise() -= y.rowwise().maxCoeff();
+    VectorR max_coeffs = y.rowwise().maxCoeff();
+    y.colwise() -= max_coeffs;
 
-    y = y.array().exp();
+    y.array() = y.array().exp();
 
-    y.array().colwise() /= y.rowwise().sum().array();
+    VectorR sums = y.rowwise().sum();
+    y.array().colwise() /= sums.array();
 }
 
 

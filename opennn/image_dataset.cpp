@@ -341,15 +341,6 @@ void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const 
 }
 
 
-void ImageDataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
-{
-    fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
-
-    if (augmentation)
-        perform_augmentation(input_data);
-}
-
-
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");

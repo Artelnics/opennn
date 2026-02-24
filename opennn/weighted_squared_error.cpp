@@ -194,14 +194,14 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     errors = outputs - targets;
 
-    for(Index i = 0; i < targets.size(); i++)
-        errors_weights(i) = (targets(i) == type(0))
-            ? negatives_weight
-            : positives_weight;
+    errors_weights.array() = (targets.array() == type(0)).select(
+        MatrixR::Constant(targets.rows(), targets.cols(), negatives_weight),
+        MatrixR::Constant(targets.rows(), targets.cols(), positives_weight)
+        );
 
     const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
-    error = (errors.array().square() * errors_weights.array()).sum() * coefficient;
+    error = (errors.array().square() * back_propagation.errors_weights.array()).sum() * coefficient;
 }
 
 
@@ -223,13 +223,11 @@ void WeightedSquaredError::calculate_output_gradients(const Batch& batch,
 
     const MatrixR& errors_weights = back_propagation.errors_weights;
 
-    const TensorView output_gradient_views = back_propagation.get_output_gradients();
+    MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
-    MatrixMap output_gradients = matrix_map(output_gradient_views);
+    const type coefficient = type(2 * total_samples_number) / (type(batch_size) * normalization_coefficient);
 
-    const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
-
-    output_gradients = coefficient * (errors_weights * errors);
+    output_gradients.array() = coefficient * (errors_weights.array() * errors.array());
 }
 
 

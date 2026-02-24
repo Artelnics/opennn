@@ -370,69 +370,35 @@ void fill_tensor_data(const MatrixR& matrix,
     if(rows_number == 0 || columns_number == 0) return;
 
     const type* matrix_data = matrix.data();
-    const Index matrix_rows_number = matrix.rows();
 
-    vector<const type*> col_ptrs(columns_number);
-
-    for(Index j = 0; j < columns_number; ++j)
-        col_ptrs[j] = matrix_data + matrix_rows_number * column_indices[j];
-
-    #pragma omp parallel for schedule(static)
-    for(Index j = 0; j < columns_number; ++j)
+    if constexpr (Layout == Eigen::RowMajor)
     {
-        const type* src_column = col_ptrs[j];
-        type* dest_column = tensor_data + rows_number*j;
+        const Index matrix_cols_number = matrix.cols();
 
-        //#pragma omp simd
+        #pragma omp parallel for schedule(static)
         for(Index i = 0; i < rows_number; ++i)
-            dest_column[i] = src_column[row_indices[i]];
-    }
-
-/*
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    if(rows_number == 0 || columns_number == 0) return;
-
-    const type* __restrict matrix_data = matrix.data();
-    const Index matrix_rows_number = matrix.dimension(0);
-    const Index* __restrict row_indices_data = row_indices.data();   
-
-    #pragma omp parallel for if(columns_number >= 32) schedule(static)
-    for(Index j = 0; j < columns_number; ++j)
-    {
-        const type* __restrict matrix_column = matrix_data + (matrix_rows_number * column_indices[j]);
-        type* __restrict tensor_value = tensor_data + (rows_number * j);
-
-        for(Index i = 0; i < rows_number; ++i)
-            tensor_value[i] = matrix_column[row_indices_data[i]];
-    }
-*/
-}
-
-
-void fill_tensor_data_row_major(const MatrixR& matrix,
-                                const vector<Index>& row_indices,
-                                const vector<Index>& column_indices,
-                                type* tensor_data)
-{
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    const type* const matrix_data = matrix.data();
-
-#pragma omp parallel for
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        const Index row_index = row_indices[i];
-
-        for(Index j = 0; j < columns_number; j++)
         {
-            const Index column_index = column_indices[j];
-            const type* const matrix_value = matrix_data + row_index + matrix.rows() * column_index;
-            type* tensor_value = tensor_data + i * columns_number + j;
-            *tensor_value = *matrix_value;
+            const Index src_row = row_indices[i];
+            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            type* dest_row_ptr = tensor_data + i * columns_number;
+
+            for(Index j = 0; j < columns_number; ++j)
+                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+        }
+    }
+    else // Eigen::ColMajor
+    {
+        const Index matrix_rows_number = matrix.rows();
+
+        #pragma omp parallel for schedule(static)
+        for(Index j = 0; j < columns_number; ++j)
+        {
+            const Index src_col = column_indices[j];
+            const type* src_col_ptr = matrix_data + src_col * matrix_rows_number;
+            type* dest_col_ptr = tensor_data + j * rows_number;
+
+            for(Index i = 0; i < rows_number; ++i)
+                dest_col_ptr[i] = src_col_ptr[row_indices[i]];
         }
     }
 }
