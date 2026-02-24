@@ -82,22 +82,24 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 }
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
-{    
-    const Index rows_unfiltered =  outputs.rows();
+{
+    const Index rows_unfiltered = outputs.rows();
     const Index variables_to_filter = outputs.cols();
 
     if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
-        throw runtime_error("Minimums/maximums size mismatch.\n");
+        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
 
     vector<Index> feasible_rows;
-
     feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
 
-    const auto min_array = minimums.array().transpose();
-    const auto max_array = maximums.array().transpose();
+    const Matrix<type, 1, Dynamic> min_row = minimums.transpose();
+    const Matrix<type, 1, Dynamic> max_row = maximums.transpose();
+
+    const auto min_array = min_row.array();
+    const auto max_array = max_row.array();
 
     for (Index i = 0; i < rows_unfiltered; ++i)
-        if (((outputs.row(i).array() >= min_array) && (outputs.row(i).array() <= max_array)).all())
+        if ((outputs.row(i).array() >= min_array).all() && (outputs.row(i).array() <= max_array).all())
             feasible_rows.push_back(i);
 
     return feasible_rows;
@@ -244,9 +246,26 @@ void set_row(MatrixR& matrix, const VectorR& new_row, Index row_index)
 {
     const Index columns_number = new_row.size();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < columns_number; i++)
-        matrix(row_index, i) = new_row(i);
+    if (columns_number != matrix.cols())
+        throw runtime_error("set_row: Vector size mismatch with matrix columns.");
+
+    if constexpr (Layout == Eigen::RowMajor)
+    {
+        type* matrix_data = matrix.data() + row_index * matrix.cols();
+        const type* row_data = new_row.data();
+
+        memcpy(matrix_data, row_data, columns_number * sizeof(type));
+    }
+    else // Eigen::ColMajor
+    {
+        type* matrix_data = matrix.data();
+        const type* row_data = new_row.data();
+        const Index rows = matrix.rows();
+
+        #pragma omp parallel for schedule(static)
+        for(Index j = 0; j < columns_number; ++j)
+            matrix_data[row_index + j * rows] = row_data[j];
+    }
 }
 
 
@@ -329,13 +348,13 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1
     return nearest_indices;
 }
 
-void set_identity(Tensor2& matrix)
+void set_identity(MatrixR& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
+    const Index rows_number = matrix.rows();
 
     matrix.setZero();
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < rows_number; i++)
         matrix(i, i) = type(1);
 }
@@ -708,7 +727,7 @@ Index get_size(vector<vector<TensorViewCuda*>> views)
 void shuffle_rows(MatrixR& matrix)
 {
     const Index rows_number = matrix.rows();
-    const Index columns_number = matrix.cols();
+    const Index columns_number = matrix.dimension(1);
 
     if (rows_number <= 1) return;
 

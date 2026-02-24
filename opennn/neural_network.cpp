@@ -541,20 +541,15 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 }
 
 
-TensorView NeuralNetwork::run_internal_forward_propagation(const type *data, const Shape &shape)
+MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    ForwardPropagation forward_propagation(shape[0], this);
-    TensorView input_view(const_cast<type*>(data), shape);
+    ForwardPropagation forward_propagation(inputs.rows(), this);
+
+    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()});
 
     forward_propagate({input_view}, forward_propagation, false);
 
-    return forward_propagation.layers.back()->get_outputs();
-}
-
-
-MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
-{
-    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.rows(), inputs.cols()});
+    TensorView out = forward_propagation.layers.back()->get_outputs();
 
     return MatrixMap(out.data, out.shape[0], out.shape[1]);
 }
@@ -562,16 +557,29 @@ MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)});
+    ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
-    return MatrixMap(out.data, out.shape[0], out.shape[1]);
+    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)});
+
+    forward_propagate({input_view}, forward_propagation, false);
+
+    TensorView out = forward_propagation.layers.back()->get_outputs();
+
+    return MatrixMap(out.data, out.shape[0], out.size() / out.shape[0]);
 }
 
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    TensorView out = run_internal_forward_propagation(inputs.data(), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)});
-    return MatrixMap(out.data, out.shape[0], out.shape[1]);
+    ForwardPropagation forward_propagation(inputs.dimension(0), this);
+
+    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)});
+
+    forward_propagate({input_view}, forward_propagation, false);
+
+    TensorView out = forward_propagation.layers.back()->get_outputs();
+
+    return MatrixMap(out.data, out.shape[0], out.size() / out.shape[0]);
 }
 
 
@@ -700,7 +708,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     // const Index channels = scaling_layer->get_input_shape()[2];
 
     // const Index current_height = image.dimension(0);
-    // const Index current_width = image.dimension(1);
+    // const Index current_width = image.cols();
     // const Index current_channels = image.dimension(2);
 
     // if (current_channels != channels)
@@ -725,7 +733,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     // {
     //     type max_value = outputs(0);
 
-    //     for(Index i = 1; i < outputs.dimension(1); ++i)
+    //     for(Index i = 1; i < outputs.cols(); ++i)
     //     {
     //         if (outputs(i) > max_value)
     //         {

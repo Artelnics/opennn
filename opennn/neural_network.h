@@ -249,8 +249,6 @@ public:
 */
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
-    TensorView run_internal_forward_propagation(const type*, const Shape&);
-
     MatrixR calculate_outputs(const MatrixR&);
 
     MatrixR calculate_outputs(const Tensor3&);
