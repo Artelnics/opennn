@@ -738,34 +738,6 @@ Index get_size(vector<vector<TensorViewCuda*>> views)
     return total_size;
 }
 
-
-void shuffle_rows(MatrixR& matrix)
-{
-    const Index rows_number = matrix.rows();
-    const Index columns_number = matrix.cols();
-
-    if (rows_number <= 1) return;
-
-    type* data = matrix.data();
-
-    for (Index i = rows_number - 1; i > 0; --i)
-    {
-        const Index j = random_integer(0, i);
-
-        if (i == j) continue;
-
-        #pragma omp parallel for schedule(static)
-        for (Index c = 0; c < columns_number; ++c)
-        {
-            const Index offset = c * rows_number;
-
-            const type temp = data[i + offset];
-            data[i + offset] = data[j + offset];
-            data[j + offset] = temp;
-        }
-    }
-}
-
 #endif
 
 Device::Device()

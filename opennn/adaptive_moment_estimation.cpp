@@ -657,15 +657,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
             loss_index->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
             
-<<<<<<< HEAD
-            training_error += training_back_propagation.error();
-            if (is_classification_model) training_accuracy += training_back_propagation.accuracy();
-=======
             training_error += training_back_propagation.error;
 
             if (is_classification_model)
                 training_accuracy += training_back_propagation.accuracy();
->>>>>>> 9ea53bda3be9dbe241f4acfbfd89cea25ec89eac
             
             update_parameters(training_back_propagation, optimization_data);
 
@@ -707,12 +702,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 neural_network->forward_propagate(current_batch->get_inputs_device(), *validation_forward_propagation, is_training);
                 loss_index->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
-<<<<<<< HEAD
-                validation_error += validation_back_propagation->error();
-                if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
-=======
                 validation_error += validation_back_propagation->error;
->>>>>>> 9ea53bda3be9dbe241f4acfbfd89cea25ec89eac
+                if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
 
                 cudaStreamSynchronize(0);
 

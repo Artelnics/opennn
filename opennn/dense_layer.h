@@ -981,7 +981,7 @@ public:
         if (!batch_normalization) return;
 
         CHECK_CUDA(cudaMemcpy(running_means_device.data, running_means.data(), running_means.size() * sizeof(type), cudaMemcpyHostToDevice));
-        VectorR moving_variances = running_standard_deviations.square();
+        VectorR moving_variances = running_standard_deviations.array().square();
         CHECK_CUDA(cudaMemcpy(running_variances_device.data, moving_variances.data(), moving_variances.size() * sizeof(type), cudaMemcpyHostToDevice));
     }
 
@@ -992,7 +992,7 @@ public:
         CHECK_CUDA(cudaMemcpy(running_means.data(), running_means_device.data, running_means.size() * sizeof(type), cudaMemcpyDeviceToHost));
         VectorR moving_variances(running_standard_deviations.size());
         CHECK_CUDA(cudaMemcpy(moving_variances.data(), running_variances_device.data, moving_variances.size() * sizeof(type), cudaMemcpyDeviceToHost));
-        running_standard_deviations = moving_variances.sqrt();
+        running_standard_deviations = moving_variances.array().sqrt();
     }
 
 
