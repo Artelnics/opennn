@@ -376,8 +376,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
     for(Index j = 0; j < (Index)feasible_rows.size(); ++j)
     {
-        set_row(feasible_inputs, inputs.row(feasible_rows[j]), j);
-        set_row(feasible_outputs, outputs.row(feasible_rows[j]), j);
+        feasible_inputs.row(j) = inputs.row(feasible_rows[j]);
+        feasible_outputs.row(j) = outputs.row(feasible_rows[j]);
     }
 
     return {feasible_inputs, feasible_outputs};

@@ -242,32 +242,6 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-void set_row(MatrixR& matrix, const VectorR& new_row, Index row_index)
-{
-    const Index columns_number = new_row.size();
-
-    if (columns_number != matrix.cols())
-        throw runtime_error("set_row: Vector size mismatch with matrix columns.");
-
-    if constexpr (Layout == Eigen::RowMajor)
-    {
-        type* matrix_data = matrix.data() + row_index * matrix.cols();
-        const type* row_data = new_row.data();
-
-        memcpy(matrix_data, row_data, columns_number * sizeof(type));
-    }
-    else // Eigen::ColMajor
-    {
-        type* matrix_data = matrix.data();
-        const type* row_data = new_row.data();
-        const Index rows = matrix.rows();
-
-        #pragma omp parallel for schedule(static)
-        for(Index j = 0; j < columns_number; ++j)
-            matrix_data[row_index + j * rows] = row_data[j];
-    }
-}
-
 
 MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
                                       Index column_index,

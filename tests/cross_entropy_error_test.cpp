@@ -40,9 +40,9 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
 
-    const Tensor1 gradient = cross_entropy_error.calculate_gradient();
+    const VectorR gradient = cross_entropy_error.calculate_gradient();
 
-    const Tensor1 numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
+    const VectorR numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 
@@ -59,17 +59,15 @@ TEST(CrossEntropyError2d, BackPropagate)
 
 TEST(CrossEntropyError2d, calculate_binary_error)
 {
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
-    data.setValues({
-      {type(0), type(1), type(0), type(1)},
-      {type(1), type(1), type(0), type(0)},
-      {type(0), type(1), type(1), type(1)},
-      {type(0), type(1), type(1), type(1)},
-      {type(0), type(1), type(0), type(1)}
-        });
+    data << type(0), type(1), type(0), type(1),
+            type(1), type(1), type(0), type(0),
+            type(0), type(1), type(1), type(1),
+            type(0), type(1), type(1), type(1),
+            type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
 
@@ -115,17 +113,15 @@ TEST(CrossEntropyError2d, calculate_binary_error)
 
 TEST(CrossEntropyError2d, calculate_multiple_error) 
 {
-    Tensor2 data;
+    MatrixR data;
     Dataset multipledataset( 5, {3}, {2});
 
     data.resize(5, 4);
-    data.setValues({
-      {type(2), type(5), type(0), type(1)},
-      {type(2), type(9), type(1), type(1)},
-      {type(2), type(9), type(1), type(1)},
-      {type(6), type(5), type(0), type(0)},
-      {type(0), type(1), type(0), type(1)}
-        });
+    data << type(2), type(5), type(0), type(1),
+            type(2), type(9), type(1), type(1),
+            type(2), type(9), type(1), type(1),
+            type(6), type(5), type(0), type(0),
+            type(0), type(1), type(0), type(1);
   
     multipledataset.set_data(data);
 
@@ -167,17 +163,15 @@ TEST(CrossEntropyError2d, calculate_multiple_error)
 
 TEST(CrossEntropyError2d, calculate_binary_output_gradients)
 {
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
-    data.setValues({
-        {type(2), type(5), type(6), type(0)},
-        {type(2), type(9), type(1), type(0)},
-        {type(2), type(9), type(1), type(1)},
-        {type(6), type(5), type(6), type(1)},
-        {type(0), type(1), type(0), type(1)}
-    });
+    data << type(2), type(5), type(6), type(0),
+            type(2), type(9), type(1), type(0),
+            type(2), type(9), type(1), type(1),
+            type(6), type(5), type(6), type(1),
+            type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
 
@@ -217,17 +211,15 @@ TEST(CrossEntropyError2d, calculate_binary_output_gradients)
 
 TEST(CrossEntropyError2d, calculate_multiple_output_gradients)
 {
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
-    data.setValues({
-    {type(2), type(5), type(0), type(0)},
-    {type(2), type(9), type(1), type(0)},
-    {type(2), type(9), type(1), type(1)},
-    {type(6), type(5), type(0), type(1)},
-    {type(0), type(1), type(0), type(1)}
-    });
+    data << type(2), type(5), type(0), type(0),
+            type(2), type(9), type(1), type(0),
+            type(2), type(9), type(1), type(1),
+            type(6), type(5), type(0), type(1),
+            type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
 
@@ -268,17 +260,15 @@ TEST(CrossEntropyError2d, calculate_multiple_output_gradients)
 
 TEST(CrossEntropyError2d, get_name)
 {
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(5, { 3 }, { 1 });
 
     data.resize(5, 4);
-    data.setValues({
-        {type(2), type(5), type(0), type(0)},
-        {type(2), type(9), type(1), type(0)},
-        {type(2), type(9), type(1), type(1)},
-        {type(6), type(5), type(0), type(1)},
-        {type(0), type(1), type(0), type(1)}
-    });
+    data << type(2), type(5), type(0), type(0),
+            type(2), type(9), type(1), type(0),
+            type(2), type(9), type(1), type(1),
+            type(6), type(5), type(0), type(1),
+            type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
 
@@ -304,15 +294,13 @@ TEST(CrossEntropyError2d, get_name)
 TEST(CrossEntropyError2d, to_XML)
 {
     Dataset dataset(5, { 2 }, { 1 });
-    Tensor2 data;
+    MatrixR data;
     data.resize(5, 3);
-    data.setValues({
-        {type(0.1), type(0.2), type(1)},
-        {type(0.5), type(0.4), type(0)},
-        {type(0.9), type(0.1), type(1)},
-        {type(0.3), type(0.8), type(0)},
-        {type(0.6), type(0.7), type(1)}
-    });
+    data << type(0.1), type(0.2), type(1),
+            type(0.5), type(0.4), type(0),
+            type(0.9), type(0.1), type(1),
+            type(0.3), type(0.8), type(0),
+            type(0.6), type(0.7), type(1);
     dataset.set_data(data);
 
     std::vector<Index> input_indices = { 0, 1 };

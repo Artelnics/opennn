@@ -108,7 +108,7 @@ TEST(Transformer, Outputs)
     outputs = transformer.calculate_outputs(inputs, context);
 
     EXPECT_EQ(outputs.dimension(0), batch_size);
-    EXPECT_EQ(outputs.dimension(1), input_length);
+    EXPECT_EQ(outputs.cols(), input_length);
     EXPECT_EQ(outputs.dimension(2), input_shape);
 
     //EXPECT_EQ(outputs.abs() < type(NUMERIC_LIMITS_MIN));
@@ -241,7 +241,7 @@ TEST(Transformer, Outputs)
 
     outputs = transformer.calculate_outputs(inputs);
 
-    EXPECT_EQ(outputs.dimension(1) == outputs_number);
+    EXPECT_EQ(outputs.cols() == outputs_number);
     EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN));
     */
@@ -311,7 +311,7 @@ TEST(Transformer, ForwardPropagate)
         
     EXPECT_EQ(dense_activations.rank() == 3);
     EXPECT_EQ(dense_activations.dimension(0) == batch_size);
-    EXPECT_EQ(dense_activations.dimension(1) == input_length);
+    EXPECT_EQ(dense_activations.cols() == input_length);
     EXPECT_EQ(dense_activations.dimension(2) == input_shape + 1);
 
     EXPECT_EQ(check_activations_sums(dense_activations));
@@ -380,7 +380,7 @@ TEST(Transformer, ForwardPropagate)
 
         EXPECT_EQ(dense_activations.rank() == 3);
         EXPECT_EQ(dense_activations.dimension(0) == batch_size);
-        EXPECT_EQ(dense_activations.dimension(1) == input_length);
+        EXPECT_EQ(dense_activations.cols() == input_length);
         EXPECT_EQ(dense_activations.dimension(2) == input_shape + 1);
 
         EXPECT_EQ(check_activations_sums(dense_activations));

@@ -1286,10 +1286,10 @@ TEST(Dataset, BatchFill)
     const Tensor2 inputs = input_views[0].to_tensor_map<2>();
 
     ASSERT_EQ(inputs.dimension(0), input_data.dimension(0));
-    ASSERT_EQ(inputs.dimension(1), input_data.dimension(1));
+    ASSERT_EQ(inputs.cols(), input_data.cols());
 
     for (Index i = 0; i < inputs.dimension(0); ++i) {
-        for (Index j = 0; j < inputs.dimension(1); ++j) {
+        for (Index j = 0; j < inputs.cols(); ++j) {
             SCOPED_TRACE("Comparando inputs en el �ndice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
             EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
         }
@@ -1299,7 +1299,7 @@ TEST(Dataset, BatchFill)
     const Tensor2 targets = targets_view.to_tensor_map<2>();
 
     ASSERT_EQ(targets.rows(), target_data.dimension(0));
-    ASSERT_EQ(targets.cols(), target_data.dimension(1));
+    ASSERT_EQ(targets.cols(), target_data.cols());
 
     for (Index i = 0; i < targets.rows(); ++i) {
         for (Index j = 0; j < targets.cols(); ++j) {

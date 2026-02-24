@@ -43,14 +43,14 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
 
     neural_network.set_parameters_random();
 
-    Tensor1 parameters_k = neural_network.get_parameters();
-    Tensor1 gradient_k = mean_squared_error.calculate_gradient();
+    VectorR parameters_k = neural_network.get_parameters();
+    VectorR gradient_k = mean_squared_error.calculate_gradient();
 
-    Tensor1 parameters_next = parameters_k;
+    VectorR parameters_next = parameters_k;
     for(Index i=0; i < parameters_next.size(); ++i) parameters_next(i) += 0.01;
 
     neural_network.set_parameters(parameters_next);
-    Tensor1 gradient_next = mean_squared_error.calculate_gradient();
+    VectorR gradient_next = mean_squared_error.calculate_gradient();
 
     optimization_data.parameter_differences = parameters_next - parameters_k;
     optimization_data.gradient_difference = gradient_next - gradient_k;
@@ -59,9 +59,9 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
 
     quasi_newton_method.calculate_inverse_hessian(optimization_data);
 
-    Tensor2 numerical_inverse_hessian = mean_squared_error.calculate_inverse_hessian();
+    MatrixR numerical_inverse_hessian = mean_squared_error.calculate_inverse_hessian();
 
-    EXPECT_EQ(optimization_data.inverse_hessian.dimension(0), numerical_inverse_hessian.dimension(0));
+    EXPECT_EQ(optimization_data.inverse_hessian.rows(), numerical_inverse_hessian.rows());
 
     for(Index i = 0; i < optimization_data.inverse_hessian.size(); ++i)
         EXPECT_FALSE(isnan(optimization_data.inverse_hessian(i)));

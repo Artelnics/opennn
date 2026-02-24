@@ -278,7 +278,6 @@ inline array<Index, 5> array_5(const Index a, Index b, Index c, Index d, Index e
     return array<Index, 5>({a, b, c, d, e});
 }
 
-void set_row(MatrixR&, const VectorR&, Index);
 
 void sum_matrices(const VectorR&, Tensor3&);
 
@@ -672,6 +671,34 @@ bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
     return true;
 }
 
+inline bool is_equal(const MatrixR& matrix,
+                     const type& value,
+                     const type& tolerance = type(1.0e-3))
+{
+    const type* data = matrix.data();
+    const Index size = matrix.size();
+
+    for(Index i = 0; i < size; ++i)
+        if(std::abs(data[i] - value) > tolerance)
+            return false;
+
+    return true;
+}
+
+inline bool is_equal(const VectorR& vector,
+                     const type& value,
+                     const type& tolerance = type(1.0e-3))
+{
+    const type* data = vector.data();
+    const Index size = vector.size();
+
+    for(Index i = 0; i < size; ++i)
+        if(std::abs(data[i] - value) > tolerance)
+            return false;
+
+    return true;
+}
+
 
 template <int Rank>
 bool are_equal(const TensorR<Rank>& A,
@@ -680,6 +707,42 @@ bool are_equal(const TensorR<Rank>& A,
 {
     if(A.size() != B.size())
         throw runtime_error("are_equal: Tensor sizes are different.");
+
+    const type* a = A.data();
+    const type* b = B.data();
+
+    for(Index i = 0; i < A.size(); ++i)
+        if(abs(a[i] - b[i]) > tolerance)
+            return false;
+
+    return true;
+}
+
+
+inline bool are_equal(const MatrixR& A,
+                      const MatrixR& B,
+                      type tolerance = type(1.0e-3))
+{
+    if(A.rows() != B.rows() || A.cols() != B.cols())
+        throw runtime_error("are_equal: Matrix sizes are different.");
+
+    const type* a = A.data();
+    const type* b = B.data();
+
+    for(Index i = 0; i < A.size(); ++i)
+        if(abs(a[i] - b[i]) > tolerance)
+            return false;
+
+    return true;
+}
+
+
+inline bool are_equal(const VectorR& A,
+                      const VectorR& B,
+                      type tolerance = type(1.0e-3))
+{
+    if(A.size() != B.size())
+        throw runtime_error("are_equal: Vector sizes are different.");
 
     const type* a = A.data();
     const type* b = B.data();
