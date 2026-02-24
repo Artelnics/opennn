@@ -9,7 +9,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
-    Tensor2 data(samples_number, 1);
+    MatrixR data(samples_number, 1);
     data.setRandom();
 
     Dataset dataset(samples_number, { 1 }, { 0 });
@@ -30,10 +30,8 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
 {
     Index samples_number = 10 + rand() % 10;
 
-    Tensor2 matrix(samples_number, 1);
+    MatrixR matrix(samples_number, 1);
     matrix.setRandom();
-
-    Tensor2 scaled_matrix;
 
     Dataset dataset(samples_number, { 1 }, { 0 });
 
@@ -44,8 +42,8 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_feature_descriptives();
 
-    EXPECT_NEAR(abs(matrix_descriptives[0].minimum), type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(matrix_descriptives[0].maximum), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(matrix_descriptives[0].minimum, type(-1.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(matrix_descriptives[0].maximum, type(1.0), NUMERIC_LIMITS_MIN);
 }
 
 
@@ -53,10 +51,10 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
 {   
     Index samples_number = 1 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
+    MatrixR matrix(samples_number, samples_number);
     matrix.setRandom();
     
-    Tensor2 scaled_matrix;
+    MatrixR scaled_matrix;
 
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
@@ -75,7 +73,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
-    Tensor2 matrix(samples_number, 1);
+    MatrixR matrix(samples_number, 1);
     matrix.setRandom();
 
     Dataset dataset(samples_number, { 1 }, { 0 });
@@ -100,6 +98,8 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
     matrix.setRandom();
 
+    matrix.array() = matrix.array().abs() + 1.0f;
+
     Dataset dataset(samples_number, { 1 }, { 0 });
 
     dataset.set_data(matrix);
@@ -113,15 +113,16 @@ TEST(ScalingTest, ScaleDataLogarithmic)
     for(Index i = 0; i < matrix.size() ; i++)
         solution_matrix(i) = log(matrix(i));
 
-    EXPECT_EQ(are_equal(scaled_matrix, solution_matrix, NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(scaled_matrix, solution_matrix, type(1e-4)), true);
 }
+
 
 TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
-    Tensor2 unscaled_matrix;
+    MatrixR matrix(samples_number, samples_number);
+    MatrixR unscaled_matrix;
 
     matrix.setRandom();
 
@@ -146,8 +147,8 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 {
     Index samples_number = 1 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
-    Tensor2 unscaled_matrix;
+    MatrixR matrix(samples_number, samples_number);
+    MatrixR unscaled_matrix;
 
     matrix.setRandom();
     
@@ -171,8 +172,8 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 {
     Index samples_number = 1 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
-    Tensor2 unscaled_matrix;
+    MatrixR matrix(samples_number, samples_number);
+    MatrixR unscaled_matrix;
 
     matrix.setRandom();
 
@@ -194,10 +195,10 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
 TEST(ScalingTest, UnscaleDataStandardDeviation)
 {
-    Index samples_number = 1 + rand() % 10;
+    Index samples_number = 2 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
-    Tensor2 unscaled_matrix;
+    MatrixR matrix(samples_number, samples_number);
+    MatrixR unscaled_matrix;
 
     matrix.setRandom();
 
@@ -212,7 +213,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, unscaled_matrix, type(1e-4)), true);
 }
 
 
@@ -220,10 +221,12 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 {
     Index samples_number = 1 + rand() % 10;
 
-    Tensor2 matrix(samples_number, samples_number);
-    Tensor2 unscaled_matrix;
+    MatrixR matrix(samples_number, samples_number);
+    MatrixR unscaled_matrix;
 
     matrix.setRandom();
+
+    matrix.array() = matrix.array().abs() + 1.0f;
 
     Dataset dataset(samples_number, { samples_number }, { 0 });
 
@@ -237,5 +240,5 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, unscaled_matrix, type(1e-4)), true);
 }

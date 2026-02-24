@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "../opennn/dataset.h"
-#include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/standard_networks.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/genetic_algorithm.h"
@@ -14,7 +13,7 @@ TEST(GeneticAlgorithmTest, DefaultConstructor)
     GeneticAlgorithm genetic_algorithm;
 
     EXPECT_EQ(genetic_algorithm.has_training_strategy(), false);
-    EXPECT_EQ(genetic_algorithm.get_population().dimension(0), 0);
+    EXPECT_EQ(genetic_algorithm.get_population().rows(), 0);
 }
 
 
@@ -53,8 +52,8 @@ TEST(GeneticAlgorithmTest, InitializePopulationRandom)
     
     MatrixB population = genetic_algorithm.get_population();
 
-    EXPECT_EQ(population.dimension(0), individuals_number);
-    EXPECT_EQ(population.dimension(1), inputs_number);
+    EXPECT_EQ(population.rows(), individuals_number);
+    EXPECT_EQ(population.cols(), inputs_number);
 
     Tensor<double, 1> counts(inputs_number);
     counts.setZero();
@@ -95,7 +94,7 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
     dataset.set_display(false);
 
-    Tensor2 full_data(samples_number, total_variables);
+    MatrixR full_data(samples_number, total_variables);
 
     for (Index i = 0; i < samples_number; ++i) {
         type value = static_cast<type>(i);
@@ -122,8 +121,8 @@ TEST(GeneticAlgorithmTest, InitializePopulationCorrelations)
 
     MatrixB population = genetic_algorithm.get_population();
 
-    EXPECT_EQ(population.dimension(0), individuals_number);
-    EXPECT_EQ(population.dimension(1), inputs_number);
+    EXPECT_EQ(population.rows(), individuals_number);
+    EXPECT_EQ(population.cols(), inputs_number);
 
     Tensor<double, 1> counts(inputs_number);
     counts.setZero();
@@ -171,14 +170,13 @@ TEST(GeneticAlgorithmTest, Selection)
     genetic_algorithm.set_individuals_number(individuals_number);
     genetic_algorithm.initialize_population_random();
 
-    Tensor1 simulated_fitness(individuals_number);
+    VectorR simulated_fitness(individuals_number);
     
-    simulated_fitness.setValues({
+    simulated_fitness <<
         0.5,  // Low Fitness
         2.5,  // Medium Fitness
         10.0, // Very high Fitness
-        7.5   // High Fitness
-        });
+        7.5;  // High Fitness
     
     genetic_algorithm.set_fitness(simulated_fitness);
     
@@ -193,7 +191,7 @@ TEST(GeneticAlgorithmTest, Selection)
 
         VectorB current_selection = genetic_algorithm.get_selection();
 
-        ASSERT_EQ(current_selection.dimension(0), individuals_number);
+        ASSERT_EQ(current_selection.rows(), individuals_number);
 
         for (Index j = 0; j < individuals_number; ++j) {
             if (current_selection(j)) {
@@ -232,22 +230,22 @@ TEST(GeneticAlgorithmTest, Crossover)
     genetic_algorithm.set_elitism_size(elitism_size);
     
     MatrixB initial_population(individuals_number, inputs_number);
-    initial_population.setValues({ {true, true, true, true, true, true, true, true},
-                                   {false, false, false, false, false, false, false, false},
-                                   {false, false, false, false, false, false, false, false},
-                                   {false, false, false, false, false, false, false, false} });
+    initial_population << true, true, true, true, true, true, true, true,
+                          false, false, false, false, false, false, false, false,
+                          false, false, false, false, false, false, false, false,
+                          false, false, false, false, false, false, false, false;
     genetic_algorithm.set_population(initial_population);
     
     VectorB forced_selection(individuals_number);
-    forced_selection.setValues({false, true, false, true}); 
+    forced_selection << false, true, false, true;
     genetic_algorithm.set_selection(forced_selection); 
 
     genetic_algorithm.perform_crossover();
 
     MatrixB new_population = genetic_algorithm.get_population();
-    const VectorB child = new_population.chip(0, 0);
-    const VectorB parent1 = initial_population.chip(0, 0);
-    const VectorB parent2 = initial_population.chip(1, 0);
+    const VectorB child = new_population.row(0);
+    const VectorB parent1 = initial_population.row(0);
+    const VectorB parent2 = initial_population.row(1);
 
     bool is_valid_crossover = true;
     bool is_clone_p1 = true;
@@ -330,7 +328,7 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByErrorGoal)
     const Index inputs_number = 3;
     Dataset dataset(20, { inputs_number }, { 1 });
 
-    Tensor2 data(20, inputs_number + 1);
+    MatrixR data(20, inputs_number + 1);
     for (Index i = 0; i < 20; i++) {
         data(i, 0) = type(i) / 20.0;
         data(i, 1) = type(10.0);
@@ -355,8 +353,8 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByErrorGoal)
     InputsSelectionResults input_selection_results = genetic_algorithm.perform_input_selection();
 
     EXPECT_EQ(input_selection_results.stopping_condition, InputsSelection::StoppingCondition::SelectionErrorGoal);
-    ASSERT_GT(input_selection_results.validation_error_history.dimension(0), 0);
-    EXPECT_LE(input_selection_results.validation_error_history(input_selection_results.validation_error_history.dimension(0) - 1), 0.1);
+    ASSERT_GT(input_selection_results.validation_error_history.rows(), 0);
+    EXPECT_LE(input_selection_results.validation_error_history(input_selection_results.validation_error_history.rows() - 1), 0.1);
 }
 
 
@@ -365,7 +363,7 @@ TEST(GeneticAlgorithmTest, InputSelection_StopsByMaxEpochs)
     const Index inputs_number = 2;
     Dataset dataset(20, { inputs_number }, { 1 });
 
-    Tensor2 data(20, inputs_number + 1);
+    MatrixR data(20, inputs_number + 1);
     for (Index i = 0; i < 20; i++) {
         data(i, 0) = type(i) / 20.0;
         data(i, 1) = type(10.0);

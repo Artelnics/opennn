@@ -56,7 +56,7 @@ TEST(Embedding, ForwardPropagate)
     Tensor3 outputs = neural_network.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), sequence_length);
+    EXPECT_EQ(outputs.cols(), sequence_length);
     EXPECT_EQ(outputs.dimension(2), embedding_dimension);
 */
 }
@@ -103,15 +103,15 @@ TEST(Embedding, BackPropagate)
     neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_shape()));
     neural_network.add_layer(make_unique<opennn::Dense<3>>(neural_network.get_output_shape(), language_dataset.get_target_shape(), "Logistic"));
 
-    Tensor2 inputs  = language_dataset.get_feature_data("Input");
-    const Index batch_size = inputs.dimension(0);
+    MatrixR inputs  = language_dataset.get_feature_data("Input");
+    const Index batch_size = inputs.rows();
 
     Layer* first_layer = neural_network.get_layer(0).get();
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<EmbeddingForwardPropagation>(batch_size, first_layer);
 
-    Shape input_dims_vector(inputs.dimensions().begin(), inputs.dimensions().end());
+    Shape input_dims_vector({inputs.rows(), inputs.cols()});
     TensorView input_view(inputs.data(), input_dims_vector);
 
     first_layer->forward_propagate({ input_view }, forward_propagation, false);

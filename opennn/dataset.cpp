@@ -3381,7 +3381,7 @@ void Dataset::set_data_binary_classification()
 
 
 VectorI Dataset::filter_data(const VectorR& minimums,
-                                      const VectorR& maximums)
+                             const VectorR& maximums)
 {
     const vector<Index> used_feature_indices = get_used_feature_indices();
 

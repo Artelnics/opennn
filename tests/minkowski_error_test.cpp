@@ -45,8 +45,8 @@ TEST(MinkowskiErrorTest, BackPropagate)
 
     MinkowskiError minkowski_error(&neural_network, &dataset);
 
-    const Tensor1 gradient = minkowski_error.calculate_gradient();
-    const Tensor1 numerical_gradient = minkowski_error.calculate_numerical_gradient();
+    const VectorR gradient = minkowski_error.calculate_gradient();
+    const VectorR numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }

@@ -41,8 +41,8 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
 
-    const Tensor1 analytical_gradient = weighted_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
+    const VectorR analytical_gradient = weighted_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-2)));
 }

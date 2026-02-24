@@ -56,8 +56,8 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
     const type error = mean_squared_error.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const Tensor1 gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -82,8 +82,8 @@ TEST(MeanSquaredErrorTest, BackPropagateRecurrent)
     const type error = mean_squared_error.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const Tensor1 gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -113,8 +113,8 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
     const type error = mean_squared_error.calculate_numerical_error();
     EXPECT_GE(error, 0);
     
-    const Tensor1 gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -147,8 +147,8 @@ TEST(MeanSquaredErrorTest, BackPropagatePooling)
     const type error = mean_squared_error.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const Tensor1 gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -180,8 +180,8 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     const type error = mean_squared_error.calculate_numerical_error();
     EXPECT_GE(error, 0);
 
-    const Tensor1 gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 }
@@ -209,8 +209,8 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
 
     const type error = mean_squared_error.calculate_numerical_error();
-    const Tensor1 analytical_gradient = mean_squared_error.calculate_gradient();
-    const Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    const VectorR analytical_gradient = mean_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_GE(error, 0.0) << "MSE must be positive";
     EXPECT_TRUE(are_equal(analytical_gradient, numerical_gradient, type(1.0e-3)));
@@ -246,9 +246,9 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     BackPropagationLM back_propagation_lm(samples_number, &mean_squared_error);
     mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-    Tensor2 numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
-    Tensor1 numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-    Tensor2 numerical_hessian = mean_squared_error.calculate_numerical_hessian();
+    MatrixR numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
+    VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
+    MatrixR numerical_hessian = mean_squared_error.calculate_numerical_hessian();
 
     EXPECT_NEAR(back_propagation_lm.error, back_propagation.error, type(1.0e-3));
     EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian), true);

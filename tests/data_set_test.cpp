@@ -64,11 +64,11 @@ TEST(Dataset, VariableDescriptives)
 
     Dataset dataset(samples_number, { inputs_number }, { targets_number });
 
-    Tensor2 data(samples_number, inputs_number + targets_number);
+    MatrixR data(samples_number, inputs_number + targets_number);
 
-    data.setValues({ {type(-1000),type(2),type(0)},
-                    {type(1)    ,type(4),type(2)},
-                    {type(1)    ,type(4),type(0)} });
+    data << type(-1000),type(2),type(0),
+            type(1)    ,type(4),type(2),
+            type(1)    ,type(4),type(0);
 
     dataset.set_data(data);
    
@@ -89,11 +89,11 @@ TEST(Dataset, RawVariableDistributions)
 
     Dataset dataset(3, { 2 }, { 1 });
 
-    Tensor2 data(3, 3);
+    MatrixR data(3, 3);
 
-    data.setValues({ {type(2),type(2),type(1)},
-                    {type(1),type(1),type(1)},
-                    {type(1),type(2),type(2)} });
+    data << type(2),type(2),type(1),
+            type(1),type(1),type(1),
+            type(1),type(2),type(2);
 
     dataset.set_data(data);
 
@@ -117,11 +117,11 @@ TEST(Dataset, FilterData_MixedFiltering) {
         Dataset dataset(2, { 1 }, { 1 });
         dataset.set_data_constant(type(1));
 
-        Tensor1 minimums(2);
-        minimums.setValues({ type(2), type(0) });
+        VectorR minimums(2);
+        minimums << type(2), type(0);
 
-        Tensor1 maximums(2);
-        maximums.setValues({ type(2), type(0.5) });
+        VectorR maximums(2);
+        maximums << type(2), type(0.5);
 
         VectorI filtered_data = dataset.filter_data(minimums, maximums);
 
@@ -133,15 +133,16 @@ TEST(Dataset, FilterData_MixedFiltering) {
     // Test
     {
         Dataset dataset(2, { 1 }, { 1 });
-        Tensor2 data(2, 2);
-        data.setValues({ { type(1), type(2) }, { type(3), type(4) } });
+        MatrixR data(2, 2);
+        data << type(1), type(2),
+                type(3), type(4);
         dataset.set_data(data);
 
-        Tensor1 minimums(2);
-        minimums.setValues({ type(0), type(0) });
+        VectorR minimums(2);
+        minimums << type(0), type(0);
 
-        Tensor1 maximums(2);
-        maximums.setValues({ type(2), type(3) });
+        VectorR maximums(2);
+        maximums << type(2), type(3);
 
         VectorI filtered_data = dataset.filter_data(minimums, maximums);
 
@@ -156,15 +157,15 @@ TEST(Dataset, ScaleData)
 {
     Dataset dataset(2, { 1 }, { 1 });
 
-    Tensor2 original_data(2, 2);
-    original_data.setValues({ {type(10), type(200)},
-                              {type(30), type(400)} });
+    MatrixR original_data(2, 2);
+    original_data << type(10), type(200),
+                     type(30), type(400);
 
     dataset.set_data(original_data);
 
     dataset.set_variable_scalers("MinimumMaximum");
     vector<Descriptives> data_descriptives_minmax = dataset.scale_data();
-    Tensor2 scaled_data_minmax = dataset.get_data();
+    MatrixR scaled_data_minmax = dataset.get_data();
 
     // Expected scaled values for column 0 (original: 10, 30):
     // 10 (min) -> 0.0
@@ -184,11 +185,11 @@ TEST(Dataset, UnuseConstantRawVariables)
 {
     Dataset dataset(3, { 2 }, { 1 });
 
-    Tensor2 data(3, 3);
+    MatrixR data(3, 3);
 
-    data.setValues({ {type(1),type(2),type(0)},
-                    {type(1),type(2),type(1)},
-                    {type(1),type(2),type(2)} });
+    data << type(1),type(2),type(0),
+            type(1),type(2),type(1),
+            type(1),type(2),type(2);
 
     dataset.set_data(data);
     dataset.unuse_constant_variables();
@@ -202,13 +203,13 @@ TEST(Dataset, UnuseConstantRawVariables)
 TEST(Dataset, CalculateTargetDistribution)
 {
     Dataset dataset(5, { 3 }, { 2 });
-    Tensor2 data(5, 4);
+    MatrixR data(5, 4);
 
-    data.setValues({ {type(2),type(5),type(6),type(0)},
-                    {type(2),type(9),type(1),type(0)},
-                    {type(2),type(9),type(1),type(NAN)},
-                    {type(6),type(5),type(6),type(1)},
-                    {type(0),type(1),type(0),type(1)} });
+    data << type(2),type(5),type(6),type(0),
+            type(2),type(9),type(1),type(0),
+            type(2),type(9),type(1),type(NAN),
+            type(6),type(5),type(6),type(1),
+            type(0),type(1),type(0),type(1);
 
 
     dataset.set_data(data);
@@ -238,11 +239,11 @@ TEST(Dataset, CalculateTargetDistribution)
     data.resize(5, 9);
     data.setZero();
 
-    data.setValues({ {type(2),type(5),type(6),type(9),type(8),type(7),type(1),type(0),type(0)},
-                    {type(2),type(9),type(1),type(9),type(4),type(5),type(0),type(1),type(0)},
-                    {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
-                    {type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1)},
-                    {type(0),type(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0)} });
+    data << type(2),type(5),type(6),type(9),type(8),type(7),type(1),type(0),type(0),
+            type(2),type(9),type(1),type(9),type(4),type(5),type(0),type(1),type(0),
+            type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1),
+            type(6),type(5),type(6),type(7),type(3),type(2),type(0),type(0),type(1),
+            type(0),type(NAN),type(1),type(0),type(2),type(2),type(0),type(1),type(0);
 
     dataset_2.set_data(data);
 
@@ -315,8 +316,8 @@ TEST(Dataset, ReadCSV_Basic)
 
     // Data Tensor Content
     const MatrixR& data = dataset.get_data();
-    ASSERT_EQ(data.dimension(0), 2);
-    ASSERT_EQ(data.dimension(1), 3);
+    ASSERT_EQ(data.rows(), 2);
+    ASSERT_EQ(data.cols(), 3);
 
     Index var1_index = dataset.get_variable_index("variable_1");
     Index var2_index = dataset.get_variable_index("variable_2");
@@ -412,7 +413,7 @@ TEST(Dataset, ReadCSV_SpaceSeparator)
     EXPECT_EQ(raw_vars[2].name, "target");
     EXPECT_EQ(raw_vars[2].type, Dataset::VariableType::Binary);
 
-    const Tensor2& data = dataset.get_data();
+    const MatrixR& data = dataset.get_data();
     Index v1_idx = dataset.get_variable_index(0);
     Index v2_idx = dataset.get_variable_index(1);
     Index t_idx = dataset.get_variable_index(2);
@@ -460,7 +461,7 @@ TEST(Dataset, ReadCSV_WithSampleIDs)
     EXPECT_EQ(sample_ids[0], "sampleA");
     EXPECT_EQ(sample_ids[1], "sampleB");
 
-    const Tensor2& data = dataset.get_data();
+    const MatrixR& data = dataset.get_data();
     Index f1_idx = dataset.get_variable_index(0);
     Index f2_idx = dataset.get_variable_index(1);
 
@@ -494,7 +495,7 @@ TEST(Dataset, ReadCSV_EmptyLinesAndWhitespaceSkipped)
     ASSERT_NO_THROW(dataset.read_csv());
 
     EXPECT_EQ(dataset.get_samples_number(), 2);
-    const Tensor2& data = dataset.get_data();
+    const MatrixR& data = dataset.get_data();
     Index h1_idx = dataset.get_variable_index(0);
     Index h2_idx = dataset.get_variable_index(1);
     EXPECT_NEAR(data(0, h1_idx), 1.0, 1e-9);
@@ -511,14 +512,14 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 {
     // Test 1 (numeric and numeric trivial case)
 
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(3, {3}, {1});
 
     data.resize(3, 4);
 
-    data.setValues({{type(1), type(1), type(-1), type(1)},
-                    {type(2), type(2), type(-2), type(2)},
-                    {type(-1), type(-1), type(1), type(-1)} });
+    data << type(1), type(1), type(-1), type(1),
+            type(2), type(2), type(-2), type(2),
+            type(-1), type(-1), type(1), type(-1);
 
     dataset.set_data(data);
     dataset.set_display(false);
@@ -543,9 +544,9 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     // Test 2 (numeric and numeric non trivial case)
 
     data.resize(3, 4);
-    data.setValues({{type(1), type(2), type(4), type(1)},
-                    {type(2), type(3), type(9), type(2)},
-                    {type(3), type(1), type(10), type(2)}});
+    data << type(1), type(2), type(4), type(1),
+            type(2), type(3), type(9), type(2),
+            type(3), type(1), type(10), type(2);
 
     dataset.set_data(data);
 
@@ -563,9 +564,9 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     // Test 3 (binary and binary non trivial case)
 
-    data.setValues({{type(0), type(0), type(1), type(0)},
-                    {type(1), type(0), type(0), type(1)},
-                    {type(1), type(0), type(0), type(1)}});
+    data << type(0), type(0), type(1), type(0),
+            type(1), type(0), type(0), type(1),
+            type(1), type(0), type(0), type(1);
 
     dataset.set_data(data);
 
@@ -589,9 +590,9 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     
     // Test 4 (binary and binary trivial case)
 
-    data.setValues({{type(0), type(0), type(0), type(0)},
-                    {type(1), type(1), type(1), type(1)},
-                    {type(1), type(1), type(1), type(1)}});
+    data << type(0), type(0), type(0), type(0),
+            type(1), type(1), type(1), type(1),
+            type(1), type(1), type(1), type(1);
 
     dataset.set_data(data);
 
@@ -770,13 +771,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 TEST(Dataset, test_calculate_input_raw_variable_correlations)
 {
     // Test 1 (numeric and numeric trivial case)
-    Tensor2 data;
+    MatrixR data;
     Dataset dataset(3, { 3 }, { 1 });
     data.resize(3, 4);
 
-    data.setValues({{type(1), type(1), type(-1), type(1)},
-                    {type(2), type(2), type(-2), type(2)},
-                    {type(3), type(3), type(-3), type(3)}});
+    data << type(1), type(1), type(-1), type(1),
+            type(2), type(2), type(-2), type(2),
+            type(3), type(3), type(-3), type(3);
 
     dataset.set_data(data);
     dataset.set_display(false);
@@ -808,9 +809,9 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     // Test 2 (numeric and numeric non trivial case)
 
     data.resize(3, 4);
-    data.setValues({{type(1), type(2), type(4), type(1)},
-                    {type(2), type(3), type(9), type(2)},
-                    {type(3), type(1), type(10), type(2)}});
+    data << type(1), type(2), type(4), type(1),
+            type(2), type(3), type(9), type(2),
+            type(3), type(1), type(10), type(2);
 
     dataset.set_data(data);
 
@@ -833,9 +834,9 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     // Test 3 (binary and binary non trivial case)
 
     data.resize(3, 4);
-    data.setValues({{type(0), type(0), type(1), type(1)},
-                    {type(1), type(0), type(0), type(2)},
-                    {type(1), type(0), type(0), type(2)}});
+    data << type(0), type(0), type(1), type(1),
+            type(1), type(0), type(0), type(2),
+            type(1), type(0), type(0), type(2);
 
     dataset.set_data(data);
 
@@ -869,9 +870,9 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     // Test 4 (binary and binary trivial case)
     
-    data.setValues({{type(1), type(0), type(1), type(1)},
-                    {type(0), type(1), type(1), type(1)},
-                    {type(1), type(1), type(0), type(0)}});
+    data << type(1), type(0), type(1), type(1),
+            type(0), type(1), type(1), type(1),
+            type(1), type(1), type(0), type(0);
 
     dataset.set_data(data);
 
@@ -1155,15 +1156,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
 TEST(Dataset, test_unuse_uncorrelated_raw_variables)
 {
-    Tensor2 data;
+    MatrixR data;
     data.resize(4, 4);
 
-    data.setValues({
-        {type(1), type(1), type(0), type(2)},
-        {type(2), type(0), type(0), type(4)},
-        {type(3), type(0), type(0), type(6)},
-        {type(4), type(1), type(0), type(8)}
-        });
+    data << type(1), type(1), type(0), type(2),
+            type(2), type(0), type(0), type(4),
+            type(3), type(0), type(0), type(6),
+            type(4), type(1), type(0), type(8);
 
     Dataset dataset(4, { 3 }, { 1 });
     dataset.set_variable_names({ "A", "B", "C", "T" });
@@ -1198,13 +1197,13 @@ TEST(Dataset,CalculateNegatives)
 
     Dataset dataset(3, { 2 }, { 1 });
 
-    Tensor2 data;
+    MatrixR data;
 
     data.resize(3, 3);
 
-    data.setValues({{ 1, 1, 1},
-                    {-1,-1, 0},
-                    { 0, 1, 1}});
+    data << 1, 1, 1,
+            -1,-1, 0,
+            0, 1, 1;
 
     dataset.set_data(data);
 
@@ -1250,12 +1249,12 @@ TEST(Dataset, BatchFill)
 {
     Dataset dataset(3, { 2 }, { 1 });
 
-    Tensor2 data;
+    MatrixR data;
 
     data.resize(3, 3);
-    data.setValues({{1,4,1},
-                    {2,-5,0},
-                    {-3,6,1}});
+    data << 1,4,1,
+            2,-5,0,
+            -3,6,1;
     dataset.set_data(data);
 
     dataset.set_sample_roles("Training");
@@ -1287,10 +1286,10 @@ TEST(Dataset, BatchFill)
     const Tensor2 inputs = input_views[0].to_tensor_map<2>();
 
     ASSERT_EQ(inputs.dimension(0), input_data.dimension(0));
-    ASSERT_EQ(inputs.dimension(1), input_data.dimension(1));
+    ASSERT_EQ(inputs.cols(), input_data.cols());
 
     for (Index i = 0; i < inputs.dimension(0); ++i) {
-        for (Index j = 0; j < inputs.dimension(1); ++j) {
+        for (Index j = 0; j < inputs.cols(); ++j) {
             SCOPED_TRACE("Comparando inputs en el �ndice (" + std::to_string(i) + ", " + std::to_string(j) + ")");
             EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
         }
@@ -1300,7 +1299,7 @@ TEST(Dataset, BatchFill)
     const Tensor2 targets = targets_view.to_tensor_map<2>();
 
     ASSERT_EQ(targets.rows(), target_data.dimension(0));
-    ASSERT_EQ(targets.cols(), target_data.dimension(1));
+    ASSERT_EQ(targets.cols(), target_data.cols());
 
     for (Index i = 0; i < targets.rows(); ++i) {
         for (Index j = 0; j < targets.cols(); ++j) {
