@@ -751,48 +751,66 @@ public:
                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                            unique_ptr<LayerBackPropagationLM>& back_propagation) const override
     {
-        const MatrixMap inputs = matrix_map(input_views[0]);
-        MatrixMap output_gradients = matrix_map(output_gradient_views[0]);
-
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
+        const Index batch_size = input_views[0].size() / inputs_number;
         const Index biases_number = biases.size();
 
-        // Forward propagation
+        const MatrixMap inputs(input_views[0].data, batch_size, inputs_number);
+        MatrixMap output_gradients(output_gradient_views[0].data, batch_size, outputs_number);
 
-        const DenseForwardPropagation<Rank>* dense_forward_propagation =
-            static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
+        const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
-        const MatrixMap activation_derivatives = matrix_map(dense_forward_propagation->activation_derivatives);
-
-        // Back propagation
-
-        DenseBackPropagationLM* dense_back_propagation_lm =
-            static_cast<DenseBackPropagationLM*>(back_propagation.get());
+        DenseBackPropagationLM* dense_back_propagation_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
 
         MatrixMap squared_errors_Jacobian = matrix_map(dense_back_propagation_lm->squared_errors_Jacobian);
 
-        if(activation_function != "Softmax")
-            output_gradients.array() *= activation_derivatives.array();
+        squared_errors_Jacobian.setZero();
 
-        squared_errors_Jacobian.leftCols(biases_number).noalias() = output_gradients;
+        if(activation_function != "Softmax")
+        {
+            const MatrixMap activation_derivatives(dense_forward_propagation->activation_derivatives.data, batch_size, outputs_number);
+            output_gradients.array() *= activation_derivatives.array();
+        }
+
+        const Index total_error_terms = squared_errors_Jacobian.rows();
+        const Index network_outputs_number = (batch_size > 0) ? total_error_terms / batch_size : 1;
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            for(Index i = 0; i < inputs_number; i++)
+            for(Index s = 0; s < batch_size; s++)
             {
-                const Index weight_column_index = biases_number + j * inputs_number + i;
+                for(Index k = 0; k < network_outputs_number; ++k)
+                {
+                    const Index error_term_row = s * network_outputs_number + k;
+                    squared_errors_Jacobian(error_term_row, j) = output_gradients(s, j);
+                }
+            }
+        }
 
-                squared_errors_Jacobian.col(weight_column_index).array()
-                    = output_gradients.col(j).array() * inputs.col(i).array();
+        for(Index i = 0; i < inputs_number; i++)
+        {
+            for(Index j = 0; j < outputs_number; j++)
+            {
+                const Index weight_column_index = biases_number + i * outputs_number + j;
+
+                for(Index s = 0; s < batch_size; s++)
+                {
+                    const type val = output_gradients(s, j) * inputs(s, i);
+
+                    for(Index k = 0; k < network_outputs_number; ++k)
+                    {
+                        const Index error_term_row = s * network_outputs_number + k;
+                        squared_errors_Jacobian(error_term_row, weight_column_index) = val;
+                    }
+                }
             }
         }
 
         if(!dense_back_propagation_lm->is_first_layer)
         {
-            MatrixMap input_gradients = matrix_map(dense_back_propagation_lm->input_gradients[0]);
-
-            const MatrixMap weights_map = matrix_map(weights);
+            MatrixMap input_gradients(dense_back_propagation_lm->input_gradients[0].data, batch_size, inputs_number);
+            const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
 
             input_gradients.noalias() = output_gradients * weights_map.transpose();
         }
