@@ -37,7 +37,7 @@ Tensor3 load_image(const filesystem::path& path)
     file.seekg(0, ios::beg);
 
     thread_local vector<uint8_t> buffer;
-    if (buffer.capacity() < size)
+    if (buffer.capacity() < size_t(size))
         buffer.reserve(size);
     
     buffer.resize(size);
