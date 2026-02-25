@@ -533,8 +533,6 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     forward_propagate(input_views, forward_propagation, false);
 
-    const vector<string> layer_labels = get_layer_labels();
-
     const TensorView outputs_view = forward_propagation.get_outputs();
 
     return tensor_map<3>(outputs_view);
@@ -543,6 +541,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
+    if(layers.empty() || inputs.size() == 0) return MatrixR();
+
     ForwardPropagation forward_propagation(inputs.rows(), this);
 
     TensorView input_view(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()});
@@ -557,6 +557,8 @@ MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
+    if(layers.empty() || inputs.size() == 0) return MatrixR();
+
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
     TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)});
@@ -571,6 +573,8 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
+    if(layers.empty() || inputs.size() == 0) return MatrixR();
+
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
     TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)});

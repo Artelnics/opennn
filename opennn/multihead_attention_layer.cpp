@@ -121,7 +121,16 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     heads_number = new_heads_number;
     label = new_label;
 
-    if (heads_number <= 0 || new_embedding_dimension % heads_number != 0)
+    if(new_heads_number == 0 && new_embedding_dimension == 0)
+    {
+        heads_number = 0;
+        return;
+    }
+
+    if(new_heads_number <= 0)
+        throw runtime_error("MultiHeadAttention Error: Heads number must be greater than 0.");
+
+    if(new_embedding_dimension % new_heads_number != 0)
         throw runtime_error("MultiHeadAttention Error: The embedding dimension must be divisible by the number of heads.");
 
     query_weights.shape = {new_embedding_dimension, new_embedding_dimension};
@@ -189,22 +198,22 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     const Index total_heads = batch_size * heads_number;
 
+    type* query_data = query.data();
+    type* key_data = key.data();
+    type* att_weights_data = attention_weights.data();
+
     #pragma omp parallel for
     for(Index i = 0; i < total_heads; ++i)
     {
-        const auto q_mat = query.reshape(array_2(total_heads, query_sequence_length * head_dimension))
-                                .chip(i, 0)
-                                .reshape(array_2(query_sequence_length, head_dimension));
+        const Index offset_q = i * query_sequence_length * head_dimension;
+        const Index offset_k = i * source_sequence_length * head_dimension;
+        const Index offset_w = i * query_sequence_length * source_sequence_length;
 
-        const auto k_mat = key.reshape(array_2(total_heads, source_sequence_length * head_dimension))
-                              .chip(i, 0)
-                              .reshape(array_2(source_sequence_length, head_dimension));
+        const MatrixMap q_mat(query_data + offset_q, query_sequence_length, head_dimension);
+        const MatrixMap k_mat(key_data + offset_k, source_sequence_length, head_dimension);
+        MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
 
-        auto w_mat = attention_weights.reshape(array_2(total_heads, query_sequence_length * source_sequence_length))
-                                      .chip(i, 0)
-                                      .reshape(array_2(query_sequence_length, source_sequence_length));
-
-        w_mat = q_mat.contract(k_mat, axes(1, 1)) * scaling_factor;
+        w_mat.noalias() = (q_mat * k_mat.transpose()) * scaling_factor;
     }
 
     if (use_causal_mask)
@@ -213,17 +222,25 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     // @todo Optimization: Call the padding mask here if your LanguageDataset provides it
     // apply_key_padding_mask(padding_mask, attention_weights);
-/*
-    softmax(attention_weights);
-*/
+    /*
+        softmax(attention_weights);
+    */
+
+    type* value_data = value.data();
+    type* att_outputs_data = attention_outputs.data();
+
     #pragma omp parallel for
     for(Index i = 0; i < total_heads; ++i)
     {
-        const auto w_mat = attention_weights.reshape(array_2(total_heads, query_sequence_length * source_sequence_length)).chip(i, 0).reshape(array_2(query_sequence_length, source_sequence_length));
-        const auto v_mat = value.reshape(array_2(total_heads, source_sequence_length * head_dimension)).chip(i, 0).reshape(array_2(source_sequence_length, head_dimension));
-        auto o_mat = attention_outputs.reshape(array_2(total_heads, query_sequence_length * head_dimension)).chip(i, 0).reshape(array_2(query_sequence_length, head_dimension));
+        const Index offset_w = i * query_sequence_length * source_sequence_length;
+        const Index offset_v = i * source_sequence_length * head_dimension;
+        const Index offset_o = i * query_sequence_length * head_dimension;
 
-        o_mat.device(get_device()) = w_mat.contract(v_mat, axes(1, 0));
+        const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+        const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
+        MatrixMap o_mat(att_outputs_data + offset_o, query_sequence_length, head_dimension);
+
+        o_mat.noalias() = w_mat * v_mat;
     }
 
     concatenated_attention_outputs.device(get_device()) = attention_outputs.shuffle(array_4(0, 2, 1, 3))
