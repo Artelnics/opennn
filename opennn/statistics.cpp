@@ -1647,7 +1647,7 @@ Index maximal_index(const VectorR& vector)
     if(vector.size() == 0) return 0;
 
     Index index;
-    vector.minCoeff(&index);
+    vector.maxCoeff(&index);
 
     return index;
 }
@@ -1751,7 +1751,7 @@ VectorI maximal_indices(const MatrixR& matrix)
 }
 
 
-VectorR percentiles(const VectorI& input_vector)
+VectorR percentiles(const VectorR& input_vector)
 {
     const Index n = input_vector.array().isFinite().count();
 

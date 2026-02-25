@@ -111,14 +111,12 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     bool is_training = true;
 
-    Tensor2 data(samples_number, inputs_number + outputs_number);
-    data.setValues({
-        {0, 0, 1},
-        {1, 1, 0},
-        {2, 2, 1},
-        {3, 3, 0},
-        {4, 4, 1}
-    });
+    MatrixR data(samples_number, inputs_number + outputs_number);
+    data << 0, 0, 1,
+            1, 1, 0,
+            2, 2, 1,
+            3, 3, 0,
+            4, 4, 1;
 
     Dataset dataset(samples_number,
                     Shape{inputs_number},
@@ -178,53 +176,46 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
 TEST(NeuralNetworkTest, CalculateDirectionalInputs)
 {
-
-    Tensor2 inputs;
-    Tensor2 outputs;
-    Tensor2 trainable_outputs;
-    Tensor1 parameters;
-    Tensor1 point;
-    Tensor2 directional_inputs;
+    MatrixR inputs;
+    VectorR point;
+    MatrixR directional_inputs;
 
     // Test
-        
+
     ApproximationNetwork neural_network({ 3 }, { 4 }, { 2 });
     neural_network.set_parameters_random();
 
     inputs.resize(2,3);
-    inputs.setValues({{type(-5),type(-1),-type(3)},
-                      {type(7),type(3),type(1)}});
+    inputs << type(-5),type(-1),-type(3),
+        type(7),type(3),type(1);
 
     point.resize(3);
-    point.setValues({type(0),type(0),type(0)});
+    point << type(0),type(0),type(0);
 
     directional_inputs = neural_network.calculate_directional_inputs(0, point, type(0), type(0), 0);
 
-    EXPECT_EQ(directional_inputs.rank(), 2);
-    EXPECT_EQ(directional_inputs.dimension(0), 0);
-    
+    EXPECT_EQ(directional_inputs.rows(), 0);
+
     // Test
 
-    point.setValues({type(1), type(2), type(3)});
+    point << type(1), type(2), type(3);
 
     directional_inputs = neural_network.calculate_directional_inputs(2, point, type(-1), type(1), 3);
 
-    EXPECT_EQ(directional_inputs.rank(), 2);
-    EXPECT_EQ(directional_inputs.dimension(0), 3);
-    EXPECT_EQ(directional_inputs.dimension(1), 3);
+    EXPECT_EQ(directional_inputs.rows(), 3);
+    EXPECT_EQ(directional_inputs.cols(), 3);
     EXPECT_NEAR(directional_inputs(0,2), - type(1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(directional_inputs(1,2), type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(directional_inputs(2,2), type(1), NUMERIC_LIMITS_MIN);
 
     // Test
 
-    point.setValues({type(1), type(2), type(3)});
+    point << type(1), type(2), type(3);
 
     directional_inputs = neural_network.calculate_directional_inputs(0, point, type(-4), type(0), 5);
 
-    EXPECT_EQ(directional_inputs.rank(), 2);
-    EXPECT_EQ(directional_inputs.dimension(0), 5);
-    EXPECT_EQ(directional_inputs.dimension(1), 3);
+    EXPECT_EQ(directional_inputs.rows(), 5);
+    EXPECT_EQ(directional_inputs.cols(), 3);
     EXPECT_NEAR(abs(directional_inputs(0,0)), type(4), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(directional_inputs(1,0)), type(3), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(directional_inputs(2,0)), type(2), NUMERIC_LIMITS_MIN);

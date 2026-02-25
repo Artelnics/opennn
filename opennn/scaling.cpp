@@ -55,7 +55,10 @@ void scale_minimum_maximum(MatrixMap matrix,
     {
         #pragma omp parallel for
         for(Index i = 0; i < matrix.rows(); i++)
-            matrix(i, column_index) = (matrix(i, column_index) - minimum) / range;
+        {
+            type normalized = (matrix(i, column_index) - minimum) / range;
+            matrix(i, column_index) = normalized * (max_range - min_range) + min_range;
+        }
     }
     else
     {
@@ -232,9 +235,11 @@ void unscale_minimum_maximum(MatrixMap matrix,
         throw runtime_error("The range values are not valid.");
 
     #pragma omp parallel for
-
     for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i,column_index) = (matrix(i, column_index)*(maximum-minimum)+minimum);
+    {
+        type normalized = (matrix(i, column_index) - min_range) / (max_range - min_range);
+        matrix(i,column_index) = normalized * (maximum - minimum) + minimum;
+    }
 }
 
 

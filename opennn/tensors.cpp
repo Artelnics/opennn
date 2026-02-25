@@ -74,31 +74,40 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     if (block.size() == 0)
         return starting_matrix;
 
+    if (starting_matrix.cols() != block.cols())
+        throw runtime_error("append_rows: Column mismatch (" +
+                                to_string(starting_matrix.cols()) + " vs " +
+                                to_string(block.cols()) + ")");
+
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 
-    final_matrix << starting_matrix, block;
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
 
     return final_matrix;
 }
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
-{    
+{
     const Index rows_unfiltered =  outputs.rows();
     const Index variables_to_filter = outputs.cols();
 
     if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
-        throw runtime_error("Minimums/maximums size mismatch.\n");
+        throw runtime_error("build_feasible_rows_mask: Minimums/maximums size mismatch with outputs columns.\n");
 
     vector<Index> feasible_rows;
-
     feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
 
-    const auto min_array = minimums.array().transpose();
-    const auto max_array = maximums.array().transpose();
+    const auto min_bound = minimums.transpose().array();
+    const auto max_bound = maximums.transpose().array();
 
     for (Index i = 0; i < rows_unfiltered; ++i)
-        if (((outputs.row(i).array() >= min_array) && (outputs.row(i).array() <= max_array)).all())
+    {
+        const auto row_arr = outputs.row(i).array();
+
+        if ((row_arr >= min_bound && row_arr <= max_bound).all())
             feasible_rows.push_back(i);
+    }
 
     return feasible_rows;
 }
@@ -240,15 +249,6 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-void set_row(MatrixR& matrix, const VectorR& new_row, Index row_index)
-{
-    const Index columns_number = new_row.size();
-
-    #pragma omp parallel for
-    for(Index i = 0; i < columns_number; i++)
-        matrix(row_index, i) = new_row(i);
-}
-
 
 MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
                                       Index column_index,
@@ -276,7 +276,7 @@ MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
         {
             const VectorR row = matrix.row(i);
 
-            set_row(new_matrix, row, row_index);
+            //set_row(new_matrix, row, row_index);
 
             row_index++;
 
@@ -316,11 +316,7 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1
         dist_index[i] = make_pair(distance, i);
     }
 
-    std::partial_sort(
-        dist_index.begin(),
-        dist_index.begin() + n,
-        dist_index.end(),
-        [](const auto& a, const auto& b){ return a.first < b.first; });
+    partial_sort( dist_index.begin(), dist_index.begin() + n, dist_index.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
 
     VectorI nearest_indices(n);
     for(int i = 0; i < n; ++i)
@@ -329,13 +325,13 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1
     return nearest_indices;
 }
 
-void set_identity(Tensor2& matrix)
+void set_identity(MatrixR& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
+    const Index rows_number = matrix.rows();
 
     matrix.setZero();
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(Index i = 0; i < rows_number; i++)
         matrix(i, i) = type(1);
 }
@@ -703,6 +699,7 @@ Index get_size(vector<vector<TensorViewCuda*>> views)
 
     return total_size;
 }
+
 
 #endif
 

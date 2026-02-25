@@ -34,7 +34,7 @@ TEST(TestingAnalysis, ErrorData)
 
 TEST(TestingAnalysis, PercentageErrorData)
 {
-    Tensor2 error_data;
+    MatrixR error_data;
 
     // Test
 
@@ -54,7 +54,7 @@ TEST(TestingAnalysis, PercentageErrorData)
     error_data = testing_analysis.calculate_percentage_error_data();
 
     EXPECT_EQ(error_data.size(), 1);
-    EXPECT_EQ(error_data.dimension(1), 1);
+    EXPECT_EQ(error_data.cols(), 1);
 }
 
 
@@ -66,12 +66,12 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     const Index targets_number = 1;
 
     Dataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
     NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -124,12 +124,12 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     const Index targets_number = 1;
 
     Dataset dataset;
-    dataset.set(samples_number, {inputs_number}, {targets_number});
+    dataset.set(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
     NeuralNetwork neural_network;
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number;
     neural_network.set_parameters_random();
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
@@ -206,11 +206,11 @@ TEST(TestingAnalysis, LinearRegression)
     const Index neurons_number = 1;
     const Index targets_number = 1;
 
-    Dataset dataset(samples_number, {inputs_number}, {targets_number});
+    Dataset dataset(samples_number, {inputs_number}, {targets_number;
     dataset.set_data_random();
     dataset.set_sample_roles("Testing");
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number;
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
     linear_correlation = testing_analysis.linear_correlation();
@@ -229,30 +229,27 @@ TEST(TestingAnalysis, LinearRegression)
 
 TEST(TestingAnalysis, Confusion)
 {
-    Tensor2 actual(4, 3);
-    actual.setValues({
-        {type(1), type(0), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(0), type(1)}
-    });
+    MatrixR actual(4, 3);
+    actual << type(1), type(0), type(0),
+        type(0), type(1), type(0),
+        type(0), type(1), type(0),
+        type(0), type(0), type(1);
 
-    Tensor2 predicted(4, 3);
-    predicted.setValues({
-        {type(1), type(0), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(1), type(0)},
-        {type(0), type(0), type(1)}
-    });
+    MatrixR predicted(4, 3);
+    predicted << type(1), type(0), type(0),
+        type(0), type(1), type(0),
+        type(0), type(1), type(0),
+        type(0), type(0), type(1);
+
     TestingAnalysis testing_analysis;
     MatrixI confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
 
-    Tensor<Index, 0> sum = confusion.sum();
+    type sum = confusion.sum();
 
-    EXPECT_EQ(sum(0), 4 + 12);
+    EXPECT_EQ(sum, 4 + 12);
 
-    EXPECT_EQ(confusion.dimension(0), 4);
-    EXPECT_EQ(confusion.dimension(1), 4);
+    EXPECT_EQ(confusion.rows(), 4);
+    EXPECT_EQ(confusion.cols(), 4);
     EXPECT_EQ(confusion(0,0), 1);
     EXPECT_EQ(confusion(1,1), 2);
     EXPECT_EQ(confusion(2,2), 1);
@@ -291,7 +288,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     TestingAnalysis testing_analysis(&neural_network, &dataset);
 
-    Tensor1 binary = testing_analysis.calculate_binary_classification_tests();
+    VectorR binary = testing_analysis.calculate_binary_classification_tests();
 
     EXPECT_EQ(binary.size(), 15 );
 /*
@@ -316,10 +313,10 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
 TEST(TestingAnalysis, RocCurve)
 {
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
-    Tensor2 roc_curve;
+    MatrixR roc_curve;
 
     // Test
 
@@ -340,8 +337,8 @@ TEST(TestingAnalysis, RocCurve)
     TestingAnalysis testing_analysis;
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    EXPECT_EQ(roc_curve.dimension(1), 3);
-    EXPECT_EQ(roc_curve.dimension(0), 101);
+    EXPECT_EQ(roc_curve.cols(), 3);
+    EXPECT_EQ(roc_curve.rows(), 101);
 
     EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
     EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
@@ -372,8 +369,8 @@ TEST(TestingAnalysis, RocCurve)
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    EXPECT_EQ(roc_curve.dimension(1), 3);
-    EXPECT_EQ(roc_curve.dimension(0), 101);
+    EXPECT_EQ(roc_curve.cols(), 3);
+    EXPECT_EQ(roc_curve.rows(), 101);
 
     EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
     EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
@@ -390,9 +387,9 @@ TEST(TestingAnalysis, RocCurve)
 
 TEST(TestingAnalysis, AreaUnderCurve)
 {
-    Tensor2 roc_curve;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR roc_curve;
+    MatrixR targets;
+    MatrixR outputs;
 
     type area_under_curve;
 
@@ -490,9 +487,9 @@ TEST(TestingAnalysis, OptimalThreshold)
 {
     type optimal_threshold;
 
-    Tensor2 roc_curve;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR roc_curve;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -568,8 +565,8 @@ TEST(TestingAnalysis, OptimalThreshold)
 
 TEST(TestingAnalysis, CumulativeGain)
 {
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     targets.resize(4,1);
 
@@ -587,10 +584,10 @@ TEST(TestingAnalysis, CumulativeGain)
 
     TestingAnalysis testing_analysis;
 
-    Tensor2 cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
+    MatrixR cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
-    EXPECT_EQ(cumulative_gain.dimension(1), 2);
-    EXPECT_EQ(cumulative_gain.dimension(0), 21);
+    EXPECT_EQ(cumulative_gain.cols(), 2);
+    EXPECT_EQ(cumulative_gain.rows(), 21);
     EXPECT_LT(cumulative_gain(0, 0) - type(0), type(NUMERIC_LIMITS_MIN));
     EXPECT_LT(cumulative_gain(0, 1) - type(0), type(NUMERIC_LIMITS_MIN));
     EXPECT_LT(cumulative_gain(20, 0) - type(1), type(NUMERIC_LIMITS_MIN));
@@ -600,10 +597,10 @@ TEST(TestingAnalysis, CumulativeGain)
 
 TEST(TestingAnalysis, LiftChart)
 {
-    Tensor2 cumulative_gain;
-    Tensor2 targets;
-    Tensor2 outputs;
-    Tensor2 lift_chart;
+    MatrixR cumulative_gain;
+    MatrixR targets;
+    MatrixR outputs;
+    MatrixR lift_chart;
 
     // Test
 
@@ -627,16 +624,16 @@ TEST(TestingAnalysis, LiftChart)
 
     lift_chart = testing_analysis.calculate_lift_chart(cumulative_gain);
 
-    EXPECT_EQ(lift_chart.dimension(1), cumulative_gain.dimension(1));
-    EXPECT_EQ(lift_chart.dimension(0), cumulative_gain.dimension(0));
+    EXPECT_EQ(lift_chart.cols(), cumulative_gain.cols());
+    EXPECT_EQ(lift_chart.rows(), cumulative_gain.rows());
 }
 
 
 TEST(TestingAnalysis, TruePositiveSamples)
 {
     vector<Index> true_positives_indices;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     //Test
 
@@ -716,8 +713,8 @@ TEST(TestingAnalysis, TruePositiveSamples)
 TEST(TestingAnalysis, FalsePositiveSamples)
 {
     vector<Index> false_positives_indices;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -798,8 +795,8 @@ TEST(TestingAnalysis, FalsePositiveSamples)
 TEST(TestingAnalysis, FalseNegativeSamples)
 {
     vector<Index> false_negatives_indices;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
 
     targets.resize(4, 1);
@@ -879,8 +876,8 @@ TEST(TestingAnalysis, FalseNegativeSamples)
 TEST(TestingAnalysis, TrueNegativeSamples)
 {
     vector<Index> true_negatives_indices;
-    Tensor2 targets;
-    Tensor2 outputs;
+    MatrixR targets;
+    MatrixR outputs;
 
     // Test
 
@@ -964,7 +961,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
 
     // Test
 
-    Tensor2 targets;
+    MatrixR targets;
     targets.resize(9, 3);
 
     targets(0,0) = type(1); targets(0,1) = type(0); targets(0,2) = type(0);
@@ -977,7 +974,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     targets(7,0) = type(0); targets(7,1) = type(1); targets(7,2) = type(0);
     targets(8,0) = type(0); targets(8,1) = type(0); targets(8,2) = type(1);
 
-    Tensor2 outputs;
+    MatrixR outputs;
     outputs.resize(9, 3);
 
     outputs(0,0) = type(1); outputs(0,1) = type(0); outputs(0,2) = type(0);

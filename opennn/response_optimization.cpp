@@ -114,19 +114,13 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
 
     const vector<Index> variable_indices = dataset->get_variable_indices(role);
 
-    cout << "puo essere in gather?" << endl;
-
     const vector<Index> feature_by_role_dimensions = gather_by_index(feature_dimensions, variable_indices);
 
     const vector<Descriptives> feture_descriptives = dataset->calculate_feature_descriptives(role);
 
     const vector<Condition> conditions_by_role = gather_by_index(conditions, variable_indices);
 
-    cout << "o in original domain?" << endl;
-
     Domain original_domain(feature_by_role_dimensions, feture_descriptives);
-
-    cout << "o in bound?" << endl;
 
     original_domain.bound(feature_by_role_dimensions, conditions_by_role);
 
@@ -147,8 +141,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     if (objectives_number == 0)
         throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
 
-    cout << "DEBUG: Number of objectives: " << objectives_number << endl;
-
     objective_sources.resize(2,objectives_number);
 
     objective_normalizer.resize(2, objectives_number);
@@ -159,16 +151,11 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     auto process_role = [&](const string& role)
     {
-        cout << "DEBUG: Processing role: " << role << endl;
 
         const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role);
         const vector<Index> feature_dimensions_by_role = gather_by_index(feature_dimensions, variable_indices);
 
-        cout << "DEBUG: Getting domain for " << role << endl;
-
         const Domain domain = response_optimization.get_original_domain(role);
-
-        cout << "DEBUG: Got domain for " << role << endl;
 
         const bool is_input = (role == "Input");
 
@@ -293,7 +280,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
         if(categories_number == 1)
         {
-            if (input_variable_types[input_variable] != Dataset::VariableType::Binary)
+            if (input_variable_types[input_variable] == Dataset::VariableType::Binary)
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
@@ -376,8 +363,8 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
     for(Index j = 0; j < (Index)feasible_rows.size(); ++j)
     {
-        set_row(feasible_inputs, inputs.row(feasible_rows[j]), j);
-        set_row(feasible_outputs, outputs.row(feasible_rows[j]), j);
+        feasible_inputs.row(j) = inputs.row(feasible_rows[j]);
+        feasible_outputs.row(j) = outputs.row(feasible_rows[j]);
     }
 
     return {feasible_inputs, feasible_outputs};
@@ -501,8 +488,9 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         auto [feasible_inputs, feasible_outputs] = filter_feasible_points(random_inputs, neural_network->calculate_outputs(random_inputs), original_output_domain);
 
-        if(feasible_inputs.rows() == 0)
-            break;
+        if (feasible_inputs.rows() == 0)
+            cout << "!!! [Critical] Zero feasible points found. "
+                 << "Check if your constraints are too strict." << endl;
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
@@ -512,7 +500,9 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         const type relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
-        if (relative_error < relative_tolerance)
+        cout <<  i << "-th " << "> loop " << "with relative error" << relative_error << endl;
+
+        if (relative_error < relative_tolerance && i > min_iterations)
         {
             cout << "> Optimization loop stopped for reaching the relative tolerance desired: " << relative_tolerance << endl;
             break;
@@ -531,18 +521,22 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const
 {
-    const Index rows_number = objective_matrix.rows();
+    const Index rows_number = inputs.rows();
 
     if (rows_number == 0)
         return {};
 
-    VectorB non_dominated(static_cast<size_t>(rows_number), true);
-
-    #pragma omp parallel for
+    vector<int> non_dominated(static_cast<size_t>(rows_number), 1);
 
     for (Index i = 0; i < rows_number; ++i)
     {
         const auto row_i = objective_matrix.row(i);
+
+        if(!row_i.allFinite())
+        {
+            non_dominated[i] = 0;
+            continue;
+        }
 
         for (Index j = 0; j < rows_number; ++j)
         {
@@ -551,23 +545,26 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
 
             const auto row_j = objective_matrix.row(j);
 
-            if ((row_j.array() >= row_i.array()).all())
+            if ((row_j.array() >= row_i.array()).all() && (row_j.array() > row_i.array()).any())
             {
-                non_dominated[i] = false;
+                non_dominated[i] = 0;
                 break;
             }
         }
     }
 
     vector<Index> non_dominated_indices;
+
     non_dominated_indices.reserve(rows_number);
 
     for (Index i = 0; i < rows_number; ++i)
-        if (non_dominated[i])
+        if (non_dominated[i] == 1)
             non_dominated_indices.push_back(i);
 
-    MatrixR pareto_inputs((Index)non_dominated_indices.size(), inputs.cols());
-    MatrixR pareto_outputs((Index)non_dominated_indices.size(), outputs.cols());
+    const Index final_count = static_cast<Index>(non_dominated_indices.size());
+
+    MatrixR pareto_inputs(final_count, inputs.cols());
+    MatrixR pareto_outputs(final_count, outputs.cols());
 
     for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
     {       
@@ -592,7 +589,6 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
     const Index objectives_number = objective_matrix.cols();
 
     const type hypercube_diagonal = sqrt(static_cast<type>(objectives_number));
-    const type compromise_distance = hypercube_diagonal / 2.0;
 
     type maximum_internal_gap = 0.0;
 
@@ -619,7 +615,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
     const type sum_boundary_gaps = (1.0 - max_objectives.array()).abs().sum();
 
     const type average_boundary_gap = sum_boundary_gaps / static_cast<type>(objectives_number);
-    const type normalized_boundary_gap = average_boundary_gap / compromise_distance;
+    const type normalized_boundary_gap = average_boundary_gap / hypercube_diagonal;
 
     return {maximum_internal_gap, normalized_boundary_gap};
 }
@@ -649,7 +645,10 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         return MatrixR();
     }
 
-    auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, objectives.extract(first_feasible_inputs, first_feasible_outputs));
+    MatrixR first_objective_matrix  = objectives.extract(first_feasible_inputs, first_feasible_outputs);
+    objectives.normalize(first_objective_matrix);
+
+    auto [global_pareto_inputs, global_pareto_outputs] = calculate_pareto(first_feasible_inputs, first_feasible_outputs, first_objective_matrix);
 
     cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << endl;
 
@@ -666,31 +665,36 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     {
         cout << "\n> [Iteration " << i + 1 << " / " << max_iterations << "]" << endl;
 
-        MatrixR union_inputs;
-        MatrixR union_outputs;
+        MatrixR candidate_inputs = global_pareto_inputs;
+        MatrixR candidate_outputs = global_pareto_outputs;
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
             const MatrixR local_random_inputs = calculate_random_inputs(local_input_domains[j]);
 
             auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, neural_network->calculate_outputs(local_random_inputs), original_output_domain);
-            auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, objectives.extract(local_feasible_inputs, local_feasible_outputs));
 
-            union_inputs = append_rows(union_inputs, local_pareto_input);
-            union_outputs = append_rows(union_outputs, local_pareto_output);
+            MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
+            objectives.normalize(local_objective_matrix);
+
+            auto [local_pareto_input, local_pareto_output] = calculate_pareto(local_feasible_inputs, local_feasible_outputs, local_objective_matrix );
+
+            candidate_inputs = append_rows(candidate_inputs, local_pareto_input);
+            candidate_outputs = append_rows(candidate_outputs, local_pareto_output);
         }
 
-        cout << "  - Aggregated local Pareto candidates: " << union_inputs.rows() << endl;
+        cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
 
-        const MatrixR candidate_inputs = append_rows(global_pareto_inputs, union_inputs);
-        const MatrixR candidate_outputs = append_rows(global_pareto_outputs, union_outputs);
 
         if (candidate_inputs.rows() == 0)
             break;
 
         auto optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives);
 
-        auto pareto_pair = calculate_pareto(candidate_inputs, candidate_outputs, objectives.extract(candidate_inputs, candidate_outputs));
+        MatrixR objective_matrix = objectives.extract(candidate_inputs, candidate_outputs);
+        objectives.normalize(objective_matrix);
+
+        const auto pareto_pair = calculate_pareto(candidate_inputs, candidate_outputs, objective_matrix);
 
         global_pareto_inputs = pareto_pair.first;
         global_pareto_outputs = pareto_pair.second;
@@ -716,10 +720,13 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         previous_holes_magnitude = current_hole;
         previous_area_covered = current_boundary;
 
+        local_input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
         local_input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
+        const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
+
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
-            local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j), optimal_set.first, input_feature_dimensions, input_variable_types);
+            local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j),best_and_pareto , input_feature_dimensions, input_variable_types);
 
         current_zoom *= zoom_factor;
     }
@@ -733,9 +740,7 @@ MatrixR ResponseOptimization::perform_response_optimization() const
     if(!dataset)
         throw runtime_error("Dataset not set\n");
 
-    cout << "DEBUG: Building objectives..." << endl;
-    const Objectives objectives = build_objectives();
-    cout << "DEBUG: Objectives built." << endl;
+     const Objectives objectives = build_objectives();
 
     if (objectives.objective_sources.cols() == 0)
         throw runtime_error("No objectives found\n");

@@ -46,8 +46,8 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     normalized_squared_error.set_regularization_weight(0.0);
 
     const type error = normalized_squared_error.calculate_numerical_error();
-    const Tensor1 numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-    const Tensor1 gradient = normalized_squared_error.calculate_gradient();
+    const VectorR numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+    const VectorR gradient = normalized_squared_error.calculate_gradient();
 
     EXPECT_GE(error, 0);
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
@@ -86,16 +86,16 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
     BackPropagationLM back_propagation_lm(samples_number, &normalized_squared_error);
     normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
 
-    const Tensor1 numerical_gradient_lm = normalized_squared_error.calculate_numerical_gradient();
-    const Tensor2 numerical_jacobian_lm = normalized_squared_error.calculate_numerical_jacobian();
-    const Tensor2 numerical_hessian_lm = normalized_squared_error.calculate_numerical_hessian();
-    const Tensor1 gradient_lm = normalized_squared_error.calculate_numerical_gradient();
+    const VectorR numerical_gradient_lm = normalized_squared_error.calculate_numerical_gradient();
+    const MatrixR numerical_jacobian_lm = normalized_squared_error.calculate_numerical_jacobian();
+    const MatrixR numerical_hessian_lm = normalized_squared_error.calculate_numerical_hessian();
+    const VectorR gradient_lm = normalized_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(gradient_lm, numerical_gradient_lm, type(1.0e-3)), true);
     EXPECT_NEAR(back_propagation_lm.error, back_propagation.error, type(1.0e-3));
     EXPECT_TRUE(are_equal(back_propagation_lm.gradient, numerical_gradient_lm, type(1e-2)));
     EXPECT_TRUE(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian_lm, type(1e-2)));
-    Tensor2 expected_hessian_gn = numerical_jacobian_lm.contract(numerical_jacobian_lm, axes(0, 0));
+    const MatrixR expected_hessian_gn = numerical_jacobian_lm.transpose() * numerical_jacobian_lm;
     EXPECT_TRUE(are_equal(back_propagation_lm.hessian, expected_hessian_gn, type(5e-2)));
 }
 
@@ -107,21 +107,18 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
     const Index neurons_number = 2;
     const Index outputs_number = 4;
 
-    Tensor<string, 1> uses;
-
-    Tensor1 targets_mean;
-    Tensor2 target_data;
+    VectorR targets_mean;
+    MatrixR target_data;
 
     Dataset dataset(samples_number, { inputs_number }, { outputs_number });
     dataset.set_data_random();
 
-    uses.resize(8);
-    uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
+    // vector<string> uses = {"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"};
+    // dataset.set_variable_roles(uses);
 
     target_data = dataset.get_feature_data("Target");
 
-    Eigen::array<int, 1> shape({0});
-    targets_mean = target_data.mean(shape);
+    targets_mean = target_data.colwise().mean().transpose();
 
     ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_random();
