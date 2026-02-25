@@ -292,6 +292,12 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 }
 
 
+void ImageDataset::print() const
+{
+    Dataset::print();
+}
+
+
 void ImageDataset::perform_augmentation(type* input_data) const
 {
     throw runtime_error("Image Augmentation is not yet implemented. Please check back in a future version.");
@@ -484,8 +490,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     variables[variables_number-1].set_categories(categories);
 
-    data.setZero();
-
     Index progress_counter = 0;
 
     #pragma omp parallel for
@@ -503,25 +507,16 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         if (current_height != height || current_width != width)
             image = resize_image(image, height, width);
 
-        #pragma omp parallel for
-        for(Index j = 0; j < pixels_number; j++)
-            data(i, j) = image(j);
+        copy(image.data(), image.data() + pixels_number, &data(i, 0));
 
         if (targets_number == 1)
-        {
             data(i, pixels_number) = (i >= images_number(0) && i < images_number(1)) ? 0 : 1;
-        }
         else
-        {
             for(Index k = 0; k < targets_number; k++)
-            {
                 if (i >= images_number(k) && i < images_number(k + 1))
-                {
                     data(i, k + pixels_number) = 1;
-                    break;
-                }
-            }
-        }
+                else
+                    data(i, k + pixels_number) = 0; 
 
         #pragma omp atomic
         progress_counter++;
@@ -547,6 +542,7 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     }
 
     shuffle_rows(data);
+    
 }
 
 } // opennn namespace

@@ -74,16 +74,22 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     if (block.size() == 0)
         return starting_matrix;
 
+    if (starting_matrix.cols() != block.cols())
+        throw runtime_error("append_rows: Column mismatch (" +
+                                to_string(starting_matrix.cols()) + " vs " +
+                                to_string(block.cols()) + ")");
+
     MatrixR final_matrix(starting_matrix.rows() + block.rows(), starting_matrix.cols());
 
-    final_matrix << starting_matrix, block;
+    final_matrix.topRows(starting_matrix.rows()) = starting_matrix;
+    final_matrix.bottomRows(block.rows()) = block;
 
     return final_matrix;
 }
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
 {
-    const Index rows_unfiltered = outputs.rows();
+    const Index rows_unfiltered =  outputs.rows();
     const Index variables_to_filter = outputs.cols();
 
     if(minimums.size() != variables_to_filter || maximums.size() != variables_to_filter)
@@ -92,15 +98,16 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     vector<Index> feasible_rows;
     feasible_rows.reserve(static_cast<size_t>(rows_unfiltered));
 
-    const Matrix<type, 1, Dynamic> min_row = minimums.transpose();
-    const Matrix<type, 1, Dynamic> max_row = maximums.transpose();
-
-    const auto min_array = min_row.array();
-    const auto max_array = max_row.array();
+    const auto min_bound = minimums.transpose().array();
+    const auto max_bound = maximums.transpose().array();
 
     for (Index i = 0; i < rows_unfiltered; ++i)
-        if ((outputs.row(i).array() >= min_array).all() && (outputs.row(i).array() <= max_array).all())
+    {
+        const auto row_arr = outputs.row(i).array();
+
+        if ((row_arr >= min_bound && row_arr <= max_bound).all())
             feasible_rows.push_back(i);
+    }
 
     return feasible_rows;
 }
@@ -243,6 +250,47 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 
 
 
+MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
+                                      Index column_index,
+                                      type minimum,
+                                      type maximum)
+{
+    const VectorR column = matrix.col(column_index);
+    const Index new_rows_number = count_between(column, minimum, maximum);
+
+    if(new_rows_number == 0) return MatrixR();
+
+    const Index rows_number = matrix.rows();
+    const Index columns_number = matrix.cols();
+
+    bool check_conditions = false;
+
+    MatrixR new_matrix(new_rows_number, columns_number);
+
+    Index row_index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(matrix(i, column_index) >= minimum
+        && matrix(i, column_index) <= maximum)
+        {
+            const VectorR row = matrix.row(i);
+
+            //set_row(new_matrix, row, row_index);
+
+            row_index++;
+
+            check_conditions = true;
+        }
+    }
+
+    if(!check_conditions)
+        throw runtime_error("Invalid conditions\n");
+
+    return new_matrix;
+}
+
+
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1)
 {
     const Index number_points_to_compare = matrix.rows();
@@ -268,11 +316,7 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1
         dist_index[i] = make_pair(distance, i);
     }
 
-    std::partial_sort(
-        dist_index.begin(),
-        dist_index.begin() + n,
-        dist_index.end(),
-        [](const auto& a, const auto& b){ return a.first < b.first; });
+    partial_sort( dist_index.begin(), dist_index.begin() + n, dist_index.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
 
     VectorI nearest_indices(n);
     for(int i = 0; i < n; ++i)
@@ -656,33 +700,6 @@ Index get_size(vector<vector<TensorViewCuda*>> views)
     return total_size;
 }
 
-
-void shuffle_rows(MatrixR& matrix)
-{
-    const Index rows_number = matrix.rows();
-    const Index columns_number = matrix.dimension(1);
-
-    if (rows_number <= 1) return;
-
-    type* data = matrix.data();
-
-    for (Index i = rows_number - 1; i > 0; --i)
-    {
-        const Index j = random_integer(0, i);
-
-        if (i == j) continue;
-
-        #pragma omp parallel for schedule(static)
-        for (Index c = 0; c < columns_number; ++c)
-        {
-            const Index offset = c * rows_number;
-
-            const type temp = data[i + offset];
-            data[i + offset] = data[j + offset];
-            data[j + offset] = temp;
-        }
-    }
-}
 
 #endif
 

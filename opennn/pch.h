@@ -48,6 +48,10 @@
 #include <regex>
 #include <sstream>
 #include <omp.h>
+#include <future>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"

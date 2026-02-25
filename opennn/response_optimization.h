@@ -123,11 +123,11 @@ private:
 
     vector<Condition> conditions;
 
-    Index evaluations_number = 1000;
+    Index evaluations_number = 2000;
 
-    Index max_iterations = 5;
+    Index max_iterations = 10;
 
-    Index min_iterations = 3;
+    Index min_iterations = 4;
 
     type zoom_factor = type(0.45);
 

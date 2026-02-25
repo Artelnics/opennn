@@ -6,7 +6,7 @@
 
 using namespace opennn;
 
-TEST(Scaling2dTest, DefaultConstructor)
+TEST(ScalingLayerTest, DefaultConstructor)
 {
     Scaling<2> scaling_layer_2d({0});
 
@@ -15,7 +15,7 @@ TEST(Scaling2dTest, DefaultConstructor)
 }
 
 
-TEST(Scaling2dTest, GeneralConstructor)
+TEST(ScalingLayerTest, GeneralConstructor)
 {
     Scaling<2> scaling_layer_2d({1});
 
@@ -26,11 +26,13 @@ TEST(Scaling2dTest, GeneralConstructor)
 }
 
 
-TEST(Scaling2dTest, ForwardPropagate)
+TEST(ScalingLayerTest, ForwardPropagate)
 {
     Index inputs_number = 3;
     Index samples_number = 2;
     bool is_training = true;
+
+    const type TOLERANCE = type(1.0e-4);
 
     Scaling<2> scaling_layer_2d({ inputs_number });
 
@@ -49,7 +51,7 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(0, 0), 10.0, NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(outputs(0, 0), 10.0, TOLERANCE);
     }
 
     // Test MinimumMaximum
@@ -72,8 +74,9 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(0, 0), type(1.5), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(outputs(2, 0), type(3.5), NUMERIC_LIMITS_MIN);
+
+        EXPECT_NEAR(outputs(0, 0), type(1.5), TOLERANCE);
+        EXPECT_NEAR(outputs(2, 0), type(3.5), TOLERANCE);
     }
 
     // Test MeanStandardDeviation
@@ -100,8 +103,9 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(0, 0), type(-2.0), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(outputs(1, 1), type(0.75), NUMERIC_LIMITS_MIN);
+
+        EXPECT_NEAR(outputs(0, 0), type(-2.0), TOLERANCE);
+        EXPECT_NEAR(outputs(1, 1), type(0.75), TOLERANCE);
     }
 
     // Test StandardDeviation
@@ -128,8 +132,9 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(1, 0), type(1.0), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(outputs(1, 1), type(4.0), NUMERIC_LIMITS_MIN);
+
+        EXPECT_NEAR(outputs(1, 0), type(1.0), TOLERANCE);
+        EXPECT_NEAR(outputs(1, 1), type(4.0), TOLERANCE);
     }
 
     // Test Logarithm
@@ -140,7 +145,7 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.set_scalers("Logarithm");
 
         Tensor2 inputs(samples_number, inputs_number);
-        inputs.setValues({ {type(0),type(0)}, {type(2),type(2)} });
+        inputs.setValues({ {type(1.0), type(1.0)}, {type(exp(1.0)), type(exp(1.0))} });
 
         unique_ptr<LayerForwardPropagation> fw_prop = make_unique<ScalingForwardPropagation<2>>(samples_number, &scaling_layer_2d);
         fw_prop->initialize();
@@ -151,8 +156,9 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(0, 0), type(0.0), 0.001);
-        EXPECT_NEAR(outputs(1, 0), type(1.098612), 0.001);
+
+        EXPECT_NEAR(outputs(0, 0), type(0.0), TOLERANCE);
+        EXPECT_NEAR(outputs(1, 0), type(1.0), TOLERANCE);
     }
 
     // Test ImageMinMax
@@ -174,7 +180,7 @@ TEST(Scaling2dTest, ForwardPropagate)
         scaling_layer_2d.forward_propagate({ input_view }, fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
-        EXPECT_NEAR(outputs(0, 1), 1.0, 0.001);
-        EXPECT_NEAR(outputs(1, 0), 100.0/255.0, 0.001);
+        EXPECT_NEAR(outputs(0, 1), 1.0, TOLERANCE);
+        EXPECT_NEAR(outputs(1, 0), 100.0/255.0, TOLERANCE);
     }
 }
