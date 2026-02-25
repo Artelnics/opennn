@@ -63,6 +63,8 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
+    void print() const override;
+
     void fill_input_tensor(const vector<Index>&,
                            const vector<Index>&,
                            type*) const override;

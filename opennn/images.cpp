@@ -22,204 +22,139 @@ struct RGBQuad
 };
 
 
-uint8_t read_u8(ifstream& f, const string& file_path_str_for_error)
-{
-    char val_char;
-    f.read(&val_char, 1);
-    if(!f) throw runtime_error("BMP read error (uint8_t) in file: " + file_path_str_for_error);
-    return static_cast<uint8_t>(val_char);
-}
-
-
-uint16_t read_u16_le(ifstream& f, const string& file_path_str_for_error)
-{
-    const uint8_t b0 = read_u8(f, file_path_str_for_error);
-    const uint8_t b1 = read_u8(f, file_path_str_for_error);
-    return static_cast<uint16_t>(static_cast<uint16_t>(b0) | (static_cast<uint16_t>(b1) << 8));
-}
-
-
-uint32_t read_u32_le(ifstream& f, const string& file_path_str_for_error)
-{
-    const uint8_t b0 = read_u8(f, file_path_str_for_error);
-    const uint8_t b1 = read_u8(f, file_path_str_for_error);
-    const uint8_t b2 = read_u8(f, file_path_str_for_error);
-    const uint8_t b3 = read_u8(f, file_path_str_for_error);
-    return static_cast<uint32_t>(static_cast<uint32_t>(b0) |
-                                 (static_cast<uint32_t>(b1) << 8) |
-                                 (static_cast<uint32_t>(b2) << 16) |
-                                 (static_cast<uint32_t>(b3) << 24));
-}
-
-
-int32_t read_s32_le(ifstream& f, const string& file_path_str_for_error)
-{
-    const uint8_t b0 = read_u8(f, file_path_str_for_error);
-    const uint8_t b1 = read_u8(f, file_path_str_for_error);
-    const uint8_t b2 = read_u8(f, file_path_str_for_error);
-    const uint8_t b3 = read_u8(f, file_path_str_for_error);
-    const uint32_t u_val = static_cast<uint32_t>(b0) |
-                     (static_cast<uint32_t>(b1) << 8) |
-                     (static_cast<uint32_t>(b2) << 16) |
-                     (static_cast<uint32_t>(b3) << 24);
-    return static_cast<int32_t>(u_val);
-}
-
-
 Tensor3 load_image(const filesystem::path& path)
 {
     const string image_path_str = path.string();
 
-    ifstream file(path, ios::binary);
-
+    ifstream file(path, ios::binary | ios::ate);
     if(!file)
         throw runtime_error("Cannot open BMP file: " + image_path_str);
 
-    const uint16_t bfType = read_u16_le(file, image_path_str);
+    streamsize size = file.tellg();
+    if(size < 54) 
+        throw runtime_error("File too small to be a BMP: " + image_path_str);
 
-    if (bfType != 0x4D42)
+    file.seekg(0, ios::beg);
+
+    thread_local vector<uint8_t> buffer;
+    if (buffer.capacity() < size)
+        buffer.reserve(size);
+    
+    buffer.resize(size);
+
+    if(!file.read(reinterpret_cast<char*>(buffer.data()), size))
+        throw runtime_error("Error reading BMP file: " + image_path_str);
+    file.close();
+
+    auto read_u16 = [&](int offset) { return static_cast<uint16_t>(buffer[offset] | (buffer[offset+1] << 8)); };
+    auto read_u32 = [&](int offset) { return static_cast<uint32_t>(buffer[offset] | (buffer[offset+1] << 8) | (buffer[offset+2] << 16) | (buffer[offset+3] << 24)); };
+    auto read_s32 = [&](int offset) { return static_cast<int32_t>(read_u32(offset)); };
+
+    if (read_u16(0) != 0x4D42) // 'BM'
         throw runtime_error("Not a BMP file (invalid signature 'BM'): " + image_path_str);
 
-    const uint32_t bfSize = read_u32_le(file, image_path_str);
-    const uint16_t bfReserved1 = read_u16_le(file, image_path_str);
-    const uint16_t bfReserved2 = read_u16_le(file, image_path_str);
-    const uint32_t bfOffBits = read_u32_le(file, image_path_str);
-
-    const uint32_t biSize = read_u32_le(file, image_path_str);
+    const uint32_t bfOffBits = read_u32(10);
+    const uint32_t biSize    = read_u32(14);
 
     if (biSize != 40)
-        throw runtime_error("Unsupported BMP DIB header size: " + to_string(biSize) + " in file: " + image_path_str + ". Expected 40 (BITMAPINFOHEADER).");
+        throw runtime_error("Unsupported BMP DIB header size in file: " + image_path_str);
 
-    const int32_t biWidth = read_s32_le(file, image_path_str);
-    const int32_t biHeight_signed = read_s32_le(file, image_path_str);
-    const uint16_t biPlanes = read_u16_le(file, image_path_str);
-    const uint16_t biBitCount = read_u16_le(file, image_path_str);
-    const uint32_t biCompression = read_u32_le(file, image_path_str);
-    const uint32_t biSizeImage = read_u32_le(file, image_path_str);
-    const int32_t biXPelsPerMeter = read_s32_le(file, image_path_str);
-    const int32_t biYPelsPerMeter = read_s32_le(file, image_path_str);
-    const uint32_t biClrUsed = read_u32_le(file, image_path_str);
-    const uint32_t biClrImportant = read_u32_le(file, image_path_str);
+    const int32_t  biWidth         = read_s32(18);
+    const int32_t  biHeight_signed = read_s32(22);
+    const uint16_t biPlanes        = read_u16(26);
+    const uint16_t biBitCount      = read_u16(28);
+    const uint32_t biCompression   = read_u32(30);
+    const uint32_t biClrUsed       = read_u32(46);
 
-    if (biWidth <= 0)
-        throw runtime_error("BMP width must be positive. Got: " + to_string(biWidth) + " in file: " + image_path_str);
-    if (biHeight_signed == 0)
-        throw runtime_error("BMP height cannot be zero in file: " + image_path_str);
-    if (biPlanes != 1)
-        throw runtime_error("BMP planes must be 1. Got: " + to_string(biPlanes) + " in file: " + image_path_str);
-    if (biCompression != 0)
-        throw runtime_error("Unsupported BMP compression type: " + to_string(biCompression) + ". Only uncompressed (0 = BI_RGB) is supported. File: " + image_path_str);
+    if (biWidth <= 0 || biHeight_signed == 0 || biPlanes != 1 || biCompression != 0)
+        throw runtime_error("Invalid or unsupported BMP format in file: " + image_path_str);
     if (biBitCount != 8 && biBitCount != 24 && biBitCount != 32)
-        throw runtime_error("Unsupported BMP bit count: " + to_string(biBitCount) + " in file: " + image_path_str + ". Supported: 8, 24, 32.");
+        throw runtime_error("Unsupported BMP bit count: " + to_string(biBitCount));
 
     vector<RGBQuad> palette;
     bool is_grayscale = false;
 
-    if (biBitCount <= 8)
+    if (biBitCount == 8)
     {
-        const uint32_t num_palette_colors = biClrUsed ? biClrUsed : (1u << biBitCount);
-
-        if (num_palette_colors > 256 && biBitCount == 8)
-            throw runtime_error("Invalid palette size for 8-bit BMP: " + to_string(num_palette_colors) + " in file: " + image_path_str);
+        const uint32_t num_palette_colors = biClrUsed ? biClrUsed : 256;
+        if (num_palette_colors > 256)
+            throw runtime_error("Invalid palette size for 8-bit BMP.");
 
         palette.resize(num_palette_colors);
         is_grayscale = true;
-
+        
+        uint32_t pal_offset = 14 + biSize; 
         for(uint32_t i = 0; i < num_palette_colors; ++i)
         {
-            palette[i].blue = read_u8(file, image_path_str);
-            palette[i].green = read_u8(file, image_path_str);
-            palette[i].red = read_u8(file, image_path_str);
-            palette[i].reserved = read_u8(file, image_path_str);
+            palette[i].blue     = buffer[pal_offset++];
+            palette[i].green    = buffer[pal_offset++];
+            palette[i].red      = buffer[pal_offset++];
+            palette[i].reserved = buffer[pal_offset++];
 
             if (palette[i].red != palette[i].green || palette[i].red != palette[i].blue)
                 is_grayscale = false;
         }
     }
 
-    const Index height = (biHeight_signed < 0) ? -biHeight_signed : biHeight_signed;
+    const Index height = abs(biHeight_signed);
     const Index width = biWidth;
     const Index channels = (biBitCount == 8 && is_grayscale) ? 1 : 3;
+    const bool top_down = (biHeight_signed < 0);
 
     Tensor3 image(height, width, channels);
 
-    const bool top_down = (biHeight_signed < 0);
+    const int bytes_per_pixel = (biBitCount == 32) ? 4 : (biBitCount == 24) ? 3 : 1;
+    const long long row_stride = ((width * bytes_per_pixel + 3) / 4) * 4;
 
-    file.seekg(bfOffBits, ios::beg);
+    if (bfOffBits + row_stride * height > size)
+        throw runtime_error("Corrupted BMP: Pixel data exceeds file size.");
 
-    if(!file)
-        throw runtime_error("Failed to seek to pixel data offset (" + to_string(bfOffBits) + ") in BMP: " + image_path_str);
+    const uint8_t* pixel_data = buffer.data() + bfOffBits;
+    
+    auto* img_data = image.data();
 
-    const int bytes_per_pixel_in_file = (biBitCount == 32) ? 4 : (biBitCount == 24) ? 3 : 1;
-    const long long row_data_bytes = width * bytes_per_pixel_in_file;
-    const long long row_stride_in_file = ((row_data_bytes + 3) / 4) * 4;
-
-    vector<unsigned char> row(row_stride_in_file);
-
-    for(Index y_row = 0; y_row < height; y_row++)
+    for(Index y = 0; y < height; y++)
     {
-        const Index tensor_y_coord = top_down ? y_row : (height - 1 - y_row);
+        const Index tensor_y = top_down ? y : (height - 1 - y);
+        const uint8_t* row_ptr = pixel_data + y * row_stride;
+        
+        const Index row_start_idx = tensor_y * width * channels;
 
-        file.read(reinterpret_cast<char*>(row.data()), row_stride_in_file);
-
-        if (file.bad())
-            throw runtime_error("Irrecoverable stream error while reading pixel row " + to_string(y_row) + " in BMP: " + image_path_str);
-
-        streamsize bytes_read = file.gcount();
-
-        if (bytes_read < row_data_bytes)
-            throw runtime_error("Incomplete pixel data for row " + to_string(y_row) +
-                                " (got " + to_string(bytes_read) + " bytes, expected at least " +
-                                to_string(row_data_bytes) + " for pixel data) in BMP: " + image_path_str);
-
-        if (file.eof() && y_row < height - 1)
-            throw runtime_error("Unexpected EOF while reading pixel rows. Reached row " + to_string(y_row + 1) +
-                                " of " + to_string(height) + " in BMP: " + image_path_str);
-
-        for(Index x_col = 0; x_col < width; ++x_col)
+        if (biBitCount == 24 || biBitCount == 32)
         {
-            float r = 0.0f, g = 0.0f, b = 0.0f;
-
-            if (biBitCount == 32)
+            for(Index x = 0; x < width; ++x)
             {
-                r = static_cast<float>(row[x_col * 4 + 2]);
-                g = static_cast<float>(row[x_col * 4 + 1]);
-                b = static_cast<float>(row[x_col * 4 + 0]);
+                const uint8_t* p = row_ptr + x * bytes_per_pixel;
+                const Index pixel_idx = row_start_idx + x * channels;
+                
+                img_data[pixel_idx + 0] = static_cast<float>(p[2]); // R
+                img_data[pixel_idx + 1] = static_cast<float>(p[1]); // G
+                img_data[pixel_idx + 2] = static_cast<float>(p[0]); // B
             }
-            else if (biBitCount == 24)
+        }
+        else if (biBitCount == 8)
+        {
+            if (channels == 1) // 8-bit (1 channel)
             {
-                r = static_cast<float>(row[x_col * 3 + 2]);
-                g = static_cast<float>(row[x_col * 3 + 1]);
-                b = static_cast<float>(row[x_col * 3 + 0]);
+                for(Index x = 0; x < width; ++x)
+                {
+                    img_data[row_start_idx + x] = static_cast<float>(palette[row_ptr[x]].red);
+                }
             }
-            else if (biBitCount == 8)
+            else // 8-bit RGB (3 channels)
             {
-                const unsigned char index = row[x_col];
-
-                if (index >= palette.size())
-                    throw runtime_error("Palette index " + to_string(index) + " out of bounds (palette size " + to_string(palette.size()) + ") in BMP: " + image_path_str);
-
-                const RGBQuad& color = palette[index];
-
-                r = static_cast<float>(color.red);
-                g = static_cast<float>(color.green);
-                b = static_cast<float>(color.blue);
-            }
-
-            if (channels == 1)
-            {
-                image(tensor_y_coord, x_col, 0) = r;
-            }
-            else
-            {
-                image(tensor_y_coord, x_col, 0) = r;
-                image(tensor_y_coord, x_col, 1) = g;
-                image(tensor_y_coord, x_col, 2) = b;
+                for(Index x = 0; x < width; ++x)
+                {
+                    const RGBQuad& color = palette[row_ptr[x]];
+                    const Index pixel_idx = row_start_idx + x * 3;
+                    
+                    img_data[pixel_idx + 0] = static_cast<float>(color.red);
+                    img_data[pixel_idx + 1] = static_cast<float>(color.green);
+                    img_data[pixel_idx + 2] = static_cast<float>(color.blue);
+                }
             }
         }
     }
-
-    file.close();
 
     return image;
 }
