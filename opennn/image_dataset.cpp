@@ -337,9 +337,9 @@ void ImageDataset::perform_augmentation(type* input_data) const
 }
 
 
-void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
+void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 
     if (augmentation)
         perform_augmentation(input_data);
@@ -406,7 +406,7 @@ vector<Descriptives> ImageDataset::scale_features(const string& variable_role)
     for(Index i = 0; i < samples_number; i++)
         for(Index j = 0; j < input_features_number; j++)
             data(i, j) /= type(255);
-
+        
     return vector<Descriptives>();
 }
 

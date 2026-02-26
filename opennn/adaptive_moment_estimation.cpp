@@ -785,7 +785,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 }
 
 
-
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,
                                                       ADAMOptimizationDataCuda& optimization_data) const
 {

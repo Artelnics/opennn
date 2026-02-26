@@ -4084,15 +4084,9 @@ void Dataset::check_separators(const string& line) const
 }
 
 
-void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
+void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data);
-}
-
-
-void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
-{
-    fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 }
 
 
@@ -4102,9 +4096,9 @@ void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, c
 // }
 
 
-void Dataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_tensor_data) const
+void Dataset::fill_target_tensor(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_data, bool parallelize) const
 {
-    fill_tensor_data(data, sample_indices, target_indices, target_tensor_data);
+    fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize);
 }
 
 
@@ -4509,14 +4503,11 @@ void BatchCuda::fill_host(const vector<Index>& sample_indices,
                           //const vector<Index>& decoder_indices,
                           const vector<Index>& target_indices)
 {
-    if (const ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset))
-        image_dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
-    else
-        dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
+    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host, false);
 
     //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
-    dataset->fill_target_tensor(sample_indices, target_indices, targets_host);
+    dataset->fill_target_tensor(sample_indices, target_indices, targets_host, false);
 }
 
 

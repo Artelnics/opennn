@@ -402,9 +402,7 @@ MatrixR filter_column_minimum_maximum(const MatrixR&, Index, type, type);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int );
 
-void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
-
-void fill_tensor_data_row_major(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
+void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 
 //void fill_tensor_sequence(const Tensor2&, const vector<Index>&, const vector<Index>&, Index, type*);
 
