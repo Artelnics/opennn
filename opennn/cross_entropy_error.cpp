@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "dataset.h"
 #include "neural_network.h"
+#include <iostream>
 #include "cross_entropy_error.h"
 
 namespace opennn

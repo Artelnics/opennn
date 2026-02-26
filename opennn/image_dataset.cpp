@@ -337,9 +337,9 @@ void ImageDataset::perform_augmentation(type* input_data) const
 }
 
 
-void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
+void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
-    fill_tensor_data(data, sample_indices, input_indices, input_data);
+    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 
     if (augmentation)
         perform_augmentation(input_data);
@@ -395,29 +395,31 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-vector<Descriptives> ImageDataset::scale_features(const string&)
+vector<Descriptives> ImageDataset::scale_features(const string& variable_role)
 {
-    TensorMap4 inputs_data(data.data(),
-                           get_samples_number(),
-                           input_shape[0],
-                           input_shape[1],
-                           input_shape[2]);
+    const Index samples_number = get_samples_number();
+    const Index input_features_number = get_features_number("Input");
+    const Index targets_number = get_features_number("Target");
+    const Index variables_number = input_features_number + targets_number;
 
-    inputs_data.device(get_device()) = inputs_data / type(255);
-
+    #pragma omp parallel for
+    for(Index i = 0; i < samples_number; i++)
+        for(Index j = 0; j < input_features_number; j++)
+            data(i, j) /= type(255);
+        
     return vector<Descriptives>();
 }
 
 
-void ImageDataset::unscale_features(const string&)
+void ImageDataset::unscale_features(const string& variable_role)
 {
-    TensorMap4 inputs_data(data.data(),
-                           get_samples_number(),
-                           input_shape[0],
-                           input_shape[1],
-                           input_shape[2]);
+    const Index samples_number = get_samples_number();
+    const Index input_features_number = get_features_number("Input");
 
-    inputs_data.device(get_device()) = inputs_data * type(255);
+    #pragma omp parallel for
+    for(Index i = 0; i < samples_number; i++)
+        for(Index j = 0; j < input_features_number; j++)
+            data(i, j) *= type(255);
 }
 
 

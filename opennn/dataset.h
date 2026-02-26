@@ -516,11 +516,13 @@ public:
 
     virtual void fill_input_tensor(const vector<Index>&,
                                    const vector<Index>&,
-                                   type*) const;
+                                   type*,
+                                   bool = true) const;
 
     virtual void fill_target_tensor(const vector<Index>&,
                                     const vector<Index>&,
-                                    type*) const;
+                                    type*,
+                                    bool = true) const;
 
     // virtual void fill_decoder_tensor(const vector<Index>&,
     //                                  const vector<Index>&,

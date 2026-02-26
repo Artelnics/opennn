@@ -388,7 +388,8 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 
 void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
                                           const vector<Index>& input_indices,
-                                          type* input_data) const
+                                          type* input_data,
+                                          bool parallelize) const
 {
     if(sample_indices.empty() || input_indices.empty()) return;
 
@@ -403,7 +404,7 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
     {
         const Index data_cols = data.cols();
 
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallelize)
         for(Index i = 0; i < batch_size; ++i)
         {
             const Index start_row = sample_indices[i];
@@ -431,7 +432,7 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
     }
     else // Eigen::ColMajor
     {
-        #pragma omp parallel for collapse(2) schedule(static)
+        #pragma omp parallel for collapse(2) schedule(static) if(parallelize)
         for(Index k = 0; k < input_size; ++k)
         {
             for(Index j = 0; j < past_time_steps; ++j)
@@ -455,7 +456,8 @@ void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
 
 void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
-                                           type* target_tensor_data) const
+                                           type* target_tensor_data,
+                                           bool parallelize) const
 {
     if(sample_indices.empty() || target_indices.empty()) return;
 
@@ -470,7 +472,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     {
         const Index data_cols = data.cols();
 
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallelize)
         for(Index i = 0; i < batch_size; ++i)
         {
             const Index target_row = sample_indices[i] + past_time_steps;
@@ -493,7 +495,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
     }
     else // Eigen::ColMajor
     {
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallelize)
         for(Index j = 0; j < target_size; ++j)
         {
             const Index column_index = target_indices[j];

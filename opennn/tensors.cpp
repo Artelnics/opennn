@@ -358,7 +358,8 @@ VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
-                      type* __restrict tensor_data)
+                      type* __restrict tensor_data,
+                      bool parallelize)
 {
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
@@ -367,26 +368,52 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const type* matrix_data = matrix.data();
 
+    bool is_contiguous = true;
+    for(Index j = 0; j < columns_number; ++j) {
+        if(column_indices[j] != column_indices[0] + j) {
+            is_contiguous = false;
+            break;
+        }
+    }
+
     if constexpr (Layout == Eigen::RowMajor)
     {
         const Index matrix_cols_number = matrix.cols();
 
-        #pragma omp parallel for schedule(static)
-        for(Index i = 0; i < rows_number; ++i)
+        if (is_contiguous) 
         {
-            const Index src_row = row_indices[i];
-            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-            type* dest_row_ptr = tensor_data + i * columns_number;
+            const Index start_col = column_indices[0];
 
-            for(Index j = 0; j < columns_number; ++j)
-                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+            // OpenMP encenderá los hilos SOLO si 'parallelize' es true
+            #pragma omp parallel for schedule(static) if(parallelize)
+            for(Index i = 0; i < rows_number; ++i)
+            {
+                const Index src_row = row_indices[i];
+                const type* src_row_ptr = matrix_data + src_row * matrix_cols_number + start_col;
+                type* dest_row_ptr = tensor_data + i * columns_number;
+
+                std::copy(src_row_ptr, src_row_ptr + columns_number, dest_row_ptr);
+            }
+        }
+        else
+        {
+            #pragma omp parallel for schedule(static) if(parallelize)
+            for(Index i = 0; i < rows_number; ++i)
+            {
+                const Index src_row = row_indices[i];
+                const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+                type* dest_row_ptr = tensor_data + i * columns_number;
+
+                for(Index j = 0; j < columns_number; ++j)
+                    dest_row_ptr[j] = src_row_ptr[column_indices[j]];
+            }
         }
     }
     else // Eigen::ColMajor
     {
         const Index matrix_rows_number = matrix.rows();
 
-        #pragma omp parallel for schedule(static)
+        #pragma omp parallel for schedule(static) if(parallelize)
         for(Index j = 0; j < columns_number; ++j)
         {
             const Index src_col = column_indices[j];

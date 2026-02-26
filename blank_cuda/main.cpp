@@ -23,15 +23,12 @@ int main()
 
         // Data set
 
-        //ImageDataset image_dataset("/home/davidgonzalez/opennn/melanoma_dataset_bmp");
-        ImageDataset image_dataset("/home/davidgonzalez/opennn/mnist_data_small");
+        ImageDataset image_dataset("/home/davidgonzalez/opennn/melanoma_dataset_bmp");
 
         image_dataset.split_samples_random(0.6, 0.2, 0.2);
 
-        image_dataset.print();
-
         // Neural network
-        /*
+        
         ImageClassificationNetwork image_classification_network(
             image_dataset.get_shape("Input"),
             { 32, 64, 16 },
@@ -60,7 +57,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
+        
 
 #endif
 /*

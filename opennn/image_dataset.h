@@ -67,7 +67,8 @@ public:
 
     void fill_input_tensor(const vector<Index>&,
                            const vector<Index>&,
-                           type*) const override;
+                           type*,
+                           bool = true) const override;
 
     void perform_augmentation(type*) const;
 

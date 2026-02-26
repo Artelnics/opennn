@@ -69,8 +69,8 @@ public:
                               Tensor4& output) const
     {
         const Index embedding_dimension = get_embedding_dimension();
-        const Index head_dimension = get_head_dimension();
         const Index heads = heads_number;
+        const Index head_dimension = get_head_dimension();
         const Index total_rows = batch_size * sequence_length;
 
         const MatrixMap inputs_map(inputs.data(), total_rows, embedding_dimension);
@@ -80,19 +80,9 @@ public:
         MatrixR projected(total_rows, embedding_dimension);
         projected.noalias() = (inputs_map * weights_map).rowwise() + biases_map.transpose();
 
-        type* output_data = output.data();
+        TensorMap4 projected_tensor(projected.data(), batch_size, sequence_length, heads, head_dimension);
 
-        #pragma omp parallel for collapse(2)
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            for(Index h = 0; h < heads; ++h)
-            {
-                type* destination_block = output_data + (b * heads + h) * (sequence_length * head_dimension);
-                MatrixMap destination_map(destination_block, sequence_length, head_dimension);
-
-                destination_map.noalias() = projected.block(b * sequence_length, h * head_dimension, sequence_length, head_dimension);
-            }
-        }
+        output = projected_tensor.shuffle(array_4(0, 2, 1, 3));
     }
 
     void calculate_projection_gradient(const Tensor4& d_head,
@@ -106,29 +96,16 @@ public:
     {
         const Index sequence_length = input.dimension(1);
         const Index embedding_dimension = get_embedding_dimension();
-        const Index heads = heads_number;
-        const Index head_dimension = get_head_dimension();
         const Index total_rows = batch_size * sequence_length;
 
-        MatrixR Delta(total_rows, embedding_dimension);
+        Tensor2 Delta_tensor = d_head.shuffle(array_4(0, 2, 1, 3))
+                                   .reshape(array_2(total_rows, embedding_dimension));
 
-        #pragma omp parallel for collapse(2)
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            for(Index h = 0; h < heads; ++h)
-            {
-                const type* source_data = d_head.data() + (b * heads + h) * (sequence_length * head_dimension);
-                const MatrixMap source_map(const_cast<type*>(source_data), sequence_length, head_dimension);
-
-                Delta.block(b * sequence_length, h * head_dimension, sequence_length, head_dimension).noalias() = source_map;
-            }
-        }
-
+        const MatrixMap Delta(Delta_tensor.data(), total_rows, embedding_dimension);
         const MatrixMap X(input.data(), total_rows, embedding_dimension);
         const MatrixMap W = matrix_map(weights);
 
         d_weights.noalias() = X.transpose() * Delta;
-
         d_bias.noalias() = Delta.colwise().sum();
 
         MatrixMap dX_mat(d_input.data(), total_rows, embedding_dimension);

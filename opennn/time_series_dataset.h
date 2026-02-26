@@ -63,11 +63,13 @@ public:
 
     void fill_input_tensor(const vector<Index>&,
                            const vector<Index>&,
-                           type*) const override;
+                           type*,
+                           bool = true) const override;
 
     void fill_target_tensor(const vector<Index>&,
                             const vector<Index>&,
-                            type*) const override;
+                            type*,
+                            bool = true) const override;
 
     vector<vector<Index>> get_batches(const vector<Index>&, Index, bool) const override;
 
