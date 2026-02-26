@@ -36,20 +36,22 @@ TEST(MultiHeadAttention, GeneralConstructorSelfAttention)
 
 TEST(MultiHeadAttention, ForwardPropagateSelfAttention)
 {
-    const Index batch_size = random_integer(1, 10);
-    const Index sequence_length = random_integer(1, 10);
-    const Index heads_number = random_integer(1, 10);
-    const Index head_dimension = random_integer(1, 10);
+    const Index batch_size = random_integer(2, 16);
+    const Index sequence_length = random_integer(4, 32);
+    const Index heads_number = random_integer(2, 8);
+    const Index head_dimension = random_integer(8, 64);
     const Index embedding_dimension = heads_number * head_dimension;
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<MultiHeadAttention>(Shape({sequence_length, embedding_dimension}), heads_number));
+    neural_network.compile();
+    neural_network.set_parameters_random();
 
     Tensor3 inputs_1(batch_size, sequence_length, embedding_dimension);
     inputs_1.setRandom();
 
     Tensor3 inputs_2(batch_size, sequence_length, embedding_dimension);
-    inputs_1.setRandom();
+    inputs_2.setRandom();
 
     Tensor3 outputs = neural_network.calculate_outputs(inputs_1, inputs_2);
 

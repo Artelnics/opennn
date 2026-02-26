@@ -170,7 +170,6 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.size(), 0);
-
 }
 
 
