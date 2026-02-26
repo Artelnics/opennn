@@ -4090,6 +4090,12 @@ void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vecto
 }
 
 
+void Dataset::fill_input_tensor_row_major(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
+{
+    fill_tensor_data_row_major(data, sample_indices, input_indices, input_data);
+}
+
+
 // void Dataset::fill_decoder_tensor(const vector<Index>& sample_indices, const vector<Index>& decoder_indices, type* decoder_tensor_data) const
 // {
 //     fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor_data);
@@ -4503,7 +4509,10 @@ void BatchCuda::fill_host(const vector<Index>& sample_indices,
                           //const vector<Index>& decoder_indices,
                           const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
+    if (const ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset))
+        image_dataset->fill_input_tensor_row_major(sample_indices, input_indices, inputs_host);
+    else
+        dataset->fill_input_tensor(sample_indices, input_indices, inputs_host);
 
     //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 

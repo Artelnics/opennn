@@ -558,7 +558,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     set_scaling();
     set_vocabularies();
 
-    // 1 Worker en background + 3 Buffers es la configuración óptima para OpenMP + CUDA
     const int PREFETCH_BATCHES = 3;
     
     ThreadSafeQueue<BatchCuda*> empty_training_queue;
