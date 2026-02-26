@@ -23,11 +23,9 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset("/home/davidgonzalez/opennn/melanoma_dataset_bmp_small");
+        ImageDataset image_dataset("/home/davidgonzalez/opennn/melanoma_dataset_bmp");
 
         image_dataset.split_samples_random(0.6, 0.2, 0.2);
-
-        image_dataset.print();
 
         // Neural network
         
