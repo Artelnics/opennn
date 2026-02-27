@@ -1,3 +1,11 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   V A R I A B L E    S T R U C T U R E  H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
 #pragma once
 
 namespace opennn
@@ -49,5 +57,7 @@ struct Variable
 };
 
 vector<string> get_feature_names(const vector<Variable>&);
+
+//get_feature_dimension
 
 }
