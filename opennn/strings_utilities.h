@@ -69,8 +69,6 @@ namespace opennn
     void detokenize_whitespace(Tensor2&, ostringstream&);
     void detokenize_wordpiece(Tensor2&, ostringstream&);
 
-    vector<string> preprocess_language_document(const string&, bool);
-
     string formatNumber(type, int);
 }
 

@@ -81,13 +81,12 @@ struct Normalization3dBackPropagation final : LayerBackPropagation
 
     void print() const override;
 
-    TensorView gamma_derivatives;
-    TensorView beta_derivatives;
+    TensorView gamma_gradients;
+    TensorView beta_gradients;
 
     Tensor3 scaled_gradients;
     Tensor3 standard_deviation_derivatives;
     Tensor2 aux_2d;
-
 };
 
 #ifdef OPENNN_CUDA

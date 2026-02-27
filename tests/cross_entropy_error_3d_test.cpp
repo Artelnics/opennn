@@ -94,7 +94,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     BackPropagation back_propagation(samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-    // EXPECT_EQ(abs(back_propagation.error) < NUMERIC_LIMITS_MIN);
+    // EXPECT_EQ(abs(back_propagation.error) < EPSILON);
     // EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
     // EXPECT_EQ(is_zero(back_propagation.gradient));

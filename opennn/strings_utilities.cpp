@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   O P E N N N   S T R I N G S
+//   S T R I N G   U T I L I T I E S
 //
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
@@ -105,52 +105,6 @@ vector<string> tokenize(const string& document)
 
 vector<string> get_tokens(const string& text, const string& separator)
 {
-/*
-    const Index tokens_number = count_tokens(text, separator);
-
-    vector<string> tokens(tokens_number);
-
-    // Skip delimiters at beginning.
-
-    string::size_type last_position = text.find_first_not_of(separator, 0);
-
-    // Find first "non-delimiter"
-
-    Index index = 0;
-    Index old_position = last_position;
-
-    string::size_type position = text.find_first_of(separator, last_position);
-
-    while(string::npos != position || string::npos != last_position)
-    {
-        if(last_position - old_position != 1 && index != 0)
-        {
-            index++;
-            old_position++;
-            continue;
-        }
-
-        // Found a token, add it to the vector
-
-        tokens[index] = text.substr(last_position, position - last_position);
-
-        old_position = position;
-
-        // Skip delimiters. Note the "not_of"
-
-        last_position = text.find_first_not_of(separator, position);
-
-        // Find next "non-delimiter"
-
-        position = text.find_first_of(separator, last_position);
-
-        index++;
-    }
-
-    return tokens;
-*/
-    // @todo Check. 
-
     vector<string> tokens;
 
     const size_t sep_len = separator.length();
@@ -174,8 +128,8 @@ vector<string> get_tokens(const string& text, const string& separator)
 }
 
 
-vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator){
-
+vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
+{
     vector<string> vector_result;
 
     for(const auto& subvec : input_vector)
@@ -426,7 +380,8 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
         {
             text.replace(start_pos, to_replace.length(), replace_with);
             start_pos += replace_with.length();
-        } else
+        }
+        else
             start_pos += 1;
     }
 }
@@ -877,54 +832,6 @@ void detokenize_wordpiece(Tensor2& predictions, ostringstream& buffer)
 */
 }
 
-vector<string> preprocess_language_document(const string& document, bool input)
-{
-    vector<string> tokens;
-
-    // if(!input)
-    tokens.push_back("[START]");
-
-    string currentToken;
-
-    for(char c : document)
-    {
-        if (isalnum(c))
-        {
-            // Add alphanumeric characters to the current token
-            currentToken += tolower(c);
-        }
-        else
-        {
-            // If the current token is not empty, add it to the tokens list
-            if(!currentToken.empty())
-            {
-                tokens.push_back(currentToken);
-                currentToken.clear();
-            }
-            // Treat punctuation as a separate token
-
-            if (ispunct(c))
-            {
-                tokens.push_back(string(1, c));
-            }
-            else if (isspace(c))
-            {
-                // Ignore spaces, they just delimit tokens
-            }
-        }
-    }
-
-    // Add the last token if it's not empty
-    if(!currentToken.empty())
-        tokens.push_back(currentToken);
-
-    // Add [END] token
-    // if(!input)
-    tokens.push_back("[END]");
-
-    return tokens;
-}
-
 
 string formatNumber(type value, int precision)
 {
@@ -944,22 +851,6 @@ string formatNumber(type value, int precision)
     }
 
     return str;
-
-    // ostringstream oss;
-    // oss << fixed << setprecision(precision) << value;
-
-    // string str = oss.str();
-
-    // if (str.find('.') != string::npos)
-    // {
-    //     while (!str.empty() && str.back() == '0')
-    //         str.pop_back();
-
-    //     if(!str.empty() && str.back() == '.')
-    //         str.pop_back();
-    // }
-
-    // return str;
 }
 
 }

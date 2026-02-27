@@ -56,8 +56,8 @@ void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
 
-    learning_rate_tolerance = numeric_limits<type>::epsilon();
-    loss_tolerance = numeric_limits<type>::epsilon();
+    learning_rate_tolerance = EPSILON;
+    loss_tolerance = EPSILON;
 
     // Stopping criteria
 
@@ -202,16 +202,15 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     else
     {
         const Index parameters_number = parameters.size();
-        constexpr type epsilon = numeric_limits<type>::epsilon();
 
 #pragma omp parallel for
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
+            if (abs(gradient(i)) < EPSILON)
                 parameter_updates(i) = 0.0f;
             else
             {
-                parameter_updates(i) = (gradient(i) > 0.0f) ? -epsilon : epsilon;
+                parameter_updates(i) = (gradient(i) > 0.0f) ? -EPSILON : EPSILON;
                 parameters(i) += parameter_updates(i);
             }
         }
@@ -296,7 +295,7 @@ TrainingResults QuasiNewtonMethod::train()
     Index validation_failures = 0;
 
     type old_loss = type(0);
-    type loss_decrease = numeric_limits<type>::max();
+    type loss_decrease = MAX;
 
     time_t beginning_time;
     time(&beginning_time);
@@ -705,9 +704,9 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
 
 Triplet::Triplet()
 {
-    A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
-    U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
-    B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    A = make_pair(MAX, MAX);
+    U = make_pair(MAX, MAX);
+    B = make_pair(MAX, MAX);
 }
 
 

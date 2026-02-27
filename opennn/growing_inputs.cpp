@@ -113,8 +113,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     const Loss* loss_index = training_strategy->get_loss_index();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
-    type previus_validation_error = numeric_limits<type>::max();
-    type previus_training_error = numeric_limits<type>::max();
+    type previus_validation_error = MAX;
+    type previus_training_error = MAX;
 
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
@@ -214,8 +214,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             cout << input_variable_names;
         }
 
-        type minimum_training_error = numeric_limits<type>::max();
-        type minimum_validation_error = numeric_limits<type>::max();
+        type minimum_training_error = MAX;
+        type minimum_validation_error = MAX;
 
         for(Index j = 0; j < trials_number; j++)
         {

@@ -178,14 +178,11 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const Index samples_number = batch.get_samples_number();
 
-    const TensorView targets_view = batch.get_targets();
-
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 

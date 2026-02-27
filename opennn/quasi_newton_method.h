@@ -94,7 +94,7 @@ private:
 
     // Stopping criteria
 
-    type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
+    type minimum_loss_decrease = EPSILON;
 
     type training_loss_goal;
 

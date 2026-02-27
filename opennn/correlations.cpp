@@ -334,7 +334,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const double denominator = sqrt((double(n) * s_xx - s_x * s_x) * (double(n) * s_yy - s_y * s_y));
 
-    if (denominator < static_cast<double>(NUMERIC_LIMITS_MIN))
+    if (denominator < static_cast<double>(EPSILON))
         return Correlation();
 
     Correlation linear_correlation;

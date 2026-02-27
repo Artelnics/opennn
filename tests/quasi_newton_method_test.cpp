@@ -93,7 +93,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
-    type old_error = numeric_limits<float>::max();
+    type old_error = MAX;
     type error;
 
     dataset.set_data_random();

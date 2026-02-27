@@ -533,11 +533,12 @@ struct Batch
               const vector<Index>& = vector<Index>());
 
     vector<TensorView> get_inputs() const;
+
     TensorView get_targets() const;
 
     Index get_samples_number() const;
 
-    Tensor2 perform_augmentation(const Tensor2&);
+//    Tensor2 perform_augmentation(const Tensor2&);
 
     void print() const;
 

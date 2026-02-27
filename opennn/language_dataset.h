@@ -37,8 +37,9 @@ public:
 
     void create_vocabulary(const vector<vector<string>>&, vector<string>&) const;
 
-    void encode_input_data(const vector<vector<string>>&);
-    void encode_target_data(const vector<vector<string>>&);
+    void encode_input(const vector<vector<string>>&);
+    void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
+    void encode_target_classification(const vector<vector<string>>&);
 
     void print() const override;
 
@@ -55,10 +56,6 @@ public:
     inline static const type END_INDEX = 3.0f;
 
     inline static const vector<string> reserved_tokens = {PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN};
-
-    Shape get_input_shape() const;
-
-    Shape get_target_shape() const;
 
 private:
 

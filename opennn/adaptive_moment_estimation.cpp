@@ -419,7 +419,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     {"Learning rate", to_string(double(learning_rate))},
     {"Beta 1", to_string(double(beta_1))},
     {"Beta 2", to_string(double(beta_2))},
-    {"Epsilon", to_string(numeric_limits<type>::epsilon())},
     {"Training loss goal", to_string(double(training_loss_goal))},
     {"Maximum epochs number", to_string(maximum_epochs)},
     {"Maximum time", write_time(maximum_time)},
@@ -450,7 +449,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
 
     parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
-                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + numeric_limits<type>::epsilon());
+                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
 }
 
 
@@ -810,7 +809,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propa
         beta_1,
         beta_2,
         learning_rate,
-        numeric_limits<float>::epsilon(),
+        EPSILON,
         bias_correction_1,
         bias_correction_2);
 }

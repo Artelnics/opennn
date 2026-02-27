@@ -208,11 +208,11 @@ public:
             const Descriptives& descriptive = descriptives[i];
 
             if(scaler == "MeanStandardDeviation")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + EPSILON);
             else if(scaler == "MinimumMaximum")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + EPSILON) * (max_range - min_range) + min_range;
             else if(scaler == "StandardDeviation")
-                outputs_mat.col(i).array() /= (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
+                outputs_mat.col(i).array() /= (descriptive.standard_deviation + EPSILON);
             else if(scaler == "Logarithm")
                 outputs_mat.col(i).array() = outputs_mat.col(i).array().log();
             else if(scaler == "ImageMinMax")

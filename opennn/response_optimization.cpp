@@ -177,11 +177,9 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                 const type superior_frontier = domain.superior_frontier(feature_pointer);
                 const type range = superior_frontier - inferior_frontier;
 
-                const type epsilon = 1e-9;
+                objective_normalizer(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
 
-                objective_normalizer(0, current_objective_index) = 1.0 / (range < epsilon ? epsilon : range);
-
-                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < epsilon ? epsilon : range);
+                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
 
                 if (current_condition.condition == ConditionType::Maximize)
                 {
@@ -600,7 +598,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
         VectorR  distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
 
-        distances(i) = numeric_limits<type>::max();
+        distances(i) = MAX;
 
         const type minimum_neighbor_distance = sqrt(distances.minCoeff());
 

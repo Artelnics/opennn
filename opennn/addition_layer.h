@@ -61,12 +61,9 @@ public:
                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
-        if (input_views.size() != 2)
-            throw runtime_error(name + " layer requires exactly two inputs.");
-/*
-        if (input_views[0].shape != input_views[1].shape)
-            throw runtime_error("Input shape for " + name + " must be identical.");
-*/
+        if (input_views.size() != 2 || input_views[0].shape != input_views[1].shape)
+            throw runtime_error(name + " input shape error.");
+
         const TensorMapR<Rank> input_1 = tensor_map<Rank>(input_views[0]);
         const TensorMapR<Rank> input_2 = tensor_map<Rank>(input_views[1]);
 
@@ -120,8 +117,8 @@ public:
 public:
 
     void forward_propagate(const vector<TensorViewCuda>& inputs,
-                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool) override
+                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                           bool) override
     {
         if (inputs.size() != 2)
             throw runtime_error(name + " layer requires exactly two inputs for CUDA propagation.");

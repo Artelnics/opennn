@@ -71,7 +71,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const MatrixR& 
 {
     const type new_normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
 
-    return (new_normalization_coefficient < NUMERIC_LIMITS_MIN)
+    return (new_normalization_coefficient < EPSILON)
                ? static_cast<type>(1)
                : new_normalization_coefficient;
 }
@@ -90,8 +90,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 
@@ -131,9 +130,7 @@ void NormalizedSquaredError::calculate_output_gradients(const Batch& batch,
 
     const MatrixR& errors = back_propagation.errors;
 
-    const TensorView output_gradient_views = back_propagation.get_output_gradients();
-
-    MatrixMap output_gradients = matrix_map(output_gradient_views);
+    MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
     const type coefficient = static_cast<type>(2.0 * total_samples_number) /
                              static_cast<type>(samples_number * normalization_coefficient);

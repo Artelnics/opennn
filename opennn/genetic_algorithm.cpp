@@ -601,7 +601,7 @@ void GeneticAlgorithm::perform_mutation()
             individual(to_false_mutations[k]) = false;
         }
 
-        for(Index k = swap_count; k < to_true_mutations.size(); ++k)
+        for(size_t k = swap_count; k < to_true_mutations.size(); ++k)
         {
             if (current_inputs_number < maximum_inputs_number)
             {
@@ -610,7 +610,7 @@ void GeneticAlgorithm::perform_mutation()
             }
         }
 
-        for(Index k = swap_count; k < to_false_mutations.size(); ++k)
+        for(size_t k = swap_count; k < to_false_mutations.size(); ++k)
         {
             if (current_inputs_number > minimum_inputs_number)
             {

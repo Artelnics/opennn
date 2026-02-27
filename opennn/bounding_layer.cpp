@@ -106,7 +106,7 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     if(lower_bounds.size() != output_shape[0])
     {
         lower_bounds.resize(output_shape[0]);
-        lower_bounds.setConstant(-numeric_limits<type>::max());
+        lower_bounds.setConstant(-MAX);
     }
 
     lower_bounds[index] = new_lower_bound;
@@ -124,8 +124,8 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
     lower_bounds.resize(new_output_shape[0]);
     upper_bounds.resize(new_output_shape[0]);
 
-    lower_bounds.setConstant(-numeric_limits<type>::max());
-    upper_bounds.setConstant(numeric_limits<type>::max());
+    lower_bounds.setConstant(-MAX);
+    upper_bounds.setConstant(MAX);
 }
 
 
@@ -142,7 +142,7 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
     if(upper_bounds.size() != output_shape[0])
     {
         upper_bounds.resize(output_shape[0]);
-        upper_bounds.setConstant(numeric_limits<type>::max());
+        upper_bounds.setConstant(MAX);
     }
 
     upper_bounds[index] = new_upper_bound;
@@ -289,10 +289,8 @@ void BoundingForwardPropagation::initialize()
 
 void BoundingForwardPropagation::print() const
 {
-/*
     cout << "Outputs:" << endl
          << outputs.shape << endl;
-*/
 }
 
 REGISTER(Layer, Bounding, "Bounding")

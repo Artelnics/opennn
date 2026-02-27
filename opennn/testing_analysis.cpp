@@ -563,7 +563,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const MatrixR& targets,
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), numeric_limits<type>::max());
+            outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), MAX);
 
             cross_entropy_error_2d -=
                 targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
@@ -727,7 +727,7 @@ type TestingAnalysis::calculate_determination(const VectorR& outputs, const Vect
 
     const type denominator = sqrt(targets_ss * outputs_ss);
 
-    if(denominator < NUMERIC_LIMITS_MIN)
+    if(denominator < EPSILON)
         return type(0);
 
     const type r = numerator / denominator;
@@ -1063,7 +1063,7 @@ type TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) cons
 
     type optimal_threshold = type(0.5);
 
-    type minimun_distance = numeric_limits<type>::max();
+    type minimun_distance = MAX;
 
     for(Index i = 0; i < points_number; i++)
     {
@@ -1190,7 +1190,7 @@ MatrixR TestingAnalysis::calculate_negative_cumulative_gain(const MatrixR& targe
         maximum_index = Index(percentage* type(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; j++)
-            if(sorted_targets(j) < NUMERIC_LIMITS_MIN)
+            if(sorted_targets(j) < EPSILON)
                 negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
@@ -1923,9 +1923,9 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const type decisi
 
     type positive_likelihood;
 
-    if(abs(classification_accuracy - type(1)) < NUMERIC_LIMITS_MIN)
+    if(abs(classification_accuracy - type(1)) < EPSILON)
         positive_likelihood = type(1);
-    else if(abs(type(1) - specificity) < NUMERIC_LIMITS_MIN)
+    else if(abs(type(1) - specificity) < EPSILON)
         positive_likelihood = type(0);
     else
         positive_likelihood = sensitivity/(type(1) - specificity);
@@ -1934,7 +1934,7 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const type decisi
 
     if(Index(classification_accuracy) == 1)
         negative_likelihood = type(1);
-    else if(abs(type(1) - sensitivity) < NUMERIC_LIMITS_MIN)
+    else if(abs(type(1) - sensitivity) < EPSILON)
         negative_likelihood = type(0);
     else
         negative_likelihood = specificity/(type(1) - sensitivity);

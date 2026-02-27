@@ -48,10 +48,10 @@ TEST(Dataset, VariableDescriptivesZero)
 
     EXPECT_EQ(variable_descriptives.size(), 2);
 
-    EXPECT_NEAR(variable_descriptives[0].minimum, 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[0].maximum, 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[0].mean, 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].minimum, 0, EPSILON);
+    EXPECT_NEAR(variable_descriptives[0].maximum, 0, EPSILON);
+    EXPECT_NEAR(variable_descriptives[0].mean, 0, EPSILON);
+    EXPECT_NEAR(variable_descriptives[0].standard_deviation, 0, EPSILON);
 
 }
 
@@ -76,12 +76,12 @@ TEST(Dataset, VariableDescriptives)
     const vector<Descriptives> variable_descriptives = dataset.calculate_feature_descriptives();
 
     EXPECT_EQ(variable_descriptives.size(), 3);
-    EXPECT_NEAR(variable_descriptives[0].minimum, type(-1000), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[1].minimum, type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[2].minimum, 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[0].maximum, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[1].maximum, type(4), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(variable_descriptives[2].maximum, type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].minimum, type(-1000), EPSILON);
+    EXPECT_NEAR(variable_descriptives[1].minimum, type(2), EPSILON);
+    EXPECT_NEAR(variable_descriptives[2].minimum, 0, EPSILON);
+    EXPECT_NEAR(variable_descriptives[0].maximum, type(1), EPSILON);
+    EXPECT_NEAR(variable_descriptives[1].maximum, type(4), EPSILON);
+    EXPECT_NEAR(variable_descriptives[2].maximum, type(2), EPSILON);
 }
 
 
@@ -102,13 +102,13 @@ TEST(Dataset, RawVariableDistributions)
 
     EXPECT_EQ(histograms.size(), 3);
 
-    EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[0].frequencies(0), 2, EPSILON);
+    EXPECT_NEAR(histograms[1].frequencies(0), 1, EPSILON);
+    EXPECT_NEAR(histograms[2].frequencies(0), 2, EPSILON);
 
-    EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[0].centers(0), 1, EPSILON);
+    EXPECT_NEAR(histograms[1].centers(0), 1, EPSILON);
+    EXPECT_NEAR(histograms[2].centers(0), 1, EPSILON);
 }
 
 
@@ -171,14 +171,14 @@ TEST(Dataset, ScaleData)
     // Expected scaled values for column 0 (original: 10, 30):
     // 10 (min) -> 0.0
     // 30 (max) -> 1.0
-    EXPECT_NEAR(scaled_data_minmax(0, 0), type(0.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(scaled_data_minmax(1, 0), type(1.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data_minmax(0, 0), type(0.0), EPSILON);
+    EXPECT_NEAR(scaled_data_minmax(1, 0), type(1.0), EPSILON);
 
     // Expected scaled values for column 1 (original: 200, 400):
     // 200 (min) -> 0.0
     // 400 (max) -> 1.0
-    EXPECT_NEAR(scaled_data_minmax(0, 1), type(0.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(scaled_data_minmax(1, 1), type(1.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data_minmax(0, 1), type(0.0), EPSILON);
+    EXPECT_NEAR(scaled_data_minmax(1, 1), type(1.0), EPSILON);
 }
 
 

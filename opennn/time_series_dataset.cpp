@@ -20,7 +20,6 @@ TimeSeriesDataset::TimeSeriesDataset(const Index new_samples_number,
                                      const Shape& new_target_shape)
     :Dataset(new_samples_number, new_input_shape, new_target_shape)
 {
-
 }
 
 
@@ -66,10 +65,10 @@ Index TimeSeriesDataset::get_future_time_steps() const
 }
 
 
-Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& feature_use) const
+Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& feature_role) const
 {
     const vector<Index> sample_indices = get_sample_indices(sample_role);
-    const vector<Index> feature_indices = get_feature_indices(feature_use);
+    const vector<Index> feature_indices = get_feature_indices(feature_role);
 
     if (sample_indices.empty() || feature_indices.empty())
         return Tensor3();
@@ -80,50 +79,14 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     Tensor3 data_3d(samples_number, past_time_steps, features_number);
     data_3d.setZero();
 
-    if (feature_use == "Input" || feature_use == "InputTarget")
+    if (feature_role == "Input" || feature_role == "InputTarget")
         fill_input_tensor(sample_indices, feature_indices, data_3d.data());
-    else if (feature_use == "Target")
+    else if (feature_role == "Target")
         throw runtime_error("get_data for 3D is only implemented for 'Input' variables in TimeSeriesDataset.");
 
     return data_3d;
 }
 
-/*
-TimeSeriesDataset::TimeSeriesData TimeSeriesDataset::get_data() const
-{
-    const Index total_samples = get_samples_number();
-
-    if (total_samples == 0)
-        return TimeSeriesData();
-
-    vector<Index> all_sample_indices(total_samples);
-    iota(all_sample_indices.begin(), all_sample_indices.end(), 0);
-
-    TimeSeriesData time_series_data;
-
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-
-    if(!input_feature_indices.empty())
-    {
-        const Index input_vars_number = input_feature_indices.size();
-        time_series_data.inputs.resize(total_samples, past_time_steps, input_vars_number);
-        time_series_data.inputs.setZero();
-        fill_input_tensor(all_sample_indices, input_feature_indices, time_series_data.inputs.data());
-    }
-
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-
-    if(!target_feature_indices.empty())
-    {
-        const Index target_vars_number = target_feature_indices.size();
-        time_series_data.targets.resize(total_samples, target_vars_number);
-        time_series_data.targets.setZero();
-        fill_target_tensor(all_sample_indices, target_feature_indices, time_series_data.targets.data());
-    }
-
-    return time_series_data;
-}
-*/
 
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
@@ -512,7 +475,7 @@ void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
 }
 
 
-// @todo Complete method following the structure.
+// @todo Is this finished?.
 
 void TimeSeriesDataset::fill_gaps()
 {   
@@ -679,8 +642,8 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
                                 : past_time_steps;
 
     Tensor3 cross_correlations(input_target_numeric_variables_number,
-                                       input_target_numeric_variables_number,
-                                       new_past_time_steps);
+                               input_target_numeric_variables_number,
+                               new_past_time_steps);
 
     VectorR cross_correlations_vector(new_past_time_steps);
 
@@ -774,40 +737,6 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
     }
 
     return cross_correlations;
-}
-
-
-vector<vector<Index>> TimeSeriesDataset::get_batches(const vector<Index>& sample_indices,
-                                                     Index batch_size,
-                                                     bool shuffle) const
-{
-    if(!shuffle) return split_samples(sample_indices, batch_size);
-
-    const Index samples_number = sample_indices.size();
-
-    if (samples_number == 0) return {};
-    if (batch_size <= 0 || batch_size > samples_number) batch_size = samples_number;
-
-    const Index batches_number = (samples_number + batch_size - 1) / batch_size;
-
-    vector<vector<Index>> batches(batches_number);
-
-    vector<Index> samples_copy(sample_indices);
-
-    shuffle_vector(samples_copy);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Index start_index = i * batch_size;
-
-        const Index end_index = min(start_index + batch_size, samples_number);
-
-        batches[i].assign(samples_copy.begin() + start_index,
-                          samples_copy.begin() + end_index);
-    }
-
-    return batches;
 }
 
 }

@@ -1082,7 +1082,7 @@ public:
                     momentum,
                     running_means_device.data,
                     running_variances_device.data,
-                    numeric_limits<type>::epsilon(),
+                    EPSILON,
                     dense_forward_propagation->batch_means.data,
                     dense_forward_propagation->bn_saved_inv_variance.data));
         else if (batch_normalization && !is_training)
@@ -1099,7 +1099,7 @@ public:
                     betas_device.data,
                     running_means_device.data,
                     running_variances_device.data,
-                    numeric_limits<type>::epsilon()));
+                    EPSILON));
 
         // Activations
 
@@ -1233,7 +1233,7 @@ public:
                 gammas_device.data,
                 dense_layer_back_propagation->gamma_gradients.data,
                 dense_layer_back_propagation->beta_gradients.data,
-                numeric_limits<type>::epsilon(),
+                EPSILON,
                 dense_forward_propagation->batch_means.data,
                 dense_forward_propagation->bn_saved_inv_variance.data));
 

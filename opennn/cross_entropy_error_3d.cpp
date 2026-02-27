@@ -26,16 +26,12 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
                                                  BackPropagation& back_propagation) const
 {
     /*
-    const TensorView targets_view = batch.get_targets();
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorMap3 outputs = tensor_map<3>(outputs_view);
+    const TensorMap3 outputs = tensor_map<3>(forward_propagation.get_last_trainable_layer_outputs());
 
     const Index batch_size = outputs.dimension(0);
     const Index sequence_length = outputs.dimension(1);
-
-    constexpr type epsilon = numeric_limits<type>::epsilon();
 
     // 3. Prepare Masking
     // In sequence tasks, we ignore padding. We assume target 0 is padding if built_mask is used.
@@ -53,8 +49,8 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
     // We reuse the errors member in back_propagation to store element-wise loss
     Tensor2& elementwise_loss = back_propagation.errors;
 
-    elementwise_loss.device(get_device()) = -(targets * (outputs_2d + epsilon).log() +
-        (targets.constant(1.0f) - targets) * (targets.constant(1.0f) - outputs_2d + epsilon).log());
+    elementwise_loss.device(get_device()) = -(targets * (outputs_2d + EPSILON).log() +
+        (targets.constant(1.0f) - targets) * (targets.constant(1.0f) - outputs_2d + EPSILON).log());
 
     // 6. Aggregate Error
     // Sum only the non-masked (non-padding) elements
@@ -79,11 +75,9 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
                                                    BackPropagation& back_propagation) const
 {
     /*
-    const TensorView targets_view = batch.get_targets();
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const TensorMap3 outputs = tensor_map<3>(outputs_view);
+    const TensorMap3 outputs = tensor_map<3>(forward_propagation.get_last_trainable_layer_outputs());
 
     const Index batch_size = outputs.dimension(0);
     const Index sequence_length = outputs.dimension(1);
@@ -102,8 +96,6 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
     // We need to find the probability the model assigned to the *correct* index.
     // In C++, a nested loop with OpenMP is the most efficient way to handle this 3D indexing.
 
-    constexpr type epsilon = numeric_limits<type>::epsilon();
-
     #pragma omp parallel for reduction(+:total_log_loss, active_tokens_count)
     for(Index i = 0; i < batch_size; ++i)
     {
@@ -119,7 +111,7 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
                 {
                     // Loss = -log(probability_of_correct_class)
                     const type probability = outputs(i, j, target_index);
-                    total_log_loss -= log(probability + epsilon);
+                    total_log_loss -= log(probability + EPSILON);
                     active_tokens_count++;
                 }
             }

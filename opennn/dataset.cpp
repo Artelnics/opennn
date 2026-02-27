@@ -78,7 +78,7 @@ VectorI Dataset::get_sample_role_numbers() const
         const string& role = sample_roles[i];
 
         if (role == "Training")         count[0]++;
-        else if (role == "Validation")   count[1]++;
+        else if (role == "Validation")  count[1]++;
         else if (role == "Testing")     count[2]++;
         else if (role == "None")        count[3]++;
         else throw runtime_error("Unknown sample role: " + role);
@@ -92,15 +92,12 @@ vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
     const Index samples_number = get_samples_number();
 
-    const Index count = get_samples_number(sample_role);
+    vector<Index> indices;
+    indices.reserve(get_samples_number(sample_role));
 
-    vector<Index> indices(count);
-
-    Index index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if (sample_roles[i] == sample_role)
-            indices[index++] = i;
+    for(Index i = 0; i < samples_number; ++i)
+        if(sample_roles[i] == sample_role)
+            indices.push_back(i);
 
     return indices;
 }
@@ -1744,7 +1741,7 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
             for(Index j = 0; j < categories_number; j++)
             {
                 for(Index k = 0; k < used_samples_number; k++)
-                    if (abs(data(used_sample_indices[k], feature_index) - type(1)) < NUMERIC_LIMITS_MIN)
+                    if (abs(data(used_sample_indices[k], feature_index) - type(1)) < EPSILON)
                         categories_frequencies(j)++;
 
                 centers(j) = type(j);
@@ -1765,7 +1762,7 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
             binary_frequencies.setZero();
 
             for(Index j = 0; j < used_samples_number; j++)
-                binary_frequencies(abs(data(used_sample_indices[j], feature_index) - type(1)) < NUMERIC_LIMITS_MIN
+                binary_frequencies(abs(data(used_sample_indices[j], feature_index) - type(1)) < EPSILON
                                        ? 1
                                        : 0)++;
 
@@ -1842,9 +1839,9 @@ Index Dataset::calculate_used_negatives(const Index target_index) const
         if (isnan(data(training_index, target_index)))
             continue;
 
-        if (abs(data(training_index, target_index)) < NUMERIC_LIMITS_MIN)
+        if (abs(data(training_index, target_index)) < EPSILON)
             negatives++;
-        else if (abs(data(training_index, target_index) - type(1)) > NUMERIC_LIMITS_MIN
+        else if (abs(data(training_index, target_index) - type(1)) > EPSILON
                  || data(training_index, target_index) < type(0))
             throw runtime_error("Training sample is neither a positive nor a negative: "
                                 + to_string(training_index) + "-" + to_string(target_index) + "-" + to_string(data(training_index, target_index)));
@@ -1867,16 +1864,16 @@ Index Dataset::calculate_negatives(const Index target_index, const string& sampl
 
         if (sample_role == "Testing")
         {
-            if (sample_value < type(NUMERIC_LIMITS_MIN))
+            if (sample_value < type(EPSILON))
                 negatives++;
         }
         else
         {
-            if (abs(sample_value) < type(NUMERIC_LIMITS_MIN))
+            if (abs(sample_value) < type(EPSILON))
                 negatives++;
             else
             {
-                type threshold = (sample_role == "Training") ? type(1.0e-3) : type(NUMERIC_LIMITS_MIN);
+                type threshold = (sample_role == "Training") ? type(1.0e-3) : type(EPSILON);
                 if (abs(sample_value - type(1)) > threshold)
                     throw runtime_error("Sample is neither a positive nor a negative: "
                                         + to_string(sample_value) + "-" + to_string(target_index) + "-" + to_string(sample_value));
@@ -1906,7 +1903,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_positive_samples()
     Index positive_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if (abs(data(used_sample_indices[i], target_index) - type(1)) < NUMERIC_LIMITS_MIN)
+        if (abs(data(used_sample_indices[i], target_index) - type(1)) < EPSILON)
             positive_samples_number++;
 
     vector<Index> positive_used_sample_indices(positive_samples_number);
@@ -1916,7 +1913,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_positive_samples()
     {
         const Index sample_index = used_sample_indices[i];
 
-        if (abs(data(sample_index, target_index) - type(1)) < NUMERIC_LIMITS_MIN)
+        if (abs(data(sample_index, target_index) - type(1)) < EPSILON)
             positive_used_sample_indices[positive_sample_index++] = sample_index;
     }
 
@@ -1936,7 +1933,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_negative_samples()
     Index negative_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if (data(used_sample_indices[i], target_index) < NUMERIC_LIMITS_MIN)
+        if (data(used_sample_indices[i], target_index) < EPSILON)
             negative_samples_number++;
 
     vector<Index> negative_used_sample_indices(negative_samples_number);
@@ -1946,7 +1943,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_negative_samples()
     {
         const Index sample_index = used_sample_indices[i];
 
-        if (data(sample_index, target_index) < NUMERIC_LIMITS_MIN)
+        if (data(sample_index, target_index) < EPSILON)
             negative_used_sample_indices[negative_sample_index++] = sample_index;
     }
 
@@ -1966,7 +1963,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_categories(const I
     Index class_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if (abs(data(used_sample_indices[i], class_index) - type(1)) < NUMERIC_LIMITS_MIN)
+        if (abs(data(used_sample_indices[i], class_index) - type(1)) < EPSILON)
             class_samples_number++;
 
     vector<Index> class_used_sample_indices(class_samples_number, 0);
@@ -1977,7 +1974,7 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_categories(const I
     {
         const Index sample_index = used_sample_indices[i];
 
-        if (abs(data(sample_index, class_index) - type(1)) < NUMERIC_LIMITS_MIN)
+        if (abs(data(sample_index, class_index) - type(1)) < EPSILON)
             class_used_sample_indices[class_sample_index++] = sample_index;
     }
 
@@ -2209,7 +2206,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() 
             const MatrixR input_j = get_variable_data(current_input_index_j);
             correlations_pearson(i, j) = correlation(input_i, input_j);
 
-            if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+            if (correlations_pearson(i, j).r > type(1) - EPSILON)
                 correlations_pearson(i, j).r = type(1);
 
             correlations_pearson(j, i) = correlations_pearson(i, j);
@@ -2251,7 +2248,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations()
 
             correlations_spearman(i, j) = correlation_spearman(input_i, input_j);
 
-            if (correlations_spearman(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
+            if (correlations_spearman(i, j).r > type(1) - EPSILON)
                 correlations_spearman(i, j).r = type(1);
 
             correlations_spearman(j, i) = correlations_spearman(i, j);
@@ -3047,7 +3044,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
         {
             const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
-            if (interquartile_range < numeric_limits<type>::epsilon())
+            if (interquartile_range < EPSILON)
             {
                 feature_index++;
                 used_feature_index++;
@@ -3134,7 +3131,7 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleani
         {
             const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
-            if (interquartile_range < numeric_limits<type>::epsilon())
+            if (interquartile_range < EPSILON)
             {
                 feature_index++;
                 used_feature_index++;
@@ -3247,8 +3244,8 @@ VectorI Dataset::filter_data(const VectorR& minimums,
                 || isnan(value))
                 continue;
 
-            if (abs(value - minimums(i)) <= NUMERIC_LIMITS_MIN
-                || abs(value - maximums(i)) <= NUMERIC_LIMITS_MIN)
+            if (abs(value - minimums(i)) <= EPSILON
+                || abs(value - maximums(i)) <= EPSILON)
                 continue;
 
             if (minimums(i) == maximums(i))
@@ -4152,19 +4149,6 @@ bool Dataset::get_has_rows_labels() const
 }
 
 
-// void Dataset::decode(string&) const
-// {
-//     switch (codification)
-//     {
-//     case Dataset::Codification::SHIFT_JIS:
-//         //        input_string = sj2utf8(input_string);
-//         break;
-//     default:
-//         break;
-//     }
-// }
-
-
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
                  // const vector<Index>& decoder_indices,
@@ -4200,35 +4184,35 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     dataset = const_cast<Dataset*>(new_dataset);
 
-    // Inputs
+    // Input
 
-    const Shape& data_set_input_dimensions = dataset->get_shape("Input");
+    const Shape& dataset_input_shape = dataset->get_shape("Input");
 
-    if(!data_set_input_dimensions.empty())
+    if(!dataset_input_shape.empty())
     {
-        input_shape = prepend(samples_number, data_set_input_dimensions);
+        input_shape = prepend(samples_number, dataset_input_shape);
         input_vector.resize(get_size(input_shape));
     }
 
-    // Targets
+    // Target
 
-    const Shape& data_set_target_shape = dataset->get_shape("Target");
+    const Shape& dataset_target_shape = dataset->get_shape("Target");
 
-    if(!data_set_target_shape.empty())
+    if(!dataset_target_shape.empty())
     {
-        target_shape = prepend(samples_number, data_set_target_shape);
+        target_shape = prepend(samples_number, dataset_target_shape);
         target_vector.resize(get_size(target_shape));
     }
 
     // Decoder
 
-    // const Shape& data_set_decoder_dimensions = dataset->get_shape("Decoder");
+    const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
 
-    // if(!data_set_decoder_dimensions.empty())
-    // {
-    //     decoder_shape = prepend(samples_number, data_set_decoder_dimensions);
-    //     decoder_vector.resize(get_size(decoder_shape));
-    // }
+    if(!dataset_decoder_shape.empty())
+    {
+         decoder_shape = prepend(samples_number, dataset_decoder_shape);
+         decoder_vector.resize(get_size(decoder_shape));
+    }
 }
 
 
@@ -4262,15 +4246,18 @@ void Batch::print() const
 
     cout << endl;
 
-    // cout << "Decoder:" << endl
-    //      << "Decoder shape:" << decoder_shape << endl;
-/*
+    if(!decoder_shape.empty())
+    {
+        cout << "Decoder:" << endl
+             << "Decoder shape:" << decoder_shape << endl;
+    }
+
     cout << "Targets:" << endl
          << "Target shape:" << target_shape << endl;
-*/
+
     cout << MatrixMap((type*)target_vector.data(),
-                                       target_shape[0],
-                                       target_shape[1]) << endl;
+                             target_shape[0],
+                             target_shape[1]) << endl;
 }
 
 
@@ -4361,17 +4348,17 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
     samples_number = new_samples_number;
     dataset = new_dataset;
 
-    const Shape& data_set_input_dimensions = dataset->get_shape("Input");
-    //const Shape& data_set_decoder_dimensions = dataset->get_shape("Decoder");
-    const Shape& data_set_target_shape = dataset->get_shape("Target");
+    const Shape& dataset_input_shape = dataset->get_shape("Input");
+    //const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
+    const Shape& dataset_target_shape = dataset->get_shape("Target");
 
-    if(!data_set_input_dimensions.empty())
+    if(!dataset_input_shape.empty())
     {
         num_input_features = dataset->get_features_number("Input");
         const Index input_size = samples_number * num_input_features;
 
         input_shape = { samples_number };
-        input_shape.insert(input_shape.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
+        input_shape.insert(input_shape.end(), dataset_input_shape.begin(), dataset_input_shape.end());
 
         if (input_size > inputs_host_allocated_size)
         {
@@ -4383,10 +4370,10 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
         inputs_device.resize({samples_number, num_input_features});
     }
     /*
-    if(!data_set_decoder_dimensions.empty())
+    if(!dataset_decoder_shape.empty())
     {
         decoder_shape = { samples_number };
-        decoder_shape.insert(decoder_shape.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
+        decoder_shape.insert(decoder_shape.end(), dataset_decoder_shape.begin(), dataset_decoder_shape.end());
 
         const Index decoder_size = decoder_shape.count();
 
@@ -4400,13 +4387,13 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
         CHECK_CUDA(cudaMalloc(&decoder_device, decoder_size * sizeof(float)));
     }
     */
-    if(!data_set_target_shape.empty())
+    if(!dataset_target_shape.empty())
     {
         num_target_features = dataset->get_features_number("Target");
         const Index target_size = samples_number * num_target_features;
 
         target_shape = { samples_number };
-        target_shape.insert(target_shape.end(), data_set_target_shape.begin(), data_set_target_shape.end());
+        target_shape.insert(target_shape.end(), dataset_target_shape.begin(), dataset_target_shape.end());
 
         if (target_size > targets_host_allocated_size)
         {

@@ -11,7 +11,7 @@
 #define EIGEN_MAX_ALIGN_BYTES 32
 #define EIGEN_NO_DEBUG
 
-#define NUMERIC_LIMITS_MIN type(0.000001)
+//#define EPSILON type(0.000001)
 
 #define NOMINMAX
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
@@ -130,6 +130,12 @@ using namespace std;
 using namespace Eigen;
 
 using type = float;
+
+namespace opennn {
+constexpr type EPSILON = numeric_limits<type>::epsilon();
+constexpr type MAX = numeric_limits<type>::max();
+}
+
 
 constexpr int Layout = Eigen::RowMajor;
 

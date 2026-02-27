@@ -910,7 +910,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(new_vector(i) - centers(j) < NUMERIC_LIMITS_MIN)
+                if(new_vector(i) - centers(j) < EPSILON)
                 {
                     frequencies(j)++;
                     break;

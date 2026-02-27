@@ -21,8 +21,8 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
    
     vector<Descriptives> matrix_descriptives = dataset.calculate_feature_descriptives();
 
-    EXPECT_NEAR(matrix_descriptives[0].mean, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(matrix_descriptives[0].mean, type(0), EPSILON);
+    EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), EPSILON);
 }
 
 
@@ -42,8 +42,8 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_feature_descriptives();
 
-    EXPECT_NEAR(matrix_descriptives[0].minimum, type(-1.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(matrix_descriptives[0].maximum, type(1.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(matrix_descriptives[0].minimum, type(-1.0), EPSILON);
+    EXPECT_NEAR(matrix_descriptives[0].maximum, type(1.0), EPSILON);
 }
 
 
@@ -65,7 +65,7 @@ TEST(ScalingTest, ScaleDataNoScaling2d)
 
     scaled_matrix = dataset.get_data();
     
-    EXPECT_EQ(are_equal(matrix, scaled_matrix, NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, scaled_matrix, EPSILON),true);
 }
 
 
@@ -84,7 +84,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 
     vector<Descriptives> matrix_descriptives = dataset.calculate_feature_descriptives();
 
-    EXPECT_NEAR(abs(matrix_descriptives[0].standard_deviation), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(matrix_descriptives[0].standard_deviation), type(1), EPSILON);
 }
 
 
@@ -139,7 +139,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
 }
 
 
@@ -164,7 +164,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
 }
 
 
@@ -189,7 +189,7 @@ TEST(ScalingTest, UnscaleDataNoScaling2d)
 
     unscaled_matrix = dataset.get_data();
 
-    EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
+    EXPECT_EQ(are_equal(matrix, unscaled_matrix,EPSILON),true);
 }
 
 

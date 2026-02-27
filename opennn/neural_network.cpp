@@ -578,9 +578,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     forward_propagate(input_views, forward_propagation, false);
 
-    const TensorView outputs_view = forward_propagation.get_outputs();
-
-    return tensor_map<3>(outputs_view);
+    return tensor_map<3>(forward_propagation.get_outputs());
 }
 
 

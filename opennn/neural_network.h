@@ -203,55 +203,7 @@ public:
     void set_parameters_glorot();
 
     // Output
-/*
-    template <Index input_rank, Index output_rank>
-    Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
-    {
-        const Index layers_number = get_layers_number();
 
-        if (layers_number == 0)
-           return Tensor<type, output_rank>();
-
-        const Index batch_size = inputs.dimension(0);
-
-        ForwardPropagation forward_propagation(batch_size, this);
-
-        Shape input_shape;
-
-        for(Index i = 0; i < input_rank; ++i)
-           input_shape.push_back(inputs.dimension(i));
-
-        const TensorView input_view((type*)inputs.data(), input_shape);
-
-        forward_propagate({input_view}, forward_propagation, false);
-
-        const TensorView& output_view = forward_propagation.layers.back()->get_outputs();
-
-        if constexpr (output_rank == 2)
-        {
-            if (output_view.rank() == 4)
-            {
-                const Index batch_size = output_view.shape[0];
-                const Index features = output_view.size() / batch_size;
-
-                if (reinterpret_cast<uintptr_t>(output_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
-                    throw runtime_error("tensor_map alignment error: Pointer is not aligned.");
-
-                return MatrixMap(output_view.data, batch_size, features);
-            }
-
-            return matrix_map(output_view);
-        }
-        else if constexpr (output_rank == 3)
-           return tensor_map<3>(output_view);
-        else if constexpr (output_rank == 4)
-           return tensor_map<4>(output_view);
-        else
-           static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
-
-        return Tensor<type, output_rank>();
-    }
-*/
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
     MatrixR calculate_outputs(const MatrixR&);

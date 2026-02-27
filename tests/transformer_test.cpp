@@ -111,7 +111,7 @@ TEST(Transformer, Outputs)
     EXPECT_EQ(outputs.cols(), input_length);
     EXPECT_EQ(outputs.dimension(2), input_shape);
 
-    //EXPECT_EQ(outputs.abs() < type(NUMERIC_LIMITS_MIN));
+    //EXPECT_EQ(outputs.abs() < type(EPSILON));
     
     // Test
 
@@ -130,11 +130,11 @@ TEST(Transformer, Outputs)
     outputs = transformer.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.size() == batch_size * outputs_number);
-    EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0, 1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0, 2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0, 3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0, 4)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 0)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(0, 1)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(0, 2)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(0, 3)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(0, 4)) < type(EPSILON));
 
     // Test
 
@@ -148,8 +148,8 @@ TEST(Transformer, Outputs)
     outputs = transformer.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.size() == 2);
-    EXPECT_EQ(abs(outputs(0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 0) - type(3)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(0, 1) - type(3)) < type(EPSILON));
 
     // Test
 
@@ -242,8 +242,8 @@ TEST(Transformer, Outputs)
     outputs = transformer.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.cols() == outputs_number);
-    EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 0)) < type(EPSILON));
+    EXPECT_EQ(abs(outputs(1, 0)) < type(EPSILON));
     */
 }
 
