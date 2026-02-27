@@ -18,6 +18,7 @@
 #include "convolutional_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -122,35 +123,32 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const vector<string>& NeuralNetwork::get_feature_names() const
+const vector<string>& NeuralNetwork::get_input_feature_names() const
 {
-    return input_names;
+    vector<string> input_feature_names;
+
+    for (const auto& var : input_variables)
+    {
+        const vector<string> names = var.get_names();
+
+        input_feature_names.insert(input_feature_names.end(), names.begin(), names.end());
+    }
+
+    return input_feature_names;
 }
 
-
-Index NeuralNetwork::get_input_index(const string& input_name) const
+const vector<string>& NeuralNetwork::get_output_feature_names() const
 {
-    for(Index i = 0; i < Index(input_names.size()); i++)
-        if(input_names[i] == input_name)
-            return i;
+    vector<string> output_feature_names;
 
-    throw runtime_error("Input name not found: " + input_name);
-}
+    for (const auto& var : output_variables)
+    {
+        const vector<string> names = var.get_names();
 
+        output_feature_names.insert(output_feature_names.end(), names.begin(), names.end());
+    }
 
-const vector<string>& NeuralNetwork::get_output_names() const
-{
-    return output_names;
-}
-
-
-Index NeuralNetwork::get_output_index(const string& output_name) const
-{
-    for(Index i = 0; i < Index(output_names.size()); i++)
-        if(output_names[i] == output_name)
-            return i;
-
-    throw runtime_error("Output name not found: " + output_name);
+    return output_feature_names;
 }
 
 
@@ -264,22 +262,63 @@ void NeuralNetwork::set(const filesystem::path& file_name)
 }
 
 
-void NeuralNetwork::set_feature_names(const vector<string>& new_feature_names)
+void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
-    input_names = new_feature_names;
+    Index j = 0;
+    for(size_t i = 0; i < input_variables.size(); ++i)
+    {
+        if(input_variables[i].is_categorical())
+        {
+            size_t num_cats = input_variables[i].get_categories_number();
+
+            input_variables[i].categories.assign(new_input_names.begin() + j, new_input_names.begin() + j + num_cats);
+
+            j += num_cats;
+        }
+        else
+        {
+            input_variables[i].name = new_input_names[j];
+            j++;
+        }
+    }
 }
 
 
 void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 {
-    output_names = new_output_namess;
+    Index j = 0;
+    for(size_t i = 0; i < output_variables.size(); ++i)
+    {
+        if(output_variables[i].is_categorical())
+        {
+            size_t num_cats = output_variables[i].get_categories_number();
+
+            output_variables[i].categories.assign(new_output_namess.begin() + j, new_output_namess.begin() + j + num_cats);
+
+            j += num_cats;
+        }
+        else
+        {
+            output_variables[i].name = new_output_namess[j];
+            j++;
+        }
+    }
 }
 
+void NeuralNetwork::set_input_variables(const vector<Variable>& new_input_variables)
+{
+    input_variables = new_input_variables;
+}
+
+void NeuralNetwork::set_output_variables(const vector<Variable>& new_output_variables)
+{
+    output_variables = new_output_variables;
+}
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
     const Index total_inputs = new_input_shape.count();
-    input_names.resize(total_inputs);
+    input_variables.resize(total_inputs);
 
     if(has("Scaling2d"))
     {
@@ -306,9 +345,9 @@ void NeuralNetwork::set_default()
 
     layer_input_indices.clear();
 
-    input_names.clear();
+    input_variables.clear();
 
-    output_names.clear();
+    output_variables.clear();
 }
 
 
@@ -631,16 +670,20 @@ string NeuralNetwork::get_expression() const
 
     const vector<string> layer_labels = get_layer_labels();
 
-    vector<string> new_feature_names = get_feature_names();
-    vector<string> new_output_names = get_output_names();
+
+    const vector<string> input_names = get_input_feature_names();
+    const vector<string> output_names = get_output_feature_names();
+
+    vector<string> new_input_names = get_input_feature_names();
+    vector<string> new_output_names = get_output_feature_names();
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
 
     for(Index i = 0; i < inputs_number; i++)
         input_names[i].empty()
-            ? new_feature_names[i] = "input_" + to_string(i)
-            : new_feature_names[i] = input_names[i];
+            ? new_input_names[i] = "input_" + to_string(i)
+            : new_input_names[i] = input_names[i];
 
     ostringstream buffer;
 
@@ -653,7 +696,7 @@ string NeuralNetwork::get_expression() const
                       ? output_names[j]
                       : "output_" + to_string(i);
 
-            buffer << layers[i]->get_expression(new_feature_names, new_output_names) << endl;
+            buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
         }
         else
         {
@@ -666,8 +709,8 @@ string NeuralNetwork::get_expression() const
                       ? "scaled_" + input_names[j]
                       : layer_labels[i] + "_output_" + to_string(j);
 
-            buffer << layers[i]->get_expression(new_feature_names, new_output_names) << endl;
-            new_feature_names = new_output_names;
+            buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
+            new_input_names = new_output_names;
         }
     }
 
@@ -852,16 +895,19 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
+    const vector<string> input_names = get_input_feature_names();
+    const vector<string> output_names = get_output_feature_names();
+
     printer.OpenElement("NeuralNetwork");
 
-    // Features
+    // Input
 
-    printer.OpenElement("Features");
+    printer.OpenElement("Input");
 
-    add_xml_element(printer, "FeaturesNumber", to_string(inputs_number));
+    add_xml_element(printer, "InputNumber", to_string(inputs_number));
 
     for(Index i = 0; i < inputs_number; i++)
-        add_xml_element_attribute(printer, "Feature", input_names[i], "Index", to_string(i + 1));
+        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
@@ -910,7 +956,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
-    features_from_XML(neural_network_element->FirstChildElement("Features"));
+    features_from_XML(neural_network_element->FirstChildElement("Input"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
     set_display(read_xml_bool(neural_network_element, "Display"));
@@ -919,26 +965,36 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
 
 void NeuralNetwork::features_from_XML(const XMLElement* features_element)
 {
+
     if(!features_element)
-        throw runtime_error("Features element is nullptr.\n");
+        throw runtime_error("Input element is nullptr.\n");
 
-    const Index new_features_number = read_xml_index(features_element, "FeaturesNumber");
-    input_names.resize(new_features_number);
+    //@simone @todo stai attento c'e forse qualcos adi sospetto in questo "new", le cose cambiano e non capisco se sono layes e input e output cambiano sempre o no
+    //const Index new_features_number = read_xml_index(features_element, "InputNumber");
 
-    // Feature names
+    const XMLElement* current_element = features_element->FirstChildElement("InputNumber");
 
-    const XMLElement* start_element = features_element->FirstChildElement("FeaturesNumber");
-
-    for(Index i = 0; i < new_features_number; i++)
+    for(Variable& variable : input_variables)
     {
-        const XMLElement* feature_element = start_element->NextSiblingElement("Feature");
-        start_element = feature_element;
+        if(variable.is_categorical())
+            for(string& category_name : variable.categories)
+            {
+                current_element = current_element->NextSiblingElement("Input");
+                if(!current_element)
+                    break;
 
-        if(feature_element->Attribute("Index") != to_string(i+1))
-            throw runtime_error("Feature index number (" + to_string(i+1) + ") does not match (" + feature_element->Attribute("Item") + ").\n");
+                if(current_element->GetText())
+                    category_name = current_element->GetText();
+            }
+        else
+        {
+            current_element = current_element->NextSiblingElement("Input");
+            if(!current_element)
+                continue;
 
-        if(feature_element->GetText())
-            input_names[i] = feature_element->GetText();
+            if(current_element->GetText())
+                variable.name = current_element->GetText();
+        }
     }
 }
 
@@ -1002,24 +1058,32 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
     if(!outputs_element)
         throw runtime_error("Outputs element is nullptr.\n");
 
-    const Index new_outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+    //const Index new_outputs_number = read_xml_index(outputs_element, "OutputsNumber");
 
-    output_names.resize(new_outputs_number);
+    const XMLElement* current_element = outputs_element->FirstChildElement("OutputsNumber");
 
-    const XMLElement* outputs_number_element = outputs_element->FirstChildElement("OutputsNumber");
-
-    const XMLElement* start_element = outputs_number_element;
-
-    for(Index i = 0; i < new_outputs_number; i++)
+    Index i = 0; // Global output index counter
+    for(Variable& variable : output_variables)
     {
-        const XMLElement* output_element = start_element->NextSiblingElement("Output");
-        start_element = output_element;
+        if(variable.is_categorical())
+            for(string& category_name : variable.categories)
+            {
+                current_element = current_element->NextSiblingElement("Output");
+                if(!current_element) break;
 
-        if(output_element->Attribute("Index") != to_string(i+1))
-            throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
+                if(current_element->GetText())
+                    category_name = current_element->GetText();
 
-        if(output_element->GetText())
-            output_names[i] = output_element->GetText();
+                i++;
+            }
+        else
+        {
+            current_element = current_element->NextSiblingElement("Output");
+            if(!current_element) continue;
+
+            if(current_element->GetText())
+                variable.name = current_element->GetText();
+        }
     }
 }
 
@@ -1028,7 +1092,7 @@ void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
 
-    cout << "Features number: " << get_inputs_number() << endl;
+    cout << "Input number: " << get_inputs_number() << endl;
 
     const Index layers_number = get_layers_number();
 
@@ -1040,7 +1104,7 @@ void NeuralNetwork::print() const
     cout << "Outputs number: " << get_outputs_number() << endl;
 
     cout << "Outputs:" << endl
-         << get_output_names();
+         << get_output_feature_names();
 
     cout << "Parameters number: " << get_parameters_number() << endl;
 
@@ -1118,7 +1182,7 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
-    const vector<string> output_names = get_output_names();
+    const vector<string> output_names = get_output_feature_names();
 
     const Index outputs_number = get_outputs_number();
     const Index batch_size = inputs.rows();
@@ -1167,10 +1231,10 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
-    const vector<string> output_names = get_output_names();
+    const vector<string> output_names = get_output_feature_names();
     const Index outputs_number = get_outputs_number();
 
-    const vector<string> input_names = get_feature_names();
+    const vector<string> input_names = get_input_feature_names();
     for(const auto& name : input_names)
         file << name << ";";
 

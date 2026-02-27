@@ -14,6 +14,7 @@
 #include "pch.h"
 #include "dataset.h"
 #include "statistics.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -54,7 +55,7 @@ public:
                      const VectorR& center,
                      const MatrixR& subset_optimal_points,
                      const vector<Index>& input_feature_dimensions,
-                     const vector<Dataset::VariableType>& input_variable_types);
+                     const vector<VariableType>& input_variable_types);
 
         VectorR inferior_frontier;
         VectorR superior_frontier;

@@ -1,5 +1,5 @@
 #include "pch.h"
-
+#include "variable.h"
 #include "../opennn/tensors.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/embedding_layer.h"
@@ -49,11 +49,11 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     raw_variables[0].name = "input";
     raw_variables[0].role = opennn::"Input";
-    raw_variables[0].type = opennn::Dataset::VariableType::Numeric;
+    raw_variables[0].type = opennn::VariableType::Numeric;
 
     raw_variables[1].name = "target";
     raw_variables[1].role = opennn::"Target";
-    raw_variables[1].type = opennn::Dataset::VariableType::Numeric;
+    raw_variables[1].type = opennn::VariableType::Numeric;
 
     language_dataset.set_raw_variables(raw_variables);
     language_dataset.set_data(data);

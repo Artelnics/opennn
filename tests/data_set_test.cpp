@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "variable.h"
 
 #include "../opennn/dataset.h"
 
@@ -306,9 +307,9 @@ TEST(Dataset, ReadCSV_Basic)
     EXPECT_EQ(raw_vars[1].name, "variable_2");
     EXPECT_EQ(raw_vars[2].name, "target_1");
 
-    EXPECT_EQ(raw_vars[0].type, Dataset::VariableType::Numeric);
-    EXPECT_EQ(raw_vars[1].type, Dataset::VariableType::Numeric);
-    EXPECT_EQ(raw_vars[2].type, Dataset::VariableType::Binary);
+    EXPECT_EQ(raw_vars[0].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[1].type, VariableType::Numeric);
+    EXPECT_EQ(raw_vars[2].type, VariableType::Binary);
 
     EXPECT_EQ(raw_vars[0].role, "Input");
     EXPECT_EQ(raw_vars[1].role, "Input");
@@ -411,7 +412,7 @@ TEST(Dataset, ReadCSV_SpaceSeparator)
     EXPECT_EQ(raw_vars[0].name, "var1");
     EXPECT_EQ(raw_vars[1].name, "var2");
     EXPECT_EQ(raw_vars[2].name, "target");
-    EXPECT_EQ(raw_vars[2].type, Dataset::VariableType::Binary);
+    EXPECT_EQ(raw_vars[2].type, VariableType::Binary);
 
     const MatrixR& data = dataset.get_data();
     Index v1_idx = dataset.get_variable_index(0);

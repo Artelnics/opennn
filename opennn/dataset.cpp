@@ -15,6 +15,9 @@
 #include "strings_utilities.h"
 #include "random_utilities.h"
 
+#include "image_dataset.h"
+#include "variable.h"
+
 namespace opennn
 {
 
@@ -56,143 +59,6 @@ Shape Dataset::get_input_shape() const
 Shape Dataset::get_target_shape() const
 {
     return target_shape;
-}
-
-
-Dataset::Variable::Variable(const string& new_name,
-                                  const string& new_variable_role,
-                                  const VariableType& new_type,
-                                  const string& new_scaler,
-                                  const vector<string>& new_categories)
-{
-    set(new_name, new_variable_role, new_type, new_scaler, new_categories);
-}
-
-
-void Dataset::Variable::set(const string& new_name,
-                               const string& new_variable_role,
-                               const VariableType& new_type,
-                               const string& new_scaler,
-                               const vector<string>& new_categories)
-{
-    name = new_name;
-    role = new_variable_role;
-    type = new_type;
-    scaler = new_scaler;
-    categories = new_categories;
-}
-
-
-void Dataset::Variable::set_scaler(const string& new_scaler)
-{
-    scaler = new_scaler;
-}
-
-
-void Dataset::Variable::set_role(const string& new_variable_role)
-{
-    role = new_variable_role;
-}
-
-
-void Dataset::Variable::set_type(const string& new_variable_type)
-{
-    if (new_variable_type == "Numeric")
-        type = VariableType::Numeric;
-    else if (new_variable_type == "Binary")
-        type = VariableType::Binary;
-    else if (new_variable_type == "Categorical")
-        type = VariableType::Categorical;
-    else if (new_variable_type == "DateTime")
-        type = VariableType::DateTime;
-    else if (new_variable_type == "Constant")
-        type = VariableType::Constant;
-    else
-        throw runtime_error("Variable type is not valid (" + new_variable_type + ").\n");
-}
-
-
-void Dataset::Variable::set_categories(const vector<string>& new_categories)
-{
-    categories = new_categories;
-}
-
-
-void Dataset::Variable::from_XML(const XMLDocument& document)
-{
-    name = read_xml_string(document.FirstChildElement(), "Name");
-    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
-    set_role(read_xml_string(document.FirstChildElement(), "Role"));
-    set_type(read_xml_string(document.FirstChildElement(), "Type"));
-
-    if (type == VariableType::Categorical)
-    {
-        const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
-        categories = get_tokens(categories_text, ";");
-    }
-}
-
-
-void Dataset::Variable::to_XML(XMLPrinter& printer) const
-{
-    add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "Scaler", scaler);
-    add_xml_element(printer, "Role", get_role());
-    add_xml_element(printer, "Type", get_type_string());
-
-    if (type == VariableType::Categorical || type == VariableType::Binary)
-        add_xml_element(printer, "Categories", vector_to_string(categories,";"));
-}
-
-
-void Dataset::Variable::print() const
-{
-    cout << "Variable" << endl
-         << "Name: " << name << endl
-         << "Role: " << get_role() << endl
-         << "Type: " << get_type_string() << endl
-         << "string: " << scaler << endl;
-
-    if (categories.size() != 0)
-    {
-        cout << "Categories: " << endl
-             << categories;
-    }
-
-    cout << endl;
-}
-
-
-string Dataset::Variable::get_role() const
-{
-    return role;
-}
-
-
-Index Dataset::Variable::get_categories_number() const
-{
-    return categories.size();
-}
-
-
-void Dataset::get_categorical_info(const string& variable_role, vector<Index>& variable_indices, vector<Index>& categories_number) const
-{
-    variable_indices.clear();
-    categories_number.clear();
-
-    const vector<Variable> variables = get_variables(variable_role);
-
-    const Index variables_number = variables.size();
-
-    for(Index i = 0; i < variables_number; ++i)
-    {
-        if(variables[i].is_categorical())
-        {
-            variable_indices.push_back(i);
-
-            categories_number.push_back(variables[i].get_categories_number());
-        }
-    }
 }
 
 
@@ -536,7 +402,7 @@ vector<Index> Dataset::get_feature_dimensions() const
 
     Index i = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
 
         if(!variable.is_used())
@@ -597,9 +463,9 @@ void Dataset::set_default_variables_roles_forecasting()
     }
 }
 
-vector<Dataset::VariableType> Dataset::get_variable_types(const vector<Index> indices) const
+vector<VariableType> Dataset::get_variable_types(const vector<Index> indices) const
 {
-    vector<Dataset::VariableType> variable_types(indices.size());
+    vector<VariableType> variable_types(indices.size());
 
     for (Index i = 0; i < static_cast<Index>(indices.size()) ; i++)
         variable_types[i] = get_variable_type(indices[i]);
@@ -618,42 +484,27 @@ void Dataset::set_default_variable_names()
 
 vector<string> Dataset::get_feature_names() const
 {
-    const Index features_number = get_features_number();
+    vector<string> feature_names;
 
-    vector<string> feature_names(features_number);
+    for (const auto& var : variables)
+    {
+        const vector<string> names = var.get_names();
 
-    Index index = 0;
-
-    for(const Dataset::Variable& variable : variables)
-        if (variable.type == VariableType::Categorical)
-            for(size_t j = 0; j < variable.categories.size(); j++)
-                feature_names[index++] = variable.categories[j];
-        else
-            feature_names[index++] = variable.name;
-
+        feature_names.insert(feature_names.end(), names.begin(), names.end());
+    }
     return feature_names;
 }
 
 
 vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
-    const Index features_number = get_features_number(variable_role);
+    vector<string> feature_names;
 
-    vector<string> feature_names(features_number);
-
-    Index index = 0;
-
-    for(const Dataset::Variable& variable : variables)
+    for (const auto& var : get_variables(variable_role))
     {
-        if(!((variable.role == variable_role) ||
-              ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget")))
-            continue;
+        const vector<string> names = var.get_names();
 
-        if (variable.type == VariableType::Categorical)
-            for(Index j = 0; j < variable.get_categories_number(); j++)
-                feature_names[index++] = variable.categories[j];
-        else
-            feature_names[index++] = variable.name;
+        feature_names.insert(feature_names.end(), names.begin(), names.end());
     }
 
     return feature_names;
@@ -706,7 +557,7 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
     Index feature_index = 0;
     Index this_feature_index = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
         if (variable.role.find(variable_role) == string::npos)
         {
@@ -810,7 +661,7 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
 
     Index index = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
         if(!((variable.role == variable_role) ||
               ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget")))
@@ -827,7 +678,7 @@ Index Dataset::get_variables_number(const string& variable_role) const
 {
     Index count = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
         if (variable.role.find(variable_role) != string::npos)
             count++;
 
@@ -844,20 +695,20 @@ Index Dataset::get_used_variables_number() const
 }
 
 
-const vector<Dataset::Variable>& Dataset::get_variables() const
+const vector<Variable>& Dataset::get_variables() const
 {
     return variables;
 }
 
 
-vector<Dataset::Variable> Dataset::get_variables(const string& variable_role) const
+vector<Variable> Dataset::get_variables(const string& variable_role) const
 {
     const Index count = get_variables_number(variable_role);
 
     vector<Variable> this_variables(count);
     Index index = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
         if (variable.role.find(variable_role) != string::npos)
             this_variables[index++] = variable;
 
@@ -878,7 +729,7 @@ Index Dataset::get_features_number(const string& variable_role) const
 {
     Index count = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
         if (variable.role.find(variable_role) != string::npos)
             count += (variable.type == VariableType::Categorical)
                          ? variable.get_categories_number()
@@ -896,7 +747,7 @@ vector<Index> Dataset::get_used_feature_indices() const
     Index feature_index = 0;
     Index used_feature_index = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
         const Index categories_number = variable.get_categories_number();
 
@@ -1026,7 +877,7 @@ void Dataset::set_feature_names(const vector<string>& new_variables_names)
 {
     Index index = 0;
 
-    for(Dataset::Variable& variable : variables)
+    for(Variable& variable : variables)
         if (variable.type == VariableType::Categorical)
             for(Index j = 0; j < variable.get_categories_number(); j++)
                 variable.categories[j] = new_variables_names[index++];
@@ -1071,7 +922,7 @@ void Dataset::set_variables_number(const Index new_variables_number)
 
 void Dataset::set_variable_scalers(const string& scalers)
 {
-    for(Dataset::Variable& variable : variables)
+    for(Variable& variable : variables)
         variable.scaler = scalers;
 }
 
@@ -1864,7 +1715,7 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
     Index feature_index = 0;
     Index used_variable_index = 0;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
         if (variable.role == "None")
         {
@@ -2491,7 +2342,7 @@ VectorI Dataset::calculate_correlations_rank() const
 
 void Dataset::set_default_variables_scalers()
 {
-    for(Dataset::Variable& variable : variables)
+    for(Variable& variable : variables)
         variable.scaler = (variable.type == VariableType::Numeric)
                                   ? "MeanStandardDeviation"
                                   : "MinimumMaximum";
@@ -2912,7 +2763,7 @@ void Dataset::print() const
          << "Number of testing samples: " << testing_samples_number << endl
          << "Number of unused samples: " << unused_samples_number << endl;
 
-    //for(const Dataset::Variable& variable : variables)
+    //for(const Variable& variable : variables)
     //    variable.print();
 }
 
@@ -2945,7 +2796,7 @@ void Dataset::load(const filesystem::path& file_name)
 
 void Dataset::print_variables() const
 {
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
         variable.print();
 
     cout << endl;
@@ -3727,14 +3578,14 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 }
 
 
-DateFormat Dataset::infer_dataset_date_format(const vector<Dataset::Variable>& variables,
+DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
                                               const vector<vector<string>>& sample_rows,
                                               bool has_sample_ids,
                                               const string& missing_values_label)
 {
     for(size_t col_idx = 0; col_idx < variables.size(); ++col_idx)
     {
-        if(variables[col_idx].type != Dataset::VariableType::DateTime)
+        if(variables[col_idx].type != VariableType::DateTime)
             continue;
 
         for(const vector<string>& row : sample_rows)
@@ -3896,7 +3747,7 @@ void Dataset::read_csv()
 
     const DateFormat date_format = infer_dataset_date_format(variables, raw_file_content, has_sample_ids, missing_values_label);
 
-    for(Dataset::Variable& variable : variables)
+    for(Variable& variable : variables)
         if(variable.type == VariableType::Categorical && variable.get_categories_number() == 2)
             variable.type = VariableType::Binary;
 
@@ -4002,28 +3853,6 @@ void Dataset::read_csv()
 }
 
 
-string Dataset::Variable::get_type_string() const
-{
-    switch (type)
-    {
-    case VariableType::None:
-        return "None";
-    case VariableType::Numeric:
-        return "Numeric";
-    case VariableType::Constant:
-        return "Constant";
-    case VariableType::Binary:
-        return "Binary";
-    case VariableType::Categorical:
-        return "Categorical";
-    case VariableType::DateTime:
-        return "DateTime";
-    default:
-        throw runtime_error("Unknown variable type");
-    }
-}
-
-
 void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 {
     if (all_rows.empty())
@@ -4117,7 +3946,7 @@ bool Dataset::has_categorical_variables() const
 
 bool Dataset::has_binary_or_categorical_variables() const
 {
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
         if (variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
             return true;
 
@@ -4227,7 +4056,7 @@ void Dataset::fix_repeated_names()
 {
     map<string, Index> variables_count_map;
 
-    for(const Dataset::Variable& variable : variables)
+    for(const Variable& variable : variables)
     {
         auto result = variables_count_map.insert(pair<string, Index>(variable.name, 1));
         if(!result.second)
@@ -4241,7 +4070,7 @@ void Dataset::fix_repeated_names()
             const string repeated_name = element.first;
             Index repeated_index = 1;
 
-            for(Dataset::Variable& variable : variables)
+            for(Variable& variable : variables)
                 if (variable.name == repeated_name)
                     variable.name = variable.name + "_" + to_string(repeated_index++);
         }
@@ -4256,7 +4085,7 @@ void Dataset::fix_repeated_names()
         for(const string& name : all_feature_names)
             global_names_count[name]++;
 
-        for(Dataset::Variable& variable : variables)
+        for(Variable& variable : variables)
         {
             bool needs_disambiguation = false;
 

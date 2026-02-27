@@ -283,11 +283,11 @@ public:
     }
 
 
-    string get_expression(const vector<string>& new_feature_names = vector<string>(), const vector<string>& = vector<string>()) const override
+    string get_expression(const vector<string>& new_input_names = vector<string>(), const vector<string>& = vector<string>()) const override
     {
-        const vector<string> input_names = new_feature_names.empty()
+        const vector<string> input_names = new_input_names.empty()
                                                ? get_default_feature_names()
-                                               : new_feature_names;
+                                               : new_input_names;
 
         const Index outputs_number = get_outputs_number();
 

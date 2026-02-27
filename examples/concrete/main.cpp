@@ -17,7 +17,7 @@
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimization_algorithm.h"
-#include "../../opennn/quasi_newton_method.h"
+#include "../../opennn/variable.h"
 
 #include "../../opennn/response_optimization.h"
 
@@ -31,7 +31,7 @@ int main()
 
         Dataset dataset("../data/concrete.csv", ",", true, false);
 
-        dataset.set_variable_types(Dataset::VariableType::Numeric);
+        dataset.set_variable_types(VariableType::Numeric);
 
         dataset.impute_missing_values_mean();
 

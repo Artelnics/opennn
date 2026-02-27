@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "dataset.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -31,17 +31,17 @@ public:
     string write_selu_c() const;
     string write_softmax_c() const;
     //void auto_association_c() const;
-    string get_expression_c(const vector<Dataset::Variable>&) const;
+    string get_expression_c(const vector<Variable>&) const;
 
     // python
     string write_header_python() const;
     string write_subheader_python() const;
-    string get_expression_python(const vector<Dataset::Variable>&) const;
+    string get_expression_python(const vector<Variable>&) const;
 
     // php
     string write_header_api() const;
     string write_subheader_api() const;
-    string get_expression_api(const vector<Dataset::Variable>&) const;
+    string get_expression_api(const vector<Variable>&) const;
 
     // javascript
     //string autoassociaton_javascript() const;
@@ -53,7 +53,7 @@ public:
     string softmax_javascript() const;
     string header_javascript() const;
     string subheader_javascript() const;
-    string get_expression_javascript(const vector<Dataset::Variable>&) const;
+    string get_expression_javascript(const vector<Variable>&) const;
 
     // other functions
     string replace_reserved_keywords(const string&) const;
@@ -61,10 +61,10 @@ public:
     vector<string> fix_feature_names(const vector<string>&) const;
     vector<string> fix_output_names(const vector<string>& ) const;
 
-    void save_python(const filesystem::path&, const vector<Dataset::Variable>&) const;
-    void save_c(const filesystem::path&, const vector<Dataset::Variable>&) const;
-    void save_javascript(const filesystem::path&, const vector<Dataset::Variable>&) const;
-    void save_api(const filesystem::path&, const vector<Dataset::Variable>&) const;
+    void save_python(const filesystem::path&, const vector<Variable>&) const;
+    void save_c(const filesystem::path&, const vector<Variable>&) const;
+    void save_javascript(const filesystem::path&, const vector<Variable>&) const;
+    void save_api(const filesystem::path&, const vector<Variable>&) const;
 
 protected:
     const NeuralNetwork* neural_network = nullptr;

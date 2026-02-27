@@ -398,8 +398,6 @@ VectorI calculate_rank_less(const VectorR&);
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
-MatrixR filter_column_minimum_maximum(const MatrixR&, Index, type, type);
-
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int );
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);

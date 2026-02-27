@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
+#include "variable.h"
 #include "neural_network.h"
 #include "weighted_squared_error.h"
 
@@ -86,7 +87,7 @@ void WeightedSquaredError::set_weights()
 {
     if(!dataset) return;
 
-    const vector<Dataset::Variable>& target_variables
+    const vector<Variable>& target_variables
         = dataset->get_variables("Target");
 
     if(target_variables.empty())
@@ -131,7 +132,7 @@ void WeightedSquaredError::set_normalization_coefficient()
         return;
     }
 
-    const vector<Dataset::Variable>& target_variables
+    const vector<Variable>& target_variables
         = dataset->get_variables("Target");
 
     if(target_variables.empty())
