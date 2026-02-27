@@ -491,7 +491,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
     shuffle_vector(difference);
     const Index genes_to_add = target_size - current_size;
     
-    for(Index i = 0; i < genes_to_add && i < difference.size(); ++i)
+    for(Index i = 0; i < genes_to_add && i < Index(difference.size()); ++i)
         descendent(difference[i]) = true;
     
     const Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
@@ -506,7 +506,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
 
         Index genes_needed = minimum_inputs_number - final_count;
 
-        for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i)
+        for(Index i = 0; i < genes_needed && i < Index(never_true_indices.size()); ++i)
             descendent(never_true_indices[i]) = true;
     }
 
