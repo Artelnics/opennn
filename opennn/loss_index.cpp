@@ -94,14 +94,9 @@ void Loss::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
-    const TensorView outputs_view
-        = forward_propagation.get_last_trainable_layer_outputs();
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
-    const MatrixMap outputs = matrix_map(outputs_view);
-
-    const TensorView targets_view = batch.get_targets();
-
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     back_propagation.errors = outputs - targets;
 }
@@ -545,7 +540,7 @@ void BackPropagation::print() const
 
 
 type Loss::calculate_numerical_error() const
-{
+{  
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");

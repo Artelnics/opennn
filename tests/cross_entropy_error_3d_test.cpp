@@ -1,5 +1,5 @@
 #include "pch.h"
-
+#include "variable.h"
 #include "../opennn/tensors.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/embedding_layer.h"
@@ -49,11 +49,11 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     raw_variables[0].name = "input";
     raw_variables[0].role = opennn::"Input";
-    raw_variables[0].type = opennn::Dataset::VariableType::Numeric;
+    raw_variables[0].type = opennn::VariableType::Numeric;
 
     raw_variables[1].name = "target";
     raw_variables[1].role = opennn::"Target";
-    raw_variables[1].type = opennn::Dataset::VariableType::Numeric;
+    raw_variables[1].type = opennn::VariableType::Numeric;
 
     language_dataset.set_raw_variables(raw_variables);
     language_dataset.set_data(data);
@@ -94,7 +94,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     BackPropagation back_propagation(samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-    // EXPECT_EQ(abs(back_propagation.error) < NUMERIC_LIMITS_MIN);
+    // EXPECT_EQ(abs(back_propagation.error) < EPSILON);
     // EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
     // EXPECT_EQ(is_zero(back_propagation.gradient));

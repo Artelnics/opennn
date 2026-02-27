@@ -12,7 +12,7 @@
 #include "statistics.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-
+#include "variable.h"
 
 namespace opennn
 {
@@ -39,81 +39,6 @@ public:
     enum class Separator{None, Space, Tab, Comma, Semicolon};
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
-
-    enum class VariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
-
-    // Structs
-
-    struct Variable
-    {
-        Variable(const string& = string(),
-                    const string& = "None",
-                    const Dataset::VariableType& = Dataset::VariableType::Numeric,
-                    const string& = "MeanStandardDeviation",
-                    const vector<string>& = vector<string>());
-
-        void set(const string& = string(),
-                 const string& = "None",
-                 const Dataset::VariableType& = Dataset::VariableType::Numeric,
-                 const string& = "MeanStandardDeviation",
-                 const vector<string>& = vector<string>());
-
-        string name;
-
-        string role = "None";
-
-        Dataset::VariableType type = Dataset::VariableType::None;
-
-        vector<string> categories;
-
-        string scaler = "None";
-
-        // Methods
-
-        string get_role() const;
-        string get_type_string() const;
-
-        Index get_categories_number() const;
-
-        void set_scaler(const string&);
-
-        void set_role(const string&);
-
-        void set_type(const string&);
-
-        void set_categories(const vector<string>&);
-
-        virtual void from_XML(const XMLDocument&);
-
-        virtual void to_XML(XMLPrinter&) const;
-
-        bool is_binary() const
-        {
-            if(type == Dataset::VariableType::Binary)
-                return true;
-            else
-                return false;
-        }
-
-        bool is_used() const
-        {
-            if(role == "None" || role == "Time")
-                return false;
-
-            return true;
-        }
-
-
-        bool is_categorical() const
-        {
-            if(type == Dataset::VariableType::Categorical)
-                return true;
-            else
-                return false;
-        }
-
-        void print() const;
-    };
 
     // Samples get
 
@@ -150,10 +75,8 @@ public:
     vector<string> get_variable_names() const;
     vector<string> get_variable_names(const string&) const;
 
-    VariableType get_variable_type(const Index index) const
-    {
-        return variables[index].type;
-    }
+    VariableType get_variable_type(const Index index) const;
+
     vector<VariableType> get_variable_types(const vector<Index> indices) const;
 
     // Variables get
@@ -233,8 +156,6 @@ public:
     Shape get_input_shape() const;
     Shape get_target_shape() const;
 
-    void get_categorical_info(const string&, vector<Index>&, vector<Index>&) const;
-
     // Set
 
     void set(const Index = 0, const Shape& = {}, const Shape& = {});
@@ -265,7 +186,7 @@ public:
     void set_default_variable_names();
 
     void set_default_variables_roles();
-    void set_default_variables_roles_forecasting();
+    void set_default_variable_roles_forecasting();
     virtual void set_variable_roles(const vector<string>&);
 
     void set_variables(const string&);
@@ -295,7 +216,7 @@ public:
 
     void set_feature_names(const vector<string>&);
 
-    void set_feature_roles(const string&);
+    void set_variable_roles(const string&);
 
     void set_shape(const string&, const Shape&);
 
@@ -450,7 +371,6 @@ public:
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
-
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
@@ -508,7 +428,7 @@ public:
     virtual void read_csv();
 
     void infer_column_types(const vector<vector<string>>&);
-    DateFormat infer_dataset_date_format(const vector<Dataset::Variable>&, const vector<vector<string>>&, bool, const string&);
+    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string>>&, bool, const string&);
 
     void read_data_file_preview(const vector<vector<string>>&);
 
@@ -613,11 +533,12 @@ struct Batch
               const vector<Index>& = vector<Index>());
 
     vector<TensorView> get_inputs() const;
+
     TensorView get_targets() const;
 
     Index get_samples_number() const;
 
-    Tensor2 perform_augmentation(const Tensor2&);
+//    Tensor2 perform_augmentation(const Tensor2&);
 
     void print() const;
 
@@ -628,13 +549,13 @@ struct Batch
     Dataset* dataset = nullptr;
 
     Shape input_shape;
-    VectorR input_tensor;
+    VectorR input_vector;
 
     Shape decoder_shape;
-    VectorR decoder_tensor;
+    VectorR decoder_vector;
 
     Shape target_shape;
-    VectorR target_tensor;
+    VectorR target_vector;
 };
 
 
@@ -662,9 +583,9 @@ struct BatchCuda
 
     Index get_samples_number() const;
 
-    Tensor2 get_inputs_from_device() const;
-    Tensor2 get_decoder_from_device() const;
-    Tensor2 get_targets_from_device() const;
+    MatrixR get_inputs_from_device() const;
+    MatrixR get_decoder_from_device() const;
+    MatrixR get_targets_from_device() const;
 
     void copy_device(const Index);
     void copy_device_async(const Index, cudaStream_t);

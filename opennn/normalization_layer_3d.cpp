@@ -104,7 +104,7 @@ void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
 
     outputs.device(get_device())
         = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
-          / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + numeric_limits<type>::epsilon());
+          / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + EPSILON);
 
     // Affine transformation
 /*
@@ -139,8 +139,8 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
     Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
 
-    VectorMap gamma_derivatives = vector_map(this_back_propagation->gamma_derivatives);
-    VectorMap beta_derivatives = vector_map(this_back_propagation->beta_derivatives);
+    VectorMap gamma_gradients = vector_map(this_back_propagation->gamma_gradients);
+    VectorMap beta_gradients = vector_map(this_back_propagation->beta_gradients);
 
     Tensor3& scaled_gradients = this_back_propagation->scaled_gradients;
     Tensor3& standard_deviation_derivatives = this_back_propagation->standard_deviation_derivatives;
@@ -149,12 +149,10 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
 
     Tensor2& aux_2d = this_back_propagation->aux_2d;
 
-    constexpr type epsilon = numeric_limits<type>::epsilon();
-
     // Parameters derivatives
 /*
-    gamma_derivatives.device(get_device()) = (outputs * output_gradients).sum(array<Index, 2>({0, 1}));
-    beta_derivatives.device(get_device()) = output_gradients.sum(array<Index, 2>({0, 1}));
+    gamma_gradients.device(get_device()) = (outputs * output_gradients).sum(array<Index, 2>({0, 1}));
+    beta_gradients.device(get_device()) = output_gradients.sum(array<Index, 2>({0, 1}));
 
     // Input derivatives
 
@@ -162,19 +160,19 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
     multiply_matrices(get_device(), scaled_gradients, gammas);
 
     aux_2d.device(get_device()) = (scaled_gradients * outputs).sum(array<Index, 1>({2}))
-                                         / (embedding_dimension * (standard_deviations + epsilon));
+                                         / (embedding_dimension * (standard_deviations + EPSILON));
 
     standard_deviation_derivatives.device(get_device()) = outputs;
     multiply_matrices(get_device(), standard_deviation_derivatives, aux_2d);
 
     scaled_gradients.device(get_device()) = scaled_gradients
                                                 / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
-                                                       .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
+                                                       .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + EPSILON);
 
     input_gradients.device(get_device()) = scaled_gradients - standard_deviation_derivatives;
 
     aux_2d.device(get_device()) = 1 / type(embedding_dimension) * scaled_gradients.sum(array<Index, 1>({2}));
-    /*
+
     input_derivatives.device(get_device()) = input_derivatives
         - aux_2d.reshape(array<Index, 3>{input_derivatives.dimension(0), input_derivatives.dimension(1), 1})
                 .broadcast(array<Index, 3>{1, 1, input_derivatives.dimension(2)});
@@ -251,8 +249,8 @@ void Normalization3dBackPropagation::initialize()
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    gamma_derivatives.shape = {embedding_dimension};
-    beta_derivatives.shape = {embedding_dimension};
+    gamma_gradients.shape = {embedding_dimension};
+    beta_gradients.shape = {embedding_dimension};
 
     scaled_gradients.resize(batch_size, sequence_length, embedding_dimension);
     standard_deviation_derivatives.resize(batch_size, sequence_length, embedding_dimension);
@@ -267,9 +265,9 @@ void Normalization3dBackPropagation::print() const
 {
 /*
     cout << "Gammas derivatives:" << endl
-         << gamma_derivatives << endl
+         << gamma_gradients << endl
          << "Betas derivatives:" << endl
-         << beta_derivatives << endl;
+         << beta_gradients << endl;
 */
 }
 
@@ -283,7 +281,7 @@ Normalization3dBackPropagation::Normalization3dBackPropagation(const Index new_b
 
 vector<TensorView*> Normalization3dBackPropagation::get_gradient_views()
 {
-    return {&gamma_derivatives, &beta_derivatives};
+    return {&gamma_gradients, &beta_gradients};
 }
 
 

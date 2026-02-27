@@ -56,8 +56,8 @@ void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
 
-    learning_rate_tolerance = numeric_limits<type>::epsilon();
-    loss_tolerance = numeric_limits<type>::epsilon();
+    learning_rate_tolerance = EPSILON;
+    loss_tolerance = EPSILON;
 
     // Stopping criteria
 
@@ -202,16 +202,15 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     else
     {
         const Index parameters_number = parameters.size();
-        constexpr type epsilon = numeric_limits<type>::epsilon();
 
 #pragma omp parallel for
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
+            if (abs(gradient(i)) < EPSILON)
                 parameter_updates(i) = 0.0f;
             else
             {
-                parameter_updates(i) = (gradient(i) > 0.0f) ? -epsilon : epsilon;
+                parameter_updates(i) = (gradient(i) > 0.0f) ? -EPSILON : EPSILON;
                 parameters(i) += parameter_updates(i);
             }
         }
@@ -296,7 +295,7 @@ TrainingResults QuasiNewtonMethod::train()
     Index validation_failures = 0;
 
     type old_loss = type(0);
-    type loss_decrease = numeric_limits<type>::max();
+    type loss_decrease = MAX;
 
     time_t beginning_time;
     time(&beginning_time);
@@ -661,8 +660,8 @@ type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
     const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
 
     return denominator != type(0)
-               ? u - type(0.5) * (numerator / denominator)
-               : type(0);
+        ? u - type(0.5) * (numerator / denominator)
+        : type(0);
 }
 
 
@@ -705,9 +704,9 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
 
 Triplet::Triplet()
 {
-    A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
-    U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
-    B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+    A = make_pair(MAX, MAX);
+    U = make_pair(MAX, MAX);
+    B = make_pair(MAX, MAX);
 }
 
 
@@ -723,18 +722,18 @@ type Triplet::get_length() const
 }
 
 
-pair<type, type> Triplet::minimum() const
-{
-    VectorR losses(3);
+// pair<type, type> Triplet::minimum() const
+// {
+//     VectorR losses(3);
 
-    losses << A.second, U.second, B.second;
+//     losses << A.second, U.second, B.second;
 
-    const Index minimal_index = opennn::minimal_index(losses);
+//     const Index minimal_index = opennn::minimal_index(losses);
 
-    if (minimal_index == 0) return A;
-    else if (minimal_index == 1) return U;
-    else return B;
-}
+//     if (minimal_index == 0) return A;
+//     else if (minimal_index == 1) return U;
+//     else return B;
+// }
 
 
 string Triplet::struct_to_string() const

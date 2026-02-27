@@ -79,10 +79,10 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     vector<Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
-    EXPECT_NEAR(error_data[0].minimum, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].maximum, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].mean, 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].minimum, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].maximum, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].mean, 1, EPSILON);
+    EXPECT_NEAR(error_data[0].standard_deviation, 0, EPSILON);
 */
 }
 
@@ -137,10 +137,10 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
 
     EXPECT_EQ(error_data_statistics.size(), 1);
     EXPECT_EQ(error_data_statistics[0].size(), 3);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, EPSILON);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, EPSILON);
 */
 }
 
@@ -340,16 +340,16 @@ TEST(TestingAnalysis, RocCurve)
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 1) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 1) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
 
     // Test
 
@@ -372,16 +372,16 @@ TEST(TestingAnalysis, RocCurve)
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
 
-    EXPECT_LT(roc_curve(0, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(0, 1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(1, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 0) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(2, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(3, 1) - type(0.5), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(roc_curve(4, 1) - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(roc_curve(0, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(0, 1), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 0), type(EPSILON));
+    EXPECT_LT(roc_curve(1, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 0) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(2, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(3, 1) - type(0.5), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 0) - type(1), type(EPSILON));
+    EXPECT_LT(roc_curve(4, 1) - type(1), type(EPSILON));
 }
 
 
@@ -415,7 +415,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(1), type(EPSILON));
 
     targets.resize(4,1);
 
@@ -435,7 +435,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
     // Test
 
@@ -457,7 +457,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
     // Test
 
@@ -479,7 +479,7 @@ TEST(TestingAnalysis, AreaUnderCurve)
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve, type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(area_under_curve, type(EPSILON));
 }
 
 
@@ -513,7 +513,7 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
     // Test
 
@@ -535,7 +535,7 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
     // Test
 
@@ -559,7 +559,7 @@ TEST(TestingAnalysis, OptimalThreshold)
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    EXPECT_LT(optimal_threshold - type(0.62), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(optimal_threshold - type(0.62), type(EPSILON));
 }
 
 
@@ -588,10 +588,10 @@ TEST(TestingAnalysis, CumulativeGain)
 
     EXPECT_EQ(cumulative_gain.cols(), 2);
     EXPECT_EQ(cumulative_gain.rows(), 21);
-    EXPECT_LT(cumulative_gain(0, 0) - type(0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(0, 1) - type(0), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(20, 0) - type(1), type(NUMERIC_LIMITS_MIN));
-    EXPECT_LT(cumulative_gain(20, 1) - type(1), type(NUMERIC_LIMITS_MIN));
+    EXPECT_LT(cumulative_gain(0, 0) - type(0), type(EPSILON));
+    EXPECT_LT(cumulative_gain(0, 1) - type(0), type(EPSILON));
+    EXPECT_LT(cumulative_gain(20, 0) - type(1), type(EPSILON));
+    EXPECT_LT(cumulative_gain(20, 1) - type(1), type(EPSILON));
 }
 
 

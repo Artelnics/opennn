@@ -132,9 +132,9 @@ struct InputsSelectionResults
 
     VectorR mean_training_error_history;
 
-    type optimum_training_error = numeric_limits<type>::max();
+    type optimum_training_error = MAX;
 
-    type optimum_validation_error = numeric_limits<type>::max();
+    type optimum_validation_error = MAX;
 
     vector<string> optimal_input_variable_names;
 

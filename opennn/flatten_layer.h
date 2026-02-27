@@ -269,10 +269,8 @@ struct FlattenBackPropagation final : LayerBackPropagation
     }
 
     void print() const override
-    {
-        /*
+    {        
         cout << "Flatten Deltas Dimensions:" << endl << input_gradients[0].shape << endl;
-*/
     }
 };
 

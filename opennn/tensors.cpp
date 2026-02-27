@@ -49,23 +49,6 @@ void multiply_matrices(Tensor3& tensor, const Tensor2& matrix)
     }
 }
 
-/*
-Tensor2 self_kronecker_product(const VectorR& vector)
-{
-    const Index columns_number = vector.size();
-
-    Tensor2 matrix(columns_number, columns_number);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        VectorMap column = tensor_map(matrix, i);
-
-        column.device(get_device()) = vector * vector(i);
-    }
-
-    return matrix;
-}
-*/
 
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
@@ -249,48 +232,6 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-
-MatrixR filter_column_minimum_maximum(const MatrixR& matrix,
-                                      Index column_index,
-                                      type minimum,
-                                      type maximum)
-{
-    const VectorR column = matrix.col(column_index);
-    const Index new_rows_number = count_between(column, minimum, maximum);
-
-    if(new_rows_number == 0) return MatrixR();
-
-    const Index rows_number = matrix.rows();
-    const Index columns_number = matrix.cols();
-
-    bool check_conditions = false;
-
-    MatrixR new_matrix(new_rows_number, columns_number);
-
-    Index row_index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        if(matrix(i, column_index) >= minimum
-        && matrix(i, column_index) <= maximum)
-        {
-            const VectorR row = matrix.row(i);
-
-            //set_row(new_matrix, row, row_index);
-
-            row_index++;
-
-            check_conditions = true;
-        }
-    }
-
-    if(!check_conditions)
-        throw runtime_error("Invalid conditions\n");
-
-    return new_matrix;
-}
-
-
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1)
 {
     const Index number_points_to_compare = matrix.rows();
@@ -426,38 +367,6 @@ void fill_tensor_data(const MatrixR& matrix,
     }
 }
 
-/*
-void fill_tensor_sequence(const Tensor2& matrix,
-                          const vector<Index>& rows_indices,
-                          const vector<Index>& columns_indices,
-                          Index past_time_steps,
-                          type* tensor_data)
-{
-    if (rows_indices.empty() || columns_indices.empty())
-        return;
-
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
-
-    const Index batch_size = rows_indices.size();
-    const Index input_size = columns_number;
-
-    TensorMap3 batch(tensor_data, batch_size, past_time_steps, input_size);
-
-    //#pragma omp parallel for collapse(3)
-
-    for(Index i = 0; i < batch_size; i++)
-    {
-        for(Index j = 0; j < past_time_steps; j++)
-        {
-            const Index actual_row = i + j * batch_size;
-
-            for(Index k = 0; k < input_size; k++)
-                batch(i, j, k) = matrix(actual_row, columns_indices[k]);
-        }
-    }
-}
-*/
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
@@ -518,11 +427,7 @@ Shape string_to_shape(const string& x, const string& separator)
 
 bool contains(const vector<string>& data, const string& value)
 {
-    vector<string> copy = data;
-
-    const string* it = find(copy.data(), copy.data()+copy.size(), value);
-
-    return it != copy.data() + copy.size();
+    return find(data.begin(), data.end(), value) != data.end();
 }
 
 
@@ -545,13 +450,6 @@ VectorMap tensor_map(const Tensor2& tensor, Index index_1)
     return VectorMap((type*)tensor.data() + tensor.dimension(0)*index_1, tensor.dimension(0));
 }
 
-/*
-VectorMap tensor_map_(const MatrixMap tensor, Index index_1)
-{
-    return VectorMap((type*)tensor.data() + tensor.dimension(0) * index_1,
-                                      tensor.dimension(0));
-}
-*/
 
 MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
 {

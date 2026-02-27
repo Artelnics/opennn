@@ -5,7 +5,6 @@
 
 using namespace opennn;
 
-
 void set_layer_parameters_constant(Layer& layer, type value)
 {
     const vector<TensorView*> parameter_views = layer.get_parameter_views();

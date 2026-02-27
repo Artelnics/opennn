@@ -75,7 +75,7 @@ private:
 
     type training_loss_goal = type(0);
 
-    Index maximum_validation_failures = numeric_limits<Index>::max();
+    Index maximum_validation_failures = MAX;
 
 #ifdef OPENNN_CUDA
 

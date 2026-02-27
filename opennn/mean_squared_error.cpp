@@ -36,8 +36,8 @@ void MeanSquaredError::calculate_error(const Batch& batch,
         throw runtime_error("MeanSquaredError: outputs_number or samples_number is zero.");
 
     const MatrixMap targets = matrix_map(batch.get_targets());
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const MatrixMap outputs = matrix_map(outputs_view);
+
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     MatrixR& errors = back_propagation.errors;
 
@@ -94,7 +94,7 @@ void MeanSquaredError::calculate_output_gradients_lm(const Batch&,
     MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
     output_gradients.array() = back_propagation.errors.array() /
-                               (back_propagation.squared_errors.array() + numeric_limits<type>::epsilon());
+                               (back_propagation.squared_errors.array() + EPSILON);
 }
 
 

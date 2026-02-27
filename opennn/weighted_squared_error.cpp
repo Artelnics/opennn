@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensors.h"
 #include "dataset.h"
+#include "variable.h"
 #include "neural_network.h"
 #include "weighted_squared_error.h"
 
@@ -86,7 +87,7 @@ void WeightedSquaredError::set_weights()
 {
     if(!dataset) return;
 
-    const vector<Dataset::Variable>& target_variables
+    const vector<Variable>& target_variables
         = dataset->get_variables("Target");
 
     if(target_variables.empty())
@@ -131,7 +132,7 @@ void WeightedSquaredError::set_normalization_coefficient()
         return;
     }
 
-    const vector<Dataset::Variable>& target_variables
+    const vector<Variable>& target_variables
         = dataset->get_variables("Target");
 
     if(target_variables.empty())
@@ -177,14 +178,11 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     const Index samples_number = batch.get_samples_number();
 
-    const TensorView targets_view = batch.get_targets();
-
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 

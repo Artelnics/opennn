@@ -817,9 +817,8 @@ void ConvolutionalBackPropagation::initialize()
 
     input_gradients_memory.resize(1);
     input_gradients_memory[0].resize(Shape({ batch_size, input_height, input_width, channels }).count());
-    input_gradients.resize(1);
-    input_gradients[0].data = input_gradients_memory[0].data();
-    input_gradients[0].shape = { batch_size, input_height, input_width, channels };
+
+    input_gradients = {{input_gradients_memory[0].data(), { batch_size, input_height, input_width, channels }}};
 
     // Batch Normalization
 

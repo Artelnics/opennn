@@ -208,11 +208,11 @@ public:
             const Descriptives& descriptive = descriptives[i];
 
             if(scaler == "MeanStandardDeviation")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + EPSILON);
             else if(scaler == "MinimumMaximum")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + NUMERIC_LIMITS_MIN) * (max_range - min_range) + min_range;
+                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + EPSILON) * (max_range - min_range) + min_range;
             else if(scaler == "StandardDeviation")
-                outputs_mat.col(i).array() /= (descriptive.standard_deviation + NUMERIC_LIMITS_MIN);
+                outputs_mat.col(i).array() /= (descriptive.standard_deviation + EPSILON);
             else if(scaler == "Logarithm")
                 outputs_mat.col(i).array() = outputs_mat.col(i).array().log();
             else if(scaler == "ImageMinMax")
@@ -283,11 +283,11 @@ public:
     }
 
 
-    string get_expression(const vector<string>& new_feature_names = vector<string>(), const vector<string>& = vector<string>()) const override
+    string get_expression(const vector<string>& new_input_names = vector<string>(), const vector<string>& = vector<string>()) const override
     {
-        const vector<string> input_names = new_feature_names.empty()
+        const vector<string> input_names = new_input_names.empty()
                                                ? get_default_feature_names()
-                                               : new_feature_names;
+                                               : new_input_names;
 
         const Index outputs_number = get_outputs_number();
 

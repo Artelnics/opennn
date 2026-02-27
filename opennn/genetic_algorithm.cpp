@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "correlations.h"
 #include "dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
@@ -358,14 +357,14 @@ void GeneticAlgorithm::evaluate_population()
                 }
             }
 
-            neural_network->set_feature_names(final_feature_names);
+            neural_network->set_input_names(final_feature_names);
         }
         else
         {
             neural_network->set_input_shape({input_features_number});
             dataset->set_shape("Input", { input_features_number });
 
-            neural_network->set_feature_names(dataset->get_feature_names("Input"));
+            neural_network->set_input_names(dataset->get_feature_names("Input"));
         }
 
         neural_network->set_parameters_random();
@@ -436,7 +435,7 @@ void GeneticAlgorithm::perform_selection()
 
 Index GeneticAlgorithm::get_selected_individuals_number() const
 {
-    return count(selection.data(), selection.data() + selection.size(), true);
+    return count(selection.data(), selection.data() + selection.size(), 1);
 }
 
 
@@ -492,7 +491,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
     shuffle_vector(difference);
     const Index genes_to_add = target_size - current_size;
     
-    for(Index i = 0; i < genes_to_add && i < Index(difference.size()); ++i)
+    for(Index i = 0; i < genes_to_add && i < difference.size(); ++i)
         descendent(difference[i]) = true;
     
     const Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
@@ -507,7 +506,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
 
         Index genes_needed = minimum_inputs_number - final_count;
 
-        for(Index i = 0; i < genes_needed && i < Index(never_true_indices.size()); ++i)
+        for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i)
             descendent(never_true_indices[i]) = true;
     }
 
@@ -602,7 +601,7 @@ void GeneticAlgorithm::perform_mutation()
             individual(to_false_mutations[k]) = false;
         }
 
-        for(Index k = swap_count; k < Index(to_true_mutations.size()); ++k)
+        for(size_t k = swap_count; k < to_true_mutations.size(); ++k)
         {
             if (current_inputs_number < maximum_inputs_number)
             {
@@ -611,7 +610,7 @@ void GeneticAlgorithm::perform_mutation()
             }
         }
 
-        for(Index k = swap_count; k < Index(to_false_mutations.size()); ++k)
+        for(size_t k = swap_count; k < to_false_mutations.size(); ++k)
         {
             if (current_inputs_number > minimum_inputs_number)
             {
@@ -821,14 +820,14 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                 final_feature_names.push_back(name);
             }
         }
-        neural_network->set_feature_names(final_feature_names);
+        neural_network->set_input_names(final_feature_names);
     }
     else
     {
         neural_network->set_input_shape({optimal_variables_number});
         dataset->set_shape("Input", { optimal_variables_number });
 
-        neural_network->set_feature_names(dataset->get_feature_names("Input"));
+        neural_network->set_input_names(dataset->get_feature_names("Input"));
     }
 
     if(neural_network->has("Scaling2d"))

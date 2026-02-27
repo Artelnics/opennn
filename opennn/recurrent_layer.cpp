@@ -317,7 +317,7 @@ string Recurrent::get_expression(const vector<string>& feature_names,
 
 void Recurrent::print() const
 {
-/*
+
     cout << "Recurrent layer" << endl
          << "Time steps: " << get_input_shape()[0] << endl
          << "Input shape: " << get_input_shape()[1] << endl
@@ -326,7 +326,6 @@ void Recurrent::print() const
          << "Input weights shape: " << input_weights.shape << endl
          << "Recurrent weights shape: " << recurrent_weights.shape << endl
          << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
-*/
 }
 
 

@@ -42,7 +42,7 @@ TEST(Normalization3dTest, ForwardPropagate)
     Tensor3 inputs(batch_size, sequence_length, embedding_dimension);
     inputs.setRandom();
 
-//    EXPECT_NEAR(outputs(0), type(-1.0), NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(outputs(0), type(-1.0), EPSILON);
 //    EXPECT_EQ(bounding_layer.get_output_shape(), Shape{ 1 });
 */
 }

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "optimization_algorithm.h"
-#include "tensors.h"
+//#include "tensors.h"
 
 namespace opennn
 {
@@ -95,7 +95,7 @@ private:
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_validation_failures = numeric_limits<Index>::max();
+   Index maximum_validation_failures = MAX;
 
    Index batch_size = 1000;
 

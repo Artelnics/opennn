@@ -40,17 +40,16 @@ int main()
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
 
-        /*
+
         Bounding* bounding_layer = (Bounding*)approximation_network.get_first("Bounding");
 
         if(bounding_layer)
             bounding_layer->set_bounding_method("NoBounding");
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
 
-        /*
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         StochasticGradientDescent* sgd = (StochasticGradientDescent*)training_strategy.get_optimization_algorithm();
@@ -59,7 +58,7 @@ int main()
         sgd->set_momentum(0.9);
         sgd->set_nesterov(true);
         sgd->set_initial_decay(0.00001);
-        */
+
 
         training_strategy.get_loss_index()->set_regularization_method("L1");
         training_strategy.get_loss_index()->set_regularization_weight(regularization_weight);
