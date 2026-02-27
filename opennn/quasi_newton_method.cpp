@@ -661,8 +661,8 @@ type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
     const type denominator = (u-a)*(fu-fb) - (u-b)*(fu-fa);
 
     return denominator != type(0)
-               ? u - type(0.5) * (numerator / denominator)
-               : type(0);
+        ? u - type(0.5) * (numerator / denominator)
+        : type(0);
 }
 
 
@@ -723,18 +723,18 @@ type Triplet::get_length() const
 }
 
 
-pair<type, type> Triplet::minimum() const
-{
-    VectorR losses(3);
+// pair<type, type> Triplet::minimum() const
+// {
+//     VectorR losses(3);
 
-    losses << A.second, U.second, B.second;
+//     losses << A.second, U.second, B.second;
 
-    const Index minimal_index = opennn::minimal_index(losses);
+//     const Index minimal_index = opennn::minimal_index(losses);
 
-    if (minimal_index == 0) return A;
-    else if (minimal_index == 1) return U;
-    else return B;
-}
+//     if (minimal_index == 0) return A;
+//     else if (minimal_index == 1) return U;
+//     else return B;
+// }
 
 
 string Triplet::struct_to_string() const

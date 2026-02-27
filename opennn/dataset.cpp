@@ -14,8 +14,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "random_utilities.h"
-
-#include "image_dataset.h"
 #include "variable.h"
 
 namespace opennn
@@ -374,7 +372,7 @@ void Dataset::set_default_variables_roles()
         return;
     }
 
-    set_feature_roles("Input");
+    set_variable_roles("Input");
 
     for(Index i = variables_number - 1; i >= 0; i--)
     {
@@ -404,7 +402,6 @@ vector<Index> Dataset::get_feature_dimensions() const
 
     for(const Variable& variable : variables)
     {
-
         if(!variable.is_used())
             continue;
 
@@ -418,7 +415,7 @@ vector<Index> Dataset::get_feature_dimensions() const
     return feature_dimensions;
 }
 
-void Dataset::set_default_variables_roles_forecasting()
+void Dataset::set_default_variable_roles_forecasting()
 {
     const Index variables_number = variables.size();
 
@@ -434,9 +431,9 @@ void Dataset::set_default_variables_roles_forecasting()
         return;
     }
 
-    set_feature_roles("Input");
+    set_variable_roles("Input");
 
-    for(Index i = variables.size() - 1; i >= 0; i--)
+    for(Index i = variables_number - 1; i >= 0; i--)
     {
         if (variables[i].type == VariableType::DateTime && !time_variable)
         {
@@ -467,7 +464,7 @@ vector<VariableType> Dataset::get_variable_types(const vector<Index> indices) co
 {
     vector<VariableType> variable_types(indices.size());
 
-    for (Index i = 0; i < static_cast<Index>(indices.size()) ; i++)
+    for (Index i = 0; i < static_cast<Index>(indices.size()); i++)
         variable_types[i] = get_variable_type(indices[i]);
 
     return variable_types;
@@ -486,9 +483,9 @@ vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
 
-    for (const auto& var : variables)
+    for (const auto& variable : variables)
     {
-        const vector<string> names = var.get_names();
+        const vector<string> names = variable.get_names();
 
         feature_names.insert(feature_names.end(), names.begin(), names.end());
     }
@@ -500,9 +497,9 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
     vector<string> feature_names;
 
-    for (const auto& var : get_variables(variable_role))
+    for (const auto& variable : get_variables(variable_role))
     {
-        const vector<string> names = var.get_names();
+        const vector<string> names = variable.get_names();
 
         feature_names.insert(feature_names.end(), names.begin(), names.end());
     }
@@ -517,21 +514,21 @@ Shape Dataset::get_shape(const string& variable_role) const
         return input_shape;
     else if (variable_role == "Target")
         return target_shape;
-    // else if (variable_role == "Decoder")
-    //     return decoder_shape;
+    else if (variable_role == "Decoder")
+         return decoder_shape;
     else
         throw invalid_argument("get_shape: Invalid variable role string: " + variable_role);
 }
 
 
-void Dataset::set_shape(const string& variable_role, const Shape& new_dimensions)
+void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
 {
     if (variable_role == "Input")
-        input_shape = new_dimensions;
+        input_shape = new_shape;
     else if (variable_role == "Target")
-        target_shape = new_dimensions;
-    // else if (variable_role == "Decoder")
-    //     decoder_shape = new_dimensions;
+        target_shape = new_shape;
+     else if (variable_role == "Decoder")
+         decoder_shape = new_shape;
     else
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
 }
@@ -663,14 +660,20 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
 
     for(const Variable& variable : variables)
     {
-        if(!((variable.role == variable_role) ||
-              ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget")))
+        if(!(variable.role == variable_role
+        || ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget")))
             continue;
 
         names[index++] = variable.name;
     }
 
     return names;
+}
+
+
+VariableType Dataset::get_variable_type(const Index index) const
+{
+    return variables[index].type;
 }
 
 
@@ -801,22 +804,16 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
         set_variable_role(index, "Input");
 
     for(const Index index : target_variables)
-    {
-        if(variables[index].role == "Input")
-            set_variable_role(index, "InputTarget");
-        else
-            set_variable_role(index, "Target");
-    }
+        variables[index].role == "Input"
+            ? set_variable_role(index, "InputTarget")
+            : set_variable_role(index, "Target");
 
     const Index input_dimensions_num = get_features_number("Input");
     const Index target_shape_num = get_features_number("Target");
 
-    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
-
-    if(ts_dataset)
-        set_shape("Input", {ts_dataset->get_past_time_steps(), input_dimensions_num});
-    else
-        set_shape("Input", {input_dimensions_num});
+    dynamic_cast<TimeSeriesDataset*>(this)
+        ? set_shape("Input", {dynamic_cast<TimeSeriesDataset*>(this)->get_past_time_steps(), input_dimensions_num})
+        : set_shape("Input", {input_dimensions_num});
 
     set_shape("Target", {target_shape_num});
 }
@@ -893,24 +890,19 @@ void Dataset::set_variable_names(const vector<string>& new_names)
 
     if (new_names_size != variables_number)
         throw runtime_error("Size of names (" + to_string(new_names.size()) + ") "
-                                                                              "is not equal to variables number (" + to_string(variables_number) + ").\n");
+                            "is not equal to variables number (" + to_string(variables_number) + ").\n");
 
     for(Index i = 0; i < variables_number; i++)
         variables[i].name = get_trimmed(new_names[i]);
 }
 
 
-void Dataset::set_feature_roles(const string& variable_role)
+void Dataset::set_variable_roles(const string& variable_role)
 {
-    const Index variables_number = get_variables_number();
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        if (variables[i].type == VariableType::Constant || variables[i].type == VariableType::DateTime)
-            variables[i].set_role("None");
-        else
-            variables[i].set_role(variable_role);
-    }
+    for(Variable& variable : variables)
+        variable.type == VariableType::Constant || variable.type == VariableType::DateTime
+            ? variable.set_role("None")
+            : variable.set_role(variable_role);
 }
 
 
@@ -933,7 +925,7 @@ void Dataset::set_variable_scalers(const vector<string>& new_scalers)
 
     if (new_scalers.size() != variables_number)
         throw runtime_error("Size of variable scalers(" + to_string(new_scalers.size()) + ") "
-                                                                                              "has to be the same as variables numbers(" + to_string(variables_number) + ").\n");
+                            "has to be the same as variables numbers(" + to_string(variables_number) + ").\n");
 
     for(size_t i = 0; i < variables_number; i++)
         variables[i].scaler = new_scalers[i];
@@ -1237,15 +1229,15 @@ MatrixR Dataset::get_sample_target_data(const Index sample_index) const
 }
 
 
-Index Dataset::get_variable_index(const string& column_name) const
+Index Dataset::get_variable_index(const string& variable_name) const
 {
     const Index variables_number = get_variables_number();
 
     for(Index i = 0; i < variables_number; i++)
-        if (variables[i].name == column_name)
+        if (variables[i].name == variable_name)
             return i;
 
-    throw runtime_error("Cannot find " + column_name + "\n");
+    throw runtime_error("Cannot find " + variable_name + "\n");
 }
 
 
@@ -1258,8 +1250,8 @@ Index Dataset::get_variable_index(const Index feature_index) const
     for(Index i = 0; i < variables_number; i++)
     {
         total_variables_number += (variables[i].type == VariableType::Categorical)
-        ? variables[i].get_categories_number()
-        : 1;
+            ? variables[i].get_categories_number()
+            : 1;
 
         if (feature_index + 1 <= total_variables_number)
             return i;
@@ -1814,14 +1806,10 @@ vector<BoxPlot> Dataset::calculate_variables_box_plots() const
         const Variable& variable = variables[i];
 
         if (variable.type == VariableType::Numeric
-            || variable.type == VariableType::Binary)
+        || variable.type == VariableType::Binary)
         {
             if (variable.role != "None")
-            {
                 box_plots[i] = box_plot(data.col(feature_index), used_sample_indices);
-
-                //used_variable_index++;
-            }
 
             feature_index++;
         }
@@ -3031,7 +3019,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
         const Variable& variable = variables[i];
 
         if (variable.role == "None"
-            && variable.type == VariableType::Categorical)
+        && variable.type == VariableType::Categorical)
         {
             feature_index += variable.get_categories_number();
             continue;
@@ -3073,7 +3061,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
                 const VectorR sample = get_sample_data(sample_indices[Index(j)]);
 
                 if (sample(feature_index) < box_plots[i].first_quartile - cleaning_parameter * interquartile_range
-                    || sample(feature_index) > box_plots[i].third_quartile + cleaning_parameter * interquartile_range)
+                || sample(feature_index) > box_plots[i].third_quartile + cleaning_parameter * interquartile_range)
                 {
                     return_values[0][j] = 1;
 
@@ -3118,7 +3106,7 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleani
         const Variable& variable = variables[i];
 
         if (variable.role == "None"
-            && variable.type == VariableType::Categorical)
+        && variable.type == VariableType::Categorical)
         {
             feature_index += variable.get_categories_number();
             continue;
@@ -3136,7 +3124,7 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleani
             continue;
         }
         else if (variable.type == VariableType::Binary
-                 || variable.type == VariableType::DateTime)
+              || variable.type == VariableType::DateTime)
         {
             feature_index++;
             used_feature_index++;
@@ -3160,7 +3148,7 @@ vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleani
                 const VectorR sample = get_sample_data(sample_indices[Index(j)]);
 
                 if (sample[feature_index] < (box_plots[i].first_quartile - cleaning_parameter * interquartile_range)
-                    || sample[feature_index] > (box_plots[i].third_quartile + cleaning_parameter * interquartile_range))
+                || sample[feature_index] > (box_plots[i].third_quartile + cleaning_parameter * interquartile_range))
                 {
                     return_values[0][Index(j)] = 1;
 

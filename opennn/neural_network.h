@@ -114,19 +114,13 @@ public:
 
     bool is_empty() const;
 
-    VectorR& get_parameters()
-    {
-        return parameters;
-    }
+    VectorR& get_parameters();
 
     const vector<Variable>& get_input_variables() const;
-    const vector<string>& get_input_feature_names() const;
-
+    const vector<string> get_input_feature_names() const;
 
     const vector<Variable>& get_output_variables() const;
-    const vector<string>& get_output_feature_names() const;
-
-
+    const vector<string> get_output_feature_names() const;
 
     const vector<unique_ptr<Layer>>& get_layers() const;
     const unique_ptr<Layer>& get_layer(const Index) const;

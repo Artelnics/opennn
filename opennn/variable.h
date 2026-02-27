@@ -1,9 +1,5 @@
 #pragma once
 
-//#include "xml_utilities.h" // Assuming this contains add_xml_element, etc.
-
-#include "pch.h"
-
 namespace opennn
 {
 

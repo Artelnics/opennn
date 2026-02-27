@@ -27,12 +27,13 @@ public:
                       bool = true,
                       bool = false,
                       const Codification& = Codification::UTF8);
-
-    struct TimeSeriesData {
+/*
+    struct TimeSeriesData
+    {
         Tensor3 inputs;
         Tensor2 targets;
     };
-
+*/
     void fill_gaps();
 
     Index get_past_time_steps() const;
@@ -40,7 +41,8 @@ public:
 
     Index get_time_variable_index() const;
 
-    TimeSeriesData get_data() const;
+//    TimeSeriesData get_data() const;
+
     Tensor3 get_data(const string& sample_role, const string& feature_use) const;
 
     void set_past_time_steps(const Index);

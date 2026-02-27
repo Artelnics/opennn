@@ -110,7 +110,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
     solution_matrix.resize(matrix.rows(),1);
 
-    for(Index i = 0; i < matrix.size() ; i++)
+    for(Index i = 0; i < matrix.size(); i++)
         solution_matrix(i) = log(matrix(i));
 
     EXPECT_EQ(are_equal(scaled_matrix, solution_matrix, type(1e-4)), true);

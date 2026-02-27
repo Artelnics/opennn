@@ -545,7 +545,7 @@ void BackPropagation::print() const
 
 
 type Loss::calculate_numerical_error() const
-{
+{  
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");

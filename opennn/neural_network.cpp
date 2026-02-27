@@ -123,7 +123,13 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const vector<string>& NeuralNetwork::get_input_feature_names() const
+VectorR &NeuralNetwork::get_parameters()
+{
+    return parameters;
+}
+
+
+const vector<string> NeuralNetwork::get_input_feature_names() const
 {
     vector<string> input_feature_names;
 
@@ -137,7 +143,7 @@ const vector<string>& NeuralNetwork::get_input_feature_names() const
     return input_feature_names;
 }
 
-const vector<string>& NeuralNetwork::get_output_feature_names() const
+const vector<string> NeuralNetwork::get_output_feature_names() const
 {
     vector<string> output_feature_names;
 

@@ -824,7 +824,7 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
-    for(Index i = 0; i <  dataset.get_variables_number("Input") ; i++)
+    for(Index i = 0; i <  dataset.get_variables_number("Input"); i++)
     {
         EXPECT_EQ(input_correlations(i,i).r, 1);
 

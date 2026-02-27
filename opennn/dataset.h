@@ -75,10 +75,8 @@ public:
     vector<string> get_variable_names() const;
     vector<string> get_variable_names(const string&) const;
 
-    VariableType get_variable_type(const Index index) const
-    {
-        return variables[index].type;
-    }
+    VariableType get_variable_type(const Index index) const;
+
     vector<VariableType> get_variable_types(const vector<Index> indices) const;
 
     // Variables get
@@ -188,7 +186,7 @@ public:
     void set_default_variable_names();
 
     void set_default_variables_roles();
-    void set_default_variables_roles_forecasting();
+    void set_default_variable_roles_forecasting();
     virtual void set_variable_roles(const vector<string>&);
 
     void set_variables(const string&);
@@ -218,7 +216,7 @@ public:
 
     void set_feature_names(const vector<string>&);
 
-    void set_feature_roles(const string&);
+    void set_variable_roles(const string&);
 
     void set_shape(const string&, const Shape&);
 

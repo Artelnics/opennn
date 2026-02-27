@@ -116,7 +116,7 @@ struct Triplet
 
     type get_length() const;
 
-    pair<type, type> minimum() const;
+//    pair<type, type> minimum() const;
 
     string struct_to_string() const;
 

@@ -136,16 +136,15 @@ void Variable::print() const
 //@simone
 //changhe and delete everywhere the logic of get_feature_names
 
- vector<string> Variable::get_names() const
+vector<string> Variable::get_names() const
 {
-    if (this->is_categorical())
-        return categories;
-    else
-        return  {name};
-
+    return is_categorical()
+       ? categories
+       : vector<string>{name};
 }
 
-vector<string> get_feature_names(const vector<Variable> &variables)
+
+vector<string> get_feature_names(const vector<Variable>& variables)
 {
     vector<string> all_feature_names;
 
