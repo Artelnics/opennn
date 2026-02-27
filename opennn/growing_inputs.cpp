@@ -350,10 +350,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 final_feature_names.push_back(name);
             }
         }
-        neural_network->set_feature_names(final_feature_names);
+        neural_network->set_input_names(final_feature_names);
     }
     else
-        neural_network->set_feature_names(dataset->get_feature_names("Input"));
+        neural_network->set_input_names(dataset->get_feature_names("Input"));
 
     if(neural_network->has("Scaling2d"))
     {

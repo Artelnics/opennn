@@ -10,6 +10,7 @@
 
 #include "layer.h"
 #include "tensors.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -118,11 +119,14 @@ public:
         return parameters;
     }
 
-    const vector<string>& get_feature_names() const;
-    Index get_input_index(const string&) const;
+    const vector<Variable>& get_input_variables() const;
+    const vector<string>& get_input_feature_names() const;
 
-    const vector<string>& get_output_names() const;
-    Index get_output_index(const string&) const;
+
+    const vector<Variable>& get_output_variables() const;
+    const vector<string>& get_output_feature_names() const;
+
+
 
     const vector<unique_ptr<Layer>>& get_layers() const;
     const unique_ptr<Layer>& get_layer(const Index) const;
@@ -156,8 +160,15 @@ public:
     void set_layer_input_indices(const string&, const initializer_list<string>&);
     void set_layer_input_indices(const string&, const string&);
 
-    void set_feature_names(const vector<string>&);
+    void set_input_variables(const vector<Variable>&);
+    void set_output_variables(const vector<Variable>&);
+
+
+    void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
+
+    //@simone @todo void set_input_names(const vector<string>&);
+    //se ci sono nuovinomi deve richiamare il cambio nome nelle variabili
 
     void set_input_shape(const Shape&);
 
@@ -323,9 +334,11 @@ protected:
 
     string name = "neural_network";
 
-    vector<string> input_names;
+//    vector<string> input_names;
+//    vector<string> output_names;
 
-    vector<string> output_names;
+    vector<Variable> input_variables;
+    vector<Variable> output_variables;
 
     vector<string> input_vocabulary;
     vector<string> output_vocabulary;
