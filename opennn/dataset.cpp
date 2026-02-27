@@ -14,7 +14,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "random_utilities.h"
-#include "image_dataset.h"
 
 namespace opennn
 {
@@ -4354,7 +4353,7 @@ void Batch::fill(const vector<Index>& sample_indices,
                  // const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, input_tensor.data());
+    dataset->fill_input_tensor(sample_indices, input_indices, input_vector.data());
 
     // if (dynamic_cast<TimeSeriesDataset*>(dataset))
     // {
@@ -4364,9 +4363,9 @@ void Batch::fill(const vector<Index>& sample_indices,
     //    input_shape.push_back(input_indices.size());
     // }
 
-    dataset->fill_target_tensor(sample_indices, target_indices, target_tensor.data());
+    dataset->fill_target_tensor(sample_indices, target_indices, target_vector.data());
 
-    // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_tensor.data());
+    // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_vector.data());
 }
 
 
@@ -4391,7 +4390,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!data_set_input_dimensions.empty())
     {
         input_shape = prepend(samples_number, data_set_input_dimensions);
-        input_tensor.resize(get_size(input_shape));
+        input_vector.resize(get_size(input_shape));
     }
 
     // Targets
@@ -4401,7 +4400,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!data_set_target_shape.empty())
     {
         target_shape = prepend(samples_number, data_set_target_shape);
-        target_tensor.resize(get_size(target_shape));
+        target_vector.resize(get_size(target_shape));
     }
 
     // Decoder
@@ -4411,7 +4410,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     // if(!data_set_decoder_dimensions.empty())
     // {
     //     decoder_shape = prepend(samples_number, data_set_decoder_dimensions);
-    //     decoder_tensor.resize(get_size(decoder_shape));
+    //     decoder_vector.resize(get_size(decoder_shape));
     // }
 }
 
@@ -4429,18 +4428,18 @@ void Batch::print() const
          << "Input shape:" << input_shape << endl;
 
     if (input_shape.size() == 4)
-        cout << TensorMap4((type*)input_tensor.data(),
+        cout << TensorMap4((type*)input_vector.data(),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2],
                                            input_shape[3]);
     else if (input_shape.size() == 3)
-        cout << TensorMap3((type*)input_tensor.data(),
+        cout << TensorMap3((type*)input_vector.data(),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2]);
     else if (input_shape.size() == 2)
-        cout << MatrixMap((type*)input_tensor.data(),
+        cout << MatrixMap((type*)input_vector.data(),
                                            input_shape[0],
                                            input_shape[1]);
 
@@ -4452,7 +4451,7 @@ void Batch::print() const
     cout << "Targets:" << endl
          << "Target shape:" << target_shape << endl;
 */
-    cout << MatrixMap((type*)target_tensor.data(),
+    cout << MatrixMap((type*)target_vector.data(),
                                        target_shape[0],
                                        target_shape[1]) << endl;
 }
@@ -4460,18 +4459,16 @@ void Batch::print() const
 
 bool Batch::is_empty() const
 {
-    return input_tensor.size() == 0;
+    return input_vector.size() == 0;
 }
-
 
 
 vector<TensorView> Batch::get_inputs() const
 {
-    vector<TensorView> input_views = {{(type*)input_tensor.data(), input_shape}};
+    vector<TensorView> input_views = {{(type*)input_vector.data(), input_shape}};
 
-    // @todo DECODER VARIABLES
-    // if(!decoder_shape.empty())
-    //     input_views.insert(input_views.begin(), {(type*)decoder_tensor.data(), decoder_shape});
+    if(!decoder_shape.empty())
+        input_views.insert(input_views.begin(), {(type*)decoder_vector.data(), decoder_shape});
 
     return input_views;
 }
@@ -4479,7 +4476,7 @@ vector<TensorView> Batch::get_inputs() const
 
 TensorView Batch::get_targets() const
 {
-    return {(type*)target_tensor.data() , target_shape};
+    return {(type*)target_vector.data() , target_shape};
 }
 
 
@@ -4626,11 +4623,11 @@ void BatchCuda::copy_device_async(const Index current_batch_size, cudaStream_t s
 }
 
 
-Tensor2 BatchCuda::get_inputs_from_device() const
+MatrixR BatchCuda::get_inputs_from_device() const
 {
     const Index inputs_number = dataset->get_variables_number("Input");
 
-    Tensor2 inputs(samples_number, inputs_number);
+    MatrixR inputs(samples_number, inputs_number);
 
     inputs.setZero();
 
@@ -4640,11 +4637,11 @@ Tensor2 BatchCuda::get_inputs_from_device() const
 }
 
 
-Tensor2 BatchCuda::get_decoder_from_device() const
+MatrixR BatchCuda::get_decoder_from_device() const
 {
     const Index decoder_number = dataset->get_variables_number("Decoder");
 
-    Tensor2 decoder(samples_number, decoder_number);
+    MatrixR decoder(samples_number, decoder_number);
 
     decoder.setZero();
 
@@ -4654,11 +4651,11 @@ Tensor2 BatchCuda::get_decoder_from_device() const
 }
 
 
-Tensor2 BatchCuda::get_targets_from_device() const
+MatrixR BatchCuda::get_targets_from_device() const
 {
     const Index targets_number = target_shape[1];
 
-    Tensor2 targets(samples_number, targets_number);
+    MatrixR targets(samples_number, targets_number);
 
     targets.setZero();
 

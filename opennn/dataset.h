@@ -13,7 +13,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
-
 namespace opennn
 {
 
@@ -628,13 +627,13 @@ struct Batch
     Dataset* dataset = nullptr;
 
     Shape input_shape;
-    VectorR input_tensor;
+    VectorR input_vector;
 
     Shape decoder_shape;
-    VectorR decoder_tensor;
+    VectorR decoder_vector;
 
     Shape target_shape;
-    VectorR target_tensor;
+    VectorR target_vector;
 };
 
 
@@ -662,9 +661,9 @@ struct BatchCuda
 
     Index get_samples_number() const;
 
-    Tensor2 get_inputs_from_device() const;
-    Tensor2 get_decoder_from_device() const;
-    Tensor2 get_targets_from_device() const;
+    MatrixR get_inputs_from_device() const;
+    MatrixR get_decoder_from_device() const;
+    MatrixR get_targets_from_device() const;
 
     void copy_device(const Index);
     void copy_device_async(const Index, cudaStream_t);
