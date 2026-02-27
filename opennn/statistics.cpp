@@ -377,7 +377,7 @@ type minimum(const VectorR& data, const vector<Index>& indices)
 
     if(size == 0) return type(NAN);
 
-    type minimum = numeric_limits<type>::max();
+    type minimum = MAX;
 
     Index index;
 
@@ -399,7 +399,7 @@ type maximum(const VectorR& data, const vector<Index>& indices)
 
     if(size == 0) return type(NAN);
 
-    type maximum = -numeric_limits<type>::max();
+    type maximum = -MAX;
 
     Index index;
 

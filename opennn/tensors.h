@@ -170,6 +170,14 @@ struct Shape
     {
         return !(*this == other);
     }
+
+    Shape& append(const Shape& other)
+    {
+        for(size_t i = 0; i < other.rank && rank < MaxRank; ++i)
+            shape[rank++] = other.shape[i];
+
+        return *this;
+    }
 };
 
 

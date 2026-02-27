@@ -90,6 +90,7 @@ public:
         input_gradients_1.device(get_device()) = output_gradients;
     }
 
+
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* element = document.FirstChildElement("Addition");
@@ -187,12 +188,7 @@ struct AdditionForwardPropagation final : LayerForwardPropagation
 
     void initialize() override
     {
-        const Shape output_shape = layer->get_output_shape();
-
-        Shape full_dims = { batch_size };
-        full_dims.insert(full_dims.end(), output_shape.begin(), output_shape.end());
-
-        outputs.shape = full_dims;
+        outputs.shape = Shape{batch_size}.append(layer->get_output_shape());
     }
 
 
@@ -215,20 +211,15 @@ struct AdditionBackPropagation final : LayerBackPropagation
     }
 
     void initialize() override
-    {
-        const Shape input_shape = layer->get_input_shape();
-        Shape full_dims = { batch_size };
-        full_dims.insert(full_dims.end(), input_shape.begin(), input_shape.end());
+    {        
+        Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
         input_gradients_memory.resize(2);
-        input_gradients_memory[0].resize(full_dims.count());
-        input_gradients_memory[1].resize(full_dims.count());
+        input_gradients_memory[0].resize(shape.count());
+        input_gradients_memory[1].resize(shape.count());
 
-        input_gradients.resize(2);
-        input_gradients[0].data = input_gradients_memory[0].data();
-        input_gradients[0].shape = full_dims;
-        input_gradients[1].data = input_gradients_memory[1].data();
-        input_gradients[1].shape = full_dims;
+        input_gradients = {{input_gradients_memory[0].data(), shape},
+                           {input_gradients_memory[1].data(), shape}};
     }
 
 
@@ -264,11 +255,7 @@ struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void initialize() override
     {
-        const Shape output_shape = layer->get_output_shape();
-        Shape full_dims = { static_cast<Index>(batch_size) };
-        full_dims.insert(full_dims.end(), output_shape.begin(), output_shape.end());
-
-        outputs.set_descriptor(full_dims);
+        outputs.set_descriptor(Shape{batch_size}.append(layer->get_output_shape()););
     }
 
     void print() const override
@@ -289,14 +276,12 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
 
 
     void initialize() override
-    {
-        const Shape input_shape = layer->get_input_shape();
-        Shape full_dims = { static_cast<Index>(batch_size) };
-        full_dims.insert(full_dims.end(), input_shape.begin(), input_shape.end());
+    {        
+        const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
         input_gradients.resize(2);
-        input_gradients[0].resize(full_dims);
-        input_gradients[1].resize(full_dims);
+        input_gradients[0].resize(shape);
+        input_gradients[1].resize(shape);
     }
 
 
