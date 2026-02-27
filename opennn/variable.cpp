@@ -1,3 +1,11 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   V A R I A B L E    S T R U C T U R E
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
 #include "variable.h"
 #include "strings_utilities.h"
 #include "tensors.h"

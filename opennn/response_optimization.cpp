@@ -6,12 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "response_optimization.h"
+
 #include "pch.h"
 #include "tensors.h"
 #include "statistics.h"
 #include "dataset.h"
 #include "neural_network.h"
-#include "response_optimization.h"
+#include "variable.h"
 
 namespace opennn
 {
