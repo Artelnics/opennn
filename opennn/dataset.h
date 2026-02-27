@@ -12,6 +12,7 @@
 #include "statistics.h"
 #include "tensors.h"
 #include "strings_utilities.h"
+#include "variable.h"
 
 
 namespace opennn
@@ -39,81 +40,6 @@ public:
     enum class Separator{None, Space, Tab, Comma, Semicolon};
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
-
-    enum class VariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
-
-    // Structs
-
-    struct Variable
-    {
-        Variable(const string& = string(),
-                    const string& = "None",
-                    const Dataset::VariableType& = Dataset::VariableType::Numeric,
-                    const string& = "MeanStandardDeviation",
-                    const vector<string>& = vector<string>());
-
-        void set(const string& = string(),
-                 const string& = "None",
-                 const Dataset::VariableType& = Dataset::VariableType::Numeric,
-                 const string& = "MeanStandardDeviation",
-                 const vector<string>& = vector<string>());
-
-        string name;
-
-        string role = "None";
-
-        Dataset::VariableType type = Dataset::VariableType::None;
-
-        vector<string> categories;
-
-        string scaler = "None";
-
-        // Methods
-
-        string get_role() const;
-        string get_type_string() const;
-
-        Index get_categories_number() const;
-
-        void set_scaler(const string&);
-
-        void set_role(const string&);
-
-        void set_type(const string&);
-
-        void set_categories(const vector<string>&);
-
-        virtual void from_XML(const XMLDocument&);
-
-        virtual void to_XML(XMLPrinter&) const;
-
-        bool is_binary() const
-        {
-            if(type == Dataset::VariableType::Binary)
-                return true;
-            else
-                return false;
-        }
-
-        bool is_used() const
-        {
-            if(role == "None" || role == "Time")
-                return false;
-
-            return true;
-        }
-
-
-        bool is_categorical() const
-        {
-            if(type == Dataset::VariableType::Categorical)
-                return true;
-            else
-                return false;
-        }
-
-        void print() const;
-    };
 
     // Samples get
 
@@ -232,8 +158,6 @@ public:
 
     Shape get_input_shape() const;
     Shape get_target_shape() const;
-
-    void get_categorical_info(const string&, vector<Index>&, vector<Index>&) const;
 
     // Set
 
@@ -450,7 +374,6 @@ public:
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
-
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
@@ -508,7 +431,7 @@ public:
     virtual void read_csv();
 
     void infer_column_types(const vector<vector<string>>&);
-    DateFormat infer_dataset_date_format(const vector<Dataset::Variable>&, const vector<vector<string>>&, bool, const string&);
+    DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string>>&, bool, const string&);
 
     void read_data_file_preview(const vector<vector<string>>&);
 

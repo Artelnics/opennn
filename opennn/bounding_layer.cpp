@@ -180,11 +180,11 @@ string Bounding::get_bounding_method_string() const
 }
 
 
-string Bounding::get_expression(const vector<string>& new_feature_names, const vector<string>& new_output_names) const
+string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
-    const vector<string> input_names = new_feature_names.empty()
+    const vector<string> input_names = new_input_names.empty()
                                            ? get_default_feature_names()
-                                           : new_feature_names;
+                                           : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()

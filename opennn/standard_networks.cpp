@@ -60,10 +60,10 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
     this->set_parameters_glorot();
 
     const Index inputs_number = get_inputs_number();
-    input_names.resize(inputs_number);
+    //input_variables.resize(inputs_number);
 
     const Index outputs_number = get_outputs_number();
-    output_names.resize(outputs_number);
+    //output_names.resize(outputs_number);
 }
 
 
@@ -92,10 +92,10 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
     this->set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
-    input_names.resize(inputs_number);
+    //input_names.resize(inputs_number);
 
     const Index outputs_number = get_outputs_number();
-    output_names.resize(outputs_number);
+    //output_names.resize(outputs_number);
 }
 
 
@@ -121,10 +121,10 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
     this->set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
-    input_names.resize(inputs_number);
+    //input_names.resize(inputs_number);
 
     const Index outputs_number = get_outputs_number();
-    output_names.resize(outputs_number);
+    //output_names.resize(outputs_number);
 }
 
 
@@ -221,10 +221,10 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     this->set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
-    input_names.resize(inputs_number);
+    //input_names.resize(inputs_number);
 
     const Index outputs_number = get_outputs_number();
-    output_names.resize(outputs_number);
+    //output_names.resize(outputs_number);
 }
 
 
@@ -649,7 +649,7 @@ void Transformer::set(const Index input_sequence_length,
     if (input_sequence_length == 0 || decoder_sequence_length == 0)
         return;
 
-    input_names.resize(input_sequence_length + decoder_sequence_length);
+    //input_names.resize(input_sequence_length + decoder_sequence_length);
 
     // Embedding Layers: vocabulary size, sequence length, embedding dimension
 
