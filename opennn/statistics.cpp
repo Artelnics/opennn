@@ -241,11 +241,9 @@ VectorR Histogram::calculate_minimal_centers() const
     }
 
     Index minimum_frequency = frequencies(0);
-    for(Index j = 1; j < frequencies.size(); j++) {
-        if (frequencies(j - 1) > frequencies(j)) {
+    for(Index j = 1; j < frequencies.size(); j++)
+        if (frequencies(j - 1) > frequencies(j))
             minimum_frequency = frequencies(j);
-        }
-    }
 
     Index minimal_indices_size = 0;
 
@@ -508,29 +506,16 @@ type mean(const VectorR& vector)
 
 type variance(const VectorR& vector)
 {
-    const Index size = vector.size();
+    const VectorR new_vector = filter_missing_values(vector);
 
-    long double sum = 0.0;
-    long double squared_sum = 0.0;
+    const Index count = new_vector.size();
 
-    Index count = 0;
+    if (count <= 1) return type(0);
 
-    for(Index i = 0; i < size; i++)
-    {
-        if (isnan(vector(i))) continue;
+    const type sum = new_vector.sum();
+    const type squared_sum = new_vector.squaredNorm(); // Equivalent to dot product with self
 
-        sum += vector(i);
-        squared_sum += double(vector(i)) * double(vector(i));
-
-        count++;
-    }
-
-    if(count <= 1) return type(0);
-
-    const type variance
-        = type(squared_sum/(count - 1) - (sum/count)*(sum/count)*count/(count-1));
-
-    return variance;
+    return (squared_sum - (sum * sum) / count) / (count - 1);
 }
 
 
@@ -615,128 +600,33 @@ type median(const VectorR& input_vector)
 }
 
 
-VectorR quartiles(const VectorR& input_vector)
+VectorR quartiles(const VectorR& data)
 {
-    const Index size = input_vector.size();
+    VectorR valid_data = filter_missing_values(data);
 
-    // Fix missing values
+    if (valid_data.size() == 0)
+        return VectorR::Constant(3, numeric_limits<type>::quiet_NaN());
 
-    Index new_size = 0;
+    sort(valid_data.begin(), valid_data.end());
 
-    for(Index i = 0; i < size; i++)
-        if(!isnan(input_vector(i)))
-            new_size++;
-
-    vector<type> sorted_vector;
-
-    for(Index i = 0; i < size; i++)
-        if(!isnan(input_vector(i)))
-            sorted_vector.push_back(input_vector(i));        
-
-    std::sort(sorted_vector.begin(), sorted_vector.end());
-    
-    // Calculate quartiles
-
-    vector<type> first_sorted_vector;
-    vector<type> last_sorted_vector;
-
-    if (new_size % 2 == 0)
+    auto get_percentile = [&](double p) -> type
     {
-        for(Index i = 0; i < new_size / 2; i++)
-        {
-            first_sorted_vector.push_back(sorted_vector[i]);
-            last_sorted_vector.push_back(sorted_vector[i+new_size/2]);
-        }
-    }
-    else
-    {
-        for(Index i = 0; i < new_size / 2; i++)
-        {
-            first_sorted_vector.push_back(sorted_vector[i]);
-            last_sorted_vector.push_back(sorted_vector[i + new_size / 2+1]);
-        }
-    }
+        const double pos = p * (valid_data.size() - 1);
+        const Index idx = static_cast<Index>(pos);
+        const double frac = pos - idx;
 
-    VectorR quartiles(3);
-
-    if (new_size == 1)
-    {
-        quartiles(0) = sorted_vector[0];
-        quartiles(1) = sorted_vector[0];
-        quartiles(2) = sorted_vector[0];
-    }
-    else if (new_size == 2)
-    {
-        quartiles(0) = (sorted_vector[0] + sorted_vector[1]) / type(4);
-        quartiles(1) = (sorted_vector[0] + sorted_vector[1]) / type(2);
-        quartiles(2) = (sorted_vector[0] + sorted_vector[1]) / type(3.0/4.0);
-    }
-    else if (new_size == 3)
-    {
-        quartiles(0) = (sorted_vector[0] + sorted_vector[1]) / type(2);
-        quartiles(1) = sorted_vector[1];
-        quartiles(2) = (sorted_vector[2] + sorted_vector[1]) / type(2);
-    }
-    else
-    {
-        Index median_index;
-
-        if (new_size % 2 == 0)
-        {
-            median_index = Index(new_size / 2);
-
-            quartiles(1) = (sorted_vector[median_index - 1] + sorted_vector[median_index]) / type(2.0);
-
-        }
+        if (idx + 1 < valid_data.size())
+            return valid_data[idx] * (1.0 - frac) + valid_data[idx + 1] * frac;
         else
-        {
-            median_index = Index(new_size / 2);
+            return valid_data[idx];
+    };
 
-            quartiles(1) = sorted_vector[median_index];
-        }
+    VectorR result(3);
+    result << get_percentile(0.25),
+        get_percentile(0.50),
+        get_percentile(0.75);
 
-        const Index first_vector_size = first_sorted_vector.size();
-        const Index last_vector_size = first_sorted_vector.size();
-
-        if (first_vector_size % 2 == 0 && last_vector_size % 2 == 0)
-        {
-            median_index = Index(first_vector_size / 2);
-
-            quartiles(0) = (first_sorted_vector[median_index - 1] + first_sorted_vector[median_index]) / type(2.0);
-            quartiles(2) = (last_sorted_vector[median_index - 1] + last_sorted_vector[median_index]) / type(2.0);
-
-        }
-        else if (first_vector_size % 2 == 0 && last_vector_size % 2 != 0)
-        {
-            const Index median_index_first = Index(first_vector_size / 2);
-
-            quartiles(0) = (first_sorted_vector[median_index_first - 1] + first_sorted_vector[median_index_first]) / type(2.0);
-
-            const Index median_index_last = Index(last_vector_size / 2);
-
-            quartiles(2) = last_sorted_vector[median_index_last];
-        }
-        else if (first_vector_size % 2 != 0 && last_vector_size % 2 == 0)
-        {
-            const Index median_index_first = Index(first_vector_size / 2);
-
-            quartiles(0) = first_sorted_vector[median_index_first];
-
-            const Index median_index_last = Index(last_vector_size / 2);
-
-            quartiles(2) = (last_sorted_vector[median_index_last - 1] + last_sorted_vector[median_index_last]) / type(2.0);
-
-        }
-        else
-        {
-            median_index = Index(first_vector_size / 2);
-
-            quartiles(0) = first_sorted_vector[median_index];
-            quartiles(2) = last_sorted_vector[median_index];
-        }
-    }
-
-    return quartiles;
+    return result;
 }
 
 
@@ -1653,73 +1543,37 @@ Index maximal_index(const VectorR& vector)
 }
 
 
-VectorI minimal_indices(const VectorR& input_vector, Index number)
+VectorI minimal_indices(const VectorR& data, Index k)
 {
-    VectorR copy_vector = input_vector;
+    vector<Index> indices(data.size());
+    iota(indices.begin(), indices.end(), 0);
 
-    const Index size = copy_vector.size();
-    VectorI minimal_indices(number);
+    k = min(k, (Index)data.size());
 
-    Index val_max=0;
+    partial_sort(indices.begin(),
+                      indices.begin() + k,
+                      indices.end(),
+                      [&data](Index i, Index j) {
+                          return data(i) < data(j);
+                      });
 
-    for(Index i = 0; i < size; i++)
-        if (input_vector(i) > val_max)
-            val_max = input_vector(i);
-
-    for(Index j = 0; j < number; j++)
-    {
-        Index minimal_index = 0;
-        type minimum = copy_vector[0];
-
-        for(Index i = 0; i < size; i++)
-        {
-            if (copy_vector[i] < minimum)
-            {
-                minimal_index = i;
-                minimum = copy_vector[i];
-            }
-        }
-
-        copy_vector[minimal_index] = val_max + type(1);
-        minimal_indices(j) = minimal_index;
-    }
-
-    return minimal_indices;
+    return Map<VectorI>(indices.data(), k);
 }
 
 
-VectorI maximal_indices(const VectorR& input_vector, Index number)
+VectorI maximal_indices(const VectorR& data, Index k)
 {
-    VectorR copy_vector = input_vector;
+    vector<Index> indices(data.size());
+    iota(indices.begin(), indices.end(), 0);
 
-    const Index size = copy_vector.size();
+    k = min(k, (Index)data.size());
 
-    Index val_min = 0;
-    for(Index i = 0; i < size; i++)
-        if (input_vector(i) < val_min)
-            val_min = input_vector(i);            
+    partial_sort(indices.begin(), indices.begin() + k, indices.end(),
+                  [&data](Index i, Index j) {
+                      return data(i) > data(j);
+                  });
 
-    VectorI maximal_indices(number);
-
-    for(Index j = 0; j < number; j++)
-    {
-        Index maximal_index = 0;
-        type maximal = copy_vector[0];
-
-        for(Index i = 0; i < size; i++)
-        {
-            if (copy_vector[i] > maximal)
-            {
-                maximal_index = i;
-                maximal = copy_vector[i];
-            }
-        }
-
-        copy_vector[maximal_index] = val_min - type(1);
-        maximal_indices(j) = maximal_index;
-    }
-
-    return maximal_indices;
+    return Map<VectorI>(indices.data(), k);
 }
 
 

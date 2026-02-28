@@ -55,7 +55,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     optimization_data.parameter_differences = parameters_next - parameters_k;
     optimization_data.gradient_difference = gradient_next - gradient_k;
 
-    set_identity(optimization_data.old_inverse_hessian);
+    optimization_data.old_inverse_hessian.setIdentity();
 
     quasi_newton_method.calculate_inverse_hessian(optimization_data);
 

@@ -17,20 +17,20 @@ namespace opennn
 template <typename T>
 class ThreadSafeQueue {
 private:
-    std::queue<T> queue_;
-    std::mutex mutex_;
-    std::condition_variable cond_;
+    queue<T> queue_;
+    mutex mutex_;
+    condition_variable cond_;
 
 public:
     void push(T item) {
-        std::unique_lock<std::mutex> lock(mutex_);
+        unique_lock<mutex> lock(mutex_);
         queue_.push(item);
         lock.unlock();
         cond_.notify_one();
     }
 
     T pop() {
-        std::unique_lock<std::mutex> lock(mutex_);
+        unique_lock<mutex> lock(mutex_);
         cond_.wait(lock, [this]() { return !queue_.empty(); });
         T item = queue_.front();
         queue_.pop();
@@ -38,7 +38,7 @@ public:
     }
 
     bool empty() {
-        std::lock_guard<std::mutex> lock(mutex_);
+        lock_guard<mutex> lock(mutex_);
         return queue_.empty();
     }
 };
