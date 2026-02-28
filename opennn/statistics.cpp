@@ -413,16 +413,6 @@ type maximum(const VectorR& data, const vector<Index>& indices)
 }
 
 
-// Index maximum(const VectorI& vector)
-// {
-//     if(vector.size() == 0) return 0;
-
-//     const Tensor<Index, 0> m = vector.maximum();
-
-//     return m(0);
-// }
-
-
 VectorR column_maximums(const MatrixR& matrix,
                         const vector<Index>& row_indices,
                         const vector<Index>& column_indices)
@@ -1443,7 +1433,6 @@ type median(const MatrixR& matrix, Index column_index)
 
 VectorR median(const MatrixR& matrix, const VectorI& column_indices)
 {
-    const Index rows_number = matrix.rows();
     const Index column_indices_size = column_indices.size();
 
     VectorR medians(column_indices_size);

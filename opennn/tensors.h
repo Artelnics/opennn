@@ -389,12 +389,6 @@ bool is_constant(const TensorR<Rank>& tensor)
 void save_csv(const Tensor2&, const filesystem::path&);
 
 
-inline Index count_NAN(const MatrixR& x)
-{
-    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
-}
-
-
 template<int rank>
 Index count_NAN(const TensorR<rank>& x)
 {

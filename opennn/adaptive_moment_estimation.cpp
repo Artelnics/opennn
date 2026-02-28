@@ -15,21 +15,26 @@ namespace opennn
 {
 
 template <typename T>
-class ThreadSafeQueue {
+class ThreadSafeQueue
+{
 private:
+
     queue<T> queue_;
     mutex mutex_;
     condition_variable cond_;
 
 public:
-    void push(T item) {
+
+    void push(T item)
+    {
         unique_lock<mutex> lock(mutex_);
         queue_.push(item);
         lock.unlock();
         cond_.notify_one();
     }
 
-    T pop() {
+    T pop()
+    {
         unique_lock<mutex> lock(mutex_);
         cond_.wait(lock, [this]() { return !queue_.empty(); });
         T item = queue_.front();
@@ -37,11 +42,13 @@ public:
         return item;
     }
 
-    bool empty() {
+    bool empty()
+    {
         lock_guard<mutex> lock(mutex_);
         return queue_.empty();
     }
 };
+
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const Loss* new_loss)
     : Optimizer(new_loss)
@@ -94,7 +101,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type new_beta_1)
 
 void AdaptiveMomentEstimation::set_beta_2(const type new_beta_2)
 {
-    beta_2= new_beta_2;
+    beta_2 = new_beta_2;
 }
 
 
