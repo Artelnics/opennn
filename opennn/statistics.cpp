@@ -502,8 +502,15 @@ type variance(const VectorR& vector)
 
     if (count <= 1) return type(0);
 
-    const type sum = new_vector.sum();
-    const type squared_sum = new_vector.squaredNorm(); // Equivalent to dot product with self
+    double sum = 0.0;
+    double squared_sum = 0.0;
+
+    for (Index i = 0; i < count; ++i)
+    {
+        double val = static_cast<double>(new_vector(i));
+        sum += val;
+        squared_sum += val * val;
+    }
 
     return (squared_sum - (sum * sum) / count) / (count - 1);
 }
@@ -593,30 +600,49 @@ type median(const VectorR& input_vector)
 VectorR quartiles(const VectorR& data)
 {
     VectorR valid_data = filter_missing_values(data);
+    const Index new_size = valid_data.size();
 
-    if (valid_data.size() == 0)
+    if (new_size == 0)
         return VectorR::Constant(3, numeric_limits<type>::quiet_NaN());
 
-    sort(valid_data.begin(), valid_data.end());
+    sort(valid_data.data(), valid_data.data() + new_size);
 
-    auto get_percentile = [&](double p) -> type
+    VectorR quartiles(3);
+
+    if (new_size == 1)
     {
-        const double pos = p * (valid_data.size() - 1);
-        const Index idx = static_cast<Index>(pos);
-        const double frac = pos - idx;
+        quartiles.setConstant(valid_data(0));
+    }
+    else if (new_size == 2)
+    {
+        quartiles(0) = (valid_data(0) + valid_data(1)) / type(4.0);
+        quartiles(1) = (valid_data(0) + valid_data(1)) / type(2.0);
+        quartiles(2) = (valid_data(0) + valid_data(1)) * type(0.75);
+    }
+    else if (new_size == 3)
+    {
+        quartiles(0) = (valid_data(0) + valid_data(1)) / type(2.0);
+        quartiles(1) = valid_data(1);
+        quartiles(2) = (valid_data(1) + valid_data(2)) / type(2.0);
+    }
+    else
+    {
+        const Index half_size = new_size / 2;
+        VectorR first_half(half_size);
+        VectorR second_half(half_size);
 
-        if (idx + 1 < valid_data.size())
-            return valid_data[idx] * (1.0 - frac) + valid_data[idx + 1] * frac;
-        else
-            return valid_data[idx];
-    };
+        for (Index i = 0; i < half_size; ++i)
+            first_half(i) = valid_data(i);
 
-    VectorR result(3);
-    result << get_percentile(0.25),
-        get_percentile(0.50),
-        get_percentile(0.75);
+        for (Index i = 0; i < half_size; ++i)
+            second_half(i) = valid_data(new_size - half_size + i);
 
-    return result;
+        quartiles(0) = median(first_half);
+        quartiles(1) = median(valid_data);
+        quartiles(2) = median(second_half);
+    }
+
+    return quartiles;
 }
 
 
@@ -624,79 +650,22 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 {
     const Index indices_size = indices.size();
 
-    // Fix missing values
-
-    Index index;
     Index new_size = 0;
-
     for(Index i = 0; i < indices_size; i++)
         if(!isnan(data(indices[i])))
             new_size++;
 
-    VectorR sorted_vector(new_size);
-
+    VectorR valid_data(new_size);
     Index sorted_index = 0;
 
     for(Index i = 0; i < indices_size; i++)
     {
-        index = indices[i];
-
+        const Index index = indices[i];
         if(!isnan(data(index)))
-            sorted_vector(sorted_index++) = data(index);
+            valid_data(sorted_index++) = data(index);
     }
 
-    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
-
-    // Calculate quartiles
-
-    VectorR first_sorted_vector(new_size/2);
-    VectorR last_sorted_vector(new_size/2);
-
-    for(Index i = 0; i < new_size/2 ; i++)
-        first_sorted_vector(i) = sorted_vector(i);
-
-    for(Index i = 0; i < new_size/2; i++)
-        last_sorted_vector(i) = sorted_vector(i + new_size - new_size/2);
-
-    VectorR quartiles(3);
-
-    if(new_size == 1)
-    {
-        quartiles(0) = sorted_vector(0);
-        quartiles(1) = sorted_vector(0);
-        quartiles(2) = sorted_vector(0);
-    }
-    else if(new_size == 2)
-    {
-        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/ type(4);
-        quartiles(1) = (sorted_vector(0)+sorted_vector(1))/ type(2);
-        quartiles(2) = (sorted_vector(0)+sorted_vector(1))* type(3/4);
-    }
-    else if(new_size == 3)
-    {
-        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/ type(2);
-        quartiles(1) = sorted_vector(1);
-        quartiles(2) = (sorted_vector(2)+sorted_vector(1))/ type(2);
-    }
-    else if(new_size % 2 == 0)
-    {
-        Index median_index = Index(first_sorted_vector.size() / 2);
-        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / type(2.0);
-
-        median_index = Index(new_size / 2);
-        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / type(2.0);
-
-        median_index = Index(last_sorted_vector.size() / 2);
-        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / type(2.0);
-    }
-    else
-    {
-        quartiles(0) = sorted_vector(new_size/4);
-        quartiles(1) = sorted_vector(new_size/2);
-        quartiles(2) = sorted_vector(new_size*3/4);
-    }
-
-    return quartiles;
+    return quartiles(valid_data);
 }
 
 
@@ -1540,11 +1509,18 @@ VectorI minimal_indices(const VectorR& data, Index k)
     k = min(k, (Index)data.size());
 
     partial_sort(indices.begin(),
-                      indices.begin() + k,
-                      indices.end(),
-                      [&data](Index i, Index j) {
-                          return data(i) < data(j);
-                      });
+                 indices.begin() + k,
+                 indices.end(),
+                 [&data](Index i, Index j) {
+                     if (data(i) == data(j)) return i < j;
+                     return data(i) < data(j);
+                 });
+
+    sort(indices.begin(), indices.begin() + k,
+         [&data](Index i, Index j) {
+             if (data(i) == data(j)) return i < j;
+             return data(i) < data(j);
+         });
 
     return Map<VectorI>(indices.data(), k);
 }
@@ -1558,9 +1534,16 @@ VectorI maximal_indices(const VectorR& data, Index k)
     k = min(k, (Index)data.size());
 
     partial_sort(indices.begin(), indices.begin() + k, indices.end(),
-                  [&data](Index i, Index j) {
-                      return data(i) > data(j);
-                  });
+                 [&data](Index i, Index j) {
+                     if (data(i) == data(j)) return i < j;
+                     return data(i) > data(j);
+                 });
+
+    sort(indices.begin(), indices.begin() + k,
+         [&data](Index i, Index j) {
+             if (data(i) == data(j)) return i < j;
+             return data(i) > data(j);
+         });
 
     return Map<VectorI>(indices.data(), k);
 }
