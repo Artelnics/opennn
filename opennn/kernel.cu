@@ -162,7 +162,7 @@ void copy_from_vector_cuda(float* destination, const float* source, Index size, 
 }
 
 
-type* vector_to_device(const Tensor1& vector)
+type* vector_to_device(const Tensor<type, 1>& vector)
 {
     type* pointer = nullptr;
 
@@ -178,11 +178,11 @@ type* vector_to_device(const Tensor1& vector)
 }
 
 
-Tensor1 vector_from_device(const type* pointer, const size_t& new_size)
+Tensor<type, 1>  vector_from_device(const type* pointer, const size_t& new_size)
 {
     if (new_size == 0) cout << "Empty vector" << endl;
 
-    Tensor1 vector(new_size);
+    Tensor<type, 1>  vector(new_size);
 
     if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Cuda vector memcpy error" << endl;
@@ -226,7 +226,7 @@ void print_device_data(const type* pointer, const size_t size) {
 }
 
 
-type* matrix_to_device(const Tensor2& matrix)
+type* matrix_to_device(const Tensor<type, 2>& matrix)
 {
     const size_t this_size = matrix.size();
 
@@ -242,9 +242,9 @@ type* matrix_to_device(const Tensor2& matrix)
 }
 
 
-Tensor2 matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_variables_number)
+Tensor<type, 2> matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_variables_number)
 {
-    Tensor2 matrix(new_rows_number, new_variables_number);
+    Tensor<type, 2> matrix(new_rows_number, new_variables_number);
 
     matrix.setZero();
 
@@ -256,10 +256,10 @@ Tensor2 matrix_from_device(const type* pointer, const size_t& new_rows_number, c
     return matrix;
 }
 
-Tensor3 matrix_3d_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
+Tensor<type, 3> matrix_3d_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
 {
 
-    Tensor3 matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
+    Tensor<type, 3> matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
 
     matrix_3d.setZero();
 

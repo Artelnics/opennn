@@ -182,7 +182,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     add_layer(move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.size();
-    
+    /*
     for(Index i = 0; i < complexity_size; i++)
     {
         const Shape kernel_shape = { 3, 3, get_output_shape()[2], complexity_dimensions[i] };
@@ -208,7 +208,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        "pooling_layer_" + to_string(i + 1)));
                                        
     }
-    
+    */
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(),

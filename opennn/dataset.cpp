@@ -4427,13 +4427,13 @@ MatrixR BatchCuda::get_targets_from_device() const
 
 vector<TensorViewCuda> BatchCuda::get_inputs_device() const
 {
-    return {{inputs_device.data, nullptr}};
+    return { inputs_device.view() };
 }
 
 
 TensorViewCuda BatchCuda::get_targets_device() const
 {
-    return {targets_device.data , nullptr};
+    return { targets_device.view() };
 }
 
 
