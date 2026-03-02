@@ -13,8 +13,8 @@
 #include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
-#include "loss_index.h"
-#include "optimization_algorithm.h"
+#include "loss.h"
+#include "optimizer.h"
 #include "variable.h"
 
 namespace opennn

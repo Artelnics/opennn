@@ -32,9 +32,7 @@ void scale_standard_deviation(MatrixMap matrix,
         ? type(1) / column_descriptives.standard_deviation
         : type(0);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) = (matrix(i, column_index)) * slope;
+    matrix.col(column_index) *= slope;
 }
 
 
@@ -44,52 +42,33 @@ void scale_minimum_maximum(MatrixMap matrix,
                            type min_range,
                            type max_range)
 {
-    const type minimum = column_descriptives.minimum;
-    const type maximum = column_descriptives.maximum;
-    const type range = maximum - minimum;
+    const type range = column_descriptives.maximum - column_descriptives.minimum;
 
-    if(max_range - min_range < EPSILON)
-        throw runtime_error("The range values for scaling are not valid.");
+    if (range < EPSILON)
+    {
+        matrix.col(column_index).setZero();
+        return;
+    }
 
-    if(range > EPSILON)
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < matrix.rows(); i++)
-        {
-            type normalized = (matrix(i, column_index) - minimum) / range;
-            matrix(i, column_index) = normalized * (max_range - min_range) + min_range;
-        }
-    }
-    else
-    {
-        #pragma omp parallel for
-        for(Index i = 0; i < matrix.rows(); i++)
-            matrix(i, column_index) = type(0);
-    }
+    matrix.col(column_index).array() =
+        (matrix.col(column_index).array() - column_descriptives.minimum) / range * (max_range - min_range) + min_range;
 }
 
 
 void scale_logarithmic(MatrixMap matrix, Index column_index)
 {
-    type min_value = MAX;
+    auto col = matrix.col(column_index).array();
 
-    for(Index i = 0; i < matrix.rows(); i++)
-        if(!isnan(matrix(i, column_index)) && matrix(i,column_index) < min_value)
-            min_value = matrix(i,column_index);
+    const type min_val = (col.isFinite()).select(col, MAX).minCoeff();
 
-    if(min_value <= type(0))
+    if (min_val <= 0)
     {
-        const type offset = abs(min_value) + type(1) + EPSILON;
+        const type offset = abs(min_val) + 1.0 + EPSILON;
 
-        for(Index i = 0; i < matrix.rows(); i++)
-            if(!isnan(matrix(i,column_index)))
-                matrix(i, column_index) += offset;
+        col = (col.isNaN()).select(col, col + offset);
     }
 
-    #pragma omp parallel for
-
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) = log(matrix(i, column_index));
+    col = col.log();
 }
 
 

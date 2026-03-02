@@ -8,7 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "model_selection.h"
 #include "training_strategy.h"
 

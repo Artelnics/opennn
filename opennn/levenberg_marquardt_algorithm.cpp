@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "dataset.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "levenberg_marquardt_algorithm.h"
 
 namespace opennn

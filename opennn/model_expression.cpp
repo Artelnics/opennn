@@ -9,7 +9,7 @@
 #include "model_expression.h"
 #include "scaling_layer.h"
 #include "scaling_layer.h"
-#include "strings_utilities.h"
+#include "string_utilities.h"
 #include "neural_network.h"
 #include "variable.h"
 
@@ -1100,9 +1100,9 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     buffer << "\n\t" << "return out;" << endl
            << "}\n" << endl;
 
-    buffer << "function updateTextInput1(val, id)" << endl
+    buffer << "function updateTextInput1(value, id)" << endl
            << "{" << endl
-           << "\t"<< "document.getElementById(id).value = val;" << endl
+           << "\t"<< "document.getElementById(id).value = value;" << endl
            << "}\n" << endl
            << "</script>\n" << endl
            << "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << endl

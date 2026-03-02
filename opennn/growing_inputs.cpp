@@ -13,7 +13,7 @@
 #include "correlations.h"
 #include "scaling_layer.h"
 #include "scaling_layer.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 
 namespace opennn

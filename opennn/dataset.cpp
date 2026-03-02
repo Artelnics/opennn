@@ -11,8 +11,8 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "correlations.h"
-#include "tensors.h"
-#include "strings_utilities.h"
+#include "tensor_utilities.h"
+#include "string_utilities.h"
 #include "random_utilities.h"
 #include "variable.h"
 
@@ -2430,13 +2430,7 @@ void Dataset::unscale_features(const string& variable_role,
 
 void Dataset::set_data_constant(const type new_value)
 {
-    const vector<Index> input_indices = get_feature_indices("Input");
-
-    const Index samples_number = get_samples_number();
-
-    for(Index i = 0; i < samples_number; ++i)
-        for(Index index : input_indices)
-            data(i, index) = new_value;
+    data.setConstant(new_value);
 }
 
 
@@ -3298,6 +3292,11 @@ void Dataset::impute_missing_values_unuse()
 
 void Dataset::impute_missing_values_mean()
 {
+
+
+
+
+
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> input_feature_indices = get_feature_indices("Input");
@@ -3964,27 +3963,7 @@ bool Dataset::has_missing_values(const vector<string>& row) const
 
 VectorI Dataset::count_nans_per_variable() const
 {
-    const Index variables_number = get_variables_number();
-    const Index rows_number = get_samples_number();
-
-    VectorI variables_with_nan(variables_number);
-    variables_with_nan.setZero();
-
-#pragma omp parallel for
-    for(Index variable_index = 0; variable_index < variables_number; variable_index++)
-    {
-        const Index current_variable_index = get_feature_indices(variable_index)[0];
-
-        Index counter = 0;
-
-        for(Index row_index = 0; row_index < rows_number; row_index++)
-            if (isnan(data(row_index, current_variable_index)))
-                counter++;
-
-        variables_with_nan(variable_index) = counter;
-    }
-
-    return variables_with_nan;
+    return data.array().isNaN().cast<Index>().colwise().sum();
 }
 
 
@@ -4004,38 +3983,15 @@ Index Dataset::count_variables_with_nan() const
 
 Index Dataset::count_rows_with_nan() const
 {
-    Index rows_with_nan = 0;
-
-    const Index rows_number = data.rows();
-    const Index variables_number = data.cols();
-
-    bool has_nan = true;
-
-    for(Index row_index = 0; row_index < rows_number; row_index++)
-    {
-        has_nan = false;
-
-        for(Index variable_index = 0; variable_index < variables_number; variable_index++)
-        {
-            if (isnan(data(row_index, variable_index)))
-            {
-                has_nan = true;
-                break;
-            }
-        }
-
-        if (has_nan)
-            rows_with_nan++;
-    }
-
-    return rows_with_nan;
+    return data.array().isNaN().rowwise().any().count();
 }
 
 
 Index Dataset::count_nan() const
 {
-    return count_NAN(data);
+    return data.array().isNaN().count();
 }
+
 
 void Dataset::fix_repeated_names()
 {

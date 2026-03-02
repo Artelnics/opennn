@@ -6,9 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "dataset.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "cross_entropy_error_3d.h"
 #include "../eigen/Eigen/LU"
 
@@ -805,7 +805,7 @@ MatrixR Loss::calculate_numerical_jacobian()
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagationLM back_propagation_lm(samples_number, this);
 
-    VectorR parameters = neural_network->get_parameters();
+    VectorR& parameters = neural_network->get_parameters();
     const Index parameters_number = parameters.size();
 
     const Index total_error_terms = back_propagation_lm.squared_errors.size();

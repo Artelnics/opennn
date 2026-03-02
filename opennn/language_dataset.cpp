@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "language_dataset.h"
-#include "strings_utilities.h"
+#include "string_utilities.h"
 #include "random_utilities.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {

@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-#include "images.h"
-#include "tensors.h"
+#include "image_utilities.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {

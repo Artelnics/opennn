@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "loss_index.h"
+#include "loss.h"
 
 namespace opennn
 {

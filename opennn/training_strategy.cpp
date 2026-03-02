@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "loss_index.h"
-#include "optimization_algorithm.h"
+#include "loss.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 #include "quasi_newton_method.h"
 #include "adaptive_moment_estimation.h"
@@ -43,7 +43,7 @@ Loss* TrainingStrategy::get_loss_index() const
 
 Optimizer* TrainingStrategy::get_optimization_algorithm() const
 {
-    return optimization_algorithm.get();
+    return optimizer.get();
 }
 
 
@@ -74,20 +74,20 @@ void TrainingStrategy::set_loss_index(const string& new_loss)
 
     loss_index->set(neural_network, dataset);
 
-    if(optimization_algorithm){
-        if(optimization_algorithm->get_name() == "QuasiNewtonMethod")
-            static_cast<QuasiNewtonMethod*>(optimization_algorithm.get())->set_loss_index(loss_index.get());
+    if(optimizer){
+        if(optimizer->get_name() == "QuasiNewtonMethod")
+            static_cast<QuasiNewtonMethod*>(optimizer.get())->set_loss_index(loss_index.get());
         else
-            optimization_algorithm->set(loss_index.get());
+            optimizer->set(loss_index.get());
     }
 }
 
 
 void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
 {
-    optimization_algorithm = Registry<Optimizer>::instance().create(new_optimization_algorithm);
+    optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
 
-    optimization_algorithm->set(loss_index.get());
+    optimizer->set(loss_index.get());
 }
 
 
@@ -172,8 +172,8 @@ void TrainingStrategy::set_default()
         set_loss_index("CrossEntropyError3d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimization_algorithm.get());
-        adam->set_learning_rate(0.0001F);
+        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
+        adam->set_learning_rate(0.0001);
         return;
     }
 
@@ -214,13 +214,13 @@ TrainingResults TrainingStrategy::train()
     if(!loss_index->has_neural_network() || !loss_index->has_dataset())
         throw runtime_error("Loss index is wrong.");
 
-    if(!optimization_algorithm->has_loss_index())
+    if(!optimizer->has_loss_index())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if(neural_network->has("Recurrent"))
         fix_forecasting();
 
-    return optimization_algorithm->train();
+    return optimizer->train();
 }
 
 
@@ -261,7 +261,7 @@ void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl
          << "Loss index: " << loss_index->get_name() << endl
-         << "Optimization algorithm: " << optimization_algorithm->get_name() << endl;
+         << "Optimization algorithm: " << optimizer->get_name() << endl;
 }
 
 
@@ -282,13 +282,13 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Optimizer");
 
-    add_xml_element(printer, "OptimizationMethod", optimization_algorithm->get_name());
+    add_xml_element(printer, "OptimizationMethod", optimizer->get_name());
 
-    optimization_algorithm->to_XML(printer);
+    optimizer->to_XML(printer);
 
     printer.CloseElement();
 
-    add_xml_element(printer, "Display", to_string(optimization_algorithm->get_display()));
+    add_xml_element(printer, "Display", to_string(optimizer->get_display()));
 
     printer.CloseElement();
 }
@@ -337,7 +337,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
         XMLDocument optimization_method_document;
         optimization_method_document.InsertFirstChild(optimization_method_element->DeepClone(&optimization_method_document));
-        optimization_algorithm->from_XML(optimization_method_document);
+        optimizer->from_XML(optimization_method_document);
     }
     else throw runtime_error(optimization_method + " element is nullptr.\n");
 
@@ -354,7 +354,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Display
 
-    optimization_algorithm->set_display(read_xml_bool(root_element, "Display"));
+    optimizer->set_display(read_xml_bool(root_element, "Display"));
 }
 
 
@@ -397,13 +397,13 @@ TrainingResults TrainingStrategy::train_cuda()
     if(!loss_index->has_neural_network() || !loss_index->has_dataset())
         throw runtime_error("Loss index is wrong.");
 
-    if(!optimization_algorithm->has_loss_index())
+    if(!optimizer->has_loss_index())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if (neural_network->has("Recurrent"))
         fix_forecasting();
 
-    return optimization_algorithm->train_cuda();
+    return optimizer->train_cuda();
 }
 
 #endif

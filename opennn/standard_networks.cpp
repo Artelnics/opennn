@@ -24,7 +24,7 @@
 #include "addition_layer.h"
 #include "normalization_layer_3d.h"
 #include "multihead_attention_layer.h"
-#include "strings_utilities.h"
+#include "string_utilities.h"
 
 using namespace std;
 

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 #include "../eigen/Eigen/Dense"
@@ -232,49 +232,28 @@ Index count_between(const VectorR& vector,type minimum, type maximum)
 }
 
 
-VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n = 1)
+VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
 {
-    const Index number_points_to_compare = matrix.rows();
+    const Index rows = matrix.rows();
 
-    const Index coordinates_number = matrix.cols();
+    const VectorR distances = (matrix.rowwise() - point.transpose()).rowwise().norm();
 
-    if(point.size() != coordinates_number)
-        throw runtime_error("get_nearest_points : Matrix row dimension and point size must match.\n");
+    vector<pair<type, Index>> pairs(rows);
 
-    if(n <= 0)
-        throw runtime_error("get_nearest_points : n must be positive.\n");
+    for(Index i = 0; i < rows; ++i)
+        pairs[i] = {distances(i), i};
 
-    if(n > number_points_to_compare)
-        n = number_points_to_compare;
+    if (n > rows)
+        n = rows;
 
-    vector<pair<type, Index>> dist_index(number_points_to_compare);
+    partial_sort(pairs.begin(), pairs.begin() + n, pairs.end());
 
-#pragma omp parallel for
-    for(Index i = 0; i < number_points_to_compare; ++i)
-    {       
-        const type distance = (matrix.row(i) - point).norm();
+    VectorI result(n);
 
-        dist_index[i] = make_pair(distance, i);
-    }
+    for(int i = 0; i < n; i++)
+        result(i) = pairs[i].second;
 
-    partial_sort( dist_index.begin(), dist_index.begin() + n, dist_index.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
-
-    VectorI nearest_indices(n);
-    for(int i = 0; i < n; ++i)
-        nearest_indices(i) = dist_index[i].second;
-
-    return nearest_indices;
-}
-
-void set_identity(MatrixR& matrix)
-{
-    const Index rows_number = matrix.rows();
-
-    matrix.setZero();
-
-    #pragma omp parallel for
-    for(Index i = 0; i < rows_number; i++)
-        matrix(i, i) = type(1);
+    return result;
 }
 
 
@@ -370,15 +349,12 @@ void fill_tensor_data(const MatrixR& matrix,
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
-    const Index size = x.size() + y.size();
+    vector<Index> result = x;
+    result.reserve(x.size() + y.size());
 
-    vector<Index> data(size);
+    result.insert(result.end(), y.begin(), y.end());
 
-    memcpy(data.data(), x.data(), x.size() * sizeof(Index));
-
-    memcpy(data.data() + x.size(), y.data(), y.size() * sizeof(Index));
-
-    return data;
+    return result;
 }
 
 
@@ -552,6 +528,114 @@ Index get_size(vector<vector<TensorView*>> views)
 }
 
 
+
+pair<VectorR, VectorR> filter_missing_values(const VectorR& x, const VectorR& y)
+{
+    Index new_size = 0;
+
+    for(Index i = 0; i < x.size(); i++)
+        if(!isnan(x(i)) && !isnan(y(i)))
+            new_size++;
+
+    if(new_size == x.size())
+        return make_pair(x, y);
+
+    VectorR new_x(new_size);
+    VectorR new_y(new_size);
+
+    Index index = 0;
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(!isnan(x(i)) && !isnan(y(i)))
+        {
+            new_x(index) = x(i);
+            new_y(index) = y(i);
+
+            index++;
+        }
+    }
+
+    return {new_x, new_y};
+}
+
+
+pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
+{
+    const Index rows_number = x.size();
+    const Index y_columns_number = y.cols();
+
+    Index new_rows_number = 0;
+
+    VectorB not_NAN_row(rows_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        not_NAN_row(i) = true;
+
+        if(isnan(x(i)) || isnan(y(i)))
+            not_NAN_row(i) = false;
+
+        if(not_NAN_row(i))
+            new_rows_number++;
+    }
+
+    VectorR new_x(new_rows_number);
+    MatrixR new_y(new_rows_number, y_columns_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        if(!not_NAN_row(i))
+            continue;
+
+        for(Index j = 0; j < y_columns_number; j++)
+            new_y(index, j) = y(i, j);
+
+        new_x(index++) = x(i);
+    }
+
+    return {new_x, new_y};
+}
+
+
+pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
+{
+    const Index rows_number = x.rows();
+    const Index x_columns_number = x.cols();
+    const Index y_columns_number = y.cols();
+
+    if(x.rows() != y.rows())
+        throw runtime_error("filter_missing_values: Matrices must have the same number of rows.");
+
+    vector<Index> valid_indices;
+    valid_indices.reserve(rows_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        const bool x_row_ok = x.row(i).array().isFinite().all();
+        const bool y_row_ok = y.row(i).array().isFinite().all();
+
+        if(x_row_ok && y_row_ok)
+            valid_indices.push_back(i);
+    }
+
+    const Index new_rows_number = static_cast<Index>(valid_indices.size());
+    MatrixR new_x(new_rows_number, x_columns_number);
+    MatrixR new_y(new_rows_number, y_columns_number);
+
+    for(Index i = 0; i < new_rows_number; i++)
+    {
+        const Index original_index = valid_indices[i];
+        new_x.row(i) = x.row(original_index);
+        new_y.row(i) = y.row(original_index);
+    }
+
+    return {new_x, new_y};
+}
+
+
 void shuffle_rows(MatrixR& matrix)
 {
     const Index rows_number = matrix.rows();
@@ -685,6 +769,23 @@ Device& Device::instance()
 ThreadPoolDevice* Device::get_thread_pool_device()
 {
     return thread_pool_device.get();
+}
+
+
+VectorR filter_missing_values(const VectorR &input)
+{
+    VectorR result(input.size());
+
+    auto end_iterator = copy_if(input.data(),
+                                input.data() + input.size(),
+                                result.data(),
+                                [](type value) {
+                                    return !isnan(value);
+                                });
+
+    result.conservativeResize(end_iterator - result.data());
+
+    return result;
 }
 
 

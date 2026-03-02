@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 #include "inputs_selection.h"
 

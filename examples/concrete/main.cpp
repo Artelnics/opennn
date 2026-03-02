@@ -16,9 +16,8 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/variable.h"
-
 #include "../../opennn/response_optimization.h"
 
 using namespace opennn;

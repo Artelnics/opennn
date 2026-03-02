@@ -8,7 +8,7 @@
 
 #include "registry.h"
 #include "neural_network.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
 

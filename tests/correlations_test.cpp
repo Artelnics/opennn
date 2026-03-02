@@ -3,14 +3,14 @@
 
 
 #include "../opennn/correlations.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/statistics.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/scaling_layer.h"
 #include "../opennn/dense_layer.h"
-#include "../opennn/strings_utilities.h"
+#include "../opennn/string_utilities.h"
 
 using namespace opennn;
 

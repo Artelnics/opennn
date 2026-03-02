@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "loss_index.h"
-#include "optimization_algorithm.h"
+#include "loss.h"
+#include "optimizer.h"
 
 namespace opennn
 {

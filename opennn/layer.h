@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 namespace opennn
@@ -295,15 +295,12 @@ protected:
     template <int Rank>
     void dropout(TensorMapR<Rank> tensor, type dropout_rate) const
     {
-        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+        const type scale = type(1) / (type(1) - dropout_rate);
 
-        #pragma omp parallel
+        tensor = tensor.unaryExpr([dropout_rate, scale](type value)
         {
-            for(Index i = 0; i < tensor.size(); i++)
-                tensor(i) = (random_uniform(0, 1) < dropout_rate)
-                    ? 0
-                    : tensor(i) * scaling_factor;
-        }
+            return (random_uniform(0, 1) < dropout_rate) ? type(0) : value * scale;
+        });
     }
 
 

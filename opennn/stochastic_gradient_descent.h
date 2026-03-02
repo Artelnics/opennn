@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 
 namespace opennn
 {

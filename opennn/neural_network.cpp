@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
-#include "images.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "image_utilities.h"
+#include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
@@ -671,23 +671,22 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 string NeuralNetwork::get_expression() const
 {
     const Index layers_number = get_layers_number();
-
     const vector<string> layer_labels = get_layer_labels();
 
-
-    const vector<string> input_names = get_input_feature_names();
-    const vector<string> output_names = get_output_feature_names();
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
     vector<string> new_input_names = get_input_feature_names();
-    vector<string> new_output_names = get_output_feature_names();
+    while (new_input_names.size() < static_cast<size_t>(inputs_number))
+        new_input_names.push_back("input_" + to_string(new_input_names.size()));
 
-    const Index inputs_number = input_names.size();
-    const Index outputs_number = output_names.size();
+    vector<string> new_output_names = get_output_feature_names();
+    while (new_output_names.size() < static_cast<size_t>(outputs_number))
+        new_output_names.push_back("output_" + to_string(new_output_names.size()));
 
     for(Index i = 0; i < inputs_number; i++)
-        input_names[i].empty()
-            ? new_input_names[i] = "input_" + to_string(i)
-            : new_input_names[i] = input_names[i];
+        if(new_input_names[i].empty())
+            new_input_names[i] = "input_" + to_string(i);
 
     ostringstream buffer;
 
@@ -696,9 +695,8 @@ string NeuralNetwork::get_expression() const
         if (i == layers_number - 1)
         {
             for(Index j = 0; j < outputs_number; j++)
-                new_output_names[j] = !output_names[j].empty()
-                      ? output_names[j]
-                      : "output_" + to_string(i);
+                if(new_output_names[j].empty())
+                    new_output_names[j] = "output_" + to_string(j);
 
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
         }
@@ -706,15 +704,15 @@ string NeuralNetwork::get_expression() const
         {
             const Index layer_neurons_number = layers[i]->get_outputs_number();
 
-            new_output_names.resize(layer_neurons_number);
-            
-            for(Index j = 0; j < layer_neurons_number; j++)
-                new_output_names[j] = (layer_labels[i] == "scaling_layer")
-                      ? "scaled_" + input_names[j]
-                      : layer_labels[i] + "_output_" + to_string(j);
+            vector<string> layer_output_names(layer_neurons_number);
 
-            buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
-            new_input_names = new_output_names;
+            for(Index j = 0; j < layer_neurons_number; j++)
+                layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < static_cast<Index>(new_input_names.size()))
+                                           ? "scaled_" + new_input_names[j]
+                                           : layer_labels[i] + "_output_" + to_string(j);
+
+            buffer << layers[i]->get_expression(new_input_names, layer_output_names) << endl;
+            new_input_names = layer_output_names;
         }
     }
 
@@ -899,8 +897,13 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
 
-    const vector<string> input_names = get_input_feature_names();
-    const vector<string> output_names = get_output_feature_names();
+    vector<string> input_names = get_input_feature_names();
+    while (input_names.size() < static_cast<size_t>(inputs_number))
+        input_names.push_back("input_" + to_string(input_names.size() + 1));
+
+    vector<string> output_names = get_output_feature_names();
+    while (output_names.size() < static_cast<size_t>(outputs_number))
+        output_names.push_back("output_" + to_string(output_names.size() + 1));
 
     printer.OpenElement("NeuralNetwork");
 
@@ -1024,6 +1027,9 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 
         const string name_string = layer_element->Name();
         unique_ptr<Layer> layer = Registry<Layer>::instance().create(name_string);
+
+        if (!layer)
+            throw runtime_error("Layer type not found: " + name_string);
 
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);

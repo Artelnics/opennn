@@ -8,9 +8,9 @@
 
 #include "dataset.h"
 #include "neural_network.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
-#include "neurons_selection.h"
+#include "neuron_selection.h"
 
 namespace opennn
 {

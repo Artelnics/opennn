@@ -231,6 +231,14 @@ struct TensorView
 };
 
 
+VectorR filter_missing_values(const VectorR& input);
+
+pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
+pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
+pair<VectorR, MatrixR> filter_missing_values(const MatrixR&, const VectorR&);
+pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
+
+
 void shuffle_rows(MatrixR& matrix);
 
 type* link(type*, vector<TensorView*>);
@@ -291,8 +299,6 @@ void sum_matrices(const VectorR&, Tensor3&);
 
 void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
-
-void set_identity(MatrixR&);
 
 inline bool is_binary(const VectorR& tensor)
 {
@@ -383,12 +389,6 @@ bool is_constant(const TensorR<Rank>& tensor)
 void save_csv(const Tensor2&, const filesystem::path&);
 
 
-inline Index count_NAN(const MatrixR& x)
-{
-    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
-}
-
-
 template<int rank>
 Index count_NAN(const TensorR<rank>& x)
 {
@@ -405,7 +405,7 @@ VectorI calculate_rank_less(const VectorR&);
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
-VectorI get_nearest_points(const MatrixR& ,const VectorR& , int );
+VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 

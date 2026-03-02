@@ -9,7 +9,7 @@
 #pragma once
 
 #include "inputs_selection.h"
-#include "neurons_selection.h"
+#include "neuron_selection.h"
 
 namespace opennn
 {
