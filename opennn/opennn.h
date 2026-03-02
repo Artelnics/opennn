@@ -12,12 +12,12 @@
 #include "pch.h"
 
 // Core utilities
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "scaling.h"
-#include "strings_utilities.h"
-#include "images.h"
+#include "string_utilities.h"
+#include "image_utilities.h"
 #include "kmeans.h"
 
 // Data handling
@@ -51,7 +51,7 @@
 #include "standard_networks.h"
 
 // Loss functions
-#include "loss_index.h"
+#include "loss.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "weighted_squared_error.h"
@@ -60,7 +60,7 @@
 #include "cross_entropy_error_3d.h"
 
 // Optimization algorithms
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
@@ -73,7 +73,7 @@
 #include "model_selection.h"
 #include "inputs_selection.h"
 #include "growing_inputs.h"
-#include "neurons_selection.h"
+#include "neuron_selection.h"
 #include "growing_neurons.h"
 #include "genetic_algorithm.h"
 

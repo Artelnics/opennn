@@ -11,8 +11,8 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "correlations.h"
-#include "tensors.h"
-#include "strings_utilities.h"
+#include "tensor_utilities.h"
+#include "string_utilities.h"
 #include "random_utilities.h"
 #include "variable.h"
 

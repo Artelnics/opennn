@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 #include "../eigen/Eigen/Dense"

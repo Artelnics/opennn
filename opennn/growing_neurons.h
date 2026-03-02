@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "neurons_selection.h"
+#include "neuron_selection.h"
 
 namespace opennn
 {

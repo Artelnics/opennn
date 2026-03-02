@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "image_dataset.h"
-#include "images.h"
-#include "tensors.h"
-#include "strings_utilities.h"
+#include "image_utilities.h"
+#include "tensor_utilities.h"
+#include "string_utilities.h"
 #include "random_utilities.h"
 
 namespace opennn

@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "variable.h"
 
 namespace opennn

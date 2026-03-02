@@ -730,7 +730,7 @@ public:
 //      Set the Value of an XML node.
 //     	@sa Value()
 
-    void SetValue(const char* val, bool staticMem=false );
+    void SetValue(const char* value, bool staticMem=false );
 
     int GetLineNum() const { return _parseLineNum; }
 

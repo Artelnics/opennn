@@ -11,7 +11,7 @@
 #include "layer.h"
 #include "statistics.h"
 #include "scaling.h"
-#include "strings_utilities.h"
+#include "string_utilities.h"
 
 namespace opennn
 {

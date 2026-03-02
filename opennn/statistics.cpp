@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "statistics.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 
 using namespace std;
 

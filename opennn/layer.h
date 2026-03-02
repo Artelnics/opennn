@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 namespace opennn
@@ -297,9 +297,9 @@ protected:
     {
         const type scale = type(1) / (type(1) - dropout_rate);
 
-        tensor = tensor.unaryExpr([dropout_rate, scale](type val)
+        tensor = tensor.unaryExpr([dropout_rate, scale](type value)
         {
-            return (random_uniform(0, 1) < dropout_rate) ? type(0) : val * scale;
+            return (random_uniform(0, 1) < dropout_rate) ? type(0) : value * scale;
         });
     }
 

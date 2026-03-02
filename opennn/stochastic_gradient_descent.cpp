@@ -9,7 +9,7 @@
 #include "registry.h"
 #include "dataset.h"
 #include "neural_network.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "cross_entropy_error_3d.h"
 #include "stochastic_gradient_descent.h"
 

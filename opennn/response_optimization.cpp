@@ -9,7 +9,7 @@
 #include "response_optimization.h"
 
 #include "pch.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "statistics.h"
 #include "dataset.h"
 #include "neural_network.h"

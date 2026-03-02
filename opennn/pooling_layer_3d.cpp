@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "pooling_layer_3d.h"
 
 namespace opennn

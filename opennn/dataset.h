@@ -10,8 +10,8 @@
 
 #include "correlations.h"
 #include "statistics.h"
-#include "tensors.h"
-#include "strings_utilities.h"
+#include "tensor_utilities.h"
+#include "string_utilities.h"
 #include "variable.h"
 
 namespace opennn

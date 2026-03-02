@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "variable.h"
-#include "strings_utilities.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "tensor_utilities.h"
 #include "tinyxml2.h"
 #include "pch.h"
 

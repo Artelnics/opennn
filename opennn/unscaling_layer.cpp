@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "tensor_utilities.h"
 #include "unscaling_layer.h"
 
 namespace opennn

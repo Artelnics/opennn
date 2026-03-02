@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "bounding_layer.h"
 
 namespace opennn

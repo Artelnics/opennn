@@ -9,7 +9,7 @@
 #include "time_series_dataset.h"
 #include "statistics.h"
 #include "correlations.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 namespace opennn

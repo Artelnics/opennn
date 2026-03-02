@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "optimization_algorithm.h"
-//#include "tensors.h"
+#include "optimizer.h"
+//#include "tensor_utilities.h"
 
 namespace opennn
 {

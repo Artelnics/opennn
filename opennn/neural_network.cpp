@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
-#include "images.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "image_utilities.h"
+#include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
