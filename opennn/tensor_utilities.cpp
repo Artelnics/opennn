@@ -217,19 +217,10 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, In
 }
 
 
-Index count_between(const VectorR& vector,type minimum, type maximum)
-{
-    const Index size = vector.size();
-
-    Index count = 0;
-
-#pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < size; i++)
-        if(vector(i) >= minimum && vector(i) <= maximum)
-            count++;
-
-    return count;
-}
+//Index count_between(const VectorR& vector,type minimum, type maximum)
+//{
+//    return (vector.array() >= minimum && vector.array() <= maximum).count();
+//}
 
 
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)

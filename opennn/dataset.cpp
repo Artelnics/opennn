@@ -197,8 +197,7 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
 Index Dataset::get_samples_number(const string& sample_role) const
 {
-    return count_if(sample_roles.begin(), sample_roles.end(),
-                    [&sample_role](const string& new_sample_role) { return new_sample_role == sample_role; });
+    return count(sample_roles.begin(), sample_roles.end(), sample_role);
 }
 
 
@@ -1604,9 +1603,9 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
     const Index new_input_variables_number = get_features_number("Input");
     const Index new_target_variables_number = get_features_number("Target");
 
-    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
-    if(ts_dataset)
-        set_shape("Input", {ts_dataset->get_past_time_steps(), new_input_variables_number});
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+    if(time_series_dataset)
+        set_shape("Input", {time_series_dataset->get_past_time_steps(), new_input_variables_number});
     else
         set_shape("Input", {new_input_variables_number});
 
