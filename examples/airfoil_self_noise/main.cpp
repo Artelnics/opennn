@@ -16,7 +16,7 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/stochastic_gradient_descent.h"
 
 using namespace opennn;

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/dataset.h"
 
 using namespace opennn;

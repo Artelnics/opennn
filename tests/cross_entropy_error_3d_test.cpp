@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "variable.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/dense_layer.h"

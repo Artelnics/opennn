@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/normalization_layer_3d.h"
 #include "../opennn/neural_network.h"
 

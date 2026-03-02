@@ -16,7 +16,7 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/optimization_algorithm.h"
+#include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
