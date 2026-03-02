@@ -22,7 +22,7 @@ int main()
 #ifdef OPENNN_CUDA
 
         // Data set
-
+/*
         ImageDataset image_dataset("/home/davidgonzalez/opennn/melanoma_dataset_bmp");
 
         image_dataset.split_samples_random(0.6, 0.2, 0.2);
@@ -57,15 +57,17 @@ int main()
         cout << "Calculating confusion...." << endl;
         const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+        */
 
 #endif
-/*
+
 cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Dataset
 
-        ImageDataset image_dataset("/mnt/c/Users/davidgonzalez/Documents/mnist_data");
+        ImageDataset image_dataset("/home/davidgonzalez/opennn/mnist_data");
+
+        image_dataset.print();
 
         // Neural network
 
@@ -74,7 +76,7 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
             image_dataset.get_shape("Target"));
 
         // Training strategy
-
+        WeightedSquaredError();
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
         training_strategy.set_loss_index("CrossEntropyError2d");
@@ -84,9 +86,10 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(100);
         adam->set_display_period(10);
+        adam->set_batch_size(64);
 
 #ifdef OPENNN_CUDA
-    training_strategy.train_cuda();
+    training_strategy.train();
 #else
     training_strategy.train();
 #endif
@@ -97,9 +100,9 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
 
         testing_analysis.set_batch_size(64);
         cout << "Calculating confusion...." << endl;
-        const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
+        const MatrixI confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
 

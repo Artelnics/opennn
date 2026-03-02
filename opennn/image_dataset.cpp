@@ -474,23 +474,36 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
         width = new_input_shape[1];
     }
 
-    const Index inputs_number = height * width * channels;
-    const Index variables_number = inputs_number + 1;
-
     const Index pixels_number = height * width * channels;
 
     const Index targets_number = (folders_number == 2) 
-        ? folders_number -1 
+        ? folders_number - 1 
         : folders_number;
 
     set(samples_number, { height, width, channels }, { targets_number });
 
-    vector<string> categories(targets_number);
+    if (targets_number == 1)
+    {
+        variables[pixels_number].name = directory_path[0].filename().string() + "_" + directory_path[1].filename().string();
+        variables[pixels_number].role = "Target";
+        variables[pixels_number].type = VariableType::Binary;
+        variables[pixels_number].set_categories({directory_path[0].filename().string(), directory_path[1].filename().string()});
+        variables[pixels_number].scaler = "None";
+    }
+    else
+    {
+        variables.resize(pixels_number + 1); 
 
-    for(Index i = 0; i < targets_number; i++)
-        categories[i] = directory_path[i].filename().string();
+        vector<string> categories(targets_number);
+        for(Index i = 0; i < targets_number; i++)
+            categories[i] = directory_path[i].filename().string();
 
-    variables[variables_number-1].set_categories(categories);
+        variables[pixels_number].name = "Class";
+        variables[pixels_number].role = "Target";
+        variables[pixels_number].type = VariableType::Categorical;
+        variables[pixels_number].set_categories(categories);
+        variables[pixels_number].scaler = "None";
+    }
 
     Index progress_counter = 0;
 

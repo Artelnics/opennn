@@ -307,7 +307,6 @@ protected:
         }
     }
 
-
     template <int Rank>
     void calculate_combinations(const TensorMapR<Rank> inputs,
                                 const MatrixMap weights,
@@ -318,16 +317,31 @@ protected:
         const Index outputs_size = weights.cols();
         const Index total_rows = inputs.size() / inputs_size;
 
-        const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-            inputs_matrix(inputs.data(), total_rows, inputs_size);
+        if (outputs_size == 1)
+        {
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                inputs_matrix(inputs.data(), total_rows, inputs_size);
 
-        const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-            weights_matrix(weights.data(), inputs_size, outputs_size);
+            const Map<const VectorR, AlignedMax> weights_vector(weights.data(), inputs_size);
 
-        Map<Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-            outputs_matrix(outputs.data(), total_rows, outputs_size);
+            Map<VectorR, AlignedMax> outputs_vector(outputs.data(), total_rows);
 
-        outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases.transpose();
+            outputs_vector.noalias() = inputs_matrix * weights_vector;
+            outputs_vector.array() += biases(0);
+        }
+        else
+        {
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                inputs_matrix(inputs.data(), total_rows, inputs_size);
+
+            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                weights_matrix(weights.data(), inputs_size, outputs_size);
+
+            Map<Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
+                outputs_matrix(outputs.data(), total_rows, outputs_size);
+
+            outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases.transpose();
+        }
     }
 
 #ifdef OPENNN_CUDA
