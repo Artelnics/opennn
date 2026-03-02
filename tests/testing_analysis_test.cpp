@@ -588,10 +588,10 @@ TEST(TestingAnalysis, CumulativeGain)
 
     EXPECT_EQ(cumulative_gain.cols(), 2);
     EXPECT_EQ(cumulative_gain.rows(), 21);
-    EXPECT_LT(cumulative_gain(0, 0) - type(0), type(EPSILON));
-    EXPECT_LT(cumulative_gain(0, 1) - type(0), type(EPSILON));
-    EXPECT_LT(cumulative_gain(20, 0) - type(1), type(EPSILON));
-    EXPECT_LT(cumulative_gain(20, 1) - type(1), type(EPSILON));
+    EXPECT_NEAR(cumulative_gain(0, 0), type(0), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(0, 1), type(0), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(20, 0), type(1), type(1e-5));
+    EXPECT_NEAR(cumulative_gain(20, 1), type(1), type(1e-5));
 }
 
 
