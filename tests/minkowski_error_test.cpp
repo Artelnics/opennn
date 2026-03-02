@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/dataset.h"
 #include "../opennn/minkowski_error.h"

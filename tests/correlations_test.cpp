@@ -3,14 +3,14 @@
 
 
 #include "../opennn/correlations.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/statistics.h"
 #include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/scaling_layer.h"
 #include "../opennn/dense_layer.h"
-#include "../opennn/strings_utilities.h"
+#include "../opennn/string_utilities.h"
 
 using namespace opennn;
 
@@ -42,7 +42,7 @@ TEST_F(CorrelationsTest, SpearmanCorrelation)
     
     Correlation result = linear_correlation_spearman(x, y);
 
-    EXPECT_NEAR(result.r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(result.r, type(1), EPSILON);
 
 }
 
@@ -55,11 +55,11 @@ TEST_F(CorrelationsTest, LinearCorrelation)
     VectorR y(10);
     y << type(10), type(20), type(30),type(40),type(50),type(60),type(70),type(80),type(90),type(100);
 
-    EXPECT_NEAR(linear_correlation(x, y).r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(linear_correlation(x, y).r, type(1), EPSILON);
     
     y << type(10), type(9), type(8),type(7),type(6),type(5),type(4),type(3),type(2),type(1);
 
-    EXPECT_NEAR(linear_correlation(x, y).r, type(- 1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(linear_correlation(x, y).r, type(- 1), EPSILON);
     
     // Test
 
@@ -105,7 +105,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
     EXPECT_LE(correlation.r, type(1));
     EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
-    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.r, type(1), EPSILON);
 
     // Test
 
@@ -160,7 +160,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation_vector_vector(x, y);
 
-    //EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
+    //EXPECT_NEAR(correlation.r, type(1), EPSILON);
     //EXPECT_EQ(correlation.form, Correlation::Form::Sigmoid);
 
     // Test
@@ -238,9 +238,9 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
 
     solution = type(1);
 
-    EXPECT_NEAR(correlation.r, solution, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.b, type(4), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.a, type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.r, solution, EPSILON);
+    EXPECT_NEAR(correlation.b, type(4), EPSILON);
+    EXPECT_NEAR(correlation.a, type(0), EPSILON);
 }
 
 TEST_F(CorrelationsTest, ExponentialCorrelation)
@@ -265,9 +265,9 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
 
     correlation = exponential_correlation(x, y);
 
-    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.a, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.b, type(0.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.r, type(1), EPSILON);
+    EXPECT_NEAR(correlation.a, type(1), EPSILON);
+    EXPECT_NEAR(correlation.b, type(0.5), EPSILON);
 
     // Test missing values
 
@@ -285,8 +285,8 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
     correlation = exponential_correlation(x, y);
 
     EXPECT_NEAR(correlation.r, type(1), type(1.0e-3));
-    EXPECT_NEAR(correlation.b, type(2.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.a, type(1.4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.b, type(2.5), EPSILON);
+    EXPECT_NEAR(correlation.a, type(1.4), EPSILON);
 
 }
 
@@ -315,9 +315,9 @@ TEST_F(CorrelationsTest, PowerCorrelation)
 
     // Test
 
-    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.a, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(correlation.b, type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.r, type(1), EPSILON);
+    EXPECT_NEAR(correlation.a, type(1), EPSILON);
+    EXPECT_NEAR(correlation.b, type(2), EPSILON);
 
 }
 

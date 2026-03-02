@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/pooling_layer.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 
 using namespace opennn;
 
@@ -10,16 +10,16 @@ Tensor4 generate_input_tensor_pooling(const MatrixR& data,
                                       const vector<Index>& column_indices,
                                       const Shape& input_shape)
 { 
-    Tensor4 input_tensor(row_indices.size(),
+    Tensor4 input_vector(row_indices.size(),
                                  input_shape[0],
                                  input_shape[1],
                                  input_shape[2]);
 
-    type* tensor_data = input_tensor.data();
+    type* tensor_data = input_vector.data();
 
     fill_tensor_data(data, row_indices, column_indices, tensor_data);
     
-    return input_tensor;
+    return input_vector;
 }
 
 

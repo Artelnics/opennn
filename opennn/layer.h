@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "random_utilities.h"
 
 namespace opennn
@@ -262,8 +262,7 @@ protected:
         const VectorMap gammas,
         const VectorMap betas,
         bool is_training,
-        const type momentum = type(0.9),
-        const type epsilon = type(1e-5)) const
+        const type momentum = type(0.9)) const
     {
         const Index neurons = running_means.size();
         const Index total_rows = outputs.size() / neurons;
@@ -277,7 +276,7 @@ protected:
 
             norm_mat = outputs_mat.rowwise() - batch_means.transpose();
 
-            batch_variances = (norm_mat.array().square().colwise().mean() + epsilon).sqrt();
+            batch_variances = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
 
             norm_mat.array().rowwise() /= batch_variances.transpose().array();
 
@@ -286,7 +285,7 @@ protected:
         }
         else
             norm_mat.array() = (outputs_mat.rowwise() - running_means.transpose()).array().rowwise() /
-                               (running_variances.transpose().array() + epsilon);
+                               (running_variances.transpose().array() + EPSILON);
 
         outputs_mat.array() = (norm_mat.array().rowwise() * gammas.transpose().array()).rowwise() +
                               betas.transpose().array();
@@ -296,15 +295,12 @@ protected:
     template <int Rank>
     void dropout(TensorMapR<Rank> tensor, type dropout_rate) const
     {
-        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+        const type scale = type(1) / (type(1) - dropout_rate);
 
-        #pragma omp parallel
+        tensor = tensor.unaryExpr([dropout_rate, scale](type value)
         {
-            for(Index i = 0; i < tensor.size(); i++)
-                tensor(i) = (random_uniform(0, 1) < dropout_rate)
-                    ? 0
-                    : tensor(i) * scaling_factor;
-        }
+            return (random_uniform(0, 1) < dropout_rate) ? type(0) : value * scale;
+        });
     }
 
     template <int Rank>

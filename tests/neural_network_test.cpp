@@ -203,9 +203,9 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
 
     EXPECT_EQ(directional_inputs.rows(), 3);
     EXPECT_EQ(directional_inputs.cols(), 3);
-    EXPECT_NEAR(directional_inputs(0,2), - type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(directional_inputs(1,2), type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(directional_inputs(2,2), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(directional_inputs(0,2), - type(1), EPSILON);
+    EXPECT_NEAR(directional_inputs(1,2), type(0), EPSILON);
+    EXPECT_NEAR(directional_inputs(2,2), type(1), EPSILON);
 
     // Test
 
@@ -215,11 +215,11 @@ TEST(NeuralNetworkTest, CalculateDirectionalInputs)
 
     EXPECT_EQ(directional_inputs.rows(), 5);
     EXPECT_EQ(directional_inputs.cols(), 3);
-    EXPECT_NEAR(abs(directional_inputs(0,0)), type(4), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(directional_inputs(1,0)), type(3), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(directional_inputs(2,0)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(directional_inputs(3,0)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(directional_inputs(4,0)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(directional_inputs(0,0)), type(4), EPSILON);
+    EXPECT_NEAR(abs(directional_inputs(1,0)), type(3), EPSILON);
+    EXPECT_NEAR(abs(directional_inputs(2,0)), type(2), EPSILON);
+    EXPECT_NEAR(abs(directional_inputs(3,0)), type(1), EPSILON);
+    EXPECT_NEAR(abs(directional_inputs(4,0)), type(0), EPSILON);
 }
 
 

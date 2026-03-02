@@ -9,7 +9,8 @@
 #pragma once
 
 #include "layer.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -113,16 +114,13 @@ public:
 
     bool is_empty() const;
 
-    VectorR& get_parameters()
-    {
-        return parameters;
-    }
+    VectorR& get_parameters();
 
-    const vector<string>& get_feature_names() const;
-    Index get_input_index(const string&) const;
+    const vector<Variable>& get_input_variables() const;
+    const vector<string> get_input_feature_names() const;
 
-    const vector<string>& get_output_names() const;
-    Index get_output_index(const string&) const;
+    const vector<Variable>& get_output_variables() const;
+    const vector<string> get_output_feature_names() const;
 
     const vector<unique_ptr<Layer>>& get_layers() const;
     const unique_ptr<Layer>& get_layer(const Index) const;
@@ -156,8 +154,15 @@ public:
     void set_layer_input_indices(const string&, const initializer_list<string>&);
     void set_layer_input_indices(const string&, const string&);
 
-    void set_feature_names(const vector<string>&);
+    void set_input_variables(const vector<Variable>&);
+    void set_output_variables(const vector<Variable>&);
+
+
+    void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
+
+    //@simone @todo void set_input_names(const vector<string>&);
+    //se ci sono nuovinomi deve richiamare il cambio nome nelle variabili
 
     void set_input_shape(const Shape&);
 
@@ -198,55 +203,7 @@ public:
     void set_parameters_glorot();
 
     // Output
-/*
-    template <Index input_rank, Index output_rank>
-    Tensor<type, output_rank> calculate_outputs(const Tensor<type, input_rank>& inputs)
-    {
-        const Index layers_number = get_layers_number();
 
-        if (layers_number == 0)
-           return Tensor<type, output_rank>();
-
-        const Index batch_size = inputs.dimension(0);
-
-        ForwardPropagation forward_propagation(batch_size, this);
-
-        Shape input_shape;
-
-        for(Index i = 0; i < input_rank; ++i)
-           input_shape.push_back(inputs.dimension(i));
-
-        const TensorView input_view((type*)inputs.data(), input_shape);
-
-        forward_propagate({input_view}, forward_propagation, false);
-
-        const TensorView& output_view = forward_propagation.layers.back()->get_outputs();
-
-        if constexpr (output_rank == 2)
-        {
-            if (output_view.rank() == 4)
-            {
-                const Index batch_size = output_view.shape[0];
-                const Index features = output_view.size() / batch_size;
-
-                if (reinterpret_cast<uintptr_t>(output_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
-                    throw runtime_error("tensor_map alignment error: Pointer is not aligned.");
-
-                return MatrixMap(output_view.data, batch_size, features);
-            }
-
-            return matrix_map(output_view);
-        }
-        else if constexpr (output_rank == 3)
-           return tensor_map<3>(output_view);
-        else if constexpr (output_rank == 4)
-           return tensor_map<4>(output_view);
-        else
-           static_assert(output_rank >= 2 && output_rank <= 4, "Unsupported output rank.");
-
-        return Tensor<type, output_rank>();
-    }
-*/
     Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
     MatrixR calculate_outputs(const MatrixR&);
@@ -323,9 +280,11 @@ protected:
 
     string name = "neural_network";
 
-    vector<string> input_names;
+//    vector<string> input_names;
+//    vector<string> output_names;
 
-    vector<string> output_names;
+    vector<Variable> input_variables;
+    vector<Variable> output_variables;
 
     vector<string> input_vocabulary;
     vector<string> output_vocabulary;

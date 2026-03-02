@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "strings_utilities.h"
-#include "tensors.h"
+#include "string_utilities.h"
+#include "tensor_utilities.h"
 #include "unscaling_layer.h"
 
 namespace opennn
@@ -77,12 +77,12 @@ vector<string> Unscaling::get_scalers() const
 }
 
 
-string Unscaling::get_expression(const vector<string>& new_feature_names,
+string Unscaling::get_expression(const vector<string>& new_input_names,
                                  const vector<string>& new_output_names) const
 {
-    const vector<string> input_names = new_feature_names.empty()
+    const vector<string> input_names = new_input_names.empty()
         ? get_default_feature_names()
-        : new_feature_names;
+        : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
         ? get_default_output_names()
@@ -101,7 +101,7 @@ string Unscaling::get_expression(const vector<string>& new_feature_names,
         if(scaler == "None")
             buffer << output_names[i] << " = " << input_names[i] << ";\n";
         else if(scaler == "MinimumMaximum")
-            if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
+            if(abs(descriptives[i].minimum - descriptives[i].maximum) < EPSILON)
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
             else
                 buffer << output_names[i] << "=" << input_names[i] << "*(" << (descriptives[i].maximum - descriptives[i].minimum)/(max_range - min_range)
@@ -202,8 +202,8 @@ void Unscaling::forward_propagate(const vector<TensorView>& input_views,
 
         const Descriptives& descriptive = descriptives[i];
 
-        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-            descriptives[i].standard_deviation = NUMERIC_LIMITS_MIN;
+        if(abs(descriptives[i].standard_deviation) < EPSILON)
+            descriptives[i].standard_deviation = EPSILON;
 
         if(scaler == "None")
             continue;

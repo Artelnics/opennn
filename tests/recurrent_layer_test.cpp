@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 #include "../opennn/recurrent_layer.h"
 
 using namespace opennn;
@@ -59,8 +59,8 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
-        vector<TensorView> input_tensor = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
-        recurrent_layer.forward_propagate(input_tensor, fw_prop, is_training);
+        vector<TensorView> input_vector = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
+        recurrent_layer.forward_propagate(input_vector, fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();
         TensorMap2 output_tensor(outputs_view.data, outputs_view.shape[0], outputs_view.shape[1]);
@@ -88,9 +88,9 @@ TEST(RecurrentLayerTest, ForwardPropagate)
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
-        vector<TensorView> input_tensor = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
+        vector<TensorView> input_vector = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
 
-        recurrent_layer.forward_propagate(input_tensor, fw_prop, is_training);
+        recurrent_layer.forward_propagate(input_vector, fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();
         TensorMap2 output_tensor(outputs_view.data, outputs_view.shape[0], outputs_view.shape[1]);
@@ -118,9 +118,9 @@ TEST(RecurrentLayerTest, ForwardPropagate)
 
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
-        vector<TensorView> input_tensor = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
+        vector<TensorView> input_vector = { {inputs.data(), {{samples_number, time_steps, inputs_number}}} };
 
-        recurrent_layer.forward_propagate(input_tensor, fw_prop, is_training);
+        recurrent_layer.forward_propagate(input_vector, fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();
         TensorMap2 output_tensor(outputs_view.data, outputs_view.shape[0], outputs_view.shape[1]);

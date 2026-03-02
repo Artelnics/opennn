@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/statistics.h"
-#include "../opennn/strings_utilities.h"
+#include "../opennn/string_utilities.h"
 #include "../opennn/random_utilities.h"
 
 using namespace opennn;
@@ -342,19 +342,19 @@ TEST(StatisticsTest, Minimum)
     vector.resize(3);
     vector << type(0), type(1), type(9);
 
-    EXPECT_NEAR(minimum(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector << type(1),type(2),type(3);
 
-    EXPECT_NEAR(minimum(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(1), EPSILON);
 
     vector.resize(3);
     vector <<  type(-1),type(2),type(3);
 
-    EXPECT_NEAR(minimum(vector), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(minimum(vector), type(-1), EPSILON);
 }
 
 
@@ -371,19 +371,19 @@ TEST(StatisticsTest, Maximum)
     vector.resize(3);
     vector <<  type(0), type(1), type(9);
 
-    EXPECT_NEAR(maximum(vector), type(9), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(9), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector << type(1),type(2),type(3);
 
-    EXPECT_NEAR(maximum(vector), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(3), EPSILON);
 
     vector.resize(3);
     vector <<  type(-1),type(-2),type(-3);
 
-    EXPECT_NEAR(maximum(vector), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(maximum(vector), type(-1), EPSILON);
 }
 
 
@@ -392,41 +392,41 @@ TEST(StatisticsTest, Mean)
     MatrixR matrix(3,3);
     matrix.setZero();
 
-    EXPECT_NEAR(mean(matrix)(0), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(matrix)(0), 0, EPSILON);
 
     matrix << type(0),type(1),type(-2),
               type(0),type(1),type(8),
               type(0),type(1),type(6);
 
-    EXPECT_NEAR(mean(matrix)(0), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(mean(matrix)(1), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(mean(matrix)(2), type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(matrix)(0), 0, EPSILON);
+    EXPECT_NEAR(mean(matrix)(1), type(1), EPSILON);
+    EXPECT_NEAR(mean(matrix)(2), type(4), EPSILON);
 
     VectorR vector(2);
     vector <<  type(1), type(1);
 
-    EXPECT_NEAR(mean(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     // Test
 
     vector.resize(2);
     vector <<  type(-1), type(1) ;
 
-    EXPECT_NEAR(mean(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(0), EPSILON);
 
     // Test missing values
 
     vector.resize(5);
     vector <<  type(1), type(NAN), type(2.0), type(3.0), type(4.0);
 
-    EXPECT_NEAR(mean(vector), type(2.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(2.5), EPSILON);
 
     // Test
 
     vector.resize(4);
     vector <<  type(1), type(1), type(NAN), type(1) ;
 
-    EXPECT_NEAR(mean(vector), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     // Test empty matrix
 
@@ -445,28 +445,28 @@ TEST(StatisticsTest, StandardDeviation)
 
     // Test
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(4);
     vector <<  type(2),type(4),type(8),type(10);
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), sqrt(type(40)/type(3)), EPSILON);
 
     // Test
 
     vector.resize(4);
     vector.setConstant(type(-11));
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector.setZero();
 
-    EXPECT_NEAR(opennn::standard_deviation(vector), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(opennn::standard_deviation(vector), 0, EPSILON);
 
     // Test
 
@@ -475,7 +475,7 @@ TEST(StatisticsTest, StandardDeviation)
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, 0, EPSILON);
 
     // Test
 
@@ -484,7 +484,7 @@ TEST(StatisticsTest, StandardDeviation)
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, sqrt(type(2)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, sqrt(type(2)), EPSILON);
 
     // Test
 
@@ -493,7 +493,7 @@ TEST(StatisticsTest, StandardDeviation)
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(standard_deviation, 0, EPSILON);
 }
 
 
@@ -511,7 +511,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
     
-    EXPECT_NEAR(median, type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(0), EPSILON);
 
     // Test
 
@@ -520,7 +520,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(6), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(6), EPSILON);
 
     // Test
 
@@ -529,7 +529,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(-11), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(-11), EPSILON);
 
     // Test
 
@@ -538,7 +538,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(median, type(2.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(median, type(2.5), EPSILON);
 
     // Test
 
@@ -547,7 +547,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(abs(median), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(median), type(3), EPSILON);
 
     // Test
 
@@ -556,7 +556,7 @@ TEST(StatisticsTest, Median)
 
     median = opennn::median(vector);
 
-    EXPECT_NEAR(abs(median), type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(median), type(2), EPSILON);
     
     // Test
     MatrixR matrix(3,2);
@@ -565,8 +565,8 @@ TEST(StatisticsTest, Median)
               type(2),type(3),
               type(3),type(4);
 
-    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), EPSILON);
+    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3), EPSILON);
     
     // Test
 
@@ -575,8 +575,8 @@ TEST(StatisticsTest, Median)
               type(NAN),type(NAN),
               type(3),type(3.5);
 
-    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(opennn::median(matrix, 0)), type(2), EPSILON);
+    EXPECT_NEAR(abs(opennn::median(matrix, 1)), type(3.5), EPSILON);
 
 }
 
@@ -597,35 +597,35 @@ TEST(StatisticsTest, Variance)
     vector.resize(4);
     vector <<  type(2),type(4),type(8),type(10);
 
-    EXPECT_NEAR(variance(vector), type(40)/type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variance(vector), type(40)/type(3), EPSILON);
 
     // Test
 
     vector.resize(4);
     vector <<  type(-11),type(-11),type(-11),type(-11);
 
-    EXPECT_NEAR(variance(vector), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variance(vector), type(0), EPSILON);
 
     // Test
 
     vector.resize(1);
     vector.setConstant(type(1));
 
-    EXPECT_NEAR(abs(variance(vector)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(0), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector << type(2),type(1),type(2);
 
-    EXPECT_NEAR(abs(variance(vector)), type(1)/type(3), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(1)/type(3), EPSILON);
 
     // Test
 
     vector.resize(3);
     vector << type(1),type(NAN),type(2);
 
-    EXPECT_NEAR(abs(variance(vector)), type(0.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(variance(vector)), type(0.5), EPSILON);
 }
 
 
@@ -642,9 +642,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(Index(quartiles(0)),type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(Index(quartiles(1)), type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(Index(quartiles(2)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(Index(quartiles(0)),type(0), EPSILON);
+    EXPECT_NEAR(Index(quartiles(1)), type(0), EPSILON);
+    EXPECT_NEAR(Index(quartiles(2)), type(0), EPSILON);
         
     // Test
 
@@ -654,8 +654,8 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)) , type(0.25), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(0.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)) , type(0.25), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(0.5), EPSILON);
 
     // Test
 
@@ -664,9 +664,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(1.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(1.5), EPSILON);
 
     // Test
 
@@ -675,9 +675,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(2.5), NUMERIC_LIMITS_MIN);    
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(2.5), EPSILON);    
     
     // Test
 
@@ -686,9 +686,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(0.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(0.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
 
     // Test
 
@@ -697,9 +697,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(4), EPSILON);
 
     
     // Test
@@ -709,9 +709,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(5.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(5.0), EPSILON);
 
     // Test
 
@@ -720,9 +720,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(5.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(5.5), EPSILON);
 
     // Test
 
@@ -731,9 +731,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(4.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(6.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
    // Test
 
@@ -742,9 +742,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(4.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(6.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(4.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(6.5), EPSILON);
 
     // Test
 
@@ -753,9 +753,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(29.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(58.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(80.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(29.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(58.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(80.0), EPSILON);
     
     
     // Test missing values:
@@ -767,9 +767,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(2.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(3.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(2.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(3.5), EPSILON);
     
     // Test
 
@@ -778,9 +778,9 @@ TEST(StatisticsTest, Quartiles)
 
     quartiles = opennn::quartiles(vector);
 
-    EXPECT_NEAR(abs(quartiles(0)), type(1.5), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(1)), type(3.0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(quartiles(2)), type(4.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(quartiles(0)), type(1.5), EPSILON);
+    EXPECT_NEAR(abs(quartiles(1)), type(3.0), EPSILON);
+    EXPECT_NEAR(abs(quartiles(2)), type(4.5), EPSILON);
     
 }
 
@@ -1043,11 +1043,11 @@ TEST(StatisticsTest, BoxPlot)
     
     box_plot = opennn::box_plot(vector);
 
-    EXPECT_NEAR(box_plot.minimum, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, type(0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(box_plot.minimum, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.first_quartile, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.median, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, type(0), EPSILON);
+    EXPECT_NEAR(box_plot.maximum, type(0), EPSILON);
     
     // Test
 
@@ -1058,11 +1058,11 @@ TEST(StatisticsTest, BoxPlot)
 
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
-    EXPECT_NEAR(box_plot.minimum, solution.minimum, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, solution.median, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, solution.maximum, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
     
     // Test missing values
 
@@ -1073,11 +1073,11 @@ TEST(StatisticsTest, BoxPlot)
 
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
-    EXPECT_NEAR(box_plot.minimum, solution.minimum, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.median, solution.median, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(box_plot.maximum, solution.maximum, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+    EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
+    EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
+    EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
     
 }
 

@@ -1,10 +1,9 @@
 #include "pch.h"
 
 #include "../opennn/convolutional_layer.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 
 using namespace opennn;
-
 
 void set_layer_parameters_constant(Layer& layer, type value)
 {

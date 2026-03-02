@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "dataset.h"
-#include "loss_index.h"
+#include "loss.h"
 #include "levenberg_marquardt_algorithm.h"
 
 namespace opennn
@@ -221,7 +221,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     BackPropagation validation_back_propagation(validation_samples_number, loss_index);
 
     type old_loss = type(0);
-    type loss_decrease = numeric_limits<type>::max();
+    type loss_decrease = MAX;
 
     Index validation_failures = 0;
 
@@ -425,21 +425,19 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
     if(!success)
     {
-        constexpr type epsilon = numeric_limits<type>::epsilon();
-
 #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
+            if (abs(gradient(i)) < EPSILON)
             {
                 parameter_updates(i) = type(0);
             }
             else
             {
                 parameter_updates(i) = gradient(i) > type(0)
-                ? -epsilon
-                : epsilon;
+                ? -EPSILON
+                : EPSILON;
 
                 parameters(i) += parameter_updates(i);
             }

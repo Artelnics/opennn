@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "correlations.h"
 #include "dataset.h"
 #include "scaling_layer.h"
@@ -187,114 +187,6 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 }
 
 
-pair<VectorR, VectorR> filter_missing_values_vector_vector(const VectorR& x, const VectorR& y)
-{
-    Index new_size = 0;
-
-    for(Index i = 0; i < x.size(); i++)
-        if(!isnan(x(i)) && !isnan(y(i)))
-            new_size++;
-
-    if(new_size == x.size())
-        return make_pair(x, y);
-
-    VectorR new_x(new_size);
-    VectorR new_y(new_size);
-
-    Index index = 0;
-
-    for(Index i = 0; i < x.size(); i++)
-    {
-        if(!isnan(x(i)) && !isnan(y(i)))
-        {
-            new_x(index) = x(i);
-            new_y(index) = y(i);
-
-            index++;
-        }
-    }
-
-    return {new_x, new_y};
-}
-
-
-pair<VectorR, MatrixR> filter_missing_values_vector_matrix(const VectorR& x, const MatrixR& y)
-{
-    const Index rows_number = x.size();
-    const Index y_columns_number = y.cols();
-
-    Index new_rows_number = 0;
-
-    VectorB not_NAN_row(rows_number);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        not_NAN_row(i) = true;
-
-        if(isnan(x(i)) || isnan(y(i)))
-            not_NAN_row(i) = false;
-
-        if(not_NAN_row(i))
-            new_rows_number++;
-    }
-
-    VectorR new_x(new_rows_number);
-    MatrixR new_y(new_rows_number, y_columns_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        if(!not_NAN_row(i))
-            continue;
-
-        for(Index j = 0; j < y_columns_number; j++)
-            new_y(index, j) = y(i, j);
-
-        new_x(index++) = x(i);
-
-    }
-
-    return {new_x, new_y};
-}
-
-
-pair<MatrixR, MatrixR> filter_missing_values_matrix_matrix(const MatrixR& x, const MatrixR& y)
-{
-    const Index rows_number = x.rows();
-    const Index x_columns_number = x.cols();
-    const Index y_columns_number = y.cols();
-
-    if(x.rows() != y.rows())
-        throw runtime_error("filter_missing_values: Matrices must have the same number of rows.");
-
-    vector<Index> valid_indices;
-    valid_indices.reserve(rows_number);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        const bool x_row_ok = x.row(i).array().isFinite().all();
-        const bool y_row_ok = y.row(i).array().isFinite().all();
-
-        if(x_row_ok && y_row_ok)
-            valid_indices.push_back(i);
-    }
-
-    const Index new_rows_number = static_cast<Index>(valid_indices.size());
-    MatrixR new_x(new_rows_number, x_columns_number);
-    MatrixR new_y(new_rows_number, y_columns_number);
-
-    for(Index i = 0; i < new_rows_number; i++)
-    {
-        const Index original_index = valid_indices[i];
-        new_x.row(i) = x.row(original_index);
-        new_y.row(i) = y.row(original_index);
-    }
-
-    return {new_x, new_y};
-}
-
-
 MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     const Index rows_number = correlations.dimension(0);
@@ -319,7 +211,7 @@ Correlation linear_correlation(const VectorR& x,
     if(is_constant(x) || is_constant(y))
         return Correlation();
 
-    const auto [x_filter, y_filter] = filter_missing_values_vector_vector(x, y);
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
     const Index n = x_filter.size();
 
@@ -334,7 +226,7 @@ Correlation linear_correlation(const VectorR& x,
 
     const double denominator = sqrt((double(n) * s_xx - s_x * s_x) * (double(n) * s_yy - s_y * s_y));
 
-    if (denominator < static_cast<double>(NUMERIC_LIMITS_MIN))
+    if (denominator < static_cast<double>(EPSILON))
         return Correlation();
 
     Correlation linear_correlation;
@@ -417,7 +309,7 @@ VectorR calculate_spearman_ranks(const VectorR& x)
 
 Correlation linear_correlation_spearman(const VectorR& x, const VectorR& y)
 {
-    const auto [x_filter, y_filter] = filter_missing_values_vector_vector(x, y);
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
     const VectorR x_rank = calculate_spearman_ranks(x_filter);
     const VectorR y_rank = calculate_spearman_ranks(y_filter);
@@ -454,7 +346,7 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
 {
     Correlation correlation;
 
-    const auto [x_filter, y_filter] = filter_missing_values_vector_vector(x,y);
+    const auto [x_filter, y_filter] = filter_missing_values(x,y);
 
     if (x_filter.size() < 2
     || is_constant(x_filter)
@@ -526,7 +418,7 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
 {
     Correlation correlation;
 
-    const auto [x_filter, y_filter] = filter_missing_values_vector_vector(x, y);
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
     if(x_filter.size() == 0)
     {
@@ -600,7 +492,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     Correlation correlation;
     correlation.form = Correlation::Form::Sigmoid;
 
-    const auto [x_filter, y_filter] = opennn::filter_missing_values_vector_matrix(x, y);
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
     if(y_filter.cols() > 50)
     {
@@ -692,7 +584,7 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     Correlation correlation;
     correlation.form = Correlation::Form::Sigmoid;
 
-    const auto [x_filter, y_filter] = filter_missing_values_matrix_matrix(x, y);
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
 
     if(x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())

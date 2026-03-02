@@ -82,12 +82,6 @@ VectorR cross_correlations(const VectorR&, const VectorR&, Index);
 
 MatrixR get_correlation_values(const Tensor<Correlation, 2>&);
 
-// Missing values
-
-pair<VectorR, VectorR> filter_missing_values_vector_vector(const VectorR&, const VectorR&);
-pair<VectorR, MatrixR> filter_missing_values_vector_matrix(const VectorR&, const MatrixR&);
-pair<VectorR, MatrixR> filter_missing_values_matrix_vector(const MatrixR&, const VectorR&);
-pair<MatrixR, MatrixR> filter_missing_values_matrix_matrix(const MatrixR&, const MatrixR&);
 
 void register_optimization_algorithms();
 

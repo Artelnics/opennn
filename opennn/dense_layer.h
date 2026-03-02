@@ -675,18 +675,19 @@ public:
                 momentum);
         }
 
-        if(is_training)
+        TensorMapR<Rank> derivatives = [&]()
         {
-            auto activation_derivatives = tensor_map<Rank>(dense_forward_propagation->activation_derivatives);
-            calculate_activations<Rank>(activation_function, outputs, activation_derivatives);
-        }
-        else
-        {
-            if constexpr(Rank == 2)
-                calculate_activations<Rank>(activation_function, outputs, TensorMap2(empty_2.data(), empty_2.dimensions()));
-            else if constexpr(Rank == 3)
-                calculate_activations<Rank>(activation_function, outputs, TensorMap3(empty_3.data(), empty_3.dimensions()));
-        }
+            if constexpr (Rank == 2)
+                return is_training
+                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                           : TensorMap2(nullptr, 0, 0);
+            else
+                return is_training
+                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                           : TensorMap3(nullptr, 0, 0, 0);
+        }();
+
+        calculate_activations<Rank>(activation_function, outputs, derivatives);
 
         if(is_training && dropout_rate > type(0))
             dropout<Rank>(outputs, dropout_rate);
@@ -759,57 +760,43 @@ public:
         const MatrixMap inputs(input_views[0].data, batch_size, inputs_number);
         MatrixMap output_gradients(output_gradient_views[0].data, batch_size, outputs_number);
 
-        const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
+        auto* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
+        auto* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
 
-        DenseBackPropagationLM* dense_back_propagation_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
-
-        MatrixMap squared_errors_Jacobian = matrix_map(dense_back_propagation_lm->squared_errors_Jacobian);
-
-        squared_errors_Jacobian.setZero();
+        MatrixMap jacobian = matrix_map(dense_bp_lm->squared_errors_Jacobian);
+        jacobian.setZero();
 
         if(activation_function != "Softmax")
         {
-            const MatrixMap activation_derivatives(dense_forward_propagation->activation_derivatives.data, batch_size, outputs_number);
+            const MatrixMap activation_derivatives(dense_fp->activation_derivatives.data, batch_size, outputs_number);
             output_gradients.array() *= activation_derivatives.array();
         }
 
-        const Index total_error_terms = squared_errors_Jacobian.rows();
-        const Index network_outputs_number = (batch_size > 0) ? total_error_terms / batch_size : 1;
+        const Index total_error_terms = jacobian.rows();
+        const Index network_outputs = (batch_size > 0) ? total_error_terms / batch_size : 1;
 
         for(Index j = 0; j < outputs_number; j++)
-        {
-            for(Index s = 0; s < batch_size; s++)
-            {
-                for(Index k = 0; k < network_outputs_number; ++k)
-                {
-                    const Index error_term_row = s * network_outputs_number + k;
-                    squared_errors_Jacobian(error_term_row, j) = output_gradients(s, j);
-                }
-            }
-        }
+            for(Index k = 0; k < network_outputs; ++k)
+                for(Index s = 0; s < batch_size; ++s)
+                    jacobian(s * network_outputs + k, j) = output_gradients(s, j);
 
         for(Index i = 0; i < inputs_number; i++)
         {
             for(Index j = 0; j < outputs_number; j++)
             {
-                const Index weight_column_index = biases_number + i * outputs_number + j;
+                const Index weight_col = biases_number + i * outputs_number + j;
 
-                for(Index s = 0; s < batch_size; s++)
-                {
-                    const type val = output_gradients(s, j) * inputs(s, i);
+                const VectorR interaction = output_gradients.col(j).array() * inputs.col(i).array();
 
-                    for(Index k = 0; k < network_outputs_number; ++k)
-                    {
-                        const Index error_term_row = s * network_outputs_number + k;
-                        squared_errors_Jacobian(error_term_row, weight_column_index) = val;
-                    }
-                }
+                for(Index k = 0; k < network_outputs; ++k)
+                    for(Index s = 0; s < batch_size; ++s)
+                        jacobian(s * network_outputs + k, weight_col) = interaction(s);
             }
         }
 
-        if(!dense_back_propagation_lm->is_first_layer)
+        if(!dense_bp_lm->is_first_layer)
         {
-            MatrixMap input_gradients(dense_back_propagation_lm->input_gradients[0].data, batch_size, inputs_number);
+            MatrixMap input_gradients(dense_bp_lm->input_gradients[0].data, batch_size, inputs_number);
             const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
 
             input_gradients.noalias() = output_gradients * weights_map.transpose();
@@ -879,12 +866,12 @@ public:
     }
 
 
-    string get_expression(const vector<string>& new_feature_names = vector<string>(),
+    string get_expression(const vector<string>& new_input_names = vector<string>(),
                           const vector<string>& new_output_names = vector<string>()) const override
     {
-        const vector<string> input_names = new_feature_names.empty()
+        const vector<string> input_names = new_input_names.empty()
             ? get_default_feature_names()
-            : new_feature_names;
+            : new_input_names;
 
         const vector<string> output_names = new_output_names.empty()
             ? get_default_output_names()
@@ -1082,7 +1069,7 @@ public:
                     momentum,
                     running_means_device.data,
                     running_variances_device.data,
-                    numeric_limits<type>::epsilon(),
+                    EPSILON,
                     dense_forward_propagation->batch_means.data,
                     dense_forward_propagation->bn_saved_inv_variance.data));
         else if (batch_normalization && !is_training)
@@ -1099,7 +1086,7 @@ public:
                     betas_device.data,
                     running_means_device.data,
                     running_variances_device.data,
-                    numeric_limits<type>::epsilon()));
+                    EPSILON));
 
         // Activations
 
@@ -1233,7 +1220,7 @@ public:
                 gammas_device.data,
                 dense_layer_back_propagation->gamma_gradients.data,
                 dense_layer_back_propagation->beta_gradients.data,
-                numeric_limits<type>::epsilon(),
+                EPSILON,
                 dense_forward_propagation->batch_means.data,
                 dense_forward_propagation->bn_saved_inv_variance.data));
 

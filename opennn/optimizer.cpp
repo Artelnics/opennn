@@ -13,8 +13,9 @@
 #include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
-#include "loss_index.h"
-#include "optimization_algorithm.h"
+#include "loss.h"
+#include "optimizer.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -204,17 +205,20 @@ void Optimizer::set_names()
 {
     Dataset* dataset = loss_index->get_dataset();
 
-    const vector<string> input_names = dataset->get_feature_names("Input");
-    const vector<string> target_names = dataset->get_feature_names("Target");
+    const vector<Variable> input_variables = dataset->get_variables("Input");
+    const vector<Variable> target_variables = dataset->get_variables("Target");
 
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+ /*@simone @todo maybe you can delete everything here
+  *
     const Index input_features_number = dataset->get_features_number("Input");
     const Index target_features_number = dataset->get_features_number("Target");
 
-    const vector<Dataset::Variable> variables = dataset->get_variables();
+    const vector<Variable> variables = dataset->get_variables();
     const vector<Index> input_feature_indices = dataset->get_variable_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_variable_indices("Input");
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     vector<string> input_variable_names;
     vector<string> target_variable_names;
@@ -264,9 +268,9 @@ void Optimizer::set_names()
 
         target_variable_names.push_back(current_target_name);
     }
-
-    neural_network->set_feature_names(input_variable_names);
-    neural_network->set_output_names(target_variable_names);
+*/
+    neural_network->set_input_variables(input_variables);
+    neural_network->set_output_variables(target_variables);
 }
 
 

@@ -170,6 +170,14 @@ struct Shape
     {
         return !(*this == other);
     }
+
+    Shape& append(const Shape& other)
+    {
+        for(size_t i = 0; i < other.rank && rank < MaxRank; ++i)
+            shape[rank++] = other.shape[i];
+
+        return *this;
+    }
 };
 
 
@@ -221,6 +229,14 @@ struct TensorView
             cout << endl;
     }
 };
+
+
+VectorR filter_missing_values(const VectorR& input);
+
+pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
+pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
+pair<VectorR, MatrixR> filter_missing_values(const MatrixR&, const VectorR&);
+pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
 
 
 void shuffle_rows(MatrixR& matrix);
@@ -284,10 +300,6 @@ void sum_matrices(const VectorR&, Tensor3&);
 void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
 
-void set_identity(MatrixR&);
-
-//Tensor2 self_kronecker_product(const VectorR&);
-
 inline bool is_binary(const VectorR& tensor)
 {
 
@@ -326,6 +338,7 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
 
     return result;
 }
+
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
@@ -376,12 +389,6 @@ bool is_constant(const TensorR<Rank>& tensor)
 void save_csv(const Tensor2&, const filesystem::path&);
 
 
-inline Index count_NAN(const MatrixR& x)
-{
-    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
-}
-
-
 template<int rank>
 Index count_NAN(const TensorR<rank>& x)
 {
@@ -398,13 +405,9 @@ VectorI calculate_rank_less(const VectorR&);
 vector<Index> get_elements_greater_than(const vector<Index>&, Index);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
-MatrixR filter_column_minimum_maximum(const MatrixR&, Index, type, type);
-
-VectorI get_nearest_points(const MatrixR& ,const VectorR& , int );
+VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
-
-//void fill_tensor_sequence(const Tensor2&, const vector<Index>&, const vector<Index>&, Index, type*);
 
 template <typename Type, int Rank>
 bool contains(const TensorR<Rank>& vector, const Type& value)
@@ -526,14 +529,13 @@ type round_to_precision(type, const int&);
 
 VectorMap vector_map(const MatrixR&, Index);
 
-VectorMap tensor_map(const Tensor2&, Index);
+//VectorMap vector_map(const Tensor2&, Index);
 
-MatrixMap tensor_map(const Tensor3&, Index);
+MatrixMap matrix_map(const Tensor3&, Index);
 TensorMap3 tensor_map(const Tensor4&, Index);
-MatrixMap tensor_map(const Tensor4&, Index, Index);
+MatrixMap matrix_map(const Tensor4&, Index, Index);
 
 TensorMap3 tensor_map_(const TensorMap4, Index);
-//VectorMap tensor_map_(const MatrixMap&, Index);
 
 inline VectorMap vector_map(const TensorView& tensor_view)
 {

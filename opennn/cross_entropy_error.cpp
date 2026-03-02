@@ -9,7 +9,6 @@
 #include "registry.h"
 #include "dataset.h"
 #include "neural_network.h"
-#include <iostream>
 #include "cross_entropy_error.h"
 
 namespace opennn
@@ -41,20 +40,17 @@ void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
     // Batch
 
     const Index samples_number = batch.get_samples_number();
-    const TensorView targets_view = batch.get_targets();
-    const MatrixMap targets = matrix_map(targets_view);
+
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 
-    const type epsilon = numeric_limits<type>::epsilon();
-
-    back_propagation.error = (targets.array() * (outputs.array() + epsilon).log() +
-                               (1.0f - targets.array()) * (1.0f - outputs.array() + epsilon).log()
+    back_propagation.error = (targets.array() * (outputs.array() + EPSILON).log() +
+                               (1.0f - targets.array()) * (1.0f - outputs.array() + EPSILON).log()
                                ).sum()/ static_cast<type>(-samples_number);
 
     if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
@@ -76,11 +72,9 @@ void CrossEntropyError2d::calculate_multiple_error(const Batch& batch,
 
     // Back propagation
 
-    const type epsilon = numeric_limits<type>::epsilon();
-
     type& error = back_propagation.error;
 
-    error = (targets.array() * (outputs.array() + epsilon).log()).sum() / static_cast<type>(-samples_number);
+    error = (targets.array() * (outputs.array() + EPSILON).log()).sum() / static_cast<type>(-samples_number);
 
     if(isnan(error)) throw runtime_error("\nError is NAN.");}
 
@@ -103,24 +97,18 @@ void CrossEntropyError2d::calculate_binary_output_gradients(const Batch& batch,
 
     const Index samples_number = batch.get_samples_number();
 
-    const TensorView targets_view = batch.get_targets();
-
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 
     MatrixMap output_gradients = matrix_map(back_propagation.get_output_gradients());
 
-    const type epsilon = numeric_limits<type>::epsilon();
-
-    output_gradients.array() = (-targets.array() / (outputs.array() + epsilon) +
-                                   (1.0f - targets.array()) / (1.0f - outputs.array() + epsilon)
+    output_gradients.array() = (-targets.array() / (outputs.array() + EPSILON) +
+                                   (1.0f - targets.array()) / (1.0f - outputs.array() + EPSILON)
                                    ) / static_cast<type>(samples_number);
 }
 
@@ -133,15 +121,11 @@ void CrossEntropyError2d::calculate_multiple_output_gradients(const Batch& batch
 
     const Index samples_number = batch.get_samples_number();
 
-    const TensorView targets_view = batch.get_targets();
-
-    const MatrixMap targets = matrix_map(targets_view);
+    const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
 
-    const TensorView outputs_view = forward_propagation.get_last_trainable_layer_outputs();
-
-    const MatrixMap outputs = matrix_map(outputs_view);
+    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     // Back propagation
 
@@ -209,7 +193,7 @@ void CrossEntropyError2d::calculate_binary_error(const BatchCuda& batch,
 
     const cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = back_propagation.reduce_tensor_descriptor;
 
-    calculate_binary_cross_entropy_cuda(size, errors, targets, outputs, numeric_limits<type>::epsilon());
+    calculate_binary_cross_entropy_cuda(size, errors, targets, outputs, EPSILON);
 
     cudnnReduceTensor(get_cudnn_handle(),
                       reduce_tensor_descriptor,
@@ -261,7 +245,7 @@ void CrossEntropyError2d::calculate_multiple_error(const BatchCuda& batch,
     void* workspace = back_propagation.workspace;
     const size_t workspace_size = back_propagation.workspace_size;
 
-    calculate_multiple_cross_entropy_cuda(size, errors, targets, outputs, numeric_limits<type>::epsilon());
+    calculate_multiple_cross_entropy_cuda(size, errors, targets, outputs, EPSILON);
 
     const float alpha = 1.0f;
     const float beta = 0.0f;
@@ -317,7 +301,7 @@ void CrossEntropyError2d::calculate_binary_output_gradients(const BatchCuda& bat
 
     const type scaling_factor = 1.0f / static_cast<type>(samples_number);
 
-    calculate_binary_cross_entropy_delta_cuda(size, output_gradients, targets, outputs, numeric_limits<type>::epsilon(), scaling_factor);
+    calculate_binary_cross_entropy_delta_cuda(size, output_gradients, targets, outputs, EPSILON, scaling_factor);
 }
 
 

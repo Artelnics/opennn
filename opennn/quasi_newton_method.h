@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "loss_index.h"
-#include "optimization_algorithm.h"
+#include "loss.h"
+#include "optimizer.h"
 
 namespace opennn
 {
@@ -94,7 +94,7 @@ private:
 
     // Stopping criteria
 
-    type minimum_loss_decrease = NUMERIC_LIMITS_MIN;
+    type minimum_loss_decrease = EPSILON;
 
     type training_loss_goal;
 
@@ -116,7 +116,7 @@ struct Triplet
 
     type get_length() const;
 
-    pair<type, type> minimum() const;
+//    pair<type, type> minimum() const;
 
     string struct_to_string() const;
 

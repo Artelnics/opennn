@@ -8,7 +8,7 @@
 
 #include "registry.h"
 #include "neural_network.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
 
@@ -75,7 +75,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Loss index
 
-    type previous_validation_error = numeric_limits<type>::max();
+    type previous_validation_error = MAX;
 
     // Optimization algorithm
 
@@ -112,8 +112,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         // Loss index
 
-        type minimum_training_error = numeric_limits<type>::max();
-        type minimum_validation_error = numeric_limits<type>::max();
+        type minimum_training_error = MAX;
+        type minimum_validation_error = MAX;
 
         for(Index trial = 0; trial < trials_number; trial++)
         {

@@ -6,12 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "response_optimization.h"
+
 #include "pch.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 #include "statistics.h"
 #include "dataset.h"
 #include "neural_network.h"
-#include "response_optimization.h"
+#include "variable.h"
 
 namespace opennn
 {
@@ -175,11 +177,9 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
                 const type superior_frontier = domain.superior_frontier(feature_pointer);
                 const type range = superior_frontier - inferior_frontier;
 
-                const type epsilon = 1e-9;
+                objective_normalizer(0, current_objective_index) = 1.0 / (range < EPSILON ? EPSILON : range);
 
-                objective_normalizer(0, current_objective_index) = 1.0 / (range < epsilon ? epsilon : range);
-
-                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < epsilon ? epsilon : range);
+                objective_normalizer(1, current_objective_index) = -inferior_frontier / (range < EPSILON ? EPSILON : range);
 
                 if (current_condition.condition == ConditionType::Maximize)
                 {
@@ -264,7 +264,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     const Index inputs_features_number = input_domain.inferior_frontier.size();
 
     const vector<Index> input_indices = dataset->get_variable_indices("Input");
-    const vector<Dataset::VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
 
     const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
     const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
@@ -280,7 +280,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 
         if(categories_number == 1)
         {
-            if (input_variable_types[input_variable] == Dataset::VariableType::Binary)
+            if (input_variable_types[input_variable] == VariableType::Binary)
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
@@ -316,7 +316,7 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
                                            const VectorR& center,
                                            const MatrixR& optimal_points_inputs,
                                            const vector<Index>& input_feature_dimensions,
-                                           const vector<Dataset::VariableType>& input_variable_types)
+                                           const vector<VariableType>& input_variable_types)
 {
     VectorR categories_to_save = optimal_points_inputs.colwise().maxCoeff();
 
@@ -330,7 +330,7 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
     {
         const Index categories_number = input_feature_dimensions[input_variable];
 
-        if(categories_number == 1 && input_variable_types[input_variable] != Dataset::VariableType::Binary)
+        if(categories_number == 1 && input_variable_types[input_variable] != VariableType::Binary)
         {
             const type half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
             inferior_frontier(current_feature_index) = max(center(current_feature_index) - half_span, inferior_frontier(current_feature_index));
@@ -466,7 +466,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
     const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
 
-    const vector<Dataset::VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
 
     const Domain original_input_domain = get_original_domain("Input");
 
@@ -598,7 +598,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
         VectorR  distances = (objective_matrix.rowwise() - current_point).rowwise().squaredNorm();
 
-        distances(i) = numeric_limits<type>::max();
+        distances(i) = MAX;
 
         const type minimum_neighbor_distance = sqrt(distances.minCoeff());
 
@@ -628,7 +628,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
     const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
 
-    const vector<Dataset::VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
 
     const Domain original_input_domain = get_original_domain("Input");
 

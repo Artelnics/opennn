@@ -8,9 +8,9 @@
 
 #include "dataset.h"
 #include "neural_network.h"
-#include "optimization_algorithm.h"
+#include "optimizer.h"
 #include "training_strategy.h"
-#include "neurons_selection.h"
+#include "neuron_selection.h"
 
 namespace opennn
 {
@@ -234,8 +234,8 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
     validation_error_history.resize(maximum_epochs);
     validation_error_history.setConstant(type(-1));
 
-    optimum_training_error = numeric_limits<type>::max();
-    optimum_validation_error = numeric_limits<type>::max();
+    optimum_training_error = MAX;
+    optimum_validation_error = MAX;
 }
 
 

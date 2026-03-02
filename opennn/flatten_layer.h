@@ -9,7 +9,7 @@
 #pragma once
 
 #include "layer.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -269,10 +269,8 @@ struct FlattenBackPropagation final : LayerBackPropagation
     }
 
     void print() const override
-    {
-        /*
+    {        
         cout << "Flatten Deltas Dimensions:" << endl << input_gradients[0].shape << endl;
-*/
     }
 };
 

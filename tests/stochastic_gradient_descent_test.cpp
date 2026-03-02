@@ -30,7 +30,7 @@ TEST(StochasticGradientDescentTest, Train)
     MeanSquaredError mean_squared_error;
     StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
 
-    type old_error = numeric_limits<float>::max();
+    type old_error = MAX;
 
     type error = 0;
 
@@ -95,7 +95,7 @@ TEST(StochasticGradientDescentTest, Train)
 TEST(StochasticGradientDescentTest, TrainTransformer)
 {
 
-    type old_error = numeric_limits<float>::max();
+    type old_error = MAX;
 
     type error = 0;
 
@@ -133,7 +133,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     transformer.set({ inputs_number, context_length, input_shape, context_dimension,
                         depth, dense_depth, heads_number, layers_number });
 
-    stochastic_gradient_descent.set_loss_goal(NUMERIC_LIMITS_MIN);
+    stochastic_gradient_descent.set_loss_goal(EPSILON);
 
     // Test
 

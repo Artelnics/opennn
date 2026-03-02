@@ -28,11 +28,6 @@ public:
                       bool = false,
                       const Codification& = Codification::UTF8);
 
-    struct TimeSeriesData {
-        Tensor3 inputs;
-        Tensor2 targets;
-    };
-
     void fill_gaps();
 
     Index get_past_time_steps() const;
@@ -40,8 +35,7 @@ public:
 
     Index get_time_variable_index() const;
 
-    TimeSeriesData get_data() const;
-    Tensor3 get_data(const string& sample_role, const string& feature_use) const;
+    Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
@@ -70,9 +64,6 @@ public:
                             const vector<Index>&,
                             type*,
                             bool = true) const override;
-
-    vector<vector<Index>> get_batches(const vector<Index>&, Index, bool) const override;
-
 
 private:
 

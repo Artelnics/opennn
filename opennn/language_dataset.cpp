@@ -7,9 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "language_dataset.h"
-#include "strings_utilities.h"
+#include "string_utilities.h"
 #include "random_utilities.h"
-#include "tensors.h"
+#include "tensor_utilities.h"
 
 namespace opennn
 {
@@ -48,8 +48,8 @@ LanguageDataset::LanguageDataset(const Index samples_number,
         variable.name = "variable_" + to_string(i + 1);
 
         variable.role = (i < input_sequence_length)
-                               ? "Input"
-                               : "Target";
+            ? "Input"
+            : "Target";
     }
 
     sample_roles.resize(samples_number);
@@ -161,35 +161,38 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 }
 
 
-void LanguageDataset::encode_input_data(const vector<vector<string>>& input_document_tokens)
+void LanguageDataset::encode_input(const vector<vector<string>>& input_document_tokens)
 {
     const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
-
     const Index samples_number = get_samples_number();
 
     #pragma omp parallel for
 
     for(Index sample = 0; sample < samples_number; sample++)
     {
-        data(sample, 0) = 2; // start
+        data(sample, 0) = START_INDEX;
 
         const vector<string>& input_tokens = input_document_tokens[sample];
-
         const size_t input_tokens_number = input_tokens.size();
 
-        for(size_t variable = 0; variable < input_tokens_number; variable++)
+        for(size_t i = 0; i < input_tokens_number; i++)
         {
-            auto it = find(input_vocabulary.begin(), input_vocabulary.end(), input_tokens[variable]);
+            if (1 + i >= (size_t)maximum_input_sequence_length) break;
 
-            data(sample, 1+variable) = (it != input_vocabulary.end()) ? it - input_vocabulary.begin() : 1;
+            const auto it = input_vocabulary_map.find(input_tokens[i]);
+
+            data(sample, 1 + i) = (it != input_vocabulary_map.end())
+                ? static_cast<type>(it->second)
+                : UNK_INDEX;
         }
 
-        data(sample, input_tokens_number + 1) = 3; // end
+        if (1 + input_tokens_number < (size_t)maximum_input_sequence_length)
+            data(sample, 1 + input_tokens_number) = END_INDEX;
     }
 }
 
 
-void LanguageDataset::encode_target_data(const vector<vector<string>>& target_document_tokens)
+void LanguageDataset::encode_target_classification(const vector<vector<string>>& target_document_tokens)
 {
     if(maximum_target_sequence_length == 1 && target_vocabulary.size() < 6)
         throw logic_error("Encode target data: Invalid case");
@@ -267,19 +270,6 @@ void LanguageDataset::encode_target_data(const vector<vector<string>>& target_do
     }
 }
 
-
-Shape LanguageDataset::get_input_shape() const
-{
-    return Shape({get_input_vocabulary_size(), get_maximum_input_sequence_length()});
-}
-
-
-Shape LanguageDataset::get_target_shape() const
-{
-    return Shape({get_features_number("Target")});
-}
-
-
 // @todo add "decoder variables"
 
 void LanguageDataset::read_csv()
@@ -346,14 +336,12 @@ void LanguageDataset::read_csv()
              [](auto& variable) {variable.role = "Target";});
 
     for(Index i = 0; i < maximum_input_sequence_length; i++)
-    {
         variables[i].name = "token_" + to_string(i+1);
-    }
 
     // set data
 
-    encode_input_data(input_document_tokens);
-    encode_target_data(target_document_tokens);
+    encode_input(input_document_tokens);
+    encode_target_classification(target_document_tokens);
 
     sample_roles.resize(samples_number);
 
@@ -370,7 +358,7 @@ void LanguageDataset::read_csv()
 }
 
 
-unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>&vocabulary)
+unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
 {
     unordered_map<string, Index> vocabulary_map;
 
@@ -516,8 +504,8 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
         << ") does not match file lines (" << input_docs_tokens.size() << ")." << endl;
     }
 
-    encode_input_data(input_docs_tokens);
-    encode_target_data(target_docs_tokens);
+    encode_input(input_docs_tokens);
+    encode_target_classification(target_docs_tokens);
 }
 
 

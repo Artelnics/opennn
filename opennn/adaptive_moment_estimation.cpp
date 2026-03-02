@@ -15,33 +15,40 @@ namespace opennn
 {
 
 template <typename T>
-class ThreadSafeQueue {
+class ThreadSafeQueue
+{
 private:
-    std::queue<T> queue_;
-    std::mutex mutex_;
-    std::condition_variable cond_;
+
+    queue<T> queue_;
+    mutex mutex_;
+    condition_variable cond_;
 
 public:
-    void push(T item) {
-        std::unique_lock<std::mutex> lock(mutex_);
+
+    void push(T item)
+    {
+        unique_lock<mutex> lock(mutex_);
         queue_.push(item);
         lock.unlock();
         cond_.notify_one();
     }
 
-    T pop() {
-        std::unique_lock<std::mutex> lock(mutex_);
+    T pop()
+    {
+        unique_lock<mutex> lock(mutex_);
         cond_.wait(lock, [this]() { return !queue_.empty(); });
         T item = queue_.front();
         queue_.pop();
         return item;
     }
 
-    bool empty() {
-        std::lock_guard<std::mutex> lock(mutex_);
+    bool empty()
+    {
+        lock_guard<mutex> lock(mutex_);
         return queue_.empty();
     }
 };
+
 
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const Loss* new_loss)
     : Optimizer(new_loss)
@@ -94,7 +101,7 @@ void AdaptiveMomentEstimation::set_beta_1(const type new_beta_1)
 
 void AdaptiveMomentEstimation::set_beta_2(const type new_beta_2)
 {
-    beta_2= new_beta_2;
+    beta_2 = new_beta_2;
 }
 
 
@@ -176,8 +183,8 @@ TrainingResults AdaptiveMomentEstimation::train()
     const Index training_batch_size = min(training_samples_number, batch_size);
 
     const Index validation_batch_size = (validation_samples_number != 0)
-                                         ? min(validation_samples_number, batch_size)
-                                         : 0;
+        ? min(validation_samples_number, batch_size)
+        : 0;
 
     const Index training_batches_number = (training_batch_size != 0)
         ? training_samples_number / training_batch_size
@@ -419,7 +426,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     {"Learning rate", to_string(double(learning_rate))},
     {"Beta 1", to_string(double(beta_1))},
     {"Beta 2", to_string(double(beta_2))},
-    {"Epsilon", to_string(numeric_limits<type>::epsilon())},
     {"Training loss goal", to_string(double(training_loss_goal))},
     {"Maximum epochs number", to_string(maximum_epochs)},
     {"Maximum time", write_time(maximum_time)},
@@ -450,7 +456,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();
 
     parameters.array() -= learning_rate * (gradient_exponential_decay.array() / bias_correction_1) /
-                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + numeric_limits<type>::epsilon());
+                          ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
 }
 
 
@@ -826,7 +832,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propa
         beta_1,
         beta_2,
         learning_rate,
-        numeric_limits<float>::epsilon(),
+        EPSILON,
         bias_correction_1,
         bias_correction_2);
 }

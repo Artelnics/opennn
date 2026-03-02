@@ -55,7 +55,7 @@ TEST(QuasiNewtonMethodTest, BFGS_Update)
     optimization_data.parameter_differences = parameters_next - parameters_k;
     optimization_data.gradient_difference = gradient_next - gradient_k;
 
-    set_identity(optimization_data.old_inverse_hessian);
+    optimization_data.old_inverse_hessian.setIdentity();
 
     quasi_newton_method.calculate_inverse_hessian(optimization_data);
 
@@ -93,7 +93,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
-    type old_error = numeric_limits<float>::max();
+    type old_error = MAX;
     type error;
 
     dataset.set_data_random();
