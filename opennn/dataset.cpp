@@ -197,8 +197,7 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
 Index Dataset::get_samples_number(const string& sample_role) const
 {
-    return count_if(sample_roles.begin(), sample_roles.end(),
-                    [&sample_role](const string& new_sample_role) { return new_sample_role == sample_role; });
+    return count(sample_roles.begin(), sample_roles.end(), sample_role);
 }
 
 
@@ -4427,13 +4426,13 @@ MatrixR BatchCuda::get_targets_from_device() const
 
 vector<TensorViewCuda> BatchCuda::get_inputs_device() const
 {
-    return {{inputs_device.data, nullptr}};
+    return { inputs_device.view() };
 }
 
 
 TensorViewCuda BatchCuda::get_targets_device() const
 {
-    return {targets_device.data , nullptr};
+    return { targets_device.view() };
 }
 
 

@@ -1093,24 +1093,24 @@ public:
         if (activation_function == "Linear")
             cudaMemcpy(outputs.data, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
         else if (activation_function == "Softmax")
-            cudnnSoftmaxForward(get_cudnn_handle(),
+            CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                 CUDNN_SOFTMAX_ACCURATE,
                                 CUDNN_SOFTMAX_MODE_CHANNEL,
                                 &alpha,
                                 output_softmax_tensor_descriptor,
-                                combinations,
+                                outputs_buffer,
                                 &beta,
                                 output_softmax_tensor_descriptor,
-                                outputs.data);
+                                outputs.data));
         else
-            cudnnActivationForward(get_cudnn_handle(),
+            CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
                                    activation_descriptor,
                                    &alpha,
                                    outputs.get_descriptor(),
                                    outputs_buffer,
                                    &beta,
                                    outputs.get_descriptor(),
-                                   outputs.data);
+                                   outputs.data));
 
         // Droput
 

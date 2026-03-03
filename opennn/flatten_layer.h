@@ -189,10 +189,10 @@ public:
             type* reordered_inputs = layer_forward_propagation->reordered_inputs.data;
             type* outputs_device = layer_forward_propagation->outputs.data;
 
-            invert_reorder_inputs_cuda(inputs[0].data, reordered_inputs,
-                                       batch_size, channels, height, width);
+            //invert_reorder_inputs_cuda(inputs[0].data, reordered_inputs,
+            //                           batch_size, channels, height, width);
 
-            reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);
+            reorganize_inputs_cuda(inputs[0].data, outputs_device, batch_size, outputs_number);
         }
         else
             CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,

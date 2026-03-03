@@ -395,7 +395,7 @@ Index count_NAN(const TensorR<rank>& x)
     return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
 }
 
-Index count_between(const VectorR&, type, type);
+//Index count_between(const VectorR&, type, type);
 
 Index count_greater_than(const vector<Index>&, Index);
 

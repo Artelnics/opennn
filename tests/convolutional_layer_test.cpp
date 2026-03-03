@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/convolutional_layer.h"
-#include "../opennn/tensors.h"
+#include "../opennn/tensor_utilities.h"
 
 using namespace opennn;
 
