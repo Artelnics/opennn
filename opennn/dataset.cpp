@@ -355,7 +355,7 @@ void Dataset::set_variables(const vector<Variable>& new_variables)
 }
 
 
-void Dataset::set_default_variables_roles()
+void Dataset::set_default_variable_roles()
 {
     const Index variables_number = variables.size();
 
@@ -1373,9 +1373,9 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     read_csv();
 
-    set_default_variables_scalers();
+    set_default_variable_scalers();
 
-    set_default_variables_roles();
+    set_default_variable_roles();
 
     missing_values_method = MissingValuesMethod::Unuse;
 
@@ -2324,7 +2324,7 @@ VectorI Dataset::calculate_correlations_rank() const
 
 
 
-void Dataset::set_default_variables_scalers()
+void Dataset::set_default_variable_scalers()
 {
     for(Variable& variable : variables)
         variable.scaler = (variable.type == VariableType::Numeric)
