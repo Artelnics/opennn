@@ -95,7 +95,7 @@ private:
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_validation_failures = MAX;
+   Index maximum_validation_failures = MAX_INDEX;
 
    Index batch_size = 1000;
 

@@ -134,6 +134,7 @@ using type = float;
 namespace opennn {
 constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
+constexpr type MAX_INDEX = numeric_limits<Index>::max();
 }
 
 
