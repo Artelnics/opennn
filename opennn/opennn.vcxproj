@@ -38,7 +38,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <ProfileGuidedOptimization>Disabled</ProfileGuidedOptimization>
     <CodeCoverageOperations>Disabled</CodeCoverageOperations>
     <UseInteloneMKL>No</UseInteloneMKL>
@@ -144,7 +144,7 @@
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include;C:\Users\Roberto Lopez\Documents\opennn_cuda\opennn_cuda;C:\Program Files\NVIDIA\CUDNN\v9.0\include\12.3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <CCppSupport>Cpp17Support</CCppSupport>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -164,6 +164,8 @@
     </Midl>
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <AdditionalDependencies>cudnn.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
@@ -251,13 +253,12 @@
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="dataset.h" />
     <ClInclude Include="dense_layer.h" />
-    <ClInclude Include="dense_layer_3d.h" />
-    <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="image_dataset.h" />
+    <ClInclude Include="image_utilities.h" />
     <ClInclude Include="language_dataset.h" />
-    <ClInclude Include="layer_back_propagation.h" />
-    <ClInclude Include="layer_back_propagation_lm.h" />
+    <ClInclude Include="loss.h" />
     <ClInclude Include="model_expression.h" />
+    <ClInclude Include="neuron_selection.h" />
     <ClInclude Include="normalization_layer_3d.h" />
     <ClInclude Include="normalized_squared_error.h" />
     <ClInclude Include="convolutional_layer.h" />
@@ -268,11 +269,9 @@
     <ClCompile Include="cross_entropy_error.cpp" />
     <ClInclude Include="cross_entropy_error_3d.h" />
     <ClCompile Include="cross_entropy_error_3d.cpp" />
-    <ClInclude Include="descriptives.h" />
     <ClInclude Include="embedding_layer.h" />
     <ClCompile Include="dataset.cpp" />
     <ClCompile Include="dense_layer.cpp" />
-    <ClCompile Include="dense_layer_3d.cpp" />
     <ClCompile Include="embedding_layer.cpp" />
     <ClInclude Include="flatten_layer.h" />
     <ClCompile Include="flatten_layer.cpp" />
@@ -285,6 +284,7 @@
     <ClInclude Include="histogram.h" />
     <ClInclude Include="inputs_selection.h" />
     <ClCompile Include="image_dataset.cpp" />
+    <ClCompile Include="image_utilities.cpp" />
     <ClCompile Include="inputs_selection.cpp" />
     <ClInclude Include="kmeans.h" />
     <ClCompile Include="kmeans.cpp" />
@@ -293,9 +293,8 @@
     <ClCompile Include="layer.cpp" />
     <ClInclude Include="levenberg_marquardt_algorithm.h" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
-    <ClInclude Include="loss_index.h" />
-    <ClCompile Include="loss_index.cpp" />
     <ClInclude Include="mean_squared_error.h" />
+    <ClCompile Include="loss.cpp" />
     <ClCompile Include="mean_squared_error.cpp" />
     <ClInclude Include="minkowski_error.h" />
     <ClCompile Include="minkowski_error.cpp" />
@@ -307,33 +306,29 @@
     <ClInclude Include="neural_network.h" />
     <ClCompile Include="neural_network.cpp" />
     <ClInclude Include="neural_network_back_propagation.h" />
-    <ClInclude Include="neurons_selection.h" />
-    <ClCompile Include="neurons_selection.cpp" />
+    <ClCompile Include="neuron_selection.cpp" />
     <ClCompile Include="normalization_layer_3d.cpp" />
     <ClCompile Include="normalized_squared_error.cpp" />
-    <ClInclude Include="images.h" />
-    <ClCompile Include="images.cpp" />
+    <ClInclude Include="opennn.h" />
+    <ClInclude Include="optimizer.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="pooling_layer_3d.h" />
     <ClInclude Include="random_utilities.h" />
     <ClInclude Include="registry.h" />
     <ClInclude Include="standard_networks.h" />
-    <ClInclude Include="strings_utilities.h" />
+    <ClCompile Include="optimizer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="pooling_layer_3d.cpp" />
     <ClCompile Include="random_utilities.cpp" />
     <ClCompile Include="registry.cpp" />
     <ClCompile Include="standard_networks.cpp" />
-    <ClCompile Include="strings_utilities.cpp" />
-    <ClInclude Include="optimization_algorithm.h" />
-    <ClCompile Include="optimization_algorithm.cpp" />
     <ClInclude Include="pooling_layer.h" />
     <ClCompile Include="pooling_layer.cpp" />
-    <ClInclude Include="probabilistic_layer_3d.h" />
-    <ClCompile Include="probabilistic_layer_3d.cpp" />
     <ClInclude Include="quasi_newton_method.h" />
     <ClCompile Include="quasi_newton_method.cpp" />
     <ClInclude Include="recurrent_layer.h" />
@@ -348,9 +343,11 @@
     <ClCompile Include="statistics.cpp" />
     <ClInclude Include="stochastic_gradient_descent.h" />
     <ClCompile Include="stochastic_gradient_descent.cpp" />
-    <ClInclude Include="tensors.h" />
-    <ClCompile Include="tensors.cpp" />
+    <ClInclude Include="string_utilities.h" />
+    <ClInclude Include="tensor_utilities.h" />
     <ClInclude Include="testing_analysis.h" />
+    <ClCompile Include="string_utilities.cpp" />
+    <ClCompile Include="tensor_utilities.cpp" />
     <ClCompile Include="testing_analysis.cpp" />
     <ClInclude Include="time_series_dataset.h" />
     <ClInclude Include="tinyxml2.h" />
@@ -363,13 +360,11 @@
     </ClCompile>
     <ClInclude Include="training_strategy.h" />
     <ClCompile Include="training_strategy.cpp" />
-    <ClInclude Include="transformer.h" />
-    <ClCompile Include="transformer.cpp" />
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
-    <ClInclude Include="vgg16.h" />
+    <ClInclude Include="variable.h" />
     <ClInclude Include="weighted_squared_error.h" />
-    <ClCompile Include="vgg16.cpp" />
+    <ClCompile Include="variable.cpp" />
     <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>
   <ItemGroup>
