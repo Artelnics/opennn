@@ -180,11 +180,6 @@ public:
 
     void add_regularization_cuda(BackPropagationCuda&) const;
 
-protected:
-
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-
 #endif
 
     void print(){}

@@ -758,6 +758,9 @@ inline bool are_equal(const VectorR& A,
 
 #ifdef OPENNN_CUDA
 
+inline const float alpha_one = 1.0f;
+inline const float beta_zero = 0.0f;
+
 struct TensorViewCuda
 {
     float* data = nullptr;
@@ -859,6 +862,14 @@ struct TensorCuda
         if (data) cudaFree(data);
         CHECK_CUDA(cudaMalloc(&data, bytes));
         CHECK_CUDA(cudaMemset(data, 0, bytes));
+    }
+
+    void fill(float value) 
+    {
+        if (value == 0.0f) 
+            CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
+        else 
+            CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
     }
 
     void set_descriptor(const Shape& shape)

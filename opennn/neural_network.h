@@ -280,14 +280,11 @@ protected:
 
     string name = "neural_network";
 
-//    vector<string> input_names;
-//    vector<string> output_names;
-
     vector<Variable> input_variables;
     vector<Variable> output_variables;
 
-    vector<string> input_vocabulary;
-    vector<string> output_vocabulary;
+//    vector<string> input_vocabulary;
+//    vector<string> output_vocabulary;
 
     vector<unique_ptr<Layer>> layers;
 
@@ -336,7 +333,7 @@ struct NeuralNetworkBackPropagationCuda
 
     const vector<unique_ptr<LayerBackPropagationCuda>>& get_layers() const;
 
-    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+    vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
     void print();
 
@@ -348,7 +345,7 @@ struct NeuralNetworkBackPropagationCuda
 
     vector<unique_ptr<LayerBackPropagationCuda>> layers;
 
-    TensorCuda workspace;
+    TensorCuda gradients;
 };
 
 #endif

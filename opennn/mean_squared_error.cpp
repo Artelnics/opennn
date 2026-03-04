@@ -172,10 +172,10 @@ void MeanSquaredError::calculate_error(const BatchCuda& batch,
                   &alpha_minus_one,
                   output_tensor_descriptor,
                   targets,
-                  &alpha,
+                  &alpha_one,
                   output_tensor_descriptor,
                   outputs.data,
-                  &beta,
+                  &beta_zero,
                   output_tensor_descriptor,
                   errors_device);
 

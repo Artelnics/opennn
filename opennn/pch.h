@@ -110,7 +110,6 @@ constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
 }
 
-
 constexpr int Layout = Eigen::RowMajor;
 
 using MatrixR = Matrix<type, Dynamic, Dynamic, Layout>;

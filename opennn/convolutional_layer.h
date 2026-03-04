@@ -247,23 +247,14 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    // @todo remove this because it can be get from layer
-//    int output_batch_size, output_channels, output_height, output_width = 0;
-
-    TensorCuda reordered_inputs_device;
-
+    TensorCuda reordered_inputs;
     TensorCuda convolutions;
-    TensorCuda batch_means;
+    TensorCuda means;
     TensorCuda bn_saved_inv_variance;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
-
-    void* workspace = nullptr;
-    size_t workspace_bytes = 0;
-
-    bool is_first_layer = false;
 };
 
 
@@ -273,7 +264,7 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     void initialize() override;
 
-    vector<TensorViewCuda*> get_workspace_views() override;
+    vector<TensorViewCuda*> get_gradient_views() override;
 
     void print() const override;
 
@@ -282,9 +273,10 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     TensorViewCuda bias_gradients;
     TensorViewCuda weight_gradients;
 
-    void* backward_data_workspace = nullptr;
-    void* backward_filter_workspace = nullptr;
-    size_t backward_data_workspace_bytes = 0;
+    TensorViewCuda gamma_gradients;
+    TensorViewCuda beta_gradients;
+
+    void* backward_filter_workspace = nullptr;   
     size_t backward_filter_workspace_bytes = 0;
 
     cudnnTensorDescriptor_t gradients_tensor_descriptor = nullptr;
@@ -292,8 +284,6 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     cudnnConvolutionBwdDataAlgo_t algo_data;
     cudnnConvolutionBwdFilterAlgo_t algo_filter;
 
-    TensorViewCuda gamma_gradients;
-    TensorViewCuda beta_gradients;
 };
 
 #endif

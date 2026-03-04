@@ -876,8 +876,8 @@ void ConvolutionalBackPropagation::print() const
 #ifdef OPENNN_CUDA
 
 void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                           bool is_training)
+                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                                      bool is_training)
 {
     // Forward propagation
 
@@ -896,9 +896,9 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
     float* outputs_buffer = use_convolutions() ? convolutions.data : outputs.data;
     cudnnTensorDescriptor_t current_output_descriptor = use_convolutions() ? convolutions.get_descriptor() : outputs.get_descriptor();
 
-    if (convolutional_forward_propagation->is_first_layer)
+    if (is_first_layer)
     {
-        type* reordered_inputs_data = convolutional_forward_propagation->reordered_inputs_device.data;
+        type* reordered_inputs_data = convolutional_forward_propagation->reordered_inputs.data;
 
         reorder_inputs_cuda(inputs[0].data, reordered_inputs_data, batch_size, get_input_channels(), get_input_height(), get_input_width());
 
@@ -917,7 +917,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
             convolution_descriptor,
             convolutional_forward_propagation->convolution_algorithm,
             convolutional_forward_propagation->workspace,
-            convolutional_forward_propagation->workspace_bytes,
+            convolutional_forward_propagation->workspace_size,
             &beta,
             current_output_descriptor,
             outputs.data,
@@ -938,7 +938,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
             convolution_descriptor,
             convolutional_forward_propagation->convolution_algorithm,
             convolutional_forward_propagation->workspace,
-            convolutional_forward_propagation->workspace_bytes,
+            convolutional_forward_propagation->workspace_size,
             &beta,
             current_output_descriptor,
             outputs_buffer));
@@ -971,7 +971,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
                 running_means_device.data,
                 running_variances_device.data,
                 CUDNN_BN_MIN_EPSILON,
-                convolutional_forward_propagation->batch_means.data,
+                convolutional_forward_propagation->means.data,
                 convolutional_forward_propagation->bn_saved_inv_variance.data));
         else if (batch_normalization && !is_training)
             CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
@@ -1029,10 +1029,10 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
     ConvolutionalBackPropagationCuda* convolutional_back_propagation
         = static_cast<ConvolutionalBackPropagationCuda*>(back_propagation.get());
 
-    void* backward_data_workspace = convolutional_back_propagation->backward_data_workspace;
-    void* backward_filter_workspace = convolutional_back_propagation->backward_filter_workspace;
+    void* workspace = back_propagation->workspace;
+    const size_t workspace_size = convolutional_back_propagation->workspace_size;
 
-    const size_t backward_data_workspace_bytes = convolutional_back_propagation->backward_data_workspace_bytes;
+    void* backward_filter_workspace = convolutional_back_propagation->backward_filter_workspace;
     const size_t backward_filter_workspace_bytes = convolutional_back_propagation->backward_filter_workspace_bytes;
 
     type* weight_gradients = convolutional_back_propagation->weight_gradients.data;
@@ -1075,7 +1075,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
             convolutional_back_propagation->gamma_gradients.data,
             convolutional_back_propagation->beta_gradients.data,
             CUDNN_BN_MIN_EPSILON,
-            convolutional_forward_propagation->batch_means.data,
+            convolutional_forward_propagation->means.data,
             convolutional_forward_propagation->bn_saved_inv_variance.data));
 
     // Convolution backwards for Weights derivatives
@@ -1113,7 +1113,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
                                  output_gradients[0].data,
                                  convolution_descriptor,
                                  convolutional_back_propagation->algo_data,
-                                 backward_data_workspace, backward_data_workspace_bytes,
+                                 workspace, workspace_size,
                                  &beta,
                                  input_tensor_descriptor, input_gradients.data);
 }
@@ -1173,13 +1173,10 @@ void ConvolutionalForwardPropagationCuda::initialize()
 
     string layer_label = convolutional_layer->get_label();
 
-    if(!layer_label.empty() && layer_label.substr(layer_label.length() - 2) == "_1")
-        is_first_layer = true;
-
     // Inputs
 
-    if (is_first_layer)
-        reordered_inputs_device.resize({ batch_size, channels, input_height, input_width });
+    if (layer->get_is_first_layer())
+        reordered_inputs.resize({ batch_size, channels, input_height, input_width });
 
     cudnnCreateTensorDescriptor(&input_tensor_descriptor);
 
@@ -1230,7 +1227,7 @@ void ConvolutionalForwardPropagationCuda::initialize()
     {
         Shape batch_normalization_dims = { 1, kernels_number, 1, 1 };
 
-        batch_means.resize(batch_normalization_dims);
+        means.resize(batch_normalization_dims);
         bn_saved_inv_variance.resize(batch_normalization_dims);
     }
 }
@@ -1248,9 +1245,6 @@ void ConvolutionalForwardPropagationCuda::print() const
 
 void ConvolutionalForwardPropagationCuda::free()
 {
-    cudaFree(workspace);
-    workspace = nullptr;
-
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
 }
 
@@ -1340,7 +1334,7 @@ void ConvolutionalBackPropagationCuda::initialize()
                                                  convolutional_layer->get_convolution_descriptor(),
                                                  input_gradients[0].get_descriptor(),
                                                  algo_data,
-                                                 &backward_data_workspace_bytes);
+                                                 &workspace_size);
 
     cudnnGetConvolutionBackwardFilterWorkspaceSize(get_cudnn_handle(),
                                                    input_gradients[0].get_descriptor(),
@@ -1352,7 +1346,7 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     // Workspace memory
 
-    CHECK_CUDA(cudaMalloc(&backward_data_workspace, backward_data_workspace_bytes));
+    CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
 
     CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes));
 
@@ -1366,7 +1360,7 @@ void ConvolutionalBackPropagationCuda::initialize()
 }
 
 
-vector<TensorViewCuda*> ConvolutionalBackPropagationCuda::get_workspace_views()
+vector<TensorViewCuda*> ConvolutionalBackPropagationCuda::get_gradient_views()
 {
     vector<TensorViewCuda*> views = { &bias_gradients, &weight_gradients };
 
@@ -1403,10 +1397,7 @@ void ConvolutionalBackPropagationCuda::print() const
 
 void ConvolutionalBackPropagationCuda::free()
 {
-    cudaFree(backward_data_workspace);
     cudaFree(backward_filter_workspace);
-
-    backward_data_workspace = nullptr;
     backward_filter_workspace = nullptr;
 
     cudnnDestroyTensorDescriptor(gradients_tensor_descriptor);

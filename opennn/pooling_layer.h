@@ -108,9 +108,9 @@ public:
                                 bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,
-                             const vector<TensorViewCuda>&,
-                             unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+                        const vector<TensorViewCuda>&,
+                        unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
 
 #endif
 
