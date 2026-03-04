@@ -181,9 +181,7 @@ void MeanSquaredError::calculate_error(const BatchCuda& batch,
 
     CHECK_CUBLAS(cublasSdot(get_cublas_handle(), samples_number * outputs_number, errors_device, 1, errors_device, 1, &error));
 
-    const type coefficient = type(1.0)/type(samples_number * outputs_number);
-
-    error *= coefficient;
+    error /= type(samples_number * outputs_number);
 
     if (isnan(error)) throw runtime_error("\nError is NAN.");
 }
