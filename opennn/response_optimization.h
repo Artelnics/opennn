@@ -94,6 +94,8 @@ public:
 
     Domain get_original_domain(const string role) const;
 
+    Condition get_condition(const Index index) const;
+
     MatrixR calculate_random_inputs(const Domain& input_domain) const;
 
     pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,

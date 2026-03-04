@@ -197,8 +197,7 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
 Index Dataset::get_samples_number(const string& sample_role) const
 {
-    return count_if(sample_roles.begin(), sample_roles.end(),
-                    [&sample_role](const string& new_sample_role) { return new_sample_role == sample_role; });
+    return count(sample_roles.begin(), sample_roles.end(), sample_role);
 }
 
 
@@ -356,7 +355,7 @@ void Dataset::set_variables(const vector<Variable>& new_variables)
 }
 
 
-void Dataset::set_default_variables_roles()
+void Dataset::set_default_variable_roles()
 {
     const Index variables_number = variables.size();
 
@@ -1374,9 +1373,9 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     read_csv();
 
-    set_default_variables_scalers();
+    set_default_variable_scalers();
 
-    set_default_variables_roles();
+    set_default_variable_roles();
 
     missing_values_method = MissingValuesMethod::Unuse;
 
@@ -1604,9 +1603,9 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
     const Index new_input_variables_number = get_features_number("Input");
     const Index new_target_variables_number = get_features_number("Target");
 
-    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
-    if(ts_dataset)
-        set_shape("Input", {ts_dataset->get_past_time_steps(), new_input_variables_number});
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(this);
+    if(time_series_dataset)
+        set_shape("Input", {time_series_dataset->get_past_time_steps(), new_input_variables_number});
     else
         set_shape("Input", {new_input_variables_number});
 
@@ -2325,7 +2324,7 @@ VectorI Dataset::calculate_correlations_rank() const
 
 
 
-void Dataset::set_default_variables_scalers()
+void Dataset::set_default_variable_scalers()
 {
     for(Variable& variable : variables)
         variable.scaler = (variable.type == VariableType::Numeric)
