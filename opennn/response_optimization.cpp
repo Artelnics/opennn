@@ -129,6 +129,11 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
     return original_domain;
 }
 
+ResponseOptimization::Condition ResponseOptimization::get_condition(const Index index) const
+{
+    return conditions[index];
+}
+
 
 ResponseOptimization::Objectives::Objectives(const ResponseOptimization& response_optimization)
 {
