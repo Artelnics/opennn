@@ -102,6 +102,11 @@ public:
                               const Shape& complexity_dimensions,
                               const Shape& output_shape,
                               const vector<string>& new_input_vocabulary = vector<string>());
+
+private:
+
+    vector<string> input_vocabulary;
+    vector<string> output_vocabulary;
 };
 
 
@@ -139,6 +144,9 @@ public:
     string calculate_outputs(const string&);
 
 private:
+
+    vector<string> input_vocabulary;
+    vector<string> output_vocabulary;
 
     unordered_map<string, Index> input_vocabulary_map;
     unordered_map<Index, string> output_inverse_vocabulary_map;

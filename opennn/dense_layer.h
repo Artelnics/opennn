@@ -194,12 +194,12 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
         set(new_batch_size, new_layer);
     }
 
-
     void initialize() override
     {
         const Index outputs_number = layer->get_output_shape().back();
 
         Index total_rows = batch_size;
+
         if constexpr (Rank == 3)
             total_rows *= layer->get_input_shape()[0];
 
@@ -213,6 +213,7 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
         
         if (dense_layer->use_combinations)
             combinations.resize({ total_rows, outputs_number, 1, 1 });
+
         outputs.set_descriptor({ total_rows, outputs_number, 1, 1});
 
         if (dense_layer->get_dropout_rate() > 0)
@@ -227,10 +228,10 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         if (dense_layer->get_batch_normalization())
         {
-            Shape batch_normalization_dims = { 1, outputs_number, 1, 1 };
+            const Shape batch_normalization_shape = { 1, outputs_number, 1, 1 };
 
-            batch_means.resize(batch_normalization_dims);
-            bn_saved_inv_variance.resize(batch_normalization_dims);
+            means.resize(batch_normalization_shape);
+            bn_saved_inv_variance.resize(batch_normalization_shape);
         }
     }
 
@@ -254,14 +255,15 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
     // Batch normalization
 
-    TensorCuda batch_means;
+    TensorCuda means;
     TensorCuda bn_saved_inv_variance;
 
     // Dropout
 
-    void* dropout_states = nullptr;
-    size_t dropout_states_size = 0;    
     unsigned long long dropout_seed;
+
+    void* dropout_states = nullptr;
+    size_t dropout_states_size = 0;
 
     void* dropout_reserve_space = nullptr;
     size_t dropout_reserve_space_size = 0;
@@ -286,9 +288,8 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         if constexpr (Rank == 3)
             total_rows *= layer->get_input_shape()[0];
 
-        CHECK_CUDA(cudaMalloc(&ones, total_rows * sizeof(float)));
-        vector<float> ones_host(total_rows, 1.0f);
-        CHECK_CUDA(cudaMemcpy(ones, ones_host.data(), total_rows * sizeof(float), cudaMemcpyHostToDevice));
+        ones.resize({total_rows});
+        ones.initialize(1.0f);
 
         input_gradients.resize(1);
         input_gradients[0].resize({ 1, inputs_number, total_rows, 1 });
@@ -308,7 +309,7 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         }
     }
 
-    vector<TensorViewCuda*> get_workspace_views() override
+    vector<TensorViewCuda*> get_gradient_views() override
     {
         vector<TensorViewCuda*> views = { &bias_gradients, &weight_gradients};
 
@@ -323,9 +324,6 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override
     {
-        cudaFree(ones);
-        ones = nullptr;
-
         cudnnDestroyTensorDescriptor(gradients_tensor_descriptor);
         gradients_tensor_descriptor = nullptr;
     }
@@ -333,10 +331,11 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
     TensorViewCuda bias_gradients;
     TensorViewCuda weight_gradients;
 
-    float* ones = nullptr;
-
     TensorViewCuda gamma_gradients;
     TensorViewCuda beta_gradients;
+
+    TensorCuda ones;
+
     cudnnTensorDescriptor_t gradients_tensor_descriptor = nullptr;
 };
 
@@ -737,7 +736,7 @@ public:
         weight_gradients.noalias() = inputs.transpose() * delta;
         bias_gradients.array() = delta.colwise().sum();
 
-        if(!dense_back_propagation->is_first_layer)
+        if(!is_first_layer)
         {
             MatrixMap input_gradients(back_propagation->input_gradients[0].data, total_rows, inputs_number);
             const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
@@ -794,7 +793,7 @@ public:
             }
         }
 
-        if(!dense_bp_lm->is_first_layer)
+        if(!is_first_layer)
         {
             MatrixMap input_gradients(dense_bp_lm->input_gradients[0].data, batch_size, inputs_number);
             const MatrixMap weights_map(weights.data, inputs_number, outputs_number);
@@ -1070,7 +1069,7 @@ public:
                     running_means_device.data,
                     running_variances_device.data,
                     EPSILON,
-                    dense_forward_propagation->batch_means.data,
+                    dense_forward_propagation->means.data,
                     dense_forward_propagation->bn_saved_inv_variance.data));
         else if (batch_normalization && !is_training)
                 CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
@@ -1127,9 +1126,9 @@ public:
 
 
     void back_propagate(const vector<TensorViewCuda>& inputs,
-                             const vector<TensorViewCuda>& output_gradients,
-                             unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                             unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
+                        const vector<TensorViewCuda>& output_gradients,
+                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                        unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
     {
         // Dense layer
 
@@ -1143,8 +1142,6 @@ public:
         const TensorViewCuda& outputs_view = forward_propagation->outputs;
 
         const auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-//        const Dense* dense_layer = static_cast<Dense*>(dense_forward_propagation->layer);
 
         type* combinations = dense_forward_propagation->combinations.data;
 
@@ -1221,7 +1218,7 @@ public:
                 dense_layer_back_propagation->gamma_gradients.data,
                 dense_layer_back_propagation->beta_gradients.data,
                 EPSILON,
-                dense_forward_propagation->batch_means.data,
+                dense_forward_propagation->means.data,
                 dense_forward_propagation->bn_saved_inv_variance.data));
 
         // Bias derivatives

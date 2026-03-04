@@ -106,6 +106,11 @@ public:
 
     bool get_is_trainable() const;
 
+    bool get_is_first_layer() const
+    {
+        return is_first_layer;
+    }
+
 protected:
 
     string label = "my_layer";
@@ -113,6 +118,10 @@ protected:
     string name = "layer";
 
     bool is_trainable = true;
+
+    // @todo set this
+
+    bool is_first_layer = false;
 
     Tensor2 empty_2;
     Tensor3 empty_3;
@@ -255,8 +264,8 @@ protected:
     void normalize_batch(
         TensorMapR<Rank> outputs,
         TensorMapR<Rank> normalized_outputs,
-        VectorMap batch_means,
-        VectorMap batch_variances,
+        VectorMap means,
+        VectorMap variances,
         VectorR running_means,
         VectorR running_variances,
         const VectorMap gammas,
@@ -272,16 +281,16 @@ protected:
 
         if(is_training)
         {
-            batch_means = outputs_mat.colwise().mean();
+            means = outputs_mat.colwise().mean();
 
-            norm_mat = outputs_mat.rowwise() - batch_means.transpose();
+            norm_mat = outputs_mat.rowwise() - means.transpose();
 
-            batch_variances = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
+            variances = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
 
-            norm_mat.array().rowwise() /= batch_variances.transpose().array();
+            norm_mat.array().rowwise() /= variances.transpose().array();
 
-            running_means = running_means * momentum + batch_means * (type(1) - momentum);
-            running_variances = running_variances * momentum + batch_variances * (type(1) - momentum);
+            running_means = running_means * momentum + means * (type(1) - momentum);
+            running_variances = running_variances * momentum + variances * (type(1) - momentum);
         }
         else
             norm_mat.array() = (outputs_mat.rowwise() - running_means.transpose()).array().rowwise() /
@@ -370,8 +379,6 @@ public:
 
 protected:
 
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
     const float beta_add = 1.0f;
 
 #endif
@@ -419,8 +426,6 @@ struct LayerBackPropagation
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
-
     vector<TensorView> input_gradients;
     vector<VectorR> input_gradients_memory;
 };
@@ -444,8 +449,6 @@ struct LayerBackPropagationLM
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
-
     vector<TensorView> input_gradients;
     vector<VectorR> input_gradients_memory;
 };
@@ -462,19 +465,30 @@ struct LayerForwardPropagationCuda
 
     virtual void initialize() = 0;
 
+    virtual void free() 
+    {
+        if (workspace) 
+        {
+            cudaFree(workspace);
+            workspace = nullptr;
+            workspace_size = 0;
+        }
+    }
+
     virtual vector<TensorViewCuda*> get_workspace_views();
 
     TensorViewCuda get_outputs() const;
 
     virtual void print() const {}
 
-    virtual void free() {}
-
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
     TensorViewCuda outputs;
+
+    void* workspace = nullptr;
+    size_t workspace_size = 0;
 };
 
 
@@ -487,7 +501,7 @@ struct LayerBackPropagationCuda
     void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual vector<TensorViewCuda*> get_workspace_views()
+    virtual vector<TensorViewCuda*> get_gradient_views()
     {
 		return vector<TensorViewCuda*>();
     };
@@ -496,15 +510,25 @@ struct LayerBackPropagationCuda
 
     virtual void print() const {}
 
-	virtual void free() {}
+    virtual void free()
+    {
+        if (workspace)
+        {
+            cudaFree(workspace);
+            workspace = nullptr;
+            workspace_size = 0;
+        }
+    }
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    bool is_first_layer = false;
-
     vector<TensorCuda> input_gradients;
+
+    void* workspace = nullptr;
+    size_t workspace_size = 0;
+
 };
 
 #endif

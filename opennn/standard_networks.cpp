@@ -605,7 +605,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         classification_layer_activation,
         "classification_layer"));
 
-    input_vocabulary = new_input_vocabulary;
+//    input_vocabulary = new_input_vocabulary;
 
     this->compile();
     this->set_parameters_random();

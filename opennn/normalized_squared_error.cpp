@@ -98,10 +98,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     errors = outputs - targets;
 
-    const type coefficient = static_cast<type>(total_samples_number) /
-                             static_cast<type>(samples_number * normalization_coefficient);
-
-    back_propagation.error = errors.squaredNorm() * coefficient;
+    back_propagation.error = errors.squaredNorm() * static_cast<type>(total_samples_number) /static_cast<type>(samples_number * normalization_coefficient);
 
     if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
 }

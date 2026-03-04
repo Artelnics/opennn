@@ -250,16 +250,16 @@ bool NeuralNetwork::get_display() const
     return display;
 }
 
-const vector<string>&NeuralNetwork::get_input_vocabulary() const
-{
-    return input_vocabulary;
-}
+//const vector<string>&NeuralNetwork::get_input_vocabulary() const
+//{
+//    return input_vocabulary;
+//}
 
 
-const vector<string>&NeuralNetwork::get_output_vocabulary() const
-{
-    return output_vocabulary;
-}
+//const vector<string>&NeuralNetwork::get_output_vocabulary() const
+//{
+//    return output_vocabulary;
+//}
 
 
 void NeuralNetwork::set(const filesystem::path& file_name)
@@ -493,7 +493,7 @@ void NeuralNetwork::set_display(bool new_display)
     display = new_display;
 }
 
-
+/*
 void NeuralNetwork::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
@@ -504,7 +504,7 @@ void NeuralNetwork::set_output_vocabulary(const vector<string>& new_output_vocab
 {
     output_vocabulary = new_output_vocabulary;
 }
-
+*/
 
 Index NeuralNetwork::get_layers_number() const
 {
@@ -801,6 +801,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_documents)
 {
+/*
     const Index batch_size = input_documents.dimension(0);
 
     const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
@@ -851,6 +852,8 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_docu
     }
 
     return calculate_outputs(inputs);
+*/
+    return MatrixR();
 }
 
 
@@ -1829,15 +1832,15 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
         layers[i]->set(batch_size, neural_network_layers[i].get());
     }
 
-    const vector<vector<TensorViewCuda*>> layer_workspace_views = get_layer_workspace_views_device();
+    const vector<vector<TensorViewCuda*>> layer_gradient_views = get_layer_gradient_views();
 
-    const Index workspace_size = get_size(layer_workspace_views);
+    const Index gradient_size = get_size(layer_gradient_views);
 
-    if (workspace_size == 0) return;
+    if (gradient_size == 0) return;
 
-    workspace.resize({workspace_size});
+    gradients.resize({gradient_size});
 
-    link(workspace.data, layer_workspace_views);
+    link(gradients.data, layer_gradient_views);
 }
 
 
@@ -1847,20 +1850,20 @@ const vector<unique_ptr<LayerBackPropagationCuda>>& NeuralNetworkBackPropagation
 }
 
 
-vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_workspace_views_device()
+vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_gradient_views()
 {
-    vector<vector<TensorViewCuda*>> layer_workspace_views(layers.size());
+    vector<vector<TensorViewCuda*>> layer_gradient_views(layers.size());
     Index i = 0;
 
     for (const auto& layer_bp : layers)
     {
         if (layer_bp)
-            layer_workspace_views[i] = layer_bp->get_workspace_views();
+            layer_gradient_views[i] = layer_bp->get_gradient_views();
 
         i++;
     }
 
-    return layer_workspace_views;
+    return layer_gradient_views;
     
 }
 

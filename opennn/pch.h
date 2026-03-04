@@ -111,7 +111,6 @@ constexpr type MAX = numeric_limits<type>::max();
 constexpr type MAX_INDEX = numeric_limits<Index>::max();
 }
 
-
 constexpr int Layout = Eigen::RowMajor;
 
 using MatrixR = Matrix<type, Dynamic, Dynamic, Layout>;

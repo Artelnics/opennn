@@ -237,7 +237,7 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
 
         d_biases.noalias() += delta.colwise().sum();
 
-        if(!recurrent_bp->is_first_layer)
+        if(!is_first_layer)
         {
             MatrixR d_input_step = delta * W_in.transpose();
 
