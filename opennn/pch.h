@@ -98,48 +98,6 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
         }                                                                         \
     } while (0)
 
-
-/*
-#define CHECK_CUDA(call) do \
-{ \
-    cudaError_t err = call; \
-    if (err != cudaSuccess) \
-    { \
-        string error_msg = std::string("CUDA Error: ") + cudaGetErrorString(err) + \
-                                " in " + __FILE__ + ":" + std::to_string(__LINE__); \
-        fprintf(stderr, "%s\n", error_msg.c_str()); \
-        throw runtime_error(error_msg); \
-    } \
-} while(0)
-
-
-
-#define CHECK_CUBLAS(call) do \
-{ \
-        cublasStatus_t status = call; \
-        if (status != CUBLAS_STATUS_SUCCESS) \
-    { \
-            string error_msg = std::string("CuBLAS Error code: ") + std::to_string(status) + \
-              " in " + __FILE__ + ":" + std::to_string(__LINE__); \
-            fprintf(stderr, "%s\n", error_msg.c_str()); \
-            throw runtime_error(error_msg); \
-    } \
-} while(0)
-
-
-#define CHECK_CUDNN(call) do \
-{ \
-        cudnnStatus_t status = call; \
-        if (status != CUDNN_STATUS_SUCCESS) \
-    { \
-            string error_msg = std::string("cuDNN Error: ") + cudnnGetErrorString(status) + \
-              " in " + __FILE__ + ":" + std::to_string(__LINE__); \
-            fprintf(stderr, "%s\n", error_msg.c_str()); \
-            throw runtime_error(error_msg); \
-    } \
-} while(0)
-*/
-
 #endif
 
 using namespace std;

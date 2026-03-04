@@ -38,7 +38,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <ProfileGuidedOptimization>Disabled</ProfileGuidedOptimization>
     <CodeCoverageOperations>Disabled</CodeCoverageOperations>
     <UseInteloneMKL>No</UseInteloneMKL>
@@ -144,7 +144,7 @@
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
-      <AdditionalIncludeDirectories>$(CUDA_PATH)\include;C:\Program Files\NVIDIA\CUDNN\v9.19\include\12.9</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <CCppSupport>Cpp17Support</CCppSupport>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -165,7 +165,7 @@
     <Lib>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <AdditionalDependencies>cudnn.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\x64;C:\Program Files\NVIDIA\CUDNN\v9.19\lib\12.9\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH)\lib\x64</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">

@@ -134,6 +134,17 @@ public:
 
     void copy_parameters_device();
 
+    cudnnFilterDescriptor_t get_kernel_descriptor() const
+    {
+        return kernel_descriptor;
+    }
+
+    cudnnConvolutionDescriptor_t get_convolution_descriptor() const
+    {
+        return convolution_descriptor;
+    }
+
+
 protected:
 
     TensorViewCuda biases_device;
@@ -152,6 +163,8 @@ protected:
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
 #endif
 
@@ -245,7 +258,6 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
 
     void* workspace = nullptr;
@@ -276,8 +288,6 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     size_t backward_filter_workspace_bytes = 0;
 
     cudnnTensorDescriptor_t gradients_tensor_descriptor = nullptr;
-
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
     cudnnConvolutionBwdDataAlgo_t algo_data;
     cudnnConvolutionBwdFilterAlgo_t algo_filter;
