@@ -446,9 +446,9 @@ MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 }
 
 
-Index get_size(const Shape&d)
+Index get_size(const Shape& shape)
 {
-    return accumulate(d.begin(), d.end(), 1, multiplies<Index>());
+    return accumulate(shape.begin(), shape.end(), 1, multiplies<Index>());
 }
 
 

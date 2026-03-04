@@ -463,6 +463,15 @@ void Convolutional::set(const Shape& new_input_shape,
         activation = CUDNN_ACTIVATION_SWISH;
 
     cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
+
+    // Kernel
+
+    cudnnCreateFilterDescriptor(&kernel_descriptor);
+
+    cudnnSetFilter4dDescriptor(kernel_descriptor,
+                               CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
+                               kernels_number, kernel_channels, kernel_height, kernel_width );
+
 #endif
 }
 
@@ -871,7 +880,6 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
     TensorCuda& convolutions = convolutional_forward_propagation->convolutions;
 
     const cudnnConvolutionDescriptor_t convolution_descriptor = convolutional_forward_propagation->convolution_descriptor;
-    const cudnnFilterDescriptor_t kernel_descriptor = convolutional_forward_propagation->kernel_descriptor;
     const cudnnTensorDescriptor_t input_tensor_descriptor = convolutional_forward_propagation->input_tensor_descriptor;
 
     const float* input_data = inputs[0].data;
@@ -1022,8 +1030,6 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
 
     const cudnnTensorDescriptor_t gradients_tensor_descriptor = convolutional_back_propagation->gradients_tensor_descriptor;
 
-    const cudnnFilterDescriptor_t kernel_descriptor = convolutional_back_propagation->kernel_descriptor;
-
     const cudnnConvolutionDescriptor_t convolution_descriptor = convolutional_back_propagation->convolution_descriptor;
 
     // Error combinations derivatives
@@ -1144,6 +1150,9 @@ void ConvolutionalForwardPropagationCuda::initialize()
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
 
+    const Index output_height = convolutional_layer->get_output_height();
+    const Index output_width = convolutional_layer->get_output_width();
+
     const Index kernels_number = convolutional_layer->get_kernels_number();
     const Index kernel_height = convolutional_layer->get_kernel_height();
     const Index kernel_width = convolutional_layer->get_kernel_width();
@@ -1158,14 +1167,6 @@ void ConvolutionalForwardPropagationCuda::initialize()
 
     if(!layer_label.empty() && layer_label.substr(layer_label.length() - 2) == "_1")
         is_first_layer = true;
-
-    // Kernels
-
-    cudnnCreateFilterDescriptor(&kernel_descriptor);
-
-    cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
-                               kernels_number, channels, kernel_height, kernel_width );
 
     // Inputs
 
@@ -1192,14 +1193,10 @@ void ConvolutionalForwardPropagationCuda::initialize()
 
     // Outputs
 
-    cudnnGetConvolution2dForwardOutputDim(convolution_descriptor,
-                                          input_tensor_descriptor, kernel_descriptor,
-                                          &output_batch_size, &output_channels, &output_height, &output_width );
-
-    outputs.set_descriptor({output_batch_size, output_channels, output_height, output_width});
+    outputs.set_descriptor({batch_size, kernels_number, output_height, output_width});
 
     if (use_convolutions)
-        convolutions.resize({output_batch_size, output_channels, output_height, output_width});
+        convolutions.resize({batch_size, kernels_number, output_height, output_width});
 
     // Convolution Workspace
 
@@ -1212,7 +1209,7 @@ void ConvolutionalForwardPropagationCuda::initialize()
     CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(
         get_cudnn_handle(),
         input_tensor_descriptor,
-        kernel_descriptor,
+        convolutional_layer->kernel_descriptor,
         convolution_descriptor,
         outputs.get_descriptor(),
         CUDNN_CONVOLUTION_FWD_ALGO_COUNT,
@@ -1223,7 +1220,7 @@ void ConvolutionalForwardPropagationCuda::initialize()
     
     cudnnGetConvolutionForwardWorkspaceSize(
         get_cudnn_handle(),
-        input_tensor_descriptor, kernel_descriptor,
+        input_tensor_descriptor, convolutional_layer->kernel_descriptor,
         convolution_descriptor, outputs.get_descriptor(),
         convolution_algorithm, &workspace_bytes);
 
@@ -1258,8 +1255,6 @@ void ConvolutionalForwardPropagationCuda::free()
     workspace = nullptr;
 
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
-
-    cudnnDestroyFilterDescriptor(kernel_descriptor);
 
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
@@ -1310,35 +1305,13 @@ void ConvolutionalBackPropagationCuda::initialize()
                                output_height,
                                output_width);
 
-    // Biases
+    // Biases derivatives
 
     bias_gradients.set_descriptor({ kernels_number });
 
-    // Kernel descriptor
-
-    cudnnCreateFilterDescriptor(&kernel_descriptor);
-
-    cudnnSetFilter4dDescriptor(kernel_descriptor,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_TENSOR_NCHW,
-                               kernels_number,
-                               channels,
-                               kernel_height,
-                               kernel_width);
-
-    // Kernel derivatives
+    // Weight derivatives
 
     weight_gradients.set_descriptor({ kernels_number, channels, kernel_height, kernel_width });
-
-    cudnnCreateFilterDescriptor(&weight_gradients_filter_descriptor);
-
-    cudnnSetFilter4dDescriptor(weight_gradients_filter_descriptor,
-                               CUDNN_DATA_FLOAT,
-                               CUDNN_TENSOR_NCHW,
-                               kernels_number,
-                               channels,
-                               kernel_height,
-                               kernel_width);
 
     // Convolution descriptor
 
@@ -1359,7 +1332,7 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
         get_cudnn_handle(),
-        kernel_descriptor,
+        convolutional_layer->kernel_descriptor,
         gradients_tensor_descriptor,
         convolution_descriptor,
         input_gradients[0].get_descriptor(),
@@ -1372,13 +1345,13 @@ void ConvolutionalBackPropagationCuda::initialize()
         input_gradients[0].get_descriptor(),
         gradients_tensor_descriptor,
         convolution_descriptor,
-        weight_gradients_filter_descriptor,
+        convolutional_layer->kernel_descriptor,
         1, &returned_algo_count, &filter_perf));
     
     algo_filter = filter_perf.algo;
 
     cudnnGetConvolutionBackwardDataWorkspaceSize(get_cudnn_handle(),
-                                                 kernel_descriptor,
+                                                 convolutional_layer->kernel_descriptor,
                                                  gradients_tensor_descriptor,
                                                  convolution_descriptor,
                                                  input_gradients[0].get_descriptor(),
@@ -1389,7 +1362,7 @@ void ConvolutionalBackPropagationCuda::initialize()
                                                    input_gradients[0].get_descriptor(),
                                                    gradients_tensor_descriptor,
                                                    convolution_descriptor,
-                                                   weight_gradients_filter_descriptor,
+                                                   convolutional_layer->kernel_descriptor,
                                                    algo_filter,
                                                    &backward_filter_workspace_bytes);
 
@@ -1453,8 +1426,6 @@ void ConvolutionalBackPropagationCuda::free()
     backward_filter_workspace = nullptr;
 
     cudnnDestroyTensorDescriptor(gradients_tensor_descriptor);
-    cudnnDestroyFilterDescriptor(kernel_descriptor);
-    cudnnDestroyFilterDescriptor(weight_gradients_filter_descriptor);
     cudnnDestroyConvolutionDescriptor(convolution_descriptor);
 }
 

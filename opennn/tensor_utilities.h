@@ -779,7 +779,7 @@ struct TensorViewCuda
         {
             cudnnTensorDescriptor_t raw_desc;
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw std::runtime_error("TensorViewCuda: Failed to create descriptor.");
+                throw runtime_error("TensorViewCuda: Failed to create descriptor.");
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
@@ -867,7 +867,7 @@ struct TensorCuda
         {
             cudnnTensorDescriptor_t raw_desc;
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw std::runtime_error("TensorCuda: Failed to create descriptor.");
+                throw runtime_error("TensorCuda: Failed to create descriptor.");
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
@@ -895,6 +895,7 @@ struct TensorCuda
         Index total_elements = 1;
         for (int i = 0; i < nbDims; ++i)
             total_elements *= static_cast<Index>(dimA[i]);
+
         return total_elements;
     }
 
@@ -911,11 +912,11 @@ struct TensorCuda
 };
 
 
-type* link(type*, vector<TensorViewCuda*>);
-void link(type*, vector<vector<TensorViewCuda*>>);
+type* link(type*, const vector<TensorViewCuda*>&);
+void link(type*, const vector<vector<TensorViewCuda*>>&);
 
-Index get_size(const vector<TensorViewCuda*>);
-Index get_size(vector<vector<TensorViewCuda*>>);
+Index get_size(const vector<TensorViewCuda*>&);
+Index get_size(const vector<vector<TensorViewCuda*>>&);
 
 #endif
 

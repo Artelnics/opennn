@@ -361,5 +361,5 @@ TEST(CrossEntropyError2d, from_XML_invalid_document)
     Dataset dataset;
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
 
-    EXPECT_THROW(cross_entropy_error.from_XML(document), std::runtime_error);
+    EXPECT_THROW(cross_entropy_error.from_XML(document), runtime_error);
 }
