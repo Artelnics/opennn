@@ -174,7 +174,7 @@ Histogram histogram(const VectorR&, Index  = 10);
 Histogram histogram_centered(const VectorR&, type = type(0), Index  = 10);
 Histogram histogram(const VectorB&);
 Histogram histogram(const VectorI&, Index  = 10);
-vector<Histogram> histograms(const Tensor2&, Index = 10);
+vector<Histogram> histograms(const MatrixR&, Index = 10);
 VectorI total_frequencies(const vector<Histogram>&);
 
 // Minimal indices

@@ -443,28 +443,6 @@ void Optimizer::set_unscaling()
 }
 
 
-void Optimizer::set_vocabularies()
-{
-    Dataset* dataset = loss_index->get_dataset();
-
-    if(!is_instance_of<LanguageDataset>(dataset))
-        return;
-
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    if(!neural_network->has("Embedding"))
-        return;
-
-    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
-
-    const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
-    const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
-
-    neural_network->set_input_vocabulary(input_vocabulary);
-    neural_network->set_output_vocabulary(target_vocabulary);
-}
-
-
 TrainingResults::TrainingResults(const Index epochs_number)
 {
     training_error_history.resize(1 + epochs_number);

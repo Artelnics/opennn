@@ -68,6 +68,17 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     input_vocabulary.resize(input_vocabulary_size + reserved_tokens.size());
     target_vocabulary.resize(2);
 
+    if(!variables.empty())
+    {
+        variables[0].type = VariableType::Categorical;
+        variables[0].categories = input_vocabulary;
+    }
+    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length))
+    {
+        variables[maximum_input_sequence_length].type = VariableType::Categorical;
+        variables[maximum_input_sequence_length].categories = target_vocabulary;
+    }
+
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
     decoder_shape = { 0 };
@@ -131,8 +142,8 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 {
     unordered_map<string, size_t> token_count;
 
-    for(const auto& document : document_tokens)
-        for(const auto& token : document)
+    for(const vector<string>& document : document_tokens)
+        for(const string& token : document)
             ++token_count[token];
 
     vector<pair<string, size_t>> sorted_tokens(token_count.begin(), token_count.end());
@@ -142,10 +153,10 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
 
     vocabulary.clear();
 
-    for(const auto& token : reserved_tokens)
+    for(const string& token : reserved_tokens)
         vocabulary.push_back(token);
 
-    for(const auto& token : sorted_tokens)
+    for(const pair<string, size_t>& token : sorted_tokens)
     {
         if (token.second < size_t(minimum_token_frequency))
             continue;
@@ -179,10 +190,10 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
         {
             if (1 + i >= (size_t)maximum_input_sequence_length) break;
 
-            const auto it = input_vocabulary_map.find(input_tokens[i]);
+            const auto iterator = input_vocabulary_map.find(input_tokens[i]);
 
-            data(sample, 1 + i) = (it != input_vocabulary_map.end())
-                ? static_cast<type>(it->second)
+            data(sample, 1 + i) = (iterator != input_vocabulary_map.end())
+                ? static_cast<type>(iterator->second)
                 : UNK_INDEX;
         }
 
@@ -260,9 +271,9 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
                 const string& current_token = target_tokens[token_index];
 
-                auto it = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
+                auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
 
-                data(sample, variable) = (it != target_vocabulary.end()) ? distance(target_vocabulary.begin(), it) : 1;
+                data(sample, variable) = (iterator != target_vocabulary.end()) ? distance(target_vocabulary.begin(), iterator) : 1;
             }
 
             data(sample, maximum_input_sequence_length + target_tokens.size() + 1) = 3; // end;
@@ -330,10 +341,21 @@ void LanguageDataset::read_csv()
     variables.resize(features_number);
 
     for_each(variables.begin(), variables.begin() + maximum_input_sequence_length,
-             [](auto& variable) {variable.role = "Input";});
+             [](Variable& variable) {variable.role = "Input";});
 
     for_each(variables.begin() + maximum_input_sequence_length, variables.begin() + maximum_input_sequence_length + maximum_target_sequence_length,
-             [](auto& variable) {variable.role = "Target";});
+             [](Variable& variable) {variable.role = "Target";});
+
+    if(!variables.empty())
+    {
+        variables[0].type = VariableType::Categorical;
+        variables[0].categories = input_vocabulary;
+    }
+    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length))
+    {
+        variables[maximum_input_sequence_length].type = VariableType::Categorical;
+        variables[maximum_input_sequence_length].categories = target_vocabulary;
+    }
 
     for(Index i = 0; i < maximum_input_sequence_length; i++)
         variables[i].name = "token_" + to_string(i+1);
@@ -465,6 +487,17 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
+
+    if(!variables.empty() && !input_vocabulary.empty())
+    {
+        variables[0].type = VariableType::Categorical;
+        variables[0].categories = input_vocabulary;
+    }
+    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length) && !target_vocabulary.empty())
+    {
+        variables[maximum_input_sequence_length].type = VariableType::Categorical;
+        variables[maximum_input_sequence_length].categories = target_vocabulary;
+    }
 
     set_display(read_xml_bool(data_set_element, "Display"));
 

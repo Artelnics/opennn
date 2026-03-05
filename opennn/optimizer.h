@@ -88,7 +88,6 @@ public:
     void set_names();
     void set_scaling();
     void set_unscaling();
-    void set_vocabularies();
 
 protected:
 

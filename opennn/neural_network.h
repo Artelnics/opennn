@@ -137,10 +137,6 @@ public:
 
     bool get_display() const;
 
-    const vector<string>& get_input_vocabulary() const;
-
-    const vector<string>& get_output_vocabulary() const;
-
     // Set
 
     void set(const filesystem::path&);
@@ -169,9 +165,6 @@ public:
     void set_default();
 
     void set_display(bool);
-
-    void set_input_vocabulary(const vector<string>&);
-    void set_output_vocabulary(const vector<string>&);
 
     // Layers
 
@@ -282,9 +275,6 @@ protected:
 
     vector<Variable> input_variables;
     vector<Variable> output_variables;
-
-//    vector<string> input_vocabulary;
-//    vector<string> output_vocabulary;
 
     vector<unique_ptr<Layer>> layers;
 
