@@ -419,6 +419,16 @@ bool contains(const TensorR<Rank>& vector, const Type& value)
     return it != (copy.data() + copy.size());
 }
 
+template <typename Derived, typename T>
+bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
+{
+    const auto* begin = vector.derived().data();
+    const auto* end = begin + vector.size();
+
+    return find(begin, end, value) != end;
+}
+
+
 
 bool contains(const vector<string>&, const string&);
 
