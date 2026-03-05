@@ -223,8 +223,6 @@ TrainingResults StochasticGradientDescent::train()
 
     set_scaling();
 
-    set_vocabularies();
-
     ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
     ForwardPropagation validation_forward_propagation(validation_batch_size, neural_network);
 
@@ -565,8 +563,6 @@ TrainingResults StochasticGradientDescent::train_cuda()
     set_names();
 
     set_scaling();
-
-    set_vocabularies();
 
     ForwardPropagationCuda training_forward_propagation(training_batch_size, neural_network);
     unique_ptr<ForwardPropagationCuda> validation_forward_propagation;

@@ -205,8 +205,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     set_scaling();
 
-    set_vocabularies();
-
     Batch training_batch(training_batch_size, dataset);
     unique_ptr<Batch> validation_batch;
 
@@ -562,7 +560,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     set_names();
     set_scaling();
-    set_vocabularies();
 
     const int PREFETCH_BATCHES = 3;
     

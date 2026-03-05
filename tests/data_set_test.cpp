@@ -291,7 +291,7 @@ TEST(Dataset, ReadCSV_Basic)
 
     ASSERT_NO_THROW(dataset.read_csv());
 
-    dataset.set_default_variables_roles();
+    dataset.set_default_variable_roles();
 
     dataset.set_shape("Input", { dataset.get_variables_number("Input") });
     dataset.set_shape("Target", { dataset.get_variables_number("Target") });

@@ -250,17 +250,6 @@ bool NeuralNetwork::get_display() const
     return display;
 }
 
-//const vector<string>&NeuralNetwork::get_input_vocabulary() const
-//{
-//    return input_vocabulary;
-//}
-
-
-//const vector<string>&NeuralNetwork::get_output_vocabulary() const
-//{
-//    return output_vocabulary;
-//}
-
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -493,18 +482,6 @@ void NeuralNetwork::set_display(bool new_display)
     display = new_display;
 }
 
-/*
-void NeuralNetwork::set_input_vocabulary(const vector<string>& new_input_vocabulary)
-{
-    input_vocabulary = new_input_vocabulary;
-}
-
-
-void NeuralNetwork::set_output_vocabulary(const vector<string>& new_output_vocabulary)
-{
-    output_vocabulary = new_output_vocabulary;
-}
-*/
 
 Index NeuralNetwork::get_layers_number() const
 {
@@ -799,19 +776,28 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 }
 
 
-MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_documents)
+MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-/*
+    if(layers.empty() || input_documents.size() == 0)
+        return MatrixR();
+
+    if(layers[0]->get_name() != "Embedding")
+        throw runtime_error("Error: First layer must be Embedding for text processing.\n");
+
+    if(input_variables.empty() || !input_variables[0].is_categorical())
+        throw runtime_error("Error: input_variables must be categorical.\n");
+
     const Index batch_size = input_documents.dimension(0);
 
     const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
-
     const Index sequence_length = embedding_layer->get_sequence_length();
 
+    const vector<string>& vocabulary = input_variables[0].categories;
+
     unordered_map<string, Index> vocabulary_map;
-    vocabulary_map.reserve(input_vocabulary.size());
-    for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
-        vocabulary_map[input_vocabulary[i]] = i;
+    vocabulary_map.reserve(vocabulary.size());
+    for(Index i = 0; i < (Index)vocabulary.size(); ++i)
+        vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs(batch_size, sequence_length);
     inputs.setConstant(0.0);
@@ -823,14 +809,12 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_docu
 
         Index current_index = 0;
 
-        // Start
         if(current_index < sequence_length)
         {
             inputs(i, current_index) = 2;
             current_index++;
         }
 
-        // Tokens
         for(const string& token : tokens)
         {
             if(current_index >= sequence_length - 1)
@@ -846,14 +830,11 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_docu
             current_index++;
         }
 
-        // End
         if(current_index < sequence_length)
             inputs(i, current_index) = 3;
     }
 
     return calculate_outputs(inputs);
-*/
-    return MatrixR();
 }
 
 
@@ -1120,10 +1101,6 @@ void NeuralNetwork::print() const
          << get_output_feature_names();
 
     cout << "Parameters number: " << get_parameters_number() << endl;
-
-    // if(!input_vocabulary.empty())
-    //     cout << "Input vocabulary" << input_vocabulary <<
-
 }
 
 
