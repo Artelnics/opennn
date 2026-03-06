@@ -4268,23 +4268,14 @@ BatchCuda::BatchCuda(const Index new_samples_number, Dataset* new_dataset)
 
 BatchCuda::~BatchCuda()
 {
-    if (inputs_host)
-    {
-        cudaFreeHost(inputs_host);
-        inputs_host = nullptr;
-    }
+    cudaFreeHost(inputs_host);
+    inputs_host = nullptr;
 
-    if (decoder_host)
-    {
-        cudaFreeHost(decoder_host);
-        decoder_host = nullptr;
-    }
+    cudaFreeHost(decoder_host);
+    decoder_host = nullptr;
 
-    if (targets_host)
-    {
-        cudaFreeHost(targets_host);
-        targets_host = nullptr;
-    }
+    cudaFreeHost(targets_host);
+    targets_host = nullptr;
 }
 
 
@@ -4309,7 +4300,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (input_size > inputs_host_allocated_size)
         {
-            if (inputs_host) cudaFreeHost(inputs_host);
+            cudaFreeHost(inputs_host);
             CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
             inputs_host_allocated_size = input_size;
         }
@@ -4326,7 +4317,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (decoder_size > decoder_host_allocated_size)
         {
-            if (decoder_host) cudaFreeHost(decoder_host);
+            cudaFreeHost(decoder_host);
             CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
             decoder_host_allocated_size = decoder_size;
         }
@@ -4344,7 +4335,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (target_size > targets_host_allocated_size)
         {
-            if (targets_host) cudaFreeHost(targets_host);
+            cudaFreeHost(targets_host);
             CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
             targets_host_allocated_size = target_size;
         }
