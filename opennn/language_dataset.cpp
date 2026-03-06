@@ -69,15 +69,7 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     target_vocabulary.resize(2);
 
     if(!variables.empty())
-    {
-        variables[0].type = VariableType::Categorical;
         variables[0].categories = input_vocabulary;
-    }
-    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length))
-    {
-        variables[maximum_input_sequence_length].type = VariableType::Categorical;
-        variables[maximum_input_sequence_length].categories = target_vocabulary;
-    }
 
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
@@ -347,15 +339,7 @@ void LanguageDataset::read_csv()
              [](Variable& variable) {variable.role = "Target";});
 
     if(!variables.empty())
-    {
-        variables[0].type = VariableType::Categorical;
         variables[0].categories = input_vocabulary;
-    }
-    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length))
-    {
-        variables[maximum_input_sequence_length].type = VariableType::Categorical;
-        variables[maximum_input_sequence_length].categories = target_vocabulary;
-    }
 
     for(Index i = 0; i < maximum_input_sequence_length; i++)
         variables[i].name = "token_" + to_string(i+1);
@@ -489,15 +473,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     target_shape = { get_maximum_target_sequence_length() };
 
     if(!variables.empty() && !input_vocabulary.empty())
-    {
-        variables[0].type = VariableType::Categorical;
         variables[0].categories = input_vocabulary;
-    }
-    if(variables.size() > static_cast<size_t>(maximum_input_sequence_length) && !target_vocabulary.empty())
-    {
-        variables[maximum_input_sequence_length].type = VariableType::Categorical;
-        variables[maximum_input_sequence_length].categories = target_vocabulary;
-    }
 
     set_display(read_xml_bool(data_set_element, "Display"));
 

@@ -220,11 +220,8 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
         attention_weights.device(get_device()) += causal_mask.reshape(array_4(1, 1, query_sequence_length, source_sequence_length))
                                                         .broadcast(array_4(batch_size, heads_number, 1, 1));
 
-    // @todo Optimization: Call the padding mask here if your LanguageDataset provides it
-    // apply_key_padding_mask(padding_mask, attention_weights);
-    /*
-        softmax(attention_weights);
-    */
+    TensorMap4 att_weights_map(attention_weights.data(), batch_size, heads_number, query_sequence_length, source_sequence_length);
+    softmax(att_weights_map);
 
     type* value_data = value.data();
     type* att_outputs_data = attention_outputs.data();
@@ -263,7 +260,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-
     const TensorMap3 query_input = tensor_map<3>(input_views[0]);
 
     const TensorMap3 source_input = (input_views.size() == 1)
@@ -319,56 +315,78 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     const MatrixMap delta_Y_map(const_cast<type*>(delta_Y.data()), total_rows, embedding_dimension);
 
     projection_weight_gradients.noalias() = concatenated_map.transpose() * delta_Y_map;
-
     projection_bias_gradients.noalias() = delta_Y_map.colwise().sum();
-/*
-    concatenated_attention_output_gradients.device(get_device()) =
-        delta_Y.contract(projection_weights, axes(2, 1));
-*/
+
+    MatrixMap concat_grad_map(concatenated_attention_output_gradients.data(), total_rows, embedding_dimension);
+    const MatrixMap proj_weights_map = matrix_map(projection_weights);
+
+    concat_grad_map.noalias() = delta_Y_map * proj_weights_map.transpose();
+
     attention_output_gradients.device(get_device()) =
         concatenated_attention_output_gradients.reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
                                             .shuffle(array_4(0, 2, 1, 3));
 
-    // @todo improve the following loops as before
+    const Index total_heads = batch_size * heads_number;
+    type* att_weights_data = const_cast<type*>(attention_weights.data());
+    type* att_out_grad_data = attention_output_gradients.data();
+    type* v_data = const_cast<type*>(value.data());
+    type* v_grad_data = value_gradients.data();
+    type* att_weight_grad_data = attention_weight_gradients.data();
 
-    #pragma omp parallel for collapse(2)
-    for(Index b = 0; b < batch_size; ++b)
+    #pragma omp parallel for
+    for(Index i = 0; i < total_heads; ++i)
     {
-        for(Index h = 0; h < heads_number; ++h)
-        {
-            const auto w_slice = attention_weights.chip(b, 0).chip(h, 0); // [Lq, Ls]
-            const auto do_slice = attention_output_gradients.chip(b, 0).chip(h, 0); // [Lq, Dh]
-            const auto v_slice = value.chip(b, 0).chip(h, 0); // [Ls, Dh]
+        const Index offset_w = i * query_sequence_length * source_sequence_length;
+        const Index offset_do = i * query_sequence_length * head_dimension;
+        const Index offset_v = i * source_sequence_length * head_dimension;
 
-            value_gradients.chip(b, 0).chip(h, 0).device(get_device()) =
-                w_slice.contract(do_slice, axes(0, 0));
+        const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+        const MatrixMap dO(att_out_grad_data + offset_do, query_sequence_length, head_dimension);
+        const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
 
-            attention_weight_gradients.chip(b, 0).chip(h, 0).device(get_device()) =
-                do_slice.contract(v_slice, axes(1, 1));
-        }
+        MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
+        MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
+
+        dV.noalias() = W.transpose() * dO;
+        dW.noalias() = dO * V.transpose();
     }
 
-    auto dot_product = (attention_weights * attention_weight_gradients).sum(array_1(3));
-
-    softmax_gradients.device(get_device()) = attention_weights * (attention_weight_gradients -
-        dot_product.reshape(array_4(batch_size, heads_number, query_sequence_length, 1))
-        .broadcast(array_4(1, 1, 1, source_sequence_length)));
-
-    #pragma omp parallel for collapse(2)
-    for(Index b = 0; b < batch_size; ++b)
+    type* sm_grad_data = softmax_gradients.data();
+    #pragma omp parallel for
+    for(Index i = 0; i < total_heads; ++i)
     {
-        for(Index h = 0; h < heads_number; ++h)
-        {
-            const auto sd_slice = softmax_gradients.chip(b, 0).chip(h, 0); // [Lq, Ls]
-            const auto q_slice = query.chip(b, 0).chip(h, 0); // [Lq, Dh]
-            const auto k_slice = key.chip(b, 0).chip(h, 0); // [Ls, Dh]
+        const Index offset_w = i * query_sequence_length * source_sequence_length;
+        const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+        const MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
+        MatrixMap dS(sm_grad_data + offset_w, query_sequence_length, source_sequence_length);
 
-            query_gradients.chip(b, 0).chip(h, 0).device(get_device()) =
-                sd_slice.contract(k_slice, axes(1, 0)) * scaling_factor;
+        VectorR dot_product = (W.array() * dW.array()).rowwise().sum();
 
-            key_gradients.chip(b, 0).chip(h, 0).device(get_device()) =
-                sd_slice.contract(q_slice, axes(0, 0)) * scaling_factor;
-        }
+        for(Index r = 0; r < query_sequence_length; ++r)
+            dS.row(r).array() = W.row(r).array() * (dW.row(r).array() - dot_product(r));
+    }
+
+    type* q_data = const_cast<type*>(query.data());
+    type* k_data = const_cast<type*>(key.data());
+    type* q_grad_data = query_gradients.data();
+    type* k_grad_data = key_gradients.data();
+
+    #pragma omp parallel for
+    for(Index i = 0; i < total_heads; ++i)
+    {
+        const Index offset_w = i * query_sequence_length * source_sequence_length;
+        const Index offset_q = i * query_sequence_length * head_dimension;
+        const Index offset_k = i * source_sequence_length * head_dimension;
+
+        const MatrixMap dS(sm_grad_data + offset_w, query_sequence_length, source_sequence_length);
+        const MatrixMap Q(q_data + offset_q, query_sequence_length, head_dimension);
+        const MatrixMap K(k_data + offset_k, source_sequence_length, head_dimension);
+
+        MatrixMap dQ(q_grad_data + offset_q, query_sequence_length, head_dimension);
+        MatrixMap dK(k_grad_data + offset_k, source_sequence_length, head_dimension);
+
+        dQ.noalias() = (dS * K) * scaling_factor;
+        dK.noalias() = (dS.transpose() * Q) * scaling_factor;
     }
 
     // Query Projection
@@ -388,7 +406,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     if(input_views.size() == 1)
         input_query_gradients.device(get_device()) += input_source_gradients;
-
 }
 
 
@@ -542,15 +559,22 @@ void MultiHeadAttentionBackPropagation::initialize()
     value_bias_gradients.shape = {embedding_dimension};
     projection_bias_gradients.shape = {embedding_dimension};
 
+    input_gradients_memory.resize(2);
+    input_gradients_memory[0].resize(batch_size * query_sequence_length * embedding_dimension);
+    input_gradients_memory[1].resize(batch_size * source_sequence_length * embedding_dimension);
+
     input_gradients.resize(2);
+    input_gradients[0].data = input_gradients_memory[0].data();
     input_gradients[0].shape = {batch_size, query_sequence_length, embedding_dimension};
+
+    input_gradients[1].data = input_gradients_memory[1].data();
     input_gradients[1].shape = {batch_size, source_sequence_length, embedding_dimension};
 
     // Auxiliar
 
     softmax_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
-    attention_weight_gradients.resize(batch_size, heads_number, source_sequence_length, query_sequence_length);
+    attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
     attention_output_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
 
