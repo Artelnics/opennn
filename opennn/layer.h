@@ -467,12 +467,9 @@ struct LayerForwardPropagationCuda
 
     virtual void free() 
     {
-        if (workspace) 
-        {
-            cudaFree(workspace);
-            workspace = nullptr;
-            workspace_size = 0;
-        }
+        cudaFree(workspace);
+        workspace = nullptr;
+        workspace_size = 0;
     }
 
     virtual vector<TensorViewCuda*> get_workspace_views();

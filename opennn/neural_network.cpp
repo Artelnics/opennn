@@ -784,8 +784,8 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     if(layers[0]->get_name() != "Embedding")
         throw runtime_error("Error: First layer must be Embedding for text processing.\n");
 
-    if(input_variables.empty() || !input_variables[0].is_categorical())
-        throw runtime_error("Error: input_variables must be categorical.\n");
+    if(input_variables.empty() || input_variables[0].categories.empty())
+        throw runtime_error("Error: input_variables[0] does not contain the vocabulary.\n");
 
     const Index batch_size = input_documents.dimension(0);
 

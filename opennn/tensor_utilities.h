@@ -835,7 +835,10 @@ struct TensorCuda
     TensorCuda() = default;
     explicit TensorCuda(const Shape& shape) { resize(shape); }
 
-    ~TensorCuda() { if (data) cudaFree(data); }
+    ~TensorCuda() 
+    {
+        cudaFree(data); 
+    }
 
     TensorCuda(const TensorCuda&) = delete;
     TensorCuda& operator=(const TensorCuda&) = delete;
@@ -867,9 +870,8 @@ struct TensorCuda
     void resize(const Shape& shape)
     {
         set_descriptor(shape);
-        const size_t total_elements = size();
-        const size_t bytes = total_elements * sizeof(float);
-        if (data) cudaFree(data);
+        const size_t bytes = size() * sizeof(float);
+        cudaFree(data);
         CHECK_CUDA(cudaMalloc(&data, bytes));
         CHECK_CUDA(cudaMemset(data, 0, bytes));
     }
@@ -922,7 +924,8 @@ struct TensorCuda
 
     void free()
     {
-        if (data) { cudaFree(data); data = nullptr; }
+        cudaFree(data); 
+        data = nullptr; 
         descriptor_handle.reset();
     }
 

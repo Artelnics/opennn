@@ -565,26 +565,24 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     
     ThreadSafeQueue<BatchCuda*> empty_training_queue;
     ThreadSafeQueue<BatchCuda*> ready_training_queue;
-    vector<BatchCuda*> training_batch_pool;
+    vector<unique_ptr<BatchCuda>> training_batch_pool;
 
     for (int i = 0; i < PREFETCH_BATCHES; i++) 
     {
-        BatchCuda* b = new BatchCuda(training_batch_size, dataset);
-        training_batch_pool.push_back(b);
-        empty_training_queue.push(b);
+        training_batch_pool.push_back(make_unique<BatchCuda>(training_batch_size, dataset));
+        empty_training_queue.push(training_batch_pool.back().get());
     }
 
     ThreadSafeQueue<BatchCuda*> empty_validation_queue;
     ThreadSafeQueue<BatchCuda*> ready_validation_queue;
-    vector<BatchCuda*> validation_batch_pool;
+    vector<unique_ptr<BatchCuda>> validation_batch_pool;
 
     if (has_validation) 
     {
         for (int i = 0; i < PREFETCH_BATCHES; i++) 
         {
-            BatchCuda* b = new BatchCuda(validation_batch_size, dataset);
-            validation_batch_pool.push_back(b);
-            empty_validation_queue.push(b);
+            validation_batch_pool.push_back(make_unique<BatchCuda>(validation_batch_size, dataset));
+            empty_validation_queue.push(validation_batch_pool.back().get());
         }
     }
 
@@ -791,9 +789,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event);
-
-    for (BatchCuda* b : training_batch_pool) delete b;
-    for (BatchCuda* b : validation_batch_pool) delete b;
 
     neural_network->copy_parameters_host();
     set_unscaling();

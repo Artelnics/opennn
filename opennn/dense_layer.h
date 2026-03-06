@@ -237,8 +237,11 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override
     {
-        if (dropout_states) cudaFree(dropout_states);
-        if (dropout_reserve_space) cudaFree(dropout_reserve_space);
+        cudaFree(dropout_states);
+        dropout_states = nullptr;
+
+        cudaFree(dropout_reserve_space);
+        dropout_reserve_space = nullptr;
 
         cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
         cudnnDestroyTensorDescriptor(biases_add_tensor_descriptor);

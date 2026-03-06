@@ -535,8 +535,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
     BatchCuda* current_training_batch = &training_batch_a;
     BatchCuda* next_training_batch = &training_batch_b;
 
-    BatchCuda* validation_batch_a = nullptr;
-    BatchCuda* validation_batch_b = nullptr;
+    unique_ptr<BatchCuda> validation_batch_a;
+    unique_ptr<BatchCuda> validation_batch_b;
+
     BatchCuda* current_validation_batch = nullptr;
     BatchCuda* next_validation_batch = nullptr;
 
@@ -578,10 +579,10 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     if (has_validation)
     {
-        validation_batch_a = new BatchCuda(validation_batch_size, dataset);
-        validation_batch_b = new BatchCuda(validation_batch_size, dataset);
-        current_validation_batch = validation_batch_a;
-        next_validation_batch = validation_batch_b;
+        validation_batch_a = make_unique<BatchCuda>(validation_batch_size, dataset);
+        validation_batch_b = make_unique<BatchCuda>(validation_batch_size, dataset);
+        current_validation_batch = validation_batch_a.get();
+        next_validation_batch = validation_batch_b.get();
 
         validation_forward_propagation = make_unique<ForwardPropagationCuda>(validation_batch_size, neural_network);
         validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss_index);
@@ -819,12 +820,6 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     cudaStreamDestroy(memory_stream);
     cudaEventDestroy(batch_ready_event);
-
-    if (has_validation)
-    {
-        delete validation_batch_a;
-        delete validation_batch_b;
-    }
 
     set_unscaling();
 

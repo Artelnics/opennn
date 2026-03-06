@@ -183,6 +183,9 @@ void Pooling3dBackPropagation::initialize()
                              layer_input_dimensions[1]);
 
     input_derivatives.setZero();
+
+    input_gradients.resize(1);
+    input_gradients[0] = TensorView(input_derivatives.data(), {batch_size, layer_input_dimensions[0], layer_input_dimensions[1]});
 }
 
 
