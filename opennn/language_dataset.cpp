@@ -73,7 +73,7 @@ LanguageDataset::LanguageDataset(const Index samples_number,
 
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
-    decoder_shape = { 0 };
+    decoder_shape.clear();
 
     set_variable_scalers("None");
     set_default_variable_names();
@@ -353,7 +353,11 @@ void LanguageDataset::read_csv()
 
     input_shape = {get_maximum_input_sequence_length()};
     target_shape = {get_maximum_target_sequence_length()};
-    decoder_shape = {get_maximum_target_sequence_length()};
+
+    if(maximum_target_sequence_length <= 1)
+        decoder_shape.clear();
+    else
+        decoder_shape = {get_maximum_target_sequence_length()};
 
     set_variable_scalers("None");
     set_default_variable_names();
@@ -471,6 +475,11 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 
     input_shape = { get_maximum_input_sequence_length() };
     target_shape = { get_maximum_target_sequence_length() };
+
+    if(maximum_target_sequence_length <= 1)
+        decoder_shape.clear();
+    else
+        decoder_shape = { get_maximum_target_sequence_length() };
 
     if(!variables.empty() && !input_vocabulary.empty())
         variables[0].categories = input_vocabulary;
