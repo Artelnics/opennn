@@ -57,7 +57,7 @@ struct ForwardPropagationCuda
 {
     ForwardPropagationCuda(const Index = 0, NeuralNetwork* = nullptr);
 
-    ~ForwardPropagationCuda() { free(); }
+    ~ForwardPropagationCuda() = default;
 
     void set(const Index = 0, NeuralNetwork* = nullptr);
 
@@ -73,8 +73,6 @@ struct ForwardPropagationCuda
     }
 
     void print();
-
-    void free();
 
     Index samples_number = 0;
 
@@ -326,8 +324,6 @@ struct NeuralNetworkBackPropagationCuda
     vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
     void print();
-
-    void free();
 
     Index batch_size = 0;
 

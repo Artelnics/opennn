@@ -1774,13 +1774,6 @@ void ForwardPropagationCuda::print()
 }
 
 
-void ForwardPropagationCuda::free()
-{
-    for (unique_ptr<LayerForwardPropagationCuda>& layer : layers)
-        if (layer) layer->free();
-}
-
-
 NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     set(new_batch_size, new_neural_network);
@@ -1857,13 +1850,6 @@ void NeuralNetworkBackPropagationCuda::print()
 
         layers[i]->print();
     }
-}
-
-
-void NeuralNetworkBackPropagationCuda::free()
-{
-    for (unique_ptr<LayerBackPropagationCuda>& layer : layers)
-        if (layer) layer->free();
 }
 
 #endif
