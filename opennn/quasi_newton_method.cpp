@@ -40,9 +40,9 @@ Index QuasiNewtonMethod::get_maximum_validation_failures() const
 }
 
 
-void QuasiNewtonMethod::set_loss_index(Loss* new_loss)
+void QuasiNewtonMethod::set_loss(Loss* new_loss)
 {
-    loss_index = new_loss;
+    loss = new_loss;
 }
 
 
@@ -182,17 +182,17 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
         ? first_learning_rate
         : optimization_data.old_learning_rate;
 
-    const type current_loss = back_propagation.loss;
+    const type current_loss_value = back_propagation.loss_value;
 
     const pair<type, type> directional_point = calculate_directional_point(
         batch,
         forward_propagation,
         back_propagation,
         optimization_data,
-        current_loss);
+        current_loss_value);
 
     optimization_data.learning_rate = directional_point.first;
-    back_propagation.loss = directional_point.second;
+    back_propagation.loss_value = directional_point.second;
 
     if(abs(optimization_data.learning_rate) > 0.0f)
     {
@@ -227,7 +227,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::train()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -238,14 +238,14 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Dataset
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();
 
-    const string error_type = loss_index->get_name();
+    const string error_type = loss->get_name();
 
     const Index training_samples_number = dataset->get_samples_number("Training");
 
@@ -259,7 +259,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
 
@@ -281,11 +281,11 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Loss index
 
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_samples_number, loss_index);
+    BackPropagation training_back_propagation(training_samples_number, loss);
 
-    BackPropagation validation_back_propagation(validation_samples_number, loss_index);
+    BackPropagation validation_back_propagation(validation_samples_number, loss);
 
     // Optimization algorithm
 
@@ -294,7 +294,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     Index validation_failures = 0;
 
-    type old_loss = type(0);
+    type old_loss_value = type(0);
     type loss_decrease = MAX;
 
     time_t beginning_time;
@@ -321,11 +321,11 @@ TrainingResults QuasiNewtonMethod::train()
 
         // Loss index
 
-        loss_index->back_propagate(training_batch,
+        loss->back_propagate(training_batch,
                                    training_forward_propagation,
                                    training_back_propagation);
 
-        loss_index->add_regularization_gradient(training_back_propagation.neural_network.gradient);
+        loss->add_regularization_gradient(training_back_propagation.neural_network.gradient);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
@@ -346,7 +346,7 @@ TrainingResults QuasiNewtonMethod::train()
 
             // Loss Index
 
-            loss_index->calculate_error(validation_batch,
+            loss->calculate_error(validation_batch,
                                         validation_forward_propagation,
                                         validation_back_propagation);
 
@@ -367,9 +367,9 @@ TrainingResults QuasiNewtonMethod::train()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
+        if(epoch != 0) loss_decrease = old_loss_value - training_back_propagation.loss_value;
 
-        old_loss = training_back_propagation.loss;
+        old_loss_value = training_back_propagation.loss_value;
 
         stop_training = true;
 
@@ -405,7 +405,7 @@ TrainingResults QuasiNewtonMethod::train()
 
         if(stop_training)
         {
-            results.loss = training_back_propagation.loss;
+            results.loss = training_back_propagation.loss_value;
             results.loss_decrease = loss_decrease;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
@@ -486,9 +486,9 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 {
     quasi_newton_method = new_quasi_newton_method;
 
-    const Loss* loss_index = quasi_newton_method->get_loss_index();
+    const Loss* loss = quasi_newton_method->get_loss();
 
-    NeuralNetwork* neural_network = const_cast<NeuralNetwork*>(loss_index->get_neural_network());
+    NeuralNetwork* neural_network = const_cast<NeuralNetwork*>(loss->get_neural_network());
 
     const Index parameters_number = neural_network->get_parameters().size();
 
@@ -536,7 +536,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
 {
     Triplet triplet;
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorR& potential_parameters = optimization_data.potential_parameters;
 
@@ -546,7 +546,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
 
     // Left point
 
-    triplet.A = { type(0), back_propagation.loss };
+    triplet.A = { type(0), back_propagation.loss_value };
 
     // Right point
 
@@ -563,9 +563,9 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
         neural_network->forward_propagate(batch.get_inputs(),
                                           potential_parameters, forward_propagation);
 
-        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+        loss->calculate_error(batch, forward_propagation, back_propagation);
 
-        triplet.B.second = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+        triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
     } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance && triplet.A.second != triplet.B.second);
 
@@ -581,9 +581,9 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
                                           potential_parameters,
                                           forward_propagation);
 
-        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+        loss->calculate_error(batch, forward_propagation, back_propagation);
 
-        triplet.B.second = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+        triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
         while(triplet.U.second > triplet.B.second)
         {
@@ -598,9 +598,9 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
                                               potential_parameters,
                                               forward_propagation);
 
-            loss_index->calculate_error(batch, forward_propagation, back_propagation);
+            loss->calculate_error(batch, forward_propagation, back_propagation);
 
-            triplet.B.second = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+            triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
         }
     }
     else if(triplet.A.second < triplet.B.second)
@@ -613,9 +613,9 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
                                           potential_parameters,
                                           forward_propagation);
 
-        loss_index->calculate_error(batch, forward_propagation, back_propagation);
+        loss->calculate_error(batch, forward_propagation, back_propagation);
 
-        triplet.U.second = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+        triplet.U.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
         while(triplet.A.second < triplet.U.second)
         {
@@ -627,9 +627,9 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
 
             neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
 
-            loss_index->calculate_error(batch, forward_propagation, back_propagation);
+            loss->calculate_error(batch, forward_propagation, back_propagation);
 
-            triplet.U.second = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+            triplet.U.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
             if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
             {
@@ -672,7 +672,7 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     QuasiNewtonMethodData& optimization_data,
     type current_loss)
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     type alpha = 1.0;
     const type rho = 0.5;
@@ -689,8 +689,8 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
         potential_parameters = parameters + training_direction * alpha;
 
         neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        loss_index->calculate_error(batch, forward_propagation, back_propagation);
-        const type new_loss = back_propagation.error + loss_index->calculate_regularization(potential_parameters);
+        loss->calculate_error(batch, forward_propagation, back_propagation);
+        const type new_loss = back_propagation.error + loss->calculate_regularization(potential_parameters);
 
         if (new_loss <= current_loss + c * alpha * slope)
             return {alpha, new_loss};

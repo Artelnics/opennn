@@ -778,63 +778,53 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-    if(layers.empty() || input_documents.size() == 0)
-        return MatrixR();
-
     if(layers[0]->get_name() != "Embedding")
         throw runtime_error("Error: First layer must be Embedding for text processing.\n");
 
     if(input_variables.empty() || input_variables[0].categories.empty())
         throw runtime_error("Error: input_variables[0] does not contain the vocabulary.\n");
 
-    const Index batch_size = input_documents.dimension(0);
-
+    const Index batch_size = input_documents.size();
     const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
     const Index sequence_length = embedding_layer->get_sequence_length();
 
     const vector<string>& vocabulary = input_variables[0].categories;
-
     unordered_map<string, Index> vocabulary_map;
     vocabulary_map.reserve(vocabulary.size());
+
     for(Index i = 0; i < (Index)vocabulary.size(); ++i)
         vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs(batch_size, sequence_length);
-    inputs.setConstant(0.0);
+    inputs.setConstant(0.0f);
 
-    #pragma omp parallel for
     for(Index i = 0; i < batch_size; ++i)
     {
-        const vector<string> tokens = tokenize(input_documents(i));
+        const string input_data = input_documents.data()[i];
+        const vector<string> tokens = tokenize(input_data);
+        const size_t tokens_number = tokens.size();
 
-        Index current_index = 0;
+        if (sequence_length > 0)
+            inputs(i, 0) = 2.0f; // START_INDEX
 
-        if(current_index < sequence_length)
+        for(size_t j = 0; j < tokens_number; j++)
         {
-            inputs(i, current_index) = 2;
-            current_index++;
+            if (1 + j >= (size_t)sequence_length) break;
+
+            const auto it = vocabulary_map.find(tokens[j]);
+
+            inputs(i, 1 + j) = (it != vocabulary_map.end())
+                                   ? static_cast<type>(it->second)
+                                   : 1.0f; // UNK_INDEX
         }
 
-        for(const string& token : tokens)
-        {
-            if(current_index >= sequence_length - 1)
-                break;
-
-            const auto it = vocabulary_map.find(token);
-
-            if(it != vocabulary_map.end())
-                inputs(i, current_index) = (type)it->second;
-            else
-                inputs(i, current_index) = 1;
-
-            current_index++;
-        }
-
-        if(current_index < sequence_length)
-            inputs(i, current_index) = 3;
+        if (1 + tokens_number < (size_t)sequence_length)
+            inputs(i, 1 + tokens_number) = 3.0f; // END_INDEX
     }
 
-    return calculate_outputs(inputs);
+    MatrixR outputs = calculate_outputs(inputs);
+
+    return outputs;
 }
 
 
@@ -893,9 +883,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     // Input
 
-    printer.OpenElement("Input");
+    printer.OpenElement("Inputs");
 
-    add_xml_element(printer, "InputNumber", to_string(inputs_number));
+    add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
     for(Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
@@ -936,6 +926,15 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Display", to_string(display));
 
+    // Paramaters
+
+    printer.OpenElement("Parameters");
+
+    if (parameters.size() > 0)
+        printer.PushText(vector_to_string(parameters, " ").c_str());
+
+    printer.CloseElement();
+
     printer.CloseElement();
 }
 
@@ -947,23 +946,33 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
-    features_from_XML(neural_network_element->FirstChildElement("Input"));
+    inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
     set_display(read_xml_bool(neural_network_element, "Display"));
+
+    compile();
+
+    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+        throw runtime_error("Parameters element is nullptr.\n");
+
+    if (parameters_element && parameters_element->GetText())
+        string_to_vector(parameters_element->GetText(), parameters);
 }
 
 
-void NeuralNetwork::features_from_XML(const XMLElement* features_element)
+void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 {
 
-    if(!features_element)
-        throw runtime_error("Input element is nullptr.\n");
+    if(!inputs_element)
+        throw runtime_error("Inputs element is nullptr.\n");
 
     //@simone @todo stai attento c'e forse qualcos adi sospetto in questo "new", le cose cambiano e non capisco se sono layes e input e output cambiano sempre o no
-    //const Index new_features_number = read_xml_index(features_element, "InputNumber");
+    //const Index new_features_number = read_xml_index(inputs_element, "InputNumber");
 
-    const XMLElement* current_element = features_element->FirstChildElement("InputNumber");
+    const XMLElement* current_element = inputs_element->FirstChildElement("InputsNumber");
 
     for(Variable& variable : input_variables)
     {
@@ -1056,7 +1065,6 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
     const XMLElement* current_element = outputs_element->FirstChildElement("OutputsNumber");
 
-    Index i = 0; // Global output index counter
     for(Variable& variable : output_variables)
     {
         if(variable.is_categorical())
@@ -1067,8 +1075,6 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
                 if(current_element->GetText())
                     category_name = current_element->GetText();
-
-                i++;
             }
         else
         {

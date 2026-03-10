@@ -310,7 +310,7 @@ void GeneticAlgorithm::evaluate_population()
 
     // Loss index
 
-    const Loss* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
 
     // Dataset
 
@@ -319,7 +319,7 @@ void GeneticAlgorithm::evaluate_population()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     // Model selection
 
@@ -371,7 +371,7 @@ void GeneticAlgorithm::evaluate_population()
 
         //Training
 
-        training_strategy->get_loss_index()->set_display(false);
+        training_strategy->get_loss()->set_display(false);
         training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
@@ -626,9 +626,9 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
-    const Loss* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Validation algorithm
@@ -650,7 +650,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     // Optimization algorithm
 

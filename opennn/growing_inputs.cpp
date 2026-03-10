@@ -110,7 +110,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Loss index
 
-    const Loss* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
 
     type previus_validation_error = MAX;

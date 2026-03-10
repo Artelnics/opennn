@@ -216,7 +216,7 @@ public:
     Tensor<string, 2> get_dense2d_layers_information() const;
 
     void from_XML(const XMLDocument&);
-    void features_from_XML(const XMLElement*);
+    void inputs_from_XML(const XMLElement*);
     void layers_from_XML(const XMLElement*);
     void outputs_from_XML(const XMLElement*);
 
