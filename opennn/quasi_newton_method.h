@@ -33,7 +33,7 @@ public:
 
     // Set
 
-    void set_loss_index(Loss*) override;
+    void set_loss(Loss*) override;
 
     void set_display(bool) override;
 

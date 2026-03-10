@@ -35,13 +35,13 @@ public:
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
-    Loss* get_loss_index() const;
+    Loss* get_loss() const;
 
     string get_hardware_use() const;
 
     void set_hardware_use(const string&);
 
-    bool has_loss_index() const;
+    bool has_loss() const;
 
     bool get_display() const;
 
@@ -55,7 +55,7 @@ public:
 
     void set(const Loss* = nullptr);
 
-    virtual void set_loss_index(Loss*);
+    virtual void set_loss(Loss*);
 
     virtual void set_display(bool);
 
@@ -91,7 +91,7 @@ public:
 
 protected:
 
-    Loss* loss_index = nullptr;
+    Loss* loss = nullptr;
 
     Index maximum_epochs = 10000;
 

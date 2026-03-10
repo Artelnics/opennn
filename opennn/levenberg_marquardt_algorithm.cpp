@@ -148,15 +148,15 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type new_maximum_time)
 
 void LevenbergMarquardtAlgorithm::check() const
 {
-    if(!loss_index)
+    if(!loss)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("The loss funcional has no dataset.");
 
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.");
@@ -165,14 +165,14 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
-    if(loss_index->get_name() == "MinkowskiError")
+    if(loss->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss_index->get_name() == "CrossEntropyError2d")
+    else if(loss->get_name() == "CrossEntropyError2d")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
-    else if(loss_index->get_name() == "WeightedSquaredError")
+    else if(loss->get_name() == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
@@ -183,7 +183,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Dataset
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     const bool has_validation = dataset->has_validation();
 
@@ -198,7 +198,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
 
@@ -215,17 +215,17 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Loss index
 
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_samples_number, loss_index);
-    BackPropagation validation_back_propagation(validation_samples_number, loss_index);
+    BackPropagation training_back_propagation(training_samples_number, loss);
+    BackPropagation validation_back_propagation(validation_samples_number, loss);
 
     type old_loss = type(0);
     type loss_decrease = MAX;
 
     Index validation_failures = 0;
 
-    BackPropagationLM training_back_propagation_lm(training_samples_number, loss_index);
+    BackPropagationLM training_back_propagation_lm(training_samples_number, loss);
 
     // Training strategy stuff
 
@@ -254,11 +254,11 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         // Loss index
 
-        loss_index->back_propagate_lm(training_batch,
+        loss->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
-        loss_index->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+        loss->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 
@@ -269,7 +269,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
                                               is_training);
 
 
-            loss_index->calculate_error(validation_batch, validation_forward_propagation, validation_back_propagation);
+            loss->calculate_error(validation_batch, validation_forward_propagation, validation_back_propagation);
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
 
@@ -279,9 +279,9 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         elapsed_time = get_elapsed_time(beginning_time);
 
-        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss_value;
 
-        old_loss = training_back_propagation_lm.loss;
+        old_loss = training_back_propagation_lm.loss_value;
 
         if(display && epoch%display_period == 0)
         {
@@ -325,7 +325,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         if(stop_training)
         {
-            results.loss = training_back_propagation_lm.loss;
+            results.loss = training_back_propagation_lm.loss_value;
             results.loss_decrease = loss_decrease;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch+1);
@@ -357,12 +357,12 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorR& parameters = neural_network->get_parameters();
 
     type& error = back_propagation_lm.error;
-    type& loss = back_propagation_lm.loss;
+    type& loss_value = back_propagation_lm.loss_value;
 
     const VectorR& gradient = back_propagation_lm.gradient;
     MatrixR& hessian = back_propagation_lm.hessian;
@@ -386,30 +386,30 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                           potential_parameters,
                                           forward_propagation);
 
-        loss_index->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-        loss_index->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
-        type new_loss;
+        type new_loss_value;
 
         try
         {
-            new_loss = error + loss_index->calculate_regularization(potential_parameters);
+            new_loss_value = error + loss->calculate_regularization(potential_parameters);
 
         }catch(exception)
         {
-            new_loss = loss;
+            new_loss_value = loss_value;
         }
 
-        if(new_loss < loss) // succesfull step
+        if(new_loss_value < loss_value) // succesfull step
         {
             set_damping_parameter(damping_parameter/damping_parameter_factor);
 
             parameters = potential_parameters;
 
-            loss = new_loss;
+            loss_value = new_loss_value;
 
             success = true;
 
@@ -505,9 +505,9 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
 {
     Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method;
 
-    const Loss* loss_index = Levenberg_Marquardt_algorithm->get_loss_index();
+    const Loss* loss = Levenberg_Marquardt_algorithm->get_loss();
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters().size();
 

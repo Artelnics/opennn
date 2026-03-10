@@ -44,7 +44,7 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.get_loss_index()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization_method("None");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(1000);

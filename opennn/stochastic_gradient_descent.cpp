@@ -134,7 +134,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
                                                   StochasticGradientDescentData& optimization_data,
                                                   type learning_rate) const
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorR& parameters = neural_network->get_parameters();
 
@@ -165,7 +165,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
 TrainingResults StochasticGradientDescent::train()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs+1);
@@ -178,7 +178,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Dataset
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     const bool has_validation = dataset->has_validation();
 
@@ -217,7 +217,7 @@ TrainingResults StochasticGradientDescent::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
 
@@ -228,10 +228,10 @@ TrainingResults StochasticGradientDescent::train()
 
     // Loss index
 
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_batch_size, loss_index);
-    BackPropagation validation_back_propagation(validation_batch_size, loss_index);
+    BackPropagation training_back_propagation(training_batch_size, loss);
+    BackPropagation validation_back_propagation(validation_batch_size, loss);
 
     //type training_loss = type(0);
     type training_error = type(0);
@@ -288,7 +288,7 @@ TrainingResults StochasticGradientDescent::train()
 
             // Loss index
 
-            loss_index->back_propagate(training_batch,
+            loss->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
@@ -333,7 +333,7 @@ TrainingResults StochasticGradientDescent::train()
 
                 // Loss
 
-                loss_index->calculate_error(validation_batch,
+                loss->calculate_error(validation_batch,
                                             validation_forward_propagation,
                                             validation_back_propagation);
 
@@ -389,7 +389,7 @@ TrainingResults StochasticGradientDescent::train()
 
         if(stop_training)
         {
-            results.loss = training_back_propagation.loss;
+            results.loss = training_back_propagation.loss_value;
             results.validation_failures = validation_failures;
             results.elapsed_time = write_time(elapsed_time);
 
@@ -477,9 +477,9 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 {
     stochastic_gradient_descent = new_stochastic_gradient_descent;
 
-    const Loss* loss_index = stochastic_gradient_descent->get_loss_index();
+    const Loss* loss = stochastic_gradient_descent->get_loss();
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters().size();
 
@@ -495,7 +495,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 
 TrainingResults StochasticGradientDescent::train_cuda()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -508,11 +508,11 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     // Dataset
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     const bool has_validation = dataset->has_validation();
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -559,7 +559,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
 
@@ -572,9 +572,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
     // Loss Index
 
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagationCuda training_back_propagation(training_batch_size, loss_index);
+    BackPropagationCuda training_back_propagation(training_batch_size, loss);
     unique_ptr<BackPropagationCuda> validation_back_propagation;
 
     if (has_validation)
@@ -585,7 +585,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         next_validation_batch = validation_batch_b.get();
 
         validation_forward_propagation = make_unique<ForwardPropagationCuda>(validation_batch_size, neural_network);
-        validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss_index);
+        validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss);
     }
 
     type training_error = type(0);
@@ -663,7 +663,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             // Loss index
 
-            loss_index->back_propagate(*current_training_batch,
+            loss->back_propagate(*current_training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
@@ -737,7 +737,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
                 // Loss
 
-                loss_index->calculate_error(*current_validation_batch,
+                loss->calculate_error(*current_validation_batch,
                                             *validation_forward_propagation,
                                             *validation_back_propagation);
 
@@ -834,7 +834,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 void StochasticGradientDescent::update_parameters(BackPropagationCuda& back_propagation,
                                                        SGDOptimizationDataCuda& optimization_data) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters_number();
 
@@ -867,7 +867,7 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 {
     stochastic_gradient_descent = new_stochastic_gradient_descent;
 
-    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss_index()->get_neural_network();
+    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss()->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters_number();
 
@@ -880,7 +880,7 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 void SGDOptimizationDataCuda::print() const
 {    
     cout << "--- SGD Optimization Data (CUDA) ---" << endl;
-    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss_index()->get_neural_network();
+    NeuralNetwork* neural_network = stochastic_gradient_descent->get_loss()->get_neural_network();
 
     cout << "------------------------------------" << endl;
 }
