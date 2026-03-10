@@ -14,42 +14,6 @@
 namespace opennn
 {
 
-template <typename T>
-class ThreadSafeQueue
-{
-private:
-
-    queue<T> queue_;
-    mutex mutex_;
-    condition_variable cond_;
-
-public:
-
-    void push(T item)
-    {
-        unique_lock<mutex> lock(mutex_);
-        queue_.push(item);
-        lock.unlock();
-        cond_.notify_one();
-    }
-
-    T pop()
-    {
-        unique_lock<mutex> lock(mutex_);
-        cond_.wait(lock, [this]() { return !queue_.empty(); });
-        T item = queue_.front();
-        queue_.pop();
-        return item;
-    }
-
-    bool empty()
-    {
-        lock_guard<mutex> lock(mutex_);
-        return queue_.empty();
-    }
-};
-
-
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -150,7 +114,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -161,14 +125,14 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Dataset
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -199,7 +163,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Neural network
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
 
@@ -213,16 +177,16 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Loss index
 
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagation training_back_propagation(training_batch_size, loss_index);
+    BackPropagation training_back_propagation(training_batch_size, loss);
     unique_ptr<BackPropagation> validation_back_propagation;
 
     if (has_validation)
     {
         validation_batch = make_unique<Batch>(validation_batch_size, dataset);
         validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
-        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss_index);
+        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
     }
 
     type training_error = type(0);
@@ -282,7 +246,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             // Loss index
 
-            loss_index->back_propagate(training_batch,
+            loss->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
@@ -327,7 +291,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 // Loss
 
-                loss_index->calculate_error(*validation_batch,
+                loss->calculate_error(*validation_batch,
                                             *validation_forward_propagation,
                                             *validation_back_propagation);
 
@@ -392,7 +356,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         if(stop_training)
         {
-            results.loss = training_back_propagation.loss;
+            results.loss = training_back_propagation.loss_value;
 
             results.validation_failures = validation_failures;
 
@@ -436,7 +400,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
     optimization_data.iteration++;
     const type iteration = static_cast<type>(optimization_data.iteration);
@@ -498,8 +462,8 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
-    Loss* loss_index = new_adaptive_moment_estimation->get_loss_index();
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    Loss* loss = new_adaptive_moment_estimation->get_loss();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters().size();
 
@@ -524,7 +488,7 @@ void AdaptiveMomentEstimationData::print() const
 
 TrainingResults AdaptiveMomentEstimation::train_cuda()
 {
-    if(!loss_index || !loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -533,11 +497,11 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
 
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
     if(!dataset) throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -556,7 +520,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches(validation_batches_number);
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
     set_scaling();
@@ -595,15 +559,15 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     unique_ptr<ForwardPropagationCuda> validation_forward_propagation;
 
     neural_network->copy_parameters_device();
-    loss_index->set_normalization_coefficient();
+    loss->set_normalization_coefficient();
 
-    BackPropagationCuda training_back_propagation(training_batch_size, loss_index);
+    BackPropagationCuda training_back_propagation(training_batch_size, loss);
     unique_ptr<BackPropagationCuda> validation_back_propagation;
 
     if (has_validation) 
     {
         validation_forward_propagation = make_unique<ForwardPropagationCuda>(validation_batch_size, neural_network);
-        validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss_index);
+        validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss);
     }
 
     type training_error = type(0);
@@ -651,24 +615,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cudaEventRecord(batch_ready_event, memory_stream);
             cudaStreamWaitEvent(0, batch_ready_event, 0);
 
-            // --- INICIO DE DEBUG: A LA SALIDA DEL BATCH ---
-            if (epoch == 0 && iteration == 0) 
-            {
-                cout << "\n\n====== DEBUG 1: INPUTS TRAS COPIA A VRAM ======" << endl;
-                
-                vector<float> h_inputs(200, 0.0f);
-                // Leemos los 20 primeros píxeles de la primera imagen desde VRAM a CPU
-                cudaMemcpy(h_inputs.data(), current_batch->inputs_device.data, 200 * sizeof(float), cudaMemcpyDeviceToHost);
-                
-                cout << "Primeros 20 floats en VRAM (BatchCuda):" << endl;
-                for(int k = 0; k < 200; k++) 
-                    cout << h_inputs[k] << " ";
-                cout << "\n===============================================\n" << endl;
-            }
-            // --- FIN DE DEBUG ---
-
             neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
-            loss_index->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
+
+            loss->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
             
             training_error += training_back_propagation.error;
 
@@ -713,7 +662,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 cudaStreamWaitEvent(0, batch_ready_event, 0);
 
                 neural_network->forward_propagate(current_batch->get_inputs_device(), *validation_forward_propagation, is_training);
-                loss_index->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
+                loss->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
                 validation_error += validation_back_propagation->error;
                 if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
@@ -776,7 +725,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         if (stop_training) 
         {
-            results.loss = training_back_propagation.loss;
+            results.loss = training_back_propagation.loss_value;
             results.validation_failures = validation_failures;
             results.resize_training_error_history(epoch + 1);
             results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
@@ -802,12 +751,12 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,
                                                       ADAMOptimizationDataCuda& optimization_data) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
     const int parameters_number = static_cast<int>(neural_network->get_parameters_number());
 
     float* parameters_device_data = neural_network->get_parameters_device().data;
-    const float* gradients_device = back_propagation.neural_network.workspace.data;
+    const float* gradients_device = back_propagation.neural_network.gradients.data;
 
     optimization_data.iteration++;
     const int iteration = static_cast<int>(optimization_data.iteration);
@@ -840,7 +789,7 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
-    NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss_index()->get_neural_network();
+    NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss()->get_neural_network();
     const Index parameters_number = neural_network->get_parameters_number();
 
     gradient_exponential_decay.resize({parameters_number});
@@ -855,7 +804,7 @@ void ADAMOptimizationDataCuda::print() const
 {
     cout << "--- ADAM Optimization Data (CUDA) ---" << endl;
 
-    NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss_index()->get_neural_network();
+    NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss()->get_neural_network();
 
     cout << "-----------------------------------" << endl;
 }

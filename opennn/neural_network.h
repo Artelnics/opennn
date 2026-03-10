@@ -57,7 +57,7 @@ struct ForwardPropagationCuda
 {
     ForwardPropagationCuda(const Index = 0, NeuralNetwork* = nullptr);
 
-    ~ForwardPropagationCuda() { free(); }
+    ~ForwardPropagationCuda() = default;
 
     void set(const Index = 0, NeuralNetwork* = nullptr);
 
@@ -73,8 +73,6 @@ struct ForwardPropagationCuda
     }
 
     void print();
-
-    void free();
 
     Index samples_number = 0;
 
@@ -216,7 +214,7 @@ public:
     Tensor<string, 2> get_dense2d_layers_information() const;
 
     void from_XML(const XMLDocument&);
-    void features_from_XML(const XMLElement*);
+    void inputs_from_XML(const XMLElement*);
     void layers_from_XML(const XMLElement*);
     void outputs_from_XML(const XMLElement*);
 
@@ -326,8 +324,6 @@ struct NeuralNetworkBackPropagationCuda
     vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
     void print();
-
-    void free();
 
     Index batch_size = 0;
 

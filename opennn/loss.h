@@ -218,11 +218,11 @@ struct BackPropagationLM
     VectorR output_gradients;
     Shape output_gradient_dimensions;
 
-    Loss* loss_index = nullptr;
+    Loss* loss = nullptr;
 
     type error;
     type regularization = type(0);
-    type loss = type(0);
+    type loss_value = type(0);
 
     NeuralNetworkBackPropagationLM neural_network;
 
@@ -253,7 +253,7 @@ struct BackPropagation
 
     Index samples_number = 0;
 
-    Loss* loss_index = nullptr;
+    Loss* loss = nullptr;
 
     NeuralNetworkBackPropagation neural_network;
 
@@ -270,7 +270,7 @@ struct BackPropagation
     MatrixB mask;
 
     bool built_mask = false;
-    type loss = type(0);
+    type loss_value = type(0);
 };
 
 
@@ -294,7 +294,7 @@ struct BackPropagationCuda
 
     Index samples_number = 0;
 
-    Loss* loss_index = nullptr;
+    Loss* loss = nullptr;
 
     NeuralNetworkBackPropagationCuda neural_network;
 
@@ -304,7 +304,7 @@ struct BackPropagationCuda
     float* error_device = nullptr;
 
     type regularization = type(0);
-    type loss = type(0);
+    type loss_value = type(0);
 
     cudnnReduceTensorDescriptor_t reduce_tensor_descriptor;
 

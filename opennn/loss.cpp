@@ -124,7 +124,7 @@ void Loss::back_propagate(const Batch& batch,
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
-    back_propagation.loss = back_propagation.error;
+    back_propagation.loss_value = back_propagation.error;
 
     // Regularization
 
@@ -141,7 +141,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 
     const VectorR& parameters = neural_network->get_parameters();
 
-    back_propagation.loss += calculate_regularization(parameters);
+    back_propagation.loss_value += calculate_regularization(parameters);
 }
 
 
@@ -152,7 +152,7 @@ void Loss::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
 
     const VectorR& parameters = neural_network->get_parameters();
 
-    type& loss = back_propagation_lm.loss;
+    type& loss = back_propagation_lm.loss_value;
 
     VectorR& gradient = back_propagation_lm.gradient;
 
@@ -195,7 +195,7 @@ void Loss::back_propagate_lm(const Batch& batch,
 
     calculate_error_hessian_lm(batch, back_propagation_lm);
 
-    back_propagation_lm.loss = back_propagation_lm.error;
+    back_propagation_lm.loss_value = back_propagation_lm.error;
 
     add_regularization_lm(back_propagation_lm);
 }
@@ -342,7 +342,7 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
     if(regularization_method == "None" || regularization_weight == 0)
         return;
 
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
     const VectorR& parameters = neural_network->get_parameters();
 
@@ -438,13 +438,13 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
 {
     samples_number = new_samples_number;
 
-    loss_index = const_cast<Loss*>(new_loss);
+    loss = const_cast<Loss*>(new_loss);
 
-    if(!loss_index) return;
+    if(!loss) return;
 
     // Neural network
 
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Shape output_shape = neural_network_ptr->get_output_shape();
 
@@ -454,7 +454,7 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
 
     neural_network.set(samples_number, neural_network_ptr);
 
-    loss = type(0);
+    loss_value = type(0);
 
     errors.resize(samples_number, outputs_number);
 
@@ -467,7 +467,7 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
 
     output_gradients.resize(size);
 
-    if(is_instance_of<CrossEntropyError3d>(loss_index))
+    if(is_instance_of<CrossEntropyError3d>(loss))
     {
         predictions.resize(samples_number, outputs_number);
         matches.resize(samples_number, outputs_number);
@@ -478,7 +478,7 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
 
 vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Index layers_number = neural_network_ptr->get_layers_number();
 
@@ -1133,7 +1133,7 @@ void BackPropagationLM::print() const
 
 vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const
 {
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Index layers_number = neural_network_ptr->get_layers_number();
 
@@ -1190,12 +1190,12 @@ TensorView BackPropagationLM::get_output_gradients() const
 void BackPropagationLM::set(const Index new_samples_number,
                             Loss *new_loss)
 {
-    loss_index = new_loss;
+    loss = new_loss;
     samples_number = new_samples_number;
 
-    if(!loss_index) return;
+    if(!loss) return;
 
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     if(!neural_network_ptr) return;
 
@@ -1220,7 +1220,7 @@ void BackPropagationLM::set(const Index new_samples_number,
 
     neural_network.set(samples_number, neural_network_ptr);
 
-    loss = type(0);
+    loss_value = type(0);
 
     gradient.resize(padded_parameters_number);
     gradient.setZero();
@@ -1275,7 +1275,7 @@ void Loss::back_propagate(const BatchCuda& batch,
 
     // Loss
 
-    back_propagation.loss = back_propagation.error;
+    back_propagation.loss_value = back_propagation.error;
 
     // Regularization
 
@@ -1320,7 +1320,7 @@ void Loss::add_regularization_cuda(BackPropagationCuda& back_propagation) const
         return;
     }
 
-    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
     const Index layers_number = neural_network->get_layers_number();
 
@@ -1416,13 +1416,13 @@ BackPropagationCuda::BackPropagationCuda(const Index new_samples_number, Loss* n
 void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 {
     samples_number = new_samples_number;
-    loss_index = new_loss;
+    loss = new_loss;
 
-    if(!loss_index) return;
+    if(!loss) return;
 
     // Neural network
 
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Shape output_shape = neural_network_ptr->get_output_shape();
 
@@ -1432,7 +1432,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
     neural_network.set(samples_number, neural_network_ptr);
 
-    loss = type(0);
+    loss_value = type(0);
     error = type(0);
     regularization = type(0);
 
@@ -1479,7 +1479,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
     // Sum
 
-    //if (is_instance_of<CrossEntropyError3d>(loss_index))
+    //if (is_instance_of<CrossEntropyError3d>(loss))
     //{
     /* @todo CudaMalloc transformers GPU
         predictions (batch_size, outputs_number);
@@ -1492,7 +1492,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
 vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_delta_views_device() const
 {
-    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Index layers_number = neural_network_ptr->get_layers_number();
 

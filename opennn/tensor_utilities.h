@@ -13,6 +13,42 @@
 namespace opennn
 {
 
+template <typename T>
+class ThreadSafeQueue
+{
+private:
+
+    queue<T> queue_;
+    mutex mutex_;
+    condition_variable cond_;
+
+public:
+
+    void push(T item)
+    {
+        unique_lock<mutex> lock(mutex_);
+        queue_.push(item);
+        lock.unlock();
+        cond_.notify_one();
+    }
+
+    T pop()
+    {
+        unique_lock<mutex> lock(mutex_);
+        cond_.wait(lock, [this]() { return !queue_.empty(); });
+        T item = queue_.front();
+        queue_.pop();
+        return item;
+    }
+
+    bool empty()
+    {
+        lock_guard<mutex> lock(mutex_);
+        return queue_.empty();
+    }
+};
+
+
 struct Shape
 {
     static constexpr size_t MaxRank = 6;
@@ -407,6 +443,7 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
+void fill_tensor_data_colmajor(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 
 template <typename Type, int Rank>
@@ -766,6 +803,70 @@ inline bool are_equal(const VectorR& A,
     return true;
 }
 
+
+class Device
+{
+public:
+    static Device& instance();
+    ThreadPoolDevice* get_thread_pool_device();
+    void set_threads_number(int num_threads);
+
+#ifdef OPENNN_CUDA
+    cublasHandle_t get_cublas_handle();
+    cudnnHandle_t get_cudnn_handle();
+    cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
+    cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
+#endif
+
+private:
+    Device();
+    ~Device();
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+#ifdef OPENNN_CUDA
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+#endif
+};
+
+inline ThreadPoolDevice& get_device()
+{
+    return *Device::instance().get_thread_pool_device();
+}
+
+void set_threads_number(int num_threads);
+
+#ifdef OPENNN_CUDA
+
+    inline cublasHandle_t get_cublas_handle()
+    {
+        return Device::instance().get_cublas_handle();
+    }
+
+
+    inline cudnnHandle_t get_cudnn_handle()
+    {
+        return Device::instance().get_cudnn_handle();
+    }
+
+
+    inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
+    {
+        return Device::instance().get_operator_sum_descriptor();
+    }
+
+
+    inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
+    {
+        return Device::instance().get_operator_multiplication_descriptor();
+    }
+
+#endif
+
 #ifdef OPENNN_CUDA
 
 inline const float alpha_one = 1.0f;
@@ -941,68 +1042,6 @@ void link(type*, const vector<vector<TensorViewCuda*>>&);
 
 Index get_size(const vector<TensorViewCuda*>&);
 Index get_size(const vector<vector<TensorViewCuda*>>&);
-
-#endif
-
-class Device
-{
-public:
-    static Device& instance();
-    ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int num_threads);
-
-#ifdef OPENNN_CUDA
-    cublasHandle_t get_cublas_handle();
-    cudnnHandle_t get_cudnn_handle();
-    cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
-    cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
-#endif
-
-private:
-    Device();
-    ~Device();
-
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
-
-#ifdef OPENNN_CUDA
-    cublasHandle_t cublas_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-#endif
-};
-
-inline ThreadPoolDevice& get_device()
-{
-    return *Device::instance().get_thread_pool_device();
-}
-
-void set_threads_number(int num_threads);
-
-#ifdef OPENNN_CUDA
-    inline cublasHandle_t get_cublas_handle()
-    {
-        return Device::instance().get_cublas_handle();
-    }
-
-
-    inline cudnnHandle_t get_cudnn_handle()
-    {
-        return Device::instance().get_cudnn_handle();
-    }
-
-
-    inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
-    {
-        return Device::instance().get_operator_sum_descriptor();
-    }
-
-
-    inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
-    {
-        return Device::instance().get_operator_multiplication_descriptor();
-    }
 
 #endif
 

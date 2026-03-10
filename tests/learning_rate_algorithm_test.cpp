@@ -9,7 +9,7 @@ TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
     LearningRateAlgorithm learning_rate_algorithm;
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), false);
+    EXPECT_EQ(learning_rate_algorithm.has_loss(), false);
 }
 
 
@@ -18,7 +18,7 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
     MeanSquaredError mean_squared_error;
     LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
-    EXPECT_EQ(learning_rate_algorithm.has_loss_index(), true);
+    EXPECT_EQ(learning_rate_algorithm.has_loss(), true);
 }
 
 

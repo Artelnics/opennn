@@ -1216,10 +1216,10 @@ void ConvolutionalForwardPropagationCuda::initialize()
         get_cudnn_handle(),
         input_tensor_descriptor, convolutional_layer->get_kernel_descriptor(),
         convolutional_layer->get_convolution_descriptor(), outputs.get_descriptor(),
-        convolution_algorithm, &workspace_bytes);
+        convolution_algorithm, &workspace_size);
 
-    if (workspace_bytes > 0)
-        CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+    if (workspace_size > 0)
+        CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
 
     // Batch Normalization
 

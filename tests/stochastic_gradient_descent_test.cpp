@@ -12,7 +12,7 @@ TEST(StochasticGradientDescentTest, DefaultConstructor)
 {
     StochasticGradientDescent adaptive_moment_estimation;
 
-    EXPECT_TRUE(!adaptive_moment_estimation.has_loss_index());
+    EXPECT_TRUE(!adaptive_moment_estimation.has_loss());
 }
 
 
@@ -21,7 +21,7 @@ TEST(StochasticGradientDescentTest, GeneralConstructor)
     MeanSquaredError mean_squared_error;
     StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
 
-    EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
+    EXPECT_TRUE(adaptive_moment_estimation.has_loss());
 }
 
 

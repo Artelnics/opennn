@@ -177,14 +177,14 @@ void NeuronSelection::check() const
 
     // Loss index
 
-    const Loss* loss_index = training_strategy->get_loss_index();
+    const Loss* loss = training_strategy->get_loss();
 
-    if(!loss_index)
+    if(!loss)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
-    const NeuralNetwork* neural_network = loss_index->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
 
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
@@ -194,7 +194,7 @@ void NeuronSelection::check() const
 
     // Dataset
 
-    const Dataset* dataset = loss_index->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Pointer to dataset is nullptr.\n");

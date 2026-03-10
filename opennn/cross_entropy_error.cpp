@@ -201,10 +201,10 @@ void CrossEntropyError2d::calculate_binary_error(const BatchCuda& batch,
                       0,
                       back_propagation.workspace,
                       back_propagation.workspace_size,
-                      &alpha,
+                      &alpha_one,
                       output_tensor_descriptor,
                       errors,
-                      &beta,
+                      &beta_zero,
                       output_reduce_tensor_descriptor,
                       error_device);
 

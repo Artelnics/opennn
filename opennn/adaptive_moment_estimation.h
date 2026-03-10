@@ -95,7 +95,7 @@ private:
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_validation_failures = MAX_INDEX;
+   Index maximum_validation_failures = numeric_limits<Index>::max();
 
    Index batch_size = 1000;
 

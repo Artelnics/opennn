@@ -292,7 +292,7 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
             total_rows *= layer->get_input_shape()[0];
 
         ones.resize({total_rows});
-        ones.initialize(1.0f);
+        ones.fill(1.0f);
 
         input_gradients.resize(1);
         input_gradients[0].resize({ 1, inputs_number, total_rows, 1 });
@@ -1154,7 +1154,7 @@ public:
 
         auto* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
 
-        float* ones = dense_layer_back_propagation->ones;
+        float* ones = dense_layer_back_propagation->ones.data;
 
         float* bias_gradients = dense_layer_back_propagation->bias_gradients.data;
         float* weight_gradients = dense_layer_back_propagation->weight_gradients.data;

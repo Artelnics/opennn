@@ -171,8 +171,8 @@ public:
 public:
 
     void forward_propagate(const vector<TensorViewCuda>& inputs,
-                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool)
+                            unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                            bool)
     {
         const Index batch_size = forward_propagation->batch_size;
         const Index outputs_number = get_outputs_number();
@@ -189,10 +189,10 @@ public:
             type* reordered_inputs = layer_forward_propagation->reordered_inputs.data;
             type* outputs_device = layer_forward_propagation->outputs.data;
 
-            //invert_reorder_inputs_cuda(inputs[0].data, reordered_inputs,
-            //                           batch_size, channels, height, width);
+            invert_reorder_inputs_cuda(inputs[0].data, reordered_inputs,
+                                       batch_size, channels, height, width);
 
-            reorganize_inputs_cuda(inputs[0].data, outputs_device, batch_size, outputs_number);
+            reorganize_inputs_cuda(inputs[0].data, outputs_device, batch_size, height, width, channels);
         }
         else
             CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,
@@ -201,18 +201,25 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>&,
-                             const vector<TensorViewCuda>& output_gradients,
-                             unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>& back_propagation) const
+    void back_propagate(const vector<TensorViewCuda>& inputs,
+                        const vector<TensorViewCuda>& output_gradients,
+                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                        unique_ptr<LayerBackPropagationCuda>& back_propagation) const
     {
         const Index batch_size = back_propagation->batch_size;
-
         type* input_gradients = back_propagation->input_gradients[0].data;
-
         const Index outputs_number = get_outputs_number();
 
-        reorganize_gradients_cuda(output_gradients[0].data, input_gradients, batch_size, outputs_number);
+        if constexpr (Rank == 4)
+        {
+            const Index height = get_input_height();
+            const Index width = get_input_width();
+            const Index channels = get_input_channels();
+       
+            reorganize_gradients_cuda(output_gradients[0].data, input_gradients, batch_size, height, width, channels);
+        }
+        else
+            CHECK_CUDA(cudaMemcpy(input_gradients, output_gradients[0].data, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
     }
 
 #endif

@@ -35,9 +35,9 @@ NeuralNetwork* TrainingStrategy::get_neural_network() const
 }
 
 
-Loss* TrainingStrategy::get_loss_index() const
+Loss* TrainingStrategy::get_loss() const
 {
-    return loss_index.get();
+    return loss.get();
 }
 
 
@@ -68,17 +68,17 @@ void TrainingStrategy::set(const NeuralNetwork* new_neural_network, const Datase
 }
 
 
-void TrainingStrategy::set_loss_index(const string& new_loss)
+void TrainingStrategy::set_loss(const string& new_loss)
 {
-    loss_index = Registry<Loss>::instance().create(new_loss);
+    loss = Registry<Loss>::instance().create(new_loss);
 
-    loss_index->set(neural_network, dataset);
+    loss->set(neural_network, dataset);
 
     if(optimizer){
         if(optimizer->get_name() == "QuasiNewtonMethod")
-            static_cast<QuasiNewtonMethod*>(optimizer.get())->set_loss_index(loss_index.get());
+            static_cast<QuasiNewtonMethod*>(optimizer.get())->set_loss(loss.get());
         else
-            optimizer->set(loss_index.get());
+            optimizer->set(loss.get());
     }
 }
 
@@ -87,7 +87,7 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 {
     optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
 
-    optimizer->set(loss_index.get());
+    optimizer->set(loss.get());
 }
 
 
@@ -112,7 +112,7 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Recurrent"))
     {
-        set_loss_index("MeanSquaredError");
+        set_loss("MeanSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
         return;
     }
@@ -121,7 +121,7 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Convolutional"))
     {
-        set_loss_index("CrossEntropyError2d");
+        set_loss("CrossEntropyError2d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
@@ -152,9 +152,9 @@ void TrainingStrategy::set_default()
     if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
     {
         if(output_activation == "Softmax")
-            set_loss_index("CrossEntropyError2d");
+            set_loss("CrossEntropyError2d");
         else
-            set_loss_index("WeightedSquaredError");
+            set_loss("WeightedSquaredError");
 
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
@@ -169,7 +169,7 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Dense3d"))
     {
-        set_loss_index("CrossEntropyError3d");
+        set_loss("CrossEntropyError3d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
@@ -181,7 +181,7 @@ void TrainingStrategy::set_default()
 
     if(output_activation == "Softmax")
     {
-        set_loss_index("CrossEntropyError2d");
+        set_loss("CrossEntropyError2d");
         set_optimization_algorithm("QuasiNewtonMethod");
     }
 
@@ -189,7 +189,7 @@ void TrainingStrategy::set_default()
 
     else if(output_activation == "Sigmoid")
     {
-        set_loss_index("WeightedSquaredError");
+        set_loss("WeightedSquaredError");
         set_optimization_algorithm("QuasiNewtonMethod");
     }
 
@@ -197,7 +197,7 @@ void TrainingStrategy::set_default()
 
     else
     {
-        set_loss_index("MeanSquaredError");
+        set_loss("MeanSquaredError");
         set_optimization_algorithm("QuasiNewtonMethod");
     }
 }
@@ -211,10 +211,10 @@ TrainingResults TrainingStrategy::train()
     if(!has_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss_index->has_neural_network() || !loss_index->has_dataset())
+    if(!loss->has_neural_network() || !loss->has_dataset())
         throw runtime_error("Loss index is wrong.");
 
-    if(!optimizer->has_loss_index())
+    if(!optimizer->has_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if(neural_network->has("Recurrent"))
@@ -260,7 +260,7 @@ void TrainingStrategy::fix_forecasting()
 void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl
-         << "Loss index: " << loss_index->get_name() << endl
+         << "Loss: " << loss->get_name() << endl
          << "Optimization algorithm: " << optimizer->get_name() << endl;
 }
 
@@ -272,11 +272,11 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Loss");
 
-    add_xml_element(printer, "LossMethod", loss_index->get_name());
+    add_xml_element(printer, "LossMethod", loss->get_name());
 
-    loss_index->to_XML(printer);
+    loss->to_XML(printer);
 
-    loss_index->write_regularization_XML(printer);
+    loss->write_regularization_XML(printer);
 
     printer.CloseElement();
 
@@ -299,24 +299,24 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if(!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
-    // Loss index
+    // Loss
 
-    const XMLElement* loss_index_element = root_element->FirstChildElement("Loss");
-    if(!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
+    const XMLElement* loss_element = root_element->FirstChildElement("Loss");
+    if(!loss_element) throw runtime_error("Loss element is nullptr.\n");
 
     // Loss method
 
-    const string loss_method = read_xml_string(loss_index_element, "LossMethod");
+    const string loss_method = read_xml_string(loss_element, "LossMethod");
 
-    const XMLElement* loss_method_element = loss_index_element->FirstChildElement(loss_method.c_str());
+    const XMLElement* loss_method_element = loss_element->FirstChildElement(loss_method.c_str());
 
     if(loss_method_element)
     {
-        set_loss_index(loss_method);
+        set_loss(loss_method);
 
         XMLDocument loss_method_document;
         loss_method_document.InsertFirstChild(loss_method_element->DeepClone(&loss_method_document));
-        loss_index->from_XML(loss_method_document);
+        loss->from_XML(loss_method_document);
     }
     else throw runtime_error(loss_method + " element is nullptr.\n");
 
@@ -343,13 +343,13 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Regularization
 
-    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
+    const XMLElement* regularization_element = loss_element->FirstChildElement("Regularization");
 
     if (regularization_element)
     {
         XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-        loss_index->regularization_from_XML(regularization_document);
+        loss->regularization_from_XML(regularization_document);
     }
 
     // Display
@@ -394,10 +394,10 @@ TrainingResults TrainingStrategy::train_cuda()
     if(!has_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss_index->has_neural_network() || !loss_index->has_dataset())
-        throw runtime_error("Loss index is wrong.");
+    if(!loss->has_neural_network() || !loss->has_dataset())
+        throw runtime_error("Loss is wrong.");
 
-    if(!optimizer->has_loss_index())
+    if(!optimizer->has_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if (neural_network->has("Recurrent"))

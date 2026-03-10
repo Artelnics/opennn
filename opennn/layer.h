@@ -379,6 +379,8 @@ public:
 
 protected:
 
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
     const float beta_add = 1.0f;
 
 #endif
@@ -459,7 +461,10 @@ struct LayerBackPropagationLM
 struct LayerForwardPropagationCuda
 {
     LayerForwardPropagationCuda() {}
-    virtual ~LayerForwardPropagationCuda() {}
+    virtual ~LayerForwardPropagationCuda() 
+    {
+        free();
+    }
 
     void set(const Index = 0, Layer* = nullptr);
 

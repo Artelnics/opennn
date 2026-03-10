@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "../opennn/opennn.h"
+#include <iostream>
 
 using namespace opennn;
 
@@ -38,9 +39,9 @@ int main()
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
-        training_strategy.set_loss_index("CrossEntropyError2d");
+        training_strategy.set_loss("CrossEntropyError2d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss_index()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization_method("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_display_period(1);
@@ -67,29 +68,30 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
 
         ImageDataset image_dataset("/home/davidgonzalez/opennn/mnist_data");
 
-        image_dataset.print();
+        //image_dataset.set_sample_roles("Training");
+
+        //image_dataset.print_data();
 
         // Neural network
 
         ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
-            {4},
+            {1},
             image_dataset.get_shape("Target"));
 
         // Training strategy
         WeightedSquaredError();
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
-        training_strategy.set_loss_index("CrossEntropyError2d");
+        training_strategy.set_loss("CrossEntropyError2d");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        training_strategy.get_loss_index()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization_method("None");
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(100);
         adam->set_display_period(10);
-        adam->set_batch_size(64);
 
 #ifdef OPENNN_CUDA
-    training_strategy.train();
+    training_strategy.train_cuda();
 #else
     training_strategy.train();
 #endif
@@ -98,13 +100,11 @@ cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example
 
         TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
 
-        testing_analysis.set_batch_size(64);
         cout << "Calculating confusion...." << endl;
-        const MatrixI confusion = testing_analysis.calculate_confusion();
+        const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
         cout << "Bye!" << endl;
-        
 
    
 #ifndef OPENNN_CUDA

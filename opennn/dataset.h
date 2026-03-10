@@ -434,6 +434,10 @@ public:
 
     void check_separators(const string&) const;
 
+    virtual void fill_input_tensor_colmajor(const vector<Index>&,
+                                            const vector<Index>&,
+                                            type*) const;
+
     virtual void fill_input_tensor(const vector<Index>&,
                                    const vector<Index>&,
                                    type*,

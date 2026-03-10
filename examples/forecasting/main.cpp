@@ -98,7 +98,7 @@ int main()
 
         /// Entrenamiento
         TrainingStrategy training_strategy(&forecasting_network, &time_series_dataset);
-        training_strategy.set_loss_index("MeanSquaredError");
+        training_strategy.set_loss("MeanSquaredError");
         // training_strategy.set_optimization_algorithm("QuasiNewtonMethod");
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 

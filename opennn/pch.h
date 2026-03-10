@@ -55,7 +55,9 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
+
 //#define OPENNN_CUDA // Comment this line to disable cuda files
+
 
 #ifdef OPENNN_CUDA
 
@@ -108,7 +110,6 @@ using type = float;
 namespace opennn {
 constexpr type EPSILON = numeric_limits<type>::epsilon();
 constexpr type MAX = numeric_limits<type>::max();
-constexpr Index MAX_INDEX = numeric_limits<Index>::max();
 }
 
 constexpr int Layout = Eigen::RowMajor;

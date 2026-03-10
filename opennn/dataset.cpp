@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "dataset.h"
+#include "image_dataset.h"
 #include "time_series_dataset.h"
 #include "statistics.h"
 #include "scaling.h"
@@ -3887,6 +3888,11 @@ void Dataset::check_separators(const string& line) const
 }
 
 
+void Dataset::fill_input_tensor_colmajor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data) const
+{
+    fill_tensor_data_colmajor(data, sample_indices, input_indices, input_data);
+}
+
 void Dataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
@@ -4251,11 +4257,15 @@ void BatchCuda::fill_host(const vector<Index>& sample_indices,
                           //const vector<Index>& decoder_indices,
                           const vector<Index>& target_indices)
 {
-    dataset->fill_input_tensor(sample_indices, input_indices, inputs_host, false);
+    if (const ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset))
+        dataset->fill_input_tensor(sample_indices, input_indices, inputs_host, false); 
+    else
+        dataset->fill_input_tensor_colmajor(sample_indices, input_indices, inputs_host);
 
     //dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_host);
 
-    dataset->fill_target_tensor(sample_indices, target_indices, targets_host, false);
+    //dataset->fill_target_tensor(sample_indices, target_indices, targets_host, false);
+    dataset->fill_input_tensor_colmajor(sample_indices, target_indices, targets_host);
 }
 
 
