@@ -10,7 +10,7 @@ TEST(LevenbergMarquardtAlgorithmTest, DefaultConstructor)
 {
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 
-    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), false);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss(), false);
 }
 
 
@@ -20,7 +20,7 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
 
-    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss(), true);
 }
 
 
@@ -113,6 +113,6 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     EXPECT_EQ(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease);
 
-    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss(), true);
 */
 }

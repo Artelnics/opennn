@@ -57,8 +57,8 @@ int main()
 
         //training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        //training_strategy.get_loss_index()->set_regularization_method("L1");
-        training_strategy.get_loss_index()->set_regularization_weight(regularization_weight);
+        //training_strategy.get_loss()->set_regularization_method("L1");
+        training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
         TrainingResults training_results = training_strategy.train();
 
@@ -199,8 +199,8 @@ int main()
 
         //training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        //training_strategy.get_loss_index()->set_regularization_method("L1");
-        training_strategy.get_loss_index()->set_regularization_weight(regularization_weight);
+        //training_strategy.get_loss()->set_regularization_method("L1");
+        training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
         TrainingResults training_results = training_strategy.train();
 
