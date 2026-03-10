@@ -250,17 +250,6 @@ bool NeuralNetwork::get_display() const
     return display;
 }
 
-const vector<string>&NeuralNetwork::get_input_vocabulary() const
-{
-    return input_vocabulary;
-}
-
-
-const vector<string>&NeuralNetwork::get_output_vocabulary() const
-{
-    return output_vocabulary;
-}
-
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -491,18 +480,6 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 void NeuralNetwork::set_display(bool new_display)
 {
     display = new_display;
-}
-
-
-void NeuralNetwork::set_input_vocabulary(const vector<string>& new_input_vocabulary)
-{
-    input_vocabulary = new_input_vocabulary;
-}
-
-
-void NeuralNetwork::set_output_vocabulary(const vector<string>& new_output_vocabulary)
-{
-    output_vocabulary = new_output_vocabulary;
 }
 
 
@@ -799,58 +776,55 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 }
 
 
-MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>&input_documents)
+MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
-    const Index batch_size = input_documents.dimension(0);
+    if(layers[0]->get_name() != "Embedding")
+        throw runtime_error("Error: First layer must be Embedding for text processing.\n");
 
+    if(input_variables.empty() || input_variables[0].categories.empty())
+        throw runtime_error("Error: input_variables[0] does not contain the vocabulary.\n");
+
+    const Index batch_size = input_documents.size();
     const Embedding* embedding_layer = static_cast<const Embedding*>(get_layer(0).get());
-
     const Index sequence_length = embedding_layer->get_sequence_length();
 
+    const vector<string>& vocabulary = input_variables[0].categories;
     unordered_map<string, Index> vocabulary_map;
-    vocabulary_map.reserve(input_vocabulary.size());
-    for(Index i = 0; i < (Index)input_vocabulary.size(); ++i)
-        vocabulary_map[input_vocabulary[i]] = i;
+    vocabulary_map.reserve(vocabulary.size());
+
+    for(Index i = 0; i < (Index)vocabulary.size(); ++i)
+        vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs(batch_size, sequence_length);
-    inputs.setConstant(0.0);
+    inputs.setConstant(0.0f);
 
-    #pragma omp parallel for
     for(Index i = 0; i < batch_size; ++i)
     {
-        const vector<string> tokens = tokenize(input_documents(i));
+        const string input_data = input_documents.data()[i];
+        const vector<string> tokens = tokenize(input_data);
+        const size_t tokens_number = tokens.size();
 
-        Index current_index = 0;
+        if (sequence_length > 0)
+            inputs(i, 0) = 2.0f; // START_INDEX
 
-        // Start
-        if(current_index < sequence_length)
+        for(size_t j = 0; j < tokens_number; j++)
         {
-            inputs(i, current_index) = 2;
-            current_index++;
+            if (1 + j >= (size_t)sequence_length) break;
+
+            const auto it = vocabulary_map.find(tokens[j]);
+
+            inputs(i, 1 + j) = (it != vocabulary_map.end())
+                                   ? static_cast<type>(it->second)
+                                   : 1.0f; // UNK_INDEX
         }
 
-        // Tokens
-        for(const string& token : tokens)
-        {
-            if(current_index >= sequence_length - 1)
-                break;
-
-            const auto it = vocabulary_map.find(token);
-
-            if(it != vocabulary_map.end())
-                inputs(i, current_index) = (type)it->second;
-            else
-                inputs(i, current_index) = 1;
-
-            current_index++;
-        }
-
-        // End
-        if(current_index < sequence_length)
-            inputs(i, current_index) = 3;
+        if (1 + tokens_number < (size_t)sequence_length)
+            inputs(i, 1 + tokens_number) = 3.0f; // END_INDEX
     }
 
-    return calculate_outputs(inputs);
+    MatrixR outputs = calculate_outputs(inputs);
+
+    return outputs;
 }
 
 
@@ -909,9 +883,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     // Input
 
-    printer.OpenElement("Input");
+    printer.OpenElement("Inputs");
 
-    add_xml_element(printer, "InputNumber", to_string(inputs_number));
+    add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
     for(Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
@@ -952,6 +926,15 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Display", to_string(display));
 
+    // Paramaters
+
+    printer.OpenElement("Parameters");
+
+    if (parameters.size() > 0)
+        printer.PushText(vector_to_string(parameters, " ").c_str());
+
+    printer.CloseElement();
+
     printer.CloseElement();
 }
 
@@ -963,23 +946,33 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
-    features_from_XML(neural_network_element->FirstChildElement("Input"));
+    inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
     set_display(read_xml_bool(neural_network_element, "Display"));
+
+    compile();
+
+    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+        throw runtime_error("Parameters element is nullptr.\n");
+
+    if (parameters_element && parameters_element->GetText())
+        string_to_vector(parameters_element->GetText(), parameters);
 }
 
 
-void NeuralNetwork::features_from_XML(const XMLElement* features_element)
+void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 {
 
-    if(!features_element)
-        throw runtime_error("Input element is nullptr.\n");
+    if(!inputs_element)
+        throw runtime_error("Inputs element is nullptr.\n");
 
     //@simone @todo stai attento c'e forse qualcos adi sospetto in questo "new", le cose cambiano e non capisco se sono layes e input e output cambiano sempre o no
-    //const Index new_features_number = read_xml_index(features_element, "InputNumber");
+    //const Index new_features_number = read_xml_index(inputs_element, "InputNumber");
 
-    const XMLElement* current_element = features_element->FirstChildElement("InputNumber");
+    const XMLElement* current_element = inputs_element->FirstChildElement("InputsNumber");
 
     for(Variable& variable : input_variables)
     {
@@ -1072,7 +1065,6 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
     const XMLElement* current_element = outputs_element->FirstChildElement("OutputsNumber");
 
-    Index i = 0; // Global output index counter
     for(Variable& variable : output_variables)
     {
         if(variable.is_categorical())
@@ -1083,8 +1075,6 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 
                 if(current_element->GetText())
                     category_name = current_element->GetText();
-
-                i++;
             }
         else
         {
@@ -1117,10 +1107,6 @@ void NeuralNetwork::print() const
          << get_output_feature_names();
 
     cout << "Parameters number: " << get_parameters_number() << endl;
-
-    // if(!input_vocabulary.empty())
-    //     cout << "Input vocabulary" << input_vocabulary <<
-
 }
 
 
@@ -1829,15 +1815,15 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
         layers[i]->set(batch_size, neural_network_layers[i].get());
     }
 
-    const vector<vector<TensorViewCuda*>> layer_workspace_views = get_layer_workspace_views_device();
+    const vector<vector<TensorViewCuda*>> layer_gradient_views = get_layer_gradient_views();
 
-    const Index workspace_size = get_size(layer_workspace_views);
+    const Index gradient_size = get_size(layer_gradient_views);
 
-    if (workspace_size == 0) return;
+    if (gradient_size == 0) return;
 
-    workspace.resize({workspace_size});
+    gradients.resize({gradient_size});
 
-    link(workspace.data, layer_workspace_views);
+    link(gradients.data, layer_gradient_views);
 }
 
 
@@ -1847,20 +1833,20 @@ const vector<unique_ptr<LayerBackPropagationCuda>>& NeuralNetworkBackPropagation
 }
 
 
-vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_workspace_views_device()
+vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_gradient_views()
 {
-    vector<vector<TensorViewCuda*>> layer_workspace_views(layers.size());
+    vector<vector<TensorViewCuda*>> layer_gradient_views(layers.size());
     Index i = 0;
 
     for (const auto& layer_bp : layers)
     {
         if (layer_bp)
-            layer_workspace_views[i] = layer_bp->get_workspace_views();
+            layer_gradient_views[i] = layer_bp->get_gradient_views();
 
         i++;
     }
 
-    return layer_workspace_views;
+    return layer_gradient_views;
     
 }
 

@@ -431,7 +431,7 @@ Index count_NAN(const TensorR<rank>& x)
     return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
 }
 
-Index count_between(const VectorR&, type, type);
+//Index count_between(const VectorR&, type, type);
 
 Index count_greater_than(const vector<Index>&, Index);
 
@@ -455,6 +455,16 @@ bool contains(const TensorR<Rank>& vector, const Type& value)
 
     return it != (copy.data() + copy.size());
 }
+
+template <typename Derived, typename T>
+bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
+{
+    const auto* begin = vector.derived().data();
+    const auto* end = begin + vector.size();
+
+    return find(begin, end, value) != end;
+}
+
 
 
 bool contains(const vector<string>&, const string&);
@@ -793,7 +803,74 @@ inline bool are_equal(const VectorR& A,
     return true;
 }
 
+
+class Device
+{
+public:
+    static Device& instance();
+    ThreadPoolDevice* get_thread_pool_device();
+    void set_threads_number(int num_threads);
+
 #ifdef OPENNN_CUDA
+    cublasHandle_t get_cublas_handle();
+    cudnnHandle_t get_cudnn_handle();
+    cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
+    cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
+#endif
+
+private:
+    Device();
+    ~Device();
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+#ifdef OPENNN_CUDA
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+#endif
+};
+
+inline ThreadPoolDevice& get_device()
+{
+    return *Device::instance().get_thread_pool_device();
+}
+
+void set_threads_number(int num_threads);
+
+#ifdef OPENNN_CUDA
+
+    inline cublasHandle_t get_cublas_handle()
+    {
+        return Device::instance().get_cublas_handle();
+    }
+
+
+    inline cudnnHandle_t get_cudnn_handle()
+    {
+        return Device::instance().get_cudnn_handle();
+    }
+
+
+    inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
+    {
+        return Device::instance().get_operator_sum_descriptor();
+    }
+
+
+    inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
+    {
+        return Device::instance().get_operator_multiplication_descriptor();
+    }
+
+#endif
+
+#ifdef OPENNN_CUDA
+
+inline const float alpha_one = 1.0f;
+inline const float beta_zero = 0.0f;
 
 struct TensorViewCuda
 {
@@ -816,7 +893,7 @@ struct TensorViewCuda
         {
             cudnnTensorDescriptor_t raw_desc;
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw std::runtime_error("TensorViewCuda: Failed to create descriptor.");
+                throw runtime_error("TensorViewCuda: Failed to create descriptor.");
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
@@ -859,7 +936,10 @@ struct TensorCuda
     TensorCuda() = default;
     explicit TensorCuda(const Shape& shape) { resize(shape); }
 
-    ~TensorCuda() { if (data) cudaFree(data); }
+    ~TensorCuda() 
+    {
+        cudaFree(data); 
+    }
 
     TensorCuda(const TensorCuda&) = delete;
     TensorCuda& operator=(const TensorCuda&) = delete;
@@ -891,11 +971,18 @@ struct TensorCuda
     void resize(const Shape& shape)
     {
         set_descriptor(shape);
-        const size_t total_elements = size();
-        const size_t bytes = total_elements * sizeof(float);
-        if (data) cudaFree(data);
+        const size_t bytes = size() * sizeof(float);
+        cudaFree(data);
         CHECK_CUDA(cudaMalloc(&data, bytes));
         CHECK_CUDA(cudaMemset(data, 0, bytes));
+    }
+
+    void fill(float value) 
+    {
+        if (value == 0.0f) 
+            CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
+        else 
+            CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
     }
 
     void set_descriptor(const Shape& shape)
@@ -904,7 +991,7 @@ struct TensorCuda
         {
             cudnnTensorDescriptor_t raw_desc;
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw std::runtime_error("TensorCuda: Failed to create descriptor.");
+                throw runtime_error("TensorCuda: Failed to create descriptor.");
 
             descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
@@ -932,12 +1019,14 @@ struct TensorCuda
         Index total_elements = 1;
         for (int i = 0; i < nbDims; ++i)
             total_elements *= static_cast<Index>(dimA[i]);
+
         return total_elements;
     }
 
     void free()
     {
-        if (data) { cudaFree(data); data = nullptr; }
+        cudaFree(data); 
+        data = nullptr; 
         descriptor_handle.reset();
     }
 
@@ -948,73 +1037,11 @@ struct TensorCuda
 };
 
 
-type* link(type*, vector<TensorViewCuda*>);
-void link(type*, vector<vector<TensorViewCuda*>>);
+type* link(type*, const vector<TensorViewCuda*>&);
+void link(type*, const vector<vector<TensorViewCuda*>>&);
 
-Index get_size(const vector<TensorViewCuda*>);
-Index get_size(vector<vector<TensorViewCuda*>>);
-
-#endif
-
-class Device
-{
-public:
-    static Device& instance();
-    ThreadPoolDevice* get_thread_pool_device();
-    void set_threads_number(int num_threads);
-
-#ifdef OPENNN_CUDA
-    cublasHandle_t get_cublas_handle();
-    cudnnHandle_t get_cudnn_handle();
-    cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
-    cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor();
-#endif
-
-private:
-    Device();
-    ~Device();
-
-    unique_ptr<ThreadPool> thread_pool;
-    unique_ptr<ThreadPoolDevice> thread_pool_device;
-
-#ifdef OPENNN_CUDA
-    cublasHandle_t cublas_handle = nullptr;
-    cudnnHandle_t cudnn_handle = nullptr;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-#endif
-};
-
-inline ThreadPoolDevice& get_device()
-{
-    return *Device::instance().get_thread_pool_device();
-}
-
-void set_threads_number(int num_threads);
-
-#ifdef OPENNN_CUDA
-    inline cublasHandle_t get_cublas_handle()
-    {
-        return Device::instance().get_cublas_handle();
-    }
-
-
-    inline cudnnHandle_t get_cudnn_handle()
-    {
-        return Device::instance().get_cudnn_handle();
-    }
-
-
-    inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
-    {
-        return Device::instance().get_operator_sum_descriptor();
-    }
-
-
-    inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
-    {
-        return Device::instance().get_operator_multiplication_descriptor();
-    }
+Index get_size(const vector<TensorViewCuda*>&);
+Index get_size(const vector<vector<TensorViewCuda*>>&);
 
 #endif
 

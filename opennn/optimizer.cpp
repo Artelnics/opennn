@@ -26,9 +26,9 @@ Optimizer::Optimizer(const Loss* new_loss)
 }
 
 
-Loss* Optimizer::get_loss_index() const
+Loss* Optimizer::get_loss() const
 {
-    return loss_index;
+    return loss;
 }
 
 
@@ -44,9 +44,9 @@ void Optimizer::set_hardware_use(const string& new_hardware_use)
 }
 
 
-bool Optimizer::has_loss_index() const
+bool Optimizer::has_loss() const
 {
-    return loss_index;
+    return loss;
 }
 
 
@@ -76,13 +76,13 @@ const string& Optimizer::get_neural_network_file_name() const
 
 void Optimizer::set(const Loss* new_loss)
 {
-    loss_index = const_cast<Loss*>(new_loss);
+    loss = const_cast<Loss*>(new_loss);
 }
 
 
-void Optimizer::set_loss_index(Loss* new_loss)
+void Optimizer::set_loss(Loss* new_loss)
 {
-    loss_index = new_loss;
+    loss = new_loss;
 }
 
 
@@ -112,8 +112,8 @@ void Optimizer::set_neural_network_file_name(const string& new_neural_network_fi
 
 void Optimizer::check() const
 {
-    if(!loss_index)
-        throw runtime_error("loss_index is nullptr.\n");
+    if(!loss)
+        throw runtime_error("loss is nullptr.\n");
 }
 
 
@@ -203,12 +203,12 @@ type Optimizer::get_elapsed_time(const time_t &beginning_time)
 
 void Optimizer::set_names()
 {
-    Dataset* dataset = loss_index->get_dataset();
+    Dataset* dataset = loss->get_dataset();
 
     const vector<Variable> input_variables = dataset->get_variables("Input");
     const vector<Variable> target_variables = dataset->get_variables("Target");
 
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
  /*@simone @todo maybe you can delete everything here
   *
@@ -276,8 +276,8 @@ void Optimizer::set_names()
 
 void Optimizer::set_scaling()
 {
-    Dataset* dataset = loss_index->get_dataset();
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    Dataset* dataset = loss->get_dataset();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     // Scaling layer
 
@@ -387,8 +387,8 @@ void Optimizer::set_scaling()
 
 void Optimizer::set_unscaling()
 {
-    Dataset* dataset = loss_index->get_dataset();
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    Dataset* dataset = loss->get_dataset();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     // Scaling layer
 
@@ -440,28 +440,6 @@ void Optimizer::set_unscaling()
 
     if(!unscaled_targets_descriptives.empty())
         dataset->unscale_features("Target", unscaled_targets_descriptives);
-}
-
-
-void Optimizer::set_vocabularies()
-{
-    Dataset* dataset = loss_index->get_dataset();
-
-    if(!is_instance_of<LanguageDataset>(dataset))
-        return;
-
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-    if(!neural_network->has("Embedding"))
-        return;
-
-    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
-
-    const vector<string>& input_vocabulary = language_dataset->get_input_vocabulary();
-    const vector<string>& target_vocabulary = language_dataset->get_target_vocabulary();
-
-    neural_network->set_input_vocabulary(input_vocabulary);
-    neural_network->set_output_vocabulary(target_vocabulary);
 }
 
 

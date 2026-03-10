@@ -217,19 +217,10 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, In
 }
 
 
-Index count_between(const VectorR& vector,type minimum, type maximum)
-{
-    const Index size = vector.size();
-
-    Index count = 0;
-
-#pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < size; i++)
-        if(vector(i) >= minimum && vector(i) <= maximum)
-            count++;
-
-    return count;
-}
+//Index count_between(const VectorR& vector,type minimum, type maximum)
+//{
+//    return (vector.array() >= minimum && vector.array() <= maximum).count();
+//}
 
 
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
@@ -476,9 +467,9 @@ MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 }
 
 
-Index get_size(const Shape&d)
+Index get_size(const Shape& shape)
 {
-    return accumulate(d.begin(), d.end(), 1, multiplies<Index>());
+    return accumulate(shape.begin(), shape.end(), 1, multiplies<Index>());
 }
 
 
@@ -675,7 +666,7 @@ void shuffle_rows(MatrixR& matrix)
 
 #ifdef OPENNN_CUDA
 
-type* link(type* pointer, vector<TensorViewCuda*> views)
+type* link(type* pointer, const vector<TensorViewCuda*>& views)
 {
     constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
     constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
@@ -694,14 +685,14 @@ type* link(type* pointer, vector<TensorViewCuda*> views)
 }
 
 
-void link(type* pointer, vector<vector<TensorViewCuda*>> views)
+void link(type* pointer, const vector<vector<TensorViewCuda*>>& views)
 {
     for (size_t i = 0; i < views.size(); i++)
         pointer = link(pointer, views[i]);
 }
 
 
-Index get_size(const vector<TensorViewCuda*> views)
+Index get_size(const vector<TensorViewCuda*>& views)
 {
     constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
     constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
@@ -720,7 +711,7 @@ Index get_size(const vector<TensorViewCuda*> views)
 }
 
 
-Index get_size(vector<vector<TensorViewCuda*>> views)
+Index get_size(const vector<vector<TensorViewCuda*>>& views)
 {
     Index total_size = 0;
 

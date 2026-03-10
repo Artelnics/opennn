@@ -185,7 +185,7 @@ public:
 
     void set_default_variable_names();
 
-    void set_default_variables_roles();
+    void set_default_variable_roles();
     void set_default_variable_roles_forecasting();
     virtual void set_variable_roles(const vector<string>&);
 
@@ -333,7 +333,7 @@ public:
 
     // Scaling2d
 
-    void set_default_variables_scalers();
+    void set_default_variable_scalers();
 
     // Data scaling
 

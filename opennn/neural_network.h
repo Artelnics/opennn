@@ -137,10 +137,6 @@ public:
 
     bool get_display() const;
 
-    const vector<string>& get_input_vocabulary() const;
-
-    const vector<string>& get_output_vocabulary() const;
-
     // Set
 
     void set(const filesystem::path&);
@@ -169,9 +165,6 @@ public:
     void set_default();
 
     void set_display(bool);
-
-    void set_input_vocabulary(const vector<string>&);
-    void set_output_vocabulary(const vector<string>&);
 
     // Layers
 
@@ -223,7 +216,7 @@ public:
     Tensor<string, 2> get_dense2d_layers_information() const;
 
     void from_XML(const XMLDocument&);
-    void features_from_XML(const XMLElement*);
+    void inputs_from_XML(const XMLElement*);
     void layers_from_XML(const XMLElement*);
     void outputs_from_XML(const XMLElement*);
 
@@ -280,14 +273,8 @@ protected:
 
     string name = "neural_network";
 
-//    vector<string> input_names;
-//    vector<string> output_names;
-
     vector<Variable> input_variables;
     vector<Variable> output_variables;
-
-    vector<string> input_vocabulary;
-    vector<string> output_vocabulary;
 
     vector<unique_ptr<Layer>> layers;
 
@@ -336,7 +323,7 @@ struct NeuralNetworkBackPropagationCuda
 
     const vector<unique_ptr<LayerBackPropagationCuda>>& get_layers() const;
 
-    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+    vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
     void print();
 
@@ -348,7 +335,7 @@ struct NeuralNetworkBackPropagationCuda
 
     vector<unique_ptr<LayerBackPropagationCuda>> layers;
 
-    TensorCuda workspace;
+    TensorCuda gradients;
 };
 
 #endif

@@ -150,6 +150,8 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
 
     const MatrixMap weights_map = matrix_map(weights);
 
+    outputs_map.setZero();
+
     #pragma omp parallel for
     for(Index i = 0; i < total_tokens; i++)
     {
@@ -205,6 +207,9 @@ void Embedding::back_propagate(const vector<TensorView>& input_views,
     for(Index i = 0; i < total_elements; i++)
     {
         const Index vocabulary_index = static_cast<Index>(input_indices[i]);
+
+        if(vocabulary_index < 0 || vocabulary_index >= weight_gradients.rows())
+            continue;
 
         weight_gradients.row(vocabulary_index).noalias() += gradients_map.row(i);
     }
@@ -373,7 +378,7 @@ void EmbeddingBackPropagationCuda::initialize()
 }
 
 
-vector<TensorViewCuda*> EmbeddingBackPropagationCuda::get_workspace_views()
+vector<TensorViewCuda*> EmbeddingBackPropagationCuda::get_gradient_views()
 {
     return {&weight_gradients};
 }

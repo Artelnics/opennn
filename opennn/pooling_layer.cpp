@@ -477,9 +477,9 @@ void Pooling::forward_propagate(const vector<TensorViewCuda>& inputs,
 
 
 void Pooling::back_propagate(const vector<TensorViewCuda>& inputs,
-                                  const vector<TensorViewCuda>& output_gradients,
-                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                  unique_ptr<LayerBackPropagationCuda>& back_propagation) const
+                             const vector<TensorViewCuda>& output_gradients,
+                             unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                             unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     // Forward propagation
     

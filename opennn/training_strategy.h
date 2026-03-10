@@ -29,7 +29,7 @@ public:
     Dataset* get_dataset();
     NeuralNetwork* get_neural_network() const;
 
-    Loss* get_loss_index() const;
+    Loss* get_loss() const;
     Optimizer* get_optimization_algorithm() const;
 
     bool has_neural_network() const;
@@ -43,7 +43,7 @@ public:
     void set_dataset(const Dataset*);
     void set_neural_network(const NeuralNetwork*);
 
-    void set_loss_index(const string&);
+    void set_loss(const string&);
     void set_optimization_algorithm(const string&);
 
     TrainingResults train();
@@ -72,7 +72,7 @@ private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    unique_ptr<Loss> loss_index;
+    unique_ptr<Loss> loss;
 
     unique_ptr<Optimizer> optimizer;
 };

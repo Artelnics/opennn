@@ -198,8 +198,7 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
 
 Index Dataset::get_samples_number(const string& sample_role) const
 {
-    return count_if(sample_roles.begin(), sample_roles.end(),
-                    [&sample_role](const string& new_sample_role) { return new_sample_role == sample_role; });
+    return count(sample_roles.begin(), sample_roles.end(), sample_role);
 }
 
 
@@ -357,7 +356,7 @@ void Dataset::set_variables(const vector<Variable>& new_variables)
 }
 
 
-void Dataset::set_default_variables_roles()
+void Dataset::set_default_variable_roles()
 {
     const Index variables_number = variables.size();
 
@@ -1375,9 +1374,9 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     read_csv();
 
-    set_default_variables_scalers();
+    set_default_variable_scalers();
 
-    set_default_variables_roles();
+    set_default_variable_roles();
 
     missing_values_method = MissingValuesMethod::Unuse;
 
@@ -1605,9 +1604,8 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
     const Index new_input_variables_number = get_features_number("Input");
     const Index new_target_variables_number = get_features_number("Target");
 
-    TimeSeriesDataset* ts_dataset = dynamic_cast<TimeSeriesDataset*>(this);
-    if(ts_dataset)
-        set_shape("Input", {ts_dataset->get_past_time_steps(), new_input_variables_number});
+    if(TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(this))
+        set_shape("Input", {time_series_dataset->get_past_time_steps(), new_input_variables_number});
     else
         set_shape("Input", {new_input_variables_number});
 
@@ -1643,6 +1641,7 @@ vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation
                 sum_of_abs_corr += abs_r;
             }
         }
+
         if (input_variables_number > 1)
             mean_abs_corr[i] = sum_of_abs_corr / (input_variables_number - 1);
     }
@@ -1657,19 +1656,11 @@ vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation
 
             if(!isnan(correlations(i, j).r) && abs(correlations(i, j).r) >= maximum_correlation)
             {
-                Index index_to_flag_for_removal;
+                const Index index_to_flag_for_removal =
+                    (high_corr_counts[i] > high_corr_counts[j]) ? i :
+                        (high_corr_counts[j] > high_corr_counts[i]) ? j :
+                        (mean_abs_corr[i] >= mean_abs_corr[j]) ? i : j;
 
-                if (high_corr_counts[i] > high_corr_counts[j])
-                    index_to_flag_for_removal = i;
-                else if (high_corr_counts[j] > high_corr_counts[i])
-                    index_to_flag_for_removal = j;
-                else
-                {
-                    if (mean_abs_corr[i] >= mean_abs_corr[j])
-                        index_to_flag_for_removal = i;
-                    else
-                        index_to_flag_for_removal = j;
-                }
                 to_be_removed[index_to_flag_for_removal] = true;
             }
         }
@@ -1764,8 +1755,8 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
 
             for(Index j = 0; j < used_samples_number; j++)
                 binary_frequencies(abs(data(used_sample_indices[j], feature_index) - type(1)) < EPSILON
-                                       ? 1
-                                       : 0)++;
+                   ? 1
+                   : 0)++;
 
             histograms[used_variable_index].frequencies = binary_frequencies;
             feature_index++;
@@ -1855,31 +1846,38 @@ Index Dataset::calculate_used_negatives(const Index target_index) const
 Index Dataset::calculate_negatives(const Index target_index, const string& sample_role) const
 {
     Index negatives = 0;
-    const vector<Index> indices = get_sample_indices(sample_role);
+
+    const auto indices = get_sample_indices(sample_role);
     const Index samples_number = get_samples_number(sample_role);
 
-    for(Index i = 0; i < samples_number; i++)
+    const bool is_testing  = (sample_role == "Testing");
+    const bool is_training = (sample_role == "Training");
+
+    const type epsilon   = type(EPSILON);
+    const type one       = type(1);
+    const type threshold = is_training ? type(1.0e-3) : epsilon;
+
+    for (Index i = 0; i < samples_number; ++i)
     {
         const Index sample_index = indices[i];
-        type sample_value = data(sample_index, target_index);
+        const type sample_value  = data(sample_index, target_index);
 
-        if (sample_role == "Testing")
+        if (is_testing)
         {
-            if (sample_value < type(EPSILON))
-                negatives++;
+            negatives += (sample_value < epsilon);
+            continue;
         }
-        else
-        {
-            if (abs(sample_value) < type(EPSILON))
-                negatives++;
-            else
-            {
-                type threshold = (sample_role == "Training") ? type(1.0e-3) : type(EPSILON);
-                if (abs(sample_value - type(1)) > threshold)
-                    throw runtime_error("Sample is neither a positive nor a negative: "
-                                        + to_string(sample_value) + "-" + to_string(target_index) + "-" + to_string(sample_value));
-            }
-        }
+
+        const type abs_value = abs(sample_value);
+
+        if (abs_value < epsilon)
+            ++negatives;
+        else if (abs(sample_value - one) > threshold)
+            throw runtime_error(
+                "Sample is neither a positive nor a negative: "
+                + to_string(sample_value) + "-"
+                + to_string(target_index) + "-"
+                + to_string(sample_value));
     }
 
     return negatives;
@@ -2001,12 +1999,6 @@ vector<Descriptives> Dataset::calculate_testing_target_variable_descriptives() c
 
     return descriptives(data, testing_indices, target_feature_indices);
 }
-
-
-// VectorR Dataset::calculate_used_variables_minimums() const
-// {
-//     return column_minimums(data, get_used_sample_indices(), get_used_feature_indices());
-// }
 
 
 VectorR Dataset::calculate_means(const string& sample_role,
@@ -2259,6 +2251,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations()
     return correlations_spearman;
 }
 
+
 void Dataset::print_inputs_correlations() const
 {
     const MatrixR input_correlations = get_correlation_values(calculate_input_variable_pearson_correlations());
@@ -2324,9 +2317,7 @@ VectorI Dataset::calculate_correlations_rank() const
 }
 
 
-
-
-void Dataset::set_default_variables_scalers()
+void Dataset::set_default_variable_scalers()
 {
     for(Variable& variable : variables)
         variable.scaler = (variable.type == VariableType::Numeric)
@@ -2339,7 +2330,7 @@ vector<Descriptives> Dataset::scale_data()
 {
     const Index features_number = get_features_number();
 
-    const vector<Descriptives> variable_descriptives = calculate_feature_descriptives();
+    const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
 
     Index variable_index;
 
@@ -2352,18 +2343,18 @@ vector<Descriptives> Dataset::scale_data()
         if(scaler == "None")
             continue;
         else if(scaler == "MinimumMaximum")
-            scale_minimum_maximum(data, i, variable_descriptives[i]);
+            scale_minimum_maximum(data, i, feature_descriptives[i]);
         else if(scaler == "MeanStandardDeviation")
-            scale_mean_standard_deviation(data, i, variable_descriptives[i]);
+            scale_mean_standard_deviation(data, i, feature_descriptives[i]);
         else if(scaler == "StandardDeviation")
-            scale_standard_deviation(data, i, variable_descriptives[i]);
+            scale_standard_deviation(data, i, feature_descriptives[i]);
         else if(scaler == "Logarithm")
             scale_logarithmic(data, i);
         else
             throw runtime_error("Unknown scaler: " + scaler + "\n");
     }
 
-    return variable_descriptives;
+    return feature_descriptives;
 }
 
 
@@ -4287,23 +4278,14 @@ BatchCuda::BatchCuda(const Index new_samples_number, Dataset* new_dataset)
 
 BatchCuda::~BatchCuda()
 {
-    if (inputs_host)
-    {
-        cudaFreeHost(inputs_host);
-        inputs_host = nullptr;
-    }
+    cudaFreeHost(inputs_host);
+    inputs_host = nullptr;
 
-    if (decoder_host)
-    {
-        cudaFreeHost(decoder_host);
-        decoder_host = nullptr;
-    }
+    cudaFreeHost(decoder_host);
+    decoder_host = nullptr;
 
-    if (targets_host)
-    {
-        cudaFreeHost(targets_host);
-        targets_host = nullptr;
-    }
+    cudaFreeHost(targets_host);
+    targets_host = nullptr;
 }
 
 
@@ -4328,7 +4310,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (input_size > inputs_host_allocated_size)
         {
-            if (inputs_host) cudaFreeHost(inputs_host);
+            cudaFreeHost(inputs_host);
             CHECK_CUDA(cudaMallocHost(&inputs_host, input_size * sizeof(float)));
             inputs_host_allocated_size = input_size;
         }
@@ -4345,7 +4327,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (decoder_size > decoder_host_allocated_size)
         {
-            if (decoder_host) cudaFreeHost(decoder_host);
+            cudaFreeHost(decoder_host);
             CHECK_CUDA(cudaMallocHost(&decoder_host, decoder_size * sizeof(float)));
             decoder_host_allocated_size = decoder_size;
         }
@@ -4363,7 +4345,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         if (target_size > targets_host_allocated_size)
         {
-            if (targets_host) cudaFreeHost(targets_host);
+            cudaFreeHost(targets_host);
             CHECK_CUDA(cudaMallocHost(&targets_host, target_size * sizeof(float)));
             targets_host_allocated_size = target_size;
         }

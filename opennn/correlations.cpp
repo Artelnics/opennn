@@ -524,7 +524,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     dataset.set_data(data);
     dataset.set_variable_indices(input_columns_indices, target_columns_indices);
     dataset.set_binary_variables();
-    dataset.set_default_variables_scalers();
+    dataset.set_default_variable_scalers();
 
     // Dataset.print();
 
