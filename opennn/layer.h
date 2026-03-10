@@ -461,7 +461,10 @@ struct LayerBackPropagationLM
 struct LayerForwardPropagationCuda
 {
     LayerForwardPropagationCuda() {}
-    virtual ~LayerForwardPropagationCuda() {}
+    virtual ~LayerForwardPropagationCuda() 
+    {
+        free();
+    }
 
     void set(const Index = 0, Layer* = nullptr);
 

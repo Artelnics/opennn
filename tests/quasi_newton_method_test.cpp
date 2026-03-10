@@ -10,7 +10,7 @@ TEST(QuasiNewtonMethodTest, DefaultConstructor)
 {
     QuasiNewtonMethod quasi_newton_method;
 
-    EXPECT_EQ(quasi_newton_method.has_loss_index(), false);
+    EXPECT_EQ(quasi_newton_method.has_loss(), false);
 }
 
 TEST(QuasiNewtonMethodTest, GeneralConstructor)
@@ -20,7 +20,7 @@ TEST(QuasiNewtonMethodTest, GeneralConstructor)
 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 
-    EXPECT_EQ(quasi_newton_method.has_loss_index(), true);
+    EXPECT_EQ(quasi_newton_method.has_loss(), true);
 }
 
 
@@ -82,7 +82,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     QuasiNewtonMethod quasi_newton_method;
 
-    quasi_newton_method.set_loss_index(new MeanSquaredError(&neural_network, &dataset));
+    quasi_newton_method.set_loss(new MeanSquaredError(&neural_network, &dataset));
 
     quasi_newton_method.set_scaling();
 

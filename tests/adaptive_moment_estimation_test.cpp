@@ -14,7 +14,7 @@ TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    EXPECT_EQ(adaptive_moment_estimation.has_loss_index(), false);
+    EXPECT_EQ(adaptive_moment_estimation.has_loss(), false);
 }
 
 
@@ -23,7 +23,7 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
     MeanSquaredError mean_squared_error;
     AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
 
-    EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
+    EXPECT_TRUE(adaptive_moment_estimation.has_loss());
 }
 
 
@@ -33,7 +33,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 
     const TrainingResults training_results = adaptive_moment_estimation.train();
 
-    EXPECT_EQ(adaptive_moment_estimation.has_loss_index(), false);
+    EXPECT_EQ(adaptive_moment_estimation.has_loss(), false);
 }
 
 
