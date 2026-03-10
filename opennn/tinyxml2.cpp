@@ -1028,8 +1028,6 @@ XMLNode* XMLNode::InsertAfterChild(XMLNode* afterThis, XMLNode* addThis )
 }
 
 
-
-
 const XMLElement* XMLNode::FirstChildElement(const char* name ) const
 {
     for(const XMLNode* node = _firstChild; node; node = node->_next )
@@ -1043,7 +1041,7 @@ const XMLElement* XMLNode::FirstChildElement(const char* name ) const
     return 0;
 }
 
-
+/*
 const XMLElement* XMLNode::LastChildElement(const char* name ) const
 {
     for(const XMLNode* node = _lastChild; node; node = node->_prev )
@@ -1056,7 +1054,7 @@ const XMLElement* XMLNode::LastChildElement(const char* name ) const
     }
     return 0;
 }
-
+*/
 
 const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
 {
@@ -1071,7 +1069,7 @@ const XMLElement* XMLNode::NextSiblingElement(const char* name ) const
     return 0;
 }
 
-
+/*
 const XMLElement* XMLNode::PreviousSiblingElement(const char* name ) const
 {
     for(const XMLNode* node = _prev; node; node = node->_prev )
@@ -1084,7 +1082,7 @@ const XMLElement* XMLNode::PreviousSiblingElement(const char* name ) const
     }
     return 0;
 }
-
+*/
 
 char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
 {
@@ -3070,13 +3068,6 @@ void add_xml_element_attribute(XMLPrinter& printer,
     printer.CloseElement();
 }
 
-void add_xml_document(XMLPrinter& printer, const string& name, const string& value)
-{
-//    printer.OpenElement(name.c_str());
-//    printer.PushText(value.c_str());
-//    printer.CloseElement();
-}
-
 
 type read_xml_type(const XMLElement* root, const string& element_name)
 {
@@ -3142,4 +3133,3 @@ string read_xml_string(const XMLElement* root, const string& element_name)
 }
 
 }   // namespace tinyxml2
-
