@@ -2239,13 +2239,6 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
         BatchCuda* current_batch = ready_testing_queue.pop();
         const Index actual_batch_size = testing_batches[iteration].size();
 
-        if (actual_batch_size != current_fp_size)
-        {
-            testing_forward_propagation.free();
-            testing_forward_propagation.set(actual_batch_size, neural_network);
-            current_fp_size = actual_batch_size;
-        }
-
         current_batch->copy_device_async(actual_batch_size, memory_stream);
         cudaEventRecord(batch_ready_event, memory_stream);
         cudaStreamWaitEvent(0, batch_ready_event, 0);
