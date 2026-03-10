@@ -92,55 +92,73 @@ void reverse_cuda(int width, int height, int channels, type* d_kernel)
 }
 
 
-__global__ void reorganize_inputs_kernel(const type* inputs_device, type* outputs_device, int rows, int cols)
+__global__ void reorganize_inputs_kernel(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    int cols = height * width * channels;
     int totalSize = rows * cols;
 
     if (idx < totalSize) {
 
-        int row = idx % rows;
-        int col = idx / rows; 
+        int n = idx % rows;
+        int p_col = idx / rows;
 
-        int newIdx = row * cols + col;
+        int h = p_col % height;
+        int w = (p_col / height) % width;
+        int c = p_col / (height * width);
+
+        int p_row = h * (width * channels) + w * channels + c;
+
+        int newIdx = n * cols + p_row;
+
         outputs_device[idx] = inputs_device[newIdx];
     }
 }
 
-
-void reorganize_inputs_cuda(const type* inputs_device, type* outputs_device, int rows, int cols)
+void reorganize_inputs_cuda(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels)
 {
+    int cols = height * width * channels;
     int num_elements = rows * cols;
     int blockSize = 256;
     int numBlocks = (num_elements + blockSize - 1) / blockSize;
 
-    reorganize_inputs_kernel << <numBlocks, blockSize >> > (inputs_device, outputs_device, rows, cols);
+    reorganize_inputs_kernel<<<numBlocks, blockSize>>>(inputs_device, outputs_device, rows, height, width, channels);
 }
 
 
-__global__ void reorganize_gradients_kernel(const type* inputs_device, type* outputs_device, int rows, int cols) 
+__global__ void reorganize_gradients_kernel(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels) 
 {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int totalSize = rows * cols;
+    long long idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    long long cols = height * width * channels;
+    long long totalSize = rows * cols;
 
     if (idx < totalSize) 
     {
-        int row = idx % rows;
-        int col = idx / rows;
+        long long n = idx / cols;
+        long long p_row = idx % cols;
 
-        int originalIdx = col + row * cols;
+        int c = p_row % channels;
+        int w = (p_row / channels) % width;
+        int h = p_row / (channels * width);
 
-        outputs_device[originalIdx] = inputs_device[idx];
+        long long p_col = h + w * height + c * (height * width);
+
+        long long originalIdx = p_col * rows + n;
+
+        outputs_device[idx] = inputs_device[originalIdx];
     }
 }
 
-void reorganize_gradients_cuda(const type* inputs_device, type* outputs_device, int rows, int cols) 
+void reorganize_gradients_cuda(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels) 
 {
-    int num_elements = rows * cols;
+    long long cols = height * width * channels;
+    long long num_elements = rows * cols;
     int blockSize = 256;
     int numBlocks = (num_elements + blockSize - 1) / blockSize;
 
-    reorganize_gradients_kernel << <numBlocks, blockSize >> > (inputs_device, outputs_device, rows, cols);
+    reorganize_gradients_kernel<<<numBlocks, blockSize>>>(inputs_device, outputs_device, rows, height, width, channels);
 }
 
 
@@ -640,6 +658,8 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
 }
 
 
+#define EPSILON 1e-7f
+
 __global__ void scale_2d_kernel(const int n, const int batch_size, const int outputs_number,
     const float* inputs_device, float* outputs_device,
     const int* scalers_device,
@@ -651,7 +671,7 @@ __global__ void scale_2d_kernel(const int n, const int batch_size, const int out
 
     if (i < n)
     {
-        const int col = i % outputs_number;
+        const int col = i / batch_size;
 
         const int scaler_type = scalers_device[col];
         const float input_val = inputs_device[i];
@@ -666,31 +686,20 @@ __global__ void scale_2d_kernel(const int n, const int batch_size, const int out
         {
             const float min_val = minimums_device[col];
             const float max_val = maximums_device[col];
-            const float range = max_val - min_val;
-            if (range > 1e-9)
-            {
-                const float scaled_01 = (input_val - min_val) / range;
-                output_val = scaled_01 * (max_range - min_range) + min_range;
-            }
+            output_val = (input_val - min_val) / ((max_val - min_val) + EPSILON) * (max_range - min_range) + min_range;
             break;
         }
         case CudaScalerMeanStandardDeviation:
         {
             const float mean = means_device[col];
             const float std_dev = std_devs_device[col];
-            if (fabsf(std_dev) > 1e-9)
-            {
-                output_val = (input_val - mean) / std_dev;
-            }
+            output_val = (input_val - mean) / (std_dev + EPSILON);
             break;
         }
         case CudaScalerStandardDeviation:
         {
             const float std_dev = std_devs_device[col];
-            if (fabsf(std_dev) > 1e-9)
-            {
-                output_val = input_val / std_dev;
-            }
+            output_val = input_val / (std_dev + EPSILON);
             break;
         }
         case CudaScalerLogarithm:

@@ -14,42 +14,6 @@
 namespace opennn
 {
 
-template <typename T>
-class ThreadSafeQueue
-{
-private:
-
-    queue<T> queue_;
-    mutex mutex_;
-    condition_variable cond_;
-
-public:
-
-    void push(T item)
-    {
-        unique_lock<mutex> lock(mutex_);
-        queue_.push(item);
-        lock.unlock();
-        cond_.notify_one();
-    }
-
-    T pop()
-    {
-        unique_lock<mutex> lock(mutex_);
-        cond_.wait(lock, [this]() { return !queue_.empty(); });
-        T item = queue_.front();
-        queue_.pop();
-        return item;
-    }
-
-    bool empty()
-    {
-        lock_guard<mutex> lock(mutex_);
-        return queue_.empty();
-    }
-};
-
-
 AdaptiveMomentEstimation::AdaptiveMomentEstimation(const Loss* new_loss)
     : Optimizer(new_loss)
 {
@@ -656,25 +620,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cudaEventRecord(batch_ready_event, memory_stream);
             cudaStreamWaitEvent(0, batch_ready_event, 0);
 
-            // --- INICIO DE DEBUG: A LA SALIDA DEL BATCH ---
-            if (epoch == 0 && iteration == 0) 
-            {
-                cout << "\n\n====== DEBUG 1: INPUTS TRAS COPIA A VRAM ======" << endl;
-                
-                vector<float> h_inputs(200, 0.0f);
-                // Leemos los 20 primeros píxeles de la primera imagen desde VRAM a CPU
-                cudaMemcpy(h_inputs.data(), current_batch->inputs_device.data, 200 * sizeof(float), cudaMemcpyDeviceToHost);
-                
-                cout << "Primeros 20 floats en VRAM (BatchCuda):" << endl;
-                for(int k = 0; k < 200; k++) 
-                    cout << h_inputs[k] << " ";
-                cout << "\n===============================================\n" << endl;
-            }
-            // --- FIN DE DEBUG ---
-
             neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
             loss_index->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
-            
+
             training_error += training_back_propagation.error;
 
             if (is_classification_model)

@@ -737,8 +737,8 @@ type TestingAnalysis::calculate_determination(const VectorR& outputs, const Vect
 
 
 MatrixI TestingAnalysis::calculate_confusion_binary_classification(const MatrixR& targets,
-                                                                            const MatrixR& outputs,
-                                                                            type decision_threshold) const
+                                                                   const MatrixR& outputs,
+                                                                   type decision_threshold) const
 {
     const Index testing_samples_number = targets.rows();
 
@@ -774,7 +774,7 @@ MatrixI TestingAnalysis::calculate_confusion_binary_classification(const MatrixR
 
 
 MatrixI TestingAnalysis::calculate_confusion_multiple_classification(const MatrixR& targets,
-                                                                              const MatrixR& outputs) const
+                                                                     const MatrixR& outputs) const
 {
     const Index samples_number = targets.rows();
     const Index targets_number = targets.cols();
@@ -2172,12 +2172,23 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
     check();
 
     const vector<Index> testing_indices = dataset->get_sample_indices("Testing");
+    const Index testing_samples_number = testing_indices.size();
 
-    const Index current_batch_size = (batch_size <= 0 || batch_size > static_cast<Index>(testing_indices.size()))
-                                         ? (testing_indices.empty() ? 1 : testing_indices.size())
-                                         : batch_size;
+    if (testing_samples_number == 0)
+    {
+        const Index outputs_number = neural_network->get_outputs_number();
+        const Index size = (outputs_number == 1) ? 3 : (outputs_number + 1);
+        MatrixI empty_matrix(size, size);
+        empty_matrix.setZero();
+        return empty_matrix;
+    }
 
-    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, current_batch_size, false);
+    const Index max_batch_size = (batch_size <= 0 || batch_size > testing_samples_number)
+                                     ? testing_samples_number
+                                     : batch_size;
+
+    const vector<vector<Index>> testing_batches = dataset->get_batches(testing_indices, max_batch_size, false);
+    const Index testing_batches_number = testing_batches.size();
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -2188,44 +2199,91 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
     MatrixI total_confusion_matrix(confusion_matrix_size, confusion_matrix_size);
     total_confusion_matrix.setZero();
 
-    BatchCuda testing_batch(current_batch_size, dataset);
-    ForwardPropagationCuda testing_forward_propagation(current_batch_size, neural_network);
+    const int PREFETCH_BATCHES = 3;
+    
+    ThreadSafeQueue<BatchCuda*> empty_testing_queue;
+    ThreadSafeQueue<BatchCuda*> ready_testing_queue;
+    vector<BatchCuda*> testing_batch_pool;
+
+    for (int i = 0; i < PREFETCH_BATCHES; i++) 
+    {
+        BatchCuda* b = new BatchCuda(max_batch_size, dataset);
+        testing_batch_pool.push_back(b);
+        empty_testing_queue.push(b);
+    }
+
+    cudaStream_t memory_stream;
+    cudaStreamCreate(&memory_stream);
+    cudaEvent_t batch_ready_event;
+    cudaEventCreate(&batch_ready_event);
+
+    ForwardPropagationCuda testing_forward_propagation(max_batch_size, neural_network);
 
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
 
-    for(const auto& current_batch_indices : testing_batches)
+    std::thread testing_worker([&]() 
     {
-        const Index current_batch_size = current_batch_indices.size();
-        if (current_batch_size == 0) continue;
+        for(Index iteration = 0; iteration < testing_batches_number; iteration++) 
+        {
+            BatchCuda* batch = empty_testing_queue.pop();
+            batch->fill_host(testing_batches[iteration], input_feature_indices, target_feature_indices);
+            ready_testing_queue.push(batch);
+        }
+    });
 
-        if (current_batch_size != current_batch_size)
+    Index current_fp_size = max_batch_size;
+
+    for(Index iteration = 0; iteration < testing_batches_number; iteration++)
+    {
+        BatchCuda* current_batch = ready_testing_queue.pop();
+        const Index actual_batch_size = testing_batches[iteration].size();
+
+        if (actual_batch_size != current_fp_size)
         {
             testing_forward_propagation.free();
-            testing_batch.set(current_batch_size, dataset);
-            testing_forward_propagation.set(current_batch_size, neural_network);
+            testing_forward_propagation.set(actual_batch_size, neural_network);
+            current_fp_size = actual_batch_size;
         }
 
-        testing_batch.fill(current_batch_indices,
-                           input_feature_indices,
-                           target_feature_indices);
+        current_batch->copy_device_async(actual_batch_size, memory_stream);
+        cudaEventRecord(batch_ready_event, memory_stream);
+        cudaStreamWaitEvent(0, batch_ready_event, 0);
 
-        neural_network->forward_propagate(testing_batch.get_inputs_device(),
+        neural_network->forward_propagate(current_batch->get_inputs_device(),
                                           testing_forward_propagation,
                                           false);
 
-        const float* outputs_device = testing_forward_propagation.get_last_trainable_layer_outputs_device().data;
+        cudaStreamSynchronize(0);
 
-        MatrixR batch_outputs(current_batch_size, outputs_number);
-        cudaMemcpy(batch_outputs.data(), outputs_device, current_batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToHost);
+        const type* outputs_device = testing_forward_propagation.get_outputs().data;
+        vector<type> host_colmajor_outputs(actual_batch_size * outputs_number);
+        
+        cudaMemcpy(host_colmajor_outputs.data(), outputs_device, actual_batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToHost);
 
-        const MatrixR batch_targets = dataset->get_data_from_indices(current_batch_indices, target_feature_indices);
+        MatrixR batch_outputs(actual_batch_size, outputs_number);
+        for(Index i = 0; i < actual_batch_size; ++i)
+            for(Index j = 0; j < outputs_number; ++j)
+                batch_outputs(i, j) = host_colmajor_outputs[j * actual_batch_size + i];
+
+        const MatrixR batch_targets = dataset->get_data_from_indices(testing_batches[iteration], target_feature_indices);
+        
         MatrixI batch_confusion = calculate_confusion(batch_outputs, batch_targets, decision_threshold);
         total_confusion_matrix += batch_confusion;
+
+        empty_testing_queue.push(current_batch);
     }
 
-    if(testing_indices.size() > 0)
-        total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_indices.size();
+    testing_worker.join();
+
+    cudaStreamDestroy(memory_stream);
+    cudaEventDestroy(batch_ready_event);
+
+    for (BatchCuda* b : testing_batch_pool) 
+        delete b;
+
+    if(testing_samples_number > 0)
+        total_confusion_matrix(confusion_matrix_size - 1, confusion_matrix_size - 1) = testing_samples_number;
 
     return total_confusion_matrix;
 }

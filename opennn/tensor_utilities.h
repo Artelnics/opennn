@@ -13,6 +13,42 @@
 namespace opennn
 {
 
+template <typename T>
+class ThreadSafeQueue
+{
+private:
+
+    queue<T> queue_;
+    mutex mutex_;
+    condition_variable cond_;
+
+public:
+
+    void push(T item)
+    {
+        unique_lock<mutex> lock(mutex_);
+        queue_.push(item);
+        lock.unlock();
+        cond_.notify_one();
+    }
+
+    T pop()
+    {
+        unique_lock<mutex> lock(mutex_);
+        cond_.wait(lock, [this]() { return !queue_.empty(); });
+        T item = queue_.front();
+        queue_.pop();
+        return item;
+    }
+
+    bool empty()
+    {
+        lock_guard<mutex> lock(mutex_);
+        return queue_.empty();
+    }
+};
+
+
 struct Shape
 {
     static constexpr size_t MaxRank = 6;
@@ -407,6 +443,7 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
+void fill_tensor_data_colmajor(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 
 template <typename Type, int Rank>

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "adaptive_moment_estimation.h"
 
 namespace opennn
 {

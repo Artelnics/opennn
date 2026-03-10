@@ -255,7 +255,7 @@ struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void initialize() override
     {
-        outputs.set_descriptor(Shape{batch_size}.append(layer->get_output_shape()););
+        outputs.set_descriptor(Shape{batch_size}.append(layer->get_output_shape()));
     }
 
     void print() const override
