@@ -889,6 +889,15 @@ struct TensorViewCuda
 
     void set_descriptor(const Shape& shape)
     {
+        int n = 1, c = 1, h = 1, w = 1;
+        if (shape.size() > 0) n = static_cast<int>(shape[0]);
+        if (shape.size() > 1) c = static_cast<int>(shape[1]);
+        if (shape.size() > 2) h = static_cast<int>(shape[2]);
+        if (shape.size() > 3) w = static_cast<int>(shape[3]);
+
+        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
+            return;
+
         if (descriptor_handle == nullptr)
         {
             cudnnTensorDescriptor_t raw_desc;
@@ -899,12 +908,6 @@ struct TensorViewCuda
                 if (p) cudnnDestroyTensorDescriptor(p);
                 });
         }
-
-        int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() > 0) n = static_cast<int>(shape[0]);
-        if (shape.size() > 1) c = static_cast<int>(shape[1]);
-        if (shape.size() > 2) h = static_cast<int>(shape[2]);
-        if (shape.size() > 3) w = static_cast<int>(shape[3]);
 
         CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w));
     }

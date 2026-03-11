@@ -62,49 +62,41 @@ int main()
 
 #endif
 
-cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
+cout << "OpenNN. Breast Cancer Example." << endl;
 
         // Dataset
 
-        ImageDataset image_dataset("/home/davidgonzalez/opennn/mnist_data");
+        Dataset dataset("/home/artelnics/Documents/breast_cancer.csv", ";", true, false);
 
-        //image_dataset.set_sample_roles("Training");
+        const Index neurons_number = 3;
 
-        //image_dataset.print_data();
+        // Neural Network
 
-        // Neural network
+        ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
 
-        ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
-            {1},
-            image_dataset.get_shape("Target"));
+        // Training Strategy
 
-        // Training strategy
-        WeightedSquaredError();
-        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
+        WeightedSquaredError loss(&classification_network, &dataset);
+        loss.set_regularization_method("L1");
 
-        training_strategy.set_loss("CrossEntropyError2d");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        TrainingStrategy training_strategy(&classification_network, &dataset);
+
         training_strategy.get_loss()->set_regularization_method("None");
-
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(100);
-        adam->set_display_period(10);
+        adam->set_maximum_epochs(1000);
 
-#ifdef OPENNN_CUDA
-    training_strategy.train_cuda();
-#else
-    training_strategy.train();
-#endif
+        training_strategy.train();
 
-        // Testing analysis
+        // Testing Analysis
 
-        TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        cout << "Calculating confusion...." << endl;
-        const MatrixI confusion = testing_analysis.calculate_confusion_cuda();
-        cout << "\nConfusion matrix:\n" << confusion << endl;
+        testing_analysis.print_binary_classification_tests();
 
-        cout << "Bye!" << endl;
+        TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
+
+        cout << "Good bye!" << endl;
 
    
 #ifndef OPENNN_CUDA

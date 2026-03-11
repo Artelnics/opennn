@@ -958,8 +958,17 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!parameters_element)
         throw runtime_error("Parameters element is nullptr.\n");
 
+    VectorR xml_parameters;
+
     if (parameters_element && parameters_element->GetText())
-        string_to_vector(parameters_element->GetText(), parameters);
+        string_to_vector(parameters_element->GetText(), xml_parameters);
+
+    if (xml_parameters.size() > 0 && parameters.size() > 0)
+    {
+        const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
+
+        memcpy(parameters.data(), xml_parameters.data(), elements_to_copy * sizeof(type));
+    }
 }
 
 
@@ -969,8 +978,8 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
-    //@simone @todo stai attento c'e forse qualcos adi sospetto in questo "new", le cose cambiano e non capisco se sono layes e input e output cambiano sempre o no
-    //const Index new_features_number = read_xml_index(inputs_element, "InputNumber");
+    const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
+    input_variables.resize(inputs_number);
 
     const XMLElement* current_element = inputs_element->FirstChildElement("InputsNumber");
 
@@ -1061,7 +1070,9 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
     if(!outputs_element)
         throw runtime_error("Outputs element is nullptr.\n");
 
-    //const Index new_outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+    const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+
+    output_variables.resize(outputs_number);
 
     const XMLElement* current_element = outputs_element->FirstChildElement("OutputsNumber");
 
@@ -1104,7 +1115,7 @@ void NeuralNetwork::print() const
     cout << "Outputs number: " << get_outputs_number() << endl;
 
     cout << "Outputs:" << endl
-         << get_output_feature_names();
+         << get_output_feature_names() << endl;
 
     cout << "Parameters number: " << get_parameters_number() << endl;
 }
