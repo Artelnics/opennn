@@ -148,11 +148,13 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     use_causal_mask = new_use_causal_mask;
 
     if (use_causal_mask)
-        causal_mask = Tensor2(query_sequence_length, source_sequence_length)
-                          .generate([=](const Eigen::array<Index, 2>& idx) -> type {
-                              const Index row = idx[0];
-                              const Index column = idx[1];
-                              return (column > row) ? minus_inf : 0;});
+    {
+        causal_mask.resize(query_sequence_length, source_sequence_length);
+
+        for(Index row = 0; row < query_sequence_length; ++row)
+            for(Index column = 0; column < source_sequence_length; ++column)
+                causal_mask(row, column) = (column > row) ? minus_inf : type(0);
+    }
 }
 
 
@@ -217,11 +219,12 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     }
 
     if (use_causal_mask)
-        attention_weights.device(get_device()) += causal_mask.reshape(array_4(1, 1, query_sequence_length, source_sequence_length))
-                                                        .broadcast(array_4(batch_size, heads_number, 1, 1));
+        apply_causal_mask(attention_weights);
 
-    TensorMap4 att_weights_map(attention_weights.data(), batch_size, heads_number, query_sequence_length, source_sequence_length);
-    softmax(att_weights_map);
+    const Index total_rows_softmax = batch_size * heads_number * query_sequence_length;
+    MatrixMap attention_weights_map(attention_weights.data(), total_rows_softmax, source_sequence_length);
+
+    softmax(attention_weights_map);
 
     type* value_data = value.data();
     type* att_outputs_data = attention_outputs.data();
@@ -405,7 +408,10 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
                                   input_source_gradients, batch_size, true);
 
     if(input_views.size() == 1)
+    {
         input_query_gradients.device(get_device()) += input_source_gradients;
+        //back_propagation->input_gradients.resize(1);
+    }
 }
 
 

@@ -30,6 +30,7 @@ public:
     string write_pooling_method() const;
 
     void set(const Shape&, const PoolingMethod&, const string&);
+    void set_input_shape(const Shape&) override;
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
@@ -68,8 +69,6 @@ struct Pooling3dBackPropagation final : LayerBackPropagation
     Pooling3dBackPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
-
-    Tensor3 input_derivatives;
 };
 
 }

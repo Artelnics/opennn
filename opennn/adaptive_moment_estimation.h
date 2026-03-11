@@ -9,7 +9,6 @@
 #pragma once
 
 #include "optimizer.h"
-//#include "tensor_utilities.h"
 
 namespace opennn
 {
