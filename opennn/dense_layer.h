@@ -13,7 +13,6 @@
 
 namespace opennn
 {
-
 template<int Rank> class Dense;
 
 template<int Rank>

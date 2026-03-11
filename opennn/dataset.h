@@ -438,12 +438,12 @@ public:
                                             const vector<Index>&,
                                             type*) const;
 
-    virtual void fill_input_tensor(const vector<Index>&,
+    virtual void fill_inputs(const vector<Index>&,
                                    const vector<Index>&,
                                    type*,
                                    bool = true) const;
 
-    virtual void fill_target_tensor(const vector<Index>&,
+    virtual void fill_targets(const vector<Index>&,
                                     const vector<Index>&,
                                     type*,
                                     bool = true) const;
@@ -541,8 +541,6 @@ struct Batch
     TensorView get_targets() const;
 
     Index get_samples_number() const;
-
-//    Tensor2 perform_augmentation(const Tensor2&);
 
     void print() const;
 

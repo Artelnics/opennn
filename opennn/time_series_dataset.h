@@ -55,12 +55,12 @@ public:
     void impute_missing_values_unuse() override;
     void impute_missing_values_interpolate() override;
 
-    void fill_input_tensor(const vector<Index>&,
+    void fill_inputs(const vector<Index>&,
                            const vector<Index>&,
                            type*,
                            bool = true) const override;
 
-    void fill_target_tensor(const vector<Index>&,
+    void fill_targets(const vector<Index>&,
                             const vector<Index>&,
                             type*,
                             bool = true) const override;

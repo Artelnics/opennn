@@ -182,7 +182,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
         const vector<Index> sample_indices = time_series_dataset->get_sample_indices(sample_role);
         const vector<Index> feature_indices = time_series_dataset->get_feature_indices("Target");
         target_data.resize(static_cast<Index>(sample_indices.size()), static_cast<Index>(feature_indices.size()));
-        time_series_dataset->fill_target_tensor(sample_indices, feature_indices, target_data.data());
+        time_series_dataset->fill_targets(sample_indices, feature_indices, target_data.data());
     }
     else
     {

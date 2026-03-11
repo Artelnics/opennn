@@ -192,7 +192,7 @@ struct Shape
         return os;
     }
 
-    bool operator==(const Shape& other) const noexcept
+    bool operator == (const Shape& other) const noexcept
     {
         if (rank != other.rank) return false;
 
@@ -202,7 +202,7 @@ struct Shape
         return true;
     }
 
-    bool operator!=(const Shape& other) const noexcept
+    bool operator != (const Shape& other) const noexcept
     {
         return !(*this == other);
     }
@@ -336,9 +336,19 @@ void sum_matrices(const VectorR&, Tensor3&);
 void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
 
+
+bool is_contiguous(const vector<Index>& v)
+{
+    for (Index i = 0; i < v.size(); i++)
+        if (v[i] != v[0] + i)
+            return false;
+
+    return true;
+}
+
+
 inline bool is_binary(const VectorR& tensor)
 {
-
     const Index size = tensor.size();
 
     for(Index i = 0; i < size; i++)

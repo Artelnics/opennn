@@ -302,7 +302,7 @@ void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& column_indices,
                       type* __restrict tensor_data,
                       bool parallelize)
-{
+{    
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
 
@@ -314,17 +314,9 @@ void fill_tensor_data(const MatrixR& matrix,
     {
         const Index matrix_cols_number = matrix.cols();
 
-        bool is_contiguous = true;
-        for(Index j = 0; j < columns_number; ++j) 
-        {
-            if(column_indices[j] != column_indices[0] + j) 
-            {
-                is_contiguous = false;
-                break;
-            }
-        }
+        const bool contiguous = is_contiguous(column_indices);
 
-        if (is_contiguous) 
+        if (contiguous) 
             for(Index i = 0; i < rows_number; ++i)
                 memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
         else
