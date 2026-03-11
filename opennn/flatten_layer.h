@@ -173,25 +173,10 @@ public:
     void forward_propagate(const vector<TensorViewCuda>& inputs,
                            unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool)
-    {
-        if constexpr (Rank == 4)
-        {
-            const Index height = get_input_height();
-            const Index width = get_input_width();
-            const Index channels = get_input_channels();
-
-            // Bridging the gap: Convert cuDNN's NCHW back to standard Row-Major NHWC
-            // We can write directly to outputs.data, no need for temporary buffers!
-            invert_reorder_inputs_cuda(inputs[0].data, forward_propagation->outputs.data,
-                                       batch_size, channels, height, width);
-        }
-        else
-        {
-            // For 1D/2D data, flattening is free in Row-Major! Just copy contiguous memory.
-            CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,
-                                  inputs[0].data, batch_size * outputs_number * sizeof(type),
-                                  cudaMemcpyDeviceToDevice));
-        }
+    {       
+        CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,
+                              inputs[0].data, batch_size * outputs_number * sizeof(type),
+                              cudaMemcpyDeviceToDevice));
     }
 
 
@@ -204,20 +189,8 @@ public:
         type* input_gradients = back_propagation->input_gradients[0].data;
         const Index outputs_number = get_outputs_number();
 
-        if constexpr (Rank == 4)
-        {
-            const Index height = get_input_height();
-            const Index width = get_input_width();
-            const Index channels = get_input_channels();
+        CHECK_CUDA(cudaMemcpy(input_gradients, output_gradients[0].data, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
 
-            // Bridging the gap: Convert standard Row-Major NHWC back to cuDNN's NCHW for backprop
-            reorder_inputs_cuda(output_gradients[0].data, input_gradients,
-                                batch_size, channels, height, width);
-        }
-        else
-        {
-            CHECK_CUDA(cudaMemcpy(input_gradients, output_gradients[0].data, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
-        }
     }
 
 #endif
@@ -292,18 +265,9 @@ struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void initialize() override
     {
-        const Index inputs_number = layer->get_inputs_number();
         const Index outputs_number = layer->get_outputs_number();
-
-        if constexpr (Rank == 4)
-        {
-            reordered_inputs.resize({ batch_size , inputs_number, 1, 1 });
-        }
-
         outputs.set_descriptor({batch_size, outputs_number});
     }
-
-    TensorCuda reordered_inputs;
 };
 
 
@@ -317,10 +281,13 @@ struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
 
     void initialize() override
     {
-        const Index inputs_number = layer->get_inputs_number();
+        const Shape input_shape = layer->get_input_shape();
+
+        Shape full_input_shape = { batch_size };
+        full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
 
         input_gradients.resize(1);
-        input_gradients[0].resize({ batch_size, inputs_number, 1, 1 });
+        input_gradients[0].resize(full_input_shape);
     }
 };
 

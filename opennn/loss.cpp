@@ -1462,12 +1462,9 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
     cudnnCreateTensorDescriptor(&output_reduce_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(output_reduce_tensor_descriptor,
-                               CUDNN_TENSOR_NCHW,
+                               CUDNN_TENSOR_NHWC,
                                CUDNN_DATA_FLOAT,
-                               1,
-                               1,
-                               1,
-                               1);
+                               1, 1, 1, 1);
 
     cudnnGetReductionWorkspaceSize(get_cudnn_handle(),
                                    reduce_tensor_descriptor,

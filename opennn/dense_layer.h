@@ -205,9 +205,9 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
         auto* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
         if (dense_layer->use_combinations)
-            combinations.resize({ total_rows, outputs_number, 1, 1 });
+            combinations.resize({ total_rows, outputs_number });
 
-        outputs.set_descriptor({ total_rows, outputs_number, 1, 1});
+        outputs.set_descriptor({ total_rows, outputs_number });
 
         if (dense_layer->get_dropout_rate() > 0)
         {
@@ -221,7 +221,7 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         if (dense_layer->get_batch_normalization())
         {
-            const Shape batch_normalization_shape = { 1, outputs_number, 1, 1 };
+            const Shape batch_normalization_shape = { outputs_number };
 
             means.resize(batch_normalization_shape);
             bn_saved_inv_variance.resize(batch_normalization_shape);
@@ -282,20 +282,21 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         ones.fill(1.0f);
 
         input_gradients.resize(1);
-        input_gradients[0].resize({ total_rows, inputs_number, 1, 1 });
+        input_gradients[0].resize({ total_rows, inputs_number });
 
-        bias_gradients.set_descriptor({ 1, outputs_number, 1, 1 });
-        weight_gradients.set_descriptor({ 1, inputs_number * outputs_number, 1, 1 });
+        bias_gradients.set_descriptor({ outputs_number });
+        weight_gradients.set_descriptor({ inputs_number, outputs_number });
+
 
         cudnnCreateTensorDescriptor(&gradients_tensor_descriptor);
-        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, (int)total_rows, (int)outputs_number, 1, 1);
+        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, (int)total_rows, (int)outputs_number, 1, 1);
 
         const Dense<Rank>* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
         if (dense_layer->get_batch_normalization())
         {
-            beta_gradients.set_descriptor({1, outputs_number,1,1});
-            gamma_gradients.set_descriptor({1, outputs_number,1,1});
+            beta_gradients.set_descriptor({outputs_number});
+            gamma_gradients.set_descriptor({outputs_number});
         }
     }
 
@@ -441,17 +442,17 @@ public:
 
 #ifdef OPENNN_CUDA
 
-        biases_device.set_descriptor({1, outputs_number, 1, 1});
-        weights_device.set_descriptor({ new_input_shape[0], outputs_number, 1, 1 });
+        biases_device.set_descriptor({outputs_number});
+        weights_device.set_descriptor({ new_input_shape[0], outputs_number });
 
         if (batch_normalization)
         {
-            Shape batch_normalization_dims = { 1, outputs_number, 1, 1 };
+            Shape batch_normalization_shape = { outputs_number };
 
-            betas_device.set_descriptor(batch_normalization_dims);
-            gammas_device.set_descriptor(batch_normalization_dims);
-            running_means_device.resize(batch_normalization_dims);
-            running_variances_device.resize(batch_normalization_dims);
+            betas_device.set_descriptor(batch_normalization_shape);
+            gammas_device.set_descriptor(batch_normalization_shape);
+            running_means_device.resize(batch_normalization_shape);
+            running_variances_device.resize(batch_normalization_shape);
         }
 
 #endif

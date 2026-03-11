@@ -910,12 +910,23 @@ struct TensorViewCuda
         }
 
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() > 0) n = static_cast<int>(shape[0]);
-        if (shape.size() > 1) c = static_cast<int>(shape[1]);
-        if (shape.size() > 2) h = static_cast<int>(shape[2]);
-        if (shape.size() > 3) w = static_cast<int>(shape[3]);
+        if (shape.size() == 4) { // NHWC
+            n = static_cast<int>(shape[0]);
+            h = static_cast<int>(shape[1]);
+            w = static_cast<int>(shape[2]);
+            c = static_cast<int>(shape[3]);
+        } else if (shape.size() == 3) { // NWC
+            n = static_cast<int>(shape[0]);
+            w = static_cast<int>(shape[1]);
+            c = static_cast<int>(shape[2]);
+        } else if (shape.size() == 2) { // NC
+            n = static_cast<int>(shape[0]);
+            c = static_cast<int>(shape[1]);
+        } else if (shape.size() == 1) { // C
+            c = static_cast<int>(shape[0]);
+        }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
     }
 
     Index size() const

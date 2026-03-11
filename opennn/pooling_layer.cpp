@@ -646,7 +646,7 @@ void PoolingForwardPropagationCuda::initialize()
     cudnnCreateTensorDescriptor(&input_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(input_tensor_descriptor,
-                               CUDNN_TENSOR_NCHW,
+                               CUDNN_TENSOR_NHWC,
                                CUDNN_DATA_FLOAT,
                                batch_size,
                                channels,
@@ -655,7 +655,7 @@ void PoolingForwardPropagationCuda::initialize()
 
     // Outputs
 
-    outputs.set_descriptor({ batch_size, channels, output_height, output_width });
+    outputs.set_descriptor({ batch_size, output_height, output_width, channels });
 }
 
 
