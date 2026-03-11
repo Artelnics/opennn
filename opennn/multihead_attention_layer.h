@@ -82,7 +82,7 @@ public:
 
         TensorMap4 projected_tensor(projected.data(), batch_size, sequence_length, heads, head_dimension);
 
-        output = projected_tensor.shuffle(array_4(0, 2, 1, 3));
+        output.device(get_device()) = projected_tensor.shuffle(array_4(0, 2, 1, 3));
     }
 
     void calculate_projection_gradient(const Tensor4& d_head,
@@ -98,22 +98,25 @@ public:
         const Index embedding_dimension = get_embedding_dimension();
         const Index total_rows = batch_size * sequence_length;
 
-        Tensor2 Delta_tensor = d_head.shuffle(array_4(0, 2, 1, 3))
-                                   .reshape(array_2(total_rows, embedding_dimension));
+        MatrixR Delta(total_rows, embedding_dimension);
+        TensorMap2 Delta_map(Delta.data(), total_rows, embedding_dimension);
 
-        const MatrixMap Delta(Delta_tensor.data(), total_rows, embedding_dimension);
+        Delta_map.device(get_device()) = d_head.shuffle(array_4(0, 2, 1, 3))
+                                             .reshape(array_2(total_rows, embedding_dimension));
+
+        const MatrixMap Delta_mat(Delta.data(), total_rows, embedding_dimension);
         const MatrixMap X(input.data(), total_rows, embedding_dimension);
         const MatrixMap W = matrix_map(weights);
 
-        d_weights.noalias() = X.transpose() * Delta;
-        d_bias.noalias() = Delta.colwise().sum();
+        d_weights.noalias() = X.transpose() * Delta_mat;
+        d_bias.noalias() = Delta_mat.colwise().sum();
 
         MatrixMap dX_mat(d_input.data(), total_rows, embedding_dimension);
 
         if(accumulate)
-            dX_mat.noalias() += Delta * W.transpose();
+            dX_mat.noalias() += Delta_mat * W.transpose();
         else
-            dX_mat.noalias() = Delta * W.transpose();
+            dX_mat.noalias() = Delta_mat * W.transpose();
     }
 
     void print() const override;
@@ -147,8 +150,8 @@ private:
 
     bool use_causal_mask = false;
 
-    Tensor2 causal_mask;
-    Tensor<bool,2> key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
+    MatrixR causal_mask;
+    MatrixB key_mask; // Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
 

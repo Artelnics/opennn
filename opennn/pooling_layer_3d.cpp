@@ -54,6 +54,12 @@ void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooli
 }
 
 
+void Pooling3d::set_input_shape(const Shape& new_input_shape)
+{
+    input_shape = new_input_shape;
+}
+
+
 void Pooling3d::set_pooling_method(const PoolingMethod& new_pooling_method)
 {
     pooling_method = new_pooling_method;
@@ -128,7 +134,9 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
     Pooling3dForwardPropagation* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
     Pooling3dBackPropagation* pooling_back_propagation = static_cast<Pooling3dBackPropagation*>(back_propagation.get());
 
-    pooling_back_propagation->input_derivatives.setZero();
+    pooling_back_propagation->input_gradients_memory[0].setZero();
+
+    TensorMap3 input_derivatives = tensor_map<3>(pooling_back_propagation->input_gradients[0]);
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
@@ -144,14 +152,14 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
             for(Index f = 0; f < features; ++f)
             {
                 const Index max_idx = maximal_indices(b, f);
-                pooling_back_propagation->input_derivatives(b, max_idx, f) = delta(b, f);
+                input_derivatives(b, max_idx, f) = delta(b, f);
             }
         }
     }
     else // AveragePooling
     {
         const type inverse_sequence_length = type(1.0) / static_cast<type>(sequence_length);
-        MatrixMap inputs_map(pooling_back_propagation->input_derivatives.data(), batch_size * sequence_length, features);
+        MatrixMap inputs_map(pooling_back_propagation->input_gradients[0].data, batch_size * sequence_length, features);
 
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; ++b)
@@ -174,18 +182,18 @@ void Pooling3dForwardPropagation::initialize()
 
 void Pooling3dBackPropagation::initialize()
 {
-    layer = static_cast<Pooling3d*>(layer);
+    const Pooling3d* pooling_layer = static_cast<Pooling3d*>(layer);
 
-    const Shape layer_input_dimensions = layer->get_input_shape();
+    const Shape layer_input_dimensions = pooling_layer->get_input_shape();
+    const Index sequence_length = layer_input_dimensions[0];
+    const Index features = layer_input_dimensions[1];
 
-    input_derivatives.resize(batch_size,
-                             layer_input_dimensions[0],
-                             layer_input_dimensions[1]);
-
-    input_derivatives.setZero();
+    input_gradients_memory.resize(1);
+    input_gradients_memory[0].resize(batch_size * sequence_length * features);
+    input_gradients_memory[0].setZero();
 
     input_gradients.resize(1);
-    input_gradients[0] = TensorView(input_derivatives.data(), {batch_size, layer_input_dimensions[0], layer_input_dimensions[1]});
+    input_gradients[0] = TensorView(input_gradients_memory[0].data(), {batch_size, sequence_length, features});
 }
 
 
