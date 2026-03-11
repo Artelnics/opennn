@@ -14,6 +14,7 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/weighted_squared_error.h"
+#include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
 
@@ -53,8 +54,12 @@ int main()
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs(100);
+        training_strategy.get_loss()->set_regularization_method("None");
+
         training_strategy.train();
-/*
+
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
@@ -64,7 +69,7 @@ int main()
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         roc_analysis.print();
-*/
+
         // Deployment
 
         Tensor<string, 1> documents(1);
