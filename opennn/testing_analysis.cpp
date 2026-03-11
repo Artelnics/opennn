@@ -2250,14 +2250,9 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
         cudaStreamSynchronize(0);
 
         const type* outputs_device = testing_forward_propagation.get_outputs().data;
-        vector<type> host_colmajor_outputs(actual_batch_size * outputs_number);
-        
-        cudaMemcpy(host_colmajor_outputs.data(), outputs_device, actual_batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToHost);
-
         MatrixR batch_outputs(actual_batch_size, outputs_number);
-        for(Index i = 0; i < actual_batch_size; ++i)
-            for(Index j = 0; j < outputs_number; ++j)
-                batch_outputs(i, j) = host_colmajor_outputs[j * actual_batch_size + i];
+
+        CHECK_CUDA(cudaMemcpy(batch_outputs.data(), outputs_device, actual_batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToHost));
 
         const MatrixR batch_targets = dataset->get_data_from_indices(testing_batches[iteration], target_feature_indices);
         

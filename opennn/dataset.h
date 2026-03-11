@@ -428,30 +428,22 @@ public:
     virtual void read_csv();
 
     void infer_column_types(const vector<vector<string>>&);
+
     DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string>>&, bool, const string&);
 
     void read_data_file_preview(const vector<vector<string>>&);
 
     void check_separators(const string&) const;
 
-    virtual void fill_input_tensor_colmajor(const vector<Index>&,
-                                            const vector<Index>&,
-                                            type*) const;
-
     virtual void fill_inputs(const vector<Index>&,
-                                   const vector<Index>&,
-                                   type*,
-                                   bool = true) const;
+                             const vector<Index>&,
+                             type*,
+                             bool = true) const;
 
     virtual void fill_targets(const vector<Index>&,
-                                    const vector<Index>&,
-                                    type*,
-                                    bool = true) const;
-
-    // virtual void fill_decoder_tensor(const vector<Index>&,
-    //                                  const vector<Index>&,
-    //                                  type*) const;
-
+                              const vector<Index>&,
+                              type*,
+                              bool = true) const;
 
 protected:
 

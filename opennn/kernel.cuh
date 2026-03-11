@@ -12,11 +12,11 @@
 
 // System includes
 
-#include <iostream>
+//#include <iostream>
 #include <stdio.h>
-#include <vector>
+//#include <vector>
 #include <string>
-#include <algorithm>
+//#include <algorithm>
 #include <time.h>
 
 using namespace std;
@@ -34,12 +34,6 @@ void invert_reorder_inputs_cuda(const float* source, float* destination, int N, 
 
 __global__ void reverse_kernel(type*, int, int, int);
 void reverse_cuda(int, int, int, type*);
-
-__global__ void reorganize_inputs_kernel(const type*, type*, int, int, int, int);
-void reorganize_inputs_cuda(const type*, type*, int, int, int, int);
-
-__global__ void reorganize_gradients_kernel(const type*, type*, int, int, int, int);
-void reorganize_gradients_cuda(const type*, type*, int, int, int, int);
 
 void copy_to_vector_cuda(float* destination, const float* source, const Index& size, Index& index);
 void copy_from_vector_cuda(float* destination, const float* source, const Index& size, Index& index);

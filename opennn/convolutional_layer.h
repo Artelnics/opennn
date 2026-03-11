@@ -29,7 +29,49 @@ public:
 
     bool get_batch_normalization() const;
 
-    void reorder_weights_for_cudnn();
+    void reorder_weights_to_cudnn()
+    {
+        const Index H = get_kernel_height();
+        const Index W = get_kernel_width();
+        const Index C = get_kernel_channels();
+        const Index K = get_kernels_number();
+
+        // CPU is currently HWCK
+        TensorMap4 current_weights(weights.data, H, W, C, K);
+
+        // cuDNN needs KCHW
+        Tensor4 cudnn_weights(K, C, H, W);
+
+        for (Index k = 0; k < K; ++k)
+            for (Index c = 0; c < C; ++c)
+                for (Index h = 0; h < H; ++h)
+                    for (Index w = 0; w < W; ++w)
+                        cudnn_weights(k, c, h, w) = current_weights(h, w, c, k);
+
+        memcpy(weights.data, cudnn_weights.data(), weights.size() * sizeof(type));
+    }
+
+    void reorder_weights_from_cudnn()
+    {
+        const Index H = get_kernel_height();
+        const Index W = get_kernel_width();
+        const Index C = get_kernel_channels();
+        const Index K = get_kernels_number();
+
+        // Memory currently holds KCHW (from cuDNN)
+        TensorMap4 cudnn_weights(weights.data, K, C, H, W);
+
+        // We want to restore HWCK for the CPU
+        Tensor4 cpu_weights(H, W, C, K);
+
+        for (Index k = 0; k < K; ++k)
+            for (Index c = 0; c < C; ++c)
+                for (Index h = 0; h < H; ++h)
+                    for (Index w = 0; w < W; ++w)
+                        cpu_weights(h, w, c, k) = cudnn_weights(k, c, h, w);
+
+        memcpy(weights.data, cpu_weights.data(), weights.size() * sizeof(type));
+    }
 
     const string& get_activation_function() const;
 

@@ -171,33 +171,27 @@ public:
 public:
 
     void forward_propagate(const vector<TensorViewCuda>& inputs,
-                            unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                            bool)
+                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                           bool)
     {
-        const Index batch_size = forward_propagation->batch_size;
-        const Index outputs_number = get_outputs_number();
-
         if constexpr (Rank == 4)
         {
             const Index height = get_input_height();
             const Index width = get_input_width();
             const Index channels = get_input_channels();
 
-            FlattenForwardPropagationCuda<Rank>* layer_forward_propagation =
-                static_cast<FlattenForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-            type* reordered_inputs = layer_forward_propagation->reordered_inputs.data;
-            type* outputs_device = layer_forward_propagation->outputs.data;
-
-            invert_reorder_inputs_cuda(inputs[0].data, reordered_inputs,
+            // Bridging the gap: Convert cuDNN's NCHW back to standard Row-Major NHWC
+            // We can write directly to outputs.data, no need for temporary buffers!
+            invert_reorder_inputs_cuda(inputs[0].data, forward_propagation->outputs.data,
                                        batch_size, channels, height, width);
-
-            reorganize_inputs_cuda(inputs[0].data, outputs_device, batch_size, height, width, channels);
         }
         else
+        {
+            // For 1D/2D data, flattening is free in Row-Major! Just copy contiguous memory.
             CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,
                                   inputs[0].data, batch_size * outputs_number * sizeof(type),
                                   cudaMemcpyDeviceToDevice));
+        }
     }
 
 
@@ -215,11 +209,15 @@ public:
             const Index height = get_input_height();
             const Index width = get_input_width();
             const Index channels = get_input_channels();
-       
-            reorganize_gradients_cuda(output_gradients[0].data, input_gradients, batch_size, height, width, channels);
+
+            // Bridging the gap: Convert standard Row-Major NHWC back to cuDNN's NCHW for backprop
+            reorder_inputs_cuda(output_gradients[0].data, input_gradients,
+                                batch_size, channels, height, width);
         }
         else
+        {
             CHECK_CUDA(cudaMemcpy(input_gradients, output_gradients[0].data, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
+        }
     }
 
 #endif

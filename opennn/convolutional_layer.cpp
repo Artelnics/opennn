@@ -39,26 +39,6 @@ bool Convolutional::get_batch_normalization() const
 }
 
 
-void Convolutional::reorder_weights_for_cudnn()
-{
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index channels = get_kernel_channels();
-    const Index kernels_number = get_kernels_number();
-
-    TensorMap4 current_weights_map(weights.data, kernel_height, kernel_width, channels, kernels_number);
-    Tensor4 weights_for_cudnn_layout(kernel_width, kernel_height, channels, kernels_number);
-    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
-        for (Index channel_index = 0; channel_index < channels; ++channel_index)
-            for (Index kernel_height_index = 0; kernel_height_index < kernel_height; ++kernel_height_index)
-                for (Index kernel_width_index = 0; kernel_width_index < kernel_width; ++kernel_width_index)
-                    weights_for_cudnn_layout(kernel_width_index, kernel_height_index, channel_index, kernel_index)
-                        = current_weights_map(kernel_height_index, kernel_width_index, channel_index, kernel_index);
-
-    memcpy(weights.data, weights_for_cudnn_layout.data(), weights.size() * sizeof(type));
-}
-
-
 void Convolutional::preprocess_inputs(const Tensor4& inputs,
                                       Tensor4& preprocessed_inputs) const
 {
@@ -205,8 +185,6 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap3 kernel_convolution_gradients = tensor_map_(output_gradients, kernel_index);
-
-        // @todo check this. If it does not work aligned put TensorMap<Tensor<type, 4>, RowMajor | Unaligned>
 
 //        TensorMap<Tensor<type, 4>, Unaligned> kernel_weight_gradients(weight_gradients_data + kernel_index*kernel_size,
 //                                                                   1, kernel_height, kernel_width, kernel_channels);
