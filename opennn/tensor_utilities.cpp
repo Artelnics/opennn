@@ -266,43 +266,12 @@ VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 }
 
 
-void fill_tensor_data_colmajor(const MatrixR& matrix,
-                               const vector<Index>& row_indices,
-                               const vector<Index>& column_indices,
-                               type* __restrict tensor_data)
-{
-    const Index rows_number = row_indices.size();
-    const Index columns_number = column_indices.size();
-
-    if(rows_number == 0 || columns_number == 0) return;
-
-    const type* matrix_data = matrix.data();
-
-    if constexpr (Layout == Eigen::RowMajor)
-    {
-        const Index matrix_cols_number = matrix.cols();
-
-        for(Index j = 0; j < columns_number; ++j)
-        {
-            const Index src_col = column_indices[j];
-            type* dest_col_ptr = tensor_data + j * rows_number;
-
-            for(Index i = 0; i < rows_number; ++i)
-            {
-                const Index src_row = row_indices[i];
-                dest_col_ptr[i] = matrix_data[src_row * matrix_cols_number + src_col];
-            }
-        }
-    }
-}
-
-
 void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
                       const vector<Index>& column_indices,
                       type* __restrict tensor_data,
                       bool parallelize)
-{
+{    
     const Index rows_number = row_indices.size();
     const Index columns_number = column_indices.size();
 
@@ -310,50 +279,24 @@ void fill_tensor_data(const MatrixR& matrix,
 
     const type* matrix_data = matrix.data();
 
-    if constexpr (Layout == Eigen::RowMajor)
+    const Index matrix_cols_number = matrix.cols();
+
+    const bool contiguous = is_contiguous(column_indices);
+
+    if (contiguous)
+        for(Index i = 0; i < rows_number; ++i)
+            memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
+    else
     {
-        const Index matrix_cols_number = matrix.cols();
-
-        bool is_contiguous = true;
-        for(Index j = 0; j < columns_number; ++j) 
+#pragma omp parallel for schedule(static) if (parallelize)
+        for(Index i = 0; i < rows_number; ++i)
         {
-            if(column_indices[j] != column_indices[0] + j) 
-            {
-                is_contiguous = false;
-                break;
-            }
-        }
+            const Index src_row = row_indices[i];
+            const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
+            type* dest_row_ptr = tensor_data + i * columns_number;
 
-        if (is_contiguous) 
-            for(Index i = 0; i < rows_number; ++i)
-                memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
-        else
-        {
-            #pragma omp parallel for schedule(static) if (parallelize)
-            for(Index i = 0; i < rows_number; ++i)
-            {
-                const Index src_row = row_indices[i];
-                const type* src_row_ptr = matrix_data + src_row * matrix_cols_number;
-                type* dest_row_ptr = tensor_data + i * columns_number;
-
-                for(Index j = 0; j < columns_number; ++j)
-                    dest_row_ptr[j] = src_row_ptr[column_indices[j]];
-            }
-        }
-    }
-    else // Eigen::ColMajor
-    {
-        const Index matrix_rows_number = matrix.rows();
-
-        #pragma omp parallel for schedule(static) if(parallelize)
-        for(Index j = 0; j < columns_number; ++j)
-        {
-            const Index src_col = column_indices[j];
-            const type* src_col_ptr = matrix_data + src_col * matrix_rows_number;
-            type* dest_col_ptr = tensor_data + j * rows_number;
-
-            for(Index i = 0; i < rows_number; ++i)
-                dest_col_ptr[i] = src_col_ptr[row_indices[i]];
+            for(Index j = 0; j < columns_number; ++j)
+                dest_row_ptr[j] = src_row_ptr[column_indices[j]];
         }
     }
 }

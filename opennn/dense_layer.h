@@ -13,7 +13,6 @@
 
 namespace opennn
 {
-
 template<int Rank> class Dense;
 
 template<int Rank>
@@ -205,16 +204,10 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         auto* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
-        cudnnCreateTensorDescriptor(&biases_add_tensor_descriptor);
-        cudnnSetTensor4dDescriptor(biases_add_tensor_descriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, (int)outputs_number, (int)total_rows, 1);
-
-        cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
-        cudnnSetTensor4dDescriptor(output_softmax_tensor_descriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, (int)outputs_number, (int)total_rows, 1);
-        
         if (dense_layer->use_combinations)
-            combinations.resize({ total_rows, outputs_number, 1, 1 });
+            combinations.resize({ total_rows, outputs_number });
 
-        outputs.set_descriptor({ total_rows, outputs_number, 1, 1});
+        outputs.set_descriptor({ total_rows, outputs_number });
 
         if (dense_layer->get_dropout_rate() > 0)
         {
@@ -228,7 +221,7 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         if (dense_layer->get_batch_normalization())
         {
-            const Shape batch_normalization_shape = { 1, outputs_number, 1, 1 };
+            const Shape batch_normalization_shape = { outputs_number };
 
             means.resize(batch_normalization_shape);
             bn_saved_inv_variance.resize(batch_normalization_shape);
@@ -243,16 +236,10 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
         cudaFree(dropout_reserve_space);
         dropout_reserve_space = nullptr;
 
-        cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
-        cudnnDestroyTensorDescriptor(biases_add_tensor_descriptor);
-
         if (dropout_descriptor) cudnnDestroyDropoutDescriptor(dropout_descriptor);
     }
 
     TensorCuda combinations;
-
-    cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t biases_add_tensor_descriptor = nullptr;
 
     cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
 
@@ -295,20 +282,21 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         ones.fill(1.0f);
 
         input_gradients.resize(1);
-        input_gradients[0].resize({ 1, inputs_number, total_rows, 1 });
+        input_gradients[0].resize({ total_rows, inputs_number });
 
-        bias_gradients.set_descriptor({ 1, outputs_number, 1, 1 });
-        weight_gradients.set_descriptor({ 1, inputs_number * outputs_number, 1, 1 });
+        bias_gradients.set_descriptor({ outputs_number });
+        weight_gradients.set_descriptor({ inputs_number, outputs_number });
+
 
         cudnnCreateTensorDescriptor(&gradients_tensor_descriptor);
-        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, (int)total_rows, (int)outputs_number, 1, 1);
+        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, (int)total_rows, (int)outputs_number, 1, 1);
 
         const Dense<Rank>* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
         if (dense_layer->get_batch_normalization())
         {
-            beta_gradients.set_descriptor({1, outputs_number,1,1});
-            gamma_gradients.set_descriptor({1, outputs_number,1,1});
+            beta_gradients.set_descriptor({outputs_number});
+            gamma_gradients.set_descriptor({outputs_number});
         }
     }
 
@@ -454,17 +442,17 @@ public:
 
 #ifdef OPENNN_CUDA
 
-        biases_device.set_descriptor({1, outputs_number, 1, 1});
-        weights_device.set_descriptor({ new_input_shape[0], outputs_number, 1, 1 });
+        biases_device.set_descriptor({outputs_number});
+        weights_device.set_descriptor({ new_input_shape[0], outputs_number });
 
         if (batch_normalization)
         {
-            Shape batch_normalization_dims = { 1, outputs_number, 1, 1 };
+            Shape batch_normalization_shape = { outputs_number };
 
-            betas_device.set_descriptor(batch_normalization_dims);
-            gammas_device.set_descriptor(batch_normalization_dims);
-            running_means_device.resize(batch_normalization_dims);
-            running_variances_device.resize(batch_normalization_dims);
+            betas_device.set_descriptor(batch_normalization_shape);
+            gammas_device.set_descriptor(batch_normalization_shape);
+            running_means_device.resize(batch_normalization_shape);
+            running_variances_device.resize(batch_normalization_shape);
         }
 
 #endif
@@ -1025,32 +1013,25 @@ public:
 
         type* combinations = dense_forward_propagation->combinations.data;
 
-        const cudnnTensorDescriptor_t output_softmax_tensor_descriptor = dense_forward_propagation->output_softmax_tensor_descriptor;
-
-        const cudnnTensorDescriptor_t& biases_add_tensor_descriptor = dense_forward_propagation->biases_add_tensor_descriptor;
-
         type* outputs_buffer = use_combinations ? combinations : outputs.data;
 
         // Combinations
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                    CUBLAS_OP_N, CUBLAS_OP_N,
-                    batch_size, outputs_number, inputs_number,
-                    &alpha,
-                    inputs[0].data,
-                    batch_size,
-                    weights_device.data,
-                    inputs_number,
-                    &beta,
-                    outputs_buffer,
-                    batch_size));
+                                 CUBLAS_OP_N, CUBLAS_OP_N,
+                                 outputs_number, batch_size, inputs_number,
+                                 &alpha,
+                                 weights_device.data, outputs_number,
+                                 inputs[0].data, inputs_number,
+                                 &beta,
+                                 outputs_buffer, outputs_number));
 
         CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
                                    &alpha,
                                    biases_device.get_descriptor(),
                                    biases_device.data,
                                    &beta_add,
-                                   biases_add_tensor_descriptor,
+                                   outputs.get_descriptor(),
                                    outputs_buffer));
 
         // Batch Normalization
@@ -1099,10 +1080,10 @@ public:
                                 CUDNN_SOFTMAX_ACCURATE,
                                 CUDNN_SOFTMAX_MODE_CHANNEL,
                                 &alpha,
-                                output_softmax_tensor_descriptor,
+                                outputs.get_descriptor(),
                                 outputs_buffer,
                                 &beta,
-                                output_softmax_tensor_descriptor,
+                                outputs.get_descriptor(),
                                 outputs.data));
         else
             CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
@@ -1226,48 +1207,35 @@ public:
 
         // Bias derivatives
 
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                    outputs_number,
-                    1,
-                    batch_size,
-                    &alpha,
-                    output_gradients[0].data,
-                    batch_size,
-                    ones,
-                    batch_size,
-                    &beta,
-                    bias_gradients,
-                    outputs_number));
+        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                                 CUBLAS_OP_N, CUBLAS_OP_N,
+                                 outputs_number, 1, batch_size,
+                                 &alpha,
+                                 output_gradients[0].data, outputs_number,
+                                 ones, batch_size,
+                                 &beta,
+                                 bias_gradients, outputs_number));
 
         // Weight derivatives
 
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(), CUBLAS_OP_T, CUBLAS_OP_N,
-                    inputs_number,
-                    outputs_number,
-                    batch_size,
-                    &alpha,
-                    inputs[0].data,
-                    batch_size,
-                    output_gradients[0].data,
-                    batch_size,
-                    &beta,
-                    weight_gradients,
-                    inputs_number));
-
+        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                                 CUBLAS_OP_N, CUBLAS_OP_T,
+                                 outputs_number, inputs_number, batch_size,
+                                 &alpha,
+                                 output_gradients[0].data, outputs_number,
+                                 inputs[0].data, inputs_number,
+                                 &beta,
+                                 weight_gradients, outputs_number));
         // Input derivatives
 
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_T,
-                    batch_size,
-                    inputs_number,
-                    outputs_number,
-                    &alpha,
-                    output_gradients[0].data,
-                    batch_size,
-                    weights_device.data,
-                    inputs_number,
-                    &beta,
-                    input_gradients,
-                    batch_size));
+        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                                 CUBLAS_OP_T, CUBLAS_OP_N,
+                                 inputs_number, batch_size, outputs_number,
+                                 &alpha,
+                                 weights_device.data, outputs_number,
+                                 output_gradients[0].data, outputs_number,
+                                 &beta,
+                                 input_gradients, inputs_number));
     }
 
     bool use_combinations = true;

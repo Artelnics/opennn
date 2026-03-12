@@ -29,8 +29,6 @@ public:
 
     bool get_batch_normalization() const;
 
-    void reorder_weights_for_cudnn();
-
     const string& get_activation_function() const;
 
     Shape get_input_shape() const override;
@@ -247,7 +245,6 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    TensorCuda reordered_inputs;
     TensorCuda convolutions;
     TensorCuda means;
     TensorCuda bn_saved_inv_variance;

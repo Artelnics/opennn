@@ -1584,27 +1584,13 @@ void NeuralNetwork::allocate_parameters_device()
 
 void NeuralNetwork::copy_parameters_device()
 {
-    // Convolutional weights need custom order for gpu
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
-
-    CHECK_CUDA(cudaMemcpy(parameters_device.data, parameters.data(), parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
-
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
+    CHECK_CUDA(cudaMemcpy(parameters.data(), parameters_device.data, parameters.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
 
 void NeuralNetwork::copy_parameters_host()
 {
     CHECK_CUDA(cudaMemcpy(parameters.data(), parameters_device.data, parameters.size() * sizeof(type), cudaMemcpyDeviceToHost));
-
-    // Convolutional weights need custom order for gpu
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
 }
 
 

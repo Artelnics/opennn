@@ -489,7 +489,7 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
 
         const Index outputs_number = scaling_layer->get_outputs_number();
 
-        outputs.set_descriptor({static_cast<int>(batch_size), static_cast<int>(outputs_number), 1, 1});
+        outputs.set_descriptor({static_cast<int>(batch_size), static_cast<int>(outputs_number)});
 
         const VectorR minimums_host = scaling_layer->get_minimums();
         const VectorR maximums_host = scaling_layer->get_maximums();
