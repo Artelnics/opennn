@@ -180,6 +180,10 @@ public:
 
     void add_regularization_cuda(BackPropagationCuda&) const;
 
+
+    TensorCuda calculate_gradient_cuda();
+
+
 #endif
 
     void print(){}

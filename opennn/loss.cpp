@@ -571,7 +571,6 @@ VectorR Loss::calculate_gradient()
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-
     // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
 
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -1262,8 +1261,8 @@ BackPropagationLM::BackPropagationLM(const Index new_batch_size, Loss *new_loss)
 #ifdef OPENNN_CUDA
 
 void Loss::back_propagate(const BatchCuda& batch,
-                                    ForwardPropagationCuda& forward_propagation,
-                                    BackPropagationCuda& back_propagation)
+                          ForwardPropagationCuda& forward_propagation,
+                          BackPropagationCuda& back_propagation)
 {
     if (batch.is_empty()) return;
 
@@ -1284,8 +1283,8 @@ void Loss::back_propagate(const BatchCuda& batch,
 
 
 void Loss::calculate_layers_error_gradient_cuda(const BatchCuda& batch,
-                                                     ForwardPropagationCuda& forward_propagation,
-                                                     BackPropagationCuda& back_propagation) const
+                                                ForwardPropagationCuda& forward_propagation,
+                                                BackPropagationCuda& back_propagation) const
 {
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
     const Index layers_number = layers.size();
@@ -1402,6 +1401,36 @@ void Loss::add_regularization_cuda(BackPropagationCuda& back_propagation) const
         back_propagation.loss += regularization_term;
     }
     */
+}
+
+
+TensorCuda Loss::calculate_gradient_cuda()
+{
+    const Index samples_number = dataset->get_samples_number("Training");
+
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    BatchCuda batch(samples_number, dataset);
+    // batch.fill(sample_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+
+    ForwardPropagationCuda forward_propagation(samples_number, neural_network);
+
+    BackPropagationCuda back_propagation(samples_number, this);
+
+    const VectorR& parameters = neural_network->get_parameters();
+
+    neural_network->forward_propagate(batch.get_inputs_device(),
+                                      parameters,
+                                      forward_propagation);
+
+    back_propagate(batch, forward_propagation, back_propagation);
+
+    return move(back_propagation.neural_network.gradients);
 }
 
 

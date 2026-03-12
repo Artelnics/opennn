@@ -170,27 +170,36 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
+    void forward_propagate(const vector<TensorViewCuda>& input_views,
                            unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool)
-    {       
-        CHECK_CUDA(cudaMemcpy(forward_propagation->outputs.data,
-                              inputs[0].data, batch_size * outputs_number * sizeof(type),
+    {
+        type* inputs = input_views[0].data;
+        type* outputs = forward_propagation->outputs.data;
+
+        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
+
+        CHECK_CUDA(cudaMemcpy(outputs,
+                              inputs,
+                              bytes_to_copy,
                               cudaMemcpyDeviceToDevice));
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>& inputs,
-                        const vector<TensorViewCuda>& output_gradients,
+    void back_propagate(const vector<TensorViewCuda>& input_views,
+                        const vector<TensorViewCuda>& output_gradient_views,
                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
     {
-        const Index batch_size = back_propagation->batch_size;
-        type* input_gradients = back_propagation->input_gradients[0].data;
-        const Index outputs_number = get_outputs_number();
+        type* input_gradients = output_gradient_views[0].data;
+        type* output_gradients = back_propagation->input_gradients[0].data;
 
-        CHECK_CUDA(cudaMemcpy(input_gradients, output_gradients[0].data, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice));
+        const size_t bytes_to_copy = back_propagation->input_gradients[0].size() * sizeof(type);
 
+        CHECK_CUDA(cudaMemcpy(input_gradients,
+                              output_gradients,
+                              bytes_to_copy,
+                              cudaMemcpyDeviceToDevice));
     }
 
 #endif

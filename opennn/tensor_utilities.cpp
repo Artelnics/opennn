@@ -288,7 +288,7 @@ void fill_tensor_data(const MatrixR& matrix,
             memcpy(tensor_data + i * columns_number, &matrix(row_indices[i], column_indices[0]), static_cast<size_t>(columns_number) * sizeof(float));
     else
     {
-#pragma omp parallel for schedule(static) if (parallelize)
+        #pragma omp parallel for schedule(static) if (parallelize)
         for(Index i = 0; i < rows_number; ++i)
         {
             const Index src_row = row_indices[i];

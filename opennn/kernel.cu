@@ -1,8 +1,4 @@
-﻿#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <stdio.h>
-#include <cudnn.h>
-#include "kernel.cuh"
+﻿#include "kernel.cuh"
 
 
 __global__ void reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,

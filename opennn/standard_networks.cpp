@@ -74,14 +74,14 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
     const Index complexity_size = complexity_dimensions.size();
 
     add_layer(make_unique<Scaling<2>>(input_shape));
-    
+
     for(Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<Dense<2>>(get_output_shape(),
                                        Shape{complexity_dimensions[i]},
                                        "HyperbolicTangent",
                                        false,
                                        "dense2d_layer_" + to_string(i + 1)));
-    
+
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                    output_shape,
                                    output_shape[0] == 1 ? "Sigmoid" : "Softmax",

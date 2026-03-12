@@ -259,6 +259,10 @@ public:
                            ForwardPropagationCuda&,
                            bool = false) const;
 
+    void forward_propagate(const vector<TensorViewCuda>&,
+                           const VectorR&,
+                           ForwardPropagationCuda&);
+
     TensorViewCuda calculate_outputs(TensorViewCuda, Index);
 
 protected:

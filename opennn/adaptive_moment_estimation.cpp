@@ -166,7 +166,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     set_names();
-
     set_scaling();
 
     Batch training_batch(training_batch_size, dataset);
@@ -753,7 +752,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propa
 {
     NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
 
-    const int parameters_number = static_cast<int>(neural_network->get_parameters_number());
+    const Index parameters_number = neural_network->get_parameters_device().size();
 
     float* parameters_device_data = neural_network->get_parameters_device().data;
     const float* gradients_device = back_propagation.neural_network.gradients.data;

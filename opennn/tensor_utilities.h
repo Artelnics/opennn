@@ -337,7 +337,7 @@ void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
 
 
-bool is_contiguous(const vector<Index>& v)
+inline bool is_contiguous(const vector<Index>& v)
 {
     for (Index i = 0; i < v.size(); i++)
         if (v[i] != v[0] + i)
@@ -898,17 +898,6 @@ struct TensorViewCuda
 
     void set_descriptor(const Shape& shape)
     {
-        if (descriptor_handle == nullptr)
-        {
-            cudnnTensorDescriptor_t raw_desc;
-            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw runtime_error("TensorViewCuda: Failed to create descriptor.");
-
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                if (p) cudnnDestroyTensorDescriptor(p);
-                });
-        }
-
         int n = 1, c = 1, h = 1, w = 1;
         if (shape.size() == 4) { // NHWC
             n = static_cast<int>(shape[0]);
@@ -924,6 +913,20 @@ struct TensorViewCuda
             c = static_cast<int>(shape[1]);
         } else if (shape.size() == 1) { // C
             c = static_cast<int>(shape[0]);
+        }
+
+        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
+            return;
+
+        if (descriptor_handle == nullptr)
+        {
+            cudnnTensorDescriptor_t raw_desc;
+            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
+                throw runtime_error("TensorViewCuda: Failed to create descriptor.");
+
+            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
+                if (p) cudnnDestroyTensorDescriptor(p);
+                });
         }
 
         CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));

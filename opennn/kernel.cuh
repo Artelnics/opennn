@@ -12,11 +12,9 @@
 
 // System includes
 
-//#include <iostream>
+#include <iostream>
 #include <stdio.h>
-//#include <vector>
 #include <string>
-//#include <algorithm>
 #include <time.h>
 
 using namespace std;

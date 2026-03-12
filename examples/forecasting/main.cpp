@@ -103,7 +103,7 @@ int main()
         // training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_batch_size(1000);
+        //adam->set_batch_size(1000);
         adam->set_maximum_epochs(10000);
 
         // QuasiNewtonMethod* quasi = static_cast<QuasiNewtonMethod*>(training_strategy.get_optimization_algorithm());
