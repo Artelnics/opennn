@@ -62,13 +62,13 @@ int main()
 
 #endif
 
-cout << "OpenNN. Breast Cancer Example." << endl;
+cout << "OpenNN. Iris Plant Example." << endl;
 
         // Dataset
 
-        Dataset dataset("/home/artelnics/Documents/breast_cancer.csv", ";", true, false);
+        Dataset dataset("/home/artelnics/Documents/iris_plant_original.csv", ";", true, false);
 
-        const Index neurons_number = 3;
+        const Index neurons_number = 16;
 
         // Neural Network
 
@@ -76,25 +76,26 @@ cout << "OpenNN. Breast Cancer Example." << endl;
 
         // Training Strategy
 
-        WeightedSquaredError loss(&classification_network, &dataset);
-        loss.set_regularization_method("L1");
-
+        WeightedSquaredError();
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
+        training_strategy.set_loss("CrossEntropyError2d");
+        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
         training_strategy.get_loss()->set_regularization_method("None");
-        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(1000);
 
+        StochasticGradientDescent* adam = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs(1000);
+        adam->set_display_period(100); // El SGD suele necesitar un learning rate más bajo que Adam
+        adam->set_momentum(0.9);
+
+        //training_strategy.train_cuda();
         training_strategy.train();
 
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&classification_network, &dataset);
 
-        testing_analysis.print_binary_classification_tests();
-
-        TestingAnalysis::RocAnalysis roc = testing_analysis.perform_roc_analysis();
+        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 
         cout << "Good bye!" << endl;
 

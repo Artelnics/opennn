@@ -337,7 +337,7 @@ void ImageDataset::perform_augmentation(type* input_data) const
 }
 
 
-void ImageDataset::fill_input_tensor(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
+void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 

@@ -192,7 +192,7 @@ struct Shape
         return os;
     }
 
-    bool operator==(const Shape& other) const noexcept
+    bool operator == (const Shape& other) const noexcept
     {
         if (rank != other.rank) return false;
 
@@ -202,7 +202,7 @@ struct Shape
         return true;
     }
 
-    bool operator!=(const Shape& other) const noexcept
+    bool operator != (const Shape& other) const noexcept
     {
         return !(*this == other);
     }
@@ -336,9 +336,19 @@ void sum_matrices(const VectorR&, Tensor3&);
 void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
 
+
+inline bool is_contiguous(const vector<Index>& v)
+{
+    for (Index i = 0; i < v.size(); i++)
+        if (v[i] != v[0] + i)
+            return false;
+
+    return true;
+}
+
+
 inline bool is_binary(const VectorR& tensor)
 {
-
     const Index size = tensor.size();
 
     for(Index i = 0; i < size; i++)
@@ -443,7 +453,6 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>&, Index);
 
 VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 
-void fill_tensor_data_colmajor(const MatrixR&, const vector<Index>&, const vector<Index>&, type*);
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 
 template <typename Type, int Rank>
@@ -890,10 +899,21 @@ struct TensorViewCuda
     void set_descriptor(const Shape& shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() > 0) n = static_cast<int>(shape[0]);
-        if (shape.size() > 1) c = static_cast<int>(shape[1]);
-        if (shape.size() > 2) h = static_cast<int>(shape[2]);
-        if (shape.size() > 3) w = static_cast<int>(shape[3]);
+        if (shape.size() == 4) { // NHWC
+            n = static_cast<int>(shape[0]);
+            h = static_cast<int>(shape[1]);
+            w = static_cast<int>(shape[2]);
+            c = static_cast<int>(shape[3]);
+        } else if (shape.size() == 3) { // NWC
+            n = static_cast<int>(shape[0]);
+            w = static_cast<int>(shape[1]);
+            c = static_cast<int>(shape[2]);
+        } else if (shape.size() == 2) { // NC
+            n = static_cast<int>(shape[0]);
+            c = static_cast<int>(shape[1]);
+        } else if (shape.size() == 1) { // C
+            c = static_cast<int>(shape[0]);
+        }
 
         if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
             return;
@@ -909,7 +929,7 @@ struct TensorViewCuda
                 });
         }
 
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w));
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
     }
 
     Index size() const

@@ -80,7 +80,7 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     data_3d.setZero();
 
     if (feature_role == "Input" || feature_role == "InputTarget")
-        fill_input_tensor(sample_indices, feature_indices, data_3d.data());
+        fill_inputs(sample_indices, feature_indices, data_3d.data());
     else if (feature_role == "Target")
         throw runtime_error("get_data for 3D is only implemented for 'Input' variables in TimeSeriesDataset.");
 
@@ -351,126 +351,63 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
 }
 
 
-void TimeSeriesDataset::fill_input_tensor(const vector<Index>& sample_indices,
-                                          const vector<Index>& input_indices,
-                                          type* input_data,
-                                          bool parallelize) const
+void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
+                                    const vector<Index>& input_indices,
+                                    type* input_data,
+                                     bool parallelize) const
 {
     if(sample_indices.empty() || input_indices.empty()) return;
 
     const Index batch_size = sample_indices.size();
-    const Index input_size = input_indices.size();
-    const Index total_rows_in_data = data.rows();
+    const Index inputs_number = input_indices.size();
+    const Index data_rows_number = data.rows();
 
-    TensorMap3 batch(input_data, batch_size, past_time_steps, input_size);
-    const type* const matrix_data = data.data();
+    TensorMap3 inputs(input_data, batch_size, past_time_steps, inputs_number);
 
-    if constexpr (Layout == Eigen::RowMajor)
+    #pragma omp parallel for schedule(static) if(parallelize)
+    for(Index i = 0; i < batch_size; ++i)
     {
-        const Index data_cols = data.cols();
+        const Index start_row = sample_indices[i];
 
-        #pragma omp parallel for schedule(static) if(parallelize)
-        for(Index i = 0; i < batch_size; ++i)
+        for(Index j = 0; j < past_time_steps; ++j)
         {
-            const Index start_row = sample_indices[i];
+            const Index actual_row = start_row + j;
 
-            for(Index j = 0; j < past_time_steps; ++j)
-            {
-                const Index actual_row = start_row + j;
-
-                if(actual_row < total_rows_in_data)
-                {
-                    const type* data_row = matrix_data + actual_row * data_cols;
-
-                    for(Index k = 0; k < input_size; ++k)
-                        batch(i, j, k) = data_row[input_indices[k]];
-                }
-                else
-                {
-                    for(Index k = 0; k < input_size; ++k)
-                        batch(i, j, k) = static_cast<type>(0);
-                }
-            }
-        }
-    }
-    else // Eigen::ColMajor
-    {
-        #pragma omp parallel for collapse(2) schedule(static) if(parallelize)
-        for(Index k = 0; k < input_size; ++k)
-        {
-            for(Index j = 0; j < past_time_steps; ++j)
-            {
-                const Index column_index = input_indices[k];
-                const type* data_row = matrix_data + column_index * total_rows_in_data;
-
-                for(Index i = 0; i < batch_size; ++i)
-                {
-                    const Index actual_row = sample_indices[i] + j;
-
-                    batch(i, j, k) = (actual_row < total_rows_in_data)
-                                         ? data_row[actual_row]
-                                         : static_cast<type>(0);
-                }
-            }
+            if(actual_row < data_rows_number)
+                for(Index k = 0; k < inputs_number; ++k)
+                    inputs(i, j, k) = data(actual_row, input_indices[k]);
+            else
+                for(Index k = 0; k < inputs_number; ++k)
+                    inputs(i, j, k) = static_cast<type>(0);
         }
     }
 }
 
 
-void TimeSeriesDataset::fill_target_tensor(const vector<Index>& sample_indices,
+void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
-                                           type* target_tensor_data,
+                                           type* target_data,
                                            bool parallelize) const
 {
     if(sample_indices.empty() || target_indices.empty()) return;
 
-    const Index batch_size = sample_indices.size();
-    const Index target_size = target_indices.size();
+    const Index batch_size = static_cast<Index>(sample_indices.size());
+    const Index targets_number = static_cast<Index>(target_indices.size());
     const Index total_rows_in_data = data.rows();
 
-    MatrixMap targets(target_tensor_data, batch_size, target_size);
-    const type* const matrix_data = data.data();
+    MatrixMap targets(target_data, batch_size, targets_number);
 
-    if constexpr (Layout == Eigen::RowMajor)
+    #pragma omp parallel for schedule(static) if(parallelize)
+    for(Index i = 0; i < batch_size; ++i)
     {
-        const Index data_cols = data.cols();
+        const Index target_row = sample_indices[i] + past_time_steps;
 
-        #pragma omp parallel for schedule(static) if(parallelize)
-        for(Index i = 0; i < batch_size; ++i)
-        {
-            const Index target_row = sample_indices[i] + past_time_steps;
-
-            if(target_row < total_rows_in_data)
-            {
-                const type* data_row = matrix_data + target_row * data_cols;
-
-                for(Index j = 0; j < target_size; ++j)
-                    targets(i, j) = data_row[target_indices[j]];
-            }
-            else
-            {
-                for(Index j = 0; j < target_size; ++j)
-                    targets(i, j) = static_cast<type>(0);
-            }
-        }
-    }
-    else // Eigen::ColMajor
-    {
-        #pragma omp parallel for schedule(static) if(parallelize)
-        for(Index j = 0; j < target_size; ++j)
-        {
-            const Index column_index = target_indices[j];
-            const type* data_row = matrix_data + column_index * total_rows_in_data;
-
-            for(Index i = 0; i < batch_size; ++i)
-            {
-                const Index target_row = sample_indices[i] + past_time_steps;
-
-                targets(i, j) = (target_row < total_rows_in_data)
-                    ? data_row[target_row]
-                    : static_cast<type>(0);
-            }
-        }
+        if(target_row < total_rows_in_data)
+            for(Index j = 0; j < targets_number; ++j)
+                targets(i, j) = data(target_row, target_indices[j]);
+        else
+            for(Index j = 0; j < targets_number; ++j)
+                targets(i, j) = static_cast<type>(0);
     }
 }
 

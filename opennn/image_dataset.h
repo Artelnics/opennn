@@ -65,10 +65,10 @@ public:
 
     void print() const override;
 
-    void fill_input_tensor(const vector<Index>&,
-                           const vector<Index>&,
-                           type*,
-                           bool = true) const override;
+    void fill_inputs(const vector<Index>&,
+                     const vector<Index>&,
+                     type*,
+                     bool = true) const override;
 
     void perform_augmentation(type*) const;
 

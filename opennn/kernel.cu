@@ -1,26 +1,24 @@
-﻿#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <stdio.h>
-#include <cudnn.h>
-#include "kernel.cuh"
+﻿#include "kernel.cuh"
 
 
 __global__ void reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int batch_samples_number, const int channels, const int height, const int width)
+    const int N, const int C, const int H, const int W)
 {
+    // Translates Row-Major NHWC (CPU) -> NCHW (cuDNN)
+
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = batch_samples_number * channels * width * height;
+    int total = N * C * H * W;
     if (idx >= total) return;
 
+    // Treat thread idx as the target NCHW index
     int tmp = idx;
-    int h = tmp % height;    tmp /= height;
-    int w = tmp % width;     tmp /= width;
-    int c = tmp % channels;
-    int b = tmp / channels;
+    int w = tmp % W; tmp /= W;
+    int h = tmp % H; tmp /= H;
+    int c = tmp % C; tmp /= C;
+    int n = tmp;
 
-    int in_idx = ((b * channels + c) * height + h) * width + w;
-
-    destination[idx] = source[in_idx];
+    int nhwc_idx = ((n * H + h) * W + w) * C + c;
+    destination[idx] = source[nhwc_idx];
 }
 
 
@@ -29,26 +27,26 @@ void reorder_inputs_cuda(const float* source, float* destination, int N,int C,in
     int total = N * H * W * C;
     const int threads_per_block = 256;
     int blocks = (total + threads_per_block - 1) / threads_per_block;
-
-    reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
+    reorder_inputs_kernel<<<blocks, threads_per_block>>>(source, destination, N, C, H, W);
 }
 
 
 __global__ void invert_reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int batch_samples_number, const int channels, const int height, const int width)
+    const int N, const int C, const int H, const int W)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = batch_samples_number * channels * height * width;
+    int total = N * C * H * W;
     if (idx >= total) return;
 
+    // Treat thread idx as the target NHWC index
     int tmp = idx;
-    int h = tmp % height;    tmp /= height;
-    int w = tmp % width;     tmp /= width;
-    int c = tmp % channels;  tmp /= channels;
-    int b = tmp;
+    int c = tmp % C; tmp /= C;
+    int w = tmp % W; tmp /= W;
+    int h = tmp % H; tmp /= H;
+    int n = tmp;
 
-    int dest_idx = ((b * channels + c) * height + h) * width + w;
-    destination[dest_idx] = source[idx];
+    int nchw_idx = ((n * C + c) * H + h) * W + w;
+    destination[idx] = source[nchw_idx];
 }
 
 
@@ -57,7 +55,7 @@ void invert_reorder_inputs_cuda(const float* source, float* destination, int N, 
     int total = N * C * H * W;
     const int threads_per_block = 256;
     int blocks = (total + threads_per_block - 1) / threads_per_block;
-    invert_reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
+    invert_reorder_inputs_kernel<<<blocks, threads_per_block>>>(source, destination, N, C, H, W);
 }
 
 
@@ -91,75 +89,6 @@ void reverse_cuda(int width, int height, int channels, type* d_kernel)
     reverse_kernel << <blocksPerGrid, threadsPerBlock >> > (d_kernel, width, height, channels);
 }
 
-
-__global__ void reorganize_inputs_kernel(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    
-    int cols = height * width * channels;
-    int totalSize = rows * cols;
-
-    if (idx < totalSize) {
-
-        int n = idx % rows;
-        int p_col = idx / rows;
-
-        int h = p_col % height;
-        int w = (p_col / height) % width;
-        int c = p_col / (height * width);
-
-        int p_row = h * (width * channels) + w * channels + c;
-
-        int newIdx = n * cols + p_row;
-
-        outputs_device[idx] = inputs_device[newIdx];
-    }
-}
-
-void reorganize_inputs_cuda(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels)
-{
-    int cols = height * width * channels;
-    int num_elements = rows * cols;
-    int blockSize = 256;
-    int numBlocks = (num_elements + blockSize - 1) / blockSize;
-
-    reorganize_inputs_kernel<<<numBlocks, blockSize>>>(inputs_device, outputs_device, rows, height, width, channels);
-}
-
-
-__global__ void reorganize_gradients_kernel(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels) 
-{
-    long long idx = blockIdx.x * blockDim.x + threadIdx.x;
-    
-    long long cols = height * width * channels;
-    long long totalSize = rows * cols;
-
-    if (idx < totalSize) 
-    {
-        long long n = idx / cols;
-        long long p_row = idx % cols;
-
-        int c = p_row % channels;
-        int w = (p_row / channels) % width;
-        int h = p_row / (channels * width);
-
-        long long p_col = h + w * height + c * (height * width);
-
-        long long originalIdx = p_col * rows + n;
-
-        outputs_device[idx] = inputs_device[originalIdx];
-    }
-}
-
-void reorganize_gradients_cuda(const type* inputs_device, type* outputs_device, int rows, int height, int width, int channels) 
-{
-    long long cols = height * width * channels;
-    long long num_elements = rows * cols;
-    int blockSize = 256;
-    int numBlocks = (num_elements + blockSize - 1) / blockSize;
-
-    reorganize_gradients_kernel<<<numBlocks, blockSize>>>(inputs_device, outputs_device, rows, height, width, channels);
-}
 
 
 void copy_to_vector_cuda(float* destination, const float* source, Index size, Index& index)
@@ -671,7 +600,7 @@ __global__ void scale_2d_kernel(const int n, const int batch_size, const int out
 
     if (i < n)
     {
-        const int col = i / batch_size;
+        const int col = i % outputs_number;
 
         const int scaler_type = scalers_device[col];
         const float input_val = inputs_device[i];

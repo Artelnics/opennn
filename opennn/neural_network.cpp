@@ -1595,27 +1595,18 @@ void NeuralNetwork::allocate_parameters_device()
 
 void NeuralNetwork::copy_parameters_device()
 {
-    // Convolutional weights need custom order for gpu
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
-
-    CHECK_CUDA(cudaMemcpy(parameters_device.data, parameters.data(), parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
-
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
+    CHECK_CUDA(cudaMemcpy(parameters_device.data,
+                          parameters.data(),
+                          parameters.size() * sizeof(type),
+                          cudaMemcpyHostToDevice));
 }
-
 
 void NeuralNetwork::copy_parameters_host()
 {
-    CHECK_CUDA(cudaMemcpy(parameters.data(), parameters_device.data, parameters.size() * sizeof(type), cudaMemcpyDeviceToHost));
-
-    // Convolutional weights need custom order for gpu
-    for (const unique_ptr<Layer>& layer : layers)
-        if (auto* conv = dynamic_cast<Convolutional*>(layer.get()))
-            conv->reorder_weights_for_cudnn();
+    CHECK_CUDA(cudaMemcpy(parameters.data(),
+                          parameters_device.data,
+                          parameters.size() * sizeof(type),
+                          cudaMemcpyDeviceToHost));
 }
 
 
@@ -1653,6 +1644,24 @@ void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_
         layers[i]->forward_propagate(layer_input_views_device[i],
                                      forward_propagation.layers[i],
                                      is_training);
+}
+
+
+void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_device,
+                                      const VectorR& new_parameters,
+                                      ForwardPropagationCuda& forward_propagation)
+{
+    const VectorR original_parameters = get_parameters();
+
+    set_parameters(new_parameters);
+
+    copy_parameters_device();
+
+    forward_propagate(input_views_device, forward_propagation, true);
+
+    set_parameters(original_parameters);
+
+    copy_parameters_device();
 }
 
 
