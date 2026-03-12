@@ -339,7 +339,7 @@ void multiply_matrices(Tensor3&, const Tensor2&);
 
 inline bool is_contiguous(const vector<Index>& v)
 {
-    for (Index i = 0; i < v.size(); i++)
+    for (Index i = 0; i < Index(v.size()); i++)
         if (v[i] != v[0] + i)
             return false;
 
