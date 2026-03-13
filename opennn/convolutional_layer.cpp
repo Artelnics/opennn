@@ -1211,9 +1211,7 @@ void ConvolutionalForwardPropagationCuda::print() const
 {
     const Shape output_shape = layer->get_output_shape();
 
-    cout << layer->get_name() + " forward propagation" << endl
-         << "Outputs:" << endl
-         << matrix_4d_from_device(outputs.data, batch_size, output_shape[0], output_shape[1], output_shape[2]) << endl;
+    // @todo print shape and important data
 }
 
 
@@ -1355,17 +1353,7 @@ void ConvolutionalBackPropagationCuda::print() const
 
     cout << layer->get_name() + " back propagation" << endl;
 
-    cout << "bias_gradients" << endl;
-    vector_from_device(bias_gradients.data, bias_gradients.size());
-
-    cout << "weight_gradients" << endl;
-    matrix_4d_from_device(weight_gradients.data, convolutional_layer->get_kernels_number(),
-                                                     convolutional_layer->get_kernel_channels(), 
-                                                     convolutional_layer->get_kernel_height(), 
-                                                     convolutional_layer->get_kernel_width());
-
-    cout << "inputs derivatives" << endl;
-    matrix_4d_from_device(input_gradients[0].data, batch_size, input_shape[0], input_shape[1], input_shape[2]);
+    // @todo print dimensions and important data
 }
 
 

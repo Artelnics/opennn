@@ -40,7 +40,7 @@ int main()
 
         // Testing Analysis
 
-        const TestingAnalysis testing_analysis(&classification_network, &dataset);
+        TestingAnalysis testing_analysis(&classification_network, &dataset);
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 

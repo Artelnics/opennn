@@ -674,15 +674,7 @@ vector<TensorViewCuda*> PoolingForwardPropagationCuda::get_workspace_views()
 
 void PoolingForwardPropagationCuda::print() const
 {
-    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
-
-    const Index output_height = pooling_layer->get_output_height();
-    const Index output_width = pooling_layer->get_output_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    cout << "Pooling layer forward propagation CUDA" << endl
-         << "Outputs:" << endl
-         << matrix_4d_from_device(outputs.data, batch_size, output_height, output_width, channels) << endl;
+    // @todo print important data
 }
 
 
@@ -717,15 +709,7 @@ void PoolingBackPropagationCuda::initialize()
 
 void PoolingBackPropagationCuda::print() const
 {
-    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
-
-    const Index input_height = pooling_layer->get_input_height();
-    const Index input_width = pooling_layer->get_input_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    cout << "Pooling layer back propagation CUDA" << endl
-         << "Input output_gradients:" << endl
-         << matrix_4d_from_device(input_gradients[0].data, batch_size, input_height, input_width, channels) << endl;
+    // @todo print important data
 }
 
 

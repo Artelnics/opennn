@@ -1,324 +1,7 @@
 ﻿#include "kernel.cuh"
 
 
-__global__ void reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int N, const int C, const int H, const int W)
-{
-    // Translates Row-Major NHWC (CPU) -> NCHW (cuDNN)
-
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = N * C * H * W;
-    if (idx >= total) return;
-
-    // Treat thread idx as the target NCHW index
-    int tmp = idx;
-    int w = tmp % W; tmp /= W;
-    int h = tmp % H; tmp /= H;
-    int c = tmp % C; tmp /= C;
-    int n = tmp;
-
-    int nhwc_idx = ((n * H + h) * W + w) * C + c;
-    destination[idx] = source[nhwc_idx];
-}
-
-
-void reorder_inputs_cuda(const float* source, float* destination, int N,int C,int H,int W)
-{
-    int total = N * H * W * C;
-    const int threads_per_block = 256;
-    int blocks = (total + threads_per_block - 1) / threads_per_block;
-    reorder_inputs_kernel<<<blocks, threads_per_block>>>(source, destination, N, C, H, W);
-}
-
-
-__global__ void invert_reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
-    const int N, const int C, const int H, const int W)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int total = N * C * H * W;
-    if (idx >= total) return;
-
-    // Treat thread idx as the target NHWC index
-    int tmp = idx;
-    int c = tmp % C; tmp /= C;
-    int w = tmp % W; tmp /= W;
-    int h = tmp % H; tmp /= H;
-    int n = tmp;
-
-    int nchw_idx = ((n * C + c) * H + h) * W + w;
-    destination[idx] = source[nchw_idx];
-}
-
-
-void invert_reorder_inputs_cuda(const float* source, float* destination, int N, int C, int H, int W)
-{
-    int total = N * C * H * W;
-    const int threads_per_block = 256;
-    int blocks = (total + threads_per_block - 1) / threads_per_block;
-    invert_reorder_inputs_kernel<<<blocks, threads_per_block>>>(source, destination, N, C, H, W);
-}
-
-
-__global__ void reverse_kernel(type* d_kernel, int width, int height, int channels) 
-{
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    for (int c = 0; c < channels; ++c) {
-        if (x < width && y < height) {
-
-            int channel_offset = c * width * height;
-            int idx1 = channel_offset + y * width + x;
-            int idx2 = channel_offset + (height - 1 - y) * width + (width - 1 - x);
-
-            if (idx1 < idx2) {
-                type temp = d_kernel[idx1];
-                d_kernel[idx1] = d_kernel[idx2];
-                d_kernel[idx2] = temp;
-            }
-        }
-    }
-}
-
-void reverse_cuda(int width, int height, int channels, type* d_kernel) 
-{
-    dim3 threadsPerBlock(16, 16);
-    dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
-        (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
-    reverse_kernel << <blocksPerGrid, threadsPerBlock >> > (d_kernel, width, height, channels);
-}
-
-
-
-void copy_to_vector_cuda(float* destination, const float* source, Index size, Index& index)
-{
-    if (cudaMemcpy(destination + index, source, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "copy_to_vector_cuda error" << endl;
-
-    index += size;
-}
-
-
-void copy_from_vector_cuda(float* destination, const float* source, Index size, Index& index)
-{
-    if (cudaMemcpy(destination, source + index, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "copy_from_vector_cuda error" << endl;
-
-    index += size;
-}
-
-
-type* vector_to_device(const Tensor<type, 1>& vector)
-{
-    type* pointer = nullptr;
-
-    const size_t this_size = vector.size();
-
-    if (this_size == 0) cout << "Empty vector" << endl;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda vector malloc error" << endl;
-
-    cudaMemcpy(pointer, vector.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-
-
-Tensor<type, 1>  vector_from_device(const type* pointer, const size_t& new_size)
-{
-    if (new_size == 0) cout << "Empty vector" << endl;
-
-    Tensor<type, 1>  vector(new_size);
-
-    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda vector memcpy error" << endl;
-
-    return vector;
-}
-
-
-string string_from_device(const float* pointer, size_t size) 
-{
-    if (size == 0) return "[]";
-
-    vector<float> host_vec(size);
-    cudaError_t err = cudaMemcpy(host_vec.data(), pointer, size * sizeof(float), cudaMemcpyDeviceToHost);
-
-    if (err != cudaSuccess)
-        return "CUDA Memcpy Error: " + std::string(cudaGetErrorString(err));
-    
-
-    ostringstream oss;
-    oss << "[ ";
-    for (size_t i = 0; i < size; ++i) 
-        oss << host_vec[i] << " ";
-    
-    oss << "]";
-    return oss.str();
-}
-
-
-void print_device_data(const type* pointer, const size_t size) {
-    type* host_data = new type[size];
-    cudaMemcpy(host_data, pointer, size * sizeof(type), cudaMemcpyDeviceToHost);
-
-    cout << "Device Data: ";
-    for (size_t i = 0; i < size; ++i) {
-        cout << host_data[i] << " ";
-    }
-    cout << endl;
-
-    delete[] host_data;
-}
-
-
-type* matrix_to_device(const Tensor<type, 2>& matrix)
-{
-    const size_t this_size = matrix.size();
-
-    if (this_size == 0) cout << "Empty matrix" << endl;
-
-    type* pointer = nullptr;
-
-    if (cudaMalloc(&pointer, this_size * sizeof(type)) != cudaSuccess) cout << "Cuda matrix malloc error" << endl;
-
-    cudaMemcpy(pointer, matrix.data(), this_size * sizeof(type), cudaMemcpyHostToDevice);
-
-    return pointer;
-}
-
-
-Tensor<type, 2> matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_variables_number)
-{
-    Tensor<type, 2> matrix(new_rows_number, new_variables_number);
-
-    matrix.setZero();
-
-    if (matrix.size() == 0) cout << "Empty matrix" << endl;
-
-    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda matrix memcpy error" << endl;
-
-    return matrix;
-}
-
-Tensor<type, 3> matrix_3d_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
-{
-
-    Tensor<type, 3> matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
-
-    matrix_3d.setZero();
-
-    if (matrix_3d.size() == 0) {
-        cout << "Empty matrix_3d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_3d.data(), pointer, new_rows_number * new_columns_number * new_depth_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_3d;
-}
-
-Tensor<type, 4> matrix_4d_from_device(const type* pointer, const size_t& new_batch_samples_number, const size_t& new_rows_number, const size_t& new_columns_number, const size_t& new_channels_number)
-{
-
-    Tensor<type, 4> matrix_4d(static_cast<long long>(new_batch_samples_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number), static_cast<long long>(new_channels_number));
-
-    matrix_4d.setZero();
-
-    if (matrix_4d.size() == 0) {
-        cout << "Empty matrix_4d" << endl;
-    }
-
-    if (cudaMemcpy(matrix_4d.data(), pointer, new_batch_samples_number * new_rows_number * new_columns_number * new_channels_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
-        cout << "CUDA tensor memcpy error" << endl;
-    }
-
-    return matrix_4d;
-}
-
-
-// Operation kernel
-
-__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n)
-    {
-        output[i] = input1[i] + input2[i];
-    }
-}
-
-void addition_cuda(const size_t n, const float* input1, const float* input2, float* output)
-{
-    if (n == 0) return;
-
-    const int threads_per_block = 256;
-    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
-
-    addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
-}
-
-
-__global__
-void log_kernel(const int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) y[i] = log(x[i]);
-}
-
-void log(const size_t& n, const type* x, type* y)
-{
-    log_kernel << <(n + 255) / 256, 256 >> > (n, x, y);
-}
-
-
-__global__
-void log_in_place_kernel(const int n, type* x)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) x[i] = log(x[i]);
-}
-
-void log_in_place(const size_t& n, type* x)
-{
-    log_in_place_kernel << <(n + 255) / 256, 256 >> > (n, x);
-}
-
-
-__global__
-void division_kernel(const int n, const type* vector_1, const type* vector_2, type* result)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) result[i] = vector_1[i] / vector_2[i];
-}
-
-void division(const size_t& size, const type* vector_1, const type* vector2, type* result)
-{
-    division_kernel << <(size + 255) / 256, 256 >> > (size, vector_1, vector2, result);
-}
-
-
-__global__
-void divide_subtract_kernel(int size, type* parameters, const type* numerator, const type* denominator) 
-{
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < size) {
-        parameters[i] -= numerator[i] / denominator[i];
-    }
-}
-
-void divide_subtract(const size_t& n, type* parameters, const type* numerator, const type* denominator) 
-{
-    divide_subtract_kernel << <(n + 255) / 256, 256 >> > (n, parameters, numerator, denominator);
-}
-
+// ADAM
 
 __global__ void adam_update_kernel(
     const int n,
@@ -384,6 +67,7 @@ void adam_update_device(
         );
 }
 
+//SGD
 
 __global__ void sgd_update_kernel(
     const int n,
@@ -445,6 +129,7 @@ void sgd_update_device(
         nesterov);
 }
 
+// Errors
 
 __global__ void calculate_binary_cross_entropy_kernel(const int n, float* term_results, const float* targets, const float* outputs, const float epsilon)
 {
@@ -534,6 +219,55 @@ void calculate_multiple_cross_entropy_delta_cuda(const size_t& n, type* deltas, 
 }
 
 
+__global__ void calculate_weighted_squared_error_kernel(const int n, type* term_results, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+        const type out = outputs[i];
+
+        const type diff = out - tgt;
+        const type weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+
+        term_results[i] = diff * diff * weight;
+    }
+}
+
+void calculate_weighted_squared_error_cuda(const size_t& n, type* term_results, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    calculate_weighted_squared_error_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), term_results, targets, outputs, positives_weight, negatives_weight);
+}
+
+
+__global__ void calculate_weighted_squared_error_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
+        const type tgt = targets[i];
+        const type out = outputs[i];
+
+        const type diff = out - tgt;
+        const type weight = (tgt == 0.0f) ? negatives_weight : positives_weight;
+
+        deltas[i] = diff * weight * scaling_factor;
+    }
+}
+
+void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor)
+{
+    if (n == 0) return;
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    calculate_weighted_squared_error_delta_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
+}
+
 // Regularization
 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
@@ -586,6 +320,7 @@ void apply_elastic_net_gradient_cuda(const size_t n, float* deltas, const float*
     apply_elastic_net_gradient_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), deltas, params, weight, mix_factor);
 }
 
+// Scaling
 
 #define EPSILON 1e-7f
 
@@ -673,4 +408,26 @@ void scale_2d_cuda(const size_t n, const int batch_size, const int outputs_numbe
         min_range,
         max_range
         );
+}
+
+// Addition
+
+__global__ void addition_kernel(const int n, const float* input1, const float* input2, float* output)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        output[i] = input1[i] + input2[i];
+    }
+}
+
+void addition_cuda(const size_t n, const float* input1, const float* input2, float* output)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
 }
