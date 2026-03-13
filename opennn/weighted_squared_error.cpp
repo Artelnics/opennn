@@ -254,19 +254,85 @@ void WeightedSquaredError::from_XML(const XMLDocument& document)
 
 #ifdef OPENNN_CUDA
 
-void WeightedSquaredError::calculate_error(const BatchCuda&,
-                                                const ForwardPropagationCuda&,
-                                                BackPropagationCuda&) const
+void WeightedSquaredError::calculate_error(const BatchCuda& batch,
+                                           const ForwardPropagationCuda& forward_propagation,
+                                           BackPropagationCuda& back_propagation) const
 {
-    throw runtime_error("CUDA calculate_error not implemented for loss index type: WeightedSquaredError");
+    // Dataset
+
+    const Index total_samples_number = dataset->get_samples_number();
+
+    // Batch
+
+    const Index samples_number = batch.get_samples_number();
+    const type* targets = batch.targets_device.data;
+
+    // Forward propagation
+
+    const float* outputs = forward_propagation.get_last_trainable_layer_outputs_device().data;
+
+    // Back propagation
+
+    type& error = back_propagation.error;
+    float* error_device = back_propagation.error_device;
+    float* errors = back_propagation.errors;
+
+    const size_t size = samples_number * forward_propagation.layers[neural_network->get_last_trainable_layer_index()]->layer->get_outputs_number();
+
+    const cudnnTensorDescriptor_t output_tensor_descriptor = back_propagation.output_gradients.get_descriptor();
+    const cudnnTensorDescriptor_t output_reduce_tensor_descriptor = back_propagation.output_reduce_tensor_descriptor;
+    const cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = back_propagation.reduce_tensor_descriptor;
+
+    calculate_weighted_squared_error_cuda(size, errors, targets, outputs, positives_weight, negatives_weight);
+
+    cudnnReduceTensor(get_cudnn_handle(),
+                      reduce_tensor_descriptor,
+                      nullptr,
+                      0,
+                      back_propagation.workspace,
+                      back_propagation.workspace_size,
+                      &alpha_one,
+                      output_tensor_descriptor,
+                      errors,
+                      &beta_zero,
+                      output_reduce_tensor_descriptor,
+                      error_device);
+
+    CHECK_CUDA(cudaMemcpy(&error, error_device, sizeof(float), cudaMemcpyDeviceToHost));
+
+    const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
+    error *= coefficient;
+
+    if (isnan(error)) throw runtime_error("\nError is NAN.");
 }
 
 
-void WeightedSquaredError::calculate_output_gradients(const BatchCuda&,
-                                                       ForwardPropagationCuda&,
-                                                       BackPropagationCuda&) const
+void WeightedSquaredError::calculate_output_gradients(const BatchCuda& batch,
+                                                      ForwardPropagationCuda& forward_propagation,
+                                                      BackPropagationCuda& back_propagation) const
 {
-    throw runtime_error("CUDA calculate_output_gradients not implemented for loss index type: WeightedSquaredError");
+    // Dataset
+
+    const Index total_samples_number = dataset->get_samples_number();
+
+    // Batch
+
+    const Index batch_size = batch.target_shape[0];
+    const type* targets = batch.targets_device.data;
+
+    // Forward propagation
+
+    const float* outputs = forward_propagation.get_last_trainable_layer_outputs_device().data;
+
+    // Back propagation
+
+    float* output_gradients = back_propagation.get_output_gradient_views_device().data;
+
+    const size_t size = batch_size * forward_propagation.layers[neural_network->get_last_trainable_layer_index()]->layer->get_outputs_number();
+
+    const type coefficient = type(2 * total_samples_number) / (type(batch_size) * normalization_coefficient);
+
+    calculate_weighted_squared_error_delta_cuda(size, output_gradients, targets, outputs, positives_weight, negatives_weight, coefficient);
 }
 
 #endif

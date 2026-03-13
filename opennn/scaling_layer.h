@@ -533,10 +533,7 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void print() const override
     {
-        const Index outputs_number = layer->get_outputs_number();
-
-        cout << "Scaling CUDA Outputs:" << endl
-            << matrix_from_device(outputs.data, batch_size, outputs_number) << endl;
+        // @todo
     }
 
     void free() override

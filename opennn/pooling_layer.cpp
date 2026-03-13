@@ -236,6 +236,13 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
         throw runtime_error("Unknown pooling type: " + new_pooling_method);
 
     pooling_method = new_pooling_method;
+
+#ifdef OPENNN_CUDA
+    if (pooling_method == "MaxPooling")
+        pooling_mode = CUDNN_POOLING_MAX;
+    else if (pooling_method == "AveragePooling")
+        pooling_mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+#endif
 }
 
 
@@ -673,9 +680,15 @@ void PoolingForwardPropagationCuda::print() const
     const Index output_width = pooling_layer->get_output_width();
     const Index channels = pooling_layer->get_channels_number();
 
-    cout << "Pooling layer forward propagation CUDA" << endl
-         << "Outputs:" << endl
-         << matrix_4d_from_device(outputs.data, batch_size, output_height, output_width, channels) << endl;
+    cout << "Pooling layer forward propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Outputs dimensions: " << output_height << "x" << output_width << "x" << channels << endl;
+    cout << "Outputs data:" << endl;
+
+    if (outputs.data)
+        cout << tensor4_from_device(outputs.data, batch_size, output_height, output_width, channels) << endl;
+    else
+        cout << "Empty (nullptr)" << endl;
 }
 
 
@@ -716,9 +729,15 @@ void PoolingBackPropagationCuda::print() const
     const Index input_width = pooling_layer->get_input_width();
     const Index channels = pooling_layer->get_channels_number();
 
-    cout << "Pooling layer back propagation CUDA" << endl
-         << "Input output_gradients:" << endl
-         << matrix_4d_from_device(input_gradients[0].data, batch_size, input_height, input_width, channels) << endl;
+    cout << "Pooling layer back propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Inputs derivatives dimensions: " << input_height << "x" << input_width << "x" << channels << endl;
+    cout << "Inputs derivatives data:" << endl;
+
+    if (!input_gradients.empty() && input_gradients[0].data)
+        cout << tensor4_from_device(input_gradients[0].data, batch_size, input_height, input_width, channels) << endl;
+    else
+        cout << "Empty (nullptr)" << endl;
 }
 
 

@@ -664,6 +664,68 @@ Index get_size(const vector<vector<TensorViewCuda*>>& views)
     return total_size;
 }
 
+VectorR vector_from_device(const type* pointer, const size_t& new_size)
+{
+    if (new_size == 0) cout << "Empty vector" << endl;
+
+    VectorR  vector(new_size);
+
+    if (cudaMemcpy(vector.data(), pointer, new_size * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda vector memcpy error" << endl;
+
+    return vector;
+}
+
+MatrixR matrix_from_device(const type* pointer, const size_t& new_rows_number, const size_t& new_variables_number)
+{
+    MatrixR matrix(new_rows_number, new_variables_number);
+
+    matrix.setZero();
+
+    if (matrix.size() == 0) cout << "Empty matrix" << endl;
+
+    if (cudaMemcpy(matrix.data(), pointer, new_rows_number * new_variables_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda matrix memcpy error" << endl;
+
+    return matrix;
+}
+
+Tensor3 tensor3_from_device(const type* pointer, const size_t& new_depth_number, const size_t& new_rows_number, const size_t& new_columns_number)
+{
+
+    Tensor3 matrix_3d(static_cast<long long>(new_depth_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number));
+
+    matrix_3d.setZero();
+
+    if (matrix_3d.size() == 0) {
+        cout << "Empty matrix_3d" << endl;
+    }
+
+    if (cudaMemcpy(matrix_3d.data(), pointer, new_rows_number * new_columns_number * new_depth_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
+        cout << "CUDA tensor memcpy error" << endl;
+    }
+
+    return matrix_3d;
+}
+
+Tensor4 tensor4_from_device(const type* pointer, const size_t& new_batch_samples_number, const size_t& new_rows_number, const size_t& new_columns_number, const size_t& new_channels_number)
+{
+
+    Tensor4 matrix_4d(static_cast<long long>(new_batch_samples_number), static_cast<long long>(new_rows_number), static_cast<long long>(new_columns_number), static_cast<long long>(new_channels_number));
+
+    matrix_4d.setZero();
+
+    if (matrix_4d.size() == 0) {
+        cout << "Empty matrix_4d" << endl;
+    }
+
+    if (cudaMemcpy(matrix_4d.data(), pointer, new_batch_samples_number * new_rows_number * new_columns_number * new_channels_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess) {
+        cout << "CUDA tensor memcpy error" << endl;
+    }
+
+    return matrix_4d;
+}
+
 
 #endif
 

@@ -1210,10 +1210,19 @@ void ConvolutionalForwardPropagationCuda::initialize()
 void ConvolutionalForwardPropagationCuda::print() const
 {
     const Shape output_shape = layer->get_output_shape();
+    const Index output_height = output_shape[0];
+    const Index output_width = output_shape[1];
+    const Index kernels_number = output_shape[2];
 
-    cout << layer->get_name() + " forward propagation" << endl
-         << "Outputs:" << endl
-         << matrix_4d_from_device(outputs.data, batch_size, output_shape[0], output_shape[1], output_shape[2]) << endl;
+    cout << layer->get_name() + " forward propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Outputs dimensions: " << output_height << "x" << output_width << "x" << kernels_number << endl;
+
+    cout << "Outputs data:" << endl;
+    if (outputs.data)
+        cout << tensor4_from_device(outputs.data, batch_size, output_height, output_width, kernels_number) << endl;
+    else
+        cout << "Empty (nullptr)" << endl;
 }
 
 
@@ -1254,7 +1263,7 @@ void ConvolutionalBackPropagationCuda::initialize()
     // Input Deltas
 
     input_gradients.resize(1);
-    input_gradients[0].resize({ batch_size, channels, input_height,  input_width });
+    input_gradients[0].resize({ batch_size, input_height, input_width, channels });
 
     // Deltas
 
@@ -1349,23 +1358,28 @@ vector<TensorViewCuda*> ConvolutionalBackPropagationCuda::get_gradient_views()
 
 void ConvolutionalBackPropagationCuda::print() const
 {
+    const Convolutional* convolutional_layer = static_cast<const Convolutional*>(layer);
     const Shape input_shape = layer->get_input_shape();
 
-    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+    const Index kernel_height = convolutional_layer->get_kernel_height();
+    const Index kernel_width = convolutional_layer->get_kernel_width();
+    const Index kernel_channels = convolutional_layer->get_kernel_channels();
 
-    cout << layer->get_name() + " back propagation" << endl;
+    cout << layer->get_name() + " back propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
 
-    cout << "bias_gradients" << endl;
-    vector_from_device(bias_gradients.data, bias_gradients.size());
+    cout << "Bias gradients (" << bias_gradients.size() << "):" << endl;
+    if (bias_gradients.data)
+        cout << vector_from_device(bias_gradients.data, bias_gradients.size()) << endl;
 
-    cout << "weight_gradients" << endl;
-    matrix_4d_from_device(weight_gradients.data, convolutional_layer->get_kernels_number(),
-                                                     convolutional_layer->get_kernel_channels(), 
-                                                     convolutional_layer->get_kernel_height(), 
-                                                     convolutional_layer->get_kernel_width());
+    cout << "Weight gradients (" << kernels_number << "x" << kernel_height << "x" << kernel_width << "x" << kernel_channels << "):" << endl;
+    if (weight_gradients.data)
+        cout << tensor4_from_device(weight_gradients.data, kernels_number, kernel_height, kernel_width, kernel_channels) << endl;
 
-    cout << "inputs derivatives" << endl;
-    matrix_4d_from_device(input_gradients[0].data, batch_size, input_shape[0], input_shape[1], input_shape[2]);
+    cout << "Input gradients (deltas) (" << batch_size << "x" << input_shape[0] << "x" << input_shape[1] << "x" << input_shape[2] << "):" << endl;
+    if (!input_gradients.empty() && input_gradients[0].data)
+        cout << tensor4_from_device(input_gradients[0].data, batch_size, input_shape[0], input_shape[1], input_shape[2]) << endl;
 }
 
 

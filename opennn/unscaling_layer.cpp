@@ -338,7 +338,7 @@ void Unscaling::forward_propagate(const vector<TensorViewCuda>& inputs,
     UnscalingForwardPropagationCuda* this_forward_propagation =
         static_cast<UnscalingForwardPropagationCuda*>(forward_propagation.get());
 
-    // @todo: implement unscaling on GPU
+    // @todo: Implement unscaling in CUDA
 }
 
 
@@ -357,10 +357,7 @@ void UnscalingForwardPropagationCuda::initialize()
 
 void UnscalingForwardPropagationCuda::print() const
 {
-    const Index outputs_number = layer->get_outputs_number();
-
-    cout << "Unscaling CUDA Outputs (pass-through):" << endl
-        << matrix_from_device(outputs.data, batch_size, outputs_number) << endl;
+    // @todo
 }
 
 REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscaling")
