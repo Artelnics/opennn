@@ -1254,7 +1254,7 @@ void ConvolutionalBackPropagationCuda::initialize()
     // Input Deltas
 
     input_gradients.resize(1);
-    input_gradients[0].resize({ batch_size, channels, input_height,  input_width });
+    input_gradients[0].resize({ batch_size, input_height, input_width, channels });
 
     // Deltas
 

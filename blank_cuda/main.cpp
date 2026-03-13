@@ -62,38 +62,36 @@ int main()
 
 #endif
 
-cout << "OpenNN. Iris Plant Example." << endl;
+        cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Dataset
 
-        Dataset dataset("/home/artelnics/Documents/iris_plant_original.csv", ";", true, false);
+        ImageDataset image_dataset("/home/artelnics/Documents/mnist_data");
 
-        const Index neurons_number = 16;
+        // Neural network
 
-        // Neural Network
+        ImageClassificationNetwork image_classification_network(image_dataset.get_shape("Input"),
+                                                                {4},
+                                                                image_dataset.get_shape("Target"));
 
-        ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
+        // Training strategy
 
-        // Training Strategy
-
-        WeightedSquaredError();
-        TrainingStrategy training_strategy(&classification_network, &dataset);
+        TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
         training_strategy.set_loss("CrossEntropyError2d");
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
+        training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         training_strategy.get_loss()->set_regularization_method("None");
 
-        StochasticGradientDescent* adam = dynamic_cast<StochasticGradientDescent*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(1000);
-        adam->set_display_period(100); // El SGD suele necesitar un learning rate más bajo que Adam
-        adam->set_momentum(0.9);
+        AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
+        adam->set_maximum_epochs(200);
+        adam->set_display_period(10);
 
-        //training_strategy.train_cuda();
-        training_strategy.train();
+        training_strategy.train_cuda();
+        //training_strategy.train();
 
         // Testing Analysis
 
-        TestingAnalysis testing_analysis(&classification_network, &dataset);
+        TestingAnalysis testing_analysis(&image_classification_network, &image_dataset);
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 

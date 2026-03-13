@@ -236,6 +236,13 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
         throw runtime_error("Unknown pooling type: " + new_pooling_method);
 
     pooling_method = new_pooling_method;
+
+#ifdef OPENNN_CUDA
+    if (pooling_method == "MaxPooling")
+        pooling_mode = CUDNN_POOLING_MAX;
+    else if (pooling_method == "AveragePooling")
+        pooling_mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+#endif
 }
 
 

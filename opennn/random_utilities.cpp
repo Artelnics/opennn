@@ -11,7 +11,7 @@
 namespace opennn
 {
 
-static long long global_seed = 12345;
+static long long global_seed = -1;
 
 thread_local mt19937 generator;
 thread_local bool is_initialized = false;
