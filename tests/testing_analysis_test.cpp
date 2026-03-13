@@ -291,7 +291,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     VectorR binary = testing_analysis.calculate_binary_classification_tests();
 
     EXPECT_EQ(binary.size(), 15 );
-/*
+
     EXPECT_EQ(binary[0], 0 );
     EXPECT_EQ(binary[1], 1 );
     EXPECT_EQ(binary[2], 0 );
@@ -307,7 +307,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     EXPECT_EQ(binary[12], 0 );
     EXPECT_EQ(binary[13], -1 );
     EXPECT_EQ(binary[14], -1 );
-*/
+
 }
 
 

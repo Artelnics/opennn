@@ -1,10 +1,10 @@
-/*
+
 #include "pch.h"
 
 #include "../opennn/mean_squared_error.h"
 
 using namespace opennn;
-
+/*
 TEST(LearningRateAlgorithmTest, DefaultConstructor)
 {
     LearningRateAlgorithm learning_rate_algorithm;
@@ -12,7 +12,7 @@ TEST(LearningRateAlgorithmTest, DefaultConstructor)
     EXPECT_EQ(learning_rate_algorithm.has_loss(), false);
 }
 
-
+/*
 TEST(LearningRateAlgorithmTest, GeneralConstructor)
 {
     MeanSquaredError mean_squared_error;

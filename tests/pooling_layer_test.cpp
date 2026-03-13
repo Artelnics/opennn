@@ -57,6 +57,7 @@ INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
                                                                               {{{6}, {8}},
                                                                                {{14}, {16}}},
 
+<<<<<<< Updated upstream
                                                                               {{{16}, {14}},
                                                                                {{8}, {6}}},
 
@@ -81,6 +82,37 @@ INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
 
                                                                           const vector<Index> row_indices = {0, 1, 2, 3};
                                                                           const vector<Index> column_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+=======
+        return generate_input_tensor_pooling(data, row_indices, column_indices, {4, 4, 1});
+        })(),
+        ([] {
+            Tensor4 expected_output(4, 2, 2, 1);
+            expected_output.setValues({
+                                        {{{6}, {8}},
+                                        {{14}, {16}}},
+
+                                        {{{16}, {14}},
+                                        {{8}, {6}}},
+
+                                        {{{2}, {2}},
+                                        {{4}, {4}}},
+
+                                        {{{1}, {1}},
+                                        {{3}, {3}}}
+                                    });
+            return expected_output;
+        })()
+    },
+    PoolingLayerConfig
+    {
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, "AveragePooling", "AveragePoolingNoPadding1Channel",
+        ([] {
+        MatrixR data(4, 16);
+        data << 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+                1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4,
+                0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3;
+>>>>>>> Stashed changes
 
                                                                           return generate_input_tensor_pooling(data, row_indices, column_indices, {4, 4, 1});
                                                                       })(),
@@ -90,11 +122,37 @@ INSTANTIATE_TEST_SUITE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
                                                                               {{{3.5}, {5.5}},
                                                                                {{11.5}, {13.5}}},
 
+<<<<<<< Updated upstream
                                                                               {{{13.5}, {11.5}},
                                                                                {{5.5}, {3.5}}},
 
                                                                               {{{1.5}, {1.5}},
                                                                                {{3.5}, {3.5}}},
+=======
+        return generate_input_tensor_pooling(data, row_indices, column_indices, {4, 4, 1});
+        })(),
+        ([] {
+            Tensor4 expected_output(4, 2, 2, 1);
+            expected_output.setValues({
+                                        {{{3.5}, {5.5}},
+                                        {{11.5}, {13.5}}},
+
+                                        {{{13.5}, {11.5}},
+                                        {{5.5}, {3.5}}},
+
+                                        {{{1.5}, {1.5}},
+                                        {{3.5}, {3.5}}},
+
+                                        {{{0.5}, {0.5}},
+                                        {{2.5}, {2.5}}}
+                                    });
+            return expected_output;
+        })()
+    }
+    // More configurations here
+    )
+);
+>>>>>>> Stashed changes
 
                                                                               {{{0.5}, {0.5}},
                                                                                {{2.5}, {2.5}}}

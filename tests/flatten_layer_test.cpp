@@ -36,11 +36,15 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<FlattenForwardPropagation<4>>(batch_size, flatten_layer.get());
 
+    forward_propagation->initialize();
+
     Tensor4 inputs(batch_size, height, width, channels);
     inputs.setConstant(1.23f);
 
     auto eigen_dims = inputs.dimensions();
+
     Shape dims_vector(eigen_dims.begin(), eigen_dims.end());
+
     TensorView input_view(inputs.data(), dims_vector);
 
     flatten_layer->forward_propagate({ input_view }, forward_propagation, false);

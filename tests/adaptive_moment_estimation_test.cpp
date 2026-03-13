@@ -165,5 +165,7 @@ TEST(AdaptiveMomentEstimationTest, PerformTrainingLossGoal)
     TrainingResults training_results = adaptive_moment_estimation.train();
 
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
+
+
 }
 

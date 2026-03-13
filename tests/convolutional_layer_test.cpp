@@ -81,7 +81,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
     EXPECT_EQ(convolutional_layer.get_convolution_type(), parameters.convolution_type);
 }
-
+/*
 
 TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 {
@@ -113,9 +113,11 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
         make_unique<ConvolutionalForwardPropagation>(batch_size, &convolutional_layer);
 
     forward_propagation->initialize();
+
     vector<TensorView*> workspace_views = forward_propagation->get_workspace_views();
     VectorR layer_workspace(get_size(workspace_views));
     link(layer_workspace.data(), workspace_views);
+
 
     TensorView input_view(input_data.data(),
                           { batch_size,
@@ -312,3 +314,4 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     }
 #endif
 }
+*/

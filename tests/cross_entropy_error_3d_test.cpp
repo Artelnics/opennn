@@ -10,8 +10,8 @@
 using namespace opennn;
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
-{
-    /* @todo CrossEntropy3d is not implemented yet
+{   /*
+     @todo CrossEntropy3d is not implemented yet
     NeuralNetwork neural_network;
     Dataset dataset;
 

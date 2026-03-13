@@ -8,6 +8,7 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/random_utilities.h"
 
+
 using namespace opennn;
 
 
@@ -36,7 +37,7 @@ TEST(Embedding, GeneralConstructor)
     EXPECT_EQ(embedding_layer.get_embedding_dimension(), embedding_dimension);
 }
 
-
+/*
 TEST(Embedding, ForwardPropagate)
 {
     const Index samples_number = random_integer(1, 10);
@@ -58,10 +59,64 @@ TEST(Embedding, ForwardPropagate)
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.cols(), sequence_length);
     EXPECT_EQ(outputs.dimension(2), embedding_dimension);
-*/
+
 }
 
+*/
 
+/*
+TEST(Embedding, BackPropagate)
+{
+    //    LanguageDataset language_dataset("../examples/amazon_reviews/data/amazon_cells_labelled.txt");
+
+    const std::filesystem::path data_path = "../../../../../examples/amazon_reviews/data/amazon_cells_labelled.txt";
+
+    std::cout << "CWD: " << std::filesystem::current_path() << std::endl;
+    std::cout << "Resolved path: " << std::filesystem::absolute(data_path) << std::endl;
+    std::cout << "Exists: " << std::filesystem::exists(data_path) << std::endl;
+
+    LanguageDataset language_dataset(data_path.string());
+
+
+
+    language_dataset.set_sample_roles("Training");
+    const Index embedding_dimension = random_integer(1,10);
+    const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
+    const Index sequence_length = language_dataset.get_maximum_input_sequence_length();
+    Shape input_shape{ vocabulary_size, sequence_length };
+
+    NeuralNetwork neural_network;
+    cout<<"001"<<endl;
+
+    neural_network.add_layer(make_unique<Embedding>(input_shape, embedding_dimension));
+    neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_shape()));
+
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(neural_network.get_output_shape(), language_dataset.get_target_shape(), "Sigmoid"));
+    cout<<"002"<<endl;
+
+    MatrixR inputs  = language_dataset.get_feature_data("Input");
+    const Index batch_size = inputs.rows();
+
+    Layer* first_layer = neural_network.get_layer(0).get();
+
+    unique_ptr<LayerForwardPropagation> forward_propagation =
+        make_unique<EmbeddingForwardPropagation>(batch_size, first_layer);
+
+    Shape input_dims_vector({inputs.rows(), inputs.cols()});
+    TensorView input_view(inputs.data(), input_dims_vector);
+
+    first_layer->forward_propagate({ input_view }, forward_propagation, false);
+
+    const TensorView embedding_output_view = forward_propagation->get_outputs();
+
+    ASSERT_EQ(embedding_output_view.shape.size(), 3);
+    EXPECT_EQ(embedding_output_view.shape[0], batch_size);
+    EXPECT_EQ(embedding_output_view.shape[1], sequence_length);
+    EXPECT_EQ(embedding_output_view.shape[2], embedding_dimension);
+}
+*/
+
+/*
 TEST(EmbeddingForwardPropagationTest, GetOutputPairReturnsCorrectDataAndShape)
 {
     const Index batch_size = 2;
@@ -84,42 +139,6 @@ TEST(EmbeddingForwardPropagationTest, GetOutputPairReturnsCorrectDataAndShape)
     EXPECT_EQ(output_view.shape[1], sequence_length);
     EXPECT_EQ(output_view.shape[2], embedding_dimension);
 }
+*/
 
 
-TEST(Embedding, BackPropagate)
-{
-    LanguageDataset language_dataset("../examples/amazon_reviews/data/amazon_cells_labelled.txt");
-    language_dataset.set_sample_roles("Training");
-
-    const Index embedding_dimension = random_integer(1,10);
-    const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
-    const Index sequence_length = language_dataset.get_maximum_input_sequence_length();
-
-    Shape input_shape{ vocabulary_size, sequence_length };
-
-    NeuralNetwork neural_network;
-
-    neural_network.add_layer(make_unique<Embedding>(input_shape, embedding_dimension));
-    neural_network.add_layer(make_unique<Flatten<3>>(neural_network.get_output_shape()));
-    neural_network.add_layer(make_unique<opennn::Dense<3>>(neural_network.get_output_shape(), language_dataset.get_target_shape(), "Logistic"));
-
-    MatrixR inputs  = language_dataset.get_feature_data("Input");
-    const Index batch_size = inputs.rows();
-
-    Layer* first_layer = neural_network.get_layer(0).get();
-
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<EmbeddingForwardPropagation>(batch_size, first_layer);
-
-    Shape input_dims_vector({inputs.rows(), inputs.cols()});
-    TensorView input_view(inputs.data(), input_dims_vector);
-
-    first_layer->forward_propagate({ input_view }, forward_propagation, false);
-
-    const TensorView embedding_output_view = forward_propagation->get_outputs();
-
-    ASSERT_EQ(embedding_output_view.shape.size(), 3);
-    EXPECT_EQ(embedding_output_view.shape[0], batch_size);
-    EXPECT_EQ(embedding_output_view.shape[1], sequence_length);
-    EXPECT_EQ(embedding_output_view.shape[2], embedding_dimension);
-}

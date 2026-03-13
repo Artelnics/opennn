@@ -1,4 +1,4 @@
-/*
+
 #include "pch.h"
 
 #include "../opennn/dataset.h"
@@ -6,12 +6,12 @@
 #include "../opennn/response_optimization.h"
 
 using namespace opennn;
-
+/*
 TEST(ResponseOptimization, DefaultConstructor)
 {
     ResponseOptimization response_optimization;
 
-//    EXPECT_EQ(response_optimization.has_, 0);
+    EXPECT_EQ(response_optimization.has_, 0);
 }
 
 
@@ -34,11 +34,11 @@ TEST(ResponseOptimization, Inputs)
     Dataset dataset;
 
     ResponseOptimization response_optimization(&neural_network, &dataset);
-/*
+
 
     Tensor2 inputs = response_optimization.calculate_inputs();
 
-/*
+
 }
 
 
@@ -50,7 +50,7 @@ TEST(ResponseOptimization, Optimize)
     ResponseOptimization response_optimization(&neural_network, &dataset);
 
     // Empty results
-/*
+
     conditions_values.resize(1);
     conditions_values.setValues({100000});
     response_optimization.set_output_condition(0,ResponseOptimization::Condition::GreaterEqualTo,conditions_values);
@@ -147,7 +147,7 @@ TEST(ResponseOptimization, Optimize)
     EXPECT_EQ(results->optimal_variables(2) <= 3.0);
     EXPECT_EQ(results->optimal_variables(3) >= type(-1));
     EXPECT_EQ(results->optimal_variables(3) <= 0.0);
-    */
-/*
-}
-*/
+
+
+}*/
+

@@ -26,49 +26,44 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
-
-    const Index samples_number = random_integer(2, 10);
-    const Index inputs_number = random_integer(1, 10);
-    const Index outputs_number = random_integer(1, 10);
-
-    Dataset dataset(1, { 1 }, { 1 });
-    //dataset.set_data_constant(type(1));
+    Dataset dataset(10, {1}, {1});
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    //NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-    //neural_network.set_parameters_random();
-    //neural_network.set_parameters_constant(type(1));
-
     NeuralNetwork neural_network;
-
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 1 },
-        Shape{ 1 },
-        "Linear"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{1}, Shape{1}, "Linear"));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
-    levenberg_marquardt_algorithm.set_maximum_epochs(1);
-    levenberg_marquardt_algorithm.set_display(false);
 
-    TrainingResults training_results = levenberg_marquardt_algorithm.train();
+    LevenbergMarquardtAlgorithm lm(&mean_squared_error);
+    lm.set_display(false);
 
-    EXPECT_LE(training_results.get_epochs_number(), 1);
+    // Test 1: max 1 epoch
+    lm.set_maximum_epochs(1);
+    TrainingResults results = lm.train();
+    EXPECT_LE(results.get_epochs_number(), 1);
 
-    // Test
-/*
-    dataset.set(1,1,1);
-    dataset.set_data_random();
+    // Test 2: More Epoch -> Less error
+    lm.set_maximum_epochs(100);
+    neural_network.set_parameters_random();
+    TrainingResults results1 = lm.train();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
-    neural_network.set_parameters_constant(-1);
+    neural_network.set_parameters_random();
+    lm.set_maximum_epochs(200);
+    TrainingResults results2 = lm.train();
 
-    levenberg_marquardt_algorithm.set_maximum_epochs(1);
+    EXPECT_LE(results2.get_training_error(), results1.get_training_error() + type(1e-3));
 
-    training_results = levenberg_marquardt_algorithm.train();
-    error = training_results.get_training_error();
+    // Test 3: loss goal
+    neural_network.set_parameters_random();
+    const type loss_goal = type(0.5);
+    lm.set_loss_goal(loss_goal);
+    lm.set_maximum_epochs(1000);
+    TrainingResults results3 = lm.train();
+    EXPECT_TRUE(results3.get_training_error() <= loss_goal
+                || results3.get_epochs_number() == 1000);
 
+<<<<<<< Updated upstream
     EXPECT_EQ(error < old_error);
 
     // Test
@@ -116,3 +111,8 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss(), true);
 */
 }
+=======
+    // Test 4: has_loss_index
+    EXPECT_EQ(lm.has_loss_index(), true);
+}
+>>>>>>> Stashed changes

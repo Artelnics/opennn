@@ -10,7 +10,8 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "Pooling*";
+
+    ::testing::GTEST_FLAG(filter) = "*";
 
     try {
         return RUN_ALL_TESTS();
