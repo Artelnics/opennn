@@ -11,7 +11,7 @@
 namespace opennn
 {
 
-static long long global_seed = 12345;
+static long long global_seed = -1;
 
 thread_local mt19937 generator;
 thread_local bool is_initialized = false;
@@ -37,10 +37,13 @@ void set_seed(Index seed)
 {
     global_seed = seed;
 
-    #pragma omp parallel
-    {
-        is_initialized = false;
-    }
+    is_initialized = false;
+}
+
+
+long long get_seed()
+{
+    return global_seed;
 }
 
 

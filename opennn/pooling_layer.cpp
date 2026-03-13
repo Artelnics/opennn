@@ -674,7 +674,21 @@ vector<TensorViewCuda*> PoolingForwardPropagationCuda::get_workspace_views()
 
 void PoolingForwardPropagationCuda::print() const
 {
-    // @todo print important data
+    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
+
+    const Index output_height = pooling_layer->get_output_height();
+    const Index output_width = pooling_layer->get_output_width();
+    const Index channels = pooling_layer->get_channels_number();
+
+    cout << "Pooling layer forward propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Outputs dimensions: " << output_height << "x" << output_width << "x" << channels << endl;
+    cout << "Outputs data:" << endl;
+
+    if (outputs.data)
+        cout << tensor4_from_device(outputs.data, batch_size, output_height, output_width, channels) << endl;
+    else
+        cout << "Empty (nullptr)" << endl;
 }
 
 
@@ -709,7 +723,21 @@ void PoolingBackPropagationCuda::initialize()
 
 void PoolingBackPropagationCuda::print() const
 {
-    // @todo print important data
+    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
+
+    const Index input_height = pooling_layer->get_input_height();
+    const Index input_width = pooling_layer->get_input_width();
+    const Index channels = pooling_layer->get_channels_number();
+
+    cout << "Pooling layer back propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Inputs derivatives dimensions: " << input_height << "x" << input_width << "x" << channels << endl;
+    cout << "Inputs derivatives data:" << endl;
+
+    if (!input_gradients.empty() && input_gradients[0].data)
+        cout << tensor4_from_device(input_gradients[0].data, batch_size, input_height, input_width, channels) << endl;
+    else
+        cout << "Empty (nullptr)" << endl;
 }
 
 

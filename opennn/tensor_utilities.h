@@ -1082,6 +1082,11 @@ void link(type*, const vector<vector<TensorViewCuda*>>&);
 Index get_size(const vector<TensorViewCuda*>&);
 Index get_size(const vector<vector<TensorViewCuda*>>&);
 
+VectorR vector_from_device(const type*, const size_t&);
+MatrixR matrix_from_device(const type*, const size_t&, const size_t&);
+Tensor3 tensor3_from_device(const type*, const size_t&, const size_t&, const size_t&);
+Tensor4 tensor4_from_device(const type*, const size_t&, const size_t&, const size_t&, const size_t&);
+
 #endif
 
 }
