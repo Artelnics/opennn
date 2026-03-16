@@ -57,10 +57,13 @@ struct DenseForwardPropagation final : LayerForwardPropagation
 
     void print() const override
     {
-        cout << "Outputs:" << endl
-             << outputs.data << endl
-             << "Activation derivatives:" << endl
-             << activation_derivatives.data << endl;
+        cout << "Dense forward propagation" << endl;
+        cout << "Outputs dimensions: " << outputs.shape << endl;
+        cout << "Outputs data:" << endl;
+        outputs.print();
+        cout << "Activation derivatives dimensions: " << activation_derivatives.shape << endl;
+        cout << "Activation derivatives data:" << endl;
+        activation_derivatives.print();
     }
 
     TensorView means;
@@ -124,10 +127,16 @@ struct DenseBackPropagation final : LayerBackPropagation
 
     void print() const override
     {
-        cout << "Bias output_gradients:" << endl
-             << bias_gradients.data << endl
-             << "Weight output_gradients:" << endl
-             << weight_gradients.data << endl;
+        cout << "Dense back propagation" << endl;
+        cout << "Bias gradients dimensions: " << bias_gradients.shape << endl;
+        cout << "Bias gradients data:" << endl;
+        bias_gradients.print();
+        cout << "Weight gradients dimensions: " << weight_gradients.shape << endl;
+        cout << "Weight gradients data:" << endl;
+        weight_gradients.print();
+        cout << "Input gradients dimensions: " << input_gradients[0].shape << endl;
+        cout << "Input gradients data:" << endl;
+        input_gradients[0].print();
     }
 
     TensorView bias_gradients;
@@ -172,9 +181,11 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 
     void print() const override
     {
-        cout << "Squared errors Jacobian: " << endl;
+        cout << "Dense back propagation LM" << endl;
+        cout << "Squared errors Jacobian dimensions: " << squared_errors_Jacobian.shape << endl;
+        cout << "Squared errors Jacobian data: " << endl;
         squared_errors_Jacobian.print();
-        cout << "Input derivatives: " << endl;
+        cout << "Input derivatives data: " << endl;
         input_gradients[0].print();
     }
 
@@ -211,11 +222,20 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         if (dense_layer->get_dropout_rate() > 0)
         {
-            cudnnCreateDropoutDescriptor(&dropout_descriptor);
+            dropout_seed = static_cast<unsigned long long>(get_seed());
+
+            if (dropout_descriptor == nullptr) cudnnCreateDropoutDescriptor(&dropout_descriptor);
+
             cudnnDropoutGetStatesSize(get_cudnn_handle(), &dropout_states_size);
+
+            if (dropout_states) cudaFree(dropout_states);
             CHECK_CUDA(cudaMalloc(&dropout_states, dropout_states_size));
+
             cudnnSetDropoutDescriptor(dropout_descriptor, get_cudnn_handle(), (float)dense_layer->get_dropout_rate(), dropout_states, dropout_states_size, dropout_seed);
+
             cudnnDropoutGetReserveSpaceSize(outputs.get_descriptor(), &dropout_reserve_space_size);
+
+            if (dropout_reserve_space) cudaFree(dropout_reserve_space);
             CHECK_CUDA(cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size));
         }
 
@@ -237,6 +257,22 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
         dropout_reserve_space = nullptr;
 
         if (dropout_descriptor) cudnnDestroyDropoutDescriptor(dropout_descriptor);
+    }
+
+    void print() const override
+    {
+        const Index outputs_number = layer->get_output_shape().back();
+        Index total_rows = batch_size;
+        if constexpr (Rank == 3) total_rows *= layer->get_input_shape()[0];
+
+        cout << "Dense forward propagation CUDA" << endl;
+        cout << "Batch size: " << batch_size << endl;
+        cout << "Outputs dimensions: " << total_rows << "x" << outputs_number << endl;
+        cout << "Outputs data:" << endl;
+        if (outputs.data)
+            cout << matrix_from_device(outputs.data, total_rows, outputs_number) << endl;
+        else
+            cout << "Empty (nullptr)" << endl;
     }
 
     TensorCuda combinations;
@@ -317,6 +353,24 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
     {
         cudnnDestroyTensorDescriptor(gradients_tensor_descriptor);
         gradients_tensor_descriptor = nullptr;
+    }
+
+    void print() const override
+    {
+        const Index outputs_number = layer->get_output_shape().back();
+        const Index inputs_number = layer->get_input_shape().back();
+        Index total_rows = batch_size;
+        if constexpr (Rank == 3) total_rows *= layer->get_input_shape()[0];
+
+        cout << "Dense back propagation CUDA" << endl;
+        cout << "Batch size: " << batch_size << endl;
+        cout << "Bias gradients (" << outputs_number << "):" << endl;
+        if (bias_gradients.data) cout << vector_from_device(bias_gradients.data, outputs_number) << endl;
+        cout << "Weight gradients (" << inputs_number << "x" << outputs_number << "):" << endl;
+        if (weight_gradients.data) cout << matrix_from_device(weight_gradients.data, inputs_number, outputs_number) << endl;
+        cout << "Input gradients (" << total_rows << "x" << inputs_number << "):" << endl;
+        if (!input_gradients.empty() && input_gradients[0].data)
+            cout << matrix_from_device(input_gradients[0].data, total_rows, inputs_number) << endl;
     }
 
     TensorViewCuda bias_gradients;
@@ -617,23 +671,39 @@ public:
         batch_normalization = new_batch_normalization;
     }
 
-/*
-    void normalization(VectorR& means, VectorR& standard_deviations, const Tensor2& inputs, Tensor2& outputs) const
+
+    void normalization(Tensor1& means, Tensor1& standard_deviations, const Tensor2& inputs, Tensor2& outputs) const
     {
-        const array<Index, 2> rows({outputs.dimension(0), 1});
+        const Index batch_size = inputs.dimension(0);
+        const Index features_number = inputs.dimension(1);
 
-        const array<int, 1> axis_x({0});
+        const array<int, 1> reduction_axis({0});
 
-        means.device(get_device()) = outputs.mean(axis_x);
+        const array<Index, 2> reshape_dims({1, features_number});
+        const array<Index, 2> broadcast_dims({batch_size, 1});
 
-        standard_deviations.device(get_device())
-            = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+        means.device(get_device()) = inputs.mean(reduction_axis);
 
-        outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
-            //shifts.broadcast(rows);
-            //+ (outputs - means.broadcast(rows))*gammas.broadcast(rows)/standard_deviations.broadcast(rows);
+        standard_deviations.device(get_device()) = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
+                                                    .square()
+                                                    .mean(reduction_axis)
+                                                    .sqrt();
+
+        outputs.device(get_device()) = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
+                                       (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + EPSILON);
+
+        if (batch_normalization && gammas.data != nullptr && betas.data != nullptr)
+        {
+            const MatrixMap gammas_map(gammas.data, 1, features_number);
+            const MatrixMap betas_map(betas.data, 1, features_number);
+
+            TensorMap2 g(gammas.data, 1, features_number);
+            TensorMap2 b(betas.data, 1, features_number);
+
+            outputs.device(get_device()) = outputs * g.broadcast(broadcast_dims) + b.broadcast(broadcast_dims);
+        }
     }
-*/
+
 
     void forward_propagate(const vector<TensorView>& input_views,
                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
@@ -663,6 +733,8 @@ public:
                 vector_map(betas),
                 is_training,
                 momentum);
+
+            outputs = normalized_outputs;
         }
 
         TensorMapR<Rank> derivatives = [&]()
@@ -860,46 +932,50 @@ public:
                           const vector<string>& new_output_names = vector<string>()) const override
     {
         const vector<string> input_names = new_input_names.empty()
-            ? get_default_feature_names()
-            : new_input_names;
+        ? get_default_feature_names()
+        : new_input_names;
 
         const vector<string> output_names = new_output_names.empty()
-            ? get_default_output_names()
-            : new_output_names;
+                                                ? get_default_output_names()
+                                                : new_output_names;
 
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
 
+        if (biases.data == nullptr || weights.data == nullptr) return "";
+
         ostringstream buffer;
-/*
+
         for(Index j = 0; j < outputs_number; j++)
         {
-            const VectorMap weights_column = tensor_map(weights, j);
+            buffer << output_names[j] << " = " << activation_function << "( " << biases.data[j] << " + ";
 
-            buffer << output_names[j] << " = " << activation_function << "( " << biases(j) << " + ";
+            for(Index i = 0; i < inputs_number; i++)
+            {
+                const Index weight_index = i * outputs_number + j;
 
-            for(Index i = 0; i < inputs_number - 1; i++)
-                buffer << "(" << weights_column(i) << "*" << input_names[i] << ") + ";
+                buffer << "(" << weights.data[weight_index] << "*" << input_names[i] << ")";
 
-            buffer << "(" << weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1] << ") );\n";
+                if (i < inputs_number - 1) buffer << " + ";
+            }
+
+            buffer << " );\n";
         }
-*/
+
         return buffer.str();
     }
 
 
     void print() const override
     {
-/*
-        cout << "Dense layer" << endl
-             << "Input shape: " << get_input_shape()[0] << endl
-             << "Output shape: " << get_output_shape()[0] << endl
-             << "Biases shape: " << biases.dimensions() << endl
-             << "Weights shape: " << weights.dimensions() << endl;
-
-        cout << "Activation function:" << endl;
-        cout << activation_function << endl;
-*/
+        cout << "Dense layer" << endl;
+        cout << "Input shape: " << get_input_shape() << endl;
+        cout << "Output shape: " << get_output_shape() << endl;
+        cout << "Biases shape: " << biases.shape << endl;
+        cout << "Weights shape: " << weights.shape << endl;
+        cout << "Activation function: " << activation_function << endl;
+        cout << "Batch normalization: " << (batch_normalization ? "True" : "False") << endl;
+        cout << "Dropout rate: " << dropout_rate << endl;
     }
 
 

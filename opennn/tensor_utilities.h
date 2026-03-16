@@ -339,8 +339,10 @@ void multiply_matrices(Tensor3&, const Tensor2&);
 
 inline bool is_contiguous(const vector<Index>& v)
 {
+    const type first = v[0];
+
     for (Index i = 0; i < v.size(); i++)
-        if (v[i] != v[0] + i)
+        if (v[i] != first + i)
             return false;
 
     return true;
@@ -1079,6 +1081,11 @@ void link(type*, const vector<vector<TensorViewCuda*>>&);
 
 Index get_size(const vector<TensorViewCuda*>&);
 Index get_size(const vector<vector<TensorViewCuda*>>&);
+
+VectorR vector_from_device(const type*, const size_t&);
+MatrixR matrix_from_device(const type*, const size_t&, const size_t&);
+Tensor3 tensor3_from_device(const type*, const size_t&, const size_t&, const size_t&);
+Tensor4 tensor4_from_device(const type*, const size_t&, const size_t&, const size_t&, const size_t&);
 
 #endif
 

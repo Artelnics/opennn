@@ -37,10 +37,13 @@ void set_seed(Index seed)
 {
     global_seed = seed;
 
-    #pragma omp parallel
-    {
-        is_initialized = false;
-    }
+    is_initialized = false;
+}
+
+
+long long get_seed()
+{
+    return global_seed;
 }
 
 

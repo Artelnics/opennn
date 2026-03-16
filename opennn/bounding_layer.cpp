@@ -324,10 +324,7 @@ void BoundingForwardPropagationCuda::initialize()
 
 void BoundingForwardPropagationCuda::print() const
 {
-    const Index outputs_number = layer->get_outputs_number();
-
-    cout << "Bounding CUDA Outputs (pass-through):" << endl
-        << matrix_from_device(outputs.data, batch_size, outputs_number) << endl;
+    // @todo
 }
 
 REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding")

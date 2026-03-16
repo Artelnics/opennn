@@ -13,6 +13,7 @@
 namespace opennn
 {
     void set_seed(Index);
+    long long get_seed();
 
     type random_uniform(type = -1, type = 1);
     type random_normal(type = 0, type = 1);
