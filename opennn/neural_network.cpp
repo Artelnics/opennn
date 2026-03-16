@@ -905,7 +905,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LayerInputIndices");
 
-    for(Index i = 0; i < Index(layer_input_indices.size()); i++) 
+    for(Index i = 0; i < Index(layer_input_indices.size()); i++)
         add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
     printer.CloseElement();
@@ -974,7 +974,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
 
 void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 {
-
     if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
@@ -986,20 +985,20 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     for(Variable& variable : input_variables)
     {
         if(variable.is_categorical())
+        {
             for(string& category_name : variable.categories)
             {
                 current_element = current_element->NextSiblingElement("Input");
-                if(!current_element)
-                    break;
+                if(!current_element) break;
 
                 if(current_element->GetText())
                     category_name = current_element->GetText();
             }
+        }
         else
         {
             current_element = current_element->NextSiblingElement("Input");
-            if(!current_element)
-                continue;
+            if(!current_element) continue;
 
             if(current_element->GetText())
                 variable.name = current_element->GetText();
