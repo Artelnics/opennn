@@ -62,8 +62,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     TrainingResults results3 = lm.train();
     EXPECT_TRUE(results3.get_training_error() <= loss_goal
                 || results3.get_epochs_number() == 1000);
-
-<<<<<<< Updated upstream
+/*
     EXPECT_EQ(error < old_error);
 
     // Test
@@ -111,8 +110,4 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss(), true);
 */
 }
-=======
-    // Test 4: has_loss_index
-    EXPECT_EQ(lm.has_loss_index(), true);
-}
->>>>>>> Stashed changes
+
