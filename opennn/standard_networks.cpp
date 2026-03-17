@@ -570,40 +570,30 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& output_shape,
                                                      const vector<string>& new_input_vocabulary) : NeuralNetwork()
 {
-    layers.clear();
-
     reference_all_layers();
 
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
     const Index embedding_dimension = input_shape[2];
-
     const Index heads_number = complexity_dimensions[0];
-    //const bool use_causal_mask = false;
 
-    const string classification_layer_activation = output_shape[0] == 1 ? "Sigmoid" : "Softmax";
-
-    add_layer(make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
-                                     embedding_dimension,
-                                     "embedding_layer"));
+    auto embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
+                                                  embedding_dimension,
+                                                  "embedding_layer");
+    embedding_layer->set_scale_embedding(true);
+    embedding_layer->set_add_positional_encoding(true);
+    add_layer(std::move(embedding_layer));
 
     add_layer(make_unique<MultiHeadAttention>(
-         Shape({sequence_length, embedding_dimension}),
-         heads_number,
-         "multihead_attention_layer"));
+        Shape({sequence_length, embedding_dimension}),
+        heads_number,
+        "multihead_attention_layer"));
 
-    add_layer(make_unique<Pooling3d>(
-        get_output_shape()));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::MaxPooling));
 
-    // add_layer(make_unique<Flatten<3>>(
-    //     get_output_shape()
-    //     ));
+    add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
-    add_layer(make_unique<Dense<2>>(
-        get_output_shape(),
-        output_shape,
-        classification_layer_activation,
-        "classification_layer"));
+    add_layer(make_unique<Dense<2>>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
 
     this->compile();
     this->set_parameters_glorot();

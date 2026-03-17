@@ -431,3 +431,158 @@ void addition_cuda(const size_t n, const float* input1, const float* input2, flo
 
     addition_kernel << <blocks_per_grid, threads_per_block >> > (static_cast<int>(n), input1, input2, output);
 }
+
+
+// Embedding
+
+__global__ void embedding_forward_kernel(const int n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        const int token_idx = i / embedding_dimension;
+        const int dim_idx = i % embedding_dimension;
+        const int seq_idx = token_idx % sequence_length;
+
+        const int token_id = static_cast<int>(inputs[token_idx]);
+
+        float val = 0.0f;
+
+        if (token_id >= 0 && token_id < vocabulary_size)
+        {
+            val = weights[token_id * embedding_dimension + dim_idx];
+        }
+
+        if (scale_embedding)
+        {
+            val *= sqrtf(static_cast<float>(embedding_dimension));
+        }
+
+        if (add_positional_encoding && positional_encoding != nullptr)
+        {
+            if (token_id > 0)
+            {
+                val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
+            }
+        }
+
+        outputs[i] = val;
+    }
+}
+
+void embedding_forward_cuda(const size_t n, const float* inputs, const float* weights, const float* positional_encoding, float* outputs, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding, const bool add_positional_encoding)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    embedding_forward_kernel<<<blocks_per_grid, threads_per_block>>>(
+        static_cast<int>(n), inputs, weights, positional_encoding, outputs,
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding, add_positional_encoding
+        );
+}
+
+
+__global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n)
+    {
+        const int token_idx = i / embedding_dimension;
+        const int dim_idx = i % embedding_dimension;
+
+        const int token_id = static_cast<int>(inputs[token_idx]);
+
+        if (token_id > 0 && token_id < vocabulary_size)
+        {
+            float grad_val = output_gradients[i];
+
+            if (scale_embedding)
+            {
+                grad_val *= sqrtf(static_cast<float>(embedding_dimension));
+            }
+
+            atomicAdd(&weight_gradients[token_id * embedding_dimension + dim_idx], grad_val);
+        }
+    }
+}
+
+void embedding_backward_cuda(const size_t n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding)
+{
+    if (n == 0) return;
+
+    const int threads_per_block = 256;
+    const int blocks_per_grid = (static_cast<int>(n) + threads_per_block - 1) / threads_per_block;
+
+    embedding_backward_kernel<<<blocks_per_grid, threads_per_block>>>(
+        static_cast<int>(n), inputs, output_gradients, weight_gradients,
+        sequence_length, embedding_dimension, vocabulary_size, scale_embedding
+        );
+}
+
+// Multihead
+
+// [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
+__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int d = i % D;
+        const int h = (i / D) % H;
+        const int s = (i / (D * H)) % S;
+        const int b = i / (D * H * S);
+
+        const int out_idx = ((b * H + h) * S + s) * D + d;
+        out[out_idx] = in[i];
+    }
+}
+
+void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_qkv_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+// [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
+__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int d = i % D;
+        const int s = (i / D) % S;
+        const int h = (i / (D * S)) % H;
+        const int b = i / (D * S * H);
+
+        const int out_idx = ((b * S + s) * H + h) * D + d;
+        out[out_idx] = in[i];
+    }
+}
+
+void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+
+__global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const int c = i % seq_k;
+        const int r = (i / seq_k) % seq_q;
+        if (c > r) scores[i] = -1e9f;
+    }
+}
+
+void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k) {
+    if (n == 0) return;
+    const int threads = 256;
+    mha_causal_mask_kernel<<<(n + threads - 1) / threads, threads>>>(n, scores, seq_q, seq_k);
+}
