@@ -203,7 +203,6 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     Tensor4& value = this_forward_propagation->value;
 
     Tensor4& attention_weights = this_forward_propagation->attention_weights;
-    //Tensor4& attention_outputs = this_forward_propagation->attention_outputs;
 
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
@@ -265,25 +264,37 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     softmax(attention_weights_map);
 
+
     type* value_data = value.data();
-    type* att_outputs_data = attention_outputs.data();
+    type* concat_data = concatenated_attention_outputs.data();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    const int original_eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1); // Prevent thread oversubscription in OMP loop
+
+#pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
     {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const Index offset_v = i * source_sequence_length * head_dimension;
-        const Index offset_o = i * query_sequence_length * head_dimension;
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
+            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
 
-        const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
-        MatrixMap o_mat(att_outputs_data + offset_o, query_sequence_length, head_dimension);
+            const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+            const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
 
-        o_mat.noalias() = w_mat * v_mat;
+            // Pointer to the exact start of this batch and head in the concatenated buffer
+            type* out_ptr = concat_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
+
+            // Map the interleaved memory directly using OuterStride
+            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
+            Eigen::Map<MatrixR, 0, StrideType> o_mat(out_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
+
+            o_mat.noalias() = w_mat * v_mat;
+        }
     }
+    Eigen::setNbThreads(original_eigen_threads); // Restore original Eigen threads
 
-    concatenated_attention_outputs.device(get_device()) = attention_outputs.shuffle(array_4(0, 2, 1, 3))
-                                                                           .reshape(concatenated_attention_outputs.dimensions());
+
 
     const MatrixMap projection_weights_map = matrix_map(projection_weights);
     const VectorMap projection_biases_map = vector_map(projection_biases);
@@ -329,7 +340,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     MatrixMap projection_weight_gradients = matrix_map(this_back_propagation->projection_weight_gradients);
     VectorMap projection_bias_gradients = vector_map(this_back_propagation->projection_bias_gradients);
     Tensor3& concatenated_attention_output_gradients = this_back_propagation->concatenated_attention_output_gradients;
-    Tensor4& attention_output_gradients = this_back_propagation->attention_output_gradients;
     Tensor4& attention_weight_gradients = this_back_propagation->attention_weight_gradients;
     Tensor4& query_gradients = this_back_propagation->query_gradients;
     Tensor4& key_gradients = this_back_propagation->key_gradients;
@@ -364,34 +374,41 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     concat_grad_map.noalias() = delta_Y_map * proj_weights_map.transpose();
 
-    attention_output_gradients.device(get_device()) =
-        concatenated_attention_output_gradients.reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
-                                            .shuffle(array_4(0, 2, 1, 3));
-
-    const Index total_heads = batch_size * heads_number;
     type* att_weights_data = const_cast<type*>(attention_weights.data());
-    type* att_out_grad_data = attention_output_gradients.data();
     type* v_data = const_cast<type*>(value.data());
     type* v_grad_data = value_gradients.data();
     type* att_weight_grad_data = attention_weight_gradients.data();
+    type* concat_grad_data = concatenated_attention_output_gradients.data();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    const int original_eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1); // Prevent thread oversubscription in OMP loop
+
+#pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
     {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const Index offset_do = i * query_sequence_length * head_dimension;
-        const Index offset_v = i * source_sequence_length * head_dimension;
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
+            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
 
-        const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap dO(att_out_grad_data + offset_do, query_sequence_length, head_dimension);
-        const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
+            const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+            const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
 
-        MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
-        MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
+            MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
+            MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
 
-        dV.noalias() = W.transpose() * dO;
-        dW.noalias() = dO * V.transpose();
+            // MAP dO DIRECTLY FROM STRIDED MEMORY
+            type* dO_ptr = concat_grad_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
+
+            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
+            Eigen::Map<const MatrixR, 0, StrideType> dO(dO_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
+
+            dV.noalias() = W.transpose() * dO;
+            dW.noalias() = dO * V.transpose();
+        }
     }
+    Eigen::setNbThreads(original_eigen_threads);
+
 
     type* sm_grad_data = softmax_gradients.data();
     #pragma omp parallel for
@@ -1058,8 +1075,6 @@ void MultiHeadAttentionForwardPropagation::initialize()
 
     attention_weights.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
-    attention_outputs.resize(batch_size, heads_number, query_sequence_length, head_dimension);
-
     // @todo can we remove concatenated_attention_outputs and assign to outputs?
 
     concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
@@ -1108,8 +1123,6 @@ void MultiHeadAttentionBackPropagation::initialize()
     softmax_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
     attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
-
-    attention_output_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
 
     concatenated_attention_output_gradients.resize(batch_size, query_sequence_length, embedding_dimension);
 

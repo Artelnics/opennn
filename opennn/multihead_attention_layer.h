@@ -181,7 +181,6 @@ struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
     Tensor4 value;
 
     Tensor4 attention_weights;
-    Tensor4 attention_outputs;
 
     Tensor3 concatenated_attention_outputs;
 };
@@ -198,7 +197,6 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
     void print() const override;
 
     Tensor4 attention_weight_gradients;
-    Tensor4 attention_output_gradients;
     Tensor3 concatenated_attention_output_gradients;
 
     Tensor4 query_gradients;
