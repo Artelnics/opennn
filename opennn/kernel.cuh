@@ -98,4 +98,18 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void embedding_backward_kernel(const int n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
  void embedding_backward_cuda(const size_t n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
+ // Multihead
+
+ // MultiHead Attention
+
+ __global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
+ void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);
+
+ __global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
+ void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);
+
+ __global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k);
+ void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k);
+
+
 #endif // KERNEL_CUH

@@ -519,3 +519,55 @@ void embedding_backward_cuda(const size_t n, const float* inputs, const float* o
         sequence_length, embedding_dimension, vocabulary_size, scale_embedding
         );
 }
+
+// Multihead
+
+__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const int d = i % D;
+        const int s = (i / D) % S;
+        const int h = (i / (D * S)) % H;
+        const int b = i / (D * S * H);
+        out[((b * H + h) * S + s) * D + d] = in[i];
+    }
+}
+
+void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D) {
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_qkv_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const int d = i % D;
+        const int s = (i / D) % S;
+        const int h = (i / (D * S)) % H;
+        const int b = i / (D * S * H);
+        out[((b * S + s) * H + h) * D + d] = in[i];
+    }
+}
+
+void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D) {
+    if (n == 0) return;
+    const int threads = 256;
+    mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+
+__global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k) {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        const int c = i % seq_k;
+        const int r = (i / seq_k) % seq_q;
+        if (c > r) scores[i] = -1e9f;
+    }
+}
+
+void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k) {
+    if (n == 0) return;
+    const int threads = 256;
+    mha_causal_mask_kernel<<<(n + threads - 1) / threads, threads>>>(n, scores, seq_q, seq_k);
+}
