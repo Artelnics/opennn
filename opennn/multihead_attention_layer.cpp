@@ -439,7 +439,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     // Key Projection
     calculate_projection_gradient(key_gradients, source_input, key_weights,
                                   key_bias_gradients, key_weight_gradients,
-                                  input_source_gradients, batch_size, true);
+                                  input_source_gradients, batch_size, false);
 
     // Value Projection (accumulate=true because it shares input with Key)
     calculate_projection_gradient(value_gradients, source_input, value_weights,
