@@ -1010,12 +1010,8 @@ void MultiHeadAttentionBackPropagation::initialize()
     input_gradients_memory[0].resize(batch_size * query_sequence_length * embedding_dimension);
     input_gradients_memory[1].resize(batch_size * source_sequence_length * embedding_dimension);
 
-    input_gradients.resize(2);
-    input_gradients[0].data = input_gradients_memory[0].data();
-    input_gradients[0].shape = {batch_size, query_sequence_length, embedding_dimension};
-
-    input_gradients[1].data = input_gradients_memory[1].data();
-    input_gradients[1].shape = {batch_size, source_sequence_length, embedding_dimension};
+    input_gradients = { { input_gradients_memory[0].data(), {batch_size, query_sequence_length, embedding_dimension} },
+                        {input_gradients_memory[1].data(), {batch_size, source_sequence_length, embedding_dimension} } };
 
     // Auxiliar
 
