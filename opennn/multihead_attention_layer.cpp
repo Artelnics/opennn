@@ -412,6 +412,8 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     type* sm_grad_data = softmax_gradients.data();
     #pragma omp parallel for
+    const Index total_heads = batch_size * heads_number;
+
     for(Index i = 0; i < total_heads; ++i)
     {
         const Index offset_w = i * query_sequence_length * source_sequence_length;
