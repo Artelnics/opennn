@@ -203,7 +203,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     Tensor4& value = this_forward_propagation->value;
 
     Tensor4& attention_weights = this_forward_propagation->attention_weights;
-    Tensor4& attention_outputs = this_forward_propagation->attention_outputs;
+    //Tensor4& attention_outputs = this_forward_propagation->attention_outputs;
 
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
@@ -283,7 +283,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     }
 
     concatenated_attention_outputs.device(get_device()) = attention_outputs.shuffle(array_4(0, 2, 1, 3))
-                                                                      .reshape(concatenated_attention_outputs.dimensions());
+                                                                           .reshape(concatenated_attention_outputs.dimensions());
 
     const MatrixMap projection_weights_map = matrix_map(projection_weights);
     const VectorMap projection_biases_map = vector_map(projection_biases);
@@ -453,17 +453,132 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     }
 }
 
+void MultiHeadAttention::calculate_projection(const TensorMap3 inputs, const TensorView &weights, const TensorView &biases, Index sequence_length, Index batch_size, Tensor4 &output) const
+{
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+
+    const MatrixMap weights_map = matrix_map(weights);
+    const VectorMap biases_map = vector_map(biases);
+
+#pragma omp parallel for collapse(2)
+    for(Index b = 0; b < batch_size; ++b)
+    {
+        for(Index h = 0; h < heads_number; ++h)
+        {
+            // 1. Map the contiguous input block for this batch:[Sequence, Embedding]
+            const type* in_ptr = inputs.data() + b * (sequence_length * embedding_dimension);
+            const MatrixMap X_b(const_cast<type*>(in_ptr), sequence_length, embedding_dimension);
+
+            // 2. Map the contiguous output block for this batch and head:[Sequence, Head_Dim]
+            type* out_ptr = output.data() + b * (heads_number * sequence_length * head_dimension)
+                            + h * (sequence_length * head_dimension);
+            MatrixMap Out_bh(out_ptr, sequence_length, head_dimension);
+
+            // 3. Extract the weight block for this head: [Embedding, Head_Dim]
+            auto W_h = weights_map.block(0, h * head_dimension, embedding_dimension, head_dimension);
+
+            // 4. Extract the bias block for this head:[Head_Dim]
+            auto b_h = biases_map.segment(h * head_dimension, head_dimension);
+
+            // 5. Multiply and add bias directly into the final, properly-transposed memory location
+            Out_bh.noalias() = (X_b * W_h).rowwise() + b_h.transpose();
+        }
+    }
+}
+
+void MultiHeadAttention::calculate_projection_gradient(const Tensor4 & d_head,
+                                                       const TensorMap3 input,
+                                                       const TensorView &weights,
+                                                       VectorMap d_bias,
+                                                       MatrixMap d_weights,
+                                                       TensorMap3 d_input,
+                                                       Index batch_size,
+                                                       bool accumulate) const
+{
+    const Index sequence_length = input.dimension(1);
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+
+    const MatrixMap W = matrix_map(weights);
+
+    // -------------------------------------------------------------------
+    // PASS 1: Compute d_input (dX)
+    // We parallelize over the batch. Each thread safely computes and
+    // writes to its own specific sequence block in d_input.
+    // -------------------------------------------------------------------
+#pragma omp parallel for
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        // Destination input gradient block for this batch: [Sequence, Embedding]
+        type* dx_ptr = d_input.data() + b * (sequence_length * embedding_dimension);
+        MatrixMap dX_b(dx_ptr, sequence_length, embedding_dimension);
+
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            // Mapped contiguous block from d_head for this batch and head: [Sequence, Head_Dim]
+            const type* delta_ptr = d_head.data() + b * (heads_number * sequence_length * head_dimension)
+                                    + h * (sequence_length * head_dimension);
+            const MatrixMap Delta_bh(const_cast<type*>(delta_ptr), sequence_length, head_dimension);
+
+            // Mapped weight block for this head: [Embedding, Head_Dim]
+            auto W_h = W.block(0, h * head_dimension, embedding_dimension, head_dimension);
+
+            // Accumulate or assign the gradients directly into the output tensor
+            if (h == 0 && !accumulate)
+                dX_b.noalias() = Delta_bh * W_h.transpose();
+            else
+                dX_b.noalias() += Delta_bh * W_h.transpose();
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // PASS 2: Compute d_weights (dW) and d_bias (db)
+    // We parallelize over the heads. Each thread safely computes and
+    // writes to its own specific sub-block in the weights and biases.
+    // -------------------------------------------------------------------
+#pragma omp parallel for
+    for (Index h = 0; h < heads_number; ++h)
+    {
+        // Destination gradient blocks for this head
+        auto dW_h = d_weights.block(0, h * head_dimension, embedding_dimension, head_dimension);
+        auto db_h = d_bias.segment(h * head_dimension, head_dimension);
+
+        for (Index b = 0; b < batch_size; ++b)
+        {
+            // Mapped contiguous block from d_head for this batch and head: [Sequence, Head_Dim]
+            const type* delta_ptr = d_head.data() + b * (heads_number * sequence_length * head_dimension)
+                                    + h * (sequence_length * head_dimension);
+            const MatrixMap Delta_bh(const_cast<type*>(delta_ptr), sequence_length, head_dimension);
+
+            // Mapped contiguous input block for this batch:[Sequence, Embedding]
+            const type* in_ptr = input.data() + b * (sequence_length * embedding_dimension);
+            const MatrixMap X_b(const_cast<type*>(in_ptr), sequence_length, embedding_dimension);
+
+            if (b == 0)
+            {
+                dW_h.noalias() = X_b.transpose() * Delta_bh;
+                db_h.noalias() = Delta_bh.colwise().sum().transpose();
+            }
+            else
+            {
+                dW_h.noalias() += X_b.transpose() * Delta_bh;
+                db_h.noalias() += Delta_bh.colwise().sum().transpose();
+            }
+        }
+    }
+}
+
 
 void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
 {
     const Index batch_size = attention_scores.dimension(0);
-    const Index heads = attention_scores.dimension(1);
     const Index query_sequence_length = attention_scores.dimension(2);
     const Index source_sequence_length = attention_scores.dimension(3);
 
     const Index matrix_size = query_sequence_length * source_sequence_length;
 
-    const Index total_matrices = batch_size * heads;
+    const Index total_matrices = batch_size * heads_number;
 
     MatrixMap scores(attention_scores.data(), total_matrices, matrix_size);
 
@@ -479,11 +594,10 @@ void MultiHeadAttention::apply_key_padding_mask(const MatrixB& key_padding_mask,
     if (key_padding_mask.size() == 0) return;
 
     const Index batch_size = attention_weights.dimension(0);
-    const Index heads = attention_weights.dimension(1);
     const Index query_sequence_length = attention_weights.dimension(2);
     const Index source_sequence_length = attention_weights.dimension(3);
 
-    const Index rows_per_batch = heads * query_sequence_length;
+    const Index rows_per_batch = heads_number * query_sequence_length;
     const type mask_penalty = type(-1e9);
 
     #pragma omp parallel for
@@ -531,55 +645,25 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
     const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
 
     // Query projection
-
-    cublasSgemm(get_cublas_handle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
-                &alpha_one,
-                query_weights_device.data, (int)embedding_dimension,
-                query_input, (int)embedding_dimension,
-                &beta_zero,
-                forward->query.data, (int)embedding_dimension);
-
-    cudnnAddTensor(get_cudnn_handle(),
-                   &alpha_one,
-                   query_biases_device.get_descriptor(), query_biases_device.data,
-                   &alpha_one,
-                   forward->query.get_descriptor(), forward->query.data);
+    linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
+                           query_biases_device.get_descriptor(), forward->query.data,
+                           forward->query.get_descriptor(),
+                           (int)(batch_size * query_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
 
     // Key projection
-
-    cublasSgemm(get_cublas_handle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
-                &alpha_one,
-                key_weights_device.data, (int)embedding_dimension,
-                source_input, (int)embedding_dimension,
-                &beta_zero,
-                forward->key.data, (int)embedding_dimension);
-
-    cudnnAddTensor(get_cudnn_handle(),
-                   &alpha_one,
-                   key_biases_device.get_descriptor(), key_biases_device.data,
-                   &alpha_one,
-                   forward->key.get_descriptor(), forward->key.data);
+    linear_projection_cuda(source_input, key_weights_device.data, key_biases_device.data,
+                           key_biases_device.get_descriptor(), forward->key.data,
+                           forward->key.get_descriptor(),
+                           (int)(batch_size * source_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
 
     // Value projection
-
-    cublasSgemm(get_cublas_handle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
-                &alpha_one,
-                value_weights_device.data, (int)embedding_dimension,
-                source_input, (int)embedding_dimension,
-                &beta_zero,
-                forward->value.data, (int)embedding_dimension);
-
-    cudnnAddTensor(get_cudnn_handle(),
-                   &alpha_one,
-                   value_biases_device.get_descriptor(), value_biases_device.data,
-                   &alpha_one,
-                   forward->value.get_descriptor(), forward->value.data);
+    linear_projection_cuda(source_input, value_weights_device.data, value_biases_device.data,
+                           value_biases_device.get_descriptor(), forward->value.data,
+                           forward->value.get_descriptor(),
+                           (int)(batch_size * source_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
 
     // Transpositions
 
@@ -653,20 +737,12 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
                          forward->attention_outputs_transposed.data, forward->concatenated_attention_outputs.data,
                          (int)query_sequence_length, (int)heads_number, (int)head_dimension);
 
-    cublasSgemm(get_cublas_handle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
-                &alpha_one,
-                projection_weights_device.data, (int)embedding_dimension,
-                forward->concatenated_attention_outputs.data, (int)embedding_dimension,
-                &beta_zero,
-                forward->outputs.data, (int)embedding_dimension);
-
-    cudnnAddTensor(get_cudnn_handle(),
-                   &alpha_one,
-                   projection_biases_device.get_descriptor(), projection_biases_device.data,
-                   &alpha_one,
-                   forward->outputs.get_descriptor(), forward->outputs.data);
+    linear_projection_cuda(forward->concatenated_attention_outputs.data,
+                           projection_weights_device.data, projection_biases_device.data,
+                           projection_biases_device.get_descriptor(), forward->outputs.data,
+                           forward->outputs.get_descriptor(),
+                           (int)(batch_size * query_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
 }
 
 

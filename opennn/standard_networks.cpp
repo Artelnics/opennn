@@ -671,7 +671,7 @@ void Transformer::set(const Index input_sequence_length,
         add_layer(make_unique<MultiHeadAttention>(Shape{input_sequence_length, embedding_dimension},
                                                   heads_number,
                                                   "input_self_attention_" + to_string(i+1)),
-                  {current_enc_idx});
+                                                  {current_enc_idx});
 
         const Index attn_idx = get_layers_number() - 1;
 
