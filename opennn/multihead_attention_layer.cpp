@@ -158,20 +158,17 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
 
 #ifdef OPENNN_CUDA
 
-    const Index embedding_dimension = new_embedding_dimension;
+    query_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    query_biases_device.set_descriptor({new_embedding_dimension});
 
-    query_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    query_biases_device.set_descriptor({embedding_dimension});
+    key_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    key_biases_device.set_descriptor({new_embedding_dimension});
 
-    key_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    key_biases_device.set_descriptor({embedding_dimension});
+    value_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    value_biases_device.set_descriptor({new_embedding_dimension});
 
-    value_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    value_biases_device.set_descriptor({embedding_dimension});
-
-    projection_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    projection_biases_device.set_descriptor({embedding_dimension});
-
+    projection_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    projection_biases_device.set_descriptor({new_embedding_dimension});
 #endif
 }
 
@@ -525,7 +522,8 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
     const Index embedding_dimension = get_embedding_dimension();
     const Index heads_number = this->heads_number;
     const Index head_dimension = get_head_dimension();
-    const type scaling_factor = get_scaling_factor();
+
+    const float scaling_factor = static_cast<float>(get_scaling_factor());
 
     const float* query_input = inputs[0].data;
     const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
@@ -674,7 +672,8 @@ void MultiHeadAttention::back_propagate(const vector<TensorViewCuda>& inputs,
     const Index embedding_dimension = get_embedding_dimension();
     const Index heads_number = this->heads_number;
     const Index head_dimension = get_head_dimension();
-    const type scaling_factor = get_scaling_factor();
+
+    const float scaling_factor = static_cast<float>(get_scaling_factor());
 
     const float* query_input = inputs[0].data;
     const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
@@ -885,17 +884,18 @@ void MultiHeadAttention::back_propagate(const vector<TensorViewCuda>& inputs,
     }
     else
     {
-        cudaMemcpy(back->input_gradients[0].data,
-                   back->query_input_gradients.data,
-                   batch_size * query_sequence_length * embedding_dimension * sizeof(float),
-                   cudaMemcpyDeviceToDevice);
+        CHECK_CUDA(cudaMemcpy(back->input_gradients[0].data,
+                              back->query_input_gradients.data,
+                              batch_size * query_sequence_length * embedding_dimension * sizeof(type),
+                              cudaMemcpyDeviceToDevice));
 
-        cudaMemcpy(back->input_gradients[1].data,
-                   back->source_input_gradients.data,
-                   batch_size * source_sequence_length * embedding_dimension * sizeof(float),
-                   cudaMemcpyDeviceToDevice);
+        CHECK_CUDA(cudaMemcpy(back->input_gradients[1].data,
+                              back->source_input_gradients.data,
+                              batch_size * source_sequence_length * embedding_dimension * sizeof(type),
+                              cudaMemcpyDeviceToDevice));
     }
 }
+
 
 
 vector<TensorViewCuda*> MultiHeadAttention::get_parameter_views_device()

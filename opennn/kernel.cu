@@ -461,7 +461,10 @@ __global__ void embedding_forward_kernel(const int n, const float* inputs, const
 
         if (add_positional_encoding && positional_encoding != nullptr)
         {
-            val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
+            if (token_id > 0)
+            {
+                val += positional_encoding[seq_idx * embedding_dimension + dim_idx];
+            }
         }
 
         outputs[i] = val;
@@ -522,35 +525,47 @@ void embedding_backward_cuda(const size_t n, const float* inputs, const float* o
 
 // Multihead
 
-__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D) {
+// [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
+__global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+    if (i < n)
+    {
         const int d = i % D;
-        const int s = (i / D) % S;
-        const int h = (i / (D * S)) % H;
-        const int b = i / (D * S * H);
-        out[((b * H + h) * S + s) * D + d] = in[i];
+        const int h = (i / D) % H;
+        const int s = (i / (D * H)) % S;
+        const int b = i / (D * H * S);
+
+        const int out_idx = ((b * H + h) * S + s) * D + d;
+        out[out_idx] = in[i];
     }
 }
 
-void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D) {
+void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
     if (n == 0) return;
     const int threads = 256;
     mha_transpose_qkv_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
 }
 
-__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D) {
+// [Batch, Heads, Seq, HeadDim] -> [Batch, Seq, Heads, HeadDim]
+__global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)
+{
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+    if (i < n)
+    {
         const int d = i % D;
         const int s = (i / D) % S;
         const int h = (i / (D * S)) % H;
         const int b = i / (D * S * H);
-        out[((b * S + s) * H + h) * D + d] = in[i];
+
+        const int out_idx = ((b * S + s) * H + h) * D + d;
+        out[out_idx] = in[i];
     }
 }
 
-void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D) {
+void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D)
+{
     if (n == 0) return;
     const int threads = 256;
     mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
