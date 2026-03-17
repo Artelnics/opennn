@@ -27,66 +27,57 @@ int main()
         // Settings
 
         const Index embedding_dimension = 64;
-        const Index heads_number = 8;
+        const Index heads_number = 4;
 
-        // Data Set
+        // Dataset
 
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
-
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();
-
         const vector<string> input_vocabulary = language_dataset.get_input_vocabulary();
 
         // Neural Network
 
-        TextClassificationNetwork text_classification_network({input_vocabulary_size, input_sequence_length, embedding_dimension},
-                                                              {heads_number},
-                                                              {targets_number},
-                                                              input_vocabulary);
-
-        //text_classification_network.print();
+        TextClassificationNetwork text_classification_network(
+            {input_vocabulary_size, input_sequence_length, embedding_dimension},
+            {heads_number},
+            {targets_number},
+            input_vocabulary);
 
         // Training Strategy
-
-        WeightedSquaredError wse;
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(100);
-        training_strategy.get_loss()->set_regularization_method("None");
+        adam->set_display_period(10);
 
+        WeightedSquaredError wse;
+
+        training_strategy.set_loss("CrossEntropyError2d");
+
+        cout << "Training network..." << endl;
         training_strategy.train();
 
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
-
+        cout << "Confusion Matrix:" << endl;
         cout << testing_analysis.calculate_confusion() << endl;
 
-        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
-
-        roc_analysis.print();
-
-        // Deployment
-
         Tensor<string, 1> documents(1);
-        documents[0] = "This is great!";
-
+        documents[0] = "This product is amazing and I love it!";
         MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
-        cout << outputs << endl;
+        cout << "Prediction for 'This product is amazing': " << outputs(0,0) << endl;
 
         cout << "Good bye!" << endl;
-
         return 0;
     }
     catch(const exception& e)
     {
         cout << e.what() << endl;
-
         return 1;
     }
 }

@@ -34,7 +34,7 @@ TEST(CrossEntropyError2d, BackPropagate)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ inputs_number }, Shape{ targets_number }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
 
     neural_network.set_parameters_random();
 
@@ -61,7 +61,6 @@ TEST(CrossEntropyError2d, calculate_binary_error)
 {
     MatrixR data;
     Dataset dataset(5, { 3 }, { 1 });
-
     data.resize(5, 4);
     data << type(0), type(1), type(0), type(1),
             type(1), type(1), type(0), type(0),
@@ -70,7 +69,6 @@ TEST(CrossEntropyError2d, calculate_binary_error)
             type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
-
     vector<Index> input_raw_variable_indices(3);
     input_raw_variable_indices = { 0,1,2 };
 
@@ -81,16 +79,18 @@ TEST(CrossEntropyError2d, calculate_binary_error)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Logistic"));
-  
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
     Batch batch(5, &dataset);
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
     batch.fill(training_indices, input_raw_variable_indices, target_raw_variable_indices);
-
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
     ForwardPropagation forward_propagation(5, &neural_network);
+
+
+    if(!forward_propagation.layers.empty())
+        cout << "layer 0 outputs data: " << forward_propagation.layers[0]->outputs.data << endl;
     BackPropagation back_propagation(5, &cross_entropy_error);
 
     const vector<TensorView> batch_input_pairs = batch.get_inputs();
@@ -134,7 +134,7 @@ TEST(CrossEntropyError2d, calculate_multiple_error)
     multipledataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
 
     Batch batch(5, &multipledataset);
 
@@ -185,7 +185,7 @@ TEST(CrossEntropyError2d, calculate_binary_output_gradients)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
 
     Batch batch(5, &dataset);
 
@@ -233,7 +233,7 @@ TEST(CrossEntropyError2d, calculate_multiple_output_gradients)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
 
     Batch batch(5, &dataset);
 
@@ -282,7 +282,7 @@ TEST(CrossEntropyError2d, get_name)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
 
@@ -309,7 +309,7 @@ TEST(CrossEntropyError2d, to_XML)
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 1 }, "Logistic"));
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ 2 }, Shape{ 1 }, "Sigmoid"));
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
 

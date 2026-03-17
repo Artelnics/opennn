@@ -104,8 +104,8 @@ public:
 public:
 
     void forward_propagate(const vector<TensorViewCuda>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                bool) override;
+                           unique_ptr<LayerForwardPropagationCuda>&,
+                           bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,
                         const vector<TensorViewCuda>&,

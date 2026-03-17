@@ -155,6 +155,21 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
             for(Index column = 0; column < source_sequence_length; ++column)
                 causal_mask(row, column) = (column > row) ? minus_inf : type(0);
     }
+
+#ifdef OPENNN_CUDA
+
+    query_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    query_biases_device.set_descriptor({new_embedding_dimension});
+
+    key_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    key_biases_device.set_descriptor({new_embedding_dimension});
+
+    value_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    value_biases_device.set_descriptor({new_embedding_dimension});
+
+    projection_weights_device.set_descriptor({new_embedding_dimension, new_embedding_dimension});
+    projection_biases_device.set_descriptor({new_embedding_dimension});
+#endif
 }
 
 
@@ -188,7 +203,6 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
     Tensor4& value = this_forward_propagation->value;
 
     Tensor4& attention_weights = this_forward_propagation->attention_weights;
-    Tensor4& attention_outputs = this_forward_propagation->attention_outputs;
 
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
@@ -218,6 +232,30 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
         w_mat.noalias() = (q_mat * k_mat.transpose()) * scaling_factor;
     }
 
+    // Key padding
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; ++b)
+    {
+        for(Index s = 0; s < source_sequence_length; ++s)
+        {
+            bool is_pad = true;
+            for(Index d = 0; d < embedding_dimension; ++d)
+            {
+                if(abs(source_input(b, s, d)) > 1e-7f)
+                {
+                    is_pad = false;
+                    break;
+                }
+            }
+
+            if(is_pad)
+                for(Index h = 0; h < heads_number; ++h)
+                    for(Index q = 0; q < query_sequence_length; ++q)
+                        attention_weights(b, h, q, s) = -1e9f;
+        }
+    }
+
     if (use_causal_mask)
         apply_causal_mask(attention_weights);
 
@@ -226,25 +264,37 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     softmax(attention_weights_map);
 
+
     type* value_data = value.data();
-    type* att_outputs_data = attention_outputs.data();
+    type* concat_data = concatenated_attention_outputs.data();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    const int original_eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1); // Prevent thread oversubscription in OMP loop
+
+#pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
     {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const Index offset_v = i * source_sequence_length * head_dimension;
-        const Index offset_o = i * query_sequence_length * head_dimension;
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
+            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
 
-        const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
-        MatrixMap o_mat(att_outputs_data + offset_o, query_sequence_length, head_dimension);
+            const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+            const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
 
-        o_mat.noalias() = w_mat * v_mat;
+            // Pointer to the exact start of this batch and head in the concatenated buffer
+            type* out_ptr = concat_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
+
+            // Map the interleaved memory directly using OuterStride
+            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
+            Eigen::Map<MatrixR, 0, StrideType> o_mat(out_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
+
+            o_mat.noalias() = w_mat * v_mat;
+        }
     }
+    Eigen::setNbThreads(original_eigen_threads); // Restore original Eigen threads
 
-    concatenated_attention_outputs.device(get_device()) = attention_outputs.shuffle(array_4(0, 2, 1, 3))
-                                                                      .reshape(concatenated_attention_outputs.dimensions());
+
 
     const MatrixMap projection_weights_map = matrix_map(projection_weights);
     const VectorMap projection_biases_map = vector_map(projection_biases);
@@ -290,7 +340,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     MatrixMap projection_weight_gradients = matrix_map(this_back_propagation->projection_weight_gradients);
     VectorMap projection_bias_gradients = vector_map(this_back_propagation->projection_bias_gradients);
     Tensor3& concatenated_attention_output_gradients = this_back_propagation->concatenated_attention_output_gradients;
-    Tensor4& attention_output_gradients = this_back_propagation->attention_output_gradients;
     Tensor4& attention_weight_gradients = this_back_propagation->attention_weight_gradients;
     Tensor4& query_gradients = this_back_propagation->query_gradients;
     Tensor4& key_gradients = this_back_propagation->key_gradients;
@@ -325,34 +374,41 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     concat_grad_map.noalias() = delta_Y_map * proj_weights_map.transpose();
 
-    attention_output_gradients.device(get_device()) =
-        concatenated_attention_output_gradients.reshape(array_4(batch_size, query_sequence_length, heads_number, head_dimension))
-                                            .shuffle(array_4(0, 2, 1, 3));
-
-    const Index total_heads = batch_size * heads_number;
     type* att_weights_data = const_cast<type*>(attention_weights.data());
-    type* att_out_grad_data = attention_output_gradients.data();
     type* v_data = const_cast<type*>(value.data());
     type* v_grad_data = value_gradients.data();
     type* att_weight_grad_data = attention_weight_gradients.data();
+    type* concat_grad_data = concatenated_attention_output_gradients.data();
 
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    const int original_eigen_threads = Eigen::nbThreads();
+    Eigen::setNbThreads(1); // Prevent thread oversubscription in OMP loop
+
+#pragma omp parallel for collapse(2)
+    for (Index b = 0; b < batch_size; ++b)
     {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const Index offset_do = i * query_sequence_length * head_dimension;
-        const Index offset_v = i * source_sequence_length * head_dimension;
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
+            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
 
-        const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap dO(att_out_grad_data + offset_do, query_sequence_length, head_dimension);
-        const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
+            const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
+            const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
 
-        MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
-        MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
+            MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
+            MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
 
-        dV.noalias() = W.transpose() * dO;
-        dW.noalias() = dO * V.transpose();
+            // MAP dO DIRECTLY FROM STRIDED MEMORY
+            type* dO_ptr = concat_grad_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
+
+            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
+            Eigen::Map<const MatrixR, 0, StrideType> dO(dO_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
+
+            dV.noalias() = W.transpose() * dO;
+            dW.noalias() = dO * V.transpose();
+        }
     }
+    Eigen::setNbThreads(original_eigen_threads);
+
 
     type* sm_grad_data = softmax_gradients.data();
     #pragma omp parallel for
@@ -414,17 +470,132 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     }
 }
 
+void MultiHeadAttention::calculate_projection(const TensorMap3 inputs, const TensorView &weights, const TensorView &biases, Index sequence_length, Index batch_size, Tensor4 &output) const
+{
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+
+    const MatrixMap weights_map = matrix_map(weights);
+    const VectorMap biases_map = vector_map(biases);
+
+#pragma omp parallel for collapse(2)
+    for(Index b = 0; b < batch_size; ++b)
+    {
+        for(Index h = 0; h < heads_number; ++h)
+        {
+            // 1. Map the contiguous input block for this batch:[Sequence, Embedding]
+            const type* in_ptr = inputs.data() + b * (sequence_length * embedding_dimension);
+            const MatrixMap X_b(const_cast<type*>(in_ptr), sequence_length, embedding_dimension);
+
+            // 2. Map the contiguous output block for this batch and head:[Sequence, Head_Dim]
+            type* out_ptr = output.data() + b * (heads_number * sequence_length * head_dimension)
+                            + h * (sequence_length * head_dimension);
+            MatrixMap Out_bh(out_ptr, sequence_length, head_dimension);
+
+            // 3. Extract the weight block for this head: [Embedding, Head_Dim]
+            auto W_h = weights_map.block(0, h * head_dimension, embedding_dimension, head_dimension);
+
+            // 4. Extract the bias block for this head:[Head_Dim]
+            auto b_h = biases_map.segment(h * head_dimension, head_dimension);
+
+            // 5. Multiply and add bias directly into the final, properly-transposed memory location
+            Out_bh.noalias() = (X_b * W_h).rowwise() + b_h.transpose();
+        }
+    }
+}
+
+void MultiHeadAttention::calculate_projection_gradient(const Tensor4 & d_head,
+                                                       const TensorMap3 input,
+                                                       const TensorView &weights,
+                                                       VectorMap d_bias,
+                                                       MatrixMap d_weights,
+                                                       TensorMap3 d_input,
+                                                       Index batch_size,
+                                                       bool accumulate) const
+{
+    const Index sequence_length = input.dimension(1);
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index head_dimension = get_head_dimension();
+
+    const MatrixMap W = matrix_map(weights);
+
+    // -------------------------------------------------------------------
+    // PASS 1: Compute d_input (dX)
+    // We parallelize over the batch. Each thread safely computes and
+    // writes to its own specific sequence block in d_input.
+    // -------------------------------------------------------------------
+#pragma omp parallel for
+    for (Index b = 0; b < batch_size; ++b)
+    {
+        // Destination input gradient block for this batch: [Sequence, Embedding]
+        type* dx_ptr = d_input.data() + b * (sequence_length * embedding_dimension);
+        MatrixMap dX_b(dx_ptr, sequence_length, embedding_dimension);
+
+        for (Index h = 0; h < heads_number; ++h)
+        {
+            // Mapped contiguous block from d_head for this batch and head: [Sequence, Head_Dim]
+            const type* delta_ptr = d_head.data() + b * (heads_number * sequence_length * head_dimension)
+                                    + h * (sequence_length * head_dimension);
+            const MatrixMap Delta_bh(const_cast<type*>(delta_ptr), sequence_length, head_dimension);
+
+            // Mapped weight block for this head: [Embedding, Head_Dim]
+            auto W_h = W.block(0, h * head_dimension, embedding_dimension, head_dimension);
+
+            // Accumulate or assign the gradients directly into the output tensor
+            if (h == 0 && !accumulate)
+                dX_b.noalias() = Delta_bh * W_h.transpose();
+            else
+                dX_b.noalias() += Delta_bh * W_h.transpose();
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // PASS 2: Compute d_weights (dW) and d_bias (db)
+    // We parallelize over the heads. Each thread safely computes and
+    // writes to its own specific sub-block in the weights and biases.
+    // -------------------------------------------------------------------
+#pragma omp parallel for
+    for (Index h = 0; h < heads_number; ++h)
+    {
+        // Destination gradient blocks for this head
+        auto dW_h = d_weights.block(0, h * head_dimension, embedding_dimension, head_dimension);
+        auto db_h = d_bias.segment(h * head_dimension, head_dimension);
+
+        for (Index b = 0; b < batch_size; ++b)
+        {
+            // Mapped contiguous block from d_head for this batch and head: [Sequence, Head_Dim]
+            const type* delta_ptr = d_head.data() + b * (heads_number * sequence_length * head_dimension)
+                                    + h * (sequence_length * head_dimension);
+            const MatrixMap Delta_bh(const_cast<type*>(delta_ptr), sequence_length, head_dimension);
+
+            // Mapped contiguous input block for this batch:[Sequence, Embedding]
+            const type* in_ptr = input.data() + b * (sequence_length * embedding_dimension);
+            const MatrixMap X_b(const_cast<type*>(in_ptr), sequence_length, embedding_dimension);
+
+            if (b == 0)
+            {
+                dW_h.noalias() = X_b.transpose() * Delta_bh;
+                db_h.noalias() = Delta_bh.colwise().sum().transpose();
+            }
+            else
+            {
+                dW_h.noalias() += X_b.transpose() * Delta_bh;
+                db_h.noalias() += Delta_bh.colwise().sum().transpose();
+            }
+        }
+    }
+}
+
 
 void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
 {
     const Index batch_size = attention_scores.dimension(0);
-    const Index heads = attention_scores.dimension(1);
     const Index query_sequence_length = attention_scores.dimension(2);
     const Index source_sequence_length = attention_scores.dimension(3);
 
     const Index matrix_size = query_sequence_length * source_sequence_length;
 
-    const Index total_matrices = batch_size * heads;
+    const Index total_matrices = batch_size * heads_number;
 
     MatrixMap scores(attention_scores.data(), total_matrices, matrix_size);
 
@@ -440,11 +611,10 @@ void MultiHeadAttention::apply_key_padding_mask(const MatrixB& key_padding_mask,
     if (key_padding_mask.size() == 0) return;
 
     const Index batch_size = attention_weights.dimension(0);
-    const Index heads = attention_weights.dimension(1);
     const Index query_sequence_length = attention_weights.dimension(2);
     const Index source_sequence_length = attention_weights.dimension(3);
 
-    const Index rows_per_batch = heads * query_sequence_length;
+    const Index rows_per_batch = heads_number * query_sequence_length;
     const type mask_penalty = type(-1e9);
 
     #pragma omp parallel for
@@ -466,6 +636,384 @@ void MultiHeadAttention::print() const
          << "Input shape: " << get_input_shape() << endl
          << "Output shape: " << get_output_shape();
 }
+
+
+#ifdef OPENNN_CUDA
+
+void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
+                                           unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation,
+                                           bool)
+{
+    MultiHeadAttentionForwardPropagationCuda* forward =
+        static_cast<MultiHeadAttentionForwardPropagationCuda*>(layer_forward_propagation.get());
+
+    const Index batch_size = forward->batch_size;
+    const Index query_sequence_length = this->query_sequence_length;
+    const Index source_sequence_length = this->source_sequence_length;
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index heads_number = this->heads_number;
+    const Index head_dimension = get_head_dimension();
+
+    const Index total_weights = batch_size * heads_number * query_sequence_length * source_sequence_length;
+
+    const float scaling_factor = static_cast<float>(get_scaling_factor());
+
+    const float* query_input = inputs[0].data;
+    const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
+
+    // Query projection
+    linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
+                           query_biases_device.get_descriptor(), forward->query.data,
+                           forward->query.get_descriptor(),
+                           (int)(batch_size * query_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
+
+    // Key projection
+    linear_projection_cuda(source_input, key_weights_device.data, key_biases_device.data,
+                           key_biases_device.get_descriptor(), forward->key.data,
+                           forward->key.get_descriptor(),
+                           (int)(batch_size * source_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
+
+    // Value projection
+    linear_projection_cuda(source_input, value_weights_device.data, value_biases_device.data,
+                           value_biases_device.get_descriptor(), forward->value.data,
+                           forward->value.get_descriptor(),
+                           (int)(batch_size * source_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
+
+    // Transpositions
+
+    mha_transpose_qkv_cuda(batch_size * query_sequence_length * embedding_dimension,
+                           forward->query.data, forward->query_transposed.data,
+                           (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+
+    mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
+                           forward->key.data, forward->key_transposed.data,
+                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+
+    mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
+                           forward->value.data, forward->value_transposed.data,
+                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+
+    // Attention scores (Q * K^T)
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_T, CUBLAS_OP_N,
+                              (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
+                              &scaling_factor,
+                              forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              &beta_zero,
+                              forward->attention_weights.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              (int)(batch_size * heads_number));
+
+    // Key padding mask
+
+    mha_key_padding_mask_cuda(
+        total_weights,
+        source_input,
+        forward->attention_weights.data,
+        (int)heads_number,
+        (int)query_sequence_length,
+        (int)source_sequence_length,
+        (int)embedding_dimension
+        );
+
+    if(use_causal_mask)
+    {
+        mha_causal_mask_cuda(batch_size * heads_number * query_sequence_length * source_sequence_length,
+                             forward->attention_weights.data,
+                             (int)query_sequence_length, (int)source_sequence_length);
+    }
+
+    // Softmax
+
+    cudnnSoftmaxForward(get_cudnn_handle(),
+                        CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
+                        &alpha_one,
+                        forward->attention_weights.get_descriptor(), forward->attention_weights.data,
+                        &beta_zero,
+                        forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data);
+
+    // Attention context (Probs * V)
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_N, CUBLAS_OP_N,
+                              (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
+                              &alpha_one,
+                              forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              &beta_zero,
+                              forward->attention_outputs_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              (int)(batch_size * heads_number));
+
+    // Concatenation and output projection
+
+    mha_transpose_o_cuda(batch_size * query_sequence_length * embedding_dimension,
+                         forward->attention_outputs_transposed.data, forward->concatenated_attention_outputs.data,
+                         (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+
+    linear_projection_cuda(forward->concatenated_attention_outputs.data,
+                           projection_weights_device.data, projection_biases_device.data,
+                           projection_biases_device.get_descriptor(), forward->outputs.data,
+                           forward->outputs.get_descriptor(),
+                           (int)(batch_size * query_sequence_length),
+                           (int)embedding_dimension, (int)embedding_dimension);
+}
+
+
+void MultiHeadAttention::back_propagate(const vector<TensorViewCuda>& inputs,
+                                        const vector<TensorViewCuda>& output_gradients,
+                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                                        unique_ptr<LayerBackPropagationCuda>& back_propagation) const
+{
+    MultiHeadAttentionForwardPropagationCuda* forward =
+        static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
+    MultiHeadAttentionBackPropagationCuda* back =
+        static_cast<MultiHeadAttentionBackPropagationCuda*>(back_propagation.get());
+
+    const Index batch_size = forward->batch_size;
+    const Index query_sequence_length = this->query_sequence_length;
+    const Index source_sequence_length = this->source_sequence_length;
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index heads_number = this->heads_number;
+    const Index head_dimension = get_head_dimension();
+
+    const float scaling_factor = static_cast<float>(get_scaling_factor());
+
+    const float* query_input = inputs[0].data;
+    const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
+
+    // Projection weight gradients
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_T,
+                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
+                &alpha_one,
+                output_gradients[0].data, (int)embedding_dimension,
+                forward->concatenated_attention_outputs.data, (int)embedding_dimension,
+                &beta_zero,
+                back->projection_weight_gradients.data, (int)embedding_dimension);
+
+    // Projection bias gradients
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
+                &alpha_one,
+                output_gradients[0].data, (int)embedding_dimension,
+                back->ones.data, (int)(batch_size * query_sequence_length),
+                &beta_zero,
+                back->projection_bias_gradients.data, (int)embedding_dimension);
+
+    // Concatenated attention output gradients
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_T, CUBLAS_OP_N,
+                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
+                &alpha_one,
+                projection_weights_device.data, (int)embedding_dimension,
+                output_gradients[0].data, (int)embedding_dimension,
+                &beta_zero,
+                back->concatenated_attention_output_gradients.data, (int)embedding_dimension);
+
+    // Attention output gradients transposed
+
+    mha_transpose_qkv_cuda(batch_size * query_sequence_length * embedding_dimension,
+                           back->concatenated_attention_output_gradients.data, back->attention_output_gradients_transposed.data,
+                           (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+
+    // Value gradients transposed
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_N, CUBLAS_OP_T,
+                              (int)head_dimension, (int)source_sequence_length, (int)query_sequence_length,
+                              &alpha_one,
+                              back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              &beta_zero,
+                              back->value_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              (int)(batch_size * heads_number));
+
+    // Attention weight gradients
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_T, CUBLAS_OP_N,
+                              (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
+                              &alpha_one,
+                              forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              &beta_zero,
+                              back->attention_weight_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              (int)(batch_size * heads_number));
+
+    // Softmax gradients
+
+    cudnnSoftmaxBackward(get_cudnn_handle(),
+                         CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
+                         &alpha_one,
+                         forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data,
+                         back->attention_weight_gradients.get_descriptor(), back->attention_weight_gradients.data,
+                         &beta_zero,
+                         back->softmax_gradients.get_descriptor(), back->softmax_gradients.data);
+
+    // Query and key gradients transposed
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_N, CUBLAS_OP_N,
+                              (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
+                              &scaling_factor,
+                              forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              &beta_zero,
+                              back->query_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              (int)(batch_size * heads_number));
+
+    cublasSgemmStridedBatched(get_cublas_handle(),
+                              CUBLAS_OP_N, CUBLAS_OP_T,
+                              (int)head_dimension, (int)source_sequence_length, (int)query_sequence_length,
+                              &scaling_factor,
+                              forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              &beta_zero,
+                              back->key_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
+                              (int)(batch_size * heads_number));
+
+    // Des-transposition to flat
+
+    mha_transpose_o_cuda(batch_size * query_sequence_length * embedding_dimension,
+                         back->query_gradients_transposed.data, back->query_gradients.data,
+                         (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+
+    mha_transpose_o_cuda(batch_size * source_sequence_length * embedding_dimension,
+                         back->key_gradients_transposed.data, back->key_gradients.data,
+                         (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+
+    mha_transpose_o_cuda(batch_size * source_sequence_length * embedding_dimension,
+                         back->value_gradients_transposed.data, back->value_gradients.data,
+                         (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+
+    // Query weight, bias and input gradients
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_T,
+                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
+                &alpha_one,
+                back->query_gradients.data, (int)embedding_dimension,
+                query_input, (int)embedding_dimension,
+                &beta_zero,
+                back->query_weight_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
+                &alpha_one,
+                back->query_gradients.data, (int)embedding_dimension,
+                back->ones.data, (int)(batch_size * query_sequence_length),
+                &beta_zero,
+                back->query_bias_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_T, CUBLAS_OP_N,
+                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
+                &alpha_one,
+                query_weights_device.data, (int)embedding_dimension,
+                back->query_gradients.data, (int)embedding_dimension,
+                &beta_zero,
+                back->query_input_gradients.data, (int)embedding_dimension);
+
+    // Key weight, bias and source projection gradients (Temp)
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_T,
+                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
+                &alpha_one,
+                back->key_gradients.data, (int)embedding_dimension,
+                source_input, (int)embedding_dimension,
+                &beta_zero,
+                back->key_weight_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
+                &alpha_one,
+                back->key_gradients.data, (int)embedding_dimension,
+                back->ones.data, (int)(batch_size * source_sequence_length),
+                &beta_zero,
+                back->key_bias_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_T, CUBLAS_OP_N,
+                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
+                &alpha_one,
+                key_weights_device.data, (int)embedding_dimension,
+                back->key_gradients.data, (int)embedding_dimension,
+                &beta_zero,
+                back->source_input_gradients.data, (int)embedding_dimension);
+
+    // Value weight, bias and source input gradients accumulation
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_T,
+                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
+                &alpha_one,
+                back->value_gradients.data, (int)embedding_dimension,
+                source_input, (int)embedding_dimension,
+                &beta_zero,
+                back->value_weight_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
+                &alpha_one,
+                back->value_gradients.data, (int)embedding_dimension,
+                back->ones.data, (int)(batch_size * source_sequence_length),
+                &beta_zero,
+                back->value_bias_gradients.data, (int)embedding_dimension);
+
+    cublasSgemm(get_cublas_handle(),
+                CUBLAS_OP_T, CUBLAS_OP_N,
+                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
+                &alpha_one,
+                value_weights_device.data, (int)embedding_dimension,
+                back->value_gradients.data, (int)embedding_dimension,
+                &alpha_one,
+                back->source_input_gradients.data, (int)embedding_dimension);
+
+    // Final input gradients
+
+    if(inputs.size() == 1)
+    {
+        addition_cuda(batch_size * query_sequence_length * embedding_dimension,
+                      back->query_input_gradients.data, back->source_input_gradients.data,
+                      back->input_gradients[0].data);
+    }
+    else
+    {
+        CHECK_CUDA(cudaMemcpy(back->input_gradients[0].data,
+                              back->query_input_gradients.data,
+                              batch_size * query_sequence_length * embedding_dimension * sizeof(type),
+                              cudaMemcpyDeviceToDevice));
+
+        CHECK_CUDA(cudaMemcpy(back->input_gradients[1].data,
+                              back->source_input_gradients.data,
+                              batch_size * source_sequence_length * embedding_dimension * sizeof(type),
+                              cudaMemcpyDeviceToDevice));
+    }
+}
+
+
+
+vector<TensorViewCuda*> MultiHeadAttention::get_parameter_views_device()
+{
+    return {&query_weights_device, &query_biases_device,
+            &key_weights_device, &key_biases_device,
+            &value_weights_device, &value_biases_device,
+            &projection_weights_device, &projection_biases_device};
+}
+
+#endif
 
 
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
@@ -527,8 +1075,6 @@ void MultiHeadAttentionForwardPropagation::initialize()
 
     attention_weights.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
-    attention_outputs.resize(batch_size, heads_number, query_sequence_length, head_dimension);
-
     // @todo can we remove concatenated_attention_outputs and assign to outputs?
 
     concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
@@ -569,20 +1115,14 @@ void MultiHeadAttentionBackPropagation::initialize()
     input_gradients_memory[0].resize(batch_size * query_sequence_length * embedding_dimension);
     input_gradients_memory[1].resize(batch_size * source_sequence_length * embedding_dimension);
 
-    input_gradients.resize(2);
-    input_gradients[0].data = input_gradients_memory[0].data();
-    input_gradients[0].shape = {batch_size, query_sequence_length, embedding_dimension};
-
-    input_gradients[1].data = input_gradients_memory[1].data();
-    input_gradients[1].shape = {batch_size, source_sequence_length, embedding_dimension};
+    input_gradients = { { input_gradients_memory[0].data(), {batch_size, query_sequence_length, embedding_dimension} },
+                        {input_gradients_memory[1].data(), {batch_size, source_sequence_length, embedding_dimension} } };
 
     // Auxiliar
 
     softmax_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
     attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
-
-    attention_output_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
 
     concatenated_attention_output_gradients.resize(batch_size, query_sequence_length, embedding_dimension);
 
@@ -614,6 +1154,110 @@ vector<TensorView*> MultiHeadAttentionBackPropagation::get_gradient_views()
             &value_weight_gradients, &value_bias_gradients,
             &projection_weight_gradients, &projection_bias_gradients};
 }
+
+
+#ifdef OPENNN_CUDA
+
+MultiHeadAttentionForwardPropagationCuda::MultiHeadAttentionForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void MultiHeadAttentionForwardPropagationCuda::initialize()
+{
+    const MultiHeadAttention* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+
+    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
+    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
+    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+
+    query.resize({batch_size * query_sequence_length, embedding_dimension});
+    key.resize({batch_size * source_sequence_length, embedding_dimension});
+    value.resize({batch_size * source_sequence_length, embedding_dimension});
+
+    query_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
+    key_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+    value_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+
+    attention_weights.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
+    attention_probabilities.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
+
+    attention_outputs_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
+    concatenated_attention_outputs.resize({batch_size * query_sequence_length, embedding_dimension});
+
+    outputs.set_descriptor({batch_size, query_sequence_length, embedding_dimension});
+}
+
+
+MultiHeadAttentionBackPropagationCuda::MultiHeadAttentionBackPropagationCuda(const Index new_batch_size, Layer* new_layer)
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void MultiHeadAttentionBackPropagationCuda::initialize()
+{
+    const MultiHeadAttention* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+
+    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
+    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
+    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+
+    query_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
+    key_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
+    value_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
+    projection_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
+
+    query_bias_gradients.set_descriptor({embedding_dimension});
+    key_bias_gradients.set_descriptor({embedding_dimension});
+    value_bias_gradients.set_descriptor({embedding_dimension});
+    projection_bias_gradients.set_descriptor({embedding_dimension});
+
+    attention_output_gradients_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
+    value_gradients_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+
+    attention_weight_gradients.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
+    softmax_gradients.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
+
+    query_gradients_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
+    key_gradients_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+
+    query_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
+    key_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
+    value_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
+
+    concatenated_attention_output_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
+
+    query_input_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
+    source_input_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
+
+    input_gradients.resize(2);
+    input_gradients[0].resize({batch_size, query_sequence_length, embedding_dimension});
+    input_gradients[1].resize({batch_size, source_sequence_length, embedding_dimension});
+
+    const Index max_seq = (query_sequence_length > source_sequence_length) ? query_sequence_length : source_sequence_length;
+    ones.resize({batch_size * max_seq});
+    ones.fill(1.0f);
+}
+
+
+vector<TensorViewCuda*> MultiHeadAttentionBackPropagationCuda::get_gradient_views()
+{
+    return {&query_weight_gradients, &query_bias_gradients,
+            &key_weight_gradients, &key_bias_gradients,
+            &value_weight_gradients, &value_bias_gradients,
+            &projection_weight_gradients, &projection_bias_gradients};
+}
+
+REGISTER(LayerForwardPropagationCuda, MultiHeadAttentionForwardPropagationCuda, "MultiHeadAttention")
+REGISTER(LayerBackPropagationCuda, MultiHeadAttentionBackPropagationCuda, "MultiHeadAttention")
+
+#endif
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 REGISTER(LayerForwardPropagation, MultiHeadAttentionForwardPropagation, "MultiHeadAttention")

@@ -1312,95 +1312,52 @@ void Loss::calculate_layers_error_gradient_cuda(const BatchCuda& batch,
 
 void Loss::add_regularization_cuda(BackPropagationCuda& back_propagation) const
 {
-    /*
     if (regularization_method == "None" || regularization_weight == 0.0f)
     {
         back_propagation.regularization = 0.0f;
         return;
     }
 
-    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
+    NeuralNetwork* neural_network = this->neural_network;
 
-    const Index layers_number = neural_network->get_layers_number();
+    const Index parameters_number = neural_network->get_parameters_number();
 
-    type total_sum_squares = 0.0f;
-    type total_l1_norm = 0.0f;
+    float* parameters_data = neural_network->get_parameters_device().data;
+    float* gradients_data = back_propagation.neural_network.gradients.data;
 
-    cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
-
-    for(Index layer_index = 0; layer_index < layers_number; ++layer_index)
+    if (regularization_method == "L1")
     {
-        Layer* layer = neural_network->get_layer(layer_index).get();
+        float l1_norm = 0.0f;
 
-        if(!layer->get_is_trainable())
-            continue;
+        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
+        back_propagation.regularization = regularization_weight * l1_norm;
 
-        LayerBackPropagationCuda* layer_back_prop_cuda = back_propagation.neural_network.layers[layer_index].get();
+        apply_l1_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight);
+    }
+    else if (regularization_method == "L2")
+    {
+        float dot_product = 0.0f;
 
-        const vector<TensorView>& parameter_device_pairs = layer->get_parameter_views_device();
-        const vector<TensorView>& delta_device_pairs = layer_back_prop_cuda->get_gradient_views_device();
+        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
+        back_propagation.regularization = 0.5f * regularization_weight * dot_product;
 
-        for(Index param_index = 0; param_index < Index(parameter_device_pairs.size()); ++param_index)
-        {
-            type* param_device_ptr = parameter_device_pairs[param_index].data;
-            const Index param_size = parameter_device_pairs[param_index].size;
-            type* delta_device_ptr = delta_device_pairs[param_index].data;
+        CHECK_CUBLAS(cublasSaxpy(get_cublas_handle(), (int)parameters_number, &regularization_weight, parameters_data, 1, gradients_data, 1));
+    }
+    else if (regularization_method == "ElasticNet")
+    {
+        const float mix_factor = 0.5f;
 
-            if (param_size == 0) continue;
+        float l1_norm = 0.0f;
+        float dot_product = 0.0f;
+        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
+        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
 
-            if (regularization_method == "L1")
-            {
-                type l1_norm = 0.0f;
-                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_norm);
-                total_l1_norm += l1_norm;
+        back_propagation.regularization = regularization_weight * (mix_factor * l1_norm + (1.0f - mix_factor) * 0.5f * dot_product);
 
-                apply_l1_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight);
-            }
-            else if (regularization_method == "L2")
-            {
-                type sum_squares = 0.0f;
-
-                cublasSdot(cublas_handle, param_size, param_device_ptr, 1, param_device_ptr, 1, &sum_squares);
-
-                total_sum_squares += sum_squares;
-
-                const type alpha = regularization_weight;
-
-                cublasSaxpy(cublas_handle, param_size, &alpha, param_device_ptr, 1, delta_device_ptr, 1);
-            }
-            else if (regularization_method == "ElasticNet")
-            {
-                const type mix_factor = 0.5f;
-                type l1_sum_abs = 0.0f;
-                type l2_sum_sq = 0.0f;
-
-                cublasSasum(cublas_handle, param_size, param_device_ptr, 1, &l1_sum_abs);
-
-                cublasSdot(cublas_handle, param_size, param_device_ptr, 1, param_device_ptr, 1, &l2_sum_sq);
-
-                const type term_l1 = mix_factor * l1_sum_abs;
-                const type term_l2 = (1.0f - mix_factor) * 0.5f * l2_sum_sq;
-
-                apply_elastic_net_gradient_cuda(param_size, delta_device_ptr, param_device_ptr, regularization_weight, mix_factor);
-            }
-        }
+        apply_elastic_net_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight, mix_factor);
     }
 
-    if (regularization_method == "L2")
-    {
-        const type regularization_term = 0.5f * regularization_weight * total_sum_squares;
-
-        back_propagation.regularization = regularization_term;
-        back_propagation.loss += regularization_term;
-    }
-    else if (regularization_method == "L1")
-    {
-        const type regularization_term = regularization_weight * total_l1_norm;
-
-        back_propagation.regularization = regularization_term;
-        back_propagation.loss += regularization_term;
-    }
-    */
+    back_propagation.loss_value += back_propagation.regularization;
 }
 
 

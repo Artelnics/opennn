@@ -63,21 +63,23 @@ public:
 public:
 
     void forward_propagate(const vector<TensorViewCuda>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
-                                bool) override;
+                           unique_ptr<LayerForwardPropagationCuda>&,
+                           bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,
-                             const vector<TensorViewCuda>&,
-                             unique_ptr<LayerForwardPropagationCuda>&,
-                             unique_ptr<LayerBackPropagationCuda>&) const override;
+                        const vector<TensorViewCuda>&,
+                        unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
 
     vector<TensorViewCuda*> get_parameter_views_device() override;
+
+    void copy_positional_encoding_device();
 
 private:
 
     TensorViewCuda weights_device;
 
-    float* positional_encoding_device = nullptr;
+    TensorCuda positional_encoding_device;
 
 #endif
 
@@ -91,6 +93,7 @@ private:
     bool add_positional_encoding = false;
 
     Tensor2 positional_encoding;
+    bool pos_encoding_synced = false;
 
     type dropout_rate = type(0);
 };

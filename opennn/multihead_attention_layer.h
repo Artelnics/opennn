@@ -9,6 +9,7 @@
 #pragma once
 
 #include "layer.h"
+#include "pch.h"
 
 namespace opennn
 {
@@ -66,24 +67,8 @@ public:
                               const TensorView& biases,
                               Index sequence_length,
                               Index batch_size,
-                              Tensor4& output) const
-    {
-        const Index embedding_dimension = get_embedding_dimension();
-        const Index heads = heads_number;
-        const Index head_dimension = get_head_dimension();
-        const Index total_rows = batch_size * sequence_length;
+                              Tensor4& output) const;
 
-        const MatrixMap inputs_map(inputs.data(), total_rows, embedding_dimension);
-        const MatrixMap weights_map = matrix_map(weights);
-        const VectorMap biases_map = vector_map(biases);
-
-        MatrixR projected(total_rows, embedding_dimension);
-        projected.noalias() = (inputs_map * weights_map).rowwise() + biases_map.transpose();
-
-        TensorMap4 projected_tensor(projected.data(), batch_size, sequence_length, heads, head_dimension);
-
-        output.device(get_device()) = projected_tensor.shuffle(array_4(0, 2, 1, 3));
-    }
 
     void calculate_projection_gradient(const Tensor4& d_head,
                                        const TensorMap3 input,
@@ -92,32 +77,7 @@ public:
                                        MatrixMap d_weights,
                                        TensorMap3 d_input,
                                        Index batch_size,
-                                       bool accumulate) const
-    {
-        const Index sequence_length = input.dimension(1);
-        const Index embedding_dimension = get_embedding_dimension();
-        const Index total_rows = batch_size * sequence_length;
-
-        MatrixR Delta(total_rows, embedding_dimension);
-        TensorMap2 Delta_map(Delta.data(), total_rows, embedding_dimension);
-
-        Delta_map.device(get_device()) = d_head.shuffle(array_4(0, 2, 1, 3))
-                                             .reshape(array_2(total_rows, embedding_dimension));
-
-        const MatrixMap Delta_mat(Delta.data(), total_rows, embedding_dimension);
-        const MatrixMap X(input.data(), total_rows, embedding_dimension);
-        const MatrixMap W = matrix_map(weights);
-
-        d_weights.noalias() = X.transpose() * Delta_mat;
-        d_bias.noalias() = Delta_mat.colwise().sum();
-
-        MatrixMap dX_mat(d_input.data(), total_rows, embedding_dimension);
-
-        if(accumulate)
-            dX_mat.noalias() += Delta_mat * W.transpose();
-        else
-            dX_mat.noalias() = Delta_mat * W.transpose();
-    }
+                                       bool accumulate) const;
 
     void print() const override;
 
@@ -127,7 +87,56 @@ public:
     void apply_key_padding_mask(const MatrixB&,Tensor4&) const;
 
 #ifdef OPENNN_CUDA
-        // @todo
+
+    public:
+
+        void forward_propagate(const vector<TensorViewCuda>&,
+                               unique_ptr<LayerForwardPropagationCuda>&,
+                               bool) override;
+
+        void back_propagate(const vector<TensorViewCuda>&,
+                            const vector<TensorViewCuda>&,
+                            unique_ptr<LayerForwardPropagationCuda>&,
+                            unique_ptr<LayerBackPropagationCuda>&) const override;
+
+        vector<TensorViewCuda*> get_parameter_views_device() override;
+
+    protected:
+
+        void linear_projection_cuda(const float* input,
+                                    const float* weights,
+                                    const float* biases,
+                                    cudnnTensorDescriptor_t biases_desc,
+                                    float* output,
+                                    cudnnTensorDescriptor_t output_desc,
+                                    int batch_seq_len,
+                                    int input_dim,
+                                    int output_dim) const
+        {
+            CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                                     CUBLAS_OP_N, CUBLAS_OP_N,
+                                     output_dim, batch_seq_len, input_dim,
+                                     &alpha_one,
+                                     weights, output_dim,
+                                     input, input_dim,
+                                     &beta_zero,
+                                     output, output_dim));
+
+            CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
+                                       &alpha_one,
+                                       biases_desc, biases,
+                                       &alpha_one,
+                                       output_desc, output));
+        }
+
+        TensorViewCuda query_weights_device;
+        TensorViewCuda query_biases_device;
+        TensorViewCuda key_weights_device;
+        TensorViewCuda key_biases_device;
+        TensorViewCuda value_weights_device;
+        TensorViewCuda value_biases_device;
+        TensorViewCuda projection_weights_device;
+        TensorViewCuda projection_biases_device;
 #endif
 
 private:
@@ -161,8 +170,7 @@ private:
 
 struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
 {
-    MultiHeadAttentionForwardPropagation(const Index new_batch_size = 0,
-                                         Layer* new_layer = nullptr);
+    MultiHeadAttentionForwardPropagation(const Index = 0, Layer* = nullptr);
 
     void initialize() override;
 
@@ -173,7 +181,6 @@ struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
     Tensor4 value;
 
     Tensor4 attention_weights;
-    Tensor4 attention_outputs;
 
     Tensor3 concatenated_attention_outputs;
 };
@@ -190,7 +197,6 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
     void print() const override;
 
     Tensor4 attention_weight_gradients;
-    Tensor4 attention_output_gradients;
     Tensor3 concatenated_attention_output_gradients;
 
     Tensor4 query_gradients;
@@ -216,7 +222,55 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
 };
 
 #ifdef OPENNN_CUDA
-    // @todo
+
+struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    MultiHeadAttentionForwardPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    void print() const override {}
+
+    void free() override {}
+
+    TensorCuda query, key, value;                       // [B*S, E]
+    TensorCuda attention_weights;                       // Scores [B*H*Sq, Sk]
+    TensorCuda attention_outputs;                       // [B*H*Sq, D]
+    TensorCuda concatenated_attention_outputs;          // [B*Sq, E]
+
+    TensorCuda query_transposed, key_transposed, value_transposed;
+    TensorCuda attention_outputs_transposed;
+    TensorCuda attention_probabilities;
+};
+
+
+struct MultiHeadAttentionBackPropagationCuda : public LayerBackPropagationCuda
+{
+    MultiHeadAttentionBackPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    vector<TensorViewCuda*> get_gradient_views() override;
+
+    void print() const override {}
+
+    void free() override {}
+
+    TensorViewCuda query_weight_gradients, key_weight_gradients, value_weight_gradients, projection_weight_gradients;
+    TensorViewCuda query_bias_gradients, key_bias_gradients, value_bias_gradients, projection_bias_gradients;
+
+    TensorCuda query_gradients, key_gradients, value_gradients;
+    TensorCuda attention_weight_gradients;              // dP
+    TensorCuda attention_output_gradients;              // dO
+    TensorCuda concatenated_attention_output_gradients; // dY_proj
+    TensorCuda softmax_gradients;                       // dS
+
+    TensorCuda query_gradients_transposed, key_gradients_transposed, value_gradients_transposed;
+    TensorCuda attention_output_gradients_transposed;
+    TensorCuda query_input_gradients, source_input_gradients; // dX_q, dX_s
+    TensorCuda ones;
+};
+
 #endif
 
 } 

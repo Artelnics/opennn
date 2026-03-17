@@ -185,21 +185,23 @@ public:
                               cudaMemcpyDeviceToDevice));
     }
 
-
-    void back_propagate(const vector<TensorViewCuda>& input_views,
+    void back_propagate(const vector<TensorViewCuda>&,
                         const vector<TensorViewCuda>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                        unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
     {
-        type* input_gradients = output_gradient_views[0].data;
-        type* output_gradients = back_propagation->input_gradients[0].data;
+        type* source_gradient = output_gradient_views[0].data;
+        type* destination_gradient = back_propagation->input_gradients[0].data;
 
         const size_t bytes_to_copy = back_propagation->input_gradients[0].size() * sizeof(type);
 
-        CHECK_CUDA(cudaMemcpy(input_gradients,
-                              output_gradients,
-                              bytes_to_copy,
-                              cudaMemcpyDeviceToDevice));
+        if (source_gradient && destination_gradient && source_gradient != destination_gradient)
+        {
+            CHECK_CUDA(cudaMemcpy(destination_gradient,
+                                  source_gradient,
+                                  bytes_to_copy,
+                                  cudaMemcpyDeviceToDevice));
+        }
     }
 
 #endif
@@ -222,7 +224,10 @@ struct FlattenForwardPropagation final : LayerForwardPropagation
     {
         const Shape output_shape = layer->get_output_shape();
         outputs.shape = {batch_size, output_shape[0]};
+        outputs_memory.resize(outputs.shape.count());
+        outputs.data = outputs_memory.data();
     }
+    VectorR outputs_memory;
 
     void print() const override
     {

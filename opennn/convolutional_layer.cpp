@@ -759,16 +759,24 @@ void ConvolutionalForwardPropagation::initialize()
                                input_channels);
 
     outputs.shape = {batch_size, output_height, output_width, kernels_number};
+    outputs_memory.resize(outputs.shape.count());
+    outputs.data = outputs_memory.data();
 
     activation_derivatives.shape = { batch_size, output_height, output_width, kernels_number };
+    activation_derivatives_memory.resize(activation_derivatives.shape.count());
+    activation_derivatives.data = activation_derivatives_memory.data();
 
     // Batch Normalization
-
     if (convolutional_layer->get_batch_normalization())
     {
         means.shape = { kernels_number };
+        means_memory.resize(kernels_number);
+        means.data = means_memory.data();
+
         standard_deviations.shape = { kernels_number };
-    } 
+        standard_deviations_memory.resize(kernels_number);
+        standard_deviations.data = standard_deviations_memory.data();
+    }
 }
 
 
@@ -1139,14 +1147,6 @@ void ConvolutionalForwardPropagationCuda::initialize()
     const Index output_width = convolutional_layer->get_output_width();
 
     const Index kernels_number = convolutional_layer->get_kernels_number();
-    const Index kernel_height = convolutional_layer->get_kernel_height();
-    const Index kernel_width = convolutional_layer->get_kernel_width();
-
-    const Index pad_height = convolutional_layer->get_padding_height();
-    const Index pad_width = convolutional_layer->get_padding_width();
-
-    const Index stride_height = convolutional_layer->get_row_stride();
-    const Index stride_width = convolutional_layer->get_column_stride();
 
     string layer_label = convolutional_layer->get_label();
 
@@ -1253,12 +1253,6 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
-
-    const Index pad_height = convolutional_layer->get_padding_height();
-    const Index pad_width = convolutional_layer->get_padding_width();
-
-    const Index stride_height = convolutional_layer->get_row_stride();
-    const Index stride_width = convolutional_layer->get_column_stride();
 
     // Input Deltas
 

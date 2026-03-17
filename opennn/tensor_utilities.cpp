@@ -217,12 +217,6 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, In
 }
 
 
-//Index count_between(const VectorR& vector,type minimum, type maximum)
-//{
-//    return (vector.array() >= minimum && vector.array() <= maximum).count();
-//}
-
-
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
 {
     const Index rows = matrix.rows();

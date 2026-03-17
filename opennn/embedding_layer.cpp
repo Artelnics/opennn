@@ -83,6 +83,14 @@ void Embedding::set(const Index new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
+
+#ifdef OPENNN_CUDA
+
+    weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
+
+    positional_encoding_device.resize({sequence_length, new_embedding_dimension});
+
+#endif
 }
 
 void Embedding::set_scale_embedding(bool new_scale_embedding)
@@ -158,7 +166,10 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
         const Index token_id = static_cast<Index>(input_indices[i]);
 
         if(token_id < 0 || token_id >= weights_map.rows())
+        {
+            outputs_map.row(i).setZero();
             continue;
+        }
 
         outputs_map.row(i).noalias() = weights_map.row(token_id);
     }
@@ -172,7 +183,9 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
 
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; b++)
-            outputs_map.block(b * sequence_length, 0, sequence_length, embedding_dimension).noalias() += positional_encoding_map;
+            for(Index s = 0; s < sequence_length; s++)
+                if (static_cast<Index>(input_indices[b * sequence_length + s]) > 0)
+                    outputs_map.row(b * sequence_length + s) += positional_encoding_map.row(s);
     }
 
     //if(is_training && dropout_rate > 0)
@@ -323,26 +336,94 @@ void EmbeddingBackPropagation::print() const
 #ifdef OPENNN_CUDA
 
 void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                       bool is_training)
+                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                                  bool is_training)
 {
-    throw runtime_error("Embedding::forward_propagate is not yet implemented. Please check back in a future version.");
+    const Index batch_size = forward_propagation->batch_size;
+    const Index sequence_length = this->sequence_length;
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index vocabulary_size = get_vocabulary_size();
+
+    const Index total_elements = batch_size * sequence_length * embedding_dimension;
+
+    TensorViewCuda& outputs = forward_propagation->outputs;
+
+    const float* inputs_ptr = inputs[0].data;
+    const float* weights_ptr = weights_device.data;
+
+    if (add_positional_encoding && !pos_encoding_synced)
+    {
+        this->copy_positional_encoding_device();
+        pos_encoding_synced = true;
+    }
+
+    const float* pos_enc_ptr = add_positional_encoding ? positional_encoding_device.data : nullptr;
+
+    float* outputs_ptr = outputs.data;
+
+    embedding_forward_cuda(
+        total_elements,
+        inputs_ptr,
+        weights_ptr,
+        pos_enc_ptr,
+        outputs_ptr,
+        sequence_length,
+        embedding_dimension,
+        vocabulary_size,
+        scale_embedding,
+        add_positional_encoding
+        );
 }
 
 
-void Embedding::back_propagate(const vector<TensorViewCuda>&,
-                                    const vector<TensorViewCuda>&,
-                                    unique_ptr<LayerForwardPropagationCuda>&,
-                                    unique_ptr<LayerBackPropagationCuda>&) const
+void Embedding::back_propagate(const vector<TensorViewCuda>& inputs,
+                               const vector<TensorViewCuda>& output_gradients,
+                               unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                               unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
-    throw runtime_error("Embedding::back_propagate is not yet implemented. Please check back in a future version.");
+    const Index batch_size = forward_propagation->batch_size;
+    const Index sequence_length = this->sequence_length;
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index vocabulary_size = get_vocabulary_size();
+    const Index total_elements = batch_size * sequence_length * embedding_dimension;
+
+    EmbeddingBackPropagationCuda* embedding_back_propagation = static_cast<EmbeddingBackPropagationCuda*>(back_propagation.get());
+
+    float* weight_gradients_ptr = embedding_back_propagation->weight_gradients.data;
+
+    CHECK_CUDA(cudaMemset(weight_gradients_ptr, 0, vocabulary_size * embedding_dimension * sizeof(float)));
+
+    const float* inputs_ptr = inputs[0].data;
+    const float* output_gradients_ptr = output_gradients[0].data;
+
+    embedding_backward_cuda(
+        total_elements,
+        inputs_ptr,
+        output_gradients_ptr,
+        weight_gradients_ptr,
+        sequence_length,
+        embedding_dimension,
+        vocabulary_size,
+        scale_embedding
+        );
 }
 
 
 vector<TensorViewCuda*> Embedding::get_parameter_views_device()
 {
-    throw runtime_error("Embedding::get_parameter_views_device is not yet implemented. Please check back in a future version.");
-    return vector<TensorViewCuda*>();
+    return {&weights_device};
+}
+
+
+void Embedding::copy_positional_encoding_device()
+{
+    if (positional_encoding.size() > 0)
+    {
+        CHECK_CUDA(cudaMemcpy(positional_encoding_device.data,
+                              positional_encoding.data(),
+                              positional_encoding.size() * sizeof(type),
+                              cudaMemcpyHostToDevice));
+    }
 }
 
 
@@ -355,13 +436,25 @@ EmbeddingForwardPropagationCuda::EmbeddingForwardPropagationCuda(const Index new
 
 void EmbeddingForwardPropagationCuda::initialize()
 {
-    throw runtime_error("EmbeddingForwardPropagationCuda::initialize is not yet implemented. Please check back in a future version.");
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
+
+    const Index sequence_length = embedding_layer->get_sequence_length();
+    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
+
+    outputs.set_descriptor({batch_size, sequence_length, embedding_dimension});
 }
 
 
 void EmbeddingForwardPropagationCuda::print() const
 {
-    throw runtime_error("EmbeddingForwardPropagationCuda::print is not yet implemented. Please check back in a future version.");
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
+
+    const Index sequence_length = embedding_layer->get_sequence_length();
+    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
+
+    cout << "Embedding layer forward propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Outputs dimensions: " << batch_size << "x" << sequence_length << "x" << embedding_dimension << endl;
 }
 
 
@@ -374,7 +467,12 @@ EmbeddingBackPropagationCuda::EmbeddingBackPropagationCuda(const Index new_batch
 
 void EmbeddingBackPropagationCuda::initialize()
 {
-    throw runtime_error("EmbeddingBackPropagationCuda::initialize is not yet implemented. Please check back in a future version.");
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
+
+    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
+    const Index vocabulary_size = embedding_layer->get_vocabulary_size();
+
+    weight_gradients.set_descriptor({vocabulary_size, embedding_dimension});
 }
 
 
@@ -386,8 +484,15 @@ vector<TensorViewCuda*> EmbeddingBackPropagationCuda::get_gradient_views()
 
 void EmbeddingBackPropagationCuda::print() const
 {
-    throw runtime_error("EmbeddingBackPropagationCuda::print is not yet implemented. Please check back in a future version.");
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
+    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
+    const Index vocabulary_size = embedding_layer->get_vocabulary_size();
+
+    cout << "Embedding layer back propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Weight gradients dimensions: " << vocabulary_size << "x" << embedding_dimension << endl;
 }
+
 
 REGISTER(LayerForwardPropagationCuda, EmbeddingForwardPropagationCuda, "Embedding")
 REGISTER(LayerBackPropagationCuda, EmbeddingBackPropagationCuda, "Embedding")

@@ -81,8 +81,13 @@ void MinkowskiError::calculate_output_gradients(const Batch& batch,
 
     const MatrixR& errors = back_propagation.errors;
 
-    output_gradients.array() = errors.array()
-        * (errors.array().abs() + EPSILON).pow(minkowski_parameter - 2.0f)/ samples_number;
+//    output_gradients.array() = errors.array()
+//        * (errors.array().abs() + EPSILON).pow(minkowski_parameter - 2.0f)/ samples_number;
+
+
+//  Falta factor minkowski_parameter
+    output_gradients.array() = minkowski_parameter * errors.array()
+                               * (errors.array().abs() + EPSILON).pow(minkowski_parameter - 2.0f) / samples_number;
 }
 
 

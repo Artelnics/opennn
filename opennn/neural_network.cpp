@@ -8,14 +8,14 @@
 
 #include "registry.h"
 #include "string_utilities.h"
-#include "image_utilities.h"
+//#include "image_utilities.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
-#include "convolutional_layer.h"
+//#include "convolutional_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
@@ -50,6 +50,8 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
         : input_indices);
+
+    compile(); //COmprobar que esta bien Miguel B. 10-03-26
 }
 
 
@@ -625,9 +627,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         = forward_propagation.get_layer_input_views(input_view, is_training);
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
+    {
         layers[i]->forward_propagate(layer_input_views[i],
             forward_propagation.layers[i],
             is_training);
+    }
 }
 
 
@@ -905,7 +909,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LayerInputIndices");
 
-    for(Index i = 0; i < Index(layer_input_indices.size()); i++) 
+    for(Index i = 0; i < Index(layer_input_indices.size()); i++)
         add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
     printer.CloseElement();
@@ -974,7 +978,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
 
 void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 {
-
     if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
@@ -986,20 +989,20 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     for(Variable& variable : input_variables)
     {
         if(variable.is_categorical())
+        {
             for(string& category_name : variable.categories)
             {
                 current_element = current_element->NextSiblingElement("Input");
-                if(!current_element)
-                    break;
+                if(!current_element) break;
 
                 if(current_element->GetText())
                     category_name = current_element->GetText();
             }
+        }
         else
         {
             current_element = current_element->NextSiblingElement("Input");
-            if(!current_element)
-                continue;
+            if(!current_element) continue;
 
             if(current_element->GetText())
                 variable.name = current_element->GetText();
@@ -1641,9 +1644,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_
         = forward_propagation.get_layer_input_views_device(input_views_device, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
+    {
         layers[i]->forward_propagate(layer_input_views_device[i],
                                      forward_propagation.layers[i],
                                      is_training);
+    }
 }
 
 

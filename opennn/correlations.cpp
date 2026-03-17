@@ -341,6 +341,7 @@ Correlation logarithmic_correlation(const VectorR& x,
 }
 
 
+
 Correlation logistic_correlation_vector_vector(const VectorR& x,
                                                const VectorR& y)
 {
@@ -348,39 +349,65 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
 
     const auto [x_filter, y_filter] = filter_missing_values(x,y);
 
+     cout<<"x_filter.size()"<<x_filter.size()<<endl;
+     cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
+     cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
+   //  cout<<"y_filter"<<y_filter<<endl;
+   //  cout<<"x_filter"<<x_filter<<endl;
+
+    cout<<"001"<<endl;
+
     if (x_filter.size() < 2
-    || is_constant(x_filter)
-    || is_constant(y_filter))
+        || is_constant(x_filter)
+        || is_constant(y_filter))
     {
+        cout<<"002"<<endl;
+       // cout<<"x_filter.size()"<<x_filter.size()<<endl;
+       // cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
+       // cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
+
         correlation.r = type(NAN);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
+    cout<<"003"<<endl;
 
-    MatrixR data;
-    data << x_filter, y_filter;
+
+    MatrixR data(x_filter.size(), 2);
+    data.col(0) = x_filter;
+    data.col(1) = y_filter;
 
     Dataset dataset(x_filter.size(), {1}, {1});
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
-    dataset.set_variable_scalers("MinimumMaximum");
+    dataset.set_variable_scalers("MeanStandardDeviation");
+    dataset.set_shape("Input", {1});
+    dataset.set_shape("Target", {1});
+    dataset.set_display(false);
+    cout<<"005"<<endl;
 
     NeuralNetwork neural_network;
     Shape dim1 = { 1 };
     Shape dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
+    cout<<"006"<<endl;
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
     mean_squared_error.set_regularization_method("None");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
+    cout<<"007"<<endl;
     levenberg_marquardt_algorithm.train();
+    cout<<"008"<<endl;
 
     const MatrixR inputs = dataset.get_feature_data("Input");
     const MatrixR targets = dataset.get_feature_data("Target");
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
+
+    // cout << "outputs: " << outputs.transpose() << endl;
+    // cout << "targets: " << targets.transpose() << endl;
 
     // Sigmoid correlation
 
@@ -510,7 +537,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
         return correlation;
     }
 
-    MatrixR data;
+    MatrixR data(x_filter.rows(), 1 + y_filter.cols());
     data << x_filter, y_filter;
 
     vector<Index> input_columns_indices(1);
@@ -532,7 +559,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     dataset.set_shape("Input", {dataset.get_features_number("Input")});
     dataset.set_shape("Target", {dataset.get_features_number("Target")});
 
-    const Index input_features_number = dataset.get_features_number("Input");
+    const Index input_features_number = dataset.    get_features_number("Input");
     const Index target_features_number = dataset.get_features_number("Target");
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
@@ -610,7 +637,7 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
         return correlation;
     }
 
-    MatrixR data;
+    MatrixR data(x_filter.rows(), x_filter.cols() + y_filter.cols());
     data << x_filter, y_filter;
 
     vector<Index> input_columns_indices(x_filter.cols());

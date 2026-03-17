@@ -37,23 +37,21 @@ void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
-    // Batch
-
     const Index samples_number = batch.get_samples_number();
+    if (samples_number == 0) return;
 
     const MatrixMap targets = matrix_map(batch.get_targets());
+    const MatrixMap outputs_map = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
-    // Forward propagation
+    auto outputs = outputs_map.array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
 
-    const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
+    MatrixR error = targets.array() * outputs.log() +
+                                 (1.0f - targets.array()) * (1.0f - outputs).log();
 
-    // Back propagation
+    back_propagation.error = error.sum() / static_cast<type>(-samples_number);
 
-    back_propagation.error = (targets.array() * (outputs.array() + EPSILON).log() +
-                               (1.0f - targets.array()) * (1.0f - outputs.array() + EPSILON).log()
-                               ).sum()/ static_cast<type>(-samples_number);
-
-    if(isnan(back_propagation.error)) throw runtime_error("\nError is NAN.");
+    if(isnan(back_propagation.error) || isinf(back_propagation.error))
+        back_propagation.error = 10.0f;
 }
 
 

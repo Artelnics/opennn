@@ -82,6 +82,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     Correlation correlation = logistic_correlation_vector_vector(x, y);
 
+    correlation.print();
     //correlation.print(); system("pause");
 
     EXPECT_LE(abs(correlation.r), type(0.1));

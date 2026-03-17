@@ -106,6 +106,7 @@ struct DenseBackPropagation final : LayerBackPropagation
 
         input_gradients_memory.resize(1);
         input_gradients_memory[0].resize(full_input_shape.count());
+
         input_gradients.resize(1);
         input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = full_input_shape;
