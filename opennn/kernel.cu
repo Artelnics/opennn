@@ -273,17 +273,11 @@ void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) 
+    if (i < n)
     {
-        const float param_val = params[i];
-
-        float sign = 0.0f;
-
-        if (param_val > 0.0f) sign = 1.0f;
-        else if (param_val < 0.0f) sign = -1.0f;
-
-        deltas[i] += weight * sign;
+        const float p = params[i];
+        const float s = (p > 0.0f) ? 1.0f : ((p < 0.0f) ? -1.0f : 0.0f);
+        deltas[i] += weight * s;
     }
 }
 
@@ -569,6 +563,41 @@ void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int
     if (n == 0) return;
     const int threads = 256;
     mha_transpose_o_kernel<<<(n + threads - 1) / threads, threads>>>(n, in, out, S, H, D);
+}
+
+
+__global__ void mha_key_padding_mask_kernel(const int n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        const int sk = i % Sk;
+        const int b  = i / (Sk * Sq * H);
+
+        bool is_padding = true;
+        const int source_token_offset = (b * Sk + sk) * E;
+
+        for (int e = 0; e < E; ++e)
+        {
+            if (fabsf(source_input[source_token_offset + e]) > 1e-7f)
+            {
+                is_padding = false;
+                break;
+            }
+        }
+
+        if (is_padding)
+        {
+            attention_weights[i] = -1e9f;
+        }
+    }
+}
+
+void mha_key_padding_mask_cuda(const size_t n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E)
+{
+    if (n == 0) return;
+    const int threads = 256;
+    mha_key_padding_mask_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), source_input, attention_weights, H, Sq, Sk, E);
 }
 
 

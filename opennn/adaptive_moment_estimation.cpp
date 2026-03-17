@@ -608,6 +608,8 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            training_back_propagation.neural_network.gradients.fill(0.0f);
+
             BatchCuda* current_batch = ready_training_queue.pop();
 
             current_batch->copy_device_async(training_batches[iteration].size(), memory_stream);

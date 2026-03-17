@@ -1139,14 +1139,6 @@ void ConvolutionalForwardPropagationCuda::initialize()
     const Index output_width = convolutional_layer->get_output_width();
 
     const Index kernels_number = convolutional_layer->get_kernels_number();
-    const Index kernel_height = convolutional_layer->get_kernel_height();
-    const Index kernel_width = convolutional_layer->get_kernel_width();
-
-    const Index pad_height = convolutional_layer->get_padding_height();
-    const Index pad_width = convolutional_layer->get_padding_width();
-
-    const Index stride_height = convolutional_layer->get_row_stride();
-    const Index stride_width = convolutional_layer->get_column_stride();
 
     string layer_label = convolutional_layer->get_label();
 
@@ -1253,12 +1245,6 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
-
-    const Index pad_height = convolutional_layer->get_padding_height();
-    const Index pad_width = convolutional_layer->get_padding_width();
-
-    const Index stride_height = convolutional_layer->get_row_stride();
-    const Index stride_width = convolutional_layer->get_column_stride();
 
     // Input Deltas
 

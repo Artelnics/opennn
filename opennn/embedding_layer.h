@@ -73,7 +73,7 @@ public:
 
     vector<TensorViewCuda*> get_parameter_views_device() override;
 
-    void copy_parameters_device();
+    void copy_positional_encoding_device();
 
 private:
 
@@ -93,6 +93,7 @@ private:
     bool add_positional_encoding = false;
 
     Tensor2 positional_encoding;
+    bool pos_encoding_synced = false;
 
     type dropout_rate = type(0);
 };

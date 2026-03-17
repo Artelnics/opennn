@@ -8,14 +8,14 @@
 
 #include "registry.h"
 #include "string_utilities.h"
-#include "image_utilities.h"
+//#include "image_utilities.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
-#include "convolutional_layer.h"
+//#include "convolutional_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
@@ -625,9 +625,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         = forward_propagation.get_layer_input_views(input_view, is_training);
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
+    {
         layers[i]->forward_propagate(layer_input_views[i],
             forward_propagation.layers[i],
             is_training);
+    }
 }
 
 
@@ -1640,9 +1642,11 @@ void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_
         = forward_propagation.get_layer_input_views_device(input_views_device, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
+    {
         layers[i]->forward_propagate(layer_input_views_device[i],
                                      forward_propagation.layers[i],
                                      is_training);
+    }
 }
 
 

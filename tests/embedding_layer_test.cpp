@@ -116,8 +116,6 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
 
-    embedding_layer.copy_parameters_device();
-
     TensorCuda input_data_device({ batch_size, parameters.sequence_length });
     CHECK_CUDA(cudaMemcpy(input_data_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
 
@@ -202,8 +200,6 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
-
-    embedding_layer.copy_parameters_device();
 
     TensorCuda input_data_device({ batch_size, parameters.sequence_length });
     CHECK_CUDA(cudaMemcpy(input_data_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));

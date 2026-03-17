@@ -351,6 +351,12 @@ void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
     const float* inputs_ptr = inputs[0].data;
     const float* weights_ptr = weights_device.data;
 
+    if (add_positional_encoding && !pos_encoding_synced)
+    {
+        this->copy_positional_encoding_device();
+        pos_encoding_synced = true;
+    }
+
     const float* pos_enc_ptr = add_positional_encoding ? positional_encoding_device.data : nullptr;
 
     float* outputs_ptr = outputs.data;
@@ -409,7 +415,7 @@ vector<TensorViewCuda*> Embedding::get_parameter_views_device()
 }
 
 
-void Embedding::copy_parameters_device()
+void Embedding::copy_positional_encoding_device()
 {
     if (positional_encoding.size() > 0)
     {

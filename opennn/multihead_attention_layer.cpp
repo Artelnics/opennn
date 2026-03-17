@@ -523,6 +523,8 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
     const Index heads_number = this->heads_number;
     const Index head_dimension = get_head_dimension();
 
+    const Index total_weights = batch_size * heads_number * query_sequence_length * source_sequence_length;
+
     const float scaling_factor = static_cast<float>(get_scaling_factor());
 
     const float* query_input = inputs[0].data;
@@ -604,6 +606,18 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
                               &beta_zero,
                               forward->attention_weights.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
                               (int)(batch_size * heads_number));
+
+    // Key padding mask
+
+    mha_key_padding_mask_cuda(
+        total_weights,
+        source_input,
+        forward->attention_weights.data,
+        (int)heads_number,
+        (int)query_sequence_length,
+        (int)source_sequence_length,
+        (int)embedding_dimension
+        );
 
     if(use_causal_mask)
     {

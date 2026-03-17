@@ -108,6 +108,9 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void mha_transpose_o_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
  void mha_transpose_o_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);
 
+ __global__ void mha_key_padding_mask_kernel(const int n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E);
+ void mha_key_padding_mask_cuda(const size_t n, const float* source_input, float* attention_weights, const int H, const int Sq, const int Sk, const int E);
+
  __global__ void mha_causal_mask_kernel(const int n, float* scores, const int seq_q, const int seq_k);
  void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const int seq_k);
 
