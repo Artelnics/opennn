@@ -236,6 +236,30 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
         w_mat.noalias() = (q_mat * k_mat.transpose()) * scaling_factor;
     }
 
+    // Key padding
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; ++b)
+    {
+        for(Index s = 0; s < source_sequence_length; ++s)
+        {
+            bool is_pad = true;
+            for(Index d = 0; d < embedding_dimension; ++d)
+            {
+                if(abs(source_input(b, s, d)) > 1e-7f)
+                {
+                    is_pad = false;
+                    break;
+                }
+            }
+
+            if(is_pad)
+                for(Index h = 0; h < heads_number; ++h)
+                    for(Index q = 0; q < query_sequence_length; ++q)
+                        attention_weights(b, h, q, s) = -1e9f;
+        }
+    }
+
     if (use_causal_mask)
         apply_causal_mask(attention_weights);
 
@@ -418,7 +442,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     // Key Projection
     calculate_projection_gradient(key_gradients, source_input, key_weights,
                                   key_bias_gradients, key_weight_gradients,
-                                  input_source_gradients, batch_size, false);
+                                  input_source_gradients, batch_size, true);
 
     // Value Projection (accumulate=true because it shares input with Key)
     calculate_projection_gradient(value_gradients, source_input, value_weights,
@@ -430,66 +454,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
         input_query_gradients.device(get_device()) += input_source_gradients;
         //back_propagation->input_gradients.resize(1);
     }
-}
-
-
-void MultiHeadAttention::calculate_projection(const TensorMap3 inputs,
-                                              const TensorView& weights,
-                                              const TensorView& biases,
-                                              Index sequence_length,
-                                              Index batch_size,
-                                              Tensor4& output) const
-{
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index heads = heads_number;
-    const Index head_dimension = get_head_dimension();
-    const Index total_rows = batch_size * sequence_length;
-
-    const MatrixMap inputs_map(inputs.data(), total_rows, embedding_dimension);
-    const MatrixMap weights_map = matrix_map(weights);
-    const VectorMap biases_map = vector_map(biases);
-
-    MatrixR projected(total_rows, embedding_dimension);
-    projected.noalias() = (inputs_map * weights_map).rowwise() + biases_map.transpose();
-
-    TensorMap4 projected_tensor(projected.data(), batch_size, sequence_length, heads, head_dimension);
-
-    output.device(get_device()) = projected_tensor.shuffle(array_4(0, 2, 1, 3));
-}
-
-
-void MultiHeadAttention::calculate_projection_gradient(const Tensor4& d_head,
-                                                       const TensorMap3 input,
-                                                       const TensorView& weights,
-                                                       VectorMap d_bias,
-                                                       MatrixMap d_weights,
-                                                       TensorMap3 d_input,
-                                                       Index batch_size,
-                                                       bool accumulate) const
-{
-    const Index sequence_length = input.dimension(1);
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index total_rows = batch_size * sequence_length;
-
-    MatrixR Delta(total_rows, embedding_dimension);
-    TensorMap2 Delta_map(Delta.data(), total_rows, embedding_dimension);
-
-    Delta_map.device(get_device()) = d_head.shuffle(array_4(0, 2, 1, 3))
-                                         .reshape(array_2(total_rows, embedding_dimension));
-
-    const MatrixMap Delta_mat(Delta.data(), total_rows, embedding_dimension);
-    const MatrixMap X(input.data(), total_rows, embedding_dimension);
-    const MatrixMap W = matrix_map(weights);
-
-    d_weights.noalias() = X.transpose() * Delta_mat;
-    d_bias.noalias() = Delta_mat.colwise().sum();
-
-    MatrixMap dX_mat(d_input.data(), total_rows, embedding_dimension);
-
-    if(accumulate)
-        dX_mat.noalias() += Delta_mat * W.transpose();
-    else
-        dX_mat.noalias() = Delta_mat * W.transpose();
 }
 
 

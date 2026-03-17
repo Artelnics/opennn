@@ -166,7 +166,10 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
         const Index token_id = static_cast<Index>(input_indices[i]);
 
         if(token_id < 0 || token_id >= weights_map.rows())
+        {
+            outputs_map.row(i).setZero();
             continue;
+        }
 
         outputs_map.row(i).noalias() = weights_map.row(token_id);
     }
@@ -180,7 +183,9 @@ void Embedding::forward_propagate(const vector<TensorView>& input_views,
 
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; b++)
-            outputs_map.block(b * sequence_length, 0, sequence_length, embedding_dimension).noalias() += positional_encoding_map;
+            for(Index s = 0; s < sequence_length; s++)
+                if (static_cast<Index>(input_indices[b * sequence_length + s]) > 0)
+                    outputs_map.row(b * sequence_length + s) += positional_encoding_map.row(s);
     }
 
     //if(is_training && dropout_rate > 0)

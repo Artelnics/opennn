@@ -13,7 +13,6 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/weighted_squared_error.h"
 
 using namespace opennn;
 
@@ -53,10 +52,8 @@ int main()
 
         // Training Strategy
 
-        // @todo avoid this declaration
-        WeightedSquaredError wse;
-
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
+        training_strategy.get_loss()->set_regularization_method("None");
 
         training_strategy.train();
 
