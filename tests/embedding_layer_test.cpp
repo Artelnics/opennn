@@ -5,6 +5,7 @@
 #include "../opennn/random_utilities.h"
 #include <iostream>
 
+
 using namespace opennn;
 
 
@@ -74,6 +75,7 @@ TEST(EmbeddingForwardPropagationTest, GetOutputPairReturnsCorrectDataAndShape)
     EXPECT_EQ(output_view.shape[1], sequence_length);
     EXPECT_EQ(output_view.shape[2], embedding_dimension);
 }
+
 
 
 TEST_P(EmbeddingLayerTest, ForwardPropagate)

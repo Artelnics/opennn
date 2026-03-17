@@ -1059,11 +1059,12 @@ TEST(StatisticsTest, BoxPlot)
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
     EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+
     EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
     EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
     EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);
     EXPECT_NEAR(box_plot.maximum, solution.maximum, EPSILON);
-    
+
     // Test missing values
 
     vector.resize(9);
@@ -1074,6 +1075,7 @@ TEST(StatisticsTest, BoxPlot)
     solution.set(type(2.0), type(2.5), type(5.5), type(7.5), type(9.0));
 
     EXPECT_NEAR(box_plot.minimum, solution.minimum, EPSILON);
+
     EXPECT_NEAR(box_plot.first_quartile, solution.first_quartile, EPSILON);
     EXPECT_NEAR(box_plot.median, solution.median, EPSILON);
     EXPECT_NEAR(box_plot.third_quartile, solution.third_quartile, EPSILON);

@@ -672,18 +672,27 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 BoxPlot box_plot(const VectorR& vector)
 {
     BoxPlot box_plot;
-
     if(vector.size() == 0)
         return box_plot;
- 
-    const VectorR quartiles = opennn::quartiles(vector);
 
-    box_plot.minimum = minimum(vector);
+    VectorR clean_vector = vector.array().isNaN().select(
+        VectorR::Constant(vector.size(), numeric_limits<type>::quiet_NaN()), vector);
+
+    // Filter NaNs
+    VectorR valid(vector.size());
+    Index count = 0;
+    for(Index i = 0; i < vector.size(); i++)
+        if(!isnan(vector(i))) valid(count++) = vector(i);
+    valid.conservativeResize(count);
+
+    if(count == 0) return box_plot;
+
+    const VectorR quartiles = opennn::quartiles(valid);
+    box_plot.minimum = minimum(valid);
     box_plot.first_quartile = quartiles(0);
     box_plot.median = quartiles(1);
     box_plot.third_quartile = quartiles(2);
-    box_plot.maximum = maximum(vector);
-
+    box_plot.maximum = maximum(valid);
     return box_plot;
 }
 

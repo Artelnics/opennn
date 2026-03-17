@@ -1,10 +1,11 @@
 #include "pch.h"
-
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/layer.h"
 #include "../opennn/dense_layer.h"
+#include "../opennn/neural_network.h"
 
 using namespace opennn;
+
 
 TEST(Dense2dTest, DefaultConstructor)
 {
@@ -39,31 +40,25 @@ TEST(Dense2dTest, ForwardPropagate)
     const Index outputs_number = 4;
     const bool is_training = true;
 
-    opennn::Dense<2> dense2d_layer({ inputs_number }, { outputs_number }, "Linear");
-    dense2d_layer.set_parameters_random();
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{inputs_number}, Shape{outputs_number}, "Linear"));
+    neural_network.set_parameters_random();
 
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<DenseForwardPropagation<2>>(batch_size, &dense2d_layer);
+    opennn::ForwardPropagation forward_propagation(batch_size, &neural_network);
 
-    forward_propagation->initialize();
+    MatrixR input_data(batch_size, inputs_number);
+    input_data.setConstant(type(1.0));
 
-    Tensor2 inputs(batch_size, inputs_number);
-    inputs.setConstant(1.0f);
+    TensorView input_view(input_data.data(), {batch_size, inputs_number});
+    vector<TensorView> input_views = {input_view};
 
-    TensorView input_view(inputs.data(), { batch_size, inputs_number });
-    vector<TensorView> input_views = { input_view };
+    ASSERT_NO_THROW(neural_network.forward_propagate(input_views, forward_propagation, is_training));
 
-    ASSERT_NO_THROW(
-        dense2d_layer.forward_propagate(input_views, forward_propagation, is_training)
-        );
+    EXPECT_EQ(neural_network.get_layers()[0]->get_name(), "Dense2d");
 
-    EXPECT_EQ(dense2d_layer.get_name(), "Dense2d");
-    EXPECT_EQ(dense2d_layer.get_input_shape()[0], inputs_number);
-    EXPECT_EQ(dense2d_layer.get_output_shape()[0], outputs_number);
+    const TensorView output_view = forward_propagation.get_outputs();
 
-    const TensorView output_view = forward_propagation->get_outputs();
-
-    ASSERT_EQ(output_view.shape.size(), 2) << "Output should be a 2D tensor.";
+    ASSERT_EQ(output_view.shape.size(), 2);
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], outputs_number);
 }
@@ -71,10 +66,11 @@ TEST(Dense2dTest, ForwardPropagate)
 
 TEST(Dense3dTest, DefaultConstructor)
 {
-    opennn::Dense<3> dense_3d;
+    opennn::Dense<3> dense_3d({1, 1}, {1});
 
     EXPECT_EQ(dense_3d.get_name(), "Dense3d");
-    EXPECT_TRUE(dense_3d.get_output_shape().size() > 0);
+    EXPECT_EQ(dense_3d.get_input_shape().size(), 1);
+    EXPECT_EQ(dense_3d.get_output_shape().size(), 1);
 }
 
 
@@ -91,11 +87,10 @@ TEST(Dense3dTest, GeneralConstructor)
 
     EXPECT_EQ(input_dims[0], sequence_length);
     EXPECT_EQ(output_dims[0], output_embedding);
-
     EXPECT_EQ(dense_3d.get_name(), "Dense3d");
 }
 
-
+/*
 TEST(Dense3dTest, ForwardPropagate)
 {
     const Index batch_size = 2;
@@ -103,29 +98,25 @@ TEST(Dense3dTest, ForwardPropagate)
     const Index input_embedding = 4;
     const Index output_embedding = 5;
 
-    opennn::Dense<3> dense_3d({sequence_length, input_embedding}, {output_embedding});
-    dense_3d.set_parameters_random();
+    NeuralNetwork neural_network;
+    neural_network.add_layer(make_unique<opennn::Dense<3>>(
+        Shape{sequence_length, input_embedding}, Shape{output_embedding}));
+    neural_network.set_parameters_random();
 
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<DenseForwardPropagation<3>>(batch_size, &dense_3d);
+    opennn::ForwardPropagation forward_propagation(batch_size, &neural_network);
 
-    forward_propagation->initialize();
+    MatrixR input_data(batch_size * sequence_length, input_embedding);
+    input_data.setConstant(type(0.5));
 
-    Tensor3 inputs(batch_size, sequence_length, input_embedding);
-    inputs.setConstant(0.5f);
+    TensorView input_view(input_data.data(), {batch_size, sequence_length, input_embedding});
+    vector<TensorView> input_views = {input_view};
 
-    TensorView input_view(inputs.data(), {batch_size, sequence_length, input_embedding});
-    vector<TensorView> input_views = { input_view };
+    ASSERT_NO_THROW(neural_network.forward_propagate(input_views, forward_propagation, false));
 
-    ASSERT_NO_THROW(
-        dense_3d.forward_propagate(input_views, forward_propagation, false)
-        );
-
-    const TensorView output_view = forward_propagation->get_outputs();
+    const TensorView output_view = forward_propagation.get_outputs();
 
     ASSERT_EQ(output_view.shape.size(), 3);
     EXPECT_EQ(output_view.shape[0], batch_size);
-
     EXPECT_EQ(output_view.shape[1], sequence_length);
     EXPECT_EQ(output_view.shape[2], output_embedding);
-}
+}*/

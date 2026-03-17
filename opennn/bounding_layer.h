@@ -90,6 +90,7 @@ struct BoundingForwardPropagation final : LayerForwardPropagation
     void initialize() override;
 
     void print() const override;
+    VectorR outputs_memory;
 };
 
 

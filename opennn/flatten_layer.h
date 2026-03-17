@@ -224,7 +224,10 @@ struct FlattenForwardPropagation final : LayerForwardPropagation
     {
         const Shape output_shape = layer->get_output_shape();
         outputs.shape = {batch_size, output_shape[0]};
+        outputs_memory.resize(outputs.shape.count());
+        outputs.data = outputs_memory.data();
     }
+    VectorR outputs_memory;
 
     void print() const override
     {

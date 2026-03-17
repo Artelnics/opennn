@@ -50,6 +50,8 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
         : input_indices);
+
+    compile(); //COmprobar que esta bien Miguel B. 10-03-26
 }
 
 

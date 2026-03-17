@@ -211,6 +211,11 @@ struct ConvolutionalForwardPropagation final : LayerForwardPropagation
     TensorView standard_deviations;
 
     TensorView activation_derivatives;
+
+    VectorR outputs_memory;
+    VectorR activation_derivatives_memory;
+    VectorR means_memory;
+    VectorR standard_deviations_memory;
 };
 
 

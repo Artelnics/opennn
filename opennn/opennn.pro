@@ -35,12 +35,20 @@ win32-g++ {
     QMAKE_CXXFLAGS += -O3
 }
 
-unix:!macx {
-    QMAKE_CXXFLAGS += -march=native -O3
+macx {
+    contains(QMAKE_APPLE_DEVICE_ARCHS, x86_64) {
+        QMAKE_CXXFLAGS += -march=x86-64
+        QMAKE_CFLAGS += -march=x86-64
+    }
+
+    contains(QMAKE_APPLE_DEVICE_ARCHS, arm64) {
+        QMAKE_CXXFLAGS += -mcpu=apple-m1
+        QMAKE_CFLAGS += -mcpu=apple-m1
+    }
 }
 
 macx {
-    QMAKE_CXXFLAGS += -march=native -O3
+    QMAKE_APPLE_DEVICE_ARCHS = arm64
 }
 
 # Eigen library

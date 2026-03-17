@@ -30,39 +30,42 @@ TEST(BoundingTest, ForwardPropagate)
 
     const Index rows_number = 2;
 
-    Tensor2 inputs(rows_number, columns_number);
+    // Inputs usando MatrixR
 
-    inputs(0, 0) = -5.0;
-    inputs(0, 1) = 0.5;
-    inputs(0, 2) = 10.0;
-    inputs(1, 0) = -1.0;
-    inputs(1, 1) = 0.0;
-    inputs(1, 2) = 1.0;
+    MatrixR input_data(rows_number, columns_number);
+    input_data << type(-5.0), type(0.5), type(10.0),
+        type(-1.0), type(0.0), type(1.0);
+
+    // Forward propagation
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<BoundingForwardPropagation>(rows_number, &bounding_layer);
 
-    auto eigen_dimensions = inputs.dimensions();
-    Shape dims_vector(eigen_dimensions.begin(), eigen_dimensions.end());
-
-    TensorView input_view(inputs.data(), dims_vector);
+    TensorView input_view(input_data.data(), {rows_number, columns_number});
 
     vector<TensorView> input_views = { input_view };
 
     bounding_layer.forward_propagate(input_views, forward_propagation, false);
 
-    const TensorMap2 outputs =
-        tensor_map<2>(forward_propagation->get_outputs());
+    // Outputs usando MatrixMap
 
-    EXPECT_EQ(outputs.dimension(0), rows_number);
-    EXPECT_EQ(outputs.dimension(1), columns_number);
+    MatrixMap outputs(forward_propagation->outputs.data,
+                      rows_number, columns_number);
 
-    EXPECT_NEAR(outputs(0, 0), type(-1.0), tolerance);
-    EXPECT_NEAR(outputs(0, 1), type(0.5), tolerance);
-    EXPECT_NEAR(outputs(0, 2), type(1.0), tolerance);
-    EXPECT_NEAR(outputs(1, 0), type(-1.0), tolerance);
-    EXPECT_NEAR(outputs(1, 1), type(0.0), tolerance);
-    EXPECT_NEAR(outputs(1, 2), type(1.0), tolerance);
+    // Verificar dimensiones
+
+    EXPECT_EQ(outputs.rows(), rows_number);
+    EXPECT_EQ(outputs.cols(), columns_number);
+
+    // Verificar valores
+
+    MatrixR expected_output(rows_number, columns_number);
+    expected_output << type(-1.0), type(0.5), type(1.0),
+        type(-1.0), type(0.0), type(1.0);
+
+    for(Index i = 0; i < rows_number; ++i)
+        for(Index j = 0; j < columns_number; ++j)
+            EXPECT_NEAR(outputs(i, j), expected_output(i, j), tolerance);
 
     EXPECT_EQ(bounding_layer.get_output_shape(), Shape{ columns_number });
 }

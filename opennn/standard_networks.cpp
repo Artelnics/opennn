@@ -208,7 +208,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        "pooling_layer_" + to_string(i + 1)));
 
     }
-    
+
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(),
