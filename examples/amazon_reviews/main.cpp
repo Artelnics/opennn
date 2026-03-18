@@ -70,7 +70,7 @@ int main()
         documents[0] = "This product is amazing and I love it!";
         MatrixR outputs = text_classification_network.calculate_text_outputs(documents);
 
-        cout << "Prediction for 'This product is amazing': " << outputs(0,0) << endl;
+        cout << "Prediction for '" << documents[0] << "': " << outputs(0,0) << endl;
 
         cout << "Good bye!" << endl;
         return 0;

@@ -219,6 +219,7 @@ void Pooling3d::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
+
 void Pooling3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* element = document.FirstChildElement("Pooling3d");

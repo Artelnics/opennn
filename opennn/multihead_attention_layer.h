@@ -71,11 +71,11 @@ public:
 
 
     void calculate_projection_gradient(const Tensor4& d_head,
-                                       const TensorMap3 input,
+                                       const TensorMap3& input,
                                        const TensorView& weights,
-                                       VectorMap d_bias,
-                                       MatrixMap d_weights,
-                                       TensorMap3 d_input,
+                                       VectorMap& d_bias,
+                                       MatrixMap& d_weights,
+                                       TensorMap3& d_input,
                                        Index batch_size,
                                        bool accumulate) const;
 
@@ -84,7 +84,7 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    void apply_key_padding_mask(const MatrixB&,Tensor4&) const;
+    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
 
 #ifdef OPENNN_CUDA
 

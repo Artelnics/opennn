@@ -589,8 +589,8 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer"));
 
-    //add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::MaxPooling));
-    add_layer(make_unique<Flatten<3>>(get_output_shape()));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::AveragePooling));
+    //add_layer(make_unique<Flatten<3>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
