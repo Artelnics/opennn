@@ -313,7 +313,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap3 query_input = tensor_map<3>(input_views[0]);
+   /* const TensorMap3 query_input = tensor_map<3>(input_views[0]);
 
     const TensorMap3 source_input = (input_views.size() == 1)
                                                         ? query_input
@@ -467,7 +467,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     {
         input_query_gradients.device(get_device()) += input_source_gradients;
         //back_propagation->input_gradients.resize(1);
-    }
+    }*/
 }
 
 void MultiHeadAttention::calculate_projection(const TensorMap3 &inputs, const TensorView &weights, const TensorView &biases, Index sequence_length, Index batch_size, Tensor4 &output) const
