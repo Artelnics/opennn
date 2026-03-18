@@ -412,7 +412,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     type* sm_grad_data = softmax_gradients.data();
     #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    for(Index i = 0; i < heads_number; ++i)
     {
         const Index offset_w = i * query_sequence_length * source_sequence_length;
         const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
@@ -431,7 +431,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     type* k_grad_data = key_gradients.data();
 
     #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
+    for(Index i = 0; i < heads_number; ++i)
     {
         const Index offset_w = i * query_sequence_length * source_sequence_length;
         const Index offset_q = i * query_sequence_length * head_dimension;
@@ -470,7 +470,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     }
 }
 
-void MultiHeadAttention::calculate_projection(const TensorMap3 inputs, const TensorView &weights, const TensorView &biases, Index sequence_length, Index batch_size, Tensor4 &output) const
+void MultiHeadAttention::calculate_projection(const TensorMap3 &inputs, const TensorView &weights, const TensorView &biases, Index sequence_length, Index batch_size, Tensor4 &output) const
 {
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();

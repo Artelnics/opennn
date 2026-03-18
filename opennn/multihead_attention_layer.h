@@ -62,7 +62,7 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void calculate_projection(const TensorMap3 inputs,
+    void calculate_projection(const TensorMap3& inputs,
                               const TensorView& weights,
                               const TensorView& biases,
                               Index sequence_length,
