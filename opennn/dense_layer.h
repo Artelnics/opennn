@@ -593,7 +593,8 @@ public:
     void set_activation_function(const string& new_activation_function)
     {
         static const unordered_set<string> activation_functions =
-            {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax"};
+            {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax","Logistic"};
+
 
         if (activation_functions.count(new_activation_function))
         {

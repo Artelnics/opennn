@@ -478,17 +478,20 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Sigmoid"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ScaledExponentialLinear")
-        activation_function = new_activation_function;
+    string normalized_activation_function = new_activation_function;
+
+    if(normalized_activation_function == "Logistic")
+        normalized_activation_function = "Sigmoid";
+
+    if(normalized_activation_function == "Sigmoid"
+        || normalized_activation_function == "HyperbolicTangent"
+        || normalized_activation_function == "Linear"
+        || normalized_activation_function == "RectifiedLinear"
+        || normalized_activation_function == "ScaledExponentialLinear")
+        activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
-
-
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
     batch_normalization = new_batch_normalization;

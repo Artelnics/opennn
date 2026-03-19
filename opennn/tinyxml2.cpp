@@ -3074,7 +3074,7 @@ type read_xml_type(const XMLElement* root, const string& element_name)
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Type)Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3090,7 +3090,7 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Index)Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3106,7 +3106,7 @@ bool read_xml_bool(const XMLElement* root, const string& element_name)
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(Bool) Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
@@ -3122,7 +3122,7 @@ string read_xml_string(const XMLElement* root, const string& element_name)
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
     if(!element)
-        throw runtime_error("Element is nullptr " + element_name);
+        throw runtime_error("(String) Element is nullptr " + element_name);
 
     const char* text = element->GetText();
 
