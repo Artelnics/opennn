@@ -67,7 +67,7 @@ private:
     Index maximum_input_sequence_length = 0;
     Index maximum_target_sequence_length = 0;
 
-    Index minimum_token_frequency = 2;
+    Index minimum_token_frequency = 1;
     Index maximum_vocabulary_size = 20000;
 };
 

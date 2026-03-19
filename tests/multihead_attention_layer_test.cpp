@@ -22,13 +22,13 @@ struct MultiHeadAttentionConfig
 
 class MultiHeadAttentionTest : public ::testing::TestWithParam<MultiHeadAttentionConfig> {};
 
-INSTANTIATE_TEST_SUITE_P(MHATests, MultiHeadAttentionTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(MultiHeadAttentionTest, MultiHeadAttentionTest, ::testing::Values(
                          MultiHeadAttentionConfig{ 2, 5, 5, 16, 4, false, false, "SelfAttention" },
                          MultiHeadAttentionConfig{ 3, 6, 6, 32, 8, true, false, "SelfAttentionCausalMask" },
                          MultiHeadAttentionConfig{ 2, 4, 7, 12, 3, false, true, "CrossAttention" },
                          MultiHeadAttentionConfig{ 8, 3, 3, 8, 2, false, false, "LargeBatchSmallDims" }));
 
-TEST(MultiHeadAttention, DefaultConstructors)
+TEST(MultiHeadAttentionTest, DefaultConstructors)
 {
     MultiHeadAttention mha_self;
     EXPECT_EQ(mha_self.get_query_sequence_length(), 0);
@@ -36,7 +36,7 @@ TEST(MultiHeadAttention, DefaultConstructors)
     EXPECT_EQ(mha_self.get_embedding_dimension(), 0);
 }
 
-TEST(MultiHeadAttention, GeneralConstructors)
+TEST(MultiHeadAttentionTest, GeneralConstructors)
 {
     MultiHeadAttention mha_self_config({ 10, 32 }, 4);
     EXPECT_EQ(mha_self_config.get_query_sequence_length(), 10);

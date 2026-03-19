@@ -179,7 +179,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     auto scaling_layer = make_unique<Scaling<4>>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
+    add_layer(std::move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -322,9 +322,9 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                 skip_path_index = get_layers_number() - 1;
             }
 
-            const Shape main_out_dims = get_layer(main_path_index)->get_output_shape();
+            const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
 
-            auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+            auto addition_layer = make_unique<Addition<4>>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
             add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
@@ -344,10 +344,10 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
         }
     }
 
-    const Shape pre_pool_dims = get_layer(last_layer_index)->get_output_shape();
+    const Shape pre_pool_shape = get_layer(last_layer_index)->get_output_shape();
 
-    auto global_pool = make_unique<Pooling>(pre_pool_dims,
-                                            Shape{ pre_pool_dims[0], pre_pool_dims[1] },
+    auto global_pool = make_unique<Pooling>(pre_pool_shape,
+                                            Shape{ pre_pool_shape[0], pre_pool_shape[1] },
                                             Shape{ 1, 1 },
                                             Shape{ 0, 0 },
                                             "AveragePooling",
@@ -533,11 +533,11 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "MaxPooling", "pool5"));
     }
 
-    const Shape pre_pool_dims = get_output_shape();
+    const Shape pre_pool_shape = get_output_shape();
 
     add_layer(make_unique<Pooling>(
-        pre_pool_dims,
-        Shape{ pre_pool_dims[0], pre_pool_dims[1] },
+        pre_pool_shape,
+        Shape{ pre_pool_shape[0], pre_pool_shape[1] },
         Shape{ 1, 1 },
         Shape{ 0, 0 },
         "AveragePooling",
@@ -567,8 +567,7 @@ VGG16::VGG16(const filesystem::path& file_name)
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
-                                                     const Shape& output_shape,
-                                                     const vector<string>& new_input_vocabulary) : NeuralNetwork()
+                                                     const Shape& output_shape) : NeuralNetwork()
 {
     reference_all_layers();
 
@@ -589,8 +588,8 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer"));
 
-    //add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::MaxPooling));
-    add_layer(make_unique<Flatten<3>>(get_output_shape()));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::AveragePooling));
+    //add_layer(make_unique<Flatten<3>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 

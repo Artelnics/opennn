@@ -253,6 +253,12 @@ bool Layer::get_is_trainable() const
 }
 
 
+bool Layer::get_is_first_layer() const
+{
+    return is_first_layer;
+}
+
+
 void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);

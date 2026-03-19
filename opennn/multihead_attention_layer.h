@@ -62,7 +62,7 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void calculate_projection(const TensorMap3 inputs,
+    void calculate_projection(const TensorMap3& inputs,
                               const TensorView& weights,
                               const TensorView& biases,
                               Index sequence_length,
@@ -71,11 +71,11 @@ public:
 
 
     void calculate_projection_gradient(const Tensor4& d_head,
-                                       const TensorMap3 input,
+                                       const TensorMap3& input,
                                        const TensorView& weights,
-                                       VectorMap d_bias,
-                                       MatrixMap d_weights,
-                                       TensorMap3 d_input,
+                                       VectorMap& d_bias,
+                                       MatrixMap& d_weights,
+                                       TensorMap3& d_input,
                                        Index batch_size,
                                        bool accumulate) const;
 
@@ -84,7 +84,7 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    void apply_key_padding_mask(const MatrixB&,Tensor4&) const;
+    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
 
 #ifdef OPENNN_CUDA
 
@@ -212,14 +212,8 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
     TensorView key_bias_gradients;
     TensorView value_bias_gradients;
     TensorView projection_bias_gradients;
-
-    VectorR aux_rows;
-
-//    Tensor3 input_query_gradients;
-//    Tensor3 input_source_gradients;
-
-    Tensor4 softmax_gradients;
 };
+
 
 #ifdef OPENNN_CUDA
 
@@ -235,7 +229,7 @@ struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagation
 
     TensorCuda query, key, value;                       // [B*S, E]
     TensorCuda attention_weights;                       // Scores [B*H*Sq, Sk]
-    TensorCuda attention_outputs;                       // [B*H*Sq, D]
+    //TensorCuda attention_outputs;                       // [B*H*Sq, D]
     TensorCuda concatenated_attention_outputs;          // [B*Sq, E]
 
     TensorCuda query_transposed, key_transposed, value_transposed;
@@ -261,7 +255,7 @@ struct MultiHeadAttentionBackPropagationCuda : public LayerBackPropagationCuda
 
     TensorCuda query_gradients, key_gradients, value_gradients;
     TensorCuda attention_weight_gradients;              // dP
-    TensorCuda attention_output_gradients;              // dO
+    //TensorCuda attention_output_gradients;              // dO
     TensorCuda concatenated_attention_output_gradients; // dY_proj
     TensorCuda softmax_gradients;                       // dS
 

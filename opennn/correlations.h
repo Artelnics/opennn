@@ -55,6 +55,10 @@ Correlation logistic_correlation_matrix_vector(const MatrixR&, const VectorR&);
 
 Correlation logistic_correlation_matrix_matrix(const MatrixR&, const MatrixR&);
 
+Correlation point_biserial_correlation(const VectorR& continuous, const VectorR& binary);
+
+Correlation eta_squared_correlation(const VectorR& continuous, const MatrixR& categorical);
+
 Correlation correlation(const MatrixR&, const MatrixR&);
 
 // Spearman correlation
