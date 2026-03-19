@@ -385,7 +385,7 @@ void Layer::softmax(TensorMap4 y) const
     }
 }
 
-
+/*
 void Layer::softmax_derivatives_times_tensor(const TensorMap3 softmax,
                                              TensorMap3 result,
                                              VectorMap aux_rows) const
@@ -415,7 +415,7 @@ void Layer::softmax_derivatives_times_tensor(const TensorMap3 softmax,
         }
     }
 }
-
+*/
 } 
 
 

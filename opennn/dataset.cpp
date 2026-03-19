@@ -2199,6 +2199,11 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() 
             const MatrixR input_j = get_variable_data(current_input_index_j);
             correlations_pearson(i, j) = correlation(input_i, input_j);
 
+            // ── DEBUG ──
+            cout << "[DATASET] i=" << i << " j=" << j
+                 << " r=" << correlations_pearson(i,j).r
+                 << " isnan=" << isnan(correlations_pearson(i,j).r) << endl;
+            // ──────────
             if (correlations_pearson(i, j).r > type(1) - EPSILON)
                 correlations_pearson(i, j).r = type(1);
 

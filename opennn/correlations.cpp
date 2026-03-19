@@ -78,20 +78,20 @@ Correlation correlation(const MatrixR& x,
         }
 
         if(!x_binary && y_binary)
-            return logistic_correlation_vector_vector(x_vector, y_vector);
+            return opennn::point_biserial_correlation(x_vector, y_vector);
 
         if(x_binary && !y_binary)
-            return logistic_correlation_vector_vector(y_vector, x_vector);
+            return opennn::point_biserial_correlation(y_vector, x_vector);
 
         if(x_binary && y_binary)
             return opennn::linear_correlation(x_vector, y_vector);
     }
 
     if(x_columns != 1 && y_columns == 1)
-        return logistic_correlation_matrix_vector(x, y.reshaped(x_rows, 1));
+        return eta_squared_correlation(y.reshaped(x_rows, 1), x);
 
     if(x_columns == 1 && y_columns != 1)
-        return logistic_correlation_vector_matrix(x.reshaped(x_rows, 1), y);
+        return eta_squared_correlation(x.reshaped(x_rows, 1), y);
 
     if(x_columns != 1 && y_columns != 1)
         return logistic_correlation_matrix_matrix(x, y);
@@ -246,10 +246,26 @@ Correlation linear_correlation(const VectorR& x,
     return linear_correlation;
 }
 
-
+/*
 type r_correlation_to_z_correlation(const type r_correlation)
 {
     return type(0.5 * log((1 + r_correlation) / (1 - r_correlation)));
+}*/
+// ANTES
+// DESPUÉS
+type r_correlation_to_z_correlation(const type r_correlation)
+{
+    cout << "[Z-CONV] r_correlation entrada = " << r_correlation << endl;
+
+    const type r_clamped = clamp(r_correlation, type(-0.9999), type(0.9999));
+
+    if(r_clamped != r_correlation)
+        cout << "[Z-CONV] CLAMP aplicado: " << r_correlation << " -> " << r_clamped << endl;
+
+    const type result = type(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
+    cout << "[Z-CONV] z resultado = " << result << endl;
+
+    return result;
 }
 
 
@@ -399,20 +415,47 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
     cout<<"007"<<endl;
-    levenberg_marquardt_algorithm.train();
+
+    try
+    {
+        levenberg_marquardt_algorithm.train();
+    }
+    catch(const exception& e)
+    {
+        cout << "[LOGISTIC] train() excepcion capturada: " << e.what() << endl;
+        cout << "[LOGISTIC] devolviendo r=0 para este par" << endl;
+        correlation.r = type(0);
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
+    }
     cout<<"008"<<endl;
 
+    cout<<"[POST-008-A] get_feature_data Input..."<<endl;
     const MatrixR inputs = dataset.get_feature_data("Input");
+
+    cout<<"[POST-008-B] get_feature_data Target..."<<endl;
     const MatrixR targets = dataset.get_feature_data("Target");
+
+    cout<<"[POST-008-C] calculate_outputs..."<<endl;
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
-    // cout << "outputs: " << outputs.transpose() << endl;
-    // cout << "targets: " << targets.transpose() << endl;
+    cout<<"[POST-008-D] outputs.rows="<<outputs.rows()<<" cols="<<outputs.cols()<<endl;
+    cout<<"[POST-008-D] outputs tiene NaN="<<outputs.hasNaN()<<endl;
+    cout<<"[POST-008-D] targets tiene NaN="<<targets.hasNaN()<<endl;
 
-    // Sigmoid correlation
-
+    cout<<"[POST-008-E] linear_correlation..."<<endl;
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
+    cout<<"[POST-008-F] r = "<<correlation.r<<endl;
+    cout << "[LOGISTIC] correlation.r tras linear_correlation = " << correlation.r << endl;
 
+    if(isnan(correlation.r) || !isfinite(correlation.r))
+    {
+        cout << "[LOGISTIC] GUARD ACTIVADO -> r era NaN/Inf, devolviendo 0" << endl;
+        correlation.r = type(0);
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
+    }
+    cout << "[LOGISTIC] guard no activado, continuando..." << endl;
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
     const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.rows());
@@ -477,8 +520,18 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
-    levenberg_marquardt_algorithm.train();
 
+    try
+    {
+        levenberg_marquardt_algorithm.train();
+    }
+    catch(const exception& e)
+    {
+        cout << "[LOGISTIC-SPEARMAN] train() excepcion: " << e.what() << endl;
+        correlation.r = type(0);
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
+    }
     const MatrixR inputs = dataset.get_feature_data("Input");
     const MatrixR targets = dataset.get_feature_data("Target");
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
@@ -577,8 +630,18 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     QuasiNewtonMethod quasi_newton_method(&cross_entropy_error_2d);
     quasi_newton_method.set_display(false);
     quasi_newton_method.set_display_period(1000);
-    quasi_newton_method.train();
 
+    try
+    {
+        quasi_newton_method.train();
+    }
+    catch(const exception& e)
+    {
+        cout << "[LOGISTIC-VEC-MAT] train() excepcion: " << e.what() << endl;
+        correlation.r = type(0);
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
+    }
     // Sigmoid correlation
 
     const MatrixR inputs = dataset.get_feature_data("Input");
@@ -674,8 +737,17 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
     quasi_newton_method.set_maximum_epochs(500);
     quasi_newton_method.set_display(false);
-    quasi_newton_method.train();
-
+    try
+    {
+        quasi_newton_method.train();
+    }
+    catch(const exception& e)
+    {
+        cout << "[LOGISTIC-MAT-MAT] train() excepcion: " << e.what() << endl;
+        correlation.r = type(0);
+        correlation.form = Correlation::Form::Sigmoid;
+        return correlation;
+    }
     // Sigmoid correlation
 
     const MatrixR inputs = dataset.get_feature_data("Input");
@@ -698,6 +770,146 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
 
     return correlation;
 }
+
+Correlation point_biserial_correlation(const VectorR& continuous,
+                                       const VectorR& binary)
+{
+    Correlation result;
+    result.form   = Correlation::Form::Linear;
+    result.method = Correlation::Method::Pearson;
+
+    const auto [x_filter, y_filter] = filter_missing_values(continuous, binary);
+
+    if(x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
+    {
+        result.r = type(0);
+        return result;
+    }
+
+    const Index n = x_filter.size();
+
+    double sum_all = 0, sum_sq = 0;
+    double sum1 = 0, sum0 = 0;
+    Index  n1 = 0,   n0 = 0;
+
+    for(Index i = 0; i < n; i++)
+    {
+        const double xi = double(x_filter(i));
+        sum_all += xi;
+        sum_sq  += xi * xi;
+
+        if(y_filter(i) > type(0.5)) { sum1 += xi; n1++; }
+        else                        { sum0 += xi; n0++; }
+    }
+
+    if(n1 == 0 || n0 == 0)
+    {
+        result.r = type(0);
+        return result;
+    }
+
+    const double mean_all = sum_all / double(n);
+    const double variance  = (sum_sq / double(n)) - (mean_all * mean_all);
+
+    if(variance <= 0)
+    {
+        result.r = type(0);
+        return result;
+    }
+
+    const double s_x  = sqrt(variance);
+    const double M1   = sum1 / double(n1);
+    const double M0   = sum0 / double(n0);
+    const double r_pb = (M1 - M0) / s_x
+                        * sqrt(double(n1) * double(n0) / (double(n) * double(n)));
+
+    result.r = type(clamp(r_pb, -1.0, 1.0));
+
+    const type z  = r_correlation_to_z_correlation(result.r);
+    const VectorR ci = confidence_interval_z_correlation(z, n);
+    result.lower_confidence = z_correlation_to_r_correlation(ci(0));
+    result.upper_confidence = z_correlation_to_r_correlation(ci(1));
+
+    return result;
+}
+
+Correlation eta_squared_correlation(const VectorR& continuous,
+                                    const MatrixR& categorical)
+{
+    Correlation result;
+    result.form   = Correlation::Form::Linear;
+    result.method = Correlation::Method::Pearson;
+
+    const auto [x_filter, y_filter] = filter_missing_values(continuous, categorical);
+
+    if(x_filter.size() < 2 || is_constant(x_filter))
+    {
+        result.r = type(0);
+        return result;
+    }
+
+    const Index n          = x_filter.size();
+    const Index n_cats     = y_filter.cols();
+
+    // Media global
+    const double grand_mean = x_filter.cast<double>().mean();
+
+    // SS_total
+    double ss_total = 0;
+    for(Index i = 0; i < n; i++)
+    {
+        const double diff = double(x_filter(i)) - grand_mean;
+        ss_total += diff * diff;
+    }
+
+    if(ss_total <= 0)
+    {
+        result.r = type(0);
+        return result;
+    }
+
+    // SS_between — suma de cuadrados entre grupos
+    double ss_between = 0;
+
+    for(Index cat = 0; cat < n_cats; cat++)
+    {
+        double group_sum   = 0;
+        Index  group_count = 0;
+
+        for(Index i = 0; i < n; i++)
+        {
+            if(y_filter(i, cat) > type(0.5))
+            {
+                group_sum += double(x_filter(i));
+                group_count++;
+            }
+        }
+
+        if(group_count == 0) continue;
+
+        const double group_mean = group_sum / double(group_count);
+        const double diff       = group_mean - grand_mean;
+        ss_between += double(group_count) * diff * diff;
+    }
+
+    // eta² = SS_between / SS_total
+    const double eta_sq = ss_between / ss_total;
+
+    // Convertimos a r equivalente: r = sqrt(eta²)
+    // con signo siempre positivo (magnitud de asociación)
+    result.r = type(clamp(sqrt(eta_sq), 0.0, 1.0));
+
+    // Intervalo de confianza via Fisher z
+    const type z      = r_correlation_to_z_correlation(result.r);
+    const VectorR ci  = confidence_interval_z_correlation(z, n);
+    result.lower_confidence = z_correlation_to_r_correlation(ci(0));
+    result.upper_confidence = z_correlation_to_r_correlation(ci(1));
+
+    return result;
+}
+
+
+
 
 
 Correlation power_correlation(const VectorR& x, const VectorR& y)

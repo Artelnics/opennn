@@ -179,7 +179,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     auto scaling_layer = make_unique<Scaling<4>>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
+    add_layer(std::move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -567,8 +567,7 @@ VGG16::VGG16(const filesystem::path& file_name)
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
-                                                     const Shape& output_shape,
-                                                     const vector<string>& new_input_vocabulary) : NeuralNetwork()
+                                                     const Shape& output_shape) : NeuralNetwork()
 {
     reference_all_layers();
 
@@ -589,8 +588,8 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
         heads_number,
         "multihead_attention_layer"));
 
-    //add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::MaxPooling));
-    add_layer(make_unique<Flatten<3>>(get_output_shape()));
+    add_layer(make_unique<Pooling3d>(get_output_shape(), Pooling3d::PoolingMethod::AveragePooling));
+    //add_layer(make_unique<Flatten<3>>(get_output_shape()));
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
@@ -671,7 +670,7 @@ void Transformer::set(const Index input_sequence_length,
         add_layer(make_unique<MultiHeadAttention>(Shape{input_sequence_length, embedding_dimension},
                                                   heads_number,
                                                   "input_self_attention_" + to_string(i+1)),
-                  {current_enc_idx});
+                                                  {current_enc_idx});
 
         const Index attn_idx = get_layers_number() - 1;
 

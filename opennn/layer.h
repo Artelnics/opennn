@@ -256,7 +256,7 @@ protected:
     void softmax(TensorMap3) const;
     void softmax(TensorMap4) const;
 
-    void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, VectorMap) const;
+    //void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, VectorMap) const;
 
     void add_gradients(const vector<TensorView>&) const;
 
