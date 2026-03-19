@@ -284,8 +284,6 @@ void BoundingForwardPropagation::initialize()
     const Index neurons_number = static_cast<Bounding*>(layer)->get_output_shape()[0];
 
     outputs.shape = {batch_size, neurons_number};
-    outputs_memory.resize(batch_size * neurons_number);  // ← añadir
-    outputs.data = outputs_memory.data();
 }
 
 

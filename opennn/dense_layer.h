@@ -30,18 +30,18 @@ struct DenseForwardPropagation final : LayerForwardPropagation
         const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
         const Shape output_shape = dense_layer->get_output_shape();
 
-        Shape full_output_dims = {batch_size};
-        full_output_dims.insert(full_output_dims.end(), output_shape.begin(), output_shape.end());
+        Shape full_output_shape = {batch_size};
+        full_output_shape.insert(full_output_shape.end(), output_shape.begin(), output_shape.end());
 
-        outputs.shape = full_output_dims;
-        activation_derivatives.shape = full_output_dims;
+        outputs.shape = full_output_shape;
+        activation_derivatives.shape = full_output_shape;
 
         if (dense_layer->get_batch_normalization())
         {
             const Index outputs_number = dense_layer->get_outputs_number();
             means.shape = {outputs_number};
             standard_deviations.shape = {outputs_number};
-            normalized_outputs.shape = full_output_dims;
+            normalized_outputs.shape = full_output_shape;
         }
     }
 
@@ -512,7 +512,6 @@ public:
 
 #endif
     }
-
 
     void set_parameters_glorot() override
     {

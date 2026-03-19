@@ -61,8 +61,6 @@ public:
         return vector<TensorView*>();
     }
 
-    //virtual pair
-
     virtual Shape get_input_shape() const = 0;
     virtual Shape get_output_shape() const = 0;
 
@@ -106,10 +104,7 @@ public:
 
     bool get_is_trainable() const;
 
-    bool get_is_first_layer() const
-    {
-        return is_first_layer;
-    }
+    bool get_is_first_layer() const;
 
 protected:
 
@@ -139,15 +134,10 @@ protected:
         else if (activation_function == "Sigmoid")
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
-        {
             if constexpr (Rank == 2)
-            {
-                MatrixMap activations_matrix(activations.data(), activations.dimension(0), activations.dimension(1));
-                softmax(activations_matrix);
-            }
+                softmax(MatrixMap(activations.data(), activations.dimension(0), activations.dimension(1)));
             else
                 softmax(activations);
-        }
         else if (activation_function == "Competitive")
             throw runtime_error("Competitive 3d not implemented");
         else if (activation_function == "HyperbolicTangent")
@@ -419,6 +409,11 @@ struct LayerBackPropagation
     virtual void initialize() = 0;
 
     virtual vector<TensorView*> get_gradient_views();
+
+    virtual vector<TensorView*> get_workspace_views()
+    {
+        return vector<TensorView*>();
+    }
 
     vector<TensorView> get_input_gradients() const;
 

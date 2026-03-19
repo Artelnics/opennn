@@ -322,9 +322,9 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                 skip_path_index = get_layers_number() - 1;
             }
 
-            const Shape main_out_dims = get_layer(main_path_index)->get_output_shape();
+            const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
 
-            auto addition_layer = make_unique<Addition<4>>(main_out_dims, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+            auto addition_layer = make_unique<Addition<4>>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
             add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
 
@@ -344,10 +344,10 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
         }
     }
 
-    const Shape pre_pool_dims = get_layer(last_layer_index)->get_output_shape();
+    const Shape pre_pool_shape = get_layer(last_layer_index)->get_output_shape();
 
-    auto global_pool = make_unique<Pooling>(pre_pool_dims,
-                                            Shape{ pre_pool_dims[0], pre_pool_dims[1] },
+    auto global_pool = make_unique<Pooling>(pre_pool_shape,
+                                            Shape{ pre_pool_shape[0], pre_pool_shape[1] },
                                             Shape{ 1, 1 },
                                             Shape{ 0, 0 },
                                             "AveragePooling",
@@ -533,11 +533,11 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
             "MaxPooling", "pool5"));
     }
 
-    const Shape pre_pool_dims = get_output_shape();
+    const Shape pre_pool_shape = get_output_shape();
 
     add_layer(make_unique<Pooling>(
-        pre_pool_dims,
-        Shape{ pre_pool_dims[0], pre_pool_dims[1] },
+        pre_pool_shape,
+        Shape{ pre_pool_shape[0], pre_pool_shape[1] },
         Shape{ 1, 1 },
         Shape{ 0, 0 },
         "AveragePooling",
