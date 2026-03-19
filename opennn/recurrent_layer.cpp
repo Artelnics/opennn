@@ -90,12 +90,17 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Sigmoid"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ScaledExponentialLinear")
-        activation_function = new_activation_function;
+    string normalized_activation_function = new_activation_function;
+
+    if(normalized_activation_function == "Logistic")
+        normalized_activation_function = "Sigmoid";
+
+    if(normalized_activation_function == "Sigmoid"
+        || normalized_activation_function == "HyperbolicTangent"
+        || normalized_activation_function == "Linear"
+        || normalized_activation_function == "RectifiedLinear"
+        || normalized_activation_function == "ScaledExponentialLinear")
+        activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }

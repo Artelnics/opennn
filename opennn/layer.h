@@ -129,9 +129,15 @@ protected:
                                TensorMapR<Rank> activations,
                                TensorMapR<Rank> activation_derivatives) const
     {
-        if (activation_function == "Linear")
+        string normalized_activation_function = activation_function;
+
+        // Compatibilidad con modelos antiguos
+        if(normalized_activation_function == "Logistic")
+            normalized_activation_function = "Sigmoid";
+
+        if (normalized_activation_function == "Linear")
             linear(activations, activation_derivatives);
-        else if (activation_function == "Sigmoid")
+        else if (normalized_activation_function == "Sigmoid")
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
             if constexpr (Rank == 2)
@@ -140,16 +146,15 @@ protected:
                 softmax(activations);
         else if (activation_function == "Competitive")
             throw runtime_error("Competitive 3d not implemented");
-        else if (activation_function == "HyperbolicTangent")
+        else if (normalized_activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
-        else if (activation_function == "RectifiedLinear")
+        else if (normalized_activation_function == "RectifiedLinear")
             rectified_linear(activations, activation_derivatives);
-        else if (activation_function == "ScaledExponentialLinear")
+        else if (normalized_activation_function == "ScaledExponentialLinear")
             exponential_linear(activations, activation_derivatives);
         else
             throw runtime_error("Unknown activation: " + activation_function);
     }
-
 
     template <int Rank>
     FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const
