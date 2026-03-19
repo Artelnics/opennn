@@ -35,15 +35,13 @@ int main()
         const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
         const Index targets_number = language_dataset.get_maximum_target_sequence_length();
-        const vector<string> input_vocabulary = language_dataset.get_input_vocabulary();
 
         // Neural Network
 
         TextClassificationNetwork text_classification_network(
             {input_vocabulary_size, input_sequence_length, embedding_dimension},
             {heads_number},
-            {targets_number},
-            input_vocabulary);
+            {targets_number});
 
         // Training Strategy
 

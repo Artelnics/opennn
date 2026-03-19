@@ -113,12 +113,38 @@ void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        const type inverse_sequence_length = type(1.0) / static_cast<type>(sequence_length);
-        const MatrixMap inputs_map(inputs.data(), batch_size * sequence_length, features);
-
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; ++b)
-            outputs.row(b).noalias() = inputs_map.block(b * sequence_length, 0, sequence_length, features).colwise().sum() * inverse_sequence_length;
+        {
+            outputs.row(b).setZero();
+
+            Index valid_count = 0;
+
+            for(Index s = 0; s < sequence_length; ++s)
+            {
+                bool is_padding = true;
+
+                for(Index f = 0; f < features; ++f)
+                {
+                    if(inputs(b, s, f) != type(0))
+                    {
+                        is_padding = false;
+                        break;
+                    }
+                }
+
+                if(!is_padding)
+                {
+                    for(Index f = 0; f < features; ++f)
+                        outputs(b, f) += inputs(b, s, f);
+
+                    ++valid_count;
+                }
+            }
+
+            if(valid_count > 0)
+                outputs.row(b) /= static_cast<type>(valid_count);
+        }
     }
 }
 
@@ -158,12 +184,52 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
     }
     else // AveragePooling
     {
-        const type inverse_sequence_length = type(1.0) / static_cast<type>(sequence_length);
-        MatrixMap inputs_map(pooling_back_propagation->input_gradients[0].data, batch_size * sequence_length, features);
-
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; ++b)
-            inputs_map.block(b * sequence_length, 0, sequence_length, features).rowwise() = delta.row(b) * inverse_sequence_length;
+        {
+            Index valid_count = 0;
+
+            for(Index s = 0; s < sequence_length; ++s)
+            {
+                bool is_padding = true;
+
+                for(Index f = 0; f < features; ++f)
+                {
+                    if(inputs(b, s, f) != type(0))
+                    {
+                        is_padding = false;
+                        break;
+                    }
+                }
+
+                if(!is_padding)
+                    ++valid_count;
+            }
+
+            if(valid_count == 0) continue;
+
+            const type inverse_valid_count = type(1.0) / static_cast<type>(valid_count);
+
+            for(Index s = 0; s < sequence_length; ++s)
+            {
+                bool is_padding = true;
+
+                for(Index f = 0; f < features; ++f)
+                {
+                    if(inputs(b, s, f) != type(0))
+                    {
+                        is_padding = false;
+                        break;
+                    }
+                }
+
+                if(!is_padding)
+                {
+                    for(Index f = 0; f < features; ++f)
+                        input_derivatives(b, s, f) = delta(b, f) * inverse_valid_count;
+                }
+            }
+        }
     }
 }
 

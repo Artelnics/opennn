@@ -100,8 +100,7 @@ public:
 
     TextClassificationNetwork(const Shape& input_shape,
                               const Shape& complexity_dimensions,
-                              const Shape& output_shape,
-                              const vector<string>& new_input_vocabulary = vector<string>());
+                              const Shape& output_shape);
 
 private:
 

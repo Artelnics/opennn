@@ -179,7 +179,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     auto scaling_layer = make_unique<Scaling<4>>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(move(scaling_layer));
+    add_layer(std::move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -567,8 +567,7 @@ VGG16::VGG16(const filesystem::path& file_name)
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
-                                                     const Shape& output_shape,
-                                                     const vector<string>& new_input_vocabulary) : NeuralNetwork()
+                                                     const Shape& output_shape) : NeuralNetwork()
 {
     reference_all_layers();
 
