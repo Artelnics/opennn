@@ -48,6 +48,19 @@ public:
 
     void print() const override;
 
+#ifdef OPENNN_CUDA
+
+    void forward_propagate(const vector<TensorViewCuda>&,
+                           unique_ptr<LayerForwardPropagationCuda>&,
+                           bool) override;
+
+    void back_propagate(const vector<TensorViewCuda>&,
+                        const vector<TensorViewCuda>&,
+                        unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
+
+#endif
+
 private:
     Shape input_shape;
     PoolingMethod pooling_method;
@@ -70,6 +83,30 @@ struct Pooling3dBackPropagation final : LayerBackPropagation
 
     void initialize() override;
 };
+
+
+#ifdef OPENNN_CUDA
+
+struct Pooling3dForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    Pooling3dForwardPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    void free() override;
+
+    TensorCuda maximal_indices_device;
+};
+
+
+struct Pooling3dBackPropagationCuda : public LayerBackPropagationCuda
+{
+    Pooling3dBackPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+};
+
+#endif
 
 }
 
