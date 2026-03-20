@@ -328,6 +328,8 @@ struct NeuralNetworkBackPropagationCuda
 
     vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
+    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+
     void print();
 
     Index batch_size = 0;
@@ -337,6 +339,8 @@ struct NeuralNetworkBackPropagationCuda
     vector<unique_ptr<LayerBackPropagationCuda>> layers;
 
     TensorCuda gradients;
+
+    TensorCuda workspace;
 };
 
 #endif

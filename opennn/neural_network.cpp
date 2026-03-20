@@ -1858,7 +1858,6 @@ NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index n
 void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     batch_size = new_batch_size;
-
     neural_network = new_neural_network;
 
     if (!neural_network) return;
@@ -1878,14 +1877,22 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
     }
 
     const vector<vector<TensorViewCuda*>> layer_gradient_views = get_layer_gradient_views();
-
     const Index gradient_size = get_size(layer_gradient_views);
 
-    if (gradient_size == 0) return;
+    if (gradient_size > 0)
+    {
+        gradients.resize({gradient_size});
+        link(gradients.data, layer_gradient_views);
+    }
 
-    gradients.resize({gradient_size});
+    const vector<vector<TensorViewCuda*>> layer_workspace_views = get_layer_workspace_views_device();
+    const Index workspace_size = get_size(layer_workspace_views);
 
-    link(gradients.data, layer_gradient_views);
+    if (workspace_size > 0)
+    {
+        workspace.resize({workspace_size});
+        link(workspace.data, layer_workspace_views);
+    }
 }
 
 
@@ -1910,6 +1917,23 @@ vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_grad
 
     return layer_gradient_views;
     
+}
+
+
+vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_workspace_views_device()
+{
+    vector<vector<TensorViewCuda*>> layer_workspace_views(layers.size());
+    Index i = 0;
+
+    for (const unique_ptr<LayerBackPropagationCuda>& layer_bp : layers)
+    {
+        if (layer_bp)
+            layer_workspace_views[i] = layer_bp->get_workspace_views();
+
+        i++;
+    }
+
+    return layer_workspace_views;
 }
 
 

@@ -129,6 +129,21 @@ void LayerBackPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
 }
 
 
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_gradient_views()
+{
+    return vector<TensorViewCuda*>();
+}
+
+
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_workspace_views()
+{
+    vector<TensorViewCuda*> views;
+    for (TensorViewCuda& view : input_gradients)
+        views.push_back(&view);
+    return views;
+}
+
+
 TensorViewCuda LayerForwardPropagationCuda::get_outputs() const
 {
     return outputs;
@@ -143,13 +158,7 @@ vector<TensorViewCuda*> LayerForwardPropagationCuda::get_workspace_views()
 
 vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() const
 {
-    vector<TensorViewCuda> views;
-    views.reserve(input_gradients.size());
-
-    for (const TensorViewCuda& tensor : input_gradients)
-        views.push_back(tensor);
-
-    return views;
+    return input_gradients;
 }
 
 #endif

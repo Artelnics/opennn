@@ -315,8 +315,7 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         ones.resize({total_rows});
         ones.fill(1.0f);
 
-        input_gradients.resize(1);
-        input_gradients[0].resize({total_rows, inputs_number});
+        input_gradients = {TensorViewCuda({total_rows, inputs_number})};
 
         bias_gradients.set_descriptor({ outputs_number });
         weight_gradients.set_descriptor({ inputs_number, outputs_number });

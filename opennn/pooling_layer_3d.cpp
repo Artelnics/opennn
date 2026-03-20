@@ -411,7 +411,7 @@ void Pooling3dBackPropagationCuda::initialize()
     const Index sequence_length = layer_input_dimensions[0];
     const Index features = layer_input_dimensions[1];
 
-    input_gradients = {{nullptr, {batch_size, sequence_length, features}}};
+    input_gradients = {TensorViewCuda({batch_size, sequence_length, features})};
 }
 
 REGISTER(LayerForwardPropagationCuda, Pooling3dForwardPropagationCuda, "Pooling3d")

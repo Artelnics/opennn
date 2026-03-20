@@ -289,8 +289,7 @@ struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
     {      
         const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(1);
-        input_gradients[0].resize(full_input_shape);
+        input_gradients = {TensorViewCuda(full_input_shape)};
     }
 };
 

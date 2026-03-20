@@ -500,10 +500,9 @@ struct LayerBackPropagationCuda
     void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual vector<TensorViewCuda*> get_gradient_views()
-    {
-        return {};
-    };
+    virtual vector<TensorViewCuda*> get_gradient_views();
+
+    virtual vector<TensorViewCuda*> get_workspace_views();
 
     vector<TensorViewCuda> get_input_gradient_views() const;
 

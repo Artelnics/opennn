@@ -999,7 +999,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
 
     const cudnnTensorDescriptor_t input_tensor_descriptor = back_propagation->input_gradients[0].get_descriptor();
 
-    TensorCuda& input_gradients = back_propagation->input_gradients[0];
+    TensorViewCuda input_gradients = back_propagation->input_gradients[0];
 
     ConvolutionalBackPropagationCuda* convolutional_back_propagation
         = static_cast<ConvolutionalBackPropagationCuda*>(back_propagation.get());
@@ -1235,8 +1235,7 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     // Input Deltas
 
-    input_gradients.resize(1);
-    input_gradients[0].resize({batch_size, input_height, input_width, channels});
+    input_gradients = {TensorViewCuda({batch_size, input_height, input_width, channels})};
 
     // Deltas
 
