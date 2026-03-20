@@ -287,9 +287,10 @@ struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
 
     void initialize() override
     {      
-        const Shape full_input_shape = Shape{batch_size}.append(dense_layer->get_input_shape());
+        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients = {{nullptr, full_input_shape}};
+        input_gradients.resize(1);
+        input_gradients[0].resize(full_input_shape);
     }
 };
 

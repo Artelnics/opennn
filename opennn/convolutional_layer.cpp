@@ -947,7 +947,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
                 running_variances_device.data,
                 CUDNN_BN_MIN_EPSILON,
                 convolutional_forward_propagation->means.data,
-                convolutional_forward_propagation->bn_saved_inv_variance.data));
+                convolutional_forward_propagation->inverse_variance.data));
         else if (batch_normalization && !is_training)
             CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
                 get_cudnn_handle(),
@@ -1051,7 +1051,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
             convolutional_back_propagation->beta_gradients.data,
             CUDNN_BN_MIN_EPSILON,
             convolutional_forward_propagation->means.data,
-            convolutional_forward_propagation->bn_saved_inv_variance.data));
+            convolutional_forward_propagation->inverse_variance.data));
 
     // Convolution backwards for Weights derivatives
 
@@ -1102,17 +1102,6 @@ vector<TensorViewCuda*> Convolutional::get_parameter_views_device()
         views_device.insert(views_device.end(), {&gammas_device, &betas_device});
 
     return views_device;
-}
-
-
-void Convolutional::copy_parameters_device()
-{
-    if (batch_normalization)
-    {
-        CHECK_CUDA(cudaMemcpy(running_means_device.data, running_means.data(), running_means.size() * sizeof(type), cudaMemcpyHostToDevice));
-        VectorR moving_variances = running_standard_deviations.array().square();
-        CHECK_CUDA(cudaMemcpy(running_variances_device.data, moving_variances.data(), moving_variances.size() * sizeof(type), cudaMemcpyHostToDevice));
-    }
 }
 
 
@@ -1192,7 +1181,7 @@ void ConvolutionalForwardPropagationCuda::initialize()
         Shape batch_normalization_shape = { kernels_number };
 
         means.resize(batch_normalization_shape);
-        bn_saved_inv_variance.resize(batch_normalization_shape);
+        inverse_variance.resize(batch_normalization_shape);
     }
 }
 
@@ -1246,7 +1235,8 @@ void ConvolutionalBackPropagationCuda::initialize()
 
     // Input Deltas
 
-    input_gradients = {{nullptr, {batch_size, input_height, input_width, channels}}};
+    input_gradients.resize(1);
+    input_gradients[0].resize({batch_size, input_height, input_width, channels});
 
     // Deltas
 

@@ -520,7 +520,7 @@ struct LayerBackPropagationCuda
 
     Layer* layer = nullptr;
 
-    vector<TensorCuda> input_gradients;
+    vector<TensorViewCuda> input_gradients;
 
     void* workspace = nullptr;
     size_t workspace_size = 0;

@@ -146,8 +146,8 @@ vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() cons
     vector<TensorViewCuda> views;
     views.reserve(input_gradients.size());
 
-    for (const TensorCuda& tensor : input_gradients)
-        views.push_back(tensor.view());
+    for (const TensorViewCuda& tensor : input_gradients)
+        views.push_back(tensor);
 
     return views;
 }
@@ -292,9 +292,7 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 
 Index Layer::get_inputs_number() const
 {
-    const Shape input_shape = get_input_shape();
-
-    return input_shape.count();
+    return get_input_shape().count();
 }
 
 

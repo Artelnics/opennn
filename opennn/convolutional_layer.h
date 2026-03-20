@@ -130,8 +130,6 @@ public:
 
     vector<TensorViewCuda*> get_parameter_views_device() override;
 
-    void copy_parameters_device();
-
     cudnnFilterDescriptor_t get_kernel_descriptor() const
     {
         return kernel_descriptor;
@@ -248,7 +246,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     TensorCuda convolutions;
     TensorCuda means;
-    TensorCuda bn_saved_inv_variance;
+    TensorCuda inverse_variance;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 

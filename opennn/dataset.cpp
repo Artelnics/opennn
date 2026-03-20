@@ -2946,7 +2946,7 @@ VectorI Dataset::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        Index target_index = target_feature_indices[0];
+        const Index target_index = target_feature_indices[0];
 
         Index positives = 0;
         Index negatives = 0;
