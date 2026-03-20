@@ -160,9 +160,9 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
     Pooling3dForwardPropagation* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
     Pooling3dBackPropagation* pooling_back_propagation = static_cast<Pooling3dBackPropagation*>(back_propagation.get());
 
-    pooling_back_propagation->input_gradients_memory[0].setZero();
-
     TensorMap3 input_derivatives = tensor_map<3>(pooling_back_propagation->input_gradients[0]);
+
+    input_derivatives.setZero();
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
@@ -254,12 +254,8 @@ void Pooling3dBackPropagation::initialize()
     const Index sequence_length = layer_input_dimensions[0];
     const Index features = layer_input_dimensions[1];
 
-    input_gradients_memory.resize(1);
-    input_gradients_memory[0].resize(batch_size * sequence_length * features);
-    input_gradients_memory[0].setZero();
-
     input_gradients.resize(1);
-    input_gradients[0] = TensorView(input_gradients_memory[0].data(), {batch_size, sequence_length, features});
+    input_gradients[0].shape = {batch_size, sequence_length, features};
 }
 
 

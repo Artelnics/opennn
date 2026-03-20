@@ -65,6 +65,17 @@ vector<TensorView *> LayerBackPropagation::get_gradient_views()
 }
 
 
+vector<TensorView *> LayerBackPropagation::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for (TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
+}
+
+
 vector<TensorView> LayerBackPropagation::get_input_gradients() const
 {
     return input_gradients;
@@ -74,6 +85,17 @@ vector<TensorView> LayerBackPropagation::get_input_gradients() const
 vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
 {
     return vector<TensorView*>();
+}
+
+
+vector<TensorView *> LayerBackPropagationLM::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for(TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
 }
 
 

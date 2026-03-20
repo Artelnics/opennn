@@ -415,10 +415,7 @@ struct LayerBackPropagation
 
     virtual vector<TensorView*> get_gradient_views();
 
-    virtual vector<TensorView*> get_workspace_views()
-    {
-        return vector<TensorView*>();
-    }
+    virtual vector<TensorView*> get_workspace_views();
 
     vector<TensorView> get_input_gradients() const;
 
@@ -429,7 +426,6 @@ struct LayerBackPropagation
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 
@@ -443,6 +439,8 @@ struct LayerBackPropagationLM
 
     virtual vector<TensorView*> get_gradient_views();
 
+    virtual vector<TensorView*> get_workspace_views();
+
     vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
@@ -452,7 +450,6 @@ struct LayerBackPropagationLM
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 
