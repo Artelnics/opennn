@@ -622,17 +622,17 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
 
     for(const string& token : tokens)
     {
-        const string to_replace(token);
+        //const string to_replace(token);
 
         const string new_word = keyword + " " + token;
 
         string::size_type position = 0;
 
-        while((position = expression.find(to_replace, position)) != string::npos)
+        while((position = expression.find(token, position)) != string::npos)
         {
             if(position > previous_pos)
             {
-                expression.replace(position, to_replace.length(), new_word);
+                expression.replace(position, token.length(), new_word);
                 position += new_word.length();
                 previous_pos = position;
                 break;
@@ -659,7 +659,8 @@ void display_progress_bar(const int& completed, const int& total)
             cout << "=";
         else if(i == position)
             cout << ">";
-        else cout << " ";
+        else
+            cout << " ";
     
     cout << "] " << int(progress * 100.0) << " %\r";
 

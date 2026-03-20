@@ -219,17 +219,14 @@ void Dataset::set_sample_roles(const string& sample_role)
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
 {
-    if (new_role == "Training")
-        sample_roles[index] = "Training";
-    else if (new_role == "Validation")
-        sample_roles[index] = "Validation";
-    else if (new_role == "Testing")
-        sample_roles[index] = "Testing";
-    else if (new_role == "None")
-        sample_roles[index] = "None";
+    static const unordered_set<string> valid_roles = {"Training", "Validation", "Testing", "None"};
+
+    if (valid_roles.count(new_role))
+        sample_roles[index] = new_role;
     else
         throw runtime_error("Unknown sample role: " + new_role + "\n");
 }
+
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
@@ -2836,7 +2833,7 @@ void Dataset::print_data_preview() const
 
 void Dataset::save_data() const
 {
-    ofstream file(data_path.c_str());
+    ofstream file(data_path);
 
     if(!file.is_open())
         throw runtime_error("Cannot open matrix data file: " + data_path.string() + "\n");
@@ -3930,11 +3927,9 @@ bool Dataset::has_categorical_variables() const
 
 bool Dataset::has_binary_or_categorical_variables() const
 {
-    for(const Variable& variable : variables)
-        if (variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
-            return true;
-
-    return false;
+    return any_of(variables.begin(), variables.end(),[](const Variable& v) {
+        return v.type == VariableType::Binary || v.type == VariableType::Categorical;
+    });
 }
 
 
@@ -4368,9 +4363,7 @@ MatrixR BatchCuda::get_inputs_from_device() const
 {
     const Index inputs_number = dataset->get_variables_number("Input");
 
-    MatrixR inputs(samples_number, inputs_number);
-
-    inputs.setZero();
+    MatrixR inputs = MatrixR::Zero(samples_number, inputs_number);
 
     CHECK_CUDA(cudaMemcpy(inputs.data(), inputs_device.data, samples_number * inputs_number * sizeof(type), cudaMemcpyDeviceToHost));
 
@@ -4382,9 +4375,7 @@ MatrixR BatchCuda::get_decoder_from_device() const
 {
     const Index decoder_number = dataset->get_variables_number("Decoder");
 
-    MatrixR decoder(samples_number, decoder_number);
-
-    decoder.setZero();
+    MatrixR decoder = MatrixR::Zero(samples_number, decoder_number);
 
     CHECK_CUDA(cudaMemcpy(decoder.data(), inputs_device.data, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost));
 
@@ -4396,9 +4387,7 @@ MatrixR BatchCuda::get_targets_from_device() const
 {
     const Index targets_number = target_shape[1];
 
-    MatrixR targets(samples_number, targets_number);
-
-    targets.setZero();
+    MatrixR targets = MatrixR::Zero(samples_number, targets_number);
 
     CHECK_CUDA(cudaMemcpy(targets.data(), targets_device.data, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost));
 

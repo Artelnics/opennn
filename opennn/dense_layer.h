@@ -810,7 +810,7 @@ public:
     }
 
 
-    void back_propagate_lm(const vector<TensorView>& input_views,
+    void back_propagate(const vector<TensorView>& input_views,
                            const vector<TensorView>& output_gradient_views,
                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                            unique_ptr<LayerBackPropagationLM>& back_propagation) const override
@@ -1334,8 +1334,8 @@ private:
 
 private:
 
-    Index inputs_number;
-    Index outputs_number;
+    //Index inputs_number;
+    //Index outputs_number;
 
     TensorView biases;
     TensorView weights;

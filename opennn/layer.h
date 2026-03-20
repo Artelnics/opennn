@@ -58,7 +58,7 @@ public:
 
     virtual vector<TensorView*> get_parameter_views()
     {
-        return vector<TensorView*>();
+        return {};
     }
 
     virtual Shape get_input_shape() const = 0;
@@ -81,7 +81,7 @@ public:
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>&) const {}
 
-    virtual void back_propagate_lm(const vector<TensorView>&,
+    virtual void back_propagate(const vector<TensorView>&,
                                    const vector<TensorView>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
@@ -365,7 +365,7 @@ public:
 
     virtual vector<TensorViewCuda*> get_parameter_views_device()
     {
-        return vector<TensorViewCuda*>();
+        return {};
     }
 
     virtual void free() {}
@@ -417,7 +417,7 @@ struct LayerBackPropagation
 
     virtual vector<TensorView*> get_workspace_views()
     {
-        return vector<TensorView*>();
+        return {};
     }
 
     vector<TensorView> get_input_gradients() const;
@@ -505,7 +505,7 @@ struct LayerBackPropagationCuda
 
     virtual vector<TensorViewCuda*> get_gradient_views()
     {
-		return vector<TensorViewCuda*>();
+        return {};
     };
 
     vector<TensorViewCuda> get_input_gradient_views() const;
@@ -514,12 +514,9 @@ struct LayerBackPropagationCuda
 
     virtual void free()
     {
-        if (workspace)
-        {
-            cudaFree(workspace);
-            workspace = nullptr;
-            workspace_size = 0;
-        }
+        cudaFree(workspace);
+        workspace = nullptr;
+        workspace_size = 0;
     }
 
     Index batch_size = 0;

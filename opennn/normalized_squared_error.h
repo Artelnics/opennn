@@ -38,22 +38,22 @@ public:
                                 ForwardPropagation&,
                                 BackPropagation&) const override;
 
-    void calculate_error_lm(const Batch&,
+    void calculate_error(const Batch&,
                             const ForwardPropagation&,
                             BackPropagationLM&) const override;
 
-    void calculate_squared_errors_lm(const Batch&,
+    void calculate_squared_errors(const Batch&,
                                      const ForwardPropagation&,
                                      BackPropagationLM&) const override;
 
-    void calculate_output_gradients_lm(const Batch&,
+    void calculate_output_gradients(const Batch&,
                                        ForwardPropagation&,
                                        BackPropagationLM&) const override;
 
-    void calculate_error_gradient_lm(const Batch&,
+    void calculate_error_gradient(const Batch&,
                                      BackPropagationLM&) const override;
 
-    void calculate_error_hessian_lm(const Batch&,
+    void calculate_error_hessian(const Batch&,
                                     BackPropagationLM&) const override;
 
     void from_XML(const XMLDocument&) override;

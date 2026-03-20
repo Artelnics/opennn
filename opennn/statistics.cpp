@@ -1269,8 +1269,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
 
-    if(row_indices_size == 0 || column_indices_size == 0) 
-        return VectorR();
+    if(row_indices_size == 0 || column_indices_size == 0) return {};
 
     Index row_index;
     Index column_index;

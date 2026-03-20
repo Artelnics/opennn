@@ -326,7 +326,7 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
         scaling_layer->set_input_shape(new_input_shape);
     }
 
-    layers[get_first_trainable_layer_index()].get()->set_input_shape(new_input_shape);
+    layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }
 
 
@@ -561,7 +561,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.rows(), this);
 
@@ -577,7 +577,7 @@ MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
@@ -593,7 +593,7 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 

@@ -78,7 +78,7 @@ public:
                                  BackPropagation&) const = 0;
 
     void add_regularization(BackPropagation&) const;
-    void add_regularization_lm(BackPropagationLM&) const;
+    void add_regularization(BackPropagationLM&) const;
 
     virtual void calculate_output_gradients(const Batch&,
                                         ForwardPropagation&,
@@ -98,35 +98,35 @@ public:
 
     // Back propagation LM
 
-    void calculate_errors_lm(const Batch&,
-                             const ForwardPropagation&,
-                             BackPropagationLM&) const;
+    void calculate_errors(const Batch&,
+                          const ForwardPropagation&,
+                          BackPropagationLM&) const;
 
-    virtual void calculate_squared_errors_lm(const Batch&,
-                                             const ForwardPropagation&,
-                                             BackPropagationLM&) const;
+    virtual void calculate_squared_errors(const Batch&,
+                                          const ForwardPropagation&,
+                                          BackPropagationLM&) const;
 
-    virtual void calculate_error_lm(const Batch&,
-                                    const ForwardPropagation&,
-                                    BackPropagationLM&) const {}
+    virtual void calculate_error(const Batch&,
+                                 const ForwardPropagation&,
+                                 BackPropagationLM&) const {}
 
-    virtual void calculate_output_gradients_lm(const Batch&,
-                                               ForwardPropagation&,
-                                               BackPropagationLM&) const {}
-
-    void calculate_layers_squared_errors_jacobian_lm(const Batch&,
-                                                     ForwardPropagation&,
-                                                     BackPropagationLM&) const;
-
-    virtual void calculate_error_gradient_lm(const Batch&,
-                                             BackPropagationLM&) const;
-
-    virtual void calculate_error_hessian_lm(const Batch&,
+    virtual void calculate_output_gradients(const Batch&,
+                                            ForwardPropagation&,
                                             BackPropagationLM&) const {}
 
-    void back_propagate_lm(const Batch&,
-                           ForwardPropagation&,
-                           BackPropagationLM&) const;
+    void calculate_layers_squared_errors_jacobian(const Batch&,
+                                                  ForwardPropagation&,
+                                                  BackPropagationLM&) const;
+
+    virtual void calculate_error_gradient(const Batch&,
+                                          BackPropagationLM&) const;
+
+    virtual void calculate_error_hessian(const Batch&,
+                                         BackPropagationLM&) const {}
+
+    void back_propagate(const Batch&,
+                        ForwardPropagation&,
+                        BackPropagationLM&) const;
 
     // Regularization
 
@@ -163,22 +163,22 @@ public:
 public:
 
     virtual void calculate_error(const BatchCuda&,
-                                      const ForwardPropagationCuda&,
-                                      BackPropagationCuda&) const = 0;
+                                 const ForwardPropagationCuda&,
+                                 BackPropagationCuda&) const = 0;
 
     virtual void calculate_output_gradients(const BatchCuda&,
-                                             ForwardPropagationCuda&,
-                                             BackPropagationCuda&) const = 0;
+                                            ForwardPropagationCuda&,
+                                            BackPropagationCuda&) const = 0;
 
-    void calculate_layers_error_gradient_cuda(const BatchCuda&,
-                                              ForwardPropagationCuda&,
-                                              BackPropagationCuda&) const;
+    void calculate_layers_error_gradient(const BatchCuda&,
+                                         ForwardPropagationCuda&,
+                                         BackPropagationCuda&) const;
 
     void back_propagate(const BatchCuda&,
-                             ForwardPropagationCuda&,
-                             BackPropagationCuda&);
+                        ForwardPropagationCuda&,
+                        BackPropagationCuda&);
 
-    void add_regularization_cuda(BackPropagationCuda&) const;
+    void add_regularization(BackPropagationCuda&) const;
 
 
     TensorCuda calculate_gradient_cuda();
@@ -237,8 +237,8 @@ struct BackPropagationLM
     VectorR gradient;
     MatrixR hessian;
 
-    VectorR regularization_gradient;
-    MatrixR regularization_hessian;
+    //VectorR regularization_gradient;
+    //MatrixR regularization_hessian;
 };
 
 

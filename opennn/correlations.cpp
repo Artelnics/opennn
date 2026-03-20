@@ -271,7 +271,7 @@ type r_correlation_to_z_correlation(const type r_correlation)
 
 type z_correlation_to_r_correlation (const type z_correlation)
 {
-    return type((exp(2 * z_correlation) - 1) / (exp(2 * z_correlation) + 1));
+    return tanh(z_correlation);
 }
 
 
@@ -292,8 +292,7 @@ VectorR calculate_spearman_ranks(const VectorR& x)
 {
     const Index n = x.size();
 
-    if (n == 0)
-        return VectorR();
+    if (n == 0) return {};
 
     VectorI sorted_indices(n);
 

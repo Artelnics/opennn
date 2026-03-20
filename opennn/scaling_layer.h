@@ -434,11 +434,6 @@ private:
 
     Shape input_shape;
 
-    type* minimums = nullptr;
-    type* maximums = nullptr;
-    type* means = nullptr;
-    type* standard_deviations = nullptr;
-
     vector<Descriptives> descriptives;
 
     vector<string> scalers;
