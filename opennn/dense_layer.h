@@ -104,11 +104,7 @@ struct DenseBackPropagation final : LayerBackPropagation
         Shape full_input_shape = { batch_size };
         full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
 
-        input_gradients_memory.resize(1);
-        input_gradients_memory[0].resize(full_input_shape.count());
-
         input_gradients.resize(1);
-        input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = full_input_shape;
     }
 
@@ -165,11 +161,7 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
         Shape input_shape_vec = {batch_size};
         input_shape_vec.insert(input_shape_vec.end(), layer_input_shape.begin(), layer_input_shape.end());
 
-        input_gradients_memory.resize(1);
-        input_gradients_memory[0].resize(input_shape_vec.count());
-
         input_gradients.resize(1);
-        input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = input_shape_vec;
 
         squared_errors_Jacobian.shape = {batch_size, parameters_number};
@@ -798,7 +790,6 @@ public:
         VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
 
         weight_gradients.noalias() = inputs.transpose() * delta;
-        bias_gradients.array() = delta.colwise().sum();
 
         if(!is_first_layer)
         {

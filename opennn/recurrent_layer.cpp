@@ -410,10 +410,7 @@ void RecurrentBackPropagation::initialize()
 
     const Shape full_input_shape = { batch_size, time_steps, inputs_number };
 
-    input_gradients_memory.resize(1);
-    input_gradients_memory[0].resize(full_input_shape.count());
     input_gradients.resize(1);
-    input_gradients[0].data = input_gradients_memory[0].data();
     input_gradients[0].shape = full_input_shape;
 }
 
@@ -422,7 +419,7 @@ void RecurrentBackPropagation::print() const
 {
     cout << "Recurrent back propagation" << endl
          << "Batch size: " << batch_size << endl
-         << "Input gradients number: " << input_gradients_memory.size() << endl
+         << "Input gradients number: " << input_gradients.size() << endl
          << "Bias gradients shape: " << bias_gradients.shape << endl
          << "Input weight gradients shape: " << input_weight_gradients.shape << endl
          << "Recurrent weight gradients shape: " << recurrent_weight_gradients.shape << endl;

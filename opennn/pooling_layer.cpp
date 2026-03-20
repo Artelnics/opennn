@@ -612,10 +612,7 @@ void PoolingBackPropagation::initialize()
     Shape full_input_shape = { batch_size };
     full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
 
-    input_gradients_memory.resize(1);
-    input_gradients_memory[0].resize(full_input_shape.count());
     input_gradients.resize(1);
-    input_gradients[0].data = input_gradients_memory[0].data();
     input_gradients[0].shape = full_input_shape;
 }
 

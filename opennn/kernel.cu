@@ -615,3 +615,149 @@ void mha_causal_mask_cuda(const size_t n, float* scores, const int seq_q, const 
     const int threads = 256;
     mha_causal_mask_kernel<<<(n + threads - 1) / threads, threads>>>(n, scores, seq_q, seq_k);
 }
+
+
+// Pooling 3D
+
+__global__ void pooling3d_max_forward_kernel(const int n, const float* in, float* out, float* indices, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n) {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        float max_val = -1e20f;
+        int max_idx = 0;
+
+        for (int s = 0; s < S; s++) {
+            float val = in[(b * S + s) * F + f];
+            if (val > max_val) {
+                max_val = val;
+                max_idx = s;
+            }
+        }
+        out[idx] = max_val;
+
+        if (indices != nullptr) indices[idx] = static_cast<float>(max_idx);
+    }
+}
+
+void pooling3d_max_forward_cuda(const size_t n, const float* in, float* out, float* indices, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_max_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, indices, B, S, F);
+}
+
+
+__global__ void pooling3d_max_backward_kernel(const int n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n) {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        const int max_s = static_cast<int>(indices[idx]);
+
+        in_grad[(b * S + max_s) * F + f] = delta[idx];
+    }
+}
+
+void pooling3d_max_backward_cuda(const size_t n, const float* delta, float* in_grad, const float* indices, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_max_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), delta, in_grad, indices, B, S, F);
+}
+
+
+__global__ void pooling3d_avg_forward_kernel(const int n, const float* in, float* out, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n)
+    {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        float sum = 0.0f;
+        int valid_count = 0;
+
+        for (int s = 0; s < S; s++)
+        {
+            bool is_padding = true;
+            for (int check_f = 0; check_f < F; check_f++)
+            {
+                if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                {
+                    is_padding = false;
+                    break;
+                }
+            }
+
+            if (!is_padding)
+            {
+                sum += in[(b * S + s) * F + f];
+                valid_count++;
+            }
+        }
+
+        out[idx] = (valid_count > 0) ? (sum / (float)valid_count) : 0.0f;
+    }
+}
+
+void pooling3d_avg_forward_cuda(const size_t n, const float* in, float* out, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_avg_forward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, out, B, S, F);
+}
+
+
+__global__ void pooling3d_avg_backward_kernel(const int n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < n)
+    {
+        const int f = idx % F;
+        const int b = idx / F;
+
+        int valid_count = 0;
+
+        for (int s = 0; s < S; s++)
+        {
+            bool is_padding = true;
+            for (int check_f = 0; check_f < F; check_f++)
+            {
+                if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                {
+                    is_padding = false;
+                    break;
+                }
+            }
+            if (!is_padding) valid_count++;
+        }
+
+        if (valid_count > 0)
+        {
+            float grad_val = delta[idx] / (float)valid_count;
+
+            for (int s = 0; s < S; s++)
+            {
+                bool is_padding = true;
+                for (int check_f = 0; check_f < F; check_f++)
+                {
+                    if (fabsf(in[(b * S + s) * F + check_f]) > 1e-7f)
+                    {
+                        is_padding = false;
+                        break;
+                    }
+                }
+                if (!is_padding)
+                    in_grad[(b * S + s) * F + f] = grad_val;
+            }
+        }
+    }
+}
+
+void pooling3d_avg_backward_cuda(const size_t n, const float* in, const float* delta, float* in_grad, const int B, const int S, const int F) {
+    if (n == 0) return;
+    const int threads = 256;
+    pooling3d_avg_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, delta, in_grad, B, S, F);
+}
