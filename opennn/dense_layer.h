@@ -30,18 +30,18 @@ struct DenseForwardPropagation final : LayerForwardPropagation
         const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
         const Shape output_shape = dense_layer->get_output_shape();
 
-        Shape full_output_dims = {batch_size};
-        full_output_dims.insert(full_output_dims.end(), output_shape.begin(), output_shape.end());
+        Shape full_output_shape = {batch_size};
+        full_output_shape.insert(full_output_shape.end(), output_shape.begin(), output_shape.end());
 
-        outputs.shape = full_output_dims;
-        activation_derivatives.shape = full_output_dims;
+        outputs.shape = full_output_shape;
+        activation_derivatives.shape = full_output_shape;
 
         if (dense_layer->get_batch_normalization())
         {
             const Index outputs_number = dense_layer->get_outputs_number();
             means.shape = {outputs_number};
             standard_deviations.shape = {outputs_number};
-            normalized_outputs.shape = full_output_dims;
+            normalized_outputs.shape = full_output_shape;
         }
     }
 
@@ -104,11 +104,7 @@ struct DenseBackPropagation final : LayerBackPropagation
         Shape full_input_shape = { batch_size };
         full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
 
-        input_gradients_memory.resize(1);
-        input_gradients_memory[0].resize(full_input_shape.count());
-
         input_gradients.resize(1);
-        input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = full_input_shape;
     }
 
@@ -165,11 +161,7 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
         Shape input_shape_vec = {batch_size};
         input_shape_vec.insert(input_shape_vec.end(), layer_input_shape.begin(), layer_input_shape.end());
 
-        input_gradients_memory.resize(1);
-        input_gradients_memory[0].resize(input_shape_vec.count());
-
         input_gradients.resize(1);
-        input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = input_shape_vec;
 
         squared_errors_Jacobian.shape = {batch_size, parameters_number};
@@ -513,7 +505,6 @@ public:
 #endif
     }
 
-
     void set_parameters_glorot() override
     {
         const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
@@ -593,7 +584,8 @@ public:
     void set_activation_function(const string& new_activation_function)
     {
         static const unordered_set<string> activation_functions =
-            {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax"};
+            {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax","Logistic"};
+
 
         if (activation_functions.count(new_activation_function))
         {
@@ -798,7 +790,6 @@ public:
         VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
 
         weight_gradients.noalias() = inputs.transpose() * delta;
-        bias_gradients.array() = delta.colwise().sum();
 
         if(!is_first_layer)
         {

@@ -61,8 +61,6 @@ public:
         return vector<TensorView*>();
     }
 
-    //virtual pair
-
     virtual Shape get_input_shape() const = 0;
     virtual Shape get_output_shape() const = 0;
 
@@ -106,10 +104,7 @@ public:
 
     bool get_is_trainable() const;
 
-    bool get_is_first_layer() const
-    {
-        return is_first_layer;
-    }
+    bool get_is_first_layer() const;
 
 protected:
 
@@ -134,32 +129,32 @@ protected:
                                TensorMapR<Rank> activations,
                                TensorMapR<Rank> activation_derivatives) const
     {
-        if (activation_function == "Linear")
+        string normalized_activation_function = activation_function;
+
+        // Compatibilidad con modelos antiguos
+        if(normalized_activation_function == "Logistic")
+            normalized_activation_function = "Sigmoid";
+
+        if (normalized_activation_function == "Linear")
             linear(activations, activation_derivatives);
-        else if (activation_function == "Sigmoid")
+        else if (normalized_activation_function == "Sigmoid")
             logistic(activations, activation_derivatives);
         else if (activation_function == "Softmax")
-        {
             if constexpr (Rank == 2)
-            {
-                MatrixMap activations_matrix(activations.data(), activations.dimension(0), activations.dimension(1));
-                softmax(activations_matrix);
-            }
+                softmax(MatrixMap(activations.data(), activations.dimension(0), activations.dimension(1)));
             else
                 softmax(activations);
-        }
         else if (activation_function == "Competitive")
             throw runtime_error("Competitive 3d not implemented");
-        else if (activation_function == "HyperbolicTangent")
+        else if (normalized_activation_function == "HyperbolicTangent")
             hyperbolic_tangent(activations, activation_derivatives);
-        else if (activation_function == "RectifiedLinear")
+        else if (normalized_activation_function == "RectifiedLinear")
             rectified_linear(activations, activation_derivatives);
-        else if (activation_function == "ScaledExponentialLinear")
+        else if (normalized_activation_function == "ScaledExponentialLinear")
             exponential_linear(activations, activation_derivatives);
         else
             throw runtime_error("Unknown activation: " + activation_function);
     }
-
 
     template <int Rank>
     FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const
@@ -420,6 +415,8 @@ struct LayerBackPropagation
 
     virtual vector<TensorView*> get_gradient_views();
 
+    virtual vector<TensorView*> get_workspace_views();
+
     vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
@@ -429,7 +426,6 @@ struct LayerBackPropagation
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 
@@ -443,6 +439,8 @@ struct LayerBackPropagationLM
 
     virtual vector<TensorView*> get_gradient_views();
 
+    virtual vector<TensorView*> get_workspace_views();
+
     vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
@@ -452,7 +450,6 @@ struct LayerBackPropagationLM
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 

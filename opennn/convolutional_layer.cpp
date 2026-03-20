@@ -478,17 +478,20 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Sigmoid"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ScaledExponentialLinear")
-        activation_function = new_activation_function;
+    string normalized_activation_function = new_activation_function;
+
+    if(normalized_activation_function == "Logistic")
+        normalized_activation_function = "Sigmoid";
+
+    if(normalized_activation_function == "Sigmoid"
+        || normalized_activation_function == "HyperbolicTangent"
+        || normalized_activation_function == "Linear"
+        || normalized_activation_function == "RectifiedLinear"
+        || normalized_activation_function == "ScaledExponentialLinear")
+        activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
-
-
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
     batch_normalization = new_batch_normalization;
@@ -759,23 +762,13 @@ void ConvolutionalForwardPropagation::initialize()
                                input_channels);
 
     outputs.shape = {batch_size, output_height, output_width, kernels_number};
-    outputs_memory.resize(outputs.shape.count());
-    outputs.data = outputs_memory.data();
-
     activation_derivatives.shape = { batch_size, output_height, output_width, kernels_number };
-    activation_derivatives_memory.resize(activation_derivatives.shape.count());
-    activation_derivatives.data = activation_derivatives_memory.data();
 
     // Batch Normalization
     if (convolutional_layer->get_batch_normalization())
     {
         means.shape = { kernels_number };
-        means_memory.resize(kernels_number);
-        means.data = means_memory.data();
-
         standard_deviations.shape = { kernels_number };
-        standard_deviations_memory.resize(kernels_number);
-        standard_deviations.data = standard_deviations_memory.data();
     }
 }
 
@@ -829,10 +822,8 @@ void ConvolutionalBackPropagation::initialize()
 
     rotated_weights.resize(kernels_number, kernel_height, kernel_width, kernel_channels);
 
-    input_gradients_memory.resize(1);
-    input_gradients_memory[0].resize(Shape({ batch_size, input_height, input_width, channels }).count());
-
-    input_gradients = {{input_gradients_memory[0].data(), { batch_size, input_height, input_width, channels }}};
+    input_gradients.resize(1);
+    input_gradients[0].shape = { batch_size, input_height, input_width, channels };
 
     // Batch Normalization
 

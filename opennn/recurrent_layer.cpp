@@ -90,12 +90,17 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
-    if(new_activation_function == "Sigmoid"
-    || new_activation_function == "HyperbolicTangent"
-    || new_activation_function == "Linear"
-    || new_activation_function == "RectifiedLinear"
-    || new_activation_function == "ScaledExponentialLinear")
-        activation_function = new_activation_function;
+    string normalized_activation_function = new_activation_function;
+
+    if(normalized_activation_function == "Logistic")
+        normalized_activation_function = "Sigmoid";
+
+    if(normalized_activation_function == "Sigmoid"
+        || normalized_activation_function == "HyperbolicTangent"
+        || normalized_activation_function == "Linear"
+        || normalized_activation_function == "RectifiedLinear"
+        || normalized_activation_function == "ScaledExponentialLinear")
+        activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
@@ -405,10 +410,7 @@ void RecurrentBackPropagation::initialize()
 
     const Shape full_input_shape = { batch_size, time_steps, inputs_number };
 
-    input_gradients_memory.resize(1);
-    input_gradients_memory[0].resize(full_input_shape.count());
     input_gradients.resize(1);
-    input_gradients[0].data = input_gradients_memory[0].data();
     input_gradients[0].shape = full_input_shape;
 }
 
@@ -417,7 +419,7 @@ void RecurrentBackPropagation::print() const
 {
     cout << "Recurrent back propagation" << endl
          << "Batch size: " << batch_size << endl
-         << "Input gradients number: " << input_gradients_memory.size() << endl
+         << "Input gradients number: " << input_gradients.size() << endl
          << "Bias gradients shape: " << bias_gradients.shape << endl
          << "Input weight gradients shape: " << input_weight_gradients.shape << endl
          << "Recurrent weight gradients shape: " << recurrent_weight_gradients.shape << endl;

@@ -224,10 +224,7 @@ struct FlattenForwardPropagation final : LayerForwardPropagation
     {
         const Shape output_shape = layer->get_output_shape();
         outputs.shape = {batch_size, output_shape[0]};
-        outputs_memory.resize(outputs.shape.count());
-        outputs.data = outputs_memory.data();
     }
-    VectorR outputs_memory;
 
     void print() const override
     {
@@ -253,10 +250,7 @@ struct FlattenBackPropagation final : LayerBackPropagation
         Shape full_input_shape = { batch_size };
         full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
 
-        input_gradients_memory.resize(1);
-        input_gradients_memory[0].resize(full_input_shape.count());
         input_gradients.resize(1);
-        input_gradients[0].data = input_gradients_memory[0].data();
         input_gradients[0].shape = full_input_shape;
     }
 

@@ -329,8 +329,6 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     const bool self_attention = (input_views.size() == 1);
 
-    Tensor4& softmax_gradients = this_back_propagation->softmax_gradients;
-
     const Index batch_size = this_forward_propagation->batch_size;
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
@@ -385,42 +383,44 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
     }
     Eigen::setNbThreads(original_eigen_threads);
 
-    type* sm_grad_data = softmax_gradients.data();
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < total_heads; ++i)
     {
         const Index offset_w = i * query_sequence_length * source_sequence_length;
         const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
-        MatrixMap dS(sm_grad_data + offset_w, query_sequence_length, source_sequence_length);
+
+        // Remove 'const' so we can overwrite it
+        MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
 
         VectorR dot_product = (W.array() * dW.array()).rowwise().sum();
 
-        for(Index r = 0; r < query_sequence_length; ++r)
-            dS.row(r).array() = W.row(r).array() * (dW.row(r).array() - dot_product(r));
+        // Overwrite dW in-place
+        dW.array() = W.array() * (dW.colwise() - dot_product).array();
     }
+
 
     type* q_data = const_cast<type*>(query.data());
     type* k_data = const_cast<type*>(key.data());
     type* q_grad_data = query_gradients.data();
     type* k_grad_data = key_gradients.data();
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for(Index i = 0; i < total_heads; ++i)
     {
         const Index offset_w = i * query_sequence_length * source_sequence_length;
         const Index offset_q = i * query_sequence_length * head_dimension;
         const Index offset_k = i * source_sequence_length * head_dimension;
 
-        const MatrixMap dS(sm_grad_data + offset_w, query_sequence_length, source_sequence_length);
+        // Use att_weight_grad_data (which now holds the softmax derivative)
+        const MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
         const MatrixMap Q(q_data + offset_q, query_sequence_length, head_dimension);
         const MatrixMap K(k_data + offset_k, source_sequence_length, head_dimension);
 
         MatrixMap dQ(q_grad_data + offset_q, query_sequence_length, head_dimension);
         MatrixMap dK(k_grad_data + offset_k, source_sequence_length, head_dimension);
 
-        dQ.noalias() = (dS * K) * scaling_factor;
-        dK.noalias() = (dS.transpose() * Q) * scaling_factor;
+        dQ.noalias() = (dW * K) * scaling_factor;
+        dK.noalias() = (dW.transpose() * Q) * scaling_factor;
     }
 
     // Query Projection
@@ -480,6 +480,7 @@ void MultiHeadAttention::calculate_projection(const TensorMap3 &inputs,
 
             type* out_ptr = output.data() + b * (heads_number * sequence_length * head_dimension)
                             + h * (sequence_length * head_dimension);
+
             MatrixMap Out_bh(out_ptr, sequence_length, head_dimension);
 
             auto W_h = weights_map.block(0, h * head_dimension, embedding_dimension, head_dimension);
@@ -492,12 +493,12 @@ void MultiHeadAttention::calculate_projection(const TensorMap3 &inputs,
 }
 
 
-void MultiHeadAttention::calculate_projection_gradient(const Tensor4 &d_head,
-                                                       const TensorMap3 &input,
-                                                       const TensorView &weights,
-                                                       VectorMap &d_bias,
-                                                       MatrixMap &d_weights,
-                                                       TensorMap3 &d_input,
+void MultiHeadAttention::calculate_projection_gradient(const Tensor4& d_head,
+                                                       const TensorMap3& input,
+                                                       const TensorView& weights,
+                                                       VectorMap& d_bias,
+                                                       MatrixMap& d_weights,
+                                                       TensorMap3& d_input,
                                                        Index batch_size,
                                                        bool accumulate) const
 {
@@ -1088,16 +1089,11 @@ void MultiHeadAttentionBackPropagation::initialize()
     value_bias_gradients.shape = {embedding_dimension};
     projection_bias_gradients.shape = {embedding_dimension};
 
-    input_gradients_memory.resize(2);
-    input_gradients_memory[0].resize(batch_size * query_sequence_length * embedding_dimension);
-    input_gradients_memory[1].resize(batch_size * source_sequence_length * embedding_dimension);
-
-    input_gradients = { { input_gradients_memory[0].data(), {batch_size, query_sequence_length, embedding_dimension} },
-                        {input_gradients_memory[1].data(), {batch_size, source_sequence_length, embedding_dimension} } };
+    input_gradients.resize(2);
+    input_gradients[0].shape = {batch_size, query_sequence_length, embedding_dimension};
+    input_gradients[1].shape = {batch_size, source_sequence_length, embedding_dimension};
 
     // Auxiliar
-
-    softmax_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
     attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
 
@@ -1106,8 +1102,6 @@ void MultiHeadAttentionBackPropagation::initialize()
     query_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
     key_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
     value_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
-
-    aux_rows.resize(source_sequence_length);
 }
 
 

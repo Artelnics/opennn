@@ -2520,7 +2520,6 @@ void Dataset::missing_values_to_XML(XMLPrinter &printer) const
     printer.CloseElement();
 }
 
-
 void Dataset::preview_data_to_XML(XMLPrinter &printer) const
 {
     printer.OpenElement("PreviewData");
@@ -2538,8 +2537,6 @@ void Dataset::preview_data_to_XML(XMLPrinter &printer) const
 
     printer.CloseElement();
 }
-
-
 
 void Dataset::variables_from_XML(const XMLElement *variables_element)
 {
@@ -2578,7 +2575,6 @@ void Dataset::variables_from_XML(const XMLElement *variables_element)
     }
 }
 
-
 void Dataset::samples_from_XML(const XMLElement *samples_element)
 {
     if(!samples_element)
@@ -2606,7 +2602,6 @@ void Dataset::samples_from_XML(const XMLElement *samples_element)
         data.resize(0, 0);
 }
 
-
 void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
 {
     if(!missing_values_element)
@@ -2614,13 +2609,20 @@ void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
 
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
-    if (missing_values_number > 0)
+    if(missing_values_number > 0)
     {
         set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        const string variables_string = read_xml_string(missing_values_element, "VariablesMissingValuesNumber");
-        const vector<string> tokens = get_tokens(variables_string, " ");
+        const XMLElement* vars_element = missing_values_element->FirstChildElement("VariablesMissingValuesNumber");
+        if(!vars_element)
+            vars_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
+        if(!vars_element)
+            throw runtime_error("Element is nullptr: VariablesMissingValuesNumber/RawVariablesMissingValuesNumber");
+
+        const string variables_string = vars_element->GetText() ? string(vars_element->GetText()) : "";
+
+        const vector<string> tokens = get_tokens(variables_string, " ");
         vector<Index> valid_numbers;
         valid_numbers.reserve(tokens.size());
 
@@ -2632,10 +2634,17 @@ void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
         for(size_t i = 0; i < valid_numbers.size(); ++i)
             variables_missing_values_number(i) = valid_numbers[i];
 
-        rows_missing_values_number = read_xml_index(missing_values_element, "SamplesMissingValuesNumber");
+        const XMLElement* rows_element = missing_values_element->FirstChildElement("SamplesMissingValuesNumber");
+        if(!rows_element)
+            rows_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
+
+        if(!rows_element)
+            throw runtime_error("Element is nullptr: SamplesMissingValuesNumber/RowsMissingValuesNumber");
+
+        const char* rows_text = rows_element->GetText();
+        rows_missing_values_number = rows_text ? static_cast<Index>(stoi(rows_text)) : 0;
     }
 }
-
 void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
 {
     if(!preview_data_element)
