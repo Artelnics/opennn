@@ -607,13 +607,9 @@ void PoolingBackPropagation::initialize()
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
-    const Shape& input_shape = pooling_layer->get_input_shape();
+    const Shape full_input_shape = Shape{batch_size}.append(pooling_layer->get_input_shape());
 
-    Shape full_input_shape = { batch_size };
-    full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
-
-    input_gradients.resize(1);
-    input_gradients[0].shape = full_input_shape;
+    input_gradients = {{nullptr, full_input_shape}};
 }
 
 
@@ -713,8 +709,7 @@ void PoolingBackPropagationCuda::initialize()
 
     // Input derivatives
 
-    input_gradients.resize(1);
-    input_gradients[0].resize({ batch_size, input_height, input_width, channels});
+    input_gradients = {{nullptr, {batch_size, input_height, input_width, channels}}};
 }
 
 

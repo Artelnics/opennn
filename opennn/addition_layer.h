@@ -212,11 +212,9 @@ struct AdditionBackPropagation final : LayerBackPropagation
 
     void initialize() override
     {
-        Shape shape = Shape{batch_size}.append(layer->get_input_shape());
+        const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(2);
-        input_gradients[0].shape = shape;
-        input_gradients[1].shape = shape;
+        input_gradients = {{nullptr,shape}, {nullptr,shape}};
     }
 
 
@@ -276,9 +274,7 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
     {        
         const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(2);
-        input_gradients[0].resize(shape);
-        input_gradients[1].resize(shape);
+        input_gradients = {{nullptr,shape}, {nullptr,shape}};
     }
 
 

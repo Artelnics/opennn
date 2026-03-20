@@ -28,10 +28,8 @@ struct DenseForwardPropagation final : LayerForwardPropagation
     void initialize() override
     {
         const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
-        const Shape output_shape = dense_layer->get_output_shape();
 
-        Shape full_output_shape = {batch_size};
-        full_output_shape.insert(full_output_shape.end(), output_shape.begin(), output_shape.end());
+        const Shape full_output_shape = Shape{batch_size}.append(dense_layer->get_output_shape());
 
         outputs.shape = full_output_shape;
         activation_derivatives.shape = full_output_shape;
@@ -99,13 +97,9 @@ struct DenseBackPropagation final : LayerBackPropagation
             beta_gradients.shape = {outputs_number};
         }
 
-        const Shape input_shape = dense_layer->get_input_shape();
+        const Shape full_input_shape = Shape{batch_size}.append(dense_layer->get_input_shape());
 
-        Shape full_input_shape = { batch_size };
-        full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
-
-        input_gradients.resize(1);
-        input_gradients[0].shape = full_input_shape;
+        input_gradients = {{nullptr, full_input_shape}};
     }
 
 
@@ -156,13 +150,10 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
     void initialize() override
     {
         const Index parameters_number = layer->get_parameters_number();
-        const Shape layer_input_shape = layer->get_input_shape();
 
-        Shape input_shape_vec = {batch_size};
-        input_shape_vec.insert(input_shape_vec.end(), layer_input_shape.begin(), layer_input_shape.end());
+        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(1);
-        input_gradients[0].shape = input_shape_vec;
+        input_gradients = {{nullptr, full_input_shape}};
 
         squared_errors_Jacobian.shape = {batch_size, parameters_number};
     }
@@ -310,8 +301,7 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
         ones.resize({total_rows});
         ones.fill(1.0f);
 
-        input_gradients.resize(1);
-        input_gradients[0].resize({ total_rows, inputs_number });
+        input_gradients = {{nullptr, {total_rows, inputs_number}}};
 
         bias_gradients.set_descriptor({ outputs_number });
         weight_gradients.set_descriptor({ inputs_number, outputs_number });

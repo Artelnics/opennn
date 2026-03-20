@@ -410,8 +410,7 @@ void RecurrentBackPropagation::initialize()
 
     const Shape full_input_shape = { batch_size, time_steps, inputs_number };
 
-    input_gradients.resize(1);
-    input_gradients[0].shape = full_input_shape;
+    input_gradients = {{nullptr, full_input_shape}};
 }
 
 
