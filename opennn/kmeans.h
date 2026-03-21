@@ -18,7 +18,7 @@ class KMeans
 
 public:
 
-    KMeans(Index clusters = 3, string distance_calculation_method = "euclidean", Index = 100);
+    KMeans(Index clusters = 3, Index = 100);
 
     VectorI calculate_outputs(const MatrixR&);
     VectorR elbow_method(const MatrixR&, Index = 10);
@@ -36,7 +36,7 @@ private:
 
     Index clusters_number;
     Index maximum_iterations;
-    string metric;
+    //string metric;
 
     MatrixR cluster_centers;
     VectorI rows_cluster_labels;

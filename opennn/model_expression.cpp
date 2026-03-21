@@ -1399,23 +1399,12 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
     if(!out.empty() && isdigit(out[0]))
         out = '_' + out;
 
-    unordered_map<string, string> special_words = {
-        {"min", "mi_n"},
-        {"max", "ma_x"},
-        {"exp", "ex_p"},
-        {"tanh", "ta_nh"}
+    const unordered_map<string, string> special_words = {
+        {"min", "mi_n"}, {"max", "ma_x"}, {"exp", "ex_p"}, {"tanh", "ta_nh"}
     };
 
-    for(const auto& pair : special_words)
-    {
-        size_t position = 0;
-
-        while ((position = out.find(pair.first, position)) != string::npos)
-        {
-            out.replace(position, pair.first.length(), pair.second);
-            position += pair.second.length();
-        }
-    }
+    for(const auto& [search, replace_val] : special_words)
+        replace_all_appearances(out, search, replace_val);
 
     return out;
 }

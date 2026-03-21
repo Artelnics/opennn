@@ -90,7 +90,7 @@ void Loss::set_display(bool new_display)
 }
 
 
-void Loss::calculate_errors_lm(const Batch& batch,
+void Loss::calculate_errors(const Batch& batch,
                                     const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
@@ -102,7 +102,7 @@ void Loss::calculate_errors_lm(const Batch& batch,
 }
 
 
-void Loss::calculate_squared_errors_lm(const Batch&,
+void Loss::calculate_squared_errors(const Batch&,
                                        const ForwardPropagation&,
                                        BackPropagationLM& back_propagation_lm) const
 {
@@ -145,7 +145,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 }
 
 
-void Loss::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
+void Loss::add_regularization(BackPropagationLM& back_propagation_lm) const
 {
     if(regularization_method == "None")
         return;
@@ -179,29 +179,29 @@ void Loss::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
 }
 
 
-void Loss::back_propagate_lm(const Batch& batch,
+void Loss::back_propagate(const Batch& batch,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagationLM& back_propagation_lm) const
 {
-    calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-    calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-    calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_error(batch, forward_propagation, back_propagation_lm);
 
-    calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_layers_squared_errors_jacobian(batch, forward_propagation, back_propagation_lm);
 
-    calculate_error_gradient_lm(batch, back_propagation_lm);
+    calculate_error_gradient(batch, back_propagation_lm);
 
-    calculate_error_hessian_lm(batch, back_propagation_lm);
+    calculate_error_hessian(batch, back_propagation_lm);
 
     back_propagation_lm.loss_value = back_propagation_lm.error;
 
-    add_regularization_lm(back_propagation_lm);
+    add_regularization(back_propagation_lm);
 }
 
 
-void Loss::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
+void Loss::calculate_layers_squared_errors_jacobian(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
                                                             BackPropagationLM& back_propagation_lm) const
 {
@@ -222,10 +222,10 @@ void Loss::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     const vector<vector<TensorView>> layer_delta_views
         = back_propagation_lm.get_layer_gradients();
 
-    calculate_output_gradients_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_output_gradients(batch, forward_propagation, back_propagation_lm);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-        layers[i]->back_propagate_lm(layer_input_views[i],
+        layers[i]->back_propagate(layer_input_views[i],
                                      layer_delta_views[i],
                                      forward_propagation.layers[i],
                                      back_propagation_lm.neural_network.layers[i]);
@@ -250,7 +250,7 @@ void Loss::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
 }
 
 
-void Loss::calculate_error_gradient_lm(const Batch&,
+void Loss::calculate_error_gradient(const Batch&,
                                        BackPropagationLM& back_propagation_lm) const
 {
     const VectorR& squared_errors = back_propagation_lm.squared_errors;
@@ -700,11 +700,11 @@ VectorR Loss::calculate_numerical_gradient_lm()
                                           parameters_forward,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         error_forward = back_propagation_lm.error;
 
@@ -716,11 +716,11 @@ VectorR Loss::calculate_numerical_gradient_lm()
                                           parameters_backward,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         error_backward = back_propagation_lm.error;
 
@@ -825,15 +825,15 @@ MatrixR Loss::calculate_numerical_jacobian()
 
         parameters_backward(j) -= perturbation;
         neural_network->forward_propagate(batch.get_inputs(), parameters_backward, forward_propagation);
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
         error_terms_backward = back_propagation_lm.squared_errors;
         parameters_backward(j) += perturbation;
 
         parameters_forward(j) += perturbation;
         neural_network->forward_propagate(batch.get_inputs(), parameters_forward, forward_propagation);
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
         error_terms_forward = back_propagation_lm.squared_errors;
         parameters_forward(j) -= perturbation;
 
@@ -869,11 +869,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                       parameters,
                                       forward_propagation);
 
-    calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-    calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-    calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+    calculate_error(batch, forward_propagation, back_propagation_lm);
 
     const type y = back_propagation_lm.error;
 
@@ -917,11 +917,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                           x_backward_2i,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_backward_2i = back_propagation_lm.error;
 
@@ -933,11 +933,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                           x_backward_i,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_backward_i = back_propagation_lm.error;
 
@@ -949,11 +949,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                           x_forward_i,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_forward_i = back_propagation_lm.error;
 
@@ -965,11 +965,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                           x_forward_2i,
                                           forward_propagation);
 
-        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        calculate_error(batch, forward_propagation, back_propagation_lm);
 
         y_forward_2i = back_propagation_lm.error;
 
@@ -991,11 +991,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                               x_backward_ij,
                                               forward_propagation);
 
-            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_backward_ij = back_propagation_lm.error;
 
@@ -1009,11 +1009,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                               x_forward_ij,
                                               forward_propagation);
 
-            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_forward_ij = back_propagation_lm.error;
 
@@ -1027,11 +1027,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                               x_backward_i_forward_j,
                                               forward_propagation);
 
-            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_backward_i_forward_j = back_propagation_lm.error;
 
@@ -1045,11 +1045,11 @@ MatrixR Loss::calculate_numerical_hessian()
                                               x_forward_i_backward_j,
                                               forward_propagation);
 
-            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+            calculate_error(batch, forward_propagation, back_propagation_lm);
 
             y_forward_i_backward_j = back_propagation_lm.error;
 
@@ -1224,8 +1224,8 @@ void BackPropagationLM::set(const Index new_samples_number,
     gradient.resize(padded_parameters_number);
     gradient.setZero();
 
-    regularization_gradient.resize(padded_parameters_number);
-    regularization_gradient.setZero();
+    //regularization_gradient.resize(padded_parameters_number);
+    //regularization_gradient.setZero();
 
     const Index outputs_number = neural_network_ptr->get_outputs_number();
     const Index total_error_terms = samples_number * outputs_number;
@@ -1236,8 +1236,8 @@ void BackPropagationLM::set(const Index new_samples_number,
     hessian.resize(padded_parameters_number, padded_parameters_number);
     hessian.setZero();
 
-    regularization_hessian.resize(padded_parameters_number, padded_parameters_number);
-    regularization_hessian.setZero();
+    //regularization_hessian.resize(padded_parameters_number, padded_parameters_number);
+    //regularization_hessian.setZero();
 
     errors.resize(samples_number, outputs_number);
     squared_errors.resize(total_error_terms);
@@ -1270,7 +1270,7 @@ void Loss::back_propagate(const BatchCuda& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    calculate_layers_error_gradient_cuda(batch, forward_propagation, back_propagation);
+    calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     // Loss
 
@@ -1278,11 +1278,11 @@ void Loss::back_propagate(const BatchCuda& batch,
 
     // Regularization
 
-    add_regularization_cuda(back_propagation);
+    add_regularization(back_propagation);
 }
 
 
-void Loss::calculate_layers_error_gradient_cuda(const BatchCuda& batch,
+void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
                                                 ForwardPropagationCuda& forward_propagation,
                                                 BackPropagationCuda& back_propagation) const
 {
@@ -1310,7 +1310,7 @@ void Loss::calculate_layers_error_gradient_cuda(const BatchCuda& batch,
 }
 
 
-void Loss::add_regularization_cuda(BackPropagationCuda& back_propagation) const
+void Loss::add_regularization(BackPropagationCuda& back_propagation) const
 {
     if (regularization_method == "None" || regularization_weight == 0.0f)
     {

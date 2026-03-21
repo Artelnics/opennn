@@ -97,8 +97,6 @@ protected:
 
     type maximum_time = type(360000);
 
-    BoxPlot auto_association_box_plot;
-
     string hardware_use = "Multi-core";
 
     Index display_period = 10;

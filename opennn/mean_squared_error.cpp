@@ -53,7 +53,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_error_lm(const Batch&,
+void MeanSquaredError::calculate_error(const Batch&,
                                           const ForwardPropagation&,
                                           BackPropagationLM& back_propagation) const
 {
@@ -87,7 +87,7 @@ void MeanSquaredError::calculate_output_gradients(const Batch& batch,
 }
 
 
-void MeanSquaredError::calculate_output_gradients_lm(const Batch&,
+void MeanSquaredError::calculate_output_gradients(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
@@ -98,7 +98,7 @@ void MeanSquaredError::calculate_output_gradients_lm(const Batch&,
 }
 
 
-void MeanSquaredError::calculate_error_gradient_lm(const Batch&,
+void MeanSquaredError::calculate_error_gradient(const Batch&,
                                                    BackPropagationLM& back_propagation_lm) const
 {
     const VectorR& squared_errors = back_propagation_lm.squared_errors;
@@ -111,7 +111,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch&,
 }
 
 
-void MeanSquaredError::calculate_error_hessian_lm(const Batch&,
+void MeanSquaredError::calculate_error_hessian(const Batch&,
                                                   BackPropagationLM& back_propagation_lm) const
 {
     const MatrixR& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;

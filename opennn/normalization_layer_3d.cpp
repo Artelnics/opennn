@@ -256,8 +256,7 @@ void Normalization3dBackPropagation::initialize()
     standard_deviation_derivatives.resize(batch_size, sequence_length, embedding_dimension);
     aux_2d.resize(batch_size, sequence_length);
 
-    input_gradients.resize(1);
-    input_gradients[0].shape = {batch_size, sequence_length, embedding_dimension};
+    input_gradients = {{nullptr, {batch_size, sequence_length, embedding_dimension}}};
 }
 
 

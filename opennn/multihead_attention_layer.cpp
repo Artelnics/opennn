@@ -1089,12 +1089,8 @@ void MultiHeadAttentionBackPropagation::initialize()
     value_bias_gradients.shape = {embedding_dimension};
     projection_bias_gradients.shape = {embedding_dimension};
 
-    input_gradients_memory.resize(2);
-    input_gradients_memory[0].resize(batch_size * query_sequence_length * embedding_dimension);
-    input_gradients_memory[1].resize(batch_size * source_sequence_length * embedding_dimension);
-
-    input_gradients = { { input_gradients_memory[0].data(), {batch_size, query_sequence_length, embedding_dimension} },
-                        {input_gradients_memory[1].data(), {batch_size, source_sequence_length, embedding_dimension} } };
+    input_gradients = {{nullptr, {batch_size, query_sequence_length, embedding_dimension}},
+                       {nullptr, {batch_size, source_sequence_length, embedding_dimension}}};
 
     // Auxiliar
 
@@ -1210,9 +1206,8 @@ void MultiHeadAttentionBackPropagationCuda::initialize()
     query_input_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
     source_input_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
 
-    input_gradients.resize(2);
-    input_gradients[0].resize({batch_size, query_sequence_length, embedding_dimension});
-    input_gradients[1].resize({batch_size, source_sequence_length, embedding_dimension});
+    input_gradients = {TensorViewCuda({batch_size, query_sequence_length, embedding_dimension}),
+                       TensorViewCuda({batch_size, source_sequence_length, embedding_dimension})};
 
     const Index max_seq = (query_sequence_length > source_sequence_length) ? query_sequence_length : source_sequence_length;
     ones.resize({batch_size * max_seq});

@@ -61,7 +61,18 @@ vector<TensorView*> LayerForwardPropagation::get_workspace_views()
 
 vector<TensorView *> LayerBackPropagation::get_gradient_views()
 {
-    return vector<TensorView*>();
+    return {};
+}
+
+
+vector<TensorView *> LayerBackPropagation::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for (TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
 }
 
 
@@ -73,7 +84,18 @@ vector<TensorView> LayerBackPropagation::get_input_gradients() const
 
 vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
 {
-    return vector<TensorView*>();
+    return {};
+}
+
+
+vector<TensorView *> LayerBackPropagationLM::get_workspace_views()
+{
+    vector<TensorView*> views;
+
+    for(TensorView& view : input_gradients)
+        views.push_back(&view);
+
+    return views;
 }
 
 
@@ -107,6 +129,21 @@ void LayerBackPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
 }
 
 
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_gradient_views()
+{
+    return vector<TensorViewCuda*>();
+}
+
+
+vector<TensorViewCuda *> LayerBackPropagationCuda::get_workspace_views()
+{
+    vector<TensorViewCuda*> views;
+    for (TensorViewCuda& view : input_gradients)
+        views.push_back(&view);
+    return views;
+}
+
+
 TensorViewCuda LayerForwardPropagationCuda::get_outputs() const
 {
     return outputs;
@@ -121,13 +158,7 @@ vector<TensorViewCuda*> LayerForwardPropagationCuda::get_workspace_views()
 
 vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() const
 {
-    vector<TensorViewCuda> views;
-    views.reserve(input_gradients.size());
-
-    for (const TensorCuda& tensor : input_gradients)
-        views.push_back(tensor.view());
-
-    return views;
+    return input_gradients;
 }
 
 #endif
@@ -270,9 +301,7 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 
 Index Layer::get_inputs_number() const
 {
-    const Shape input_shape = get_input_shape();
-
-    return input_shape.count();
+    return get_input_shape().count();
 }
 
 

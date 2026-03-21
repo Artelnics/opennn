@@ -893,6 +893,11 @@ struct TensorViewCuda
     TensorViewCuda(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
         : data(new_data), descriptor_handle(handle) {}
 
+    explicit TensorViewCuda(const Shape& shape)
+    {
+        set_descriptor(shape);
+    }
+
     cudnnTensorDescriptor_t get_descriptor() const 
     {
         return descriptor_handle ? descriptor_handle.get() : nullptr;

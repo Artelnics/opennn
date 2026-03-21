@@ -297,6 +297,7 @@ struct NeuralNetworkBackPropagation
     const vector<unique_ptr<LayerBackPropagation>>& get_layers() const;
 
     vector<vector<TensorView*>> get_layer_gradient_views();
+
     vector<vector<TensorView*>> get_layer_workspace_views();
 
     void print() const;
@@ -327,6 +328,8 @@ struct NeuralNetworkBackPropagationCuda
 
     vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
+    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+
     void print();
 
     Index batch_size = 0;
@@ -336,6 +339,8 @@ struct NeuralNetworkBackPropagationCuda
     vector<unique_ptr<LayerBackPropagationCuda>> layers;
 
     TensorCuda gradients;
+
+    TensorCuda workspace;
 };
 
 #endif
@@ -351,6 +356,8 @@ struct NeuralNetworkBackPropagationLM
 
     NeuralNetwork* get_neural_network() const;
 
+    vector<vector<TensorView*>> get_layer_gradient_views();
+
     vector<vector<TensorView*>> get_layer_workspace_views();
 
     void print();
@@ -360,6 +367,8 @@ struct NeuralNetworkBackPropagationLM
     NeuralNetwork* neural_network = nullptr;
 
     vector<unique_ptr<LayerBackPropagationLM>> layers;
+
+    VectorR gradient;
 
     VectorR workspace;
 };

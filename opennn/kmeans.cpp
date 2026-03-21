@@ -13,9 +13,8 @@ namespace opennn
 {
 
 KMeans::KMeans(Index clusters,
-               string distance_calculation_method,
                Index iterations_number)
-    : clusters_number(clusters), maximum_iterations(iterations_number), metric(distance_calculation_method)
+    : clusters_number(clusters), maximum_iterations(iterations_number)
 {
 }
 

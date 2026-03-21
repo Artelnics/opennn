@@ -326,7 +326,7 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
         scaling_layer->set_input_shape(new_input_shape);
     }
 
-    layers[get_first_trainable_layer_index()].get()->set_input_shape(new_input_shape);
+    layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }
 
 
@@ -561,7 +561,7 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
 MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.rows(), this);
 
@@ -577,7 +577,7 @@ MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
@@ -593,7 +593,7 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
 
 MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
 {
-    if(layers.empty() || inputs.size() == 0) return MatrixR();
+    if(layers.empty() || inputs.size() == 0) return {};
 
     ForwardPropagation forward_propagation(inputs.dimension(0), this);
 
@@ -1308,7 +1308,6 @@ NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(const Index new_batch
 void NeuralNetworkBackPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     batch_size = new_batch_size;
-
     neural_network = new_neural_network;
 
     if(!neural_network) return;
@@ -1328,15 +1327,24 @@ void NeuralNetworkBackPropagation::set(const Index new_batch_size, NeuralNetwork
     }
 
     const vector<vector<TensorView*>> layer_gradient_views = get_layer_gradient_views();
-
     const Index gradient_size = get_size(layer_gradient_views);
 
-    if (gradient_size == 0) return;
+    if (gradient_size > 0)
+    {
+        gradient.resize(gradient_size);
+        gradient.setZero();
+        link(gradient.data(), layer_gradient_views);
+    }
 
-    gradient.resize(gradient_size);
-    gradient.setZero();
+    const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
+    const Index workspace_size = get_size(layer_workspace_views);
 
-    link(gradient.data(), layer_gradient_views);
+    if (workspace_size > 0)
+    {
+        workspace.resize(workspace_size);
+        workspace.setZero();
+        link(workspace.data(), layer_workspace_views);
+    }
 }
 
 
@@ -1358,6 +1366,20 @@ vector<vector<TensorView *>> NeuralNetworkBackPropagation::get_layer_gradient_vi
 
 
     return layer_gradient_views;
+}
+
+
+vector<vector<TensorView *>> NeuralNetworkBackPropagation::get_layer_workspace_views()
+{
+    const size_t layers_number = layers.size();
+
+    vector<vector<TensorView*>> layer_workspace_views(layers_number);
+
+    for (size_t i = 0; i < layers_number; i++)
+        if (layers[i])
+            layer_workspace_views[i] = layers[i]->get_workspace_views();
+
+    return layer_workspace_views;
 }
 
 
@@ -1535,15 +1557,25 @@ void NeuralNetworkBackPropagationLM::set(const Index new_batch_size,
     for(Index i = first_trainable; i <= last_trainable; i++)
         layers[i] = make_unique<DenseBackPropagationLM>(total_error_terms, neural_network_layers[i].get());
 
+    const vector<vector<TensorView*>> layer_gradient_views = get_layer_gradient_views();
+    const Index gradient_size = get_size(layer_gradient_views);
+
+    if(gradient_size > 0)
+    {
+        gradient.resize(gradient_size);
+        gradient.setZero();
+        link(gradient.data(), layer_gradient_views);
+    }
+
     const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
     const Index workspace_size = get_size(layer_workspace_views);
 
-    if(workspace_size == 0) return;
-
-    workspace.resize(workspace_size);
-    workspace.setZero();
-
-    link(workspace.data(), layer_workspace_views);
+    if(workspace_size > 0)
+    {
+        workspace.resize(workspace_size);
+        workspace.setZero();
+        link(workspace.data(), layer_workspace_views);
+    }
 }
 
 const vector<unique_ptr<LayerBackPropagationLM> >&NeuralNetworkBackPropagationLM::get_layers() const
@@ -1557,6 +1589,20 @@ NeuralNetwork *NeuralNetworkBackPropagationLM::get_neural_network() const
 }
 
 
+vector<vector<TensorView *>> NeuralNetworkBackPropagationLM::get_layer_gradient_views()
+{
+    const Index layers_number = neural_network->get_layers_number();
+
+    vector<vector<TensorView*>> layer_gradient_views(layers_number);
+
+    for(Index i = 0; i < layers_number; i++)
+        if(layers[i])
+            layer_gradient_views[i] = layers[i]->get_gradient_views();
+
+    return layer_gradient_views;
+}
+
+
 vector<vector<TensorView *>> NeuralNetworkBackPropagationLM::get_layer_workspace_views()
 {
     const Index layers_number = neural_network->get_layers_number();
@@ -1565,7 +1611,7 @@ vector<vector<TensorView *>> NeuralNetworkBackPropagationLM::get_layer_workspace
 
     for(Index i = 0; i < layers_number; i++)
         if(layers[i])
-            layer_workspace_views[i] = layers[i]->get_gradient_views();
+            layer_workspace_views[i] = layers[i]->get_workspace_views();
 
     return layer_workspace_views;
 }
@@ -1812,7 +1858,6 @@ NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index n
 void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     batch_size = new_batch_size;
-
     neural_network = new_neural_network;
 
     if (!neural_network) return;
@@ -1832,14 +1877,22 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
     }
 
     const vector<vector<TensorViewCuda*>> layer_gradient_views = get_layer_gradient_views();
-
     const Index gradient_size = get_size(layer_gradient_views);
 
-    if (gradient_size == 0) return;
+    if (gradient_size > 0)
+    {
+        gradients.resize({gradient_size});
+        link(gradients.data, layer_gradient_views);
+    }
 
-    gradients.resize({gradient_size});
+    const vector<vector<TensorViewCuda*>> layer_workspace_views = get_layer_workspace_views_device();
+    const Index workspace_size = get_size(layer_workspace_views);
 
-    link(gradients.data, layer_gradient_views);
+    if (workspace_size > 0)
+    {
+        workspace.resize({workspace_size});
+        link(workspace.data, layer_workspace_views);
+    }
 }
 
 
@@ -1864,6 +1917,23 @@ vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_grad
 
     return layer_gradient_views;
     
+}
+
+
+vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_workspace_views_device()
+{
+    vector<vector<TensorViewCuda*>> layer_workspace_views(layers.size());
+    Index i = 0;
+
+    for (const unique_ptr<LayerBackPropagationCuda>& layer_bp : layers)
+    {
+        if (layer_bp)
+            layer_workspace_views[i] = layer_bp->get_workspace_views();
+
+        i++;
+    }
+
+    return layer_workspace_views;
 }
 
 

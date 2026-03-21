@@ -58,7 +58,7 @@ public:
 
     virtual vector<TensorView*> get_parameter_views()
     {
-        return vector<TensorView*>();
+        return {};
     }
 
     virtual Shape get_input_shape() const = 0;
@@ -81,7 +81,7 @@ public:
                                 unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>&) const {}
 
-    virtual void back_propagate_lm(const vector<TensorView>&,
+    virtual void back_propagate(const vector<TensorView>&,
                                    const vector<TensorView>&,
                                    unique_ptr<LayerForwardPropagation>&,
                                    unique_ptr<LayerBackPropagationLM>&) const {}
@@ -365,7 +365,7 @@ public:
 
     virtual vector<TensorViewCuda*> get_parameter_views_device()
     {
-        return vector<TensorViewCuda*>();
+        return {};
     }
 
     virtual void free() {}
@@ -415,10 +415,7 @@ struct LayerBackPropagation
 
     virtual vector<TensorView*> get_gradient_views();
 
-    virtual vector<TensorView*> get_workspace_views()
-    {
-        return vector<TensorView*>();
-    }
+    virtual vector<TensorView*> get_workspace_views();
 
     vector<TensorView> get_input_gradients() const;
 
@@ -429,7 +426,6 @@ struct LayerBackPropagation
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 
@@ -443,6 +439,8 @@ struct LayerBackPropagationLM
 
     virtual vector<TensorView*> get_gradient_views();
 
+    virtual vector<TensorView*> get_workspace_views();
+
     vector<TensorView> get_input_gradients() const;
 
     virtual void print() const {}
@@ -452,7 +450,6 @@ struct LayerBackPropagationLM
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
-    vector<VectorR> input_gradients_memory;
 };
 
 
@@ -503,10 +500,9 @@ struct LayerBackPropagationCuda
     void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual vector<TensorViewCuda*> get_gradient_views()
-    {
-		return vector<TensorViewCuda*>();
-    };
+    virtual vector<TensorViewCuda*> get_gradient_views();
+
+    virtual vector<TensorViewCuda*> get_workspace_views();
 
     vector<TensorViewCuda> get_input_gradient_views() const;
 
@@ -514,19 +510,16 @@ struct LayerBackPropagationCuda
 
     virtual void free()
     {
-        if (workspace)
-        {
-            cudaFree(workspace);
-            workspace = nullptr;
-            workspace_size = 0;
-        }
+        cudaFree(workspace);
+        workspace = nullptr;
+        workspace_size = 0;
     }
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    vector<TensorCuda> input_gradients;
+    vector<TensorViewCuda> input_gradients;
 
     void* workspace = nullptr;
     size_t workspace_size = 0;
