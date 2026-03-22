@@ -70,8 +70,7 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(const vector<TensorView>&,
-                                   unique_ptr<LayerForwardPropagation>&,
+    virtual void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                                    bool) = 0;
 
     // Back propagation
@@ -402,6 +401,10 @@ struct LayerForwardPropagation
     Layer* layer = nullptr;
 
     TensorView outputs;
+
+    vector<TensorView> inputs;
+
+    const vector<TensorView>& get_inputs() const { return inputs; }
 };
 
 

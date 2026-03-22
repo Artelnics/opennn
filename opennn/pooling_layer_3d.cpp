@@ -74,14 +74,13 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool is_training)
 {
-    const TensorMap3 inputs = tensor_map<3>(input_views[0]);
-    MatrixMap outputs = matrix_map(layer_forward_propagation->outputs);
+    const TensorMap3 inputs = tensor_map<3>(forward_propagation->inputs[0]);
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
-    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
+    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);

@@ -144,17 +144,16 @@ void Embedding::set_parameters_glorot()
 }
 
 
-void Embedding::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Embedding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool)
 {
-    const Index batch_size = input_views[0].shape[0];
-    const Index sequence_length = input_views[0].shape[1];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index sequence_length = forward_propagation->inputs[0].shape[1];
     const Index embedding_dimension = get_embedding_dimension();
     const Index total_tokens = batch_size * sequence_length;
 
-    const type* input_indices = input_views[0].data;
-    MatrixMap outputs_map(layer_forward_propagation->outputs.data, total_tokens, embedding_dimension);
+    const type* input_indices = forward_propagation->inputs[0].data;
+    MatrixMap outputs_map(forward_propagation->outputs.data, total_tokens, embedding_dimension);
 
     const MatrixMap weights_map = matrix_map(weights);
 

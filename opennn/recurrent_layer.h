@@ -34,8 +34,7 @@ public:
 
     void set_activation_function(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void back_propagate(const vector<TensorView>&,

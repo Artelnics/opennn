@@ -51,8 +51,7 @@ public:
 
     // Lower and upper bounds
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
 #ifdef OPENNN_CUDA

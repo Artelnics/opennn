@@ -78,14 +78,13 @@ void Convolutional::calculate_convolutions(const Tensor4& inputs, TensorMap4 con
 }
 
 
-void Convolutional::forward_propagate(const vector<TensorView>& input_views,
-                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       bool is_training)
 {
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
 
     ConvolutionalForwardPropagation* convolutional_forward_propagation =
-        static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
+        static_cast<ConvolutionalForwardPropagation*>(forward_propagation.get());
 
     TensorMap4 outputs = tensor_map<4>(convolutional_forward_propagation->outputs);
 

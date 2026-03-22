@@ -93,17 +93,13 @@ public:
 
     // Forward propagation
     
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
-        FlattenForwardPropagation<Rank>* forward_propagation =
-            static_cast<FlattenForwardPropagation<Rank>*>(layer_forward_propagation.get());
+        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
-        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
-
-        if (input_views[0].data != forward_propagation->outputs.data)
-            memcpy(forward_propagation->outputs.data, input_views[0].data, bytes_to_copy);
+        if (forward_propagation->inputs[0].data != forward_propagation->outputs.data)
+            memcpy(forward_propagation->outputs.data, forward_propagation->inputs[0].data, bytes_to_copy);
     }
     
     // Back-propagation

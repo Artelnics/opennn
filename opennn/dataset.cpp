@@ -17,6 +17,8 @@
 #include "random_utilities.h"
 #include "variable.h"
 
+#include <charconv>
+
 namespace opennn
 {
 
@@ -3719,16 +3721,12 @@ void Dataset::read_csv()
     variables.resize(variables_number);
 
     if(has_header)
-    {
         if(has_sample_ids)
             for(Index i = 0; i < variables_number; i++) variables[i].name = header_tokens[i + 1];
         else
             set_variable_names(header_tokens);
-    }
     else
-    {
         set_default_variable_names();
-    }
 
     infer_column_types(raw_file_content);
 
@@ -3791,7 +3789,7 @@ void Dataset::read_csv()
                     data(sample_index, feature_indices[0]) = NAN;
                 else
                 {
-                    time_t timestamp = date_to_timestamp(token, gmt, date_format);
+                    const time_t timestamp = date_to_timestamp(token, gmt, date_format);
 
                     if(timestamp == -1)
                         throw runtime_error("Date format is unsupported or date is prior to 1970.");
@@ -3801,13 +3799,14 @@ void Dataset::read_csv()
                 break;
             case VariableType::Categorical:
                 if(token.empty() || token == missing_values_label)
-                    for(Index cat_idx : feature_indices) data(sample_index, cat_idx) = NAN;
+                    for(Index cat_idx : feature_indices)
+                        data(sample_index, cat_idx) = NAN;
                 else
                 {
                     auto it = find(variable.categories.begin(), variable.categories.end(), token);
                     if(it != variable.categories.end())
                     {
-                        Index category_index = distance(variable.categories.begin(), it);
+                        const Index category_index = distance(variable.categories.begin(), it);
                         data(sample_index, feature_indices[category_index]) = 1;
                     }
                 }
@@ -3818,6 +3817,7 @@ void Dataset::read_csv()
                 else
                 {
                     const vector<string>& categories = variable.categories;
+
                     if(token.empty() || token == missing_values_label)
                         data(sample_index, feature_indices[0]) = NAN;
                     else if(!categories.empty() && token == categories[0])
@@ -3825,6 +3825,7 @@ void Dataset::read_csv()
                     else if(categories.size() > 1 && token == categories[1])
                         data(sample_index, feature_indices[0]) = 1;
                     else
+                        //from_chars(token.data(), token.data() + token.size(), data(sample_index, feature_indices[0])); // AFTER
                         data(sample_index, feature_indices[0]) = stof(token);
                 }
                 break;

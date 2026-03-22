@@ -188,17 +188,16 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
         const Index features = scalers.size();
-        const Index total_rows = input_views[0].size() / features;
+        const Index total_rows = forward_propagation->inputs[0].size() / features;
 
-        const MatrixMap inputs_mat(input_views[0].data, total_rows, features);
-        MatrixMap outputs_mat(layer_forward_propagation->outputs.data, total_rows, features);
+        const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, features);
+        MatrixMap outputs(forward_propagation->outputs.data, total_rows, features);
 
-        outputs_mat.noalias() = inputs_mat;
+        outputs.noalias() = inputs;
 
         for(Index i = 0; i < features; i++)
         {
@@ -208,15 +207,15 @@ public:
             const Descriptives& descriptive = descriptives[i];
 
             if(scaler == "MeanStandardDeviation")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + EPSILON);
+                outputs.col(i).array() = (outputs.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + EPSILON);
             else if(scaler == "MinimumMaximum")
-                outputs_mat.col(i).array() = (outputs_mat.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + EPSILON) * (max_range - min_range) + min_range;
+                outputs.col(i).array() = (outputs.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + EPSILON) * (max_range - min_range) + min_range;
             else if(scaler == "StandardDeviation")
-                outputs_mat.col(i).array() /= (descriptive.standard_deviation + EPSILON);
+                outputs.col(i).array() /= (descriptive.standard_deviation + EPSILON);
             else if(scaler == "Logarithm")
-                outputs_mat.col(i).array() = outputs_mat.col(i).array().log();
+                outputs.col(i).array() = outputs.col(i).array().log();
             else if(scaler == "ImageMinMax")
-                outputs_mat.col(i).array() /= type(255.0);
+                outputs.col(i).array() /= type(255.0);
             else
                 throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
         }

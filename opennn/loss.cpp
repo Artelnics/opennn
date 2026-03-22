@@ -219,14 +219,14 @@ void Loss::calculate_layers_squared_errors_jacobian(const Batch& batch,
     const vector<vector<TensorView>> layer_input_views
         = forward_propagation.get_layer_input_views(batch.get_inputs(), true);
 
-    const vector<vector<TensorView>> layer_delta_views
+    const vector<vector<TensorView>> layer_gradient_views
         = back_propagation_lm.get_layer_gradients();
 
     calculate_output_gradients(batch, forward_propagation, back_propagation_lm);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_views[i],
-                                     layer_delta_views[i],
+                                     layer_gradient_views[i],
                                      forward_propagation.layers[i],
                                      back_propagation_lm.neural_network.layers[i]);
 
@@ -296,14 +296,14 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     const vector<vector<TensorView>> layer_input_views
         = forward_propagation.get_layer_input_views(batch.get_inputs(), true);
 
-    const vector<vector<TensorView>> layer_delta_views
+    const vector<vector<TensorView>> layer_gradient_views
         = back_propagation.get_layer_gradients();
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_views[i],
-            layer_delta_views[i],
+            layer_gradient_views[i],
             forward_propagation.layers[i],
             back_propagation.neural_network.layers[i]);
 }
@@ -488,7 +488,7 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
     vector<TensorView> input_gradient_views;
 
-    vector<vector<TensorView>> layer_delta_views(layers_number);
+    vector<vector<TensorView>> layer_gradient_views(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -497,7 +497,7 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
     {
         if (i == last_trainable_layer_index)
         {
-            layer_delta_views[i].push_back(get_output_gradients());
+            layer_gradient_views[i].push_back(get_output_gradients());
 
             continue;
         }
@@ -509,11 +509,11 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
             input_gradient_views = layer_back_propagations[output_index]->get_input_gradients();
 
-            layer_delta_views[i].push_back(input_gradient_views[input_index]);
+            layer_gradient_views[i].push_back(input_gradient_views[input_index]);
         }
     }
 
-    return layer_delta_views;
+    return layer_gradient_views;
 }
 
 
@@ -1143,7 +1143,7 @@ vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const
 
     vector<TensorView> input_gradient_views;
 
-    vector<vector<TensorView>> layer_delta_views(layers_number);
+    vector<vector<TensorView>> layer_gradient_views(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -1152,7 +1152,7 @@ vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const
     {
         if(i == last_trainable_layer_index)
         {
-            layer_delta_views[i].push_back(get_output_gradients());
+            layer_gradient_views[i].push_back(get_output_gradients());
 
             continue;
         }
@@ -1172,11 +1172,11 @@ vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const
 
             vector<TensorView> input_derivative_pairs = layer_back_propagations[output_layer_index]->get_input_gradients();
 
-            layer_delta_views[i].push_back(input_derivative_pairs[input_port_index]);
+            layer_gradient_views[i].push_back(input_derivative_pairs[input_port_index]);
         }
     }
 
-    return layer_delta_views;
+    return layer_gradient_views;
 }
 
 
@@ -1297,14 +1297,14 @@ void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
     const vector<vector<TensorViewCuda>> layer_input_views
         = forward_propagation.get_layer_input_views_device(batch.get_inputs_device(), true);
 
-    const vector<vector<TensorViewCuda>> layer_delta_views
+    const vector<vector<TensorViewCuda>> layer_gradient_views
         = back_propagation.get_layer_delta_views_device();
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_views[i],
-                                       layer_delta_views[i],
+                                       layer_gradient_views[i],
                                        forward_propagation.layers[i],
                                        back_propagation.neural_network.layers[i]);
 }
@@ -1485,7 +1485,7 @@ vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_delta_views_device
 
     vector<TensorViewCuda> input_gradient_views;
 
-    vector<vector<TensorViewCuda>> layer_delta_views(layers_number);
+    vector<vector<TensorViewCuda>> layer_gradient_views(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -1494,7 +1494,7 @@ vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_delta_views_device
     {
         if (i == last_trainable_layer_index)
         {
-            layer_delta_views[i].push_back(get_output_gradient_views_device());
+            layer_gradient_views[i].push_back(get_output_gradient_views_device());
 
             continue;
         }
@@ -1506,11 +1506,11 @@ vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_delta_views_device
 
             input_gradient_views = layer_back_propagations[output_index]->get_input_gradient_views();
 
-            layer_delta_views[i].push_back(input_gradient_views[input_index]);
+            layer_gradient_views[i].push_back(input_gradient_views[input_index]);
         }
     }
 
-    return layer_delta_views;
+    return layer_gradient_views;
 }
 
 

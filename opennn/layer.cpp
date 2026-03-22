@@ -313,8 +313,7 @@ Index Layer::get_outputs_number() const
 }
 
 
-void Layer::forward_propagate(const vector<TensorView>&,
-                              unique_ptr<LayerForwardPropagation>&, bool)
+void Layer::forward_propagate(unique_ptr<LayerForwardPropagation>&, bool)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }

@@ -184,15 +184,14 @@ void Unscaling::set_scalers(const string& new_scalers)
 }
 
 
-void Unscaling::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool)
 {
     MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     const Index outputs_number = get_outputs_number();
 
-    const MatrixMap inputs = matrix_map(input_views[0]);
+    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
 
     outputs = inputs;
 

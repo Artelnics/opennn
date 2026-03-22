@@ -74,20 +74,19 @@ void Normalization3d::set(const Index new_sequence_length,
 }
 
 
-void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
-                                        unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         bool)
 {
-    const Index batch_size = layer_forward_propagation->batch_size;
+    const Index batch_size = forward_propagation->batch_size;
     //    const Index sequence_length = get_sequence_length();
     const Index embedding_dimension = get_embedding_dimension();
 
-    const TensorMap3 inputs(input_views[0].data, batch_size, sequence_length, embedding_dimension);
+    const TensorMap3 inputs(forward_propagation->inputs[0].data, batch_size, sequence_length, embedding_dimension);
 
-    TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
+    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
 
     Normalization3dForwardPropagation* this_forward_propagation =
-        static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
+        static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
     Tensor2& means = this_forward_propagation->means;
     Tensor2& standard_deviations = this_forward_propagation->standard_deviations;
