@@ -31,8 +31,7 @@ public:
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void back_propagate(const vector<TensorView>&,

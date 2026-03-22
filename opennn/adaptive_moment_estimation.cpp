@@ -409,9 +409,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     VectorR& parameters = neural_network->get_parameters();
 
-    VectorMap gradient_exponential_decay(optimization_data.gradient_exponential_decay.data(), optimization_data.gradient_exponential_decay.size());
-    VectorMap square_gradient_exponential_decay(optimization_data.square_gradient_exponential_decay.data(), optimization_data.square_gradient_exponential_decay.size());
-    const VectorMap gradient(back_propagation.neural_network.gradient.data(), back_propagation.neural_network.gradient.size());
+    VectorR& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
+    VectorR& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
+
+    const VectorR& gradient = back_propagation.neural_network.gradient;
 
     gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
     square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();

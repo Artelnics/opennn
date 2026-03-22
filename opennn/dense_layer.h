@@ -701,15 +701,14 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool is_training) override
     {
-        auto* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(layer_forward_propagation.get());
+        auto* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
         auto outputs = tensor_map<Rank>(dense_forward_propagation->outputs);
 
-        calculate_combinations<Rank>(tensor_map<Rank>(input_views[0]),
+        calculate_combinations<Rank>(tensor_map<Rank>(forward_propagation->inputs[0]),
                                      matrix_map(weights),
                                      vector_map(biases),
                                      outputs);

@@ -57,15 +57,11 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
-        if (input_views.size() != 2 || input_views[0].shape != input_views[1].shape)
-            throw runtime_error(name + " input shape error.");
-
-        const TensorMapR<Rank> input_1 = tensor_map<Rank>(input_views[0]);
-        const TensorMapR<Rank> input_2 = tensor_map<Rank>(input_views[1]);
+        const TensorMapR<Rank> input_1 = tensor_map<Rank>(forward_propagation->inputs[0]);
+        const TensorMapR<Rank> input_2 = tensor_map<Rank>(forward_propagation->inputs[1]);
 
         TensorMapR<Rank> outputs = tensor_map<Rank>(forward_propagation->outputs);
 

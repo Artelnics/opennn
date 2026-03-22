@@ -179,22 +179,21 @@ void MultiHeadAttention::set_dropout_rate(const type new_dropout_rate)
 }
 
 
-void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views,
-                                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            bool)
 {
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
     const type scaling_factor = get_scaling_factor();
 
-    const TensorMap3 query_input = tensor_map<3>(input_views[0]);
+    const TensorMap3 query_input = tensor_map<3>(forward_propagation->inputs[0]);
 
-    const TensorMap3 source_input = (input_views.size() == 1)
+    const TensorMap3 source_input = (forward_propagation->inputs.size() == 1)
                                     ? query_input
-                                    : tensor_map<3>(input_views[1]);
+                                    : tensor_map<3>(forward_propagation->inputs[1]);
 
     MultiHeadAttentionForwardPropagation* this_forward_propagation =
-        static_cast<MultiHeadAttentionForwardPropagation*>(layer_forward_propagation.get());
+        static_cast<MultiHeadAttentionForwardPropagation*>(forward_propagation.get());
 
     const Index batch_size = this_forward_propagation->batch_size;
 
@@ -206,7 +205,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
-    TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
+    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
 
     calculate_projection(query_input, query_weights, query_biases, query_sequence_length, batch_size, query);
     calculate_projection(source_input, key_weights, key_biases, source_sequence_length, batch_size, key);

@@ -53,8 +53,7 @@ public:
 
     void apply_causal_mask(Tensor4&) const;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void back_propagate(const vector<TensorView>&,

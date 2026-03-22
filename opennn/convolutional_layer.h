@@ -99,8 +99,7 @@ public:
 
     void calculate_convolutions(const Tensor4&, TensorMap4) const;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     // Back propagation

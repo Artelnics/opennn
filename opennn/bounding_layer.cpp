@@ -149,11 +149,10 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 }
 
 
-void Bounding::forward_propagate(const vector<TensorView>& input_views,
-                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Bounding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                  bool)
 {
-    const MatrixMap inputs = matrix_map(input_views[0]);
+    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
     MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     if(bounding_method == BoundingMethod::NoBounding)

@@ -246,19 +246,18 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling::forward_propagate(const vector<TensorView>& input_views,
-                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Pooling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                 bool is_training)
 {
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
 
     if(pooling_method == "MaxPooling")
         forward_propagate_max_pooling(inputs,
-                                      layer_forward_propagation,
+                                      forward_propagation,
                                       is_training);
     else if(pooling_method == "AveragePooling")
         forward_propagate_average_pooling(inputs,
-                                          layer_forward_propagation,
+                                          forward_propagation,
                                           is_training);
 }
 
