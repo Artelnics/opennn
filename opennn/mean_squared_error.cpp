@@ -201,7 +201,7 @@ void MeanSquaredError::calculate_output_gradients(const BatchCuda& batch,
 
     type* errors_device = back_propagation.errors;
 
-    float* output_gradients_device = back_propagation.get_output_gradient_views_device().data;
+    float* output_gradients_device = back_propagation.get_output_gradients_device().data;
 
     const type coefficient = type(2.0) / type(outputs_number * samples_number);
 

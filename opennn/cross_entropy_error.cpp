@@ -292,7 +292,7 @@ void CrossEntropyError2d::calculate_binary_output_gradients(const BatchCuda& bat
 
     // Back propagation
 
-    float* output_gradients = back_propagation.get_output_gradient_views_device().data;
+    float* output_gradients = back_propagation.get_output_gradients_device().data;
 
     const type scaling_factor = 1.0f / static_cast<type>(samples_number);
 
@@ -316,7 +316,7 @@ void CrossEntropyError2d::calculate_multiple_output_gradients(const BatchCuda& b
 
     // Back propagation
 
-    float* output_gradients = back_propagation.get_output_gradient_views_device().data;
+    float* output_gradients = back_propagation.get_output_gradients_device().data;
 
     const size_t size = samples_number * forward_propagation.layers[neural_network->get_last_trainable_layer_index()]->layer->get_outputs_number();
 

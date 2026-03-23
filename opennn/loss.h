@@ -289,7 +289,7 @@ struct BackPropagationCuda
 
     vector<vector<TensorViewCuda>> get_layer_gradients_device() const;
 
-    TensorViewCuda get_output_gradient_views_device() const;
+    TensorViewCuda get_output_gradients_device() const;
 
     void print() const;
 
