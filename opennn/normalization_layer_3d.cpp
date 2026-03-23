@@ -163,7 +163,7 @@ void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forwar
                            .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
     // D = dY * Gamma
-    Tensor3 D = dY * gamma_bcast;
+    Tensor3 D = output_gradients * gamma_bcast;
 
     // sum_D = sum(D, axis=2)
     Tensor2 sum_D = D.sum(array<Index, 1>({2}));

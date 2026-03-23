@@ -89,7 +89,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
 
     flatten_layer->forward_propagate(forward_propagation, true);
 
-    flatten_layer->back_propagate(forward_propagation->inputs, { output_derivatives_view }, forward_propagation, back_propagation);
+    flatten_layer->back_propagate(forward_propagation, back_propagation);
 
     const vector<TensorView> input_derivative_views = back_propagation->get_input_gradients();
 

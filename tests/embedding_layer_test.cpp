@@ -189,7 +189,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 #endif
 
-    embedding_layer.back_propagate(forward_propagation_base->inputs, { delta_view }, forward_propagation_base, back_propagation_base);
+    embedding_layer.back_propagate(forward_propagation_base, back_propagation_base);
 
     EmbeddingBackPropagation* back_propagation = static_cast<EmbeddingBackPropagation*>(back_propagation_base.get());
     const TensorView weight_gradients_cpu = back_propagation->weight_gradients;

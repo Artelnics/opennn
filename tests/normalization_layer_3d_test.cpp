@@ -162,7 +162,7 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     if (bp_workspace.size() > 0)
         link(bp_workspace.data(), bp_workspace_views);
 
-    norm_layer.back_propagate(forward_propagation_base->inputs, { delta_view }, forward_propagation_base, back_propagation_base);
+    norm_layer.back_propagate(forward_propagation_base, back_propagation_base);
 
     Normalization3dBackPropagation* bp_cpu = static_cast<Normalization3dBackPropagation*>(back_propagation_base.get());
     vector<TensorView> input_derivatives_pair = bp_cpu->get_input_gradients();
