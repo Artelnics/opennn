@@ -237,7 +237,7 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
 
     layer->forward_propagate(forward_cuda_base, true);
 
-    layer->back_propagate(forward_cuda_base->inputs, delta_views_device, forward_cuda_base, back_cuda_base);
+    layer->back_propagate(forward_cuda_base, back_cuda_base);
 
     vector<type> host_layer_gradients(layer_gradients_device.size());
     CHECK_CUDA(cudaMemcpy(host_layer_gradients.data(), layer_gradients_device.data, layer_gradients_device.size() * sizeof(type), cudaMemcpyDeviceToHost));

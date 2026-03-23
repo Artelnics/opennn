@@ -203,7 +203,7 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
 
-    norm_layer.back_propagate(forward_propagation_cuda_base->inputs, { delta_device.view() }, forward_propagation_cuda_base, back_propagation_cuda_base);
+    norm_layer.back_propagate(forward_propagation_cuda_base, back_propagation_cuda_base);
 
     Normalization3dBackPropagationCuda* bp_gpu = static_cast<Normalization3dBackPropagationCuda*>(back_propagation_cuda_base.get());
 

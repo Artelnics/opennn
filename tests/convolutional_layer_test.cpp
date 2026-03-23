@@ -284,11 +284,11 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 #endif
 
-    convolutional_layer.back_propagate(forward_propagation->inputs, { delta_view }, forward_propagation, back_propagation_base);
+    convolutional_layer.back_propagate(forward_propagation, back_propagation_base);
 
 #ifdef OPENNN_CUDA
 
-    convolutional_layer.back_propagate(forward_propagation_cuda->inputs, delta_views_device, forward_propagation_cuda, back_propagation_cuda_base);
+    convolutional_layer.back_propagate(forward_propagation_cuda, back_propagation_cuda_base);
 
     // CPU vs GPU
     const TensorView bias_gradients = back_propagation->bias_gradients;

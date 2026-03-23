@@ -263,7 +263,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), delta_device.size() * sizeof(type), cudaMemcpyHostToDevice));
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 
-    pooling_layer.back_propagate(forward_propagation_cuda->inputs, delta_views_device, forward_propagation_cuda, back_propagation_cuda);
+    pooling_layer.back_propagate(forward_propagation_cuda, back_propagation_cuda);
 
     vector<type> host_input_grads(back_propagation_cuda->input_gradients[0].size());
     CHECK_CUDA(cudaMemcpy(host_input_grads.data(), back_propagation_cuda->input_gradients[0].data, back_propagation_cuda->input_gradients[0].size() * sizeof(type), cudaMemcpyDeviceToHost));

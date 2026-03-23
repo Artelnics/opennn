@@ -222,7 +222,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
 
-    embedding_layer.back_propagate(forward_propagation_cuda_base->inputs, delta_views_device, forward_propagation_cuda_base, back_propagation_cuda_base);
+    embedding_layer.back_propagate(forward_propagation_cuda_base, back_propagation_cuda_base);
 
     EmbeddingBackPropagationCuda* back_propagation_cuda = static_cast<EmbeddingBackPropagationCuda*>(back_propagation_cuda_base.get());
 
