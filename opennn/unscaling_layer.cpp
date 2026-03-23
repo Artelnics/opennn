@@ -330,14 +330,11 @@ REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
 
 #ifdef OPENNN_CUDA
 
-void Unscaling::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                       bool)
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
-    UnscalingForwardPropagationCuda* this_forward_propagation =
-        static_cast<UnscalingForwardPropagationCuda*>(forward_propagation.get());
-
     // @todo: Implement unscaling in CUDA
+
+    throw runtime_error("Unscaling layer not implemented in CUDA");
 }
 
 

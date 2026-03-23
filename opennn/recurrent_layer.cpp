@@ -181,19 +181,17 @@ void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
 }
 
 
-void Recurrent::back_propagate(const vector<TensorView>& input_views,
-                               const vector<TensorView>& output_gradient_views,
-                               unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_views[0].shape[0];
-    const Index past_time_steps = input_views[0].shape[1];
-    const Index input_size = input_views[0].shape[2];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index past_time_steps = forward_propagation->inputs[0].shape[1];
+    const Index input_size = forward_propagation->inputs[0].shape[2];
     const Index neurons_number = biases.shape[0];
 
     const MatrixMap W_in = matrix_map(input_weights);
     const MatrixMap W_rec = matrix_map(recurrent_weights);
-    const MatrixMap external_output_gradients = matrix_map(output_gradient_views[0]);
+    const MatrixMap external_output_gradients = matrix_map(back_propagation->output_gradients[0]);
 
     RecurrentBackPropagation* recurrent_bp = static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
@@ -208,7 +206,7 @@ void Recurrent::back_propagate(const vector<TensorView>& input_views,
     dW_rec.setZero();
 
     RecurrentForwardPropagation* recurrent_fp = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
-    TensorMap3 input_sequences = tensor_map<3>(input_views[0]);
+    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
     TensorMap3 all_hidden_states = tensor_map<3>(recurrent_fp->hidden_states);
     TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_fp->activation_derivatives);
 

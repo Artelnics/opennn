@@ -31,19 +31,33 @@ public:
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
+    void set_parameters_random() override;
+    void set_parameters_glorot() override;
+
     void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
 #ifdef OPENNN_CUDA
-        // @todo
+
+    vector<TensorViewCuda*> get_parameter_views_device() override;
+
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                           bool) override;
+
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                        unique_ptr<LayerBackPropagationCuda>&) const override;
+
+protected:
+
+    TensorViewCuda gammas_device;
+    TensorViewCuda betas_device;
+
 #endif
 
 private:
@@ -51,7 +65,6 @@ private:
     Index sequence_length;
 
     TensorView gammas;
-
     TensorView betas;
 };
 
@@ -66,6 +79,7 @@ struct Normalization3dForwardPropagation final : LayerForwardPropagation
 
     Tensor2 means;
     Tensor2 standard_deviations;
+    Tensor3 normalized_inputs;
 };
 
 
@@ -82,14 +96,36 @@ struct Normalization3dBackPropagation final : LayerBackPropagation
 
     TensorView gamma_gradients;
     TensorView beta_gradients;
-
-    Tensor3 scaled_gradients;
-    Tensor3 standard_deviation_derivatives;
-    Tensor2 aux_2d;
 };
 
+
 #ifdef OPENNN_CUDA
-// @todo
+
+struct Normalization3dForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    Normalization3dForwardPropagationCuda(const Index = 0, Layer* = nullptr);
+
+    void initialize() override;
+
+    void free() override {}
+
+    TensorCuda means_device;
+    TensorCuda inv_variances_device;
+};
+
+
+struct Normalization3dBackPropagationCuda : public LayerBackPropagationCuda
+{
+    Normalization3dBackPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr);
+
+    vector<TensorViewCuda*> get_gradient_views() override;
+
+    void initialize() override;
+
+    TensorViewCuda gamma_gradients;
+    TensorViewCuda beta_gradients;
+};
+
 #endif
 
 }

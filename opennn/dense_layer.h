@@ -751,17 +751,15 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>& input_views,
-                        const vector<TensorView>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+    void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
-        const Index total_rows = input_views[0].size() / inputs_number;
+        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
-        const MatrixMap inputs(input_views[0].data, total_rows, inputs_number);
-        const MatrixMap output_gradients(output_gradient_views[0].data, total_rows, outputs_number);
+        const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, inputs_number);
+        const MatrixMap output_gradients(back_propagation->output_gradients[0].data, total_rows, outputs_number);
 
         const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
@@ -803,18 +801,16 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>& input_views,
-                           const vector<TensorView>& output_gradient_views,
-                           unique_ptr<LayerForwardPropagation>& forward_propagation,
-                           unique_ptr<LayerBackPropagationLM>& back_propagation) const override
+    void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                        unique_ptr<LayerBackPropagationLM>& back_propagation) const override
     {
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
-        const Index batch_size = input_views[0].size() / inputs_number;
+        const Index batch_size = forward_propagation->inputs[0].size() / inputs_number;
         const Index biases_number = biases.size();
 
-        const MatrixMap inputs(input_views[0].data, batch_size, inputs_number);
-        MatrixMap output_gradients(output_gradient_views[0].data, batch_size, outputs_number);
+        const MatrixMap inputs(forward_propagation->inputs[0].data, batch_size, inputs_number);
+        MatrixMap output_gradients(back_propagation->output_gradients[0].data, batch_size, outputs_number);
 
         auto* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
         auto* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
@@ -1043,9 +1039,7 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
-                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool is_training)
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
     {
         // Dense layer
 
@@ -1071,7 +1065,7 @@ public:
                                  outputs_number, batch_size, inputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
-                                 inputs[0].data, inputs_number,
+                                 forward_propagation->inputs[0].data, inputs_number,
                                  &beta,
                                  outputs_buffer, outputs_number));
 
@@ -1158,9 +1152,7 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>& inputs,
-                        const vector<TensorViewCuda>& output_gradients,
-                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                         unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
     {
         // Dense layer
@@ -1180,7 +1172,8 @@ public:
 
         // Back propagation
 
-        float* input_gradients = bp_cuda->input_gradients[0].data;
+        float* input_gradients_data = bp_cuda->input_gradients[0].data;
+        float* output_gradients_data = bp_cuda->output_gradients[0].data;
 
         auto* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
 
@@ -1197,9 +1190,9 @@ public:
             CHECK_CUDNN(cudnnDropoutBackward(get_cudnn_handle(),
                                              dense_forward_propagation->dropout_descriptor,
                                              gradients_tensor_descriptor,
-                                             output_gradients[0].data,
+                                             output_gradients_data,
                                              gradients_tensor_descriptor,
-                                             output_gradients[0].data,
+                                             output_gradients_data,
                                              dense_forward_propagation->dropout_reserve_space,
                                              dense_forward_propagation->dropout_reserve_space_size));
 
@@ -1212,12 +1205,12 @@ public:
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data,
+                                                output_gradients_data,
                                                 gradients_tensor_descriptor,
                                                 combinations,
                                                 &beta,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data));
+                                                output_gradients_data));
         else if (activation_function != "Linear" && activation_function != "Softmax" && !use_combinations)
             CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
                                                 activation_descriptor,
@@ -1225,12 +1218,12 @@ public:
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data,
+                                                output_gradients_data,
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 &beta,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data));
+                                                output_gradients_data));
 
         // Batch Normalization
 
@@ -1243,9 +1236,9 @@ public:
                 dense_forward_propagation->outputs.get_descriptor(),
                 use_combinations ? combinations : outputs_view.data,
                 gradients_tensor_descriptor,
-                output_gradients[0].data,
+                output_gradients_data,
                 gradients_tensor_descriptor,
-                output_gradients[0].data,
+                output_gradients_data,
                 gammas_device.get_descriptor(),
                 gammas_device.data,
                 dense_layer_back_propagation->gamma_gradients.data,
@@ -1260,7 +1253,7 @@ public:
                                  CUBLAS_OP_N, CUBLAS_OP_N,
                                  outputs_number, 1, batch_size,
                                  &alpha,
-                                 output_gradients[0].data, outputs_number,
+                                 output_gradients_data, outputs_number,
                                  ones, batch_size,
                                  &beta,
                                  bias_gradients, outputs_number));
@@ -1271,8 +1264,8 @@ public:
                                  CUBLAS_OP_N, CUBLAS_OP_T,
                                  outputs_number, inputs_number, batch_size,
                                  &alpha,
-                                 output_gradients[0].data, outputs_number,
-                                 inputs[0].data, inputs_number,
+                                 output_gradients_data, outputs_number,
+                                 input_gradients_data, inputs_number,
                                  &beta,
                                  weight_gradients, outputs_number));
         // Input derivatives
@@ -1282,9 +1275,9 @@ public:
                                  inputs_number, batch_size, outputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
-                                 output_gradients[0].data, outputs_number,
+                                 output_gradients_data, outputs_number,
                                  &beta,
-                                 input_gradients, inputs_number));
+                                 input_gradients_data, inputs_number));
     }
 
     bool use_combinations = true;

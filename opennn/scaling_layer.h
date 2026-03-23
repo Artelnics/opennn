@@ -403,9 +403,7 @@ public:
 
 #ifdef OPENNN_CUDA
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
-                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool) override
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool) override
     {
         ScalingForwardPropagationCuda<Rank>* scaling_forward_propagation =
             static_cast<ScalingForwardPropagationCuda<Rank>*>(forward_propagation.get());
@@ -416,7 +414,7 @@ public:
         scale_2d_cuda(size,
                       forward_propagation->batch_size,
                       outputs_number,
-                      inputs[0].data,
+                      forward_propagation->inputs[0].data,
                       forward_propagation->outputs.data,
                       scaling_forward_propagation->scalers_device,
                       scaling_forward_propagation->minimums_device,

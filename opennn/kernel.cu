@@ -761,3 +761,136 @@ void pooling3d_avg_backward_cuda(const size_t n, const float* in, const float* d
     const int threads = 256;
     pooling3d_avg_backward_kernel<<<(n + threads - 1) / threads, threads>>>(static_cast<int>(n), in, delta, in_grad, B, S, F);
 }
+
+
+// Normalization layer
+
+__global__ void layernorm_forward_kernel(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const float* x_row = X + idx * D;
+    float* y_row = Y + idx * D;
+
+    float sum = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        sum += x_row[i];
+    }
+
+    __shared__ float shared_sum[256];
+    shared_sum[threadIdx.x] = sum;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            shared_sum[threadIdx.x] += shared_sum[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float mean = shared_sum[0] / (float)D;
+    if (threadIdx.x == 0) means[idx] = mean;
+
+    float var_sum = 0.0f;
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float diff = x_row[i] - mean;
+        var_sum += diff * diff;
+    }
+
+    shared_sum[threadIdx.x] = var_sum;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            shared_sum[threadIdx.x] += shared_sum[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float var = shared_sum[0] / (float)D;
+    float inv_var = rsqrtf(var + eps);
+    if (threadIdx.x == 0) inv_vars[idx] = inv_var;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float x_hat = (x_row[i] - mean) * inv_var;
+        y_row[i] = gamma[i] * x_hat + beta[i];
+    }
+}
+
+void layernorm_forward_cuda(const int N, const int D, const float* X, float* Y, float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
+{
+    if (N == 0 || D == 0) return;
+
+    int threads = 256;
+    if (D <= 32) threads = 32;
+    else if (D <= 64) threads = 64;
+    else if (D <= 128) threads = 128;
+
+    layernorm_forward_kernel<<<N, threads>>>(N, D, X, Y, means, inv_vars, gamma, beta, eps);
+}
+
+
+__global__ void layernorm_backward_kernel(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta)
+{
+    const int idx = blockIdx.x;
+    if (idx >= N) return;
+
+    const float* dy_row = dY + idx * D;
+    const float* x_row = X + idx * D;
+    float* dx_row = dX + idx * D;
+
+    float mean = means[idx];
+    float inv_var = inv_vars[idx];
+
+    float sum_D = 0.0f;
+    float sum_D_xhat = 0.0f;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float d = dy_row[i] * gamma[i];
+        float x_hat = (x_row[i] - mean) * inv_var;
+
+        sum_D += d;
+        sum_D_xhat += d * x_hat;
+
+        atomicAdd(&dGamma[i], dy_row[i] * x_hat);
+        atomicAdd(&dBeta[i], dy_row[i]);
+    }
+
+    __shared__ float s_sum_D[256];
+    __shared__ float s_sum_D_xhat[256];
+
+    s_sum_D[threadIdx.x] = sum_D;
+    s_sum_D_xhat[threadIdx.x] = sum_D_xhat;
+    __syncthreads();
+
+    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
+            s_sum_D[threadIdx.x] += s_sum_D[threadIdx.x + stride];
+            s_sum_D_xhat[threadIdx.x] += s_sum_D_xhat[threadIdx.x + stride];
+        }
+        __syncthreads();
+    }
+
+    float mean_D = s_sum_D[0] / (float)D;
+    float mean_D_xhat = s_sum_D_xhat[0] / (float)D;
+
+    for (int i = threadIdx.x; i < D; i += blockDim.x) {
+        float d = dy_row[i] * gamma[i];
+        float x_hat = (x_row[i] - mean) * inv_var;
+
+        dx_row[i] = (d - mean_D - x_hat * mean_D_xhat) * inv_var;
+    }
+}
+
+void layernorm_backward_cuda(const int N, const int D, const float* dY, const float* X, const float* means, const float* inv_vars, const float* gamma, float* dX, float* dGamma, float* dBeta)
+{
+    if (N == 0 || D == 0) return;
+
+    int threads = 256;
+    if (D <= 32) threads = 32;
+    else if (D <= 64) threads = 64;
+    else if (D <= 128) threads = 128;
+
+    layernorm_backward_kernel<<<N, threads>>>(N, D, dY, X, means, inv_vars, gamma, dX, dGamma, dBeta);
+}

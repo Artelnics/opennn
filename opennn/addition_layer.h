@@ -69,15 +69,13 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
-        if (output_gradient_views.size() != 1)
+        if (back_propagation->output_gradients.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input.");
 
-        const TensorMapR<Rank> output_gradients = tensor_map<Rank>(output_gradient_views[0]);
+        const TensorMapR<Rank> output_gradients = tensor_map<Rank>(back_propagation->output_gradients[0]);
 
         TensorMapR<Rank> input_gradients_0 = tensor_map<Rank>(back_propagation->input_gradients[0]);
         TensorMapR<Rank> input_gradients_1 = tensor_map<Rank>(back_propagation->input_gradients[1]);
@@ -113,19 +111,15 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
-                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool) override
     {
-        if (inputs.size() != 2)
-            throw runtime_error(name + " layer requires exactly two inputs for CUDA propagation.");
-
-        const size_t total_elements = static_cast<size_t>(forward_propagation->batch_size) * get_inputs_number();
-
-        const float alpha_minus_one = -1.0f;
+        const size_t total_elements = forward_propagation->batch_size * get_inputs_number();
 
         // @todo substitute addition_cuda by cudnn function similar as follows
 /*
+        const float alpha_minus_one = -1.0f;
+
         cudnnOpTensor(cudnn_handle,
                       operator_sum_descriptor,
                       &alpha_minus_one,
@@ -140,18 +134,16 @@ public:
 
 */
         addition_cuda(total_elements,
-                      inputs[0].data,
-                      inputs[1].data,
+                      forward_propagation->inputs[0].data,
+                      forward_propagation->inputs[1].data,
                       forward_propagation->outputs.data);
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>&,
-                        const vector<TensorViewCuda>& output_gradients,
-                        unique_ptr<LayerForwardPropagationCuda>&,
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const override
     {
-        if (output_gradients.size() != 1)
+        if (back_propagation->output_gradients.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input for CUDA.");
 
         AdditionBackPropagationCuda<Rank>* this_back_propagation =
@@ -160,8 +152,8 @@ public:
         const size_t inputs_number = get_inputs_number();
         const size_t total_elements = static_cast<size_t>(back_propagation->batch_size) * inputs_number;
 
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
     }
 
 #endif

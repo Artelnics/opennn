@@ -326,7 +326,7 @@ void WeightedSquaredError::calculate_output_gradients(const BatchCuda& batch,
 
     // Back propagation
 
-    float* output_gradients = back_propagation.get_output_gradient_views_device().data;
+    float* output_gradients = back_propagation.get_output_gradients_device().data;
 
     const size_t size = batch_size * forward_propagation.layers[neural_network->get_last_trainable_layer_index()]->layer->get_outputs_number();
 

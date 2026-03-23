@@ -3,8 +3,6 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/random_utilities.h"
-#include <iostream>
-
 
 using namespace opennn;
 
@@ -98,18 +96,17 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
         for (Index j = 0; j < parameters.sequence_length; ++j)
             inputs_mat(i, j) = static_cast<type>(random_integer(0, parameters.vocabulary_size - 1));
 
-    TensorView input_view(inputs_mat.data(), { batch_size, parameters.sequence_length });
-
     unique_ptr<LayerForwardPropagation> forward_propagation_base =
         make_unique<EmbeddingForwardPropagation>(batch_size, &embedding_layer);
     forward_propagation_base->initialize();
 
-    EmbeddingForwardPropagation* forward_propagation = static_cast<EmbeddingForwardPropagation*>(forward_propagation_base.get());
-    VectorR fp_outputs(forward_propagation->outputs.size());
-    forward_propagation->outputs.data = fp_outputs.data();
+    Tensor1 workspace(get_size(forward_propagation_base->get_workspace_views()));
+    link(workspace.data(), forward_propagation_base->get_workspace_views());
 
-    embedding_layer.forward_propagate({ input_view }, forward_propagation_base, false);
-    const TensorView output_view = forward_propagation->get_outputs();
+    forward_propagation_base->inputs = { TensorView(inputs_mat.data(), {batch_size, parameters.sequence_length}) };
+
+    embedding_layer.forward_propagate(forward_propagation_base, false);
+    const TensorView output_view = forward_propagation_base->get_outputs();
 
 #ifdef OPENNN_CUDA
 
@@ -118,25 +115,26 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
 
-    TensorCuda input_data_device({ batch_size, parameters.sequence_length });
-    CHECK_CUDA(cudaMemcpy(input_data_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
-
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda_base =
         make_unique<EmbeddingForwardPropagationCuda>(batch_size, &embedding_layer);
     forward_propagation_cuda_base->initialize();
 
-    EmbeddingForwardPropagationCuda* forward_propagation_cuda = static_cast<EmbeddingForwardPropagationCuda*>(forward_propagation_cuda_base.get());
-    TensorCuda fp_outputs_device({forward_propagation_cuda->outputs.size()});
-    forward_propagation_cuda->outputs.data = fp_outputs_device.data;
+    vector<TensorViewCuda*> workspace_views_device = forward_propagation_cuda_base->get_workspace_views();
+    TensorCuda layer_workspace_device({get_size(workspace_views_device)});
+    link(layer_workspace_device.data, workspace_views_device);
 
-    embedding_layer.forward_propagate({ input_data_device.view() }, forward_propagation_cuda_base, false);
+    TensorCuda inputs_device({batch_size, parameters.sequence_length});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
 
-    vector<type> host_output_from_gpu(forward_propagation_cuda->outputs.size());
-    CHECK_CUDA(cudaMemcpy(host_output_from_gpu.data(), forward_propagation_cuda->outputs.data, forward_propagation_cuda->outputs.size() * sizeof(type), cudaMemcpyDeviceToHost));
+    embedding_layer.forward_propagate(forward_propagation_cuda_base, false);
 
-    for (Index i = 0; i < output_view.size(); ++i) {
+    vector<type> host_output_from_gpu(forward_propagation_cuda_base->outputs.size());
+    CHECK_CUDA(cudaMemcpy(host_output_from_gpu.data(), forward_propagation_cuda_base->outputs.data, forward_propagation_cuda_base->outputs.size() * sizeof(type), cudaMemcpyDeviceToHost));
+
+    for (Index i = 0; i < output_view.size(); ++i)
         EXPECT_NEAR(output_view.data[i], host_output_from_gpu[i], 1e-4);
-    }
+
 #endif
 }
 
@@ -161,18 +159,17 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
         for (Index j = 0; j < parameters.sequence_length; ++j)
             inputs_mat(i, j) = static_cast<type>(random_integer(0, parameters.vocabulary_size - 1));
 
-    TensorView input_view(inputs_mat.data(), { batch_size, parameters.sequence_length });
-
     unique_ptr<LayerForwardPropagation> forward_propagation_base =
         make_unique<EmbeddingForwardPropagation>(batch_size, &embedding_layer);
     forward_propagation_base->initialize();
 
-    EmbeddingForwardPropagation* forward_propagation = static_cast<EmbeddingForwardPropagation*>(forward_propagation_base.get());
-    VectorR fp_outputs(forward_propagation->outputs.size());
-    forward_propagation->outputs.data = fp_outputs.data();
+    Tensor1 workspace_fw(get_size(forward_propagation_base->get_workspace_views()));
+    link(workspace_fw.data(), forward_propagation_base->get_workspace_views());
 
-    embedding_layer.forward_propagate({ input_view }, forward_propagation_base, true);
-    TensorView output_view = forward_propagation->get_outputs();
+    forward_propagation_base->inputs = { TensorView(inputs_mat.data(), {batch_size, parameters.sequence_length}) };
+
+    embedding_layer.forward_propagate(forward_propagation_base, true);
+    TensorView output_view = forward_propagation_base->get_outputs();
 
     unique_ptr<LayerBackPropagation> back_propagation_base =
         make_unique<EmbeddingBackPropagation>(batch_size, &embedding_layer);
@@ -192,7 +189,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 #endif
 
-    embedding_layer.back_propagate({ input_view }, { delta_view }, forward_propagation_base, back_propagation_base);
+    embedding_layer.back_propagate(forward_propagation_base, back_propagation_base);
 
     EmbeddingBackPropagation* back_propagation = static_cast<EmbeddingBackPropagation*>(back_propagation_base.get());
     const TensorView weight_gradients_cpu = back_propagation->weight_gradients;
@@ -203,18 +200,19 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
 
-    TensorCuda input_data_device({ batch_size, parameters.sequence_length });
-    CHECK_CUDA(cudaMemcpy(input_data_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
-
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda_base =
         make_unique<EmbeddingForwardPropagationCuda>(batch_size, &embedding_layer);
     forward_propagation_cuda_base->initialize();
 
-    EmbeddingForwardPropagationCuda* forward_propagation_cuda = static_cast<EmbeddingForwardPropagationCuda*>(forward_propagation_cuda_base.get());
-    TensorCuda fp_outputs_device({forward_propagation_cuda->outputs.size()});
-    forward_propagation_cuda->outputs.data = fp_outputs_device.data;
+    vector<TensorViewCuda*> workspace_fw_views_device = forward_propagation_cuda_base->get_workspace_views();
+    TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
+    link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
-    embedding_layer.forward_propagate({ input_data_device.view() }, forward_propagation_cuda_base, true);
+    TensorCuda inputs_device({batch_size, parameters.sequence_length});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
+
+    embedding_layer.forward_propagate(forward_propagation_cuda_base, true);
 
     unique_ptr<LayerBackPropagationCuda> back_propagation_cuda_base =
         make_unique<EmbeddingBackPropagationCuda>(batch_size, &embedding_layer);
@@ -224,7 +222,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
 
-    embedding_layer.back_propagate({ input_data_device.view() }, delta_views_device, forward_propagation_cuda_base, back_propagation_cuda_base);
+    embedding_layer.back_propagate(forward_propagation_cuda_base, back_propagation_cuda_base);
 
     EmbeddingBackPropagationCuda* back_propagation_cuda = static_cast<EmbeddingBackPropagationCuda*>(back_propagation_cuda_base.get());
 

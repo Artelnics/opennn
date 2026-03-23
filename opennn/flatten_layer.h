@@ -96,6 +96,9 @@ public:
     void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation: inputs size != outputs size");
+
         const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
         if (forward_propagation->inputs[0].data != forward_propagation->outputs.data)
@@ -104,15 +107,13 @@ public:
     
     // Back-propagation
     
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>& layer_back_propagation) const override
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
         FlattenBackPropagation<Rank>* flatten_back_propagation =
-            static_cast<FlattenBackPropagation<Rank>*>(layer_back_propagation.get());
+            static_cast<FlattenBackPropagation<Rank>*>(back_propagation.get());
 
-        type* source_ptr = output_gradient_views[0].data;
+        type* source_ptr = back_propagation->output_gradients[0].data;
         type* dest_ptr = flatten_back_propagation->input_gradients[0].data;
 
         const size_t bytes_to_copy = flatten_back_propagation->input_gradients[0].size() * sizeof(type);
@@ -166,14 +167,15 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>& input_views,
-                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                           bool)
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
     {
-        type* inputs = input_views[0].data;
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation CUDA: inputs size != outputs size");
+
+        type* inputs = forward_propagation->inputs[0].data;
         type* outputs = forward_propagation->outputs.data;
 
-        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
+        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
         CHECK_CUDA(cudaMemcpy(outputs,
                               inputs,
@@ -181,12 +183,10 @@ public:
                               cudaMemcpyDeviceToDevice));
     }
 
-    void back_propagate(const vector<TensorViewCuda>&,
-                        const vector<TensorViewCuda>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagationCuda>&,
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
     {
-        type* source_gradient = output_gradient_views[0].data;
+        type* source_gradient = back_propagation->output_gradients[0].data;
         type* destination_gradient = back_propagation->input_gradients[0].data;
 
         const size_t bytes_to_copy = back_propagation->input_gradients[0].size() * sizeof(type);

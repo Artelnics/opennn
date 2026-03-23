@@ -149,13 +149,8 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
     link(workspace.data(), forward_propagation->get_workspace_views());
 
-    TensorView input_view( parameters.input_data.data(),
-                          { batch_size,
-                           parameters.input_shape[0],
-                           parameters.input_shape[1],
-                           parameters.input_shape[2] } );
-
-    pooling_layer.forward_propagate({ input_view }, forward_propagation, false);
+    forward_propagation->inputs = { TensorView(parameters.input_data.data(), { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] }) };
+    pooling_layer.forward_propagate(forward_propagation, false);
 
     TensorView output_pair = forward_propagation->get_outputs();
 
@@ -166,20 +161,13 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     TensorMap4 output_tensor = tensor_map<4>(output_pair);
 
-    for (Index b = 0; b < batch_size; ++b) {
-        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
-            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
-                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h)
+            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w)
+                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c)
                     EXPECT_NEAR(output_tensor(b, h, w, c), parameters.expected_output(b, h, w, c), 1e-5);
-                }
-            }
-        }
-    }
 
 #ifdef OPENNN_CUDA
-    TensorCuda input_data_device({batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2]});
-    CHECK_CUDA(cudaMemcpy(input_data_device.data, parameters.input_data.data(), input_data_device.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> input_views_device = { input_data_device.view() };
 
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda =
         make_unique<PoolingForwardPropagationCuda>(batch_size, &pooling_layer);
@@ -189,7 +177,10 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    pooling_layer.forward_propagate(input_views_device, forward_propagation_cuda, false);
+    TensorCuda inputs_device({ batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] });
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda->inputs = { inputs_device.view() };
+    pooling_layer.forward_propagate(forward_propagation_cuda, false);
 
     TensorViewCuda output_view_device = forward_propagation_cuda->outputs;
     EXPECT_EQ(output_view_device.size(), output_pair.size());
@@ -229,13 +220,9 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     Tensor1 workspace_fw(get_size(forward_propagation->get_workspace_views()));
     link(workspace_fw.data(), forward_propagation->get_workspace_views());
 
-    TensorView input_view( parameters.input_data.data(),
-                          { batch_size,
-                           parameters.input_shape[0],
-                           parameters.input_shape[1],
-                           parameters.input_shape[2] } );
+    forward_propagation->inputs = { TensorView(parameters.input_data.data(), { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] }) };
 
-    pooling_layer.forward_propagate({ input_view }, forward_propagation, true);
+    pooling_layer.forward_propagate(forward_propagation, true);
 
     TensorView output_pair = forward_propagation->get_outputs();
 
@@ -243,7 +230,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     deltas.setConstant(1.0);
     TensorView delta_view(deltas.data(), output_pair.shape);
 
-    pooling_layer.back_propagate({ input_view }, { delta_view }, forward_propagation, back_propagation);
+    pooling_layer.back_propagate(forward_propagation, back_propagation);
 
     vector<TensorView> input_derivatives_pair = back_propagation->get_input_gradients();
 
@@ -253,9 +240,6 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     EXPECT_EQ(input_derivatives_pair[0].shape[3], parameters.input_data.dimension(3));
 
 #ifdef OPENNN_CUDA
-    TensorCuda input_data_device({batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2]});
-    CHECK_CUDA(cudaMemcpy(input_data_device.data, parameters.input_data.data(), input_data_device.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> input_views_device = { input_data_device.view() };
 
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda =
         make_unique<PoolingForwardPropagationCuda>(batch_size, &pooling_layer);
@@ -265,7 +249,11 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    pooling_layer.forward_propagate(input_views_device, forward_propagation_cuda, true);
+    TensorCuda inputs_device({ batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] });
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda->inputs = { inputs_device.view() };
+
+    pooling_layer.forward_propagate(forward_propagation_cuda, true);
 
     unique_ptr<LayerBackPropagationCuda> back_propagation_cuda =
         make_unique<PoolingBackPropagationCuda>(batch_size, &pooling_layer);
@@ -275,7 +263,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), delta_device.size() * sizeof(type), cudaMemcpyHostToDevice));
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 
-    pooling_layer.back_propagate(input_views_device, delta_views_device, forward_propagation_cuda, back_propagation_cuda);
+    pooling_layer.back_propagate(forward_propagation_cuda, back_propagation_cuda);
 
     vector<type> host_input_grads(back_propagation_cuda->input_gradients[0].size());
     CHECK_CUDA(cudaMemcpy(host_input_grads.data(), back_propagation_cuda->input_gradients[0].data, back_propagation_cuda->input_gradients[0].size() * sizeof(type), cudaMemcpyDeviceToHost));

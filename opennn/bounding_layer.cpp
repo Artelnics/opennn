@@ -298,11 +298,10 @@ REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
 
 #ifdef OPENNN_CUDA
 
-void Bounding::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                      bool)
+void Bounding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     // @todo Implement bounding in CUDA
+    throw runtime_error("Bounding layer is not implemented in CUDA.\n");
 }
 
 

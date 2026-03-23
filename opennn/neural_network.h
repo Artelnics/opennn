@@ -57,20 +57,15 @@ struct ForwardPropagationCuda
 {
     ForwardPropagationCuda(const Index = 0, NeuralNetwork* = nullptr);
 
-    ~ForwardPropagationCuda() = default;
-
     void set(const Index = 0, NeuralNetwork* = nullptr);
 
-    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+    vector<vector<TensorViewCuda*>> get_layer_workspace_views();
 
     TensorViewCuda get_last_trainable_layer_outputs_device() const;
 
     vector<vector<TensorViewCuda>> get_layer_input_views_device(const vector<TensorViewCuda>&, bool) const;
 
-    TensorViewCuda get_outputs()
-    {
-        return layers.back()->get_outputs();
-    }
+    TensorViewCuda get_outputs();
 
     void print();
 
@@ -328,7 +323,7 @@ struct NeuralNetworkBackPropagationCuda
 
     vector<vector<TensorViewCuda*>> get_layer_gradient_views();
 
-    vector<vector<TensorViewCuda*>> get_layer_workspace_views_device();
+    vector<vector<TensorViewCuda*>> get_layer_workspace_views();
 
     void print();
 

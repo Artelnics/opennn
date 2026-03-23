@@ -116,9 +116,7 @@ void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagation>& forwa
 }
 
 
-void Convolutional::back_propagate(const vector<TensorView>& input_views,
-                                   const vector<TensorView>& output_gradient_views,
-                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Convolutional::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     // Convolutional layer
@@ -134,8 +132,8 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
     const Index kernel_channels = get_kernel_channels();
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
-    TensorMap4 output_gradients = tensor_map<4>(output_gradient_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
+    TensorMap4 output_gradients = tensor_map<4>(back_propagation->output_gradients[0]);
 
     // Forward propagation
 
@@ -858,9 +856,7 @@ void ConvolutionalBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                      bool is_training)
+void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
     // Forward propagation
 
@@ -875,7 +871,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
 
     const cudnnTensorDescriptor_t input_tensor_descriptor = convolutional_forward_propagation->input_tensor_descriptor;
 
-    const float* input_data = inputs[0].data;
+    const float* input_data = forward_propagation->inputs[0].data;
     float* outputs_buffer = use_convolutions() ? convolutions.data : outputs.data;
     cudnnTensorDescriptor_t current_output_descriptor = use_convolutions() ? convolutions.get_descriptor() : outputs.get_descriptor();
 
@@ -980,9 +976,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
 }
 
 
-void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
-                                   const vector<TensorViewCuda>& output_gradients,
-                                   unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                    unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     // Forward propagation
@@ -999,6 +993,8 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
     const cudnnTensorDescriptor_t input_tensor_descriptor = back_propagation->input_gradients[0].get_descriptor();
 
     TensorViewCuda input_gradients = back_propagation->input_gradients[0];
+
+    float* output_gradients_data = back_propagation->output_gradients[0].data;
 
     ConvolutionalBackPropagationCuda* convolutional_back_propagation
         = static_cast<ConvolutionalBackPropagationCuda*>(back_propagation.get());
@@ -1023,12 +1019,12 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
             gradients_tensor_descriptor,
             outputs_view.data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gradients_tensor_descriptor,
             (use_convolutions() && convolutions) ? convolutions : outputs_view.data,
             &beta,
             gradients_tensor_descriptor,
-            output_gradients[0].data));
+            output_gradients_data));
 
     // Batch Normalization
 
@@ -1041,9 +1037,9 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
             outputs_view.get_descriptor(),
             use_convolutions() ? convolutions : outputs_view.data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gammas_device.get_descriptor(),
             gammas_device.data,
             convolutional_back_propagation->gamma_gradients.data,
@@ -1057,9 +1053,9 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
     cudnnConvolutionBackwardFilter(get_cudnn_handle(),
                                    &alpha,
                                    input_tensor_descriptor,
-                                   inputs[0].data,
+                                   input_gradients.data,
                                    gradients_tensor_descriptor,
-                                   output_gradients[0].data,
+                                   output_gradients_data,
                                    convolution_descriptor,
                                    convolutional_back_propagation->algo_filter,
                                    backward_filter_workspace,
@@ -1072,7 +1068,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
     cudnnConvolutionBackwardBias(get_cudnn_handle(),
                                  &alpha,
                                  gradients_tensor_descriptor,
-                                 output_gradients[0].data,
+                                 output_gradients_data,
                                  &beta,
                                  biases_device.get_descriptor(),
                                  bias_gradients);
@@ -1084,7 +1080,7 @@ void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
                                  kernel_descriptor,
                                  weights_device.data,
                                  gradients_tensor_descriptor,
-                                 output_gradients[0].data,
+                                 output_gradients_data,
                                  convolution_descriptor,
                                  convolutional_back_propagation->algo_data,
                                  workspace, workspace_size,
