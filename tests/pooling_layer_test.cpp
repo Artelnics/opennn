@@ -230,7 +230,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     deltas.setConstant(1.0);
     TensorView delta_view(deltas.data(), output_pair.shape);
 
-    pooling_layer.back_propagate(forward_propagation->inputs, { delta_view }, forward_propagation, back_propagation);
+    pooling_layer.back_propagate(forward_propagation, back_propagation);
 
     vector<TensorView> input_derivatives_pair = back_propagation->get_input_gradients();
 

@@ -196,7 +196,7 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
 
 #endif
 
-    layer->back_propagate(forward_base->inputs, delta_views, forward_base, back_base);
+    layer->back_propagate(forward_base, back_base);
     MultiHeadAttentionBackPropagation* back = static_cast<MultiHeadAttentionBackPropagation*>(back_base.get());
 
 #ifdef OPENNN_CUDA
