@@ -20,7 +20,7 @@ namespace opennn
 
     vector<string> get_tokens(const string&, const string&);
 
-    vector<string_view> get_tokens_fast(string_view text, string_view separator)
+    inline vector<string_view> get_tokens_fast(string_view text, string_view separator)
     {
         vector<string_view> tokens;
 
