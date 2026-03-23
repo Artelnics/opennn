@@ -615,7 +615,7 @@ void MultiHeadAttention::print() const
 
 #ifdef OPENNN_CUDA
 
-void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation, bool)
+void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     MultiHeadAttentionForwardPropagationCuda* forward =
         static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
@@ -753,8 +753,9 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
 
     const float scaling_factor = static_cast<float>(get_scaling_factor());
 
-    const float* query_input = inputs[0].data;
-    const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
+    const float* query_input = forward_propagation->inputs[0].data;
+    const float* source_input = (forward_propagation->inputs.size() == 1) ? query_input : forward_propagation->inputs[1].data;
+    const float* output_gradients_data = back_propagation->output_gradients[0].data;
 
     // Projection weight gradients
 
@@ -762,7 +763,7 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
                 &alpha_one,
-                output_gradients[0].data, (int)embedding_dimension,
+                output_gradients_data, (int)embedding_dimension,
                 forward->concatenated_attention_outputs.data, (int)embedding_dimension,
                 &beta_zero,
                 back->projection_weight_gradients.data, (int)embedding_dimension);
@@ -773,7 +774,7 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
                 &alpha_one,
-                output_gradients[0].data, (int)embedding_dimension,
+                output_gradients_data, (int)embedding_dimension,
                 back->ones.data, (int)(batch_size * query_sequence_length),
                 &beta_zero,
                 back->projection_bias_gradients.data, (int)embedding_dimension);
@@ -785,7 +786,7 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
                 (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
                 &alpha_one,
                 projection_weights_device.data, (int)embedding_dimension,
-                output_gradients[0].data, (int)embedding_dimension,
+                output_gradients_data, (int)embedding_dimension,
                 &beta_zero,
                 back->concatenated_attention_output_gradients.data, (int)embedding_dimension);
 
@@ -954,7 +955,7 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
 
     // Final input gradients
 
-    if(inputs.size() == 1)
+    if(forward_propagation->inputs.size() == 1)
     {
         addition_cuda(batch_size * query_sequence_length * embedding_dimension,
                       back->query_input_gradients.data, back->source_input_gradients.data,

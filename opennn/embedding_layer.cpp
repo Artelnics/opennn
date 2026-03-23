@@ -330,7 +330,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
+void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     const Index batch_size = forward_propagation->batch_size;
     const Index sequence_length = this->sequence_length;
@@ -384,8 +384,8 @@ void Embedding::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_
 
     CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocabulary_size * embedding_dimension * sizeof(float)));
 
-    const float* inputs_data = inputs[0].data;
-    const float* output_gradients_data = output_gradients[0].data;
+    const float* inputs_data = forward_propagation->inputs[0].data;
+    const float* output_gradients_data = back_propagation->output_gradients[0].data;
 
     embedding_backward_cuda(
         total_elements,

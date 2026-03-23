@@ -994,6 +994,8 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
 
     TensorViewCuda input_gradients = back_propagation->input_gradients[0];
 
+    float* output_gradients_data = back_propagation->output_gradients[0].data;
+
     ConvolutionalBackPropagationCuda* convolutional_back_propagation
         = static_cast<ConvolutionalBackPropagationCuda*>(back_propagation.get());
 
@@ -1017,12 +1019,12 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
             gradients_tensor_descriptor,
             outputs_view.data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gradients_tensor_descriptor,
             (use_convolutions() && convolutions) ? convolutions : outputs_view.data,
             &beta,
             gradients_tensor_descriptor,
-            output_gradients[0].data));
+            output_gradients_data));
 
     // Batch Normalization
 
@@ -1035,9 +1037,9 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
             outputs_view.get_descriptor(),
             use_convolutions() ? convolutions : outputs_view.data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gradients_tensor_descriptor,
-            output_gradients[0].data,
+            output_gradients_data,
             gammas_device.get_descriptor(),
             gammas_device.data,
             convolutional_back_propagation->gamma_gradients.data,
@@ -1051,9 +1053,9 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
     cudnnConvolutionBackwardFilter(get_cudnn_handle(),
                                    &alpha,
                                    input_tensor_descriptor,
-                                   inputs[0].data,
+                                   input_gradients.data,
                                    gradients_tensor_descriptor,
-                                   output_gradients[0].data,
+                                   output_gradients_data,
                                    convolution_descriptor,
                                    convolutional_back_propagation->algo_filter,
                                    backward_filter_workspace,
@@ -1066,7 +1068,7 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
     cudnnConvolutionBackwardBias(get_cudnn_handle(),
                                  &alpha,
                                  gradients_tensor_descriptor,
-                                 output_gradients[0].data,
+                                 output_gradients_data,
                                  &beta,
                                  biases_device.get_descriptor(),
                                  bias_gradients);
@@ -1078,7 +1080,7 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
                                  kernel_descriptor,
                                  weights_device.data,
                                  gradients_tensor_descriptor,
-                                 output_gradients[0].data,
+                                 output_gradients_data,
                                  convolution_descriptor,
                                  convolutional_back_propagation->algo_data,
                                  workspace, workspace_size,

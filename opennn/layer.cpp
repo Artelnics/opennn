@@ -319,7 +319,6 @@ void Layer::forward_propagate(unique_ptr<LayerForwardPropagation>&, bool)
 }
 
 
-
 void Layer::set_input_shape(const Shape&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");

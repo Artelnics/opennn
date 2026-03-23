@@ -352,6 +352,7 @@ public:
     }
 
     virtual void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                                unique_ptr<LayerBackPropagationCuda>&) const
     {
         throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
     }

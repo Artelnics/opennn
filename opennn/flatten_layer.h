@@ -186,7 +186,7 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
     {
-        type* source_gradient = output_gradient_views[0].data;
+        type* source_gradient = back_propagation->output_gradients[0].data;
         type* destination_gradient = back_propagation->input_gradients[0].data;
 
         const size_t bytes_to_copy = back_propagation->input_gradients[0].size() * sizeof(type);

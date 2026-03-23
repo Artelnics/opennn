@@ -143,7 +143,7 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const override
     {
-        if (output_gradients.size() != 1)
+        if (back_propagation->output_gradients.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input for CUDA.");
 
         AdditionBackPropagationCuda<Rank>* this_back_propagation =
@@ -152,8 +152,8 @@ public:
         const size_t inputs_number = get_inputs_number();
         const size_t total_elements = static_cast<size_t>(back_propagation->batch_size) * inputs_number;
 
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
     }
 
 #endif

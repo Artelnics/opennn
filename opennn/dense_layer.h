@@ -1172,7 +1172,8 @@ public:
 
         // Back propagation
 
-        float* input_gradients = bp_cuda->input_gradients[0].data;
+        float* input_gradients_data = bp_cuda->input_gradients[0].data;
+        float* output_gradients_data = bp_cuda->output_gradients[0].data;
 
         auto* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
 
@@ -1189,9 +1190,9 @@ public:
             CHECK_CUDNN(cudnnDropoutBackward(get_cudnn_handle(),
                                              dense_forward_propagation->dropout_descriptor,
                                              gradients_tensor_descriptor,
-                                             output_gradients[0].data,
+                                             output_gradients_data,
                                              gradients_tensor_descriptor,
-                                             output_gradients[0].data,
+                                             output_gradients_data,
                                              dense_forward_propagation->dropout_reserve_space,
                                              dense_forward_propagation->dropout_reserve_space_size));
 
@@ -1204,12 +1205,12 @@ public:
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data,
+                                                output_gradients_data,
                                                 gradients_tensor_descriptor,
                                                 combinations,
                                                 &beta,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data));
+                                                output_gradients_data));
         else if (activation_function != "Linear" && activation_function != "Softmax" && !use_combinations)
             CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
                                                 activation_descriptor,
@@ -1217,12 +1218,12 @@ public:
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data,
+                                                output_gradients_data,
                                                 gradients_tensor_descriptor,
                                                 outputs_view.data,
                                                 &beta,
                                                 gradients_tensor_descriptor,
-                                                output_gradients[0].data));
+                                                output_gradients_data));
 
         // Batch Normalization
 
@@ -1235,9 +1236,9 @@ public:
                 dense_forward_propagation->outputs.get_descriptor(),
                 use_combinations ? combinations : outputs_view.data,
                 gradients_tensor_descriptor,
-                output_gradients[0].data,
+                output_gradients_data,
                 gradients_tensor_descriptor,
-                output_gradients[0].data,
+                output_gradients_data,
                 gammas_device.get_descriptor(),
                 gammas_device.data,
                 dense_layer_back_propagation->gamma_gradients.data,
@@ -1252,7 +1253,7 @@ public:
                                  CUBLAS_OP_N, CUBLAS_OP_N,
                                  outputs_number, 1, batch_size,
                                  &alpha,
-                                 output_gradients[0].data, outputs_number,
+                                 output_gradients_data, outputs_number,
                                  ones, batch_size,
                                  &beta,
                                  bias_gradients, outputs_number));
@@ -1263,8 +1264,8 @@ public:
                                  CUBLAS_OP_N, CUBLAS_OP_T,
                                  outputs_number, inputs_number, batch_size,
                                  &alpha,
-                                 output_gradients[0].data, outputs_number,
-                                 inputs[0].data, inputs_number,
+                                 output_gradients_data, outputs_number,
+                                 input_gradients_data, inputs_number,
                                  &beta,
                                  weight_gradients, outputs_number));
         // Input derivatives
@@ -1274,9 +1275,9 @@ public:
                                  inputs_number, batch_size, outputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
-                                 output_gradients[0].data, outputs_number,
+                                 output_gradients_data, outputs_number,
                                  &beta,
-                                 input_gradients, inputs_number));
+                                 input_gradients_data, inputs_number));
     }
 
     bool use_combinations = true;

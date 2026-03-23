@@ -195,8 +195,7 @@ vector<TensorViewCuda*> Normalization3d::get_parameter_views_device()
 }
 
 
-void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                        bool is_training)
+void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
 
@@ -216,9 +215,7 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>&
 }
 
 
-void Normalization3d::back_propagate(const vector<TensorViewCuda>& inputs,
-                                     const vector<TensorViewCuda>& output_gradients,
-                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
@@ -232,8 +229,8 @@ void Normalization3d::back_propagate(const vector<TensorViewCuda>& inputs,
 
     layernorm_backward_cuda(
         N, D,
-        output_gradients[0].data,
-        inputs[0].data,
+        back_propagation->output_gradients[0].data,
+        forward_propagation->inputs[0].data,
         fp_cuda->means_device.data,
         fp_cuda->inv_variances_device.data,
         gammas_device.data,
