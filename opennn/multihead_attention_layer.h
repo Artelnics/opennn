@@ -53,8 +53,7 @@ public:
 
     void apply_causal_mask(Tensor4&) const;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void back_propagate(const vector<TensorView>&,
@@ -90,8 +89,7 @@ public:
 
     public:
 
-        void forward_propagate(const vector<TensorViewCuda>&,
-                               unique_ptr<LayerForwardPropagationCuda>&,
+        void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                                bool) override;
 
         void back_propagate(const vector<TensorViewCuda>&,
@@ -101,33 +99,11 @@ public:
 
         vector<TensorViewCuda*> get_parameter_views_device() override;
 
+        void linear_projection_cuda(const float*, const float*, const float*,
+                                    cudnnTensorDescriptor_t, float*, cudnnTensorDescriptor_t,
+                                    int, int, int) const;
+
     protected:
-
-        void linear_projection_cuda(const float* input,
-                                    const float* weights,
-                                    const float* biases,
-                                    cudnnTensorDescriptor_t biases_desc,
-                                    float* output,
-                                    cudnnTensorDescriptor_t output_desc,
-                                    int batch_seq_len,
-                                    int input_dim,
-                                    int output_dim) const
-        {
-            CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                     CUBLAS_OP_N, CUBLAS_OP_N,
-                                     output_dim, batch_seq_len, input_dim,
-                                     &alpha_one,
-                                     weights, output_dim,
-                                     input, input_dim,
-                                     &beta_zero,
-                                     output, output_dim));
-
-            CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                                       &alpha_one,
-                                       biases_desc, biases,
-                                       &alpha_one,
-                                       output_desc, output));
-        }
 
         TensorViewCuda query_weights_device;
         TensorViewCuda query_biases_device;

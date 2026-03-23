@@ -99,8 +99,7 @@ public:
 
     void calculate_convolutions(const Tensor4&, TensorMap4) const;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     // Back propagation
@@ -119,8 +118,7 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>&,
-                           unique_ptr<LayerForwardPropagationCuda>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                            bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,
@@ -129,8 +127,6 @@ public:
                         unique_ptr<LayerBackPropagationCuda>&) const override;
 
     vector<TensorViewCuda*> get_parameter_views_device() override;
-
-    void copy_parameters_device();
 
     cudnnFilterDescriptor_t get_kernel_descriptor() const
     {
@@ -248,7 +244,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     TensorCuda convolutions;
     TensorCuda means;
-    TensorCuda bn_saved_inv_variance;
+    TensorCuda inverse_variance;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 

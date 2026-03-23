@@ -146,7 +146,7 @@ void Optimizer::from_XML(const XMLDocument& document)
 
 Tensor<string, 2> Optimizer::to_string_matrix() const
 {
-    return Tensor<string, 2>();
+    return {};
 }
 
 

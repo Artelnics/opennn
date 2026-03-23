@@ -886,7 +886,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
             batch_outputs = neural_network->calculate_outputs(inputs_4d);
         }
         else
-            return MatrixI();
+            return {};
 
         const MatrixI batch_confusion = calculate_confusion(batch_outputs, batch_targets, decision_threshold);
         total_confusion_matrix += batch_confusion;
@@ -910,7 +910,7 @@ MatrixI TestingAnalysis::calculate_confusion(const MatrixR& outputs,
     else
         return calculate_confusion_multiple_classification(targets, outputs);
 
-    return MatrixI();
+    return {};
 }
 
 
@@ -1494,16 +1494,13 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 
     // Save indices
 
-    Index target_index;
-    Index output_index;
-
-    MatrixI indices(targets_number, targets_number);
+    MatrixI indices = MatrixI::Zero(targets_number, targets_number);
     indices.setZero();
 
     for(Index i = 0; i < samples_number; i++)
     {
-        target_index = maximal_index(targets.row(i));
-        output_index = maximal_index(outputs.row(i));
+        const Index target_index = maximal_index(targets.row(i));
+        const Index output_index = maximal_index(outputs.row(i));
 
         multiple_classification_rates(target_index, output_index)(indices(target_index, output_index))
             = testing_indices[i];
@@ -1872,7 +1869,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     return pair<type, type>(error, accuracy);
 */
-    return pair<type, type>();
+    return {};
 }
 
 

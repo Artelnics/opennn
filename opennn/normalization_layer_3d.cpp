@@ -84,18 +84,18 @@ void Normalization3d::set_parameters_glorot()
 }
 
 
-void Normalization3d::forward_propagate(const vector<TensorView>& input_views,
-                                        unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         bool)
 {
-    const Index batch_size = layer_forward_propagation->batch_size;
+    const Index batch_size = forward_propagation->batch_size;
     const Index embedding_dimension = get_embedding_dimension();
 
-    const TensorMap3 inputs(input_views[0].data, batch_size, sequence_length, embedding_dimension);
-    TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
+    const TensorMap3 inputs(forward_propagation->inputs[0].data, batch_size, sequence_length, embedding_dimension);
+
+    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
 
     Normalization3dForwardPropagation* this_forward_propagation =
-        static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
+        static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
     Tensor2& means = this_forward_propagation->means;
     Tensor2& standard_deviations = this_forward_propagation->standard_deviations;
@@ -197,8 +197,7 @@ vector<TensorViewCuda*> Normalization3d::get_parameter_views_device()
 }
 
 
-void Normalization3d::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                         bool is_training)
 {
     Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
@@ -208,7 +207,7 @@ void Normalization3d::forward_propagate(const vector<TensorViewCuda>& inputs,
 
     layernorm_forward_cuda(
         N, D,
-        inputs[0].data,
+        forward_propagation->inputs[0].data,
         fp_cuda->outputs.data,
         fp_cuda->means_device.data,
         fp_cuda->inv_variances_device.data,
@@ -314,11 +313,10 @@ void Normalization3dBackPropagation::initialize()
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
+    input_gradients = {{nullptr, {batch_size, sequence_length, embedding_dimension}}};
+
     gamma_gradients.shape = {embedding_dimension};
     beta_gradients.shape = {embedding_dimension};
-
-    input_gradients.resize(1);
-    input_gradients[0].shape = {batch_size, sequence_length, embedding_dimension};
 }
 
 
@@ -364,11 +362,10 @@ void Normalization3dBackPropagationCuda::initialize()
     const Index seq = norm_layer->get_sequence_length();
     const Index dim = norm_layer->get_embedding_dimension();
 
+    input_gradients = {TensorViewCuda({batch_size, seq, dim})};
+
     gamma_gradients.set_descriptor({dim});
     beta_gradients.set_descriptor({dim});
-
-    input_gradients.resize(1);
-    input_gradients[0].resize({batch_size, seq, dim});
 }
 
 vector<TensorViewCuda*> Normalization3dBackPropagationCuda::get_gradient_views()

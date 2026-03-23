@@ -57,15 +57,11 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
-        if (input_views.size() != 2 || input_views[0].shape != input_views[1].shape)
-            throw runtime_error(name + " input shape error.");
-
-        const TensorMapR<Rank> input_1 = tensor_map<Rank>(input_views[0]);
-        const TensorMapR<Rank> input_2 = tensor_map<Rank>(input_views[1]);
+        const TensorMapR<Rank> input_1 = tensor_map<Rank>(forward_propagation->inputs[0]);
+        const TensorMapR<Rank> input_2 = tensor_map<Rank>(forward_propagation->inputs[1]);
 
         TensorMapR<Rank> outputs = tensor_map<Rank>(forward_propagation->outputs);
 
@@ -117,19 +113,15 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
-                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool) override
     {
-        if (inputs.size() != 2)
-            throw runtime_error(name + " layer requires exactly two inputs for CUDA propagation.");
-
-        const size_t total_elements = static_cast<size_t>(forward_propagation->batch_size) * get_inputs_number();
-
-        const float alpha_minus_one = -1.0f;
+        const size_t total_elements = forward_propagation->batch_size * get_inputs_number();
 
         // @todo substitute addition_cuda by cudnn function similar as follows
 /*
+        const float alpha_minus_one = -1.0f;
+
         cudnnOpTensor(cudnn_handle,
                       operator_sum_descriptor,
                       &alpha_minus_one,
@@ -144,8 +136,8 @@ public:
 
 */
         addition_cuda(total_elements,
-                      inputs[0].data,
-                      inputs[1].data,
+                      forward_propagation->inputs[0].data,
+                      forward_propagation->inputs[1].data,
                       forward_propagation->outputs.data);
     }
 
@@ -212,11 +204,9 @@ struct AdditionBackPropagation final : LayerBackPropagation
 
     void initialize() override
     {
-        Shape shape = Shape{batch_size}.append(layer->get_input_shape());
+        const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(2);
-        input_gradients[0].shape = shape;
-        input_gradients[1].shape = shape;
+        input_gradients = {{nullptr,shape}, {nullptr,shape}};
     }
 
 
@@ -276,9 +266,7 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
     {        
         const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        input_gradients.resize(2);
-        input_gradients[0].resize(shape);
-        input_gradients[1].resize(shape);
+        input_gradients = {TensorViewCuda(shape), TensorViewCuda(shape)};
     }
 
 

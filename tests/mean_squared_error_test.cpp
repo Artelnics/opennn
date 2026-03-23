@@ -117,9 +117,9 @@ TEST(MeanSquaredErrorTest, BackPropagateConvolutional)
 
     NeuralNetwork neural_network;
     neural_network.add_layer(make_unique<Convolutional>(input_shape, kernel_shape));
-    const Shape flatten_layer_input_dimensions = neural_network.get_layer(0).get()->get_output_shape();
+    const Shape flatten_layer_input_dimensions = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<Flatten<4>>(flatten_layer_input_dimensions));
-    const Shape dense_layer_input_dimensions = neural_network.get_layer(1).get()->get_output_shape();
+    const Shape dense_layer_input_dimensions = neural_network.get_layer(1)->get_output_shape();
     neural_network.add_layer(make_unique<opennn::Dense<2>>(dense_layer_input_dimensions, dataset.get_target_shape()));
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
@@ -185,7 +185,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     NeuralNetwork neural_network;
 
     neural_network.add_layer(make_unique<Embedding>(Shape{ inputs_number, sequence_length }, embeding_dim));
-    const Shape flatten_layer_input_dimensions = neural_network.get_layer(0).get()->get_output_shape();
+    const Shape flatten_layer_input_dimensions = neural_network.get_layer(0)->get_output_shape();
     neural_network.add_layer(make_unique<Flatten<3>>(Shape{ flatten_layer_input_dimensions }));
     neural_network.add_layer(make_unique<opennn::Dense<2>>(Shape{ flattened_size }, Shape{ targets_number }));
 
@@ -274,7 +274,7 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     BackPropagationLM back_propagation_lm(samples_number, &mean_squared_error);
-    mean_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+    mean_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
     MatrixR numerical_jacobian = mean_squared_error.calculate_numerical_jacobian();
     VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();

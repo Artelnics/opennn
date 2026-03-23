@@ -104,7 +104,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_error_lm(const Batch&,
+void NormalizedSquaredError::calculate_error(const Batch&,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
@@ -136,7 +136,7 @@ void NormalizedSquaredError::calculate_output_gradients(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_squared_errors_lm(const Batch& batch,
+void NormalizedSquaredError::calculate_squared_errors(const Batch& batch,
                                                          const ForwardPropagation&,
                                                          BackPropagationLM& back_propagation_lm) const
 {
@@ -154,7 +154,7 @@ void NormalizedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_output_gradients_lm(const Batch& batch,
+void NormalizedSquaredError::calculate_output_gradients(const Batch& batch,
                                                        ForwardPropagation&,
                                                        BackPropagationLM & back_propagation) const
 {
@@ -171,7 +171,7 @@ void NormalizedSquaredError::calculate_output_gradients_lm(const Batch& batch,
 }
 
 
-void NormalizedSquaredError::calculate_error_gradient_lm(const Batch&,
+void NormalizedSquaredError::calculate_error_gradient(const Batch&,
                                                          BackPropagationLM& back_propagation_lm) const
 {
     VectorR& gradient = back_propagation_lm.gradient;
@@ -184,7 +184,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch&,
 }
 
 
-void NormalizedSquaredError::calculate_error_hessian_lm(const Batch&,
+void NormalizedSquaredError::calculate_error_hessian(const Batch&,
                                                         BackPropagationLM& back_propagation_lm) const
 {
     const MatrixR& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;

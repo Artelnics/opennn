@@ -184,15 +184,14 @@ void Unscaling::set_scalers(const string& new_scalers)
 }
 
 
-void Unscaling::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool)
 {
     MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     const Index outputs_number = get_outputs_number();
 
-    const MatrixMap inputs = matrix_map(input_views[0]);
+    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
 
     outputs = inputs;
 
@@ -331,14 +330,12 @@ REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
 
 #ifdef OPENNN_CUDA
 
-void Unscaling::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                       bool)
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                                  bool)
 {
-    UnscalingForwardPropagationCuda* this_forward_propagation =
-        static_cast<UnscalingForwardPropagationCuda*>(forward_propagation.get());
-
     // @todo: Implement unscaling in CUDA
+
+    throw runtime_error("Unscaling layer not implemented in CUDA");
 }
 
 

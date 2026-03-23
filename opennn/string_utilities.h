@@ -19,6 +19,7 @@ namespace opennn
     Index count_tokens(const string&, const string&);
 
     vector<string> get_tokens(const string&, const string&);
+    vector<string_view> get_tokens_fast(string_view, string_view);
 
     vector<string> tokenize(const string&);
 

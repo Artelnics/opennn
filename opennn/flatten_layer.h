@@ -93,17 +93,16 @@ public:
 
     // Forward propagation
     
-    void forward_propagate(const vector<TensorView>& input_views,
-                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
-        FlattenForwardPropagation<Rank>* forward_propagation =
-            static_cast<FlattenForwardPropagation<Rank>*>(layer_forward_propagation.get());
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation: inputs size != outputs size");
 
-        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
+        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
-        if (input_views[0].data != forward_propagation->outputs.data)
-            memcpy(forward_propagation->outputs.data, input_views[0].data, bytes_to_copy);
+        if (forward_propagation->inputs[0].data != forward_propagation->outputs.data)
+            memcpy(forward_propagation->outputs.data, forward_propagation->inputs[0].data, bytes_to_copy);
     }
     
     // Back-propagation
@@ -170,14 +169,16 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>& input_views,
-                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool)
     {
-        type* inputs = input_views[0].data;
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation CUDA: inputs size != outputs size");
+
+        type* inputs = forward_propagation->inputs[0].data;
         type* outputs = forward_propagation->outputs.data;
 
-        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
+        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
         CHECK_CUDA(cudaMemcpy(outputs,
                               inputs,
@@ -247,11 +248,9 @@ struct FlattenBackPropagation final : LayerBackPropagation
 
         const Shape input_shape = flatten_layer->get_input_shape();
 
-        Shape full_input_shape = { batch_size };
-        full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
+        const Shape full_input_shape = Shape{batch_size}.append(flatten_layer->get_input_shape());
 
-        input_gradients.resize(1);
-        input_gradients[0].shape = full_input_shape;
+        input_gradients = {{nullptr, full_input_shape}};
     }
 
     void print() const override
@@ -288,14 +287,10 @@ struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
     }
 
     void initialize() override
-    {
-        const Shape input_shape = layer->get_input_shape();
+    {      
+        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
 
-        Shape full_input_shape = { batch_size };
-        full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
-
-        input_gradients.resize(1);
-        input_gradients[0].resize(full_input_shape);
+        input_gradients = {TensorViewCuda(full_input_shape)};
     }
 };
 

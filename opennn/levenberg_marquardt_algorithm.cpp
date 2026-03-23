@@ -254,7 +254,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
         // Loss index
 
-        loss->back_propagate_lm(training_batch,
+        loss->back_propagate(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
@@ -386,11 +386,11 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                           potential_parameters,
                                           forward_propagation);
 
-        loss->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_errors(batch, forward_propagation, back_propagation_lm);
 
-        loss->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
 
-        loss->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+        loss->calculate_error(batch, forward_propagation, back_propagation_lm);
 
         type new_loss_value;
 

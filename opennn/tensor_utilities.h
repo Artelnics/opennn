@@ -75,9 +75,11 @@ struct Shape
     }
 
     template<typename InputIt, typename = typename enable_if<!is_integral<InputIt>::value>::type>
-    Shape(InputIt first, InputIt last) {
+    Shape(InputIt first, InputIt last)
+    {
         rank = 0;
-        while (first != last && rank < MaxRank) {
+        while (first != last && rank < MaxRank)
+        {
             shape[rank++] = static_cast<Index>(*first);
             ++first;
         }
@@ -108,7 +110,10 @@ struct Shape
         return rank;
     }
 
-    bool empty() const noexcept { return rank == 0; }
+    bool empty() const noexcept
+    {
+        return rank == 0;
+    }
 
     Index* begin() noexcept
     {
@@ -167,7 +172,7 @@ struct Shape
     void resize(size_t n)
     {
         if (n > MaxRank)
-            throw std::out_of_range("Shape::resize: rank exceeds MaxRank (8)");
+            throw out_of_range("Shape::resize: rank exceeds MaxRank (8)");
 
         rank = n;
     }
@@ -587,8 +592,6 @@ type round_to_precision(type, const int&);
 
 VectorMap vector_map(const MatrixR&, Index);
 
-//VectorMap vector_map(const Tensor2&, Index);
-
 MatrixMap matrix_map(const Tensor3&, Index);
 TensorMap3 tensor_map(const Tensor4&, Index);
 MatrixMap matrix_map(const Tensor4&, Index, Index);
@@ -597,12 +600,8 @@ TensorMap3 tensor_map_(const TensorMap4, Index);
 
 inline VectorMap vector_map(const TensorView& tensor_view)
 {
-    if(!tensor_view.data)
-        throw runtime_error("tensor_map: Null pointer in pair.");
-
-    if (reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
-        throw runtime_error("tensor_map alignment error: Pointer is not aligned. "
-                            "This will cause a crash with AlignedMax TensorMaps.");
+    assert(tensor_view.data != nullptr);
+    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     return VectorMap(tensor_view.data, tensor_view.size());
 }
@@ -610,12 +609,8 @@ inline VectorMap vector_map(const TensorView& tensor_view)
 
 inline MatrixMap matrix_map(const TensorView& tensor_view)
 {
-    if(!tensor_view.data)
-        throw runtime_error("tensor_map: Null pointer in pair.");
-
-    if (reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
-        throw runtime_error("tensor_map alignment error: Pointer is not aligned. "
-                            "This will cause a crash with AlignedMax TensorMaps.");
+    assert(tensor_view.data != nullptr);
+    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     return MatrixMap(tensor_view.data, tensor_view.shape[0], tensor_view.size() / tensor_view.shape[0]);
 }
@@ -624,14 +619,10 @@ inline MatrixMap matrix_map(const TensorView& tensor_view)
 template <Index rank>
 TensorMapR<rank> tensor_map(const TensorView& tensor_view)
 {
-    if(!tensor_view.data)
-        throw runtime_error("tensor_map: Null pointer in pair.");
+    assert(tensor_view.data != nullptr);
+    assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
-    if (reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES != 0)
-        throw runtime_error("tensor_map alignment error: Pointer is not aligned. "
-                            "This will cause a crash with AlignedMax TensorMaps.");
-
-    if constexpr (rank == 2)
+    if constexpr (rank == 2) // @todo For what is this? Can we simplify?
         if (tensor_view.rank() == 4)
             return TensorMap2(tensor_view.data,
                               tensor_view.shape[0],
@@ -892,6 +883,11 @@ struct TensorViewCuda
 
     TensorViewCuda(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
         : data(new_data), descriptor_handle(handle) {}
+
+    explicit TensorViewCuda(const Shape& shape)
+    {
+        set_descriptor(shape);
+    }
 
     cudnnTensorDescriptor_t get_descriptor() const 
     {

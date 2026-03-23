@@ -43,12 +43,10 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 #ifdef OPENNN_CUDA
-    void forward_propagate(const vector<TensorViewCuda>&,
-                           unique_ptr<LayerForwardPropagationCuda>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                            bool) override;
 #endif
 

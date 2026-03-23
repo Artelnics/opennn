@@ -68,8 +68,7 @@ public:
 
     void set_pooling_method(const string&);
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void forward_propagate_max_pooling(const Tensor4&,
@@ -103,8 +102,7 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>&,
-                           unique_ptr<LayerForwardPropagationCuda>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                            bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,

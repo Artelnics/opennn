@@ -61,9 +61,9 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace.setZero();
         link(workspace.data(), views);
 
-        TensorView input_pair_unscale = { data_to_unscale.data(), {{samples_number, inputs_number}} };
+        memcpy(fw_prop_unscale->inputs[0].data, data_to_unscale.data(), data_to_unscale.size() * sizeof(type));
 
-        unscaling_layer_none.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        unscaling_layer_none.forward_propagate(fw_prop_unscale, is_training);
 
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
@@ -101,8 +101,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_scale.setZero();
         link(workspace_scale.data(), views_scale);
 
-        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
-        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        memcpy(fw_prop_scale->inputs[0].data, original_data.data(), original_data.size() * sizeof(type));
+        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
         TensorView output_pair_scale = fw_prop_scale->get_outputs();
         Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
 
@@ -127,8 +127,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_unscale.setZero();
         link(workspace_unscale.data(), views_unscale);
 
-        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
-        unscaling_layer_minmax.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        memcpy(fw_prop_unscale->inputs[0].data, scaled_data.data(), scaled_data.size() * sizeof(type));
+        unscaling_layer_minmax.forward_propagate(fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
 
@@ -166,8 +166,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_scale.setZero();
         link(workspace_scale.data(), views_scale);
 
-        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
-        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        memcpy(fw_prop_scale->inputs[0].data, original_data.data(), original_data.size() * sizeof(type));
+        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
         TensorView output_pair_scale = fw_prop_scale->get_outputs();
         Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
 
@@ -184,8 +184,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_unscale.setZero();
         link(workspace_unscale.data(), views_unscale);
 
-        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
-        unscaling_layer_msd.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        memcpy(fw_prop_unscale->inputs[0].data, scaled_data.data(), scaled_data.size() * sizeof(type));
+        unscaling_layer_msd.forward_propagate(fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
 
@@ -224,8 +224,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_scale.setZero();
         link(workspace_scale.data(), views_scale);
 
-        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
-        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        memcpy(fw_prop_scale->inputs[0].data, original_data.data(), original_data.size() * sizeof(type));
+        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
         TensorView output_pair_scale = fw_prop_scale->get_outputs();
         Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
 
@@ -242,8 +242,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_unscale.setZero();
         link(workspace_unscale.data(), views_unscale);
 
-        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
-        unscaling_layer_std.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        memcpy(fw_prop_unscale->inputs[0].data, scaled_data.data(), scaled_data.size() * sizeof(type));
+        unscaling_layer_std.forward_propagate(fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         MatrixR unscaled_data = matrix_map(output_pair_unscale);
 
@@ -279,8 +279,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_scale.setZero();
         link(workspace_scale.data(), views_scale);
 
-        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
-        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        memcpy(fw_prop_scale->inputs[0].data, original_data.data(), original_data.size() * sizeof(type));
+        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
         TensorView output_pair_scale = fw_prop_scale->get_outputs();
         Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
 
@@ -301,8 +301,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_unscale.setZero();
         link(workspace_unscale.data(), views_unscale);
 
-        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
-        unscaling_layer_log.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        memcpy(fw_prop_unscale->inputs[0].data, scaled_data.data(), scaled_data.size() * sizeof(type));
+        unscaling_layer_log.forward_propagate(fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
 
@@ -338,8 +338,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_scale.setZero();
         link(workspace_scale.data(), views_scale);
 
-        TensorView input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
-        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        memcpy(fw_prop_scale->inputs[0].data, original_data.data(), original_data.size() * sizeof(type));
+        helper_scaling_layer.forward_propagate(fw_prop_scale, is_training);
         TensorView output_pair_scale = fw_prop_scale->get_outputs();
         Tensor2 scaled_data = tensor_map<2>(output_pair_scale);
 
@@ -360,8 +360,8 @@ TEST(UnscalingTest, ForwardPropagate)
         workspace_unscale.setZero();
         link(workspace_unscale.data(), views_unscale);
 
-        TensorView input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
-        unscaling_layer_img.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        memcpy(fw_prop_unscale->inputs[0].data, scaled_data.data(), scaled_data.size() * sizeof(type));
+        unscaling_layer_img.forward_propagate(fw_prop_unscale, is_training);
         TensorView output_pair_unscale = fw_prop_unscale->get_outputs();
         Tensor2 unscaled_data = tensor_map<2>(output_pair_unscale);
 

@@ -106,13 +106,12 @@ void Recurrent::set_activation_function(const string& new_activation_function)
 }
 
 
-void Recurrent::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool is_training)
 {
-    const Index batch_size = input_views[0].shape[0];
-    const Index past_time_steps = input_views[0].shape[1];
-    const Index input_size = input_views[0].shape[2];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index past_time_steps = forward_propagation->inputs[0].shape[1];
+    const Index input_size = forward_propagation->inputs[0].shape[2];
     const Index output_size = biases.shape[0];
 
     const VectorMap biases_map = vector_map(biases);
@@ -121,7 +120,7 @@ void Recurrent::forward_propagate(const vector<TensorView>& input_views,
 
     RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
-    TensorMap3 input_sequences = tensor_map<3>(input_views[0]);
+    TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
     TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
     TensorMap3 all_activation_derivatives = tensor_map<3>(recurrent_forward_propagation->activation_derivatives);
 
@@ -410,8 +409,7 @@ void RecurrentBackPropagation::initialize()
 
     const Shape full_input_shape = { batch_size, time_steps, inputs_number };
 
-    input_gradients.resize(1);
-    input_gradients[0].shape = full_input_shape;
+    input_gradients = {{nullptr, full_input_shape}};
 }
 
 

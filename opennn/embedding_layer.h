@@ -44,8 +44,7 @@ public:
     void set_parameters_random() override;
     void set_parameters_glorot() override;
 
-    void forward_propagate(const vector<TensorView>&,
-                           unique_ptr<LayerForwardPropagation>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
     void back_propagate(const vector<TensorView>&,
@@ -62,8 +61,7 @@ public:
 
 public:
 
-    void forward_propagate(const vector<TensorViewCuda>&,
-                           unique_ptr<LayerForwardPropagationCuda>&,
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                            bool) override;
 
     void back_propagate(const vector<TensorViewCuda>&,

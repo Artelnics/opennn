@@ -84,7 +84,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateLM)
     normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     BackPropagationLM back_propagation_lm(samples_number, &normalized_squared_error);
-    normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+    normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation_lm);
 
     const VectorR numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
     const MatrixR numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();

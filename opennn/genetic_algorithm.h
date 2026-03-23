@@ -126,7 +126,7 @@ private:
 
     type mean_validation_error;
     
-    MatrixB optimal_individuals_history;
+    //MatrixB optimal_individuals_history;
 
     type mutation_rate;
 

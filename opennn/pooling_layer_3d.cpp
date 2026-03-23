@@ -74,14 +74,13 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling3d::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool is_training)
 {
-    const TensorMap3 inputs = tensor_map<3>(input_views[0]);
-    MatrixMap outputs = matrix_map(layer_forward_propagation->outputs);
+    const TensorMap3 inputs = tensor_map<3>(forward_propagation->inputs[0]);
+    MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
-    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(layer_forward_propagation.get());
+    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
@@ -235,8 +234,7 @@ void Pooling3d::back_propagate(const vector<TensorView>& input_views,
 
 #ifdef OPENNN_CUDA
 
-void Pooling3d::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                   bool is_training)
 {
     Pooling3dForwardPropagationCuda* pooling_forward_propagation =
@@ -246,7 +244,7 @@ void Pooling3d::forward_propagate(const vector<TensorViewCuda>& inputs,
     const Index sequence_length = input_shape[0];
     const Index features = input_shape[1];
 
-    const float* inputs_data = inputs[0].data;
+    const float* inputs_data = forward_propagation->inputs[0].data;
     float* outputs_data = forward_propagation->outputs.data;
 
     const int total_elements = static_cast<int>(batch_size * features);
@@ -351,8 +349,7 @@ void Pooling3dBackPropagation::initialize()
     const Index sequence_length = layer_input_dimensions[0];
     const Index features = layer_input_dimensions[1];
 
-    input_gradients.resize(1);
-    input_gradients[0].shape = {batch_size, sequence_length, features};
+    input_gradients = {{nullptr, {batch_size, sequence_length, features}}};
 }
 
 
@@ -412,8 +409,7 @@ void Pooling3dBackPropagationCuda::initialize()
     const Index sequence_length = layer_input_dimensions[0];
     const Index features = layer_input_dimensions[1];
 
-    input_gradients.resize(1);
-    input_gradients[0].resize({batch_size, sequence_length, features});
+    input_gradients = {TensorViewCuda({batch_size, sequence_length, features})};
 }
 
 REGISTER(LayerForwardPropagationCuda, Pooling3dForwardPropagationCuda, "Pooling3d")

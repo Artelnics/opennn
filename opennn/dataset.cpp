@@ -17,6 +17,8 @@
 #include "random_utilities.h"
 #include "variable.h"
 
+#include <charconv>
+
 namespace opennn
 {
 
@@ -219,17 +221,14 @@ void Dataset::set_sample_roles(const string& sample_role)
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
 {
-    if (new_role == "Training")
-        sample_roles[index] = "Training";
-    else if (new_role == "Validation")
-        sample_roles[index] = "Validation";
-    else if (new_role == "Testing")
-        sample_roles[index] = "Testing";
-    else if (new_role == "None")
-        sample_roles[index] = "None";
+    static const unordered_set<string> valid_roles = {"Training", "Validation", "Testing", "None"};
+
+    if (valid_roles.count(new_role))
+        sample_roles[index] = new_role;
     else
         throw runtime_error("Unknown sample role: " + new_role + "\n");
 }
+
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
@@ -2836,7 +2835,7 @@ void Dataset::print_data_preview() const
 
 void Dataset::save_data() const
 {
-    ofstream file(data_path.c_str());
+    ofstream file(data_path);
 
     if(!file.is_open())
         throw runtime_error("Cannot open matrix data file: " + data_path.string() + "\n");
@@ -2949,7 +2948,7 @@ VectorI Dataset::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        Index target_index = target_feature_indices[0];
+        const Index target_index = target_feature_indices[0];
 
         Index positives = 0;
         Index negatives = 0;
@@ -3722,16 +3721,12 @@ void Dataset::read_csv()
     variables.resize(variables_number);
 
     if(has_header)
-    {
         if(has_sample_ids)
             for(Index i = 0; i < variables_number; i++) variables[i].name = header_tokens[i + 1];
         else
             set_variable_names(header_tokens);
-    }
     else
-    {
         set_default_variable_names();
-    }
 
     infer_column_types(raw_file_content);
 
@@ -3794,7 +3789,7 @@ void Dataset::read_csv()
                     data(sample_index, feature_indices[0]) = NAN;
                 else
                 {
-                    time_t timestamp = date_to_timestamp(token, gmt, date_format);
+                    const time_t timestamp = date_to_timestamp(token, gmt, date_format);
 
                     if(timestamp == -1)
                         throw runtime_error("Date format is unsupported or date is prior to 1970.");
@@ -3804,13 +3799,14 @@ void Dataset::read_csv()
                 break;
             case VariableType::Categorical:
                 if(token.empty() || token == missing_values_label)
-                    for(Index cat_idx : feature_indices) data(sample_index, cat_idx) = NAN;
+                    for(Index cat_idx : feature_indices)
+                        data(sample_index, cat_idx) = NAN;
                 else
                 {
                     auto it = find(variable.categories.begin(), variable.categories.end(), token);
                     if(it != variable.categories.end())
                     {
-                        Index category_index = distance(variable.categories.begin(), it);
+                        const Index category_index = distance(variable.categories.begin(), it);
                         data(sample_index, feature_indices[category_index]) = 1;
                     }
                 }
@@ -3821,6 +3817,7 @@ void Dataset::read_csv()
                 else
                 {
                     const vector<string>& categories = variable.categories;
+
                     if(token.empty() || token == missing_values_label)
                         data(sample_index, feature_indices[0]) = NAN;
                     else if(!categories.empty() && token == categories[0])
@@ -3828,6 +3825,7 @@ void Dataset::read_csv()
                     else if(categories.size() > 1 && token == categories[1])
                         data(sample_index, feature_indices[0]) = 1;
                     else
+                        //from_chars(token.data(), token.data() + token.size(), data(sample_index, feature_indices[0])); // AFTER
                         data(sample_index, feature_indices[0]) = stof(token);
                 }
                 break;
@@ -3930,11 +3928,9 @@ bool Dataset::has_categorical_variables() const
 
 bool Dataset::has_binary_or_categorical_variables() const
 {
-    for(const Variable& variable : variables)
-        if (variable.type == VariableType::Binary || variable.type == VariableType::Categorical)
-            return true;
-
-    return false;
+    return any_of(variables.begin(), variables.end(),[](const Variable& v) {
+        return v.type == VariableType::Binary || v.type == VariableType::Categorical;
+    });
 }
 
 
@@ -4368,9 +4364,7 @@ MatrixR BatchCuda::get_inputs_from_device() const
 {
     const Index inputs_number = dataset->get_variables_number("Input");
 
-    MatrixR inputs(samples_number, inputs_number);
-
-    inputs.setZero();
+    MatrixR inputs = MatrixR::Zero(samples_number, inputs_number);
 
     CHECK_CUDA(cudaMemcpy(inputs.data(), inputs_device.data, samples_number * inputs_number * sizeof(type), cudaMemcpyDeviceToHost));
 
@@ -4382,9 +4376,7 @@ MatrixR BatchCuda::get_decoder_from_device() const
 {
     const Index decoder_number = dataset->get_variables_number("Decoder");
 
-    MatrixR decoder(samples_number, decoder_number);
-
-    decoder.setZero();
+    MatrixR decoder = MatrixR::Zero(samples_number, decoder_number);
 
     CHECK_CUDA(cudaMemcpy(decoder.data(), inputs_device.data, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost));
 
@@ -4396,9 +4388,7 @@ MatrixR BatchCuda::get_targets_from_device() const
 {
     const Index targets_number = target_shape[1];
 
-    MatrixR targets(samples_number, targets_number);
-
-    targets.setZero();
+    MatrixR targets = MatrixR::Zero(samples_number, targets_number);
 
     CHECK_CUDA(cudaMemcpy(targets.data(), targets_device.data, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost));
 

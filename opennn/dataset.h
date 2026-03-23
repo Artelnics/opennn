@@ -475,7 +475,7 @@ protected:
 
     string missing_values_label = "NA";
 
-    VectorB nans_variables;
+    //VectorB nans_variables;
 
     bool has_header = false;
 

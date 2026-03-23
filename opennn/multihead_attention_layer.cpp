@@ -179,22 +179,21 @@ void MultiHeadAttention::set_dropout_rate(const type new_dropout_rate)
 }
 
 
-void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views,
-                                           unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            bool)
 {
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
     const type scaling_factor = get_scaling_factor();
 
-    const TensorMap3 query_input = tensor_map<3>(input_views[0]);
+    const TensorMap3 query_input = tensor_map<3>(forward_propagation->inputs[0]);
 
-    const TensorMap3 source_input = (input_views.size() == 1)
+    const TensorMap3 source_input = (forward_propagation->inputs.size() == 1)
                                     ? query_input
-                                    : tensor_map<3>(input_views[1]);
+                                    : tensor_map<3>(forward_propagation->inputs[1]);
 
     MultiHeadAttentionForwardPropagation* this_forward_propagation =
-        static_cast<MultiHeadAttentionForwardPropagation*>(layer_forward_propagation.get());
+        static_cast<MultiHeadAttentionForwardPropagation*>(forward_propagation.get());
 
     const Index batch_size = this_forward_propagation->batch_size;
 
@@ -206,7 +205,7 @@ void MultiHeadAttention::forward_propagate(const vector<TensorView>& input_views
 
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
-    TensorMap3 outputs = tensor_map<3>(layer_forward_propagation->outputs);
+    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
 
     calculate_projection(query_input, query_weights, query_biases, query_sequence_length, batch_size, query);
     calculate_projection(source_input, key_weights, key_biases, source_sequence_length, batch_size, key);
@@ -618,12 +617,11 @@ void MultiHeadAttention::print() const
 
 #ifdef OPENNN_CUDA
 
-void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                           unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation,
+void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                            bool)
 {
     MultiHeadAttentionForwardPropagationCuda* forward =
-        static_cast<MultiHeadAttentionForwardPropagationCuda*>(layer_forward_propagation.get());
+        static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
 
     const Index batch_size = forward->batch_size;
     const Index query_sequence_length = this->query_sequence_length;
@@ -636,8 +634,8 @@ void MultiHeadAttention::forward_propagate(const vector<TensorViewCuda>& inputs,
 
     const float scaling_factor = static_cast<float>(get_scaling_factor());
 
-    const float* query_input = inputs[0].data;
-    const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
+    const float* query_input = forward_propagation->inputs[0].data;
+    const float* source_input = (forward_propagation->inputs.size() == 1) ? query_input : forward_propagation->inputs[1].data;
 
     // Query projection
     linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
@@ -991,6 +989,32 @@ vector<TensorViewCuda*> MultiHeadAttention::get_parameter_views_device()
             &projection_weights_device, &projection_biases_device};
 }
 
+void MultiHeadAttention::linear_projection_cuda(const float* input,
+                                                const float* weights,
+                                                const float* biases,
+                                                cudnnTensorDescriptor_t biases_desc,
+                                                float* output,
+                                                cudnnTensorDescriptor_t output_desc,
+                                                int batch_seq_len,
+                                                int input_dim,
+                                                int output_dim) const
+{
+    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                             CUBLAS_OP_N, CUBLAS_OP_N,
+                             output_dim, batch_seq_len, input_dim,
+                             &alpha_one,
+                             weights, output_dim,
+                             input, input_dim,
+                             &beta_zero,
+                             output, output_dim));
+
+    CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
+                               &alpha_one,
+                               biases_desc, biases,
+                               &alpha_one,
+                               output_desc, output));
+}
+
 #endif
 
 
@@ -1089,9 +1113,8 @@ void MultiHeadAttentionBackPropagation::initialize()
     value_bias_gradients.shape = {embedding_dimension};
     projection_bias_gradients.shape = {embedding_dimension};
 
-    input_gradients.resize(2);
-    input_gradients[0].shape = {batch_size, query_sequence_length, embedding_dimension};
-    input_gradients[1].shape = {batch_size, source_sequence_length, embedding_dimension};
+    input_gradients = {{nullptr, {batch_size, query_sequence_length, embedding_dimension}},
+                       {nullptr, {batch_size, source_sequence_length, embedding_dimension}}};
 
     // Auxiliar
 
@@ -1207,9 +1230,8 @@ void MultiHeadAttentionBackPropagationCuda::initialize()
     query_input_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
     source_input_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
 
-    input_gradients.resize(2);
-    input_gradients[0].resize({batch_size, query_sequence_length, embedding_dimension});
-    input_gradients[1].resize({batch_size, source_sequence_length, embedding_dimension});
+    input_gradients = {TensorViewCuda({batch_size, query_sequence_length, embedding_dimension}),
+                       TensorViewCuda({batch_size, source_sequence_length, embedding_dimension})};
 
     const Index max_seq = (query_sequence_length > source_sequence_length) ? query_sequence_length : source_sequence_length;
     ones.resize({batch_size * max_seq});

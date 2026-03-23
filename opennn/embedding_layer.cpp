@@ -144,17 +144,16 @@ void Embedding::set_parameters_glorot()
 }
 
 
-void Embedding::forward_propagate(const vector<TensorView>& input_views,
-                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Embedding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool)
 {
-    const Index batch_size = input_views[0].shape[0];
-    const Index sequence_length = input_views[0].shape[1];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index sequence_length = forward_propagation->inputs[0].shape[1];
     const Index embedding_dimension = get_embedding_dimension();
     const Index total_tokens = batch_size * sequence_length;
 
-    const type* input_indices = input_views[0].data;
-    MatrixMap outputs_map(layer_forward_propagation->outputs.data, total_tokens, embedding_dimension);
+    const type* input_indices = forward_propagation->inputs[0].data;
+    MatrixMap outputs_map(forward_propagation->outputs.data, total_tokens, embedding_dimension);
 
     const MatrixMap weights_map = matrix_map(weights);
 
@@ -335,8 +334,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                   bool is_training)
 {
     const Index batch_size = forward_propagation->batch_size;
@@ -348,8 +346,8 @@ void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
 
     TensorViewCuda& outputs = forward_propagation->outputs;
 
-    const float* inputs_ptr = inputs[0].data;
-    const float* weights_ptr = weights_device.data;
+    const float* inputs_data = forward_propagation->inputs[0].data;
+    const float* weights_data = weights_device.data;
 
     if (add_positional_encoding && !pos_encoding_synced)
     {
@@ -357,15 +355,15 @@ void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
         pos_encoding_synced = true;
     }
 
-    const float* pos_enc_ptr = add_positional_encoding ? positional_encoding_device.data : nullptr;
+    const float* positional_encoding_data = add_positional_encoding ? positional_encoding_device.data : nullptr;
 
     float* outputs_ptr = outputs.data;
 
     embedding_forward_cuda(
         total_elements,
-        inputs_ptr,
-        weights_ptr,
-        pos_enc_ptr,
+        inputs_data,
+        weights_data,
+        positional_encoding_data,
         outputs_ptr,
         sequence_length,
         embedding_dimension,
@@ -389,18 +387,18 @@ void Embedding::back_propagate(const vector<TensorViewCuda>& inputs,
 
     EmbeddingBackPropagationCuda* embedding_back_propagation = static_cast<EmbeddingBackPropagationCuda*>(back_propagation.get());
 
-    float* weight_gradients_ptr = embedding_back_propagation->weight_gradients.data;
+    float* weight_gradients_data = embedding_back_propagation->weight_gradients.data;
 
-    CHECK_CUDA(cudaMemset(weight_gradients_ptr, 0, vocabulary_size * embedding_dimension * sizeof(float)));
+    CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocabulary_size * embedding_dimension * sizeof(float)));
 
-    const float* inputs_ptr = inputs[0].data;
-    const float* output_gradients_ptr = output_gradients[0].data;
+    const float* inputs_data = inputs[0].data;
+    const float* output_gradients_data = output_gradients[0].data;
 
     embedding_backward_cuda(
         total_elements,
-        inputs_ptr,
-        output_gradients_ptr,
-        weight_gradients_ptr,
+        inputs_data,
+        output_gradients_data,
+        weight_gradients_data,
         sequence_length,
         embedding_dimension,
         vocabulary_size,

@@ -246,19 +246,18 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling::forward_propagate(const vector<TensorView>& input_views,
-                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+void Pooling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                 bool is_training)
 {
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
 
     if(pooling_method == "MaxPooling")
         forward_propagate_max_pooling(inputs,
-                                      layer_forward_propagation,
+                                      forward_propagation,
                                       is_training);
     else if(pooling_method == "AveragePooling")
         forward_propagate_average_pooling(inputs,
-                                          layer_forward_propagation,
+                                          forward_propagation,
                                           is_training);
 }
 
@@ -457,9 +456,8 @@ void Pooling::back_propagate_average_pooling(const Tensor4& inputs,
 
 #ifdef OPENNN_CUDA
 
-void Pooling::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                     bool is_training)
+void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+                                bool is_training)
 {
     TensorViewCuda outputs = forward_propagation->outputs;
 
@@ -476,7 +474,7 @@ void Pooling::forward_propagate(const vector<TensorViewCuda>& inputs,
         pooling_descriptor,
         &alpha,
         input_tensor_descriptor,
-        inputs[0].data,
+        forward_propagation->inputs[0].data,
         &beta,
         outputs.get_descriptor(),
         outputs.data));
@@ -607,13 +605,9 @@ void PoolingBackPropagation::initialize()
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
-    const Shape& input_shape = pooling_layer->get_input_shape();
+    const Shape full_input_shape = Shape{batch_size}.append(pooling_layer->get_input_shape());
 
-    Shape full_input_shape = { batch_size };
-    full_input_shape.insert(full_input_shape.end(), input_shape.begin(), input_shape.end());
-
-    input_gradients.resize(1);
-    input_gradients[0].shape = full_input_shape;
+    input_gradients = {{nullptr, full_input_shape}};
 }
 
 
@@ -713,8 +707,7 @@ void PoolingBackPropagationCuda::initialize()
 
     // Input derivatives
 
-    input_gradients.resize(1);
-    input_gradients[0].resize({ batch_size, input_height, input_width, channels});
+    input_gradients = {TensorViewCuda({batch_size, input_height, input_width, channels})};
 }
 
 
