@@ -403,8 +403,7 @@ public:
 
 #ifdef OPENNN_CUDA
 
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                           bool) override
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool) override
     {
         ScalingForwardPropagationCuda<Rank>* scaling_forward_propagation =
             static_cast<ScalingForwardPropagationCuda<Rank>*>(forward_propagation.get());

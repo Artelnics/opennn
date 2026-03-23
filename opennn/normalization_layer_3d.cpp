@@ -125,18 +125,16 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& for
 }
 
 
-void Normalization3d::back_propagate(const vector<TensorView>& input_views,
-                                     const vector<TensorView>& output_gradient_views,
-                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_views[0].shape[0];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    if(output_gradient_views.size() > 1)
-        add_gradients(output_gradient_views);
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
 
-    const TensorMap3 dY = tensor_map<3>(output_gradient_views[0]);
+    const TensorMap3 output_gradients = tensor_map<3>(back_propagation->output_gradients[0]);
 
     const Normalization3dForwardPropagation* this_forward_propagation =
         static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
@@ -151,8 +149,8 @@ void Normalization3d::back_propagate(const vector<TensorView>& input_views,
     VectorMap dBeta_map = vector_map(this_back_propagation->beta_gradients);
     TensorMap3 dX = tensor_map<3>(this_back_propagation->input_gradients[0]);
 
-    Tensor1 dGamma_tensor = (dY * X_hat).sum(array<Index, 2>({0, 1}));
-    Tensor1 dBeta_tensor = dY.sum(array<Index, 2>({0, 1}));
+    Tensor1 dGamma_tensor = (output_gradients * X_hat).sum(array<Index, 2>({0, 1}));
+    Tensor1 dBeta_tensor = output_gradients.sum(array<Index, 2>({0, 1}));
 
     for(Index i = 0; i < embedding_dimension; ++i)
     {

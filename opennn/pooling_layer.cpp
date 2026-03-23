@@ -354,13 +354,11 @@ void Pooling::forward_propagate_max_pooling(const Tensor4& inputs,
 }
 
 
-void Pooling::back_propagate(const vector<TensorView>& input_views,
-                             const vector<TensorView>& output_gradient_views,
-                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Pooling::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                              unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
-    const TensorMap4 output_gradients = tensor_map<4>(output_gradient_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
+    const TensorMap4 output_gradients = tensor_map<4>(back_propagation->output_gradients[0]);
 
     if(pooling_method == "MaxPooling")
         back_propagate_max_pooling(inputs,
@@ -456,8 +454,7 @@ void Pooling::back_propagate_average_pooling(const Tensor4& inputs,
 
 #ifdef OPENNN_CUDA
 
-void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool is_training)
+void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
     TensorViewCuda outputs = forward_propagation->outputs;
 
@@ -481,9 +478,7 @@ void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward
 }
 
 
-void Pooling::back_propagate(const vector<TensorViewCuda>& inputs,
-                             const vector<TensorViewCuda>& output_gradients,
-                             unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Pooling::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                              unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     // Forward propagation

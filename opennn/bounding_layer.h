@@ -51,12 +51,10 @@ public:
 
     // Lower and upper bounds
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagation>&, bool) override;
 
 #ifdef OPENNN_CUDA
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                           bool) override;
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
 #endif
 
     // Expression

@@ -69,15 +69,13 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
-        if (output_gradient_views.size() != 1)
+        if (back_propagation->output_gradients.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input.");
 
-        const TensorMapR<Rank> output_gradients = tensor_map<Rank>(output_gradient_views[0]);
+        const TensorMapR<Rank> output_gradients = tensor_map<Rank>(back_propagation->output_gradients[0]);
 
         TensorMapR<Rank> input_gradients_0 = tensor_map<Rank>(back_propagation->input_gradients[0]);
         TensorMapR<Rank> input_gradients_1 = tensor_map<Rank>(back_propagation->input_gradients[1]);
@@ -142,9 +140,7 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>&,
-                        const vector<TensorViewCuda>& output_gradients,
-                        unique_ptr<LayerForwardPropagationCuda>&,
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const override
     {
         if (output_gradients.size() != 1)

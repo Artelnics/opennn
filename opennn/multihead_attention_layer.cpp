@@ -281,18 +281,16 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagation>& 
 }
 
 
-void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
-                                        const vector<TensorView>& output_gradient_views,
-                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const TensorMap3 query_input = tensor_map<3>(input_views[0]);
+    const TensorMap3 query_input = tensor_map<3>(forward_propagation->inputs[0]);
 
-    const TensorMap3 source_input = (input_views.size() == 1)
+    const TensorMap3 source_input = (forward_propagation->inputs.size() == 1)
                                                         ? query_input
-                                                        : tensor_map<3>(input_views[1]);
+                                                        : tensor_map<3>(forward_propagation->inputs[1]);
 
-    const TensorMap3 delta_Y = tensor_map<3>(output_gradient_views[0]);
+    const TensorMap3 delta_Y = tensor_map<3>(back_propagation->output_gradients[0]);
 
     // Forward propagation
 
@@ -326,7 +324,7 @@ void MultiHeadAttention::back_propagate(const vector<TensorView>& input_views,
 
     TensorMap3 input_query_gradients = tensor_map<3>(back_propagation->input_gradients[0]);
 
-    const bool self_attention = (input_views.size() == 1);
+    const bool self_attention = (forward_propagation->inputs.size() == 1);
 
     const Index batch_size = this_forward_propagation->batch_size;
     const Index embedding_dimension = get_embedding_dimension();
@@ -617,8 +615,7 @@ void MultiHeadAttention::print() const
 
 #ifdef OPENNN_CUDA
 
-void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                           bool)
+void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation, bool)
 {
     MultiHeadAttentionForwardPropagationCuda* forward =
         static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
@@ -739,9 +736,7 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
 }
 
 
-void MultiHeadAttention::back_propagate(const vector<TensorViewCuda>& inputs,
-                                        const vector<TensorViewCuda>& output_gradients,
-                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     MultiHeadAttentionForwardPropagationCuda* forward =

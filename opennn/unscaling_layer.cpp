@@ -330,8 +330,7 @@ REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
 
 #ifdef OPENNN_CUDA
 
-void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                                  bool)
+void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     // @todo: Implement unscaling in CUDA
 
