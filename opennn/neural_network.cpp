@@ -614,24 +614,48 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
     const Index layers_number = get_layers_number();
 
     const Index first_layer_index = is_training
-                                  ? get_first_trainable_layer_index()
-                                  : 0;
+                                        ? get_first_trainable_layer_index()
+                                        : 0;
 
     const Index last_layer_index = is_training
-                                 ? get_last_trainable_layer_index()
-                                 : layers_number - 1;
+                                       ? get_last_trainable_layer_index()
+                                       : layers_number - 1;
 
-    if (first_layer_index == 0)
+    for (Index layer_index = first_layer_index; layer_index <= last_layer_index; ++layer_index)
     {
-        forward_propagation.layers[0]->inputs[0] = input_view[0];
+        const vector<Index>& input_indices = layer_input_indices[layer_index];
+        vector<TensorView>& layer_inputs = forward_propagation.layers[layer_index]->inputs;
 
-        if (input_view.size() > 1 && forward_propagation.layers[0]->inputs.size() > 1)
-            forward_propagation.layers[0]->inputs[1] = input_view[1];
+        layer_inputs.resize(input_indices.size());
+
+        for (Index i = 0; i < static_cast<Index>(input_indices.size()); ++i)
+        {
+            const Index current_input = input_indices[i];
+
+            if (current_input < 0)
+            {
+                Index input_view_index = (-current_input) - 1;
+
+                if (input_view_index < 0 || input_view_index >= static_cast<Index>(input_view.size()))
+                    input_view_index = 0;
+
+                layer_inputs[i] = input_view[input_view_index];
+            }
+            else if (is_training && current_input < first_layer_index)
+            {
+                Index input_view_index = (i < static_cast<Index>(input_view.size()))
+                                         ? i
+                                         : 0;
+
+                layer_inputs[i] = input_view[input_view_index];
+            }
+            else
+                layer_inputs[i] = forward_propagation.layers[current_input]->get_outputs();
+        }
     }
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
-        layers[i]->forward_propagate(forward_propagation.layers[i],
-                                     is_training);
+        layers[i]->forward_propagate(forward_propagation.layers[i], is_training);
 }
 
 
@@ -1485,30 +1509,13 @@ vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vecto
                                                                      bool is_training) const
 {
     const Index layers_number = neural_network->get_layers_number();
-    if (layers_number == 0) return {};
 
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const Index first_trainable = neural_network->get_first_trainable_layer_index();
+    if (layers_number == 0) return {};
 
     vector<vector<TensorView>> layer_input_views(layers_number);
 
     for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-    {
-        if (layer_index == 0 || (is_training && layer_index == first_trainable))
-        {
-            layer_input_views[layer_index] = batch_input_views;
-            continue;
-        }
-
-        if (layer_index < first_trainable) continue;
-
-        const auto& input_indices = layer_input_indices[layer_index];
-        auto& input_views = layer_input_views[layer_index];
-        input_views.resize(input_indices.size());
-
-        for (Index i = 0; i < static_cast<Index>(input_indices.size()); ++i)
-            input_views[i] = layers[input_indices[i]]->get_outputs();
-    }
+        layer_input_views[layer_index] = layers[layer_index]->inputs;
 
     return layer_input_views;
 }
@@ -1685,24 +1692,48 @@ void NeuralNetwork::forward_propagate(const vector<TensorViewCuda>& input_views_
     const Index layers_number = get_layers_number();
 
     const Index first_layer_index = is_training
-                                    ? get_first_trainable_layer_index()
-                                    : 0;
+                                        ? get_first_trainable_layer_index()
+                                        : 0;
 
     const Index last_layer_index = is_training
-                                    ? get_last_trainable_layer_index()
-                                    : layers_number - 1;
+                                       ? get_last_trainable_layer_index()
+                                       : layers_number - 1;
 
-    if (first_layer_index == 0)
+    for (Index layer_index = first_layer_index; layer_index <= last_layer_index; ++layer_index)
     {
-        forward_propagation.layers[0]->inputs[0] = input_views_device[0];
+        const vector<Index>& input_indices = layer_input_indices[layer_index];
+        vector<TensorViewCuda>& layer_inputs = forward_propagation.layers[layer_index]->inputs;
 
-        if (input_views_device.size() > 1 && forward_propagation.layers[0]->inputs.size() > 1)
-            forward_propagation.layers[0]->inputs[1] = input_views_device[1];
+        layer_inputs.resize(input_indices.size());
+
+        for (Index i = 0; i < static_cast<Index>(input_indices.size()); ++i)
+        {
+            const Index src_index = input_indices[i];
+
+            if (src_index < 0)
+            {
+                Index ext_idx = (-src_index) - 1;
+
+                if (ext_idx < 0 || ext_idx >= static_cast<Index>(input_views_device.size()))
+                    ext_idx = 0;
+
+                layer_inputs[i] = input_views_device[ext_idx];
+            }
+            else if (is_training && src_index < first_layer_index)
+            {
+                Index ext_idx = (i < static_cast<Index>(input_views_device.size()))
+                                    ? i
+                                    : 0;
+
+                layer_inputs[i] = input_views_device[ext_idx];
+            }
+            else
+                layer_inputs[i] = forward_propagation.layers[src_index]->get_outputs();
+        }
     }
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
-        layers[i]->forward_propagate(forward_propagation.layers[i],
-                                     is_training);
+        layers[i]->forward_propagate(forward_propagation.layers[i], is_training);
 }
 
 
@@ -1820,28 +1851,10 @@ vector<vector<TensorViewCuda>> ForwardPropagationCuda::get_layer_input_views_dev
     const Index layers_number = neural_network->get_layers_number();
     if (layers_number == 0) return {};
 
-    const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
-    const Index first_trainable = neural_network->get_first_trainable_layer_index();
-
     vector<vector<TensorViewCuda>> layer_input_views(layers_number);
 
     for (Index layer_index = 0; layer_index < layers_number; ++layer_index)
-    {
-        if (layer_index == 0 || (is_training && layer_index == first_trainable))
-        {
-            layer_input_views[layer_index] = batch_input_views;
-            continue;
-        }
-
-        if (layer_index < first_trainable) continue;
-
-        const auto& input_indices = layer_input_indices[layer_index];
-        auto& input_views = layer_input_views[layer_index];
-        input_views.resize(input_indices.size());
-
-        for (Index i = 0; i < static_cast<Index>(input_indices.size()); ++i)
-            input_views[i] = layers[input_indices[i]]->get_outputs();
-    }
+        layer_input_views[layer_index] = layers[layer_index]->inputs;
 
     return layer_input_views;
 }
