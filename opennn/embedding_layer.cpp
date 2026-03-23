@@ -251,12 +251,12 @@ void Embedding::from_XML(const XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("Embedding element is nullptr.\n");
 
-    const string new_name = read_xml_string(embedding_layer_element, "Name");
+    const string new_label = read_xml_string(embedding_layer_element, "Label");
     const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
     const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
     const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
 
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_label);
 }
 
 
@@ -341,8 +341,8 @@ void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forwa
 
     TensorViewCuda& outputs = forward_propagation->outputs;
 
-    const float* inputs_ptr = inputs[0].data;
-    const float* weights_ptr = weights_device.data;
+    const float* inputs_data = forward_propagation->inputs[0].data;
+    const float* weights_data = weights_device.data;
 
     if (add_positional_encoding && !pos_encoding_synced)
     {
@@ -350,15 +350,15 @@ void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forwa
         pos_encoding_synced = true;
     }
 
-    const float* pos_enc_ptr = add_positional_encoding ? positional_encoding_device.data : nullptr;
+    const float* positional_encoding_data = add_positional_encoding ? positional_encoding_device.data : nullptr;
 
     float* outputs_ptr = outputs.data;
 
     embedding_forward_cuda(
         total_elements,
-        inputs_ptr,
-        weights_ptr,
-        pos_enc_ptr,
+        inputs_data,
+        weights_data,
+        positional_encoding_data,
         outputs_ptr,
         sequence_length,
         embedding_dimension,
@@ -380,18 +380,18 @@ void Embedding::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_
 
     EmbeddingBackPropagationCuda* embedding_back_propagation = static_cast<EmbeddingBackPropagationCuda*>(back_propagation.get());
 
-    float* weight_gradients_ptr = embedding_back_propagation->weight_gradients.data;
+    float* weight_gradients_data = embedding_back_propagation->weight_gradients.data;
 
-    CHECK_CUDA(cudaMemset(weight_gradients_ptr, 0, vocabulary_size * embedding_dimension * sizeof(float)));
+    CHECK_CUDA(cudaMemset(weight_gradients_data, 0, vocabulary_size * embedding_dimension * sizeof(float)));
 
-    const float* inputs_ptr = inputs[0].data;
-    const float* output_gradients_ptr = output_gradients[0].data;
+    const float* inputs_data = inputs[0].data;
+    const float* output_gradients_data = output_gradients[0].data;
 
     embedding_backward_cuda(
         total_elements,
-        inputs_ptr,
-        output_gradients_ptr,
-        weight_gradients_ptr,
+        inputs_data,
+        output_gradients_data,
+        weight_gradients_data,
         sequence_length,
         embedding_dimension,
         vocabulary_size,

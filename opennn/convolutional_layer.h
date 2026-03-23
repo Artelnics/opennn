@@ -116,7 +116,12 @@ public:
 
 public:
 
+<<<<<<< HEAD
     void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
+=======
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                           bool) override;
+>>>>>>> 5d737e55da14848ee8ba7ff9b116f94be9e7a84f
 
     void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                         unique_ptr<LayerBackPropagationCuda>&) const override;

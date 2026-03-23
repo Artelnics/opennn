@@ -114,15 +114,12 @@ public:
     void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                            bool) override
     {
-        if (inputs.size() != 2)
-            throw runtime_error(name + " layer requires exactly two inputs for CUDA propagation.");
-
-        const size_t total_elements = static_cast<size_t>(forward_propagation->batch_size) * get_inputs_number();
-
-        const float alpha_minus_one = -1.0f;
+        const size_t total_elements = forward_propagation->batch_size * get_inputs_number();
 
         // @todo substitute addition_cuda by cudnn function similar as follows
 /*
+        const float alpha_minus_one = -1.0f;
+
         cudnnOpTensor(cudnn_handle,
                       operator_sum_descriptor,
                       &alpha_minus_one,
@@ -137,8 +134,8 @@ public:
 
 */
         addition_cuda(total_elements,
-                      inputs[0].data,
-                      inputs[1].data,
+                      forward_propagation->inputs[0].data,
+                      forward_propagation->inputs[1].data,
                       forward_propagation->outputs.data);
     }
 

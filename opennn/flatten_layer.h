@@ -96,6 +96,9 @@ public:
     void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool) override
     {
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation: inputs size != outputs size");
+
         const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
         if (forward_propagation->inputs[0].data != forward_propagation->outputs.data)
@@ -166,10 +169,13 @@ public:
 
     void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
     {
-        type* inputs = input_views[0].data;
+        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
+            throw runtime_error("Flatten layer forward propagation CUDA: inputs size != outputs size");
+
+        type* inputs = forward_propagation->inputs[0].data;
         type* outputs = forward_propagation->outputs.data;
 
-        const size_t bytes_to_copy = input_views[0].size() * sizeof(type);
+        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
         CHECK_CUDA(cudaMemcpy(outputs,
                               inputs,

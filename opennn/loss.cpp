@@ -1290,7 +1290,7 @@ void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
         = forward_propagation.get_layer_input_views_device(batch.get_inputs_device(), true);
 
     const vector<vector<TensorViewCuda>> layer_gradient_views
-        = back_propagation.get_layer_delta_views_device();
+        = back_propagation.get_layer_gradients_device();
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
@@ -1465,7 +1465,7 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 }
 
 
-vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_delta_views_device() const
+vector<vector<TensorViewCuda>> BackPropagationCuda::get_layer_gradients_device() const
 {
     NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 

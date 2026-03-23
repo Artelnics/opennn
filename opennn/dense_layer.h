@@ -1065,7 +1065,7 @@ public:
                                  outputs_number, batch_size, inputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
-                                 inputs[0].data, inputs_number,
+                                 forward_propagation->inputs[0].data, inputs_number,
                                  &beta,
                                  outputs_buffer, outputs_number));
 

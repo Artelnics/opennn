@@ -283,12 +283,11 @@ struct BackPropagation
 struct BackPropagationCuda
 {
     BackPropagationCuda(const Index = 0, Loss* = nullptr);
-
     ~BackPropagationCuda() { free(); }
 
     void set(const Index = 0, Loss* = nullptr);
 
-    vector<vector<TensorViewCuda>> get_layer_delta_views_device() const;
+    vector<vector<TensorViewCuda>> get_layer_gradients_device() const;
 
     TensorViewCuda get_output_gradient_views_device() const;
 
@@ -302,9 +301,8 @@ struct BackPropagationCuda
 
     NeuralNetworkBackPropagationCuda neural_network;
 
-    float* errors = nullptr;
-
     type error;
+    float* errors = nullptr;
     float* error_device = nullptr;
 
     type regularization = type(0);

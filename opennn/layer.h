@@ -343,13 +343,15 @@ protected:
 
 public:
 
-    virtual void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool)
+        // Forward propagation CUDA
+
+    virtual void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                                   bool)
     {
         throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
     }
 
     virtual void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                                unique_ptr<LayerBackPropagationCuda>&) const 
     {
         throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
     }
@@ -384,6 +386,8 @@ struct LayerForwardPropagation
 
     virtual vector<TensorView*> get_workspace_views();
 
+    const vector<TensorView>& get_inputs() const { return inputs; }
+
     TensorView get_outputs() const;
 
     virtual void print() const {}
@@ -392,11 +396,9 @@ struct LayerForwardPropagation
 
     Layer* layer = nullptr;
 
-    TensorView outputs;
-
     vector<TensorView> inputs;
 
-    const vector<TensorView>& get_inputs() const { return inputs; }
+    TensorView outputs;
 };
 
 
@@ -461,7 +463,6 @@ struct LayerForwardPropagationCuda
     }
 
     void set(const Index = 0, Layer* = nullptr);
-
     virtual void initialize() = 0;
 
     virtual void free() 
@@ -472,6 +473,8 @@ struct LayerForwardPropagationCuda
     }
 
     virtual vector<TensorViewCuda*> get_workspace_views();
+
+    const vector<TensorViewCuda>& get_inputs() const { return inputs; }
 
     TensorViewCuda get_outputs() const;
 
@@ -493,7 +496,6 @@ struct LayerForwardPropagationCuda
 struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
-
     virtual ~LayerBackPropagationCuda() {}
 
     void set(const Index = 0, Layer* = nullptr);
@@ -523,7 +525,6 @@ struct LayerBackPropagationCuda
 
     void* workspace = nullptr;
     size_t workspace_size = 0;
-
 };
 
 #endif

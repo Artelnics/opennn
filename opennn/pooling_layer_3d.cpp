@@ -241,7 +241,7 @@ void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forwa
     const Index sequence_length = input_shape[0];
     const Index features = input_shape[1];
 
-    const float* inputs_data = inputs[0].data;
+    const float* inputs_data = forward_propagation->inputs[0].data;
     float* outputs_data = forward_propagation->outputs.data;
 
     const int total_elements = static_cast<int>(batch_size * features);

@@ -128,6 +128,30 @@ vector<string> get_tokens(const string& text, const string& separator)
 }
 
 
+vector<string_view> get_tokens_fast(string_view text, string_view separator)
+{
+    vector<string_view> tokens;
+
+    size_t start = 0;
+
+    while (start < text.length())
+    {
+        const size_t end = text.find(separator, start);
+
+        if (end == string_view::npos)
+        {
+            tokens.push_back(text.substr(start));
+            break;
+        }
+
+        tokens.push_back(text.substr(start, end - start));
+        start = end + separator.length();
+    }
+
+    return tokens;
+}
+
+
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;

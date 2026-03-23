@@ -414,7 +414,7 @@ public:
         scale_2d_cuda(size,
                       forward_propagation->batch_size,
                       outputs_number,
-                      inputs[0].data,
+                      forward_propagation->inputs[0].data,
                       forward_propagation->outputs.data,
                       scaling_forward_propagation->scalers_device,
                       scaling_forward_propagation->minimums_device,

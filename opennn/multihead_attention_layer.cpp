@@ -618,7 +618,7 @@ void MultiHeadAttention::print() const
 void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation, bool)
 {
     MultiHeadAttentionForwardPropagationCuda* forward =
-        static_cast<MultiHeadAttentionForwardPropagationCuda*>(layer_forward_propagation.get());
+        static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
 
     const Index batch_size = forward->batch_size;
     const Index query_sequence_length = this->query_sequence_length;
@@ -631,8 +631,8 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
 
     const float scaling_factor = static_cast<float>(get_scaling_factor());
 
-    const float* query_input = inputs[0].data;
-    const float* source_input = (inputs.size() == 1) ? query_input : inputs[1].data;
+    const float* query_input = forward_propagation->inputs[0].data;
+    const float* source_input = (forward_propagation->inputs.size() == 1) ? query_input : forward_propagation->inputs[1].data;
 
     // Query projection
     linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
@@ -984,6 +984,32 @@ vector<TensorViewCuda*> MultiHeadAttention::get_parameter_views_device()
             &projection_weights_device, &projection_biases_device};
 }
 
+void MultiHeadAttention::linear_projection_cuda(const float* input,
+                                                const float* weights,
+                                                const float* biases,
+                                                cudnnTensorDescriptor_t biases_desc,
+                                                float* output,
+                                                cudnnTensorDescriptor_t output_desc,
+                                                int batch_seq_len,
+                                                int input_dim,
+                                                int output_dim) const
+{
+    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                             CUBLAS_OP_N, CUBLAS_OP_N,
+                             output_dim, batch_seq_len, input_dim,
+                             &alpha_one,
+                             weights, output_dim,
+                             input, input_dim,
+                             &beta_zero,
+                             output, output_dim));
+
+    CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
+                               &alpha_one,
+                               biases_desc, biases,
+                               &alpha_one,
+                               output_desc, output));
+}
+
 #endif
 
 
@@ -1012,14 +1038,14 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiHeadAttention element is nullptr.\n");
 
-    const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
+    const string new_label = read_xml_string(multihead_attention_layer_element, "Label");
     const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
     const Index new_context_size = read_xml_index(multihead_attention_layer_element, "ContextSize");
     const Index new_depth = read_xml_index(multihead_attention_layer_element, "Depth");
     const Index new_heads_number = read_xml_index(multihead_attention_layer_element, "HeadsNumber");
     const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
 
-    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
+    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_label);
 }
 
 

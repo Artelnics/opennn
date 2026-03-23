@@ -41,11 +41,14 @@ TEST(BoundingTest, ForwardPropagate)
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<BoundingForwardPropagation>(rows_number, &bounding_layer);
 
-    TensorView input_view(input_data.data(), {rows_number, columns_number});
+    forward_propagation->initialize();
 
-    vector<TensorView> input_views = { input_view };
+    Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
+    link(workspace.data(), forward_propagation->get_workspace_views());
 
-    bounding_layer.forward_propagate(input_views, forward_propagation, false);
+    memcpy(forward_propagation->inputs[0].data, input_data.data(), input_data.size() * sizeof(type));
+
+    bounding_layer.forward_propagate(forward_propagation, false);
 
     // Outputs usando MatrixMap
 

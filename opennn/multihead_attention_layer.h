@@ -87,40 +87,23 @@ public:
 
     public:
 
+<<<<<<< HEAD
         void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
+=======
+        void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
+                               bool) override;
+>>>>>>> 5d737e55da14848ee8ba7ff9b116f94be9e7a84f
 
         void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
         vector<TensorViewCuda*> get_parameter_views_device() override;
 
+        void linear_projection_cuda(const float*, const float*, const float*,
+                                    cudnnTensorDescriptor_t, float*, cudnnTensorDescriptor_t,
+                                    int, int, int) const;
+
     protected:
-
-        void linear_projection_cuda(const float* input,
-                                    const float* weights,
-                                    const float* biases,
-                                    cudnnTensorDescriptor_t biases_desc,
-                                    float* output,
-                                    cudnnTensorDescriptor_t output_desc,
-                                    int batch_seq_len,
-                                    int input_dim,
-                                    int output_dim) const
-        {
-            CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                     CUBLAS_OP_N, CUBLAS_OP_N,
-                                     output_dim, batch_seq_len, input_dim,
-                                     &alpha_one,
-                                     weights, output_dim,
-                                     input, input_dim,
-                                     &beta_zero,
-                                     output, output_dim));
-
-            CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                                       &alpha_one,
-                                       biases_desc, biases,
-                                       &alpha_one,
-                                       output_desc, output));
-        }
 
         TensorViewCuda query_weights_device;
         TensorViewCuda query_biases_device;

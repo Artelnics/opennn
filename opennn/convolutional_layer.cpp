@@ -871,7 +871,7 @@ void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& f
 
     const cudnnTensorDescriptor_t input_tensor_descriptor = convolutional_forward_propagation->input_tensor_descriptor;
 
-    const float* input_data = inputs[0].data;
+    const float* input_data = forward_propagation->inputs[0].data;
     float* outputs_buffer = use_convolutions() ? convolutions.data : outputs.data;
     cudnnTensorDescriptor_t current_output_descriptor = use_convolutions() ? convolutions.get_descriptor() : outputs.get_descriptor();
 

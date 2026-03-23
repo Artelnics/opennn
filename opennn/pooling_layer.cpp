@@ -471,7 +471,7 @@ void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward
         pooling_descriptor,
         &alpha,
         input_tensor_descriptor,
-        inputs[0].data,
+        forward_propagation->inputs[0].data,
         &beta,
         outputs.get_descriptor(),
         outputs.data));
