@@ -54,8 +54,8 @@ int main()
         training_strategy.set_loss("CrossEntropyError2d");
 
         cout << "Training network..." << endl;
-        training_strategy.train_cuda();
-        //training_strategy.train();
+        //training_strategy.train_cuda();
+        training_strategy.train();
 
         // Testing Analysis
 

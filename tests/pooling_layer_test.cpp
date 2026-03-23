@@ -166,15 +166,11 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     TensorMap4 output_tensor = tensor_map<4>(output_pair);
 
-    for (Index b = 0; b < batch_size; ++b) {
-        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
-            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
-                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
+    for (Index b = 0; b < batch_size; ++b)
+        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h)
+            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w)
+                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c)
                     EXPECT_NEAR(output_tensor(b, h, w, c), parameters.expected_output(b, h, w, c), 1e-5);
-                }
-            }
-        }
-    }
 
 #ifdef OPENNN_CUDA
     TensorCuda input_data_device({batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2]});
