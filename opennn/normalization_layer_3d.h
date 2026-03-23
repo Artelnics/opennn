@@ -34,9 +34,7 @@ public:
     void forward_propagate(unique_ptr<LayerForwardPropagation>&,
                            bool) override;
 
-    void back_propagate(const vector<TensorView>&,
-                        const vector<TensorView>&,
-                        unique_ptr<LayerForwardPropagation>&,
+    void back_propagate(unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
     void from_XML(const XMLDocument&) override;

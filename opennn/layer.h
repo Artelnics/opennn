@@ -75,15 +75,11 @@ public:
 
     // Back propagation
 
-    virtual void back_propagate(const vector<TensorView>&,
-                                const vector<TensorView>&,
-                                unique_ptr<LayerForwardPropagation>&,
+    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
                                 unique_ptr<LayerBackPropagation>&) const {}
 
-    virtual void back_propagate(const vector<TensorView>&,
-                                   const vector<TensorView>&,
-                                   unique_ptr<LayerForwardPropagation>&,
-                                   unique_ptr<LayerBackPropagationLM>&) const {}
+    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
+                                unique_ptr<LayerBackPropagationLM>&) const {}
 
     virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    Index,
@@ -347,16 +343,12 @@ protected:
 
 public:
 
-    virtual void forward_propagate(const vector<TensorViewCuda>&,
-                                   unique_ptr<LayerForwardPropagationCuda>&,
-                                   bool)
+    virtual void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool)
     {
         throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
     }
 
-    virtual void back_propagate(const vector<TensorViewCuda>&,
-                                const vector<TensorViewCuda>&,
-                                unique_ptr<LayerForwardPropagationCuda>&,
+    virtual void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
                                 unique_ptr<LayerBackPropagationCuda>&) const 
     {
         throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
@@ -429,6 +421,7 @@ struct LayerBackPropagation
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
 };
 
 
@@ -453,6 +446,7 @@ struct LayerBackPropagationLM
     Layer* layer = nullptr;
 
     vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
 };
 
 
@@ -486,6 +480,8 @@ struct LayerForwardPropagationCuda
     Index batch_size = 0;
 
     Layer* layer = nullptr;
+
+    vector<TensorViewCuda> inputs;
 
     TensorViewCuda outputs;
 
@@ -523,6 +519,7 @@ struct LayerBackPropagationCuda
     Layer* layer = nullptr;
 
     vector<TensorViewCuda> input_gradients;
+    vector<TensorViewCuda> output_gradients;
 
     void* workspace = nullptr;
     size_t workspace_size = 0;

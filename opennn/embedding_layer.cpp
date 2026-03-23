@@ -178,13 +178,11 @@ void Embedding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
 
     if(add_positional_encoding)
     {
-        const MatrixMap positional_encoding_map(positional_encoding.data(), sequence_length, embedding_dimension);
-
         #pragma omp parallel for
         for(Index b = 0; b < batch_size; b++)
             for(Index s = 0; s < sequence_length; s++)
                 if (static_cast<Index>(input_indices[b * sequence_length + s]) > 0)
-                    outputs_map.row(b * sequence_length + s) += positional_encoding_map.row(s);
+                    outputs_map.row(b * sequence_length + s) += positional_encoding.row(s);
     }
 
     //if(is_training && dropout_rate > 0)
@@ -192,22 +190,20 @@ void Embedding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
 }
 
 
-void Embedding::back_propagate(const vector<TensorView>& input_views,
-                               const vector<TensorView>& output_gradient_views,
-                               unique_ptr<LayerForwardPropagation>&,
+void Embedding::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index embedding_dimension = get_embedding_dimension();
-    const Index batch_size = input_views[0].shape[0];
-    const Index sequence_length = input_views[0].shape[1];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
+    const Index sequence_length = forward_propagation->inputs[0].shape[1];
     const Index total_elements = batch_size * sequence_length;
 
-    const type* input_indices = input_views[0].data;
+    const type* input_indices = forward_propagation->inputs[0].data;
 
-    if(output_gradient_views.size() > 1)
-        add_gradients(output_gradient_views);
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
 
-    MatrixMap gradients_map(output_gradient_views[0].data, total_elements, embedding_dimension);
+    MatrixMap gradients_map(back_propagation->output_gradients[0].data, total_elements, embedding_dimension);
 
     if(scale_embedding)
         gradients_map *= sqrt(static_cast<type>(embedding_dimension));
@@ -334,9 +330,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                  bool is_training)
+void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
     const Index batch_size = forward_propagation->batch_size;
     const Index sequence_length = this->sequence_length;
@@ -375,9 +369,7 @@ void Embedding::forward_propagate(const vector<TensorViewCuda>& inputs,
 }
 
 
-void Embedding::back_propagate(const vector<TensorViewCuda>& inputs,
-                               const vector<TensorViewCuda>& output_gradients,
-                               unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Embedding::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     const Index batch_size = forward_propagation->batch_size;

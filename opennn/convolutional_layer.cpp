@@ -116,9 +116,7 @@ void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagation>& forwa
 }
 
 
-void Convolutional::back_propagate(const vector<TensorView>& input_views,
-                                   const vector<TensorView>& output_gradient_views,
-                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Convolutional::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     // Convolutional layer
@@ -134,8 +132,8 @@ void Convolutional::back_propagate(const vector<TensorView>& input_views,
     const Index kernel_channels = get_kernel_channels();
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
-    const TensorMap4 inputs = tensor_map<4>(input_views[0]);
-    TensorMap4 output_gradients = tensor_map<4>(output_gradient_views[0]);
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
+    TensorMap4 output_gradients = tensor_map<4>(back_propagation->output_gradients[0]);
 
     // Forward propagation
 
@@ -858,9 +856,7 @@ void ConvolutionalBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
-                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                      bool is_training)
+void Convolutional::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
     // Forward propagation
 
@@ -980,9 +976,7 @@ void Convolutional::forward_propagate(const vector<TensorViewCuda>& inputs,
 }
 
 
-void Convolutional::back_propagate(const vector<TensorViewCuda>& inputs,
-                                   const vector<TensorViewCuda>& output_gradients,
-                                   unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                    unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
     // Forward propagation

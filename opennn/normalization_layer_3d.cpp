@@ -115,18 +115,16 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& for
 }
 
 
-void Normalization3d::back_propagate(const vector<TensorView>& input_views,
-                                     const vector<TensorView>& output_gradient_views,
-                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = input_views[0].shape[0];
+    const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    if(output_gradient_views.size() > 1)
-        add_gradients(output_gradient_views);
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
 
-    const TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
+    const TensorMap3 output_gradients = tensor_map<3>(back_propagation->output_gradients[0]);
 
     const TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
 

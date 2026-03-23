@@ -1347,6 +1347,31 @@ void NeuralNetworkBackPropagation::set(const Index new_batch_size, NeuralNetwork
         workspace.setZero();
         link(workspace.data(), layer_workspace_views);
     }
+
+    const Index last_trainable = neural_network->get_last_trainable_layer_index();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+
+    for(size_t i = 0; i < layers.size(); i++)
+    {
+        if(!layers[i]) continue;
+        layers[i]->output_gradients.clear();
+
+        if (i == last_trainable)
+        {
+            layers[i]->output_gradients.push_back(TensorView());
+        } else
+        {
+            for(Index consumer_idx : layer_output_indices[i])
+            {
+                if(consumer_idx == -1) continue;
+
+                const Index port = neural_network->find_input_index(layer_input_indices[consumer_idx], i);
+
+                layers[i]->output_gradients.push_back(layers[consumer_idx]->input_gradients[port]);
+            }
+        }
+    }
 }
 
 

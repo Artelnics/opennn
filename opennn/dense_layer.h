@@ -751,17 +751,15 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>& input_views,
-                        const vector<TensorView>& output_gradient_views,
-                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+    void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
-        const Index total_rows = input_views[0].size() / inputs_number;
+        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
-        const MatrixMap inputs(input_views[0].data, total_rows, inputs_number);
-        const MatrixMap output_gradients(output_gradient_views[0].data, total_rows, outputs_number);
+        const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, inputs_number);
+        const MatrixMap output_gradients(back_propagation->output_gradients[0].data, total_rows, outputs_number);
 
         const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
@@ -803,18 +801,16 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorView>& input_views,
-                           const vector<TensorView>& output_gradient_views,
-                           unique_ptr<LayerForwardPropagation>& forward_propagation,
-                           unique_ptr<LayerBackPropagationLM>& back_propagation) const override
+    void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
+                        unique_ptr<LayerBackPropagationLM>& back_propagation) const override
     {
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
-        const Index batch_size = input_views[0].size() / inputs_number;
+        const Index batch_size = forward_propagation->inputs[0].size() / inputs_number;
         const Index biases_number = biases.size();
 
-        const MatrixMap inputs(input_views[0].data, batch_size, inputs_number);
-        MatrixMap output_gradients(output_gradient_views[0].data, batch_size, outputs_number);
+        const MatrixMap inputs(forward_propagation->inputs[0].data, batch_size, inputs_number);
+        MatrixMap output_gradients(back_propagation->output_gradients[0].data, batch_size, outputs_number);
 
         auto* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
         auto* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
@@ -1043,9 +1039,7 @@ public:
     }
 
 
-    void forward_propagate(const vector<TensorViewCuda>& inputs,
-                                unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                bool is_training)
+    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
     {
         // Dense layer
 
@@ -1158,9 +1152,7 @@ public:
     }
 
 
-    void back_propagate(const vector<TensorViewCuda>& inputs,
-                        const vector<TensorViewCuda>& output_gradients,
-                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
+    void back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                         unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
     {
         // Dense layer
