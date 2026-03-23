@@ -1018,14 +1018,14 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiHeadAttention element is nullptr.\n");
 
-    const string new_name = read_xml_string(multihead_attention_layer_element, "Name");
+    const string new_label = read_xml_string(multihead_attention_layer_element, "Label");
     const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");
     const Index new_context_size = read_xml_index(multihead_attention_layer_element, "ContextSize");
     const Index new_depth = read_xml_index(multihead_attention_layer_element, "Depth");
     const Index new_heads_number = read_xml_index(multihead_attention_layer_element, "HeadsNumber");
     const Index new_use_causal_mask = read_xml_bool(multihead_attention_layer_element, "CausalMask");
 
-    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_name);
+    set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_label);
 }
 
 
