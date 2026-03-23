@@ -59,7 +59,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
         recurrent_layer.forward_propagate(fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();
@@ -89,7 +89,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
         recurrent_layer.forward_propagate(fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();
@@ -119,7 +119,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
         Tensor3 inputs(samples_number, time_steps, inputs_number);
         inputs.setConstant(type(1));
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, time_steps, inputs_number}) };
         recurrent_layer.forward_propagate(fw_prop, is_training);
 
         TensorView outputs_view = fw_prop->get_outputs();

@@ -54,14 +54,14 @@ int main()
         training_strategy.set_loss("CrossEntropyError2d");
 
         cout << "Training network..." << endl;
-        //training_strategy.train_cuda();
-        training_strategy.train();
+        training_strategy.train_cuda();
+        //training_strategy.train();
 
         // Testing Analysis
 
         TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
         cout << "Confusion Matrix:" << endl;
-        cout << testing_analysis.calculate_confusion() << endl;
+        cout << testing_analysis.calculate_confusion_cuda() << endl;
 
         Tensor<string, 1> documents(1);
         documents[0] = "This product is amazing and I love it!";

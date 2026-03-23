@@ -23,10 +23,10 @@ struct MultiHeadAttentionConfig
 class MultiHeadAttentionTest : public ::testing::TestWithParam<MultiHeadAttentionConfig> {};
 
 INSTANTIATE_TEST_SUITE_P(MultiHeadAttentionTest, MultiHeadAttentionTest, ::testing::Values(
-                         MultiHeadAttentionConfig{ 2, 5, 5, 16, 4, false, false, "SelfAttention" },
-                         MultiHeadAttentionConfig{ 3, 6, 6, 32, 8, true, false, "SelfAttentionCausalMask" },
-                         MultiHeadAttentionConfig{ 2, 4, 7, 12, 3, false, true, "CrossAttention" },
-                         MultiHeadAttentionConfig{ 8, 3, 3, 8, 2, false, false, "LargeBatchSmallDims" }));
+                                                                             MultiHeadAttentionConfig{ 2, 5, 5, 16, 4, false, false, "SelfAttention" },
+                                                                             MultiHeadAttentionConfig{ 3, 6, 6, 32, 8, true, false, "SelfAttentionCausalMask" },
+                                                                             MultiHeadAttentionConfig{ 2, 4, 7, 12, 3, false, true, "CrossAttention" },
+                                                                             MultiHeadAttentionConfig{ 8, 3, 3, 8, 2, false, false, "LargeBatchSmallDims" }));
 
 TEST(MultiHeadAttentionTest, DefaultConstructors)
 {
@@ -84,9 +84,10 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_base->get_workspace_views()));
     link(workspace.data(), forward_base->get_workspace_views());
 
-    memcpy(forward_base->inputs[0].data, query_input.data(), query_input.size() * sizeof(type));
+    forward_base->inputs.resize(params.is_cross_attention ? 2 : 1);
+    forward_base->inputs[0] = TensorView(query_input.data(), { params.batch_size, params.query_sequence_length, params.embedding_dimension });
     if (params.is_cross_attention)
-        memcpy(forward_base->inputs[1].data, source_input.data(), source_input.size() * sizeof(type));
+        forward_base->inputs[1] = TensorView(source_input.data(), { params.batch_size, params.source_sequence_length, params.embedding_dimension });
 
     layer->forward_propagate(forward_base, false);
     const TensorView output_view = forward_base->get_outputs();
@@ -105,9 +106,19 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_cuda_base->inputs[0].data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda query_device({ params.batch_size, params.query_sequence_length, params.embedding_dimension });
+    CHECK_CUDA(cudaMemcpy(query_device.data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+
+    forward_cuda_base->inputs.resize(params.is_cross_attention ? 2 : 1);
+    forward_cuda_base->inputs[0] = query_device.view();
+
+    TensorCuda source_device;
     if (params.is_cross_attention)
-        CHECK_CUDA(cudaMemcpy(forward_cuda_base->inputs[1].data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+    {
+        source_device.resize({ params.batch_size, params.source_sequence_length, params.embedding_dimension });
+        CHECK_CUDA(cudaMemcpy(source_device.data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+        forward_cuda_base->inputs[1] = source_device.view();
+    }
 
     layer->forward_propagate(forward_cuda_base, false);
 
@@ -153,9 +164,10 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
     Tensor1 workspace_fw(get_size(forward_base->get_workspace_views()));
     link(workspace_fw.data(), forward_base->get_workspace_views());
 
-    memcpy(forward_base->inputs[0].data, query_input.data(), query_input.size() * sizeof(type));
+    forward_base->inputs.resize(params.is_cross_attention ? 2 : 1);
+    forward_base->inputs[0] = TensorView(query_input.data(), { params.batch_size, params.query_sequence_length, params.embedding_dimension });
     if (params.is_cross_attention)
-        memcpy(forward_base->inputs[1].data, source_input.data(), source_input.size() * sizeof(type));
+        forward_base->inputs[1] = TensorView(source_input.data(), { params.batch_size, params.source_sequence_length, params.embedding_dimension });
 
     layer->forward_propagate(forward_base, true);
     TensorView output_view = forward_base->get_outputs();
@@ -201,10 +213,18 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
     TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
     link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_cuda_base->inputs[0].data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda query_device({ params.batch_size, params.query_sequence_length, params.embedding_dimension });
+    CHECK_CUDA(cudaMemcpy(query_device.data, query_input.data(), query_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+
+    forward_cuda_base->inputs.resize(params.is_cross_attention ? 2 : 1);
+    forward_cuda_base->inputs[0] = query_device.view();
+
+    TensorCuda source_device;
     if (params.is_cross_attention)
     {
-        CHECK_CUDA(cudaMemcpy(forward_cuda_base->inputs[1].data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+        source_device.resize({ params.batch_size, params.source_sequence_length, params.embedding_dimension });
+        CHECK_CUDA(cudaMemcpy(source_device.data, source_input.data(), source_input.size() * sizeof(type), cudaMemcpyHostToDevice));
+        forward_cuda_base->inputs[1] = source_device.view();
     }
 
     unique_ptr<LayerBackPropagationCuda> back_cuda_base = make_unique<MultiHeadAttentionBackPropagationCuda>(params.batch_size, layer.get());

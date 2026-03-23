@@ -30,13 +30,9 @@ TEST(BoundingTest, ForwardPropagate)
 
     const Index rows_number = 2;
 
-    // Inputs usando MatrixR
-
     MatrixR input_data(rows_number, columns_number);
     input_data << type(-5.0), type(0.5), type(10.0),
         type(-1.0), type(0.0), type(1.0);
-
-    // Forward propagation
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<BoundingForwardPropagation>(rows_number, &bounding_layer);
@@ -46,21 +42,15 @@ TEST(BoundingTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
     link(workspace.data(), forward_propagation->get_workspace_views());
 
-    memcpy(forward_propagation->inputs[0].data, input_data.data(), input_data.size() * sizeof(type));
+    forward_propagation->inputs = { TensorView(input_data.data(), {rows_number, columns_number}) };
 
     bounding_layer.forward_propagate(forward_propagation, false);
-
-    // Outputs usando MatrixMap
 
     MatrixMap outputs(forward_propagation->outputs.data,
                       rows_number, columns_number);
 
-    // Verificar dimensiones
-
     EXPECT_EQ(outputs.rows(), rows_number);
     EXPECT_EQ(outputs.cols(), columns_number);
-
-    // Verificar valores
 
     MatrixR expected_output(rows_number, columns_number);
     expected_output << type(-1.0), type(0.5), type(1.0),

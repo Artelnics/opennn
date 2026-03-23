@@ -47,7 +47,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
@@ -70,7 +70,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
@@ -99,7 +99,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
@@ -128,7 +128,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
@@ -152,7 +152,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());
@@ -176,7 +176,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
         Tensor1 workspace(get_size(fw_prop->get_workspace_views()));
         link(workspace.data(), fw_prop->get_workspace_views());
 
-        memcpy(fw_prop->inputs[0].data, inputs.data(), inputs.size() * sizeof(type));
+        fw_prop->inputs = { TensorView(inputs.data(), {samples_number, inputs_number}) };
         scaling_layer_2d.forward_propagate(fw_prop, is_training);
 
         Tensor2 outputs = tensor_map<2>(fw_prop->get_outputs());

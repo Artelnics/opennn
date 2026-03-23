@@ -81,7 +81,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
     EXPECT_EQ(convolutional_layer.get_batch_normalization(), parameters.batch_normalization);
     EXPECT_EQ(convolutional_layer.get_convolution_type(), parameters.convolution_type);
 }
-/*
+
 
 TEST_P(ConvolutionalLayerTest, ForwardPropagate)
 {
@@ -125,9 +125,9 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
                            parameters.input_shape[1],
                            parameters.input_shape[2] });
 
-    vector<TensorView> input_views = { input_view };
+    forward_propagation->inputs = { input_view };
 
-    convolutional_layer.forward_propagate(input_views, forward_propagation, true);
+    convolutional_layer.forward_propagate(forward_propagation, true);
 
     const TensorView output_view = forward_propagation->get_outputs();
     const Shape expected_output_dims = convolutional_layer.get_output_shape();
@@ -163,11 +163,9 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     link(layer_parameters_device.data, param_views_device);
 
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
-    convolutional_layer.copy_parameters_device();
 
     TensorCuda input_data_device({batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2]});
     CHECK_CUDA(cudaMemcpy(input_data_device.data, input_data.data(), input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> input_views_device = { input_data_device.view() };
 
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda =
         make_unique<ConvolutionalForwardPropagationCuda>(batch_size, &convolutional_layer);
@@ -177,7 +175,8 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    convolutional_layer.forward_propagate(input_views_device, forward_propagation_cuda, true);
+    forward_propagation_cuda->inputs = { input_data_device.view() };
+    convolutional_layer.forward_propagate(forward_propagation_cuda, true);
 
     // CPU vs GPU
 
@@ -229,8 +228,9 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     link(layer_workspace.data(), workspace_views);
 
     TensorView input_view(input_data.data(), { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] });
+    forward_propagation->inputs = { input_view };
 
-    convolutional_layer.forward_propagate({ input_view }, forward_propagation, true);
+    convolutional_layer.forward_propagate(forward_propagation, true);
 
     unique_ptr<LayerBackPropagation> back_propagation_base =
         make_unique<ConvolutionalBackPropagation>(batch_size, &convolutional_layer);
@@ -258,7 +258,6 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     TensorCuda input_data_device({batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2]});
     CHECK_CUDA(cudaMemcpy(input_data_device.data, input_data.data(), input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> input_views_device = { input_data_device.view() };
 
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda =
         make_unique<ConvolutionalForwardPropagationCuda>(batch_size, &convolutional_layer);
@@ -267,7 +266,8 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    convolutional_layer.forward_propagate(input_views_device, forward_propagation_cuda, true);
+    forward_propagation_cuda->inputs = { input_data_device.view() };
+    convolutional_layer.forward_propagate(forward_propagation_cuda, true);
 
     unique_ptr<LayerBackPropagationCuda> back_propagation_cuda_base =
         make_unique<ConvolutionalBackPropagationCuda>(batch_size, &convolutional_layer);
@@ -284,11 +284,11 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 #endif
 
-    convolutional_layer.back_propagate({ input_view }, { delta_view }, forward_propagation, back_propagation_base);
+    convolutional_layer.back_propagate(forward_propagation->inputs, { delta_view }, forward_propagation, back_propagation_base);
 
 #ifdef OPENNN_CUDA
 
-    convolutional_layer.back_propagate(input_views_device, delta_views_device, forward_propagation_cuda, back_propagation_cuda_base);
+    convolutional_layer.back_propagate(forward_propagation_cuda->inputs, delta_views_device, forward_propagation_cuda, back_propagation_cuda_base);
 
     // CPU vs GPU
     const TensorView bias_gradients = back_propagation->bias_gradients;
@@ -314,4 +314,3 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     }
 #endif
 }
-*/

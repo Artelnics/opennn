@@ -3,8 +3,6 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/random_utilities.h"
-#include <iostream>
-
 
 using namespace opennn;
 
@@ -105,7 +103,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_propagation_base->get_workspace_views()));
     link(workspace.data(), forward_propagation_base->get_workspace_views());
 
-    memcpy(forward_propagation_base->inputs[0].data, inputs_mat.data(), inputs_mat.size() * sizeof(type));
+    forward_propagation_base->inputs = { TensorView(inputs_mat.data(), {batch_size, parameters.sequence_length}) };
 
     embedding_layer.forward_propagate(forward_propagation_base, false);
     const TensorView output_view = forward_propagation_base->get_outputs();
@@ -125,7 +123,9 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda_base->inputs[0].data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({batch_size, parameters.sequence_length});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
 
     embedding_layer.forward_propagate(forward_propagation_cuda_base, false);
 
@@ -166,7 +166,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     Tensor1 workspace_fw(get_size(forward_propagation_base->get_workspace_views()));
     link(workspace_fw.data(), forward_propagation_base->get_workspace_views());
 
-    memcpy(forward_propagation_base->inputs[0].data, inputs_mat.data(), inputs_mat.size() * sizeof(type));
+    forward_propagation_base->inputs = { TensorView(inputs_mat.data(), {batch_size, parameters.sequence_length}) };
 
     embedding_layer.forward_propagate(forward_propagation_base, true);
     TensorView output_view = forward_propagation_base->get_outputs();
@@ -208,7 +208,9 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
     link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda_base->inputs[0].data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({batch_size, parameters.sequence_length});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_mat.data(), inputs_mat.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
 
     embedding_layer.forward_propagate(forward_propagation_cuda_base, true);
 

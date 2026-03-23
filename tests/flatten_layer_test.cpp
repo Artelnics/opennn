@@ -43,7 +43,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     Tensor4 inputs_data(batch_size, height, width, channels);
     inputs_data.setConstant(1.23f);
 
-    memcpy(forward_propagation->inputs[0].data, inputs_data.data(), inputs_data.size() * sizeof(type));
+    forward_propagation->inputs = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
 
     flatten_layer->forward_propagate(forward_propagation, false);
 
@@ -73,7 +73,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
     Tensor4 inputs_data(batch_size, height, width, channels);
     inputs_data.setConstant(1.0f);
 
-    memcpy(forward_propagation->inputs[0].data, inputs_data.data(), inputs_data.size() * sizeof(type));
+    forward_propagation->inputs = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
 
     unique_ptr<LayerBackPropagation> back_propagation =
         make_unique<FlattenBackPropagation<4>>(batch_size, flatten_layer.get());

@@ -149,7 +149,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_propagation->get_workspace_views()));
     link(workspace.data(), forward_propagation->get_workspace_views());
 
-    memcpy(forward_propagation->inputs[0].data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type));
+    forward_propagation->inputs = { TensorView(parameters.input_data.data(), { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] }) };
     pooling_layer.forward_propagate(forward_propagation, false);
 
     TensorView output_pair = forward_propagation->get_outputs();
@@ -177,7 +177,9 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda->inputs[0].data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({ batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] });
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda->inputs = { inputs_device.view() };
     pooling_layer.forward_propagate(forward_propagation_cuda, false);
 
     TensorViewCuda output_view_device = forward_propagation_cuda->outputs;
@@ -218,7 +220,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     Tensor1 workspace_fw(get_size(forward_propagation->get_workspace_views()));
     link(workspace_fw.data(), forward_propagation->get_workspace_views());
 
-    memcpy(forward_propagation->inputs[0].data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type));
+    forward_propagation->inputs = { TensorView(parameters.input_data.data(), { batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] }) };
 
     pooling_layer.forward_propagate(forward_propagation, true);
 
@@ -247,7 +249,9 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda->inputs[0].data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({ batch_size, parameters.input_shape[0], parameters.input_shape[1], parameters.input_shape[2] });
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, parameters.input_data.data(), parameters.input_data.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda->inputs = { inputs_device.view() };
 
     pooling_layer.forward_propagate(forward_propagation_cuda, true);
 

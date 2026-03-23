@@ -77,7 +77,7 @@ TEST_P(Normalization3dLayerTest, ForwardPropagate)
     Tensor1 workspace(get_size(forward_propagation_base->get_workspace_views()));
     link(workspace.data(), forward_propagation_base->get_workspace_views());
 
-    memcpy(forward_propagation_base->inputs[0].data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type));
+    forward_propagation_base->inputs = { TensorView(inputs_tensor.data(), {batch_size, seq, dim}) };
 
     norm_layer.forward_propagate(forward_propagation_base, false);
     TensorView output_view = forward_propagation_base->get_outputs();
@@ -102,7 +102,9 @@ TEST_P(Normalization3dLayerTest, ForwardPropagate)
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda_base->inputs[0].data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({batch_size, seq, dim});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
 
     norm_layer.forward_propagate(forward_propagation_cuda_base, false);
 
@@ -141,7 +143,7 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     Tensor1 workspace_fw(get_size(forward_propagation_base->get_workspace_views()));
     link(workspace_fw.data(), forward_propagation_base->get_workspace_views());
 
-    memcpy(forward_propagation_base->inputs[0].data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type));
+    forward_propagation_base->inputs = { TensorView(inputs_tensor.data(), {batch_size, seq, dim}) };
 
     norm_layer.forward_propagate(forward_propagation_base, true);
     TensorView output_view = forward_propagation_base->get_outputs();
@@ -185,10 +187,12 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     forward_propagation_cuda_base->initialize();
 
     vector<TensorViewCuda*> workspace_fw_views_device = forward_propagation_cuda_base->get_workspace_views();
-    TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
-    link(layer_workspace_fw_device.data, workspace_fw_views_device);
+    TensorCuda layer_workspace_device({get_size(workspace_fw_views_device)});
+    link(layer_workspace_device.data, workspace_fw_views_device);
 
-    CHECK_CUDA(cudaMemcpy(forward_propagation_cuda_base->inputs[0].data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type), cudaMemcpyHostToDevice));
+    TensorCuda inputs_device({batch_size, seq, dim});
+    CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type), cudaMemcpyHostToDevice));
+    forward_propagation_cuda_base->inputs = { inputs_device.view() };
 
     norm_layer.forward_propagate(forward_propagation_cuda_base, true);
 
@@ -224,4 +228,3 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
 #endif
 
 }
-
