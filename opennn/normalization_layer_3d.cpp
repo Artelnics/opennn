@@ -253,7 +253,7 @@ void Normalization3d::from_XML(const XMLDocument& document)
     const XMLElement* element = document.FirstChildElement("Normalization3d");
     if(!element) throw runtime_error("Normalization3d element is nullptr.\n");
 
-    const string new_name = read_xml_string(element, "Name");
+    const string new_name = read_xml_string(element, "Label");
     const Index new_sequence_length = read_xml_index(element, "SequenceLength");
     const Index new_embedding_dimension = read_xml_index(element, "EmbeddingDimension");
 
