@@ -394,7 +394,6 @@ public:
             printer.PushAttribute("Index", int(i + 1));
             add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
             add_xml_element(printer, "Scaler", scalers[i]);
-
             printer.CloseElement();
         }
 
@@ -452,7 +451,7 @@ struct ScalingForwardPropagation final : LayerForwardPropagation
 
     void initialize() override
     {
-        outputs.shape = prepend(batch_size, layer->get_output_shape());
+        outputs.shape = Shape{batch_size}.append(layer->get_output_shape());
     }
 
     void print() const override
@@ -489,6 +488,7 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
         const vector<string> scalers_host_vec = scaling_layer->get_scalers();
 
         Tensor<int, 1> scalers_host_tensor(outputs_number);
+
         for(Index i = 0; i < outputs_number; ++i)
         {
             const string & scaler_str = scalers_host_vec[i];
