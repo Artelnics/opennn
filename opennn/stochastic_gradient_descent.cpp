@@ -660,15 +660,15 @@ TrainingResults StochasticGradientDescent::train_cuda()
             validation_error = type(0);
             if (is_classification_model) validation_accuracy = type(0);
 
-            std::thread validation_worker([&]()
-                                          {
-                                              for(Index iteration = 0; iteration < validation_batches_number; iteration++)
-                                              {
-                                                  BatchCuda* batch = empty_validation_queue.pop();
-                                                  batch->fill_host(validation_batches[iteration], input_feature_indices, target_feature_indices);
-                                                  ready_validation_queue.push(batch);
-                                              }
-                                          });
+            thread validation_worker([&]()
+            {
+                for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                {
+                    BatchCuda* batch = empty_validation_queue.pop();
+                    batch->fill_host(validation_batches[iteration], input_feature_indices, target_feature_indices);
+                    ready_validation_queue.push(batch);
+                }
+            });
 
             for(Index iteration = 0; iteration < validation_batches_number; iteration++)
             {
@@ -766,7 +766,7 @@ void StochasticGradientDescent::update_parameters(BackPropagationCuda& back_prop
                                                   SGDOptimizationDataCuda& optimization_data,
                                                   type current_learning_rate) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters_device().size();
 
@@ -783,8 +783,7 @@ void StochasticGradientDescent::update_parameters(BackPropagationCuda& back_prop
         gradients_device,
         static_cast<float>(current_learning_rate),
         momentum_f,
-        nesterov
-        );
+        nesterov);
 }
 
 

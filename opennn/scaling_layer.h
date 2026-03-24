@@ -452,8 +452,7 @@ struct ScalingForwardPropagation final : LayerForwardPropagation
 
     void initialize() override
     {
-        const Shape layer_output_shape = layer->get_output_shape();
-        outputs.shape = prepend(batch_size, layer_output_shape);
+        outputs.shape = prepend(batch_size, layer->get_output_shape());
     }
 
     void print() const override

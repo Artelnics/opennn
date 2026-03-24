@@ -399,7 +399,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     optimization_data.iteration++;
     const type iteration = static_cast<type>(optimization_data.iteration);
@@ -751,9 +751,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,
-                                                      ADAMOptimizationDataCuda& optimization_data) const
+                                                 ADAMOptimizationDataCuda& optimization_data) const
 {
-    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters_device().size();
 

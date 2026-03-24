@@ -765,6 +765,8 @@ public:
 
         DenseBackPropagation<Rank>* dense_back_propagation = static_cast<DenseBackPropagation<Rank>*>(back_propagation.get());
 
+        // @todo generating memory here
+
         MatrixR delta;
 
         if(activation_function != "Softmax")

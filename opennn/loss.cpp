@@ -334,8 +334,6 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
     if(regularization_method == "None" || regularization_weight == 0)
         return;
 
-    NeuralNetwork* neural_network = back_propagation.loss->get_neural_network();
-
     const VectorR& parameters = neural_network->get_parameters();
 
     VectorR& gradient = back_propagation.neural_network.gradient;

@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
-#include "string_utilities.h"
+//#include "registry.h"
+//#include "string_utilities.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
@@ -37,11 +37,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 {
     const Index old_layers_number = get_layers_number() - 1;
 
-    if (old_layers_number >= 0)
-    {
-        const string& name = layers[old_layers_number]->get_name();
-        if(!validate_name(name)) return;
-    }
+    if (!layers.empty() && !validate_name(layers.back()->get_name())) return;
 
     layers.push_back(std::move(layer));
 
@@ -49,7 +45,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
         ? vector<Index>(1, old_layers_number )
         : input_indices);
 
-    compile(); //COmprobar que esta bien Miguel B. 10-03-26
+    compile(); //@todo COmprobar que esta bien Miguel B. 10-03-26
 }
 
 
