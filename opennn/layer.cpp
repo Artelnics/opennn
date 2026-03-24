@@ -207,11 +207,7 @@ void Layer::set_parameters_random()
     const vector<TensorView*> parameter_views = get_parameter_views();
 
     for(const auto& view : parameter_views)
-    {
-        VectorMap this_parameters(view->data, view->size());
-
-        set_random_uniform(this_parameters);
-    }
+        set_random_uniform(VectorMap(view->data, view->size()));
 }
 
 
@@ -225,11 +221,7 @@ void Layer::set_parameters_glorot()
     const vector<TensorView*> parameter_views = get_parameter_views();
 
     for(const TensorView* view : parameter_views)
-    {
-        VectorMap this_parameters(view->data, view->size());
-
-        set_random_uniform(this_parameters, -limit, limit);
-    }
+        set_random_uniform(VectorMap(view->data, view->size()), -limit, limit);
 }
 
 
