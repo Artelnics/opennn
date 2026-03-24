@@ -120,6 +120,7 @@ TEST_P(Normalization3dLayerTest, ForwardPropagate)
 #endif
 }
 
+
 TEST_P(Normalization3dLayerTest, BackPropagate)
 {
     Normalization3dLayerConfig parameters = GetParam();
@@ -164,6 +165,8 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     if (bp_workspace.size() > 0)
         link(bp_workspace.data(), bp_workspace_views);
 
+    back_propagation_base->output_gradients = { delta_view };
+
     norm_layer.back_propagate(forward_propagation_base, back_propagation_base);
 
     Normalization3dBackPropagation* bp_cpu = static_cast<Normalization3dBackPropagation*>(back_propagation_base.get());
@@ -187,8 +190,8 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     forward_propagation_cuda_base->initialize();
 
     vector<TensorViewCuda*> workspace_fw_views_device = forward_propagation_cuda_base->get_workspace_views();
-    TensorCuda layer_workspace_device({get_size(workspace_fw_views_device)});
-    link(layer_workspace_device.data, workspace_fw_views_device);
+    TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
+    link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
     TensorCuda inputs_device({batch_size, seq, dim});
     CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_tensor.data(), inputs_tensor.size() * sizeof(type), cudaMemcpyHostToDevice));
@@ -202,6 +205,13 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     vector<TensorViewCuda*> gradient_views_device = back_propagation_cuda_base->get_gradient_views();
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
+
+    vector<TensorViewCuda*> bp_workspace_views_device = back_propagation_cuda_base->get_workspace_views();
+    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
+    if (bp_workspace_device.size() > 0)
+        link(bp_workspace_device.data, bp_workspace_views_device);
+
+    back_propagation_cuda_base->output_gradients = { delta_device.view() };
 
     norm_layer.back_propagate(forward_propagation_cuda_base, back_propagation_cuda_base);
 

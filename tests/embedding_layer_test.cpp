@@ -3,6 +3,8 @@
 #include "../opennn/tensor_utilities.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/random_utilities.h"
+#include <iostream>
+
 
 using namespace opennn;
 
@@ -179,14 +181,20 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     VectorR layer_gradients(get_size(gradient_views));
     link(layer_gradients.data(), gradient_views);
 
+    vector<TensorView*> bp_workspace_views = back_propagation_base->get_workspace_views();
+    VectorR bp_workspace(get_size(bp_workspace_views));
+    if (bp_workspace.size() > 0)
+        link(bp_workspace.data(), bp_workspace_views);
+
     Tensor1 deltas(output_view.size());
     for(Index i = 0; i < deltas.size(); ++i) deltas(i) = static_cast<type>(random_normal(0.0, 1.0));
     TensorView delta_view(deltas.data(), output_view.shape);
 
+    back_propagation_base->output_gradients = { delta_view };
+
 #ifdef OPENNN_CUDA
     TensorCuda delta_device({ output_view.shape[0], output_view.shape[1], output_view.shape[2] });
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 #endif
 
     embedding_layer.back_propagate(forward_propagation_base, back_propagation_base);
@@ -221,6 +229,13 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     vector<TensorViewCuda*> gradient_views_device = back_propagation_cuda_base->get_gradient_views();
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
+
+    vector<TensorViewCuda*> bp_workspace_views_device = back_propagation_cuda_base->get_workspace_views();
+    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
+    if (bp_workspace_device.size() > 0)
+        link(bp_workspace_device.data, bp_workspace_views_device);
+
+    back_propagation_cuda_base->output_gradients = { delta_device.view() };
 
     embedding_layer.back_propagate(forward_propagation_cuda_base, back_propagation_cuda_base);
 

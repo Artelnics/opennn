@@ -50,7 +50,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
     const TensorView output_view = forward_propagation->get_outputs();
     const Shape& output_dims = output_view.shape;
 
-    ASSERT_EQ(output_dims.size(), 2) << "Flatten<4> should produce a 2D tensor (batch, features).";
+    ASSERT_EQ(output_dims.size(), 2);
     EXPECT_EQ(output_dims[0], batch_size);
     EXPECT_EQ(output_dims[1], height * width * channels);
 
@@ -75,19 +75,27 @@ TEST_F(FlattenLayerTest, BackPropagate)
 
     forward_propagation->inputs = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
 
+    flatten_layer->forward_propagate(forward_propagation, true);
+
     unique_ptr<LayerBackPropagation> back_propagation =
         make_unique<FlattenBackPropagation<4>>(batch_size, flatten_layer.get());
     back_propagation->initialize();
 
-    Tensor1 workspace_bw(get_size(back_propagation->get_workspace_views()));
-    link(workspace_bw.data(), back_propagation->get_workspace_views());
+    vector<TensorView*> gradient_views = back_propagation->get_gradient_views();
+    Tensor1 layer_gradients(get_size(gradient_views));
+    if (layer_gradients.size() > 0)
+        link(layer_gradients.data(), gradient_views);
+
+    vector<TensorView*> bp_workspace_views = back_propagation->get_workspace_views();
+    Tensor1 workspace_bw(get_size(bp_workspace_views));
+    if (workspace_bw.size() > 0)
+        link(workspace_bw.data(), bp_workspace_views);
 
     const Index flattened_size = height * width * channels;
     Tensor2 output_derivatives(batch_size, flattened_size);
     output_derivatives.setConstant(1.0f);
-    TensorView output_derivatives_view(output_derivatives.data(), Shape{ batch_size, flattened_size });
 
-    flatten_layer->forward_propagate(forward_propagation, true);
+    back_propagation->output_gradients = { TensorView(output_derivatives.data(), Shape{ batch_size, flattened_size }) };
 
     flatten_layer->back_propagate(forward_propagation, back_propagation);
 

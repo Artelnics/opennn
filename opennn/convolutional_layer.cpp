@@ -1053,7 +1053,7 @@ void Convolutional::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forw
     cudnnConvolutionBackwardFilter(get_cudnn_handle(),
                                    &alpha,
                                    input_tensor_descriptor,
-                                   input_gradients.data,
+                                   forward_propagation->inputs[0].data,
                                    gradients_tensor_descriptor,
                                    output_gradients_data,
                                    convolution_descriptor,

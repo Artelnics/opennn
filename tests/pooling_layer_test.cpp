@@ -226,9 +226,21 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     TensorView output_pair = forward_propagation->get_outputs();
 
+    vector<TensorView*> gradient_views = back_propagation->get_gradient_views();
+    Tensor1 layer_gradients(get_size(gradient_views));
+    if (layer_gradients.size() > 0)
+        link(layer_gradients.data(), gradient_views);
+
+    vector<TensorView*> bp_workspace_views = back_propagation->get_workspace_views();
+    Tensor1 workspace_bw(get_size(bp_workspace_views));
+    if (workspace_bw.size() > 0)
+        link(workspace_bw.data(), bp_workspace_views);
+
     Tensor1 deltas(output_pair.size());
     deltas.setConstant(1.0);
     TensorView delta_view(deltas.data(), output_pair.shape);
+
+    back_propagation->output_gradients = { delta_view };
 
     pooling_layer.back_propagate(forward_propagation, back_propagation);
 
@@ -259,9 +271,20 @@ TEST_P(PoolingLayerTest, BackPropagate) {
         make_unique<PoolingBackPropagationCuda>(batch_size, &pooling_layer);
     back_propagation_cuda->initialize();
 
+    vector<TensorViewCuda*> gradient_views_device = back_propagation_cuda->get_gradient_views();
+    TensorCuda layer_gradients_device({get_size(gradient_views_device)});
+    if (layer_gradients_device.size() > 0)
+        link(layer_gradients_device.data, gradient_views_device);
+
+    vector<TensorViewCuda*> bp_workspace_views_device = back_propagation_cuda->get_workspace_views();
+    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
+    if (bp_workspace_device.size() > 0)
+        link(bp_workspace_device.data, bp_workspace_views_device);
+
     TensorCuda delta_device({output_pair.shape[0], output_pair.shape[1], output_pair.shape[2], output_pair.shape[3]});
-    CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), delta_device.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> delta_views_device = { delta_device.view() };
+    CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
+
+    back_propagation_cuda->output_gradients = { delta_device.view() };
 
     pooling_layer.back_propagate(forward_propagation_cuda, back_propagation_cuda);
 
