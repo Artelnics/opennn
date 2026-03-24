@@ -790,6 +790,7 @@ public:
         VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
 
         weight_gradients.noalias() = inputs.transpose() * delta;
+        bias_gradients.noalias() = delta.colwise().sum();
 
         if(!is_first_layer)
         {
@@ -1265,7 +1266,7 @@ public:
                                  outputs_number, inputs_number, batch_size,
                                  &alpha,
                                  output_gradients_data, outputs_number,
-                                 input_gradients_data, inputs_number,
+                                 forward_propagation->inputs[0].data, inputs_number,
                                  &beta,
                                  weight_gradients, outputs_number));
         // Input derivatives
