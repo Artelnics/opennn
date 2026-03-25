@@ -127,7 +127,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     Batch batch(samples_number, &dataset);
     batch.fill(dataset.get_sample_indices("Training"),
                dataset.get_variable_indices("Input"),
-               // dataset.get_variable_indices("Decoder"),
+               dataset.get_variable_indices("Decoder"),
                dataset.get_variable_indices("Target"));
 
     ApproximationNetwork neural_network_aproximation({inputs_number}, {neurons_number}, {outputs_number});

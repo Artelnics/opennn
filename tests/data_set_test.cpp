@@ -527,15 +527,15 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     dataset.set_data(data);
     dataset.set_display(false);
     dataset.set_sample_roles("Training");
-    vector<Index> input_raw_variable_indices(3);
-    input_raw_variable_indices[0] = Index(0);
-    input_raw_variable_indices[1] = Index(1);
-    input_raw_variable_indices[2] = Index(2);
+    vector<Index> input_features_indices(3);
+    input_features_indices[0] = Index(0);
+    input_features_indices[1] = Index(1);
+    input_features_indices[2] = Index(2);
 
-    vector<Index> target_raw_variable_indices(1);
-    target_raw_variable_indices[0] = Index(3);
+    vector<Index> target_features_indices(1);
+    target_features_indices[0] = Index(3);
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -553,11 +553,11 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices = { 0, 1 };
-    target_raw_variable_indices.resize(2);
-    target_raw_variable_indices = { 2, 3 };
+    input_features_indices = { 0, 1 };
+    target_features_indices.resize(2);
+    target_features_indices = { 2, 3 };
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -573,12 +573,12 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 2};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 2};
 
-    target_raw_variable_indices = {3};
+    target_features_indices = {3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -599,12 +599,12 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 2};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 2};
 
-    target_raw_variable_indices = {3};
+    target_features_indices = {3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -620,13 +620,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     categorical_dataset.set("../datasets/correlation_tests.csv", ",", false);
 
-    input_raw_variable_indices.resize(2);
-    input_raw_variable_indices = {0, 3};
+    input_features_indices.resize(2);
+    input_features_indices = {0, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {4};
+    target_features_indices.resize(1);
+    target_features_indices = {4};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -638,13 +638,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     // Test 6 (numeric and binary)
 
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {1, 2, 5};
+    input_features_indices.resize(3);
+    input_features_indices = {1, 2, 5};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -667,13 +667,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     // Test 7 (numeric and categorical)
 
-    input_raw_variable_indices.resize(1);
-    input_raw_variable_indices = {1};
+    input_features_indices.resize(1);
+    input_features_indices = {1};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {0};
+    target_features_indices.resize(1);
+    target_features_indices = {0};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -682,13 +682,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 */
     // Test 8 (binary and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {2,5,6};
+    input_features_indices.resize(3);
+    input_features_indices = {2,5,6};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {0};
+    target_features_indices.resize(1);
+    target_features_indices = {0};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -707,13 +707,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
     categorical_dataset_test9.set("../datasets/correlation_tests_with_nan.csv",",", false);
 
 
-    input_raw_variable_indices.resize(2);
-    input_raw_variable_indices = {0, 3};
+    input_features_indices.resize(2);
+    input_features_indices = {0, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {4};
+    target_features_indices.resize(1);
+    target_features_indices = {4};
 
-    categorical_dataset_test9.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset_test9.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset_test9.calculate_input_target_variable_pearson_correlations();
 
@@ -725,13 +725,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     // Test 10 (numeric and binary)
 /*
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {1, 2, 5};
+    input_features_indices.resize(3);
+    input_features_indices = {1, 2, 5};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -746,13 +746,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     // Test 11 (numeric and categorical)
 
-    input_raw_variable_indices.resize(1);
-    input_raw_variable_indices = {1};
+    input_features_indices.resize(1);
+    input_features_indices = {1};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {0};
+    target_features_indices.resize(1);
+    target_features_indices = {0};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -761,13 +761,13 @@ TEST(Dataset, test_calculate_raw_variable_correlations)
 
     // Test 12 (binary and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {1, 2, 5};
+    input_features_indices.resize(3);
+    input_features_indices = {1, 2, 5};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {0};
+    target_features_indices.resize(1);
+    target_features_indices = {0};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_target_raw_variable_correlations = categorical_dataset.calculate_input_target_variable_pearson_correlations();
 
@@ -796,15 +796,15 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     dataset.set_data(data);
     dataset.set_display(false);
 
-    vector<Index> input_raw_variable_indices(3);
-    input_raw_variable_indices[0] = Index(0);
-    input_raw_variable_indices[1] = Index(1);
-    input_raw_variable_indices[2] = Index(2);
+    vector<Index> input_features_indices(3);
+    input_features_indices[0] = Index(0);
+    input_features_indices[1] = Index(1);
+    input_features_indices[2] = Index(2);
 
-    vector<Index> target_raw_variable_indices(1);
-    target_raw_variable_indices[0] = Index(3);
+    vector<Index> target_features_indices(1);
+    target_features_indices[0] = Index(3);
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     Tensor<Correlation, 2> input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
@@ -829,11 +829,11 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices = {0, 1};
+    input_features_indices = {0, 1};
 
-    target_raw_variable_indices = {2,3};
+    target_features_indices = {2,3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
@@ -854,12 +854,12 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 2};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 2};
 
-    target_raw_variable_indices = {3};
+    target_features_indices = {3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
@@ -890,12 +890,12 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     dataset.set_data(data);
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 2};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 2};
 
-    target_raw_variable_indices = {3};
+    target_features_indices = {3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
     
     input_correlations = dataset.calculate_input_variable_pearson_correlations();
 
@@ -931,15 +931,15 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     Dataset categorical_dataset = Dataset();
     categorical_dataset.set("../datasets/correlation_tests.csv",",", false);
 
-    input_raw_variable_indices.resize(2);
-    input_raw_variable_indices = {0, 4};
+    input_features_indices.resize(2);
+    input_features_indices = {0, 4};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {5};
+    target_features_indices.resize(1);
+    target_features_indices = {5};
 
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
 
 
@@ -963,13 +963,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
  
     // Test 6 (numeric and binary)
 /*
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {1, 2, 5};
+    input_features_indices.resize(3);
+    input_features_indices = {1, 2, 5};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -992,13 +992,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     // Test 7 (numeric and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 3};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1020,13 +1020,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     // Test 8 (binary and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 2, 3};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 2, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1053,13 +1053,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     categorical_dataset.set_missing_values_label("NA");
     categorical_dataset.set("../datasets/correlation_tests_with_nan.csv",",", false);
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 3, 4};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 3, 4};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
     
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1083,14 +1083,14 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     // Test 10 (numeric and binary)
 
-    input_raw_variable_indices.resize(3)
-    input_raw_variable_indices = {1, 2, 5};
+    input_features_indices.resize(3)
+    input_features_indices = {1, 2, 5};
 
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1113,13 +1113,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
 
     // Test 11 (numeric and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 1, 3};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 1, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1141,13 +1141,13 @@ TEST(Dataset, test_calculate_input_raw_variable_correlations)
     
     // Test 12 (binary and categorical)
 
-    input_raw_variable_indices.resize(3);
-    input_raw_variable_indices = {0, 2, 3};
+    input_features_indices.resize(3);
+    input_features_indices = {0, 2, 3};
 
-    target_raw_variable_indices.resize(1);
-    target_raw_variable_indices = {6};
+    target_features_indices.resize(1);
+    target_features_indices = {6};
 
-    categorical_dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    categorical_dataset.set_variable_indices(input_features_indices, target_features_indices);
 
     input_correlations = categorical_dataset.calculate_input_variable_pearson_correlations();
 
@@ -1289,7 +1289,7 @@ TEST(Dataset, BatchFill)
     target_variables_indices.push_back(2);
 
     Batch batch(samples_number, &dataset);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     // Datos esperados
 

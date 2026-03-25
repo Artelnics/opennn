@@ -536,18 +536,18 @@ type Loss::calculate_numerical_error() const
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");
-    const vector<Index> input_indices = dataset->get_feature_indices("Input");
-    // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-    const vector<Index> target_indices = dataset->get_feature_indices("Target");
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
 
-    batch.fill(training_indices, input_indices, target_indices);
+    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
-    neural_network->forward_propagate(batch.get_inputs(),
-                                      forward_propagation);
+    neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
 
     BackPropagation back_propagation(samples_number, this);
 
@@ -561,15 +561,14 @@ VectorR Loss::calculate_gradient()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> training_indices = dataset->get_sample_indices("Training");
 
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
-    // batch.fill(sample_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -591,13 +590,14 @@ VectorR Loss::calculate_numerical_gradient()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> training_indices = dataset->get_sample_indices("Training");
+
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    //const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
 
     Batch batch(samples_number, dataset);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -656,12 +656,14 @@ VectorR Loss::calculate_numerical_gradient_lm()
 {
     const Index samples_number = dataset->get_samples_number("Training");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> training_indices = dataset->get_sample_indices("Training");
+
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -728,7 +730,6 @@ VectorR Loss::calculate_numerical_gradient_lm()
 VectorR Loss::calculate_numerical_input_gradients()
 {
     const Index samples_number = dataset->get_samples_number("Training");
-    const Shape input_shape = dataset->get_shape("Input");
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
 
@@ -737,8 +738,7 @@ VectorR Loss::calculate_numerical_input_gradients()
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
-    // batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -791,7 +791,7 @@ MatrixR Loss::calculate_numerical_jacobian()
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagationLM back_propagation_lm(samples_number, this);
@@ -846,8 +846,7 @@ MatrixR Loss::calculate_numerical_hessian()
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     Batch batch(samples_number, dataset);
-    // batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -1351,14 +1350,13 @@ TensorCuda Loss::calculate_gradient_cuda()
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
 
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     BatchCuda batch(samples_number, dataset);
-    // batch.fill(sample_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-    batch.fill(sample_indices, input_feature_indices, target_feature_indices);
+    batch.fill(sample_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
 
     ForwardPropagationCuda forward_propagation(samples_number, neural_network);
 

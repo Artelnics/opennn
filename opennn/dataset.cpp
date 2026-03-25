@@ -3900,13 +3900,25 @@ void Dataset::check_separators(const string& line) const
 }
 
 
-void Dataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
+void Dataset::fill_inputs(const vector<Index>& sample_indices,
+                          const vector<Index>& input_indices,
+                          type* input_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 }
 
 
-void Dataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices, type* target_data, bool parallelize) const
+void Dataset::fill_decoder(const vector<Index>& sample_indices,
+                           const vector<Index>& decoder_indices,
+                           type* decoder_data, bool parallelize) const
+{
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize);
+}
+
+
+void Dataset::fill_targets(const vector<Index>& sample_indices,
+                           const vector<Index>& target_indices,
+                           type* target_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize);
 }
@@ -4103,14 +4115,15 @@ bool Dataset::get_has_rows_labels() const
 
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
-                 // const vector<Index>& decoder_indices,
+                 const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
     dataset->fill_inputs(sample_indices, input_indices, input_vector.data());
 
-    dataset->fill_targets(sample_indices, target_indices, target_vector.data());
+    if(!decoder_shape.empty())
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_vector.data());
 
-    // dataset->fill_decoder_tensor(sample_indices, decoder_indices, decoder_vector.data());
+    dataset->fill_targets(sample_indices, target_indices, target_vector.data());
 }
 
 
@@ -4232,10 +4245,10 @@ TensorView Batch::get_targets() const
     
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,
-                     //const vector<Index>& decoder_indices,
+                     const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    fill_host(sample_indices, input_indices, target_indices);
+    fill_host(sample_indices, input_indices, decoder_indices, target_indices);
 
     const Index batch_size = sample_indices.size();
 
@@ -4245,10 +4258,13 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 
 void BatchCuda::fill_host(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
-                          //const vector<Index>& decoder_indices,
+                          const vector<Index>& decoder_indices,
                           const vector<Index>& target_indices)
 {
     dataset->fill_inputs(sample_indices, input_indices, inputs_host, false);
+
+    if(!decoder_shape.empty())
+        dataset->fill_decoder(sample_indices, decoder_indices, decoder_host, false);
 
     dataset->fill_targets(sample_indices, target_indices, targets_host, false);
 }
@@ -4282,7 +4298,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
     dataset = new_dataset;
 
     const Shape& dataset_input_shape = dataset->get_shape("Input");
-    //const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
+    const Shape& dataset_decoder_shape = dataset->get_shape("Decoder");
     const Shape& dataset_target_shape = dataset->get_shape("Target");
 
     if(!dataset_input_shape.empty())
@@ -4302,13 +4318,14 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 
         inputs_device.resize({samples_number, num_input_features});
     }
-    /*
     if(!dataset_decoder_shape.empty())
     {
+        const Index num_decoder_features = dataset->get_features_number("Decoder");
+
         decoder_shape = { samples_number };
         decoder_shape.insert(decoder_shape.end(), dataset_decoder_shape.begin(), dataset_decoder_shape.end());
 
-        const Index decoder_size = decoder_shape.count();
+        const Index decoder_size = samples_number * num_decoder_features;
 
         if (decoder_size > decoder_host_allocated_size)
         {
@@ -4317,9 +4334,8 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
             decoder_host_allocated_size = decoder_size;
         }
 
-        CHECK_CUDA(cudaMalloc(&decoder_device, decoder_size * sizeof(float)));
+        decoder_device.resize({samples_number, num_decoder_features});
     }
-    */
     if(!dataset_target_shape.empty())
     {
         num_target_features = dataset->get_features_number("Target");
@@ -4346,6 +4362,13 @@ void BatchCuda::copy_device(const Index current_batch_size)
     const Index target_size = current_batch_size * num_target_features;
 
     CHECK_CUDA(cudaMemcpy(inputs_device.data, inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice));
+
+    if(!decoder_shape.empty())
+    {
+        const Index decoder_size = current_batch_size * num_decoder_features;
+        CHECK_CUDA(cudaMemcpy(decoder_device.data, decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice));
+    }
+
     CHECK_CUDA(cudaMemcpy(targets_device.data, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
 }
 
@@ -4356,6 +4379,13 @@ void BatchCuda::copy_device_async(const Index current_batch_size, cudaStream_t s
     const Index target_size = current_batch_size * num_target_features;
 
     CHECK_CUDA(cudaMemcpyAsync(inputs_device.data, inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+
+    if(!decoder_shape.empty())
+    {
+        const Index decoder_size = current_batch_size * num_decoder_features;
+        CHECK_CUDA(cudaMemcpyAsync(decoder_device.data, decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    }
+
     CHECK_CUDA(cudaMemcpyAsync(targets_device.data, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
@@ -4378,7 +4408,7 @@ MatrixR BatchCuda::get_decoder_from_device() const
 
     MatrixR decoder = MatrixR::Zero(samples_number, decoder_number);
 
-    CHECK_CUDA(cudaMemcpy(decoder.data(), inputs_device.data, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy(decoder.data(), decoder_device.data, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost));
 
     return decoder;
 }
@@ -4398,6 +4428,9 @@ MatrixR BatchCuda::get_targets_from_device() const
 
 vector<TensorViewCuda> BatchCuda::get_inputs_device() const
 {
+    if(!decoder_shape.empty())
+        return { decoder_device.view(), inputs_device.view() };
+
     return { inputs_device.view() };
 }
 

@@ -136,7 +136,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-    // const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
 
     const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
@@ -234,7 +234,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             training_batch.fill(training_batches[iteration],
                                 input_feature_indices,
-                                // decoder_feature_indices,
+                                decoder_feature_indices,
                                 target_feature_indices);
 
             // Neural network
@@ -279,7 +279,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 validation_batch->fill(validation_batches[iteration],
                                       input_feature_indices,
-                                      // decoder_feature_indices,
+                                      decoder_feature_indices,
                                       target_feature_indices);
 
                 // Neural network
@@ -504,7 +504,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
     const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
     const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
 
@@ -602,7 +604,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             for(Index iteration = 0; iteration < training_batches_number; iteration++) 
             {
                 BatchCuda* batch = empty_training_queue.pop();
-                batch->fill_host(training_batches[iteration], input_feature_indices, target_feature_indices);
+                batch->fill_host(training_batches[iteration],
+                                 input_feature_indices,
+                                 decoder_feature_indices,
+                                 target_feature_indices);
                 ready_training_queue.push(batch);
             }
         });
@@ -650,7 +655,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 for(Index iteration = 0; iteration < validation_batches_number; iteration++) 
                 {
                     BatchCuda* batch = empty_validation_queue.pop();
-                    batch->fill_host(validation_batches[iteration], input_feature_indices, target_feature_indices);
+                    batch->fill_host(training_batches[iteration],
+                                     input_feature_indices,
+                                     decoder_feature_indices,
+                                     target_feature_indices);
                     ready_validation_queue.push(batch);
                 }
             });
