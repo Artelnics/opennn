@@ -31,7 +31,6 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagate)
 {
-
     const Index samples_number = random_integer(2, 10);
     const Index inputs_number = random_integer(1, 10);
     const Index outputs_number = random_integer(1, 10);
@@ -46,11 +45,8 @@ TEST(MinkowskiErrorTest, BackPropagate)
     MinkowskiError minkowski_error(&neural_network, &dataset);
 
     const VectorR gradient = minkowski_error.calculate_gradient();
+
     const VectorR numerical_gradient = minkowski_error.calculate_numerical_gradient();
-
-
-    //EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
-    //Se relaja la tolerancia
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-2)), true);
 }

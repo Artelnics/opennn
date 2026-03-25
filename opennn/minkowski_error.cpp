@@ -56,14 +56,17 @@ void MinkowskiError::calculate_error(const Batch& batch,
     const MatrixMap targets = matrix_map(batch.get_targets());
 
     // Forward propagation
-
     const MatrixMap outputs = matrix_map(forward_propagation.get_last_trainable_layer_outputs());
 
     MatrixR& errors = back_propagation.errors;
 
     errors = outputs - targets;
 
-    const type minkowski_sum = (errors.array().abs() + EPSILON).pow(minkowski_parameter).sum();
+    const type p = minkowski_parameter;
+
+    const type minkowski_sum = errors.array().unaryExpr([p](type e) {
+                                                 return std::pow(std::abs(e) + EPSILON, p);
+                                             }).sum();
 
     back_propagation.error = minkowski_sum / static_cast<type>(samples_number);
 
@@ -72,8 +75,8 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
 
 void MinkowskiError::calculate_output_gradients(const Batch& batch,
-                                            ForwardPropagation&,
-                                            BackPropagation& back_propagation) const
+                                                ForwardPropagation&,
+                                                BackPropagation& back_propagation) const
 {
     const Index samples_number = batch.get_samples_number();
 
@@ -81,13 +84,12 @@ void MinkowskiError::calculate_output_gradients(const Batch& batch,
 
     const MatrixR& errors = back_propagation.errors;
 
-//    output_gradients.array() = errors.array()
-//        * (errors.array().abs() + EPSILON).pow(minkowski_parameter - 2.0f)/ samples_number;
+    const type exponent = minkowski_parameter - type(2.0);
+    const type coeff = minkowski_parameter / static_cast<type>(samples_number);
 
-
-//  Falta factor minkowski_parameter
-    output_gradients.array() = minkowski_parameter * errors.array()
-                               * (errors.array().abs() + EPSILON).pow(minkowski_parameter - 2.0f) / samples_number;
+    output_gradients.array() = coeff * errors.array() * errors.array().unaryExpr([exponent](type e) {
+        return std::pow(std::abs(e) + EPSILON, exponent);
+    });
 }
 
 

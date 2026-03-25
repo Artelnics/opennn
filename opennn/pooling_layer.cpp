@@ -602,9 +602,7 @@ void PoolingBackPropagation::initialize()
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
-    const Shape full_input_shape = Shape{batch_size}.append(pooling_layer->get_input_shape());
-
-    input_gradients = {{nullptr, full_input_shape}};
+    input_gradients = {{nullptr, Shape{batch_size}.append(pooling_layer->get_input_shape())}};
 }
 
 

@@ -98,9 +98,7 @@ struct DenseBackPropagation final : LayerBackPropagation
             beta_gradients.shape = {outputs_number};
         }
 
-        const Shape full_input_shape = Shape{batch_size}.append(dense_layer->get_input_shape());
-
-        input_gradients = {{nullptr, full_input_shape}};
+        input_gradients = {{nullptr, Shape{batch_size}.append(dense_layer->get_input_shape())}};
     }
 
 
@@ -150,13 +148,9 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 
     void initialize() override
     {
-        const Index parameters_number = layer->get_parameters_number();
+        input_gradients = {{nullptr, Shape{batch_size}.append(layer->get_input_shape())}};
 
-        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
-
-        input_gradients = {{nullptr, full_input_shape}};
-
-        squared_errors_Jacobian.shape = {batch_size, parameters_number};
+        squared_errors_Jacobian.shape = {batch_size, layer->get_parameters_number()};
     }
 
     vector<TensorView*> get_gradient_views() override
@@ -573,45 +567,25 @@ public:
         const type limit = sqrt(6.0 / (get_input_features_number() + get_neurons_number()));
 
         if(biases.size() > 0)
-        {
-            VectorMap biases_map(biases.data, biases.size());
-            biases_map.setZero();
-        }
+            VectorMap(biases.data, biases.size()).setZero();
 
         if(weights.size() > 0)
-        {
-            VectorMap weights_map(weights.data, weights.size());
-            set_random_uniform(weights_map, -limit, limit);
-        }
+            set_random_uniform(VectorMap(weights.data, weights.size()), -limit, limit);
 
-        if(batch_normalization)
-        {
-            if(gammas.size() > 0)
-            {
-                VectorMap scales_map(gammas.data, gammas.size());
-                scales_map.setConstant(1.0);
-            }
-            if(betas.size() > 0)
-            {
-                VectorMap offsets_map(betas.data, betas.size());
-                offsets_map.setZero();
-            }
-        }
+        if(batch_normalization && gammas.size() > 0)
+            VectorMap(gammas.data, gammas.size()).setConstant(1.0);
+
+        if(batch_normalization && betas.size() > 0)
+            VectorMap(betas.data, betas.size()).setZero();
     }
 
     void set_parameters_random() override
     {
         if(biases.size() > 0)
-        {
-            VectorMap biases_map(biases.data, biases.size());
-            biases_map.setZero();
-        }
+            VectorMap(biases.data, biases.size()).setZero();
 
         if(weights.size() > 0)
-        {
-            VectorMap weights_map(weights.data, weights.size());
-            set_random_uniform(weights_map);
-        }
+            set_random_uniform(VectorMap(weights.data, weights.size()));
 
         if (batch_normalization)
         {
@@ -657,14 +631,11 @@ public:
         static const unordered_set<string> activation_functions =
             {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax","Logistic"};
 
-
         if (activation_functions.count(new_activation_function))
-        {
             if (get_output_shape()[0] == 1 && new_activation_function == "Softmax")
                 activation_function = "Sigmoid";
             else
                 activation_function = new_activation_function;
-        }
         else
             throw runtime_error("Unknown activation function: " + new_activation_function);
 
@@ -804,12 +775,12 @@ public:
         {
             if constexpr (Rank == 2)
                 return is_training
-                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
-                           : TensorMap2(nullptr, 0, 0);
+                   ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                   : TensorMap2(nullptr, 0, 0);
             else
                 return is_training
-                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
-                           : TensorMap3(nullptr, 0, 0, 0);
+                   ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                   : TensorMap3(nullptr, 0, 0, 0);
         }();
 
         calculate_activations<Rank>(activation_function, outputs, derivatives);
@@ -832,6 +803,8 @@ public:
         const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
         DenseBackPropagation<Rank>* dense_back_propagation = static_cast<DenseBackPropagation<Rank>*>(back_propagation.get());
+
+        // @todo generating memory here
 
         MatrixR delta;
 

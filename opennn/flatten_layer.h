@@ -241,11 +241,7 @@ struct FlattenBackPropagation final : LayerBackPropagation
     {
         const Flatten<Rank>* flatten_layer = static_cast<const Flatten<Rank>*>(layer);
 
-        const Shape input_shape = flatten_layer->get_input_shape();
-
-        const Shape full_input_shape = Shape{batch_size}.append(flatten_layer->get_input_shape());
-
-        input_gradients = {{nullptr, full_input_shape}};
+        input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};
     }
 
     void print() const override
