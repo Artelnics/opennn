@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//#include "registry.h"
+#include "registry.h"
 //#include "string_utilities.h"
 #include "tensor_utilities.h"
 #include "neural_network.h"
@@ -45,7 +45,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
         ? vector<Index>(1, old_layers_number )
         : input_indices);
 
-    compile(); //@todo COmprobar que esta bien Miguel B. 10-03-26
+    compile();
 }
 
 
