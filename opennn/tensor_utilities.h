@@ -945,6 +945,16 @@ struct TensorViewCuda
             total_elements *= static_cast<Index>(dimA[i]);
         return total_elements;
     }
+
+    void fill(float value)
+    {
+        if (data == nullptr || descriptor_handle == nullptr) return;
+
+        if (value == 0.0f)
+            CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
+        else
+            CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
+    }
 };
 
 

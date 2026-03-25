@@ -194,7 +194,7 @@ struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagation
 
     void initialize() override;
 
-    void print() const override {}
+    void print() const override;
 
     void free() override {}
 
@@ -216,24 +216,24 @@ struct MultiHeadAttentionBackPropagationCuda : public LayerBackPropagationCuda
     void initialize() override;
 
     vector<TensorViewCuda*> get_gradient_views() override;
+    vector<TensorViewCuda*> get_workspace_views() override;
 
-    void print() const override {}
+    void print() const override;
 
     void free() override {}
 
     TensorViewCuda query_weight_gradients, key_weight_gradients, value_weight_gradients, projection_weight_gradients;
     TensorViewCuda query_bias_gradients, key_bias_gradients, value_bias_gradients, projection_bias_gradients;
 
-    TensorCuda query_gradients, key_gradients, value_gradients;
-    TensorCuda attention_weight_gradients;              // dP
-    //TensorCuda attention_output_gradients;              // dO
-    TensorCuda concatenated_attention_output_gradients; // dY_proj
-    TensorCuda softmax_gradients;                       // dS
+    TensorViewCuda query_gradients, key_gradients, value_gradients;
+    TensorViewCuda attention_weight_gradients;              // dP
+    TensorViewCuda concatenated_attention_output_gradients; // dY_proj
+    TensorViewCuda softmax_gradients;                       // dS
 
-    TensorCuda query_gradients_transposed, key_gradients_transposed, value_gradients_transposed;
-    TensorCuda attention_output_gradients_transposed;
-    TensorCuda query_input_gradients, source_input_gradients; // dX_q, dX_s
-    TensorCuda ones;
+    TensorViewCuda query_gradients_transposed, key_gradients_transposed, value_gradients_transposed;
+    TensorViewCuda attention_output_gradients_transposed;
+    TensorViewCuda query_input_gradients, source_input_gradients; // dX_q, dX_s
+    TensorViewCuda ones;
 };
 
 #endif
