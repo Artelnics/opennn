@@ -1943,12 +1943,12 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
     const Index layers_number = neural_network_layers.size();
-    const Index first_traineable_layer_number = neural_network->get_first_trainable_layer_index();
-    const Index last_traineable_layer_number = neural_network->get_last_trainable_layer_index();
+    const Index first_trainable_layer_number = neural_network->get_first_trainable_layer_index();
+    const Index last_trainable_layer_number = neural_network->get_last_trainable_layer_index();
 
     layers.resize(layers_number);
 
-    for (Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
+    for (Index i = first_trainable_layer_number; i <= last_trainable_layer_number; i++)
     {
         layers[i] = Registry<LayerBackPropagationCuda>::instance().create(neural_network_layers[i]->get_name());
         layers[i]->set(batch_size, neural_network_layers[i].get());
@@ -1970,6 +1970,33 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
     {
         workspace.resize({workspace_size});
         link(workspace.data, layer_workspace_views);
+    }
+
+    const Index last_trainable = neural_network->get_last_trainable_layer_index();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+
+    for(size_t i = 0; i < layers.size(); i++)
+    {
+        if(!layers[i]) continue;
+
+        layers[i]->output_gradients.clear();
+
+        if (static_cast<Index>(i) == last_trainable)
+        {
+            layers[i]->output_gradients.push_back(TensorViewCuda());
+        }
+        else
+        {
+            for(Index consumer_idx : layer_output_indices[i])
+            {
+                if(consumer_idx == -1) continue;
+
+                const Index port = neural_network->find_input_index(layer_input_indices[consumer_idx], static_cast<Index>(i));
+
+                layers[i]->output_gradients.push_back(layers[consumer_idx]->input_gradients[port]);
+            }
+        }
     }
 }
 

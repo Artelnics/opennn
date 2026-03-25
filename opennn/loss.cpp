@@ -1291,8 +1291,7 @@ void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
     back_propagation.neural_network.layers[last_trainable_layer_index]->output_gradients[0] = back_propagation.get_output_gradients_device();
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-        layers[i]->back_propagate(forward_propagation.layers[i],
-                                  back_propagation.neural_network.layers[i]);
+        layers[i]->back_propagate(forward_propagation.layers[i], back_propagation.neural_network.layers[i]);
 }
 
 

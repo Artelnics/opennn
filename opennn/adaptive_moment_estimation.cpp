@@ -620,7 +620,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             neural_network->forward_propagate(current_batch->get_inputs_device(), training_forward_propagation, is_training);
 
             loss->back_propagate(*current_batch, training_forward_propagation, training_back_propagation);
-            
+
             training_error += training_back_propagation.error;
 
             if (is_classification_model)
