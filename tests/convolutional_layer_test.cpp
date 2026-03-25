@@ -236,9 +236,16 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
         make_unique<ConvolutionalBackPropagation>(batch_size, &convolutional_layer);
 
     back_propagation_base->initialize();
+
     vector<TensorView*> gradient_views = back_propagation_base->get_gradient_views();
     VectorR layer_gradients(get_size(gradient_views));
+    layer_gradients.setZero();
     link(layer_gradients.data(), gradient_views);
+
+    vector<TensorView*> bp_workspace_views = back_propagation_base->get_workspace_views();
+    VectorR bp_workspace(get_size(bp_workspace_views));
+    if (bp_workspace.size() > 0)
+        link(bp_workspace.data(), bp_workspace_views);
 
     ConvolutionalBackPropagation* back_propagation =
         static_cast<ConvolutionalBackPropagation*>(back_propagation_base.get());
@@ -247,7 +254,10 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     Tensor4 deltas(output_view.shape[0], output_view.shape[1], output_view.shape[2], output_view.shape[3]);
     deltas.setConstant(1.0);
-    TensorView delta_view(deltas.data(), output_view.shape);
+
+    back_propagation_base->output_gradients = { TensorView(deltas.data(), output_view.shape) };
+
+    convolutional_layer.back_propagate(forward_propagation, back_propagation_base);
 
 #ifdef OPENNN_CUDA
 
@@ -262,6 +272,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda =
         make_unique<ConvolutionalForwardPropagationCuda>(batch_size, &convolutional_layer);
     forward_propagation_cuda->initialize();
+
     vector<TensorViewCuda*> workspace_views_device = forward_propagation_cuda->get_workspace_views();
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
@@ -272,45 +283,47 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     unique_ptr<LayerBackPropagationCuda> back_propagation_cuda_base =
         make_unique<ConvolutionalBackPropagationCuda>(batch_size, &convolutional_layer);
     back_propagation_cuda_base->initialize();
+
     vector<TensorViewCuda*> gradient_views_device = back_propagation_cuda_base->get_gradient_views();
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
+    CHECK_CUDA(cudaMemset(layer_gradients_device.data, 0, layer_gradients_device.size() * sizeof(type)));
     link(layer_gradients_device.data, gradient_views_device);
+
+    vector<TensorViewCuda*> bp_workspace_views_device = back_propagation_cuda_base->get_workspace_views();
+    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
+    if (bp_workspace_device.size() > 0)
+        link(bp_workspace_device.data, bp_workspace_views_device);
 
     ConvolutionalBackPropagationCuda* back_propagation_cuda =
         static_cast<ConvolutionalBackPropagationCuda*>(back_propagation_cuda_base.get());
 
+    deltas.setConstant(1.0);
+
     TensorCuda delta_device({output_view.shape[0], output_view.shape[1], output_view.shape[2], output_view.shape[3]});
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> delta_views_device = { delta_device.view() };
-#endif
 
-    convolutional_layer.back_propagate(forward_propagation, back_propagation_base);
-
-#ifdef OPENNN_CUDA
+    back_propagation_cuda_base->output_gradients = { delta_device.view() };
 
     convolutional_layer.back_propagate(forward_propagation_cuda, back_propagation_cuda_base);
 
-    // CPU vs GPU
     const TensorView bias_gradients = back_propagation->bias_gradients;
     const TensorView weight_gradients = back_propagation->weight_gradients;
     const TensorView& input_deltas_view = back_propagation->input_gradients[0];
 
     vector<type> host_bias_grads(back_propagation_cuda->bias_gradients.size());
     CHECK_CUDA(cudaMemcpy(host_bias_grads.data(), back_propagation_cuda->bias_gradients.data, back_propagation_cuda->bias_gradients.size() * sizeof(type), cudaMemcpyDeviceToHost));
-    for (Index i = 0; i < bias_gradients.size(); ++i) {
+    for (Index i = 0; i < bias_gradients.size(); ++i)
         EXPECT_NEAR(bias_gradients.data[i], host_bias_grads[i], 1e-4);
-    }
 
     vector<type> host_weight_grads(back_propagation_cuda->weight_gradients.size());
     CHECK_CUDA(cudaMemcpy(host_weight_grads.data(), back_propagation_cuda->weight_gradients.data, back_propagation_cuda->weight_gradients.size() * sizeof(type), cudaMemcpyDeviceToHost));
-    for (Index i = 0; i < weight_gradients.size(); ++i) {
+    for (Index i = 0; i < weight_gradients.size(); ++i)
         EXPECT_NEAR(weight_gradients.data[i], host_weight_grads[i], 1e-3);
-    }
 
     vector<type> host_input_grads(back_propagation_cuda->input_gradients[0].size());
     CHECK_CUDA(cudaMemcpy(host_input_grads.data(), back_propagation_cuda->input_gradients[0].data, back_propagation_cuda->input_gradients[0].size() * sizeof(type), cudaMemcpyDeviceToHost));
-    for (Index i = 0; i < input_deltas_view.size(); ++i) {
+    for (Index i = 0; i < input_deltas_view.size(); ++i)
         EXPECT_NEAR(input_deltas_view.data[i], host_input_grads[i], 1e-4);
-    }
+
 #endif
 }

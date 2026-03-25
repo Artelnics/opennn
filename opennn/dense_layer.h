@@ -36,7 +36,7 @@ struct DenseForwardPropagation final : LayerForwardPropagation
 
         if (dense_layer->get_batch_normalization())
         {
-            const Index outputs_number = dense_layer->get_outputs_number();
+            const Index outputs_number = dense_layer->get_neurons_number();
             means.shape = {outputs_number};
             standard_deviations.shape = {outputs_number};
             normalized_outputs.shape = full_output_shape;
@@ -85,9 +85,9 @@ struct DenseBackPropagation final : LayerBackPropagation
     {
         const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
 
-        const Index outputs_number = layer->get_outputs_number();
+        const Index outputs_number = dense_layer->get_neurons_number();
 
-        const Index inputs_number = layer->get_inputs_number();
+        const Index inputs_number = dense_layer->get_input_features_number();
 
         bias_gradients.shape = {outputs_number};
         weight_gradients.shape = {inputs_number, outputs_number};
@@ -98,9 +98,7 @@ struct DenseBackPropagation final : LayerBackPropagation
             beta_gradients.shape = {outputs_number};
         }
 
-        const Shape full_input_shape = Shape{batch_size}.append(dense_layer->get_input_shape());
-
-        input_gradients = {{nullptr, full_input_shape}};
+        input_gradients = {{nullptr, Shape{batch_size}.append(dense_layer->get_input_shape())}};
     }
 
 
@@ -150,13 +148,9 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 
     void initialize() override
     {
-        const Index parameters_number = layer->get_parameters_number();
+        input_gradients = {{nullptr, Shape{batch_size}.append(layer->get_input_shape())}};
 
-        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
-
-        input_gradients = {{nullptr, full_input_shape}};
-
-        squared_errors_Jacobian.shape = {batch_size, parameters_number};
+        squared_errors_Jacobian.shape = {batch_size, layer->get_parameters_number()};
     }
 
     vector<TensorView*> get_gradient_views() override
@@ -191,16 +185,16 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void initialize() override
     {
-        const Index total_rows = batch_size * (Rank == 3 ? layer->get_input_shape()[0] : 1);
-
         auto* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
-        const Index outputs_number = layer->get_output_shape().back();
+        const Index outputs_number = dense_layer->get_neurons_number();
+        const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
+        const Index total_rows = dense_layer->get_total_rows(batch_size);
 
         if (dense_layer->use_combinations)
-            combinations.set_descriptor({total_rows, outputs_number});
+            combinations.set_descriptor(full_output_shape);
 
-        outputs.set_descriptor({total_rows, outputs_number});
+        outputs.set_descriptor(full_output_shape);
 
         if (dense_layer->get_dropout_rate() > 0)
         {
@@ -258,7 +252,7 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
     {
         const Index outputs_number = layer->get_output_shape().back();
 
-        const Index total_rows = batch_size * (Rank == 3 ? layer->get_input_shape()[0] : 1);
+        const Index total_rows = static_cast<const Dense<Rank>*>(this->layer)->get_total_rows(batch_size);
 
         cout << "Dense forward propagation CUDA" << endl;
         cout << "Batch size: " << batch_size << endl;
@@ -303,27 +297,42 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
 
     void initialize() override
     {
-        const Index outputs_number = layer->get_output_shape().back();
-        const Index inputs_number = layer->get_input_shape().back();
+        const Dense<Rank>* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
-        //Index total_rows = batch_size;
-        //if constexpr (Rank == 3)
-        //    total_rows *= layer->get_input_shape()[0];
-
-        const Index total_rows = batch_size * (Rank == 3 ? layer->get_input_shape()[0] : 1);
+        const Index outputs_number = dense_layer->get_neurons_number();
+        const Index inputs_number = dense_layer->get_input_features_number();
+        const Index total_rows = dense_layer->get_total_rows(batch_size);
 
         ones.resize({total_rows});
         ones.fill(1.0f);
 
-        input_gradients = {TensorViewCuda({total_rows, inputs_number})};
+        const Shape full_input_shape = dense_layer->get_batch_input_shape(batch_size);
+        const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
+
+        input_gradients = {TensorViewCuda(full_input_shape)};
 
         bias_gradients.set_descriptor({ outputs_number });
         weight_gradients.set_descriptor({ inputs_number, outputs_number });
 
-        cudnnCreateTensorDescriptor(&gradients_tensor_descriptor);
-        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, (int)total_rows, (int)outputs_number, 1, 1);
+        if (gradients_tensor_descriptor == nullptr)
+            cudnnCreateTensorDescriptor(&gradients_tensor_descriptor);
 
-        const Dense<Rank>* dense_layer = static_cast<Dense<Rank>*>(this->layer);
+        int n = 1, c = 1, h = 1, w = 1;
+        if (full_output_shape.size() == 3)
+        {
+            n = static_cast<int>(full_output_shape[0]);
+            w = static_cast<int>(full_output_shape[1]);
+            c = static_cast<int>(full_output_shape[2]);
+        }
+        else if (full_output_shape.size() == 2)
+        {
+            n = static_cast<int>(full_output_shape[0]);
+            c = static_cast<int>(full_output_shape[1]);
+        }
+        else if (full_output_shape.size() == 1)
+            c = static_cast<int>(full_output_shape[0]);
+
+        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w);
 
         if (dense_layer->get_batch_normalization())
         {
@@ -353,10 +362,11 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
 
     void print() const override
     {
-        const Index outputs_number = layer->get_output_shape().back();
-        const Index inputs_number = layer->get_input_shape().back();
+        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(this->layer);
+        const Index outputs_number = dense_layer->get_neurons_number();
+        const Index inputs_number = dense_layer->get_input_features_number();
 
-        const Index total_rows = batch_size * (Rank == 3 ? layer->get_input_shape()[0] : 1);
+        const Index total_rows = static_cast<const Dense<Rank>*>(this->layer)->get_total_rows(batch_size);
 
         cout << "Dense back propagation CUDA" << endl;
         cout << "Batch size: " << batch_size << endl;
@@ -418,13 +428,55 @@ public:
 
     Shape get_input_shape() const override
     {
-        return { weights.shape[0] };
+        return input_shape;
     }
 
 
     Shape get_output_shape() const override
     {
-        return { biases.size() };
+        if constexpr (Rank == 2)
+            return { biases.size() };
+        else
+            return { input_shape[0], biases.size() };
+    }
+
+
+    Index get_input_features_number() const
+    {
+        return weights.shape[0];
+    }
+
+
+    Index get_neurons_number() const
+    {
+        return biases.size();
+    }
+
+
+    Index get_sequence_length() const
+    {
+        if constexpr (Rank == 3)
+            return input_shape[0];
+        else
+            return 1;
+    }
+
+
+    Index get_total_rows(const Index batch_size) const
+    {
+        return batch_size * get_sequence_length();
+    }
+
+
+    Shape get_batch_input_shape(const Index batch_size) const
+    {
+        return Shape{batch_size}.append(get_input_shape());
+    }
+
+
+    Shape get_batch_output_shape(const Index batch_size) const
+    {
+        return Shape{batch_size}.append(get_output_shape());
     }
 
 
@@ -469,14 +521,16 @@ public:
         if (new_output_shape.size() != 1)
             throw runtime_error("Output shape size is not 1");
 
+        input_shape = new_input_shape;
+
         biases.shape = { new_output_shape[0] };
-        weights.shape = { new_input_shape[0], new_output_shape[0] };
+        weights.shape = { new_input_shape.back(), new_output_shape[0] };
 
         set_activation_function(new_activation_function);
 
         set_batch_normalization(new_batch_normalization);
 
-        const Index outputs_number = get_outputs_number();
+        const Index outputs_number = get_neurons_number();
 
         if (batch_normalization)
         {
@@ -493,7 +547,7 @@ public:
 #ifdef OPENNN_CUDA
 
         biases_device.set_descriptor({outputs_number});
-        weights_device.set_descriptor({ new_input_shape[0], outputs_number });
+        weights_device.set_descriptor({ new_input_shape.back(), outputs_number });
 
         if (batch_normalization)
         {
@@ -510,48 +564,28 @@ public:
 
     void set_parameters_glorot() override
     {
-        const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
+        const type limit = sqrt(6.0 / (get_input_features_number() + get_neurons_number()));
 
         if(biases.size() > 0)
-        {
-            VectorMap biases_map(biases.data, biases.size());
-            biases_map.setZero();
-        }
+            VectorMap(biases.data, biases.size()).setZero();
 
         if(weights.size() > 0)
-        {
-            VectorMap weights_map(weights.data, weights.size());
-            set_random_uniform(weights_map, -limit, limit);
-        }
+            set_random_uniform(VectorMap(weights.data, weights.size()), -limit, limit);
 
-        if(batch_normalization)
-        {
-            if(gammas.size() > 0)
-            {
-                VectorMap scales_map(gammas.data, gammas.size());
-                scales_map.setConstant(1.0);
-            }
-            if(betas.size() > 0)
-            {
-                VectorMap offsets_map(betas.data, betas.size());
-                offsets_map.setZero();
-            }
-        }
+        if(batch_normalization && gammas.size() > 0)
+            VectorMap(gammas.data, gammas.size()).setConstant(1.0);
+
+        if(batch_normalization && betas.size() > 0)
+            VectorMap(betas.data, betas.size()).setZero();
     }
 
     void set_parameters_random() override
     {
         if(biases.size() > 0)
-        {
-            VectorMap biases_map(biases.data, biases.size());
-            biases_map.setZero();
-        }
+            VectorMap(biases.data, biases.size()).setZero();
 
         if(weights.size() > 0)
-        {
-            VectorMap weights_map(weights.data, weights.size());
-            set_random_uniform(weights_map);
-        }
+            set_random_uniform(VectorMap(weights.data, weights.size()));
 
         if (batch_normalization)
         {
@@ -566,8 +600,13 @@ public:
 
     void set_input_shape(const Shape& new_input_shape) override
     {
-        const Index inputs_number = new_input_shape[0];
-        const Index outputs_number = get_outputs_number();
+        if (new_input_shape.size() != Rank - 1)
+            throw runtime_error("Input shape size must be " + to_string(Rank - 1));
+
+        input_shape = new_input_shape;
+
+        const Index inputs_number = new_input_shape.back();
+        const Index outputs_number = get_neurons_number();
 
         biases.shape = { outputs_number };
         weights.shape = { inputs_number, outputs_number };
@@ -576,7 +615,10 @@ public:
 
     void set_output_shape(const Shape& new_output_shape) override
     {
-        const Index inputs_number = get_inputs_number();
+        if (new_output_shape.size() != 1)
+            throw runtime_error("Output shape size is not 1");
+
+        const Index inputs_number = get_input_features_number();
         const Index neurons_number = new_output_shape[0];
 
         biases.shape = { neurons_number };
@@ -589,14 +631,11 @@ public:
         static const unordered_set<string> activation_functions =
             {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax","Logistic"};
 
-
         if (activation_functions.count(new_activation_function))
-        {
             if (get_output_shape()[0] == 1 && new_activation_function == "Softmax")
                 activation_function = "Sigmoid";
             else
                 activation_function = new_activation_function;
-        }
         else
             throw runtime_error("Unknown activation function: " + new_activation_function);
 
@@ -736,12 +775,12 @@ public:
         {
             if constexpr (Rank == 2)
                 return is_training
-                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
-                           : TensorMap2(nullptr, 0, 0);
+                   ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                   : TensorMap2(nullptr, 0, 0);
             else
                 return is_training
-                           ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
-                           : TensorMap3(nullptr, 0, 0, 0);
+                   ? tensor_map<Rank>(dense_forward_propagation->activation_derivatives)
+                   : TensorMap3(nullptr, 0, 0, 0);
         }();
 
         calculate_activations<Rank>(activation_function, outputs, derivatives);
@@ -754,8 +793,8 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                         unique_ptr<LayerBackPropagation>& back_propagation) const override
     {
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
+        const Index inputs_number = get_input_features_number();
+        const Index outputs_number = get_neurons_number();
         const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, inputs_number);
@@ -764,6 +803,8 @@ public:
         const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
         DenseBackPropagation<Rank>* dense_back_propagation = static_cast<DenseBackPropagation<Rank>*>(back_propagation.get());
+
+        // @todo generating memory here
 
         MatrixR delta;
 
@@ -790,6 +831,7 @@ public:
         VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
 
         weight_gradients.noalias() = inputs.transpose() * delta;
+        bias_gradients.noalias() = delta.colwise().sum();
 
         if(!is_first_layer)
         {
@@ -804,8 +846,8 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                         unique_ptr<LayerBackPropagationLM>& back_propagation) const override
     {
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
+        const Index inputs_number = get_input_features_number();
+        const Index outputs_number = get_neurons_number();
         const Index batch_size = forward_propagation->inputs[0].size() / inputs_number;
         const Index biases_number = biases.size();
 
@@ -929,8 +971,8 @@ public:
                                                 ? get_default_output_names()
                                                 : new_output_names;
 
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
+        const Index inputs_number = get_input_features_number();
+        const Index outputs_number = get_neurons_number();
 
         if (biases.data == nullptr || weights.data == nullptr) return "";
 
@@ -981,7 +1023,14 @@ public:
         const Index inputs_number = read_xml_index(dense2d_layer_element, "InputsNumber");
         const Index neurons_number = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
-        set_input_shape({ inputs_number });
+        if constexpr (Rank == 3)
+        {
+            const Index input_sequence_length = read_xml_index(dense2d_layer_element, "InputSequenceLength");
+            set_input_shape({ input_sequence_length, inputs_number });
+        }
+        else
+            set_input_shape({ inputs_number });
+
         set_output_shape({ neurons_number });
 
         set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
@@ -991,7 +1040,7 @@ public:
 
         if (bn_element && bn_element->GetText())
             use_batch_normalization = (string(bn_element->GetText()) == "true");
-        set_batch_normalization(use_batch_normalization);      
+        set_batch_normalization(use_batch_normalization);
 
         if (batch_normalization)
         {
@@ -1009,8 +1058,17 @@ public:
         printer.OpenElement(name.c_str());
 
         add_xml_element(printer, "Label", label);
-        add_xml_element(printer, "InputsNumber", to_string(get_input_shape()[0]));
-        add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
+        if constexpr (Rank == 3)
+        {
+            add_xml_element(printer, "InputSequenceLength", to_string(get_input_shape()[0]));
+            add_xml_element(printer, "InputsNumber", to_string(get_input_shape()[1]));
+            add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[1]));
+        }
+        else
+        {
+            add_xml_element(printer, "InputsNumber", to_string(get_input_shape()[0]));
+            add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
+        }
         add_xml_element(printer, "Activation", activation_function);
         add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
 
@@ -1043,12 +1101,13 @@ public:
     {
         // Dense layer
 
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
+        const Index inputs_number = get_input_features_number();
+        const Index outputs_number = get_neurons_number();
 
         // Forward propagation
 
         const Index batch_size = forward_propagation->batch_size;
+        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         TensorViewCuda& outputs = forward_propagation->outputs;
 
@@ -1062,7 +1121,7 @@ public:
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
                                  CUBLAS_OP_N, CUBLAS_OP_N,
-                                 outputs_number, batch_size, inputs_number,
+                                 outputs_number, total_rows, inputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
                                  forward_propagation->inputs[0].data, inputs_number,
@@ -1117,7 +1176,7 @@ public:
         // Activations
 
         if (activation_function == "Linear")
-            cudaMemcpy(outputs.data, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+            cudaMemcpy(outputs.data, combinations, total_rows * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
         else if (activation_function == "Softmax")
             CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                 CUDNN_SOFTMAX_ACCURATE,
@@ -1148,7 +1207,7 @@ public:
                                             outputs.get_descriptor(),
                                             outputs.data,
                                             dense_forward_propagation->dropout_reserve_space,
-                                            dense_forward_propagation->dropout_reserve_space_size)); 
+                                            dense_forward_propagation->dropout_reserve_space_size));
     }
 
 
@@ -1157,12 +1216,13 @@ public:
     {
         // Dense layer
 
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
+        const Index inputs_number = get_input_features_number();
+        const Index outputs_number = get_neurons_number();
 
         // Forward propagation
 
         const Index batch_size = forward_propagation->batch_size;
+        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         const TensorViewCuda& outputs_view = forward_propagation->outputs;
 
@@ -1251,10 +1311,10 @@ public:
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
                                  CUBLAS_OP_N, CUBLAS_OP_N,
-                                 outputs_number, 1, batch_size,
+                                 outputs_number, 1, total_rows,
                                  &alpha,
                                  output_gradients_data, outputs_number,
-                                 ones, batch_size,
+                                 ones, total_rows,
                                  &beta,
                                  bias_gradients, outputs_number));
 
@@ -1262,17 +1322,17 @@ public:
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
                                  CUBLAS_OP_N, CUBLAS_OP_T,
-                                 outputs_number, inputs_number, batch_size,
+                                 outputs_number, inputs_number, total_rows,
                                  &alpha,
                                  output_gradients_data, outputs_number,
-                                 input_gradients_data, inputs_number,
+                                 forward_propagation->inputs[0].data, inputs_number,
                                  &beta,
                                  weight_gradients, outputs_number));
         // Input derivatives
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
                                  CUBLAS_OP_T, CUBLAS_OP_N,
-                                 inputs_number, batch_size, outputs_number,
+                                 inputs_number, total_rows, outputs_number,
                                  &alpha,
                                  weights_device.data, outputs_number,
                                  output_gradients_data, outputs_number,
@@ -1299,8 +1359,7 @@ private:
 
 private:
 
-    //Index inputs_number;
-    //Index outputs_number;
+    Shape input_shape;
 
     TensorView biases;
     TensorView weights;

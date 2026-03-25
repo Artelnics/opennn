@@ -180,19 +180,21 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
     layer_gradients.setZero();
     link(layer_gradients.data(), gradient_views);
 
-    Tensor1 workspace_bw(get_size(back_base->get_workspace_views()));
-    link(workspace_bw.data(), back_base->get_workspace_views());
+    vector<TensorView*> bp_workspace_views = back_base->get_workspace_views();
+    VectorR bp_workspace(get_size(bp_workspace_views));
+    if (bp_workspace.size() > 0)
+        link(bp_workspace.data(), bp_workspace_views);
 
     Tensor1 deltas(output_view.size());
     for(Index i = 0; i < deltas.size(); ++i) deltas(i) = static_cast<type>(random_normal(0.0, 1.0));
     TensorView delta_view(deltas.data(), output_view.shape);
-    vector<TensorView> delta_views = { delta_view };
+
+    back_base->output_gradients = { delta_view };
 
 #ifdef OPENNN_CUDA
 
     TensorCuda delta_device({params.batch_size, params.query_sequence_length, params.embedding_dimension});
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
-    vector<TensorViewCuda> delta_views_device = { delta_device.view() };
 
 #endif
 
@@ -235,8 +237,14 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
     CHECK_CUDA(cudaMemset(layer_gradients_device.data, 0, layer_gradients_device.size() * sizeof(type)));
     link(layer_gradients_device.data, gradient_views_device);
 
+    vector<TensorViewCuda*> bp_workspace_views_device = back_cuda_base->get_workspace_views();
+    TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
+    if (bp_workspace_device.size() > 0)
+        link(bp_workspace_device.data, bp_workspace_views_device);
+
     layer->forward_propagate(forward_cuda_base, true);
 
+    back_cuda_base->output_gradients = { delta_device.view() };
     layer->back_propagate(forward_cuda_base, back_cuda_base);
 
     vector<type> host_layer_gradients(layer_gradients_device.size());

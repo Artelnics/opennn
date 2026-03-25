@@ -246,24 +246,12 @@ Correlation linear_correlation(const VectorR& x,
     return linear_correlation;
 }
 
-/*
-type r_correlation_to_z_correlation(const type r_correlation)
-{
-    return type(0.5 * log((1 + r_correlation) / (1 - r_correlation)));
-}*/
-// ANTES
-// DESPUÉS
-type r_correlation_to_z_correlation(const type r_correlation)
-{
-    cout << "[Z-CONV] r_correlation entrada = " << r_correlation << endl;
 
+type r_correlation_to_z_correlation(const type r_correlation)
+{
     const type r_clamped = clamp(r_correlation, type(-0.9999), type(0.9999));
 
-    if(r_clamped != r_correlation)
-        cout << "[Z-CONV] CLAMP aplicado: " << r_correlation << " -> " << r_clamped << endl;
-
     const type result = type(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
-    cout << "[Z-CONV] z resultado = " << result << endl;
 
     return result;
 }

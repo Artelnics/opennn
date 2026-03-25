@@ -634,152 +634,259 @@ void Transformer::set(const Index input_sequence_length,
     layers.clear();
     layer_input_indices.clear();
 
-    if (input_sequence_length == 0 || decoder_sequence_length == 0)
+    if(input_sequence_length == 0 ||
+        decoder_sequence_length == 0 ||
+        input_vocabulary_size == 0 ||
+        output_vocabulary_size == 0 ||
+        embedding_dimension == 0 ||
+        heads_number == 0 ||
+        feed_forward_dimension == 0 ||
+        layers_number == 0)
+    {
         return;
+    }
 
-    //input_names.resize(input_sequence_length + decoder_sequence_length);
+    if(embedding_dimension % heads_number != 0)
+        throw runtime_error("Transformer Error: embedding_dimension must be divisible by heads_number.");
 
-    // Embedding Layers: vocabulary size, sequence length, embedding dimension
+    // External input convention in NeuralNetwork:
+    //   -1 -> first external input
+    //   -2 -> second external input
+    //
+    // This transformer uses:
+    //   -1 -> decoder token ids
+    //   -2 -> encoder/input token ids
+    //
+    // @todo If you want the opposite convention, swap {-1} and {-2} here
+    // and keep the same order everywhere you call forward propagation.
 
-    auto decoder_embedding = make_unique<Embedding>(Shape{output_vocabulary_size, decoder_sequence_length},
-                                                    embedding_dimension,
-                                                    "decoder_embedding");
+    // -------------------------------------------------------------------------
+    // Input embeddings
+    // -------------------------------------------------------------------------
+
+    auto decoder_embedding = make_unique<Embedding>(
+        Shape{output_vocabulary_size, decoder_sequence_length},
+        embedding_dimension,
+        "decoder_embedding");
 
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
 
     add_layer(std::move(decoder_embedding), {-1});
+    Index current_decoder_idx = get_layers_number() - 1;
 
-    Index current_dec_idx = 0;
+    auto encoder_embedding = make_unique<Embedding>(
+        Shape{input_vocabulary_size, input_sequence_length},
+        embedding_dimension,
+        "encoder_embedding");
 
-    auto input_embedding = make_unique<Embedding>(Shape{input_vocabulary_size, input_sequence_length},
-                                                  embedding_dimension,
-                                                  "input_embedding");
+    encoder_embedding->set_scale_embedding(true);
+    encoder_embedding->set_add_positional_encoding(true);
 
-    input_embedding->set_scale_embedding(true);
-    input_embedding->set_add_positional_encoding(true);
+    add_layer(std::move(encoder_embedding), {-2});
+    Index current_encoder_idx = get_layers_number() - 1;
 
-    add_layer(std::move(input_embedding), {-2});
+    // -------------------------------------------------------------------------
+    // Encoder stack
+    // -------------------------------------------------------------------------
 
-    Index current_enc_idx = 1;
-
-    // Encoder
-
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
     {
-        add_layer(make_unique<MultiHeadAttention>(Shape{input_sequence_length, embedding_dimension},
-                                                  heads_number,
-                                                  "input_self_attention_" + to_string(i+1)),
-                                                  {current_enc_idx});
+        const string suffix = "_" + to_string(i + 1);
 
-        const Index attn_idx = get_layers_number() - 1;
+        // Self-attention
+        add_layer(
+            make_unique<MultiHeadAttention>(
+                Shape{input_sequence_length, embedding_dimension},
+                heads_number,
+                "encoder_self_attention" + suffix),
+            {current_encoder_idx});
 
-        add_layer(make_unique<Addition<3>>(Shape{input_sequence_length, embedding_dimension},
-                                           "input_self_attention_addition_" + to_string(i+1)),
-                  {current_enc_idx, attn_idx});
+        const Index encoder_self_attention_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Normalization3d>(Shape{input_sequence_length, embedding_dimension},
-                                               "input_self_attention_normalization_" + to_string(i+1)));
+        // Residual
+        add_layer(
+            make_unique<Addition<3>>(
+                Shape{input_sequence_length, embedding_dimension},
+                "encoder_self_attention_addition" + suffix),
+            {current_encoder_idx, encoder_self_attention_idx});
 
-        const Index norm_1_idx = get_layers_number() - 1;
+        // Post-norm
+        add_layer(
+            make_unique<Normalization3d>(
+                Shape{input_sequence_length, embedding_dimension},
+                "encoder_self_attention_normalization" + suffix));
 
-        add_layer(make_unique<Dense<3>>(input_sequence_length,
-                                       embedding_dimension,
-                                       feed_forward_dimension,
-                                       "RectifiedLinear",
-                                       "encoder_internal_dense_" + to_string(i+1)));
+        const Index encoder_norm_1_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Dense<3>>(input_sequence_length,
-                                       feed_forward_dimension,
-                                       embedding_dimension,
-                                       "HyperbolicTangent",
-                                       "encoder_external_dense_" + to_string(i+1)));
+        // Feed-forward
+        add_layer(
+            make_unique<Dense<3>>(
+                input_sequence_length,
+                embedding_dimension,
+                feed_forward_dimension,
+                "RectifiedLinear",
+                "encoder_internal_dense" + suffix));
 
-        const Index ff_idx = get_layers_number() - 1;
+        add_layer(
+            make_unique<Dense<3>>(
+                input_sequence_length,
+                feed_forward_dimension,
+                embedding_dimension,
+                "Linear",
+                "encoder_external_dense" + suffix));
 
-        add_layer(make_unique<Addition<3>>(Shape{input_sequence_length, embedding_dimension},
-                                           "encoder_dense_addition_" + to_string(i+1)),
-                  {norm_1_idx, ff_idx});
+        const Index encoder_ff_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Normalization3d>(Shape{input_sequence_length, embedding_dimension},
-                                               "encoder_dense_normalization_" + to_string(i+1)));
+        // Residual
+        add_layer(
+            make_unique<Addition<3>>(
+                Shape{input_sequence_length, embedding_dimension},
+                "encoder_dense_addition" + suffix),
+            {encoder_norm_1_idx, encoder_ff_idx});
 
-        current_enc_idx = get_layers_number() - 1;
+        // Post-norm
+        add_layer(
+            make_unique<Normalization3d>(
+                Shape{input_sequence_length, embedding_dimension},
+                "encoder_dense_normalization" + suffix));
+
+        current_encoder_idx = get_layers_number() - 1;
     }
 
-    // Decoder
+    const Index encoder_final_output_idx = current_encoder_idx;
 
-    const Index encoder_final_output_idx = current_enc_idx;
+    // -------------------------------------------------------------------------
+    // Decoder stack
+    // -------------------------------------------------------------------------
 
-    for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < layers_number; ++i)
     {
-        // chatgpt says that here uses causal mask???
+        const string suffix = "_" + to_string(i + 1);
 
-        add_layer(make_unique<MultiHeadAttention>(Shape{decoder_sequence_length, embedding_dimension},
-                                                  heads_number,
-                                                  "decoder_self_attention_" + to_string(i+1)),
-                  {current_dec_idx});
+        // Masked self-attention
+        //
+        // Important:
+        // The current MultiHeadAttention constructors default to use_causal_mask=false,
+        // so we must call set(...) explicitly to enable the decoder causal mask.
+        auto decoder_self_attention = make_unique<MultiHeadAttention>(
+            Shape{decoder_sequence_length, embedding_dimension},
+            heads_number,
+            "decoder_self_attention" + suffix);
 
-        const Index self_attn_idx = get_layers_number() - 1;
+        decoder_self_attention->set(
+            decoder_sequence_length,   // query_sequence_length
+            decoder_sequence_length,   // source_sequence_length
+            embedding_dimension,
+            heads_number,
+            true,                      // use_causal_mask
+            "decoder_self_attention" + suffix);
 
-        add_layer(make_unique<Addition<3>>(Shape{decoder_sequence_length, embedding_dimension},
-                                           "decoder_self_attention_addition_" + to_string(i+1)),
-                  {current_dec_idx, self_attn_idx});
+        add_layer(std::move(decoder_self_attention), {current_decoder_idx});
+        const Index decoder_self_attention_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Normalization3d>(Shape{decoder_sequence_length, embedding_dimension},
-                                               "decoder_self_attention_normalization_" + to_string(i+1)));
+        // Residual
+        add_layer(
+            make_unique<Addition<3>>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "decoder_self_attention_addition" + suffix),
+            {current_decoder_idx, decoder_self_attention_idx});
 
-        const Index norm_1_idx = get_layers_number() - 1;
+        // Post-norm
+        add_layer(
+            make_unique<Normalization3d>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "decoder_self_attention_normalization" + suffix));
 
-        add_layer(make_unique<MultiHeadAttention>(Shape{decoder_sequence_length, embedding_dimension},
-                                                  Shape{input_sequence_length, embedding_dimension},
-                                                  heads_number,
-                                                  "cross_attention_" + to_string(i+1)),
-                  {norm_1_idx, encoder_final_output_idx});
+        const Index decoder_norm_1_idx = get_layers_number() - 1;
 
-        const Index cross_attn_idx = get_layers_number() - 1;
+        // Cross-attention: query = decoder, source = encoder output
+        add_layer(
+            make_unique<MultiHeadAttention>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                Shape{input_sequence_length, embedding_dimension},
+                heads_number,
+                "cross_attention" + suffix),
+            {decoder_norm_1_idx, encoder_final_output_idx});
 
-        add_layer(make_unique<Addition<3>>(Shape{decoder_sequence_length, embedding_dimension},
-                                           "cross_attention_addition_" + to_string(i+1)),
-                  {norm_1_idx, cross_attn_idx});
+        const Index cross_attention_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Normalization3d>(Shape{decoder_sequence_length, embedding_dimension},
-                                               "cross_attention_normalization_" + to_string(i+1)));
+        // Residual
+        add_layer(
+            make_unique<Addition<3>>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "cross_attention_addition" + suffix),
+            {decoder_norm_1_idx, cross_attention_idx});
 
-        const Index norm_2_idx = get_layers_number() - 1;
+        // Post-norm
+        add_layer(
+            make_unique<Normalization3d>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "cross_attention_normalization" + suffix));
 
-        add_layer(make_unique<Dense<3>>(decoder_sequence_length,
-                                       embedding_dimension,
-                                       feed_forward_dimension,
-                                       "RectifiedLinear",
-                                       "decoder_internal_dense_" + to_string(i+1)));
+        const Index decoder_norm_2_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Dense<3>>(decoder_sequence_length,
-                                       feed_forward_dimension,
-                                       embedding_dimension,
-                                       "HyperbolicTangent",
-                                       "decoder_external_dense_" + to_string(i+1)));
+        // Feed-forward
+        add_layer(
+            make_unique<Dense<3>>(
+                decoder_sequence_length,
+                embedding_dimension,
+                feed_forward_dimension,
+                "RectifiedLinear",
+                "decoder_internal_dense" + suffix));
 
-        const Index ff_idx = get_layers_number() - 1;
+        add_layer(
+            make_unique<Dense<3>>(
+                decoder_sequence_length,
+                feed_forward_dimension,
+                embedding_dimension,
+                "Linear",
+                "decoder_external_dense" + suffix));
 
-        add_layer(make_unique<Addition<3>>(Shape{decoder_sequence_length, embedding_dimension},
-                                           "decoder_dense_addition_" + to_string(i+1)),
-                  {norm_2_idx, ff_idx});
+        const Index decoder_ff_idx = get_layers_number() - 1;
 
-        add_layer(make_unique<Normalization3d>(Shape{decoder_sequence_length, embedding_dimension},
-                                               "decoder_dense_normalization_" + to_string(i+1)));
+        // Residual
+        add_layer(
+            make_unique<Addition<3>>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "decoder_dense_addition" + suffix),
+            {decoder_norm_2_idx, decoder_ff_idx});
 
-        current_dec_idx = get_layers_number() - 1;
+        // Post-norm
+        add_layer(
+            make_unique<Normalization3d>(
+                Shape{decoder_sequence_length, embedding_dimension},
+                "decoder_dense_normalization" + suffix));
+
+        current_decoder_idx = get_layers_number() - 1;
     }
 
-    add_layer(make_unique<Dense<3>>(decoder_sequence_length,
-                                   embedding_dimension,
-                                   output_vocabulary_size,
-                                   "Softmax", // Change from "Linear" to "Softmax"
-                                   "output_projection"));
+    // -------------------------------------------------------------------------
+    // Final token projection
+    // -------------------------------------------------------------------------
 
-    this->compile();
-    this->set_parameters_random();
+    add_layer(
+        make_unique<Dense<3>>(
+            decoder_sequence_length,
+            embedding_dimension,
+            output_vocabulary_size,
+            "Softmax",
+            "output_projection"));
+
+    // @todo If your loss already applies softmax internally and expects logits,
+    // change the activation above from "Softmax" to "Linear".
+
+    // @todo This transformer assumes Dense<3> is already fixed so that it
+    // projects the last dimension (embedding/features) and preserves the
+    // sequence dimension. If Dense<3> still uses input_shape[0] as the weight
+    // input size, the FFN/output projection will be wrong.
+
+    // @todo If you want to serialize/deserialize this model through XML/registry,
+    // make sure reference_all_layers() registers every layer used here:
+    // Embedding, MultiHeadAttention, Normalization3d, Addition<3>, Dense<3>.
+
+    compile();
+    set_parameters_random();
 }
 
 

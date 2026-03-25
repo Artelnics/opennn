@@ -405,9 +405,7 @@ void RecurrentBackPropagation::initialize()
     input_weight_gradients.shape = {inputs_number, outputs_number};
     recurrent_weight_gradients.shape = {outputs_number, outputs_number};
 
-    const Shape full_input_shape = { batch_size, time_steps, inputs_number };
-
-    input_gradients = {{nullptr, full_input_shape}};
+    input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
 }
 
 

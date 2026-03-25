@@ -35,7 +35,8 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
     if (new_query_dimensions[1] != new_source_dimensions[1])
         throw runtime_error("MultiHeadAttention Error: embedding dimension must be the same for query and source.");
 
-    // cross-attention
+    // Cross-attention
+
     set(new_query_dimensions[0],    // query_sequence_length
         new_source_dimensions[0],   // source_sequence_length
         new_query_dimensions[1],    // embedding_dimension
@@ -605,11 +606,17 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
 
 void MultiHeadAttention::print() const
 {
-    cout << "Multi-head attention Layer" << endl
+    cout << "Multi-head attention layer" << endl
          << "Label: " << label << endl
-         << "Type: Embedding" << endl
+         << "Type: MultiHeadAttention" << endl
          << "Input shape: " << get_input_shape() << endl
-         << "Output shape: " << get_output_shape();
+         << "Output shape: " << get_output_shape() << endl
+         << "Query sequence length: " << get_query_sequence_length() << endl
+         << "Source sequence length: " << get_source_sequence_length() << endl
+         << "Embedding dimension: " << get_embedding_dimension() << endl
+         << "Heads number: " << get_heads_number() << endl
+         << "Head dimension: " << get_head_dimension() << endl
+         << "Use causal mask: " << (use_causal_mask ? "True" : "False") << endl;
 }
 
 
@@ -743,6 +750,8 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
         static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
     MultiHeadAttentionBackPropagationCuda* back =
         static_cast<MultiHeadAttentionBackPropagationCuda*>(back_propagation.get());
+
+    back->ones.fill(1.0f);
 
     const Index batch_size = forward->batch_size;
     const Index query_sequence_length = this->query_sequence_length;
@@ -1083,9 +1092,19 @@ void MultiHeadAttentionForwardPropagation::initialize()
 
 void MultiHeadAttentionForwardPropagation::print() const
 {
-//    cout << "Output shape:" << output_shape << endl
-//    cout << "Outputs:" << endl;
-    //cout << TensorMap<Tensor<type,3>>(outputs_data, output_shape(0), output_shape(1), output_shape(2)) << endl;
+    cout << "Multi-head attention forward propagation" << endl
+         << "Batch size: " << batch_size << endl
+         << "Query shape: "
+         << Shape({query.dimension(0), query.dimension(1), query.dimension(2), query.dimension(3)}) << endl
+         << "Key shape: "
+         << Shape({key.dimension(0), key.dimension(1), key.dimension(2), key.dimension(3)}) << endl
+         << "Value shape: "
+         << Shape({value.dimension(0), value.dimension(1), value.dimension(2), value.dimension(3)}) << endl
+         << "Attention weights shape: "
+         << Shape({attention_weights.dimension(0), attention_weights.dimension(1), attention_weights.dimension(2), attention_weights.dimension(3)}) << endl
+         << "Concatenated attention outputs shape: "
+         << Shape({concatenated_attention_outputs.dimension(0), concatenated_attention_outputs.dimension(1), concatenated_attention_outputs.dimension(2)}) << endl
+         << "Outputs shape: " << outputs.shape << endl;
 }
 
 
@@ -1126,6 +1145,28 @@ void MultiHeadAttentionBackPropagation::initialize()
 
 void MultiHeadAttentionBackPropagation::print() const
 {
+    cout << "Multi-head attention back propagation" << endl
+         << "Batch size: " << batch_size << endl
+         << "Attention weight gradients shape: "
+         << Shape({attention_weight_gradients.dimension(0), attention_weight_gradients.dimension(1), attention_weight_gradients.dimension(2), attention_weight_gradients.dimension(3)}) << endl
+         << "Concatenated attention output gradients shape: "
+         << Shape({concatenated_attention_output_gradients.dimension(0), concatenated_attention_output_gradients.dimension(1), concatenated_attention_output_gradients.dimension(2)}) << endl
+         << "Query gradients shape: "
+         << Shape({query_gradients.dimension(0), query_gradients.dimension(1), query_gradients.dimension(2), query_gradients.dimension(3)}) << endl
+         << "Key gradients shape: "
+         << Shape({key_gradients.dimension(0), key_gradients.dimension(1), key_gradients.dimension(2), key_gradients.dimension(3)}) << endl
+         << "Value gradients shape: "
+         << Shape({value_gradients.dimension(0), value_gradients.dimension(1), value_gradients.dimension(2), value_gradients.dimension(3)}) << endl
+         << "Query weight gradients shape: " << query_weight_gradients.shape << endl
+         << "Key weight gradients shape: " << key_weight_gradients.shape << endl
+         << "Value weight gradients shape: " << value_weight_gradients.shape << endl
+         << "Projection weight gradients shape: " << projection_weight_gradients.shape << endl
+         << "Query bias gradients shape: " << query_bias_gradients.shape << endl
+         << "Key bias gradients shape: " << key_bias_gradients.shape << endl
+         << "Value bias gradients shape: " << value_bias_gradients.shape << endl
+         << "Projection bias gradients shape: " << projection_bias_gradients.shape << endl
+         << "Input gradient[0] shape: " << input_gradients[0].shape << endl
+         << "Input gradient[1] shape: " << input_gradients[1].shape << endl;
 }
 
 
@@ -1182,6 +1223,45 @@ void MultiHeadAttentionForwardPropagationCuda::initialize()
 }
 
 
+void MultiHeadAttentionForwardPropagationCuda::print() const
+{
+    const auto* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+
+    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
+    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
+    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+
+    cout << "Multi-head attention forward propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Query dimensions: "
+         << batch_size * query_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Key dimensions: "
+         << batch_size * source_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Value dimensions: "
+         << batch_size * source_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Query transposed dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << head_dimension << endl;
+    cout << "Key transposed dimensions: "
+         << batch_size * heads_number * source_sequence_length << "x" << head_dimension << endl;
+    cout << "Value transposed dimensions: "
+         << batch_size * heads_number * source_sequence_length << "x" << head_dimension << endl;
+    cout << "Attention weights dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << source_sequence_length << endl;
+    cout << "Attention probabilities dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << source_sequence_length << endl;
+    cout << "Attention outputs transposed dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << head_dimension << endl;
+    cout << "Concatenated attention outputs dimensions: "
+         << batch_size * query_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Outputs dimensions: [ "
+         << batch_size << ", "
+         << query_sequence_length << ", "
+         << embedding_dimension << " ]" << endl;
+}
+
+
 MultiHeadAttentionBackPropagationCuda::MultiHeadAttentionBackPropagationCuda(const Index new_batch_size, Layer* new_layer)
 {
     set(new_batch_size, new_layer);
@@ -1198,6 +1278,7 @@ void MultiHeadAttentionBackPropagationCuda::initialize()
     const Index heads_number = multihead_attention_layer->get_heads_number();
     const Index head_dimension = multihead_attention_layer->get_head_dimension();
 
+    // Parameter gradients
     query_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
     key_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
     value_weight_gradients.set_descriptor({embedding_dimension, embedding_dimension});
@@ -1208,30 +1289,97 @@ void MultiHeadAttentionBackPropagationCuda::initialize()
     value_bias_gradients.set_descriptor({embedding_dimension});
     projection_bias_gradients.set_descriptor({embedding_dimension});
 
-    attention_output_gradients_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
-    value_gradients_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+    // Internal workspace buffers
+    attention_output_gradients_transposed.set_descriptor({batch_size * heads_number * query_sequence_length, head_dimension});
+    value_gradients_transposed.set_descriptor({batch_size * heads_number * source_sequence_length, head_dimension});
 
-    attention_weight_gradients.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
-    softmax_gradients.resize({batch_size * heads_number * query_sequence_length, source_sequence_length});
+    attention_weight_gradients.set_descriptor({batch_size * heads_number * query_sequence_length, source_sequence_length});
+    softmax_gradients.set_descriptor({batch_size * heads_number * query_sequence_length, source_sequence_length});
 
-    query_gradients_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
-    key_gradients_transposed.resize({batch_size * heads_number * source_sequence_length, head_dimension});
+    query_gradients_transposed.set_descriptor({batch_size * heads_number * query_sequence_length, head_dimension});
+    key_gradients_transposed.set_descriptor({batch_size * heads_number * source_sequence_length, head_dimension});
 
-    query_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
-    key_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
-    value_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
+    query_gradients.set_descriptor({batch_size * query_sequence_length, embedding_dimension});
+    key_gradients.set_descriptor({batch_size * source_sequence_length, embedding_dimension});
+    value_gradients.set_descriptor({batch_size * source_sequence_length, embedding_dimension});
 
-    concatenated_attention_output_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
+    concatenated_attention_output_gradients.set_descriptor({batch_size * query_sequence_length, embedding_dimension});
 
-    query_input_gradients.resize({batch_size * query_sequence_length, embedding_dimension});
-    source_input_gradients.resize({batch_size * source_sequence_length, embedding_dimension});
+    query_input_gradients.set_descriptor({batch_size * query_sequence_length, embedding_dimension});
+    source_input_gradients.set_descriptor({batch_size * source_sequence_length, embedding_dimension});
 
-    input_gradients = {TensorViewCuda({batch_size, query_sequence_length, embedding_dimension}),
-                       TensorViewCuda({batch_size, source_sequence_length, embedding_dimension})};
+    input_gradients = {
+            TensorViewCuda({batch_size, query_sequence_length, embedding_dimension}),
+            TensorViewCuda({batch_size, source_sequence_length, embedding_dimension}) };
 
-    const Index max_seq = (query_sequence_length > source_sequence_length) ? query_sequence_length : source_sequence_length;
-    ones.resize({batch_size * max_seq});
-    ones.fill(1.0f);
+    const Index max_seq = (query_sequence_length > source_sequence_length)
+                              ? query_sequence_length
+                              : source_sequence_length;
+
+    ones.set_descriptor({batch_size * max_seq});
+}
+
+
+void MultiHeadAttentionBackPropagationCuda::print() const
+{
+    const auto* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+
+    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
+    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
+    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+
+    cout << "Multi-head attention back propagation CUDA" << endl;
+    cout << "Batch size: " << batch_size << endl;
+    cout << "Query weight gradients dimensions: "
+         << embedding_dimension << "x" << embedding_dimension << endl;
+    cout << "Key weight gradients dimensions: "
+         << embedding_dimension << "x" << embedding_dimension << endl;
+    cout << "Value weight gradients dimensions: "
+         << embedding_dimension << "x" << embedding_dimension << endl;
+    cout << "Projection weight gradients dimensions: "
+         << embedding_dimension << "x" << embedding_dimension << endl;
+    cout << "Query bias gradients dimensions: "
+         << embedding_dimension << endl;
+    cout << "Key bias gradients dimensions: "
+         << embedding_dimension << endl;
+    cout << "Value bias gradients dimensions: "
+         << embedding_dimension << endl;
+    cout << "Projection bias gradients dimensions: "
+         << embedding_dimension << endl;
+    cout << "Query gradients dimensions: "
+         << batch_size * query_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Key gradients dimensions: "
+         << batch_size * source_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Value gradients dimensions: "
+         << batch_size * source_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Attention weight gradients dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << source_sequence_length << endl;
+    cout << "Concatenated attention output gradients dimensions: "
+         << batch_size * query_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Softmax gradients dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << source_sequence_length << endl;
+    cout << "Query gradients transposed dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << head_dimension << endl;
+    cout << "Key gradients transposed dimensions: "
+         << batch_size * heads_number * source_sequence_length << "x" << head_dimension << endl;
+    cout << "Value gradients transposed dimensions: "
+         << batch_size * heads_number * source_sequence_length << "x" << head_dimension << endl;
+    cout << "Attention output gradients transposed dimensions: "
+         << batch_size * heads_number * query_sequence_length << "x" << head_dimension << endl;
+    cout << "Query input gradients dimensions: "
+         << batch_size * query_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Source input gradients dimensions: "
+         << batch_size * source_sequence_length << "x" << embedding_dimension << endl;
+    cout << "Input gradient[0] dimensions: [ "
+         << batch_size << ", "
+         << query_sequence_length << ", "
+         << embedding_dimension << " ]" << endl;
+    cout << "Input gradient[1] dimensions: [ "
+         << batch_size << ", "
+         << source_sequence_length << ", "
+         << embedding_dimension << " ]" << endl;
 }
 
 
@@ -1242,6 +1390,33 @@ vector<TensorViewCuda*> MultiHeadAttentionBackPropagationCuda::get_gradient_view
             &value_weight_gradients, &value_bias_gradients,
             &projection_weight_gradients, &projection_bias_gradients};
 }
+
+
+vector<TensorViewCuda*> MultiHeadAttentionBackPropagationCuda::get_workspace_views()
+{
+    vector<TensorViewCuda*> views = LayerBackPropagationCuda::get_workspace_views();
+
+    views.push_back(&query_gradients);
+    views.push_back(&key_gradients);
+    views.push_back(&value_gradients);
+
+    views.push_back(&attention_weight_gradients);
+    views.push_back(&concatenated_attention_output_gradients);
+    views.push_back(&softmax_gradients);
+
+    views.push_back(&query_gradients_transposed);
+    views.push_back(&key_gradients_transposed);
+    views.push_back(&value_gradients_transposed);
+    views.push_back(&attention_output_gradients_transposed);
+
+    views.push_back(&query_input_gradients);
+    views.push_back(&source_input_gradients);
+
+    views.push_back(&ones);
+
+    return views;
+}
+
 
 REGISTER(LayerForwardPropagationCuda, MultiHeadAttentionForwardPropagationCuda, "MultiHeadAttention")
 REGISTER(LayerBackPropagationCuda, MultiHeadAttentionBackPropagationCuda, "MultiHeadAttention")
