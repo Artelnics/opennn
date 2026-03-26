@@ -65,6 +65,12 @@ Index TimeSeriesDataset::get_future_time_steps() const
 }
 
 
+bool TimeSeriesDataset::get_multi_target() const
+{
+    return multi_target;
+}
+
+
 Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& feature_role) const
 {
     const vector<Index> sample_indices = get_sample_indices(sample_role);
@@ -91,18 +97,27 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
+    input_shape = { past_time_steps, get_features_number("Input") };
 }
 
 
 void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
     future_time_steps = new_future_time_steps;
+    if(multi_target)
+        target_shape = { future_time_steps };
 }
 
 
 void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_index)
 {
     time_variable_index = new_time_variable_index;
+}
+
+
+void TimeSeriesDataset::set_multi_target(bool new_multi_target)
+{
+    multi_target = new_multi_target;
 }
 
 
@@ -120,10 +135,11 @@ void TimeSeriesDataset::print() const
          << "Number of variables: " << features_number << "\n"
          << "Number of input variables: " << input_features_number << "\n"
          << "Number of target variables: " << target_variables_number << "\n"
-         << "Input variables shape: " << get_shape("Input")
-         << "Target variables shape: " << get_shape("Target")
-         << "Past time steps: " << get_past_time_steps() << endl
-         << "Future time steps: " << get_future_time_steps() << endl;
+         << "Input variables shape: " << get_shape("Input") << "\n"
+         << "Target variables shape: " << get_shape("Target") << "\n"
+         << "Multi target activate: " << std::boolalpha << get_multi_target() << "\n"
+         << "Past time steps: " << get_past_time_steps() << "\n"
+         << "Future time steps: " << get_future_time_steps() << "\n";
 }
 
 
@@ -239,8 +255,10 @@ void TimeSeriesDataset::read_csv()
 
     const Index samples_number = get_samples_number();
 
-    if(samples_number > past_time_steps)
-        for(Index i = samples_number - past_time_steps; i < samples_number; i++)
+    const Index invalid_samples = past_time_steps + future_time_steps - 1;
+
+    if(samples_number > invalid_samples)
+        for(Index i = samples_number - invalid_samples; i < samples_number; i++)
             set_sample_role(i, "None");
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
@@ -392,7 +410,7 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     if(sample_indices.empty() || target_indices.empty()) return;
 
     const Index batch_size = static_cast<Index>(sample_indices.size());
-    const Index targets_number = static_cast<Index>(target_indices.size());
+    const Index targets_number = get_target_shape()[0];
     const Index total_rows_in_data = data.rows();
 
     MatrixMap targets(target_data, batch_size, targets_number);
@@ -400,14 +418,26 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     #pragma omp parallel for schedule(static) if(parallelize)
     for(Index i = 0; i < batch_size; ++i)
     {
-        const Index target_row = sample_indices[i] + past_time_steps;
-
-        if(target_row < total_rows_in_data)
-            for(Index j = 0; j < targets_number; ++j)
-                targets(i, j) = data(target_row, target_indices[j]);
+        if(multi_target)
+        {
+            for(Index j = 0; j < future_time_steps; ++j)
+            {
+                const Index target_row = sample_indices[i] + past_time_steps + j;
+                if(target_row < total_rows_in_data)
+                    targets(i, j) = data(target_row, target_indices[0]);
+                else
+                    targets(i, j) = static_cast<type>(0);
+            }
+        }
         else
-            for(Index j = 0; j < targets_number; ++j)
-                targets(i, j) = static_cast<type>(0);
+        {
+            const Index target_row = sample_indices[i] + past_time_steps + (future_time_steps - 1);
+
+            if(target_row < total_rows_in_data)
+                targets(i, 0) = data(target_row, target_indices[0]);
+            else
+                targets(i, 0) = static_cast<type>(0);
+        }
     }
 }
 

@@ -751,7 +751,6 @@ public:
                                      matrix_map(weights),
                                      vector_map(biases),
                                      outputs);
-
         if(batch_normalization)
         {
             auto normalized_outputs = tensor_map<Rank>(dense_forward_propagation->normalized_outputs);
