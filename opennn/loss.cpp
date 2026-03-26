@@ -447,9 +447,11 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
     neural_network.set(samples_number, neural_network_ptr);
 
     loss_value = type(0);
+    error = type(0);
+    built_mask = false;
+    accuracy.setZero();
 
     errors.resize(samples_number, outputs_number);
-
     errors_weights.resize(samples_number, outputs_number);
 
     output_gradient_dimensions = { samples_number };
@@ -462,8 +464,13 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
     if(is_instance_of<CrossEntropyError3d>(loss))
     {
         predictions.resize(samples_number, outputs_number);
+        predictions.setZero();
+
         matches.resize(samples_number, outputs_number);
+        matches.setConstant(false);
+
         mask.resize(samples_number, outputs_number);
+        mask.setConstant(false);
     }
 }
 
@@ -1404,6 +1411,8 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
     loss_value = type(0);
     error = type(0);
     regularization = type(0);
+    built_mask = false;
+    accuracy.setZero();
 
     CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
@@ -1412,8 +1421,6 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
     Shape output_gradient_dimensions = { samples_number };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
-
-    const Index size = accumulate(output_shape.begin(), output_shape.end(), samples_number, multiplies<>());
 
     output_gradients.resize(output_gradient_dimensions);
 
@@ -1443,16 +1450,19 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
     CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
 
-    // Sum
+    // Classification helpers
 
-    //if (is_instance_of<CrossEntropyError3d>(loss))
-    //{
-    /* @todo CudaMalloc transformers GPU
-        predictions (batch_size, outputs_number);
-        matches (batch_size, outputs_number);
-        mask (batch_size, outputs_number);
-        */
-    //}
+    if(is_instance_of<CrossEntropyError3d>(loss))
+    {
+        predictions.resize({samples_number, outputs_number});
+        predictions.fill(0.0f);
+
+        matches.resize({samples_number, outputs_number});
+        matches.fill(0.0f);
+
+        mask.resize({samples_number, outputs_number});
+        mask.fill(0.0f);
+    }
 }
 
 
@@ -1520,8 +1530,17 @@ void BackPropagationCuda::free()
     cudaFree(workspace);
     workspace = nullptr;
 
-    cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
-    cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor);
+    if(reduce_tensor_descriptor)
+    {
+        cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
+        reduce_tensor_descriptor = nullptr;
+    }
+
+    if(output_reduce_tensor_descriptor)
+    {
+        cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor);
+        output_reduce_tensor_descriptor = nullptr;
+    }
 }
 
 #endif

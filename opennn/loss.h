@@ -318,9 +318,9 @@ struct BackPropagationCuda
     TensorCuda output_gradients;
 
     Tensor0 accuracy;
-    float* predictions = nullptr;
-    float* matches = nullptr;
-    float* mask = nullptr;
+    TensorCuda predictions;
+    TensorCuda matches;
+    TensorCuda mask;
     bool built_mask = false;
 };
 
