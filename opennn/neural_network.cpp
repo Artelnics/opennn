@@ -400,6 +400,9 @@ Index NeuralNetwork::get_inputs_number() const
     if(has("Embedding"))
         return get_layer(0)->get_inputs_number();
 
+    if(has("Recurrent"))
+        return get_first("Recurrent")->get_input_shape()[1];
+
     const Shape input_shape = layers[0]->get_input_shape();
 
     return input_shape.count();
@@ -1463,7 +1466,6 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
 void ForwardPropagation::set(const Index new_samples_number, NeuralNetwork* new_neural_network)
 {
     samples_number = new_samples_number;
-
     neural_network = new_neural_network;
 
     if(!neural_network) throw runtime_error("There is no neural network.");
@@ -1480,6 +1482,16 @@ void ForwardPropagation::set(const Index new_samples_number, NeuralNetwork* new_
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
 
+    const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
+    const Index workspace_size = get_size(layer_workspace_views);
+
+    if (workspace_size > 0)
+    {
+        workspace.resize(workspace_size);
+        workspace.setZero();
+        link(workspace.data(), layer_workspace_views);
+    }
+
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
@@ -1487,19 +1499,11 @@ void ForwardPropagation::set(const Index new_samples_number, NeuralNetwork* new_
         layers[i]->inputs.clear();
 
         for(Index input_index : layer_input_indices[i])
+        {
+            // Ahora la copia de 'outputs' llevará el puntero de memoria correcto
             layers[i]->inputs.push_back(input_index >= 0 ? layers[input_index]->outputs : TensorView());
+        }
     }
-
-    const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
-
-    const Index workspace_size = get_size(layer_workspace_views);
-
-    if (workspace_size == 0) return;
-
-    workspace.resize(workspace_size);
-    workspace.setZero();
-
-    link(workspace.data(), layer_workspace_views);
 }
 
 
