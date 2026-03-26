@@ -32,14 +32,15 @@ public:
 
     Index get_past_time_steps() const;
     Index get_future_time_steps() const;
-
     Index get_time_variable_index() const;
+    bool get_multi_target() const;
 
     Tensor3 get_data(const string& sample_role, const string& feature_role) const;
 
     void set_past_time_steps(const Index);
     void set_future_time_steps(const Index);
     void set_time_variable_index(const Index);
+    void set_multi_target(const bool);
 
     MatrixR calculate_autocorrelations(const Index = 10) const;
     Tensor3 calculate_cross_correlations(const Index = 10) const;
@@ -70,6 +71,8 @@ private:
     Index past_time_steps = 2;
 
     Index future_time_steps = 1;
+
+    bool multi_target = false;
 
     Index time_variable_index = 0;
 };

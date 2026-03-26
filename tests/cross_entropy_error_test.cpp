@@ -69,13 +69,13 @@ TEST(CrossEntropyError2d, calculate_binary_error)
             type(0), type(1), type(0), type(1);
 
     dataset.set_data(data);
-    vector<Index> input_raw_variable_indices(3);
-    input_raw_variable_indices = { 0,1,2 };
+    vector<Index> input_features_indices(3);
+    input_features_indices = { 0,1,2 };
 
-    vector<Index> target_raw_variable_indices(1);
-    target_raw_variable_indices[0] = Index(3);
+    vector<Index> target_features_indices(1);
+    target_features_indices[0] = Index(3);
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
@@ -84,7 +84,7 @@ TEST(CrossEntropyError2d, calculate_binary_error)
     Batch batch(5, &dataset);
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
-    batch.fill(training_indices, input_raw_variable_indices, target_raw_variable_indices);
+    batch.fill(training_indices, input_features_indices, {}, target_features_indices);
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
     ForwardPropagation forward_propagation(5, &neural_network);
 
@@ -125,12 +125,12 @@ TEST(CrossEntropyError2d, calculate_multiple_error)
   
     multipledataset.set_data(data);
 
-    vector<Index> input_raw_variable_indices = { 0,1 };
+    vector<Index> input_features_indices = { 0,1 };
 
-    vector<Index> target_raw_variable_indices = {2, 3};
+    vector<Index> target_features_indices = {2, 3};
   
 
-    multipledataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    multipledataset.set_variable_indices(input_features_indices, target_features_indices);
     multipledataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
@@ -139,7 +139,7 @@ TEST(CrossEntropyError2d, calculate_multiple_error)
     Batch batch(5, &multipledataset);
 
     const vector<Index> training_indices = multipledataset.get_sample_indices("Training");
-    batch.fill(training_indices, input_raw_variable_indices, target_raw_variable_indices);
+    batch.fill(training_indices, input_features_indices, {},  target_features_indices);
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &multipledataset);
     ForwardPropagation forward_propagation(5, &neural_network);
@@ -175,13 +175,13 @@ TEST(CrossEntropyError2d, calculate_binary_output_gradients)
 
     dataset.set_data(data);
 
-    vector<Index> input_raw_variable_indices(3);
-    input_raw_variable_indices = { 0,1,2 };
+    vector<Index> input_features_indices(3);
+    input_features_indices = { 0,1,2 };
 
-    vector<Index> target_raw_variable_indices(1);
-    target_raw_variable_indices[0] = Index(3);
+    vector<Index> target_features_indices(1);
+    target_features_indices[0] = Index(3);
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
@@ -190,7 +190,7 @@ TEST(CrossEntropyError2d, calculate_binary_output_gradients)
     Batch batch(5, &dataset);
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
-    batch.fill(training_indices, input_raw_variable_indices, target_raw_variable_indices);
+    batch.fill(training_indices, input_features_indices, {},  target_features_indices);
 
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
@@ -223,13 +223,13 @@ TEST(CrossEntropyError2d, calculate_multiple_output_gradients)
 
     dataset.set_data(data);
 
-    vector<Index> input_raw_variable_indices(2);
-    input_raw_variable_indices = { 0,1 };
+    vector<Index> input_features_indices(2);
+    input_features_indices = { 0,1 };
 
-    vector<Index> target_raw_variable_indices(2);
-    target_raw_variable_indices = {2,3};
+    vector<Index> target_features_indices(2);
+    target_features_indices = {2,3};
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;
@@ -238,7 +238,7 @@ TEST(CrossEntropyError2d, calculate_multiple_output_gradients)
     Batch batch(5, &dataset);
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
-    batch.fill(training_indices, input_raw_variable_indices, target_raw_variable_indices);
+    batch.fill(training_indices, input_features_indices, {},  target_features_indices);
 
 
     CrossEntropyError2d cross_entropy_error(&neural_network, &dataset);
@@ -272,13 +272,13 @@ TEST(CrossEntropyError2d, get_name)
 
     dataset.set_data(data);
 
-    vector<Index> input_raw_variable_indices(2);
-    input_raw_variable_indices = { 0,1 };
+    vector<Index> input_features_indices(2);
+    input_features_indices = { 0,1 };
 
-    vector<Index> target_raw_variable_indices(2);
-    target_raw_variable_indices = { 2,3 };
+    vector<Index> target_features_indices(2);
+    target_features_indices = { 2,3 };
 
-    dataset.set_variable_indices(input_raw_variable_indices, target_raw_variable_indices);
+    dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
     NeuralNetwork neural_network;

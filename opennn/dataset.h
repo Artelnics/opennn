@@ -440,6 +440,11 @@ public:
                              type*,
                              bool = true) const;
 
+    virtual void fill_decoder(const vector<Index>&,
+                              const vector<Index>&,
+                              type*,
+                              bool = true) const;
+
     virtual void fill_targets(const vector<Index>&,
                               const vector<Index>&,
                               type*,
@@ -525,8 +530,8 @@ struct Batch
 
     void fill(const vector<Index>&,
               const vector<Index>&,
-              // const vector<Index>&,
-              const vector<Index>& = vector<Index>());
+              const vector<Index>&,
+              const vector<Index>&);
 
     vector<TensorView> get_inputs() const;
 
@@ -564,13 +569,13 @@ struct BatchCuda
 
     void fill(const vector<Index>&,
               const vector<Index>&,
-              //const vector<Index>&,
-              const vector<Index>& = vector<Index>());
+              const vector<Index>&,
+              const vector<Index>&);
 
     void fill_host(const vector<Index>&,
                    const vector<Index>&,
-                   //const vector<Index>&,
-                   const vector<Index>& = vector<Index>());
+                   const vector<Index>&,
+                   const vector<Index>&);
 
     vector<TensorViewCuda> get_inputs_device() const;
     TensorViewCuda get_targets_device() const;
@@ -590,6 +595,7 @@ struct BatchCuda
 
     Index samples_number = 0;
     Index num_input_features = 0;
+    Index num_decoder_features = 0;
     Index num_target_features = 0;
 
     Dataset* dataset = nullptr;

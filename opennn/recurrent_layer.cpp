@@ -109,6 +109,8 @@ void Recurrent::set_activation_function(const string& new_activation_function)
 void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   bool is_training)
 {
+    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
+
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index past_time_steps = forward_propagation->inputs[0].shape[1];
     const Index input_size = forward_propagation->inputs[0].shape[2];
@@ -117,8 +119,6 @@ void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
     const VectorMap biases_map = vector_map(biases);
     const MatrixMap input_weights_map = matrix_map(input_weights);
     const MatrixMap recurrent_weights_map = matrix_map(recurrent_weights);
-
-    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
     TensorMap3 input_sequences = tensor_map<3>(forward_propagation->inputs[0]);
     TensorMap3 all_hidden_states = tensor_map<3>(recurrent_forward_propagation->hidden_states);
@@ -176,8 +176,11 @@ void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-    MatrixMap outputs_map = matrix_map(recurrent_forward_propagation->outputs);
-    TensorMap2(outputs_map.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
+    if(recurrent_forward_propagation->outputs.data != nullptr)
+    {
+        TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
+        outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
+    }
 }
 
 
@@ -373,15 +376,15 @@ void RecurrentForwardPropagation::initialize()
     const Index outputs_num = layer->get_outputs_number();
     const Index steps = layer->get_input_shape()[0];
 
-    outputs.shape = {batch, outputs_num};
-    hidden_states.shape = {batch, steps, outputs_num};
-    activation_derivatives.shape = {batch, steps, outputs_num};
+    this->outputs.shape = {batch, outputs_num};
+    this->hidden_states.shape = {batch, steps, outputs_num};
+    this->activation_derivatives.shape = {batch, steps, outputs_num};
 }
 
 
 vector<TensorView *> RecurrentForwardPropagation::get_workspace_views()
 {
-    return {&outputs, &hidden_states, &activation_derivatives};
+    return {&this->outputs, &this->hidden_states, &this->activation_derivatives};
 }
 
 

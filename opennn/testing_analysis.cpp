@@ -2188,6 +2188,7 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
     const Index testing_batches_number = testing_batches.size();
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -2224,12 +2225,10 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
         for(Index iteration = 0; iteration < testing_batches_number; iteration++) 
         {
             BatchCuda* batch = empty_testing_queue.pop();
-            batch->fill_host(testing_batches[iteration], input_feature_indices, target_feature_indices);
+            batch->fill_host(testing_batches[iteration], input_feature_indices, decoder_feature_indices, target_feature_indices);
             ready_testing_queue.push(batch);
         }
     });
-
-    Index current_fp_size = max_batch_size;
 
     for(Index iteration = 0; iteration < testing_batches_number; iteration++)
     {

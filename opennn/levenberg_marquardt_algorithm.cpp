@@ -205,10 +205,10 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     set_scaling();
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_sample_indices, input_feature_indices, target_feature_indices);
+    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices);
 
     Batch validation_batch(validation_samples_number, dataset);
-    validation_batch.fill(validation_sample_indices, input_feature_indices, target_feature_indices);
+    validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation validation_forward_propagation(validation_samples_number, neural_network);
