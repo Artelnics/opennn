@@ -655,7 +655,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 for(Index iteration = 0; iteration < validation_batches_number; iteration++) 
                 {
                     BatchCuda* batch = empty_validation_queue.pop();
-                    batch->fill_host(training_batches[iteration],
+                    batch->fill_host(validation_batches[iteration],
                                      input_feature_indices,
                                      decoder_feature_indices,
                                      target_feature_indices);

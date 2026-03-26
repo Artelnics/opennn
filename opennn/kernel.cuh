@@ -49,8 +49,20 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void calculate_weighted_squared_error_kernel(const int, type*, const type*, const type*, const type, const type);
  void calculate_weighted_squared_error_cuda(const size_t&, type*, const type*, const type*, const type, const type);
 
- __global__ void calculate_weighted_squared_error_delta_kernel(const int n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor);
- void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, const type* targets, const type* outputs, const type positives_weight, const type negatives_weight, const type scaling_factor);
+ __global__ void calculate_weighted_squared_error_delta_kernel(const int, type*, const type*, const type*, const type, const type, const type);
+ void calculate_weighted_squared_error_delta_cuda(const size_t&, type*, const type*, const type*, const type, const type, const type);
+
+ __global__ void cross_entropy_3d_multiple_forward_kernel(const int, const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_multiple_forward_cuda(const size_t, const int, const int, const int, const float*, const float*, float*, const float);
+
+ __global__ void cross_entropy_3d_multiple_backward_kernel(const int, const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_multiple_backward_cuda(const size_t, const int, const int, const int, const float*, const float*, float*, const float);
+
+ __global__ void cross_entropy_3d_binary_forward_kernel(const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_binary_forward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
+
+ __global__ void cross_entropy_3d_binary_backward_kernel(const int, const float*, const float*, float*, const float);
+ void cross_entropy_3d_binary_backward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
 
  // Regularization
 

@@ -53,7 +53,12 @@ public:
 
         label = new_label;
 
-        name = "Addition";
+        if constexpr (Rank == 3)
+            name = "Addition3d";
+        else if constexpr (Rank == 4)
+            name = "Addition4d";
+        else
+            throw runtime_error("Addition layer not implemented for rank: " + Rank);
     }
 
 

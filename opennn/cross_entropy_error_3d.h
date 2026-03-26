@@ -20,6 +20,8 @@ public:
 
     CrossEntropyError3d(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
+    // Error
+
     void calculate_error(const Batch&,
                          const ForwardPropagation&,
                          BackPropagation&) const override;
@@ -28,13 +30,15 @@ public:
                                 const ForwardPropagation&,
                                 BackPropagation&) const;
 
+    // Gradient
+
     void calculate_multiple_error(const Batch&,
                                   const ForwardPropagation&,
                                   BackPropagation&) const;
 
     void calculate_output_gradients(const Batch&,
-                                ForwardPropagation&,
-                                BackPropagation&) const override;
+                                    ForwardPropagation&,
+                                    BackPropagation&) const override;
 
 
     void from_XML(const XMLDocument&) override;
@@ -48,14 +52,30 @@ private:
     // Error
 
     void calculate_error(const BatchCuda&,
-                              const ForwardPropagationCuda&,
-                              BackPropagationCuda&) const override;
+                         const ForwardPropagationCuda&,
+                         BackPropagationCuda&) const override;
+
+    void calculate_binary_error(const BatchCuda&,
+                                const ForwardPropagationCuda&,
+                                BackPropagationCuda&) const;
+
+    void calculate_multiple_error(const BatchCuda&,
+                                  const ForwardPropagationCuda&,
+                                  BackPropagationCuda&) const;
 
     // Gradient
 
     void calculate_output_gradients(const BatchCuda&,
-                                     ForwardPropagationCuda&,
-                                     BackPropagationCuda&) const override;
+                                    ForwardPropagationCuda&,
+                                    BackPropagationCuda&) const override;
+
+    void calculate_binary_output_gradients(const BatchCuda&,
+                                           ForwardPropagationCuda&,
+                                           BackPropagationCuda&) const;
+
+    void calculate_multiple_output_gradients(const BatchCuda&,
+                                             ForwardPropagationCuda&,
+                                             BackPropagationCuda&) const;
 
 #endif
 

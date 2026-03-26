@@ -268,6 +268,200 @@ void calculate_weighted_squared_error_delta_cuda(const size_t& n, type* deltas, 
     calculate_weighted_squared_error_delta_kernel<<<blocks_per_grid, threads_per_block>>>(static_cast<int>(n), deltas, targets, outputs, positives_weight, negatives_weight, scaling_factor);
 }
 
+// Cross Entropy 3D
+
+__global__ void cross_entropy_3d_multiple_forward_kernel(const int total_tokens,
+                                                         const int vocab_size,
+                                                         const float* outputs,
+                                                         const float* targets,
+                                                         float* errors,
+                                                         const float epsilon)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < total_tokens)
+    {
+        const int target_class = static_cast<int>(targets[idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            const float prob = outputs[idx * vocab_size + target_class];
+            errors[idx] = -logf(prob + epsilon);
+        }
+        else
+        {
+            errors[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_forward_cuda(const size_t n,
+                                            const int batch_size,
+                                            const int seq_length,
+                                            const int vocab_size,
+                                            const float* outputs,
+                                            const float* targets,
+                                            float* errors,
+                                            const float epsilon)
+{
+    (void)n;
+
+    const int total_tokens = batch_size * seq_length;
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (total_tokens + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_forward_kernel<<<grid_size, block_size>>>(
+        total_tokens, vocab_size, outputs, targets, errors, epsilon);
+}
+
+
+__global__ void cross_entropy_3d_multiple_backward_kernel(const int n,
+                                                          const int vocab_size,
+                                                          const float* outputs,
+                                                          const float* targets,
+                                                          float* output_gradients,
+                                                          const float scale_factor)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const int token_idx = idx / vocab_size;
+        const int class_idx = idx % vocab_size;
+        const int target_class = static_cast<int>(targets[token_idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            if(class_idx == target_class)
+                output_gradients[idx] = (outputs[idx] - 1.0f) * scale_factor;
+            else
+                output_gradients[idx] = outputs[idx] * scale_factor;
+        }
+        else
+        {
+            output_gradients[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_backward_cuda(const size_t n,
+                                             const int batch_size,
+                                             const int seq_length,
+                                             const int vocab_size,
+                                             const float* outputs,
+                                             const float* targets,
+                                             float* output_gradients,
+                                             const float scale_factor)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_backward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), vocab_size, outputs, targets, output_gradients, scale_factor);
+}
+
+
+__global__ void cross_entropy_3d_binary_forward_kernel(const int n,
+                                                       const float* outputs,
+                                                       const float* targets,
+                                                       float* errors,
+                                                       const float epsilon)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            const float prob = outputs[idx];
+            errors[idx] = -(target_val * logf(prob + epsilon)
+                            + (1.0f - target_val) * logf(1.0f - prob + epsilon));
+        }
+        else
+        {
+            errors[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_binary_forward_cuda(const size_t n,
+                                          const int batch_size,
+                                          const int seq_length,
+                                          const float* outputs,
+                                          const float* targets,
+                                          float* errors,
+                                          const float epsilon)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_forward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), outputs, targets, errors, epsilon);
+}
+
+
+__global__ void cross_entropy_3d_binary_backward_kernel(const int n,
+                                                        const float* outputs,
+                                                        const float* targets,
+                                                        float* output_gradients,
+                                                        const float scale_factor)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < n)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            const float prob = outputs[idx];
+
+            const float term1 = (1.0f - target_val) / (1.0f - prob + 1e-7f);
+            const float term2 = target_val / (prob + 1e-7f);
+
+            output_gradients[idx] = (term1 - term2) * scale_factor;
+        }
+        else
+        {
+            output_gradients[idx] = 0.0f;
+        }
+    }
+}
+
+void cross_entropy_3d_binary_backward_cuda(const size_t n,
+                                           const int batch_size,
+                                           const int seq_length,
+                                           const float* outputs,
+                                           const float* targets,
+                                           float* output_gradients,
+                                           const float scale_factor)
+{
+    (void)batch_size;
+    (void)seq_length;
+
+    if(n == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(n) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_backward_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(n), outputs, targets, output_gradients, scale_factor);
+}
+
 // Regularization
 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)

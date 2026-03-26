@@ -629,6 +629,8 @@ void Transformer::set(const Index input_sequence_length,
                       Index feed_forward_dimension,
                       Index layers_number)
 {
+    reference_all_layers();
+
     name = "transformer";
 
     layers.clear();
@@ -898,24 +900,34 @@ void Transformer::set_dropout_rate(const type new_dropout_rate)
 void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
+
+    input_vocabulary_map.clear();
+
+    for(Index i = 0; i < static_cast<Index>(input_vocabulary.size()); i++)
+        input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
 
 void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabulary)
 {
     output_vocabulary = new_output_vocabulary;
+
+    output_inverse_vocabulary_map.clear();
+
+    for(Index i = 0; i < static_cast<Index>(output_vocabulary.size()); i++)
+        output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 
 
 Index Transformer::get_input_sequence_length() const
 {
-    return get_layer("enc_embed")->get_input_shape()[0];
+    return get_layer("encoder_embedding")->get_input_shape()[0];
 }
 
 
 Index Transformer::get_decoder_sequence_length() const
 {
-    return get_layer("dec_embed")->get_input_shape()[0];
+    return get_layer("decoder_embedding")->get_input_shape()[0];
 }
 
 
@@ -936,7 +948,7 @@ Index Transformer::get_heads_number() const
 
 string Transformer::calculate_outputs(const string& source)
 {
-    if (input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
+    if(input_vocabulary_map.empty() || output_inverse_vocabulary_map.empty())
         throw runtime_error("Transformer::calculate_outputs Error: Vocabularies not initialized.");
 
     constexpr type PAD   = 0.0f;
@@ -953,14 +965,23 @@ string Transformer::calculate_outputs(const string& source)
     Tensor2 source_ids(batch_size, input_sequence_length);
     source_ids.setConstant(PAD);
 
-    for(size_t i = 0; i < source_tokens.size() && i < static_cast<size_t>(input_sequence_length); i++)
+    // Encode source exactly like training:
+    // [START] token_1 token_2 ... token_n [END] [PAD] ...
+    source_ids(0, 0) = START;
+
+    Index write_index = 1;
+
+    for(size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; i++, write_index++)
     {
         const auto it = input_vocabulary_map.find(source_tokens[i]);
 
-        source_ids(0, i) = (it != input_vocabulary_map.end())
-                               ? static_cast<type>(it->second)
-                               : UNK;
+        source_ids(0, write_index) = (it != input_vocabulary_map.end())
+                                         ? static_cast<type>(it->second)
+                                         : UNK;
     }
+
+    if(write_index < input_sequence_length)
+        source_ids(0, write_index) = END;
 
     Tensor2 target_ids(batch_size, decoder_sequence_length);
     target_ids.setConstant(PAD);
@@ -970,23 +991,19 @@ string Transformer::calculate_outputs(const string& source)
 
     for(Index i = 1; i < decoder_sequence_length; i++)
     {
-        const vector<TensorView> inputs = {TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
-                                           TensorView(source_ids.data(), {batch_size, input_sequence_length})};
+        const vector<TensorView> inputs =
+            {
+                TensorView(target_ids.data(), {batch_size, decoder_sequence_length}),
+                TensorView(source_ids.data(), {batch_size, input_sequence_length})
+            };
 
         forward_propagate(inputs, forward_propagation, false);
 
         const TensorView output_view = forward_propagation.get_outputs();
-
         const Index vocabulary_size = output_view.shape[2];
 
-        const TensorMap3 probabilities(output_view.data, batch_size, decoder_sequence_length, vocabulary_size);
-
-        // GREEDY SELECTION:
-        // The prediction for the "next" word is found at the output of the current word's index.
-        // We look at the distribution for position i-1 to pick word for position i.
-        //const VectorR current_distribution = probabilities.chip(0, 0).chip(i-1, 0);
-
-        type* distribution_ptr = output_view.data + (i - 1) * vocabulary_size;
+        const type* distribution_ptr =
+            output_view.data + ((i - 1) * vocabulary_size);
 
         const Map<const VectorR> current_distribution(distribution_ptr, vocabulary_size);
 
@@ -994,7 +1011,8 @@ string Transformer::calculate_outputs(const string& source)
 
         target_ids(0, i) = static_cast<type>(best_id);
 
-        if(best_id == 3) break; // [END]
+        if(best_id == END)
+            break;
     }
 
     string result;
@@ -1003,11 +1021,12 @@ string Transformer::calculate_outputs(const string& source)
     {
         const Index id = static_cast<Index>(target_ids(0, i));
 
-        if(id == END || id == PAD) break;
+        if(id == END || id == PAD)
+            break;
 
         const auto it = output_inverse_vocabulary_map.find(id);
 
-        if (it == output_inverse_vocabulary_map.end())
+        if(it == output_inverse_vocabulary_map.end())
             continue;
 
         if(!result.empty())

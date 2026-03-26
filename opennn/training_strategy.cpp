@@ -147,6 +147,18 @@ void TrainingStrategy::set_default()
         }
     }
 
+    // Transformer
+
+    if(neural_network->has("Dense3d"))
+    {
+        set_loss("CrossEntropyError3d");
+        set_optimization_algorithm("AdaptiveMomentEstimation");
+
+        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
+        adam->set_learning_rate(0.0001);
+        return;
+    }
+
     // Text Classification
 
     if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
@@ -162,18 +174,6 @@ void TrainingStrategy::set_default()
         adaptive_moment_estimation->set_maximum_epochs(100);
         adaptive_moment_estimation->set_display_period(10);
 
-        return;
-    }
-
-    // Transformer
-
-    if(neural_network->has("Dense3d"))
-    {
-        set_loss("CrossEntropyError3d");
-        set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
-        adam->set_learning_rate(0.0001);
         return;
     }
 
