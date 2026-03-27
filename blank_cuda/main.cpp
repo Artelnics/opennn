@@ -130,9 +130,9 @@ int main()
         // Transformer
         // ---------------------------------------------------------------------
 
-        const Index embedding_dimension = 32;
+        const Index embedding_dimension = 256;
         const Index heads_number = 2;
-        const Index feed_forward_dimension = 64;
+        const Index feed_forward_dimension = 1024;
         const Index layers_number = 1;
 
         Transformer transformer(input_sequence_length,
@@ -161,9 +161,9 @@ int main()
         if(!adam)
             throw runtime_error("AdaptiveMomentEstimation optimizer not found.");
 
-        adam->set_batch_size(8);
+        adam->set_batch_size(16);
         adam->set_learning_rate(0.0005);
-        adam->set_maximum_epochs(30);
+        adam->set_maximum_epochs(10);
         adam->set_display_period(1);
 
 #ifdef OPENNN_CUDA

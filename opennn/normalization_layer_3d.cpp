@@ -128,6 +128,9 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& for
 void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
+
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
@@ -223,9 +226,6 @@ void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagationCuda>& fo
 
     const int N = static_cast<int>(fp_cuda->batch_size * sequence_length);
     const int D = static_cast<int>(get_embedding_dimension());
-
-    CHECK_CUDA(cudaMemset(bp_cuda->gamma_gradients.data, 0, D * sizeof(float)));
-    CHECK_CUDA(cudaMemset(bp_cuda->beta_gradients.data, 0, D * sizeof(float)));
 
     layernorm_backward_cuda(
         N, D,
