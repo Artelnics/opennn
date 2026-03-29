@@ -132,7 +132,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+    const bool is_text_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
@@ -224,7 +224,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         
         training_error = type(0);
 
-        if(is_classification_model) training_accuracy = type(0);
+        if(is_text_classification_model) training_accuracy = type(0);
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
@@ -251,7 +251,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             training_error += training_back_propagation.error;
 
-            if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
+            if(is_text_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             update_parameters(training_back_propagation, optimization_data);
         }
@@ -259,7 +259,7 @@ TrainingResults AdaptiveMomentEstimation::train()
         // Loss
 
         training_error /= type(training_batches_number);
-        if(is_classification_model)
+        if(is_text_classification_model)
             training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
@@ -270,7 +270,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
             validation_error = type(0);
 
-            if(is_classification_model)
+            if(is_text_classification_model)
                 validation_accuracy = type(0);
 
             for(Index iteration = 0; iteration < validation_batches_number; iteration++)
@@ -296,12 +296,12 @@ TrainingResults AdaptiveMomentEstimation::train()
 
                 validation_error += validation_back_propagation->error;
 
-                if(is_classification_model)
+                if(is_text_classification_model)
                     validation_accuracy += validation_back_propagation->accuracy(0);
             }
 
             validation_error /= type(validation_batches_number);
-            if(is_classification_model) validation_accuracy /= type(validation_batches_number);
+            if(is_text_classification_model) validation_accuracy /= type(validation_batches_number);
 
             results.validation_error_history(epoch) = validation_error;
 
@@ -315,9 +315,9 @@ TrainingResults AdaptiveMomentEstimation::train()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            if(is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if(is_text_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
             if(has_validation) cout << "Validation error: " << validation_error << endl;
-            if(has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
+            if(has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
@@ -501,7 +501,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     if(!dataset) throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+    const bool is_text_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
@@ -597,7 +597,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
         training_error = type(0);
-        if (is_classification_model) training_accuracy = type(0);
+        if (is_text_classification_model) training_accuracy = type(0);
         
         std::thread training_worker([&]() 
         {
@@ -628,7 +628,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
             training_error += training_back_propagation.error;
 
-            if (is_classification_model)
+            if (is_text_classification_model)
                 training_accuracy += training_back_propagation.accuracy();
             
             update_parameters(training_back_propagation, optimization_data);
@@ -641,14 +641,14 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         training_worker.join();
 
         training_error /= type(training_batches_number);
-        if (is_classification_model) training_accuracy /= type(training_batches_number);
+        if (is_text_classification_model) training_accuracy /= type(training_batches_number);
         results.training_error_history(epoch) = training_error;
 
         if (has_validation)
         {
             validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
             validation_error = type(0);
-            if (is_classification_model) validation_accuracy = type(0);
+            if (is_text_classification_model) validation_accuracy = type(0);
 
             std::thread validation_worker([&]() 
             {
@@ -675,7 +675,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
                 loss->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
                 validation_error += validation_back_propagation->error;
-                if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
+                if (is_text_classification_model) validation_accuracy += validation_back_propagation->accuracy();
 
                 cudaStreamSynchronize(0);
 
@@ -685,7 +685,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             validation_worker.join();
 
             validation_error /= type(validation_batches_number);
-            if (is_classification_model) validation_accuracy /= type(validation_batches_number);
+            if (is_text_classification_model) validation_accuracy /= type(validation_batches_number);
             results.validation_error_history(epoch) = validation_error;
 
             if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1)) 
@@ -697,9 +697,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
         if (display && epoch % display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if (is_text_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
             if (has_validation) cout << "Validation error: " << validation_error << endl;
-            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
+            if (has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
@@ -800,7 +800,7 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
     NeuralNetwork* neural_network = adaptive_moment_estimation->get_loss()->get_neural_network();
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters().size();
 
     gradient_exponential_decay.resize({parameters_number});
     square_gradient_exponential_decay.resize({parameters_number});

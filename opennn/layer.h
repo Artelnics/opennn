@@ -357,10 +357,9 @@ public:
         throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
     }
 
-    virtual vector<TensorViewCuda*> get_parameter_views_device()
-    {
-        return {};
-    }
+    virtual vector<TensorViewCuda*> get_parameter_views_device() { return {}; }
+
+    void add_gradients(const vector<TensorViewCuda>&) const;
 
     virtual void free() {}
 

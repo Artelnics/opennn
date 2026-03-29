@@ -746,6 +746,9 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
 void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
+
     MultiHeadAttentionForwardPropagationCuda* forward =
         static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
     MultiHeadAttentionBackPropagationCuda* back =

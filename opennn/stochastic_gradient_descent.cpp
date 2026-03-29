@@ -509,7 +509,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
     Dataset* dataset = loss->get_dataset();
 
     const bool has_validation = dataset->has_validation();
-    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+    const bool is_text_classification_model = is_instance_of<CrossEntropyError3d>(loss);
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
@@ -614,7 +614,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         const type current_learning_rate = initial_learning_rate / (type(1) + type(epoch) * initial_decay);
 
         training_error = type(0);
-        if (is_classification_model) training_accuracy = type(0);
+        if (is_text_classification_model) training_accuracy = type(0);
 
         std::thread training_worker([&]()
                                     {
@@ -643,7 +643,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
 
             training_error += training_back_propagation.error;
 
-            if (is_classification_model)
+            if (is_text_classification_model)
                 training_accuracy += training_back_propagation.accuracy();
 
             update_parameters(training_back_propagation, optimization_data, current_learning_rate);
@@ -656,14 +656,14 @@ TrainingResults StochasticGradientDescent::train_cuda()
         training_worker.join();
 
         training_error /= type(training_batches_number);
-        if (is_classification_model) training_accuracy /= type(training_batches_number);
+        if (is_text_classification_model) training_accuracy /= type(training_batches_number);
         results.training_error_history(epoch) = training_error;
 
         if (has_validation)
         {
             validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
             validation_error = type(0);
-            if (is_classification_model) validation_accuracy = type(0);
+            if (is_text_classification_model) validation_accuracy = type(0);
 
             thread validation_worker([&]()
             {
@@ -690,7 +690,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                 loss->calculate_error(*current_batch, *validation_forward_propagation, *validation_back_propagation);
 
                 validation_error += validation_back_propagation->error;
-                if (is_classification_model) validation_accuracy += validation_back_propagation->accuracy();
+                if (is_text_classification_model) validation_accuracy += validation_back_propagation->accuracy();
 
                 cudaStreamSynchronize(0);
 
@@ -700,7 +700,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
             validation_worker.join();
 
             validation_error /= type(validation_batches_number);
-            if (is_classification_model) validation_accuracy /= type(validation_batches_number);
+            if (is_text_classification_model) validation_accuracy /= type(validation_batches_number);
             results.validation_error_history(epoch) = validation_error;
 
             if (epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
@@ -713,9 +713,9 @@ TrainingResults StochasticGradientDescent::train_cuda()
         if (display && epoch % display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if (is_text_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
             if (has_validation) cout << "Validation error: " << validation_error << endl;
-            if (has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
+            if (has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 

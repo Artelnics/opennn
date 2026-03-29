@@ -1311,7 +1311,7 @@ void Loss::add_regularization(BackPropagationCuda& back_propagation) const
 
     NeuralNetwork* neural_network = this->neural_network;
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_number = neural_network->get_parameters().size();
 
     float* parameters_data = neural_network->get_parameters_device().data;
     float* gradients_data = back_propagation.neural_network.gradients.data;
