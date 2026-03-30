@@ -222,6 +222,7 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
 
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
+
     vector<Condition> applicable_conditions;
     applicable_conditions.reserve(variables_number);
 
@@ -519,6 +520,19 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
 /*
 pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
 {
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+
+
+
+
+
+=======
+    cout << "> entering filter_feasible_points " << endl;
+>>>>>>> Stashed changes
+
+>>>>>>> 5c710e731 (merging)
     const vector<Index> feasible_rows = build_feasible_rows_mask(outputs, output_domain.inferior_frontier, output_domain.superior_frontier);
 
     if(feasible_rows.empty())
@@ -677,6 +691,8 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
         if (feasible_inputs.rows() == 0)
             cout << "!!! [Critical] Zero feasible points found. "
                  << "Check if your constraints are too strict." << endl;
+
+        cout << "> feasible done " << endl;
 
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
@@ -929,7 +945,12 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
+<<<<<<< HEAD
     const Index objectives_number = get_objectives_number();
+=======
+
+    const Objectives objectives = build_objectives();
+>>>>>>> 5c710e731 (merging)
 
     if (objectives_number == 0)
         throw runtime_error("No objectives found\n");

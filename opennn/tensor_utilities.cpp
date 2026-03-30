@@ -84,6 +84,9 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     const auto min_bound = minimums.transpose().array();
     const auto max_bound = maximums.transpose().array();
 
+    cout << "> build_feasible_rows_mask post transpose " << endl;
+
+
     for (Index i = 0; i < rows_unfiltered; ++i)
     {
         const auto row_arr = outputs.row(i).array();
