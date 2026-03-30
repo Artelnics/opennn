@@ -13,6 +13,8 @@
 #include "statistics.h"
 #include "neural_network.h"
 #include "variable.h"
+#include "scaling_layer.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -97,26 +99,12 @@ void ResponseOptimization::set_deformation_domain_factor(type new_deformation_do
     deformation_domain_factor = new_deformation_domain_factor;
 }
 
+
 type ResponseOptimization::get_deformation_domain_factor()
 {
     return deformation_domain_factor;
 }
 
-Scaling<2>* ResponseOptimization::get_scaling_layer_2d() const
-{
-    if(!neural_network->has("Scaling2d"))
-        return nullptr;
-
-    return static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
-}
-
-Unscaling* ResponseOptimization::get_unscaling_layer() const
-{
-    if(!neural_network->has("Unscaling"))
-        return nullptr;
-
-    return static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
-}
 
 vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
 {
@@ -182,7 +170,6 @@ pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables
 
 void ResponseOptimization::Domain::set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor)
 {
-
     const Index variables_number = static_cast<Index>(variables.size());
 
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
@@ -192,8 +179,8 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
     inferior_frontier.resize(total_feature_dimensions);
     superior_frontier.resize(total_feature_dimensions);
 
-    allowed_values.resize(total_feature_dimensions, 1);
-    allowed_values.setConstant(numeric_limits<type>::quiet_NaN());
+    //allowed_values.resize(total_feature_dimensions, 1);
+    //allowed_values.setConstant(numeric_limits<type>::quiet_NaN());
 
     Index feature_index = 0;
 
@@ -221,6 +208,7 @@ void ResponseOptimization::Domain::set(const vector<Variable>& variables, const 
         feature_index += feature_dimension;
     }
 }
+
 
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(const string role) const
 {
@@ -250,16 +238,12 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
 
 ResponseOptimization::Objectives::Objectives(const ResponseOptimization& response_optimization)
 {
-    Index objectives_number = 0;
-
-    for (const auto& [_, constraints] : response_optimization.conditions)
-        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-            objectives_number++;
+    const Index objectives_number = response_optimization.get_objectives_number();
 
     if (objectives_number == 0)
         throw runtime_error("No Objectives found, make sure to set Minimize or Maximize to any variable");
 
-    objective_sources.resize(2,objectives_number);
+    objective_sources.resize(2, objectives_number);
 
     objective_normalizer.resize(2, objectives_number);
 
@@ -273,8 +257,8 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
         const auto [variables, descriptives] = response_optimization.get_variables_and_descriptives(role);
 
-        //const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role, use_exact);
         const vector<Index> feature_dimensions_by_role = get_feature_dimensions(variables);
+
         const Domain domain = response_optimization.get_original_domain(role);
 
         Index feature_pointer = 0;
@@ -283,7 +267,8 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
         {
             const Condition current_condition = response_optimization.get_condition(variables[i].name);
 
-            if (current_condition.condition == ConditionType::Maximize || current_condition.condition == ConditionType::Minimize)
+            if (current_condition.condition == ConditionType::Maximize
+            || current_condition.condition == ConditionType::Minimize)
             {
                 objective_sources(0, current_objective_index) = is_input ? 1.0f : 0.0f;
 
@@ -310,6 +295,7 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
                 current_objective_index++;
             }
+
             feature_pointer += feature_dimensions_by_role[i];
         }
     };
@@ -318,10 +304,6 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
     process_role("Target");
 }
 
-ResponseOptimization::Objectives ResponseOptimization::build_objectives() const
-{
-    return  Objectives(*this);
-}
 
 void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<Condition>& conditions)
 {
@@ -355,7 +337,6 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
             case ConditionType::LessEqualTo:
                 superior = min(superior, condition.up_bound);
                 break;
-
             default:
                 break;
             }
@@ -428,6 +409,7 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 }
 
 
+// @todo bad name constructor
 Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_candidates) const
 {
     // Get all 8 input features
@@ -478,6 +460,7 @@ Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_cand
     return constructed_input;
 }
 
+// @todo change name optimized_variables
 MatrixR ResponseOptimization::calculate_outputs(const MatrixR& optimized_variables) const
 {
     if (is_forecasting)
@@ -489,17 +472,19 @@ MatrixR ResponseOptimization::calculate_outputs(const MatrixR& optimized_variabl
 
         return neural_network->calculate_outputs(formatted_input);
     }
-        return neural_network->calculate_outputs(optimized_variables);
+
+    return neural_network->calculate_outputs(optimized_variables);
 }
+
 
 void ResponseOptimization::Domain::reshape(const type zoom_factor,
                                            const VectorR& center,
-                                           const MatrixR& optimal_points_inputs,
+                                           const MatrixR& points_inputs,
                                            const vector<Variable>& variables)
 {
     const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
-    VectorR categories_to_save = optimal_points_inputs.colwise().maxCoeff();
+    VectorR categories_to_save = points_inputs.colwise().maxCoeff();
 
     for(Index i = 0; i < categories_to_save.size(); ++i)
         if(center(i) > categories_to_save(i))
@@ -534,12 +519,6 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
 /*
 pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
 {
-
-
-
-
-
-
     const vector<Index> feasible_rows = build_feasible_rows_mask(outputs, output_domain.inferior_frontier, output_domain.superior_frontier);
 
     if(feasible_rows.empty())
@@ -566,7 +545,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
 
     // 1. Start with all row indices as "potentially feasible"
     vector<Index> feasible_indices(rows_count);
-    std::iota(feasible_indices.begin(), feasible_indices.end(), 0);
+    iota(feasible_indices.begin(), feasible_indices.end(), 0);
 
     // 2. Loop through columns and apply filters ONLY for Hard Constraints
     for (size_t j = 0; j < target_vars.size(); ++j)
@@ -603,6 +582,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     return {feasible_inputs, feasible_outputs};
 }
 
+
 MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
     const Index objectives_number = objective_sources.cols();
@@ -620,15 +600,17 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
 
 void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) const
 {
-    const auto combined_scale = (objective_normalizer.row(0).array() * utopian_and_senses.row(1).array());
-    const auto combined_offset = (objective_normalizer.row(1).array() * utopian_and_senses.row(1).array());
+    const auto combined_scale = objective_normalizer.row(0).array() * utopian_and_senses.row(1).array();
+    const auto combined_offset = objective_normalizer.row(1).array() * utopian_and_senses.row(1).array();
 
     objective_matrix.array().rowwise() *= combined_scale;
     objective_matrix.array().rowwise() += combined_offset;
 }
 
 
-pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs, const MatrixR& feasible_outputs, const Objectives& objectives) const
+pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs,
+                                                                      const MatrixR& feasible_outputs,
+                                                                      const Objectives& objectives) const
 {
     const Index subset_dimension = clamp<Index>(llround(zoom_factor * evaluations_number), 1, feasible_outputs.rows());
 
@@ -652,6 +634,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
     return {nearest_inputs, nearest_outputs};
 }
 
+// @todo to tensor
 MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const MatrixR& outputs) const
 {
     MatrixR result(inputs.rows(), inputs.cols() + outputs.cols());
@@ -660,15 +643,17 @@ MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const Matr
     return result;
 }
 
-MatrixR ResponseOptimization::perform_single_objective_optimization(const Objectives& objectives) const
+
+MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
+    const Objectives objectives(*this);
+
     const auto [input_variables, descriptives] = get_variables_and_descriptives("Input");
 
+    // @todo too many domains?
     const Domain original_input_domain = get_original_domain("Input");
-
     const Domain original_output_domain = get_original_domain("Target");
-
-    Domain input_domain_to_iterate = original_input_domain;
+    Domain input_domain = original_input_domain;
 
     pair<MatrixR, MatrixR> optimal_set;
 
@@ -680,7 +665,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
     for (Index i = 0; i < max_iterations; i++)
     {
-        const MatrixR random_inputs = calculate_random_inputs(input_domain_to_iterate);
+        const MatrixR random_inputs = calculate_random_inputs(input_domain);
 
         const MatrixR outputs = calculate_outputs(random_inputs);
 
@@ -696,8 +681,8 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
         optimal_set = calculate_optimal_points(feasible_inputs, feasible_outputs, objectives);
 
         optimal_point = (objectives.objective_sources(0, 0) > 0.5f
-                             ? optimal_set.first
-                             : optimal_set.second)(0, static_cast<Index>(objectives.objective_sources(1, 0)));
+            ? optimal_set.first
+            : optimal_set.second)(0, static_cast<Index>(objectives.objective_sources(1, 0)));
 
         const type relative_error = abs((optimal_point - previous_optimal_point) / (objectives.utopian_and_senses(0,0) + 1e-6f));
 
@@ -711,7 +696,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         previous_optimal_point = optimal_point;
 
-        input_domain_to_iterate.reshape(zoom_factor, optimal_set.first.row(0), optimal_set.first, input_variables);
+        input_domain.reshape(zoom_factor, optimal_set.first.row(0), optimal_set.first, input_variables);
     }
 
     return optimal_set.first.rows() == 0
@@ -720,7 +705,9 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 }
 
 
-pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const
+pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs,
+                                                              const MatrixR& outputs,
+                                                              const MatrixR& objective_matrix) const
 {
     const Index rows_number = inputs.rows();
 
@@ -755,17 +742,16 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
     }
 
     vector<Index> non_dominated_indices;
-
     non_dominated_indices.reserve(rows_number);
 
     for (Index i = 0; i < rows_number; ++i)
         if (non_dominated[i] == 1)
             non_dominated_indices.push_back(i);
 
-    const Index final_count = static_cast<Index>(non_dominated_indices.size());
+    const Index pareto_size = static_cast<Index>(non_dominated_indices.size());
 
-    MatrixR pareto_inputs(final_count, inputs.cols());
-    MatrixR pareto_outputs(final_count, outputs.cols());
+    MatrixR pareto_inputs(pareto_size, inputs.cols());
+    MatrixR pareto_outputs(pareto_size, outputs.cols());
 
     for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
     {       
@@ -777,7 +763,9 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
 }
 
 
-pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs, const Objectives& objectives) const
+pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs,
+                                                                 const MatrixR& outputs,
+                                                                 const Objectives& objectives) const
 {
     const Index points_number = inputs.rows();
 
@@ -785,6 +773,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
         return {static_cast<type>(1e6), static_cast<type>(1e6)};
 
     MatrixR objective_matrix = objectives.extract(inputs, outputs);
+
     objectives.normalize(objective_matrix);
 
     const Index objectives_number = objective_matrix.cols();
@@ -811,7 +800,7 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
     maximum_internal_gap /= hypercube_diagonal;
 
-    VectorR max_objectives = objective_matrix.colwise().maxCoeff();
+    const VectorR max_objectives = objective_matrix.colwise().maxCoeff();
 
     const type sum_boundary_gaps = (1.0 - max_objectives.array()).abs().sum();
 
@@ -822,23 +811,22 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 }
 
 
-MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectives& objectives) const
+MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 {
+    const Objectives objectives(*this);
+
     const auto [input_variables, input_descriptives] = get_variables_and_descriptives("Input");
 
     const auto [output_variables, output_descriptives] = get_variables_and_descriptives("Target");
 
     const Domain original_input_domain = get_original_domain("Input");
-
     const Domain original_output_domain = get_original_domain("Target");
 
-    Domain input_domain_to_iterate = original_input_domain;
+    const MatrixR random_inputs = calculate_random_inputs(original_input_domain);
 
-    const MatrixR first_random_inputs = calculate_random_inputs(original_input_domain);
+    const MatrixR outputs = calculate_outputs(random_inputs);
 
-    const MatrixR first_outputs = calculate_outputs(first_random_inputs);
-
-    auto [first_feasible_inputs, first_feasible_outputs] = filter_feasible_points(first_random_inputs, first_outputs, original_output_domain);
+    auto [first_feasible_inputs, first_feasible_outputs] = filter_feasible_points(random_inputs, outputs, original_output_domain);
 
     if (first_feasible_inputs.rows() == 0)
     {
@@ -854,7 +842,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
     cout << "> Initial Pareto front size: " << global_pareto_inputs.rows() << " points." << endl;
 
-    vector<Domain> local_input_domains(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
+    vector<Domain> input_domains(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
     type current_zoom = zoom_factor;
 
@@ -872,7 +860,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
         {
-            const MatrixR local_random_inputs = calculate_random_inputs(local_input_domains[j]);
+            const MatrixR local_random_inputs = calculate_random_inputs(input_domains[j]);
 
             const MatrixR local_outputs = calculate_outputs(local_random_inputs);
 
@@ -888,7 +876,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         }
 
         cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
-
 
         if (candidate_inputs.rows() == 0)
             break;
@@ -924,13 +911,13 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         previous_holes_magnitude = current_hole;
         previous_area_covered = current_boundary;
 
-        local_input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
-        local_input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
+        input_domains.reserve(static_cast<size_t>(global_pareto_inputs.rows()));
+        input_domains.assign(static_cast<size_t>(global_pareto_inputs.rows()), original_input_domain);
 
         const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
-            local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j),best_and_pareto , input_variables);
+            input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j), best_and_pareto , input_variables);
 
         current_zoom *= zoom_factor;
     }
@@ -939,16 +926,17 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
     return assemble_results(global_pareto_inputs, global_pareto_outputs);
 }
 
+
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
-    const Objectives objectives = build_objectives();
+    const Index objectives_number = get_objectives_number();
 
-    if (objectives.objective_sources.cols() == 0)
+    if (objectives_number == 0)
         throw runtime_error("No objectives found\n");
 
-    return  (objectives.objective_sources.cols() == 1)
-               ? perform_single_objective_optimization(objectives)
-               : perform_multiobjective_optimization(objectives);;
+    return (objectives_number == 1)
+        ? perform_single_objective_optimization()
+        : perform_multiobjective_optimization();
 }
 
 }

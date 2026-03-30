@@ -9,8 +9,6 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-#include "scaling_layer.h"
-#include "unscaling_layer.h"
 #pragma once
 
 #include "pch.h"
@@ -43,21 +41,25 @@ public:
         Domain() = default;
         virtual ~Domain() = default;
 
-        Domain(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor =type(1))
+        Domain(const vector<Variable>& variables,
+               const vector<Descriptives>& descriptives,
+               const type deformation_domain_factor = type(1))
         {
             set(variables, descriptives, deformation_domain_factor);
         }
 
-        void set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor =type(1));
+        void set(const vector<Variable>& variables,
+                 const vector<Descriptives>& descriptives,
+                 const type deformation_domain_factor = type(1));
 
         void bound(const vector<Variable>& variables, const vector<Condition>& conditions);
 
-        void reshape(const type zoom_factor, const VectorR& center, const MatrixR& subset_optimal_points, const vector<Variable>& vars);
+        void reshape(const type zoom_factor, const VectorR& center, const MatrixR& points_inputs, const vector<Variable>& vars);
 
         VectorR inferior_frontier;
         VectorR superior_frontier;
 
-        MatrixR allowed_values;
+        //MatrixR allowed_values;
     };
 
     struct Objectives
@@ -79,8 +81,6 @@ public:
 
     void set(NeuralNetwork* = nullptr);
 
-    Objectives build_objectives() const;
-
     void clear_conditions();
     void clear_conditions(const string& name);
 
@@ -97,10 +97,6 @@ public:
 
     void set_deformation_domain_factor(type new_deformation_domain_factor);
     type get_deformation_domain_factor();
-
-    Scaling<2>* get_scaling_layer_2d() const;
-    Scaling<3>* get_scaling_layer_3d() const;
-    Unscaling* get_unscaling_layer() const;
 
     vector<Descriptives> get_descriptives(const string& ) const;
 
@@ -126,15 +122,28 @@ public:
 
     MatrixR assemble_results(const MatrixR& inputs, const MatrixR& outputs) const;
 
-    MatrixR perform_single_objective_optimization(const Objectives& objectives) const;
-
     pair<MatrixR, MatrixR> calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const;
 
-    pair<type, type> calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs,const Objectives& objectives) const;
+    pair<type, type> calculate_quality_metrics(const MatrixR& inputs,
+                                               const MatrixR& outputs,
+                                               const Objectives& objectives) const;
 
-    MatrixR perform_multiobjective_optimization(const Objectives& objectives) const;
+    MatrixR perform_single_objective_optimization() const;
+
+    MatrixR perform_multiobjective_optimization() const;
 
     MatrixR perform_response_optimization() const;
+
+    Index get_objectives_number() const
+    {
+        Index objectives_number = 0;
+
+        for (const auto& [_, constraints] : conditions)
+            if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
+                objectives_number++;
+
+        return objectives_number;
+    }
 
 
 private:
@@ -159,7 +168,7 @@ private:
 
     Tensor3 fixed_history; //(1 matrix, time_steps,  features_dimentions )
     //@simone @todo, forecasting start from here
-    bool is_forecasting = false;
+    bool is_forecasting = false;   
 };
 
 }
