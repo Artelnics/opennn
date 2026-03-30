@@ -8,7 +8,9 @@
 
 #include "registry.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "bounding_layer.h"
+#include "neural_network.h"
 
 namespace opennn
 {
@@ -149,23 +151,15 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 }
 
 
-void Bounding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                 bool)
+void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
-    MatrixMap outputs = matrix_map(forward_propagation->outputs);
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
+    TensorView& output = forward_propagation.views[layer][Outputs][0];
 
     if(bounding_method == BoundingMethod::NoBounding)
-    {
-        outputs = inputs;
-        return;
-    }
-
-    const Index columns_number = inputs.cols();
-
-    for(Index j = 0; j < columns_number; j++)
-        outputs.col(j).array() = inputs.col(j).array().max(lower_bounds(j)).min(upper_bounds(j));
-}
+        opennn::copy(input, output);
+    else
+        opennn::bounding(input, lower_bounds, upper_bounds, output);}
 
 
 string Bounding::get_bounding_method_string() const
@@ -270,62 +264,7 @@ void Bounding::from_XML(const XMLDocument& document)
     set_bounding_method(read_xml_string(root_element, "BoundingMethod"));
 }
 
-
-BoundingForwardPropagation::BoundingForwardPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void BoundingForwardPropagation::initialize()
-{
-    const Index neurons_number = static_cast<Bounding*>(layer)->get_output_shape()[0];
-
-    outputs.shape = {batch_size, neurons_number};
-}
-
-
-void BoundingForwardPropagation::print() const
-{
-    cout << "Outputs:" << endl
-         << outputs.shape << endl;
-}
-
 REGISTER(Layer, Bounding, "Bounding")
-REGISTER(LayerForwardPropagation, BoundingForwardPropagation, "Bounding")
-
-
-#ifdef OPENNN_CUDA
-
-void Bounding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
-{
-    // @todo Implement bounding in CUDA
-    throw runtime_error("Bounding layer is not implemented in CUDA.\n");
-}
-
-
-BoundingForwardPropagationCuda::BoundingForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void BoundingForwardPropagationCuda::initialize()
-{
-    // @todo
-}
-
-
-void BoundingForwardPropagationCuda::print() const
-{
-    // @todo
-}
-
-REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding")
-
-#endif
 
 }
 

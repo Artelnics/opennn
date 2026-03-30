@@ -146,7 +146,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
     NeuralNetwork* neural_network = forward_propagation.neural_network;
 
     VectorR& parameters = neural_network->get_parameters();
-    const VectorR& gradient = back_propagation.neural_network.gradient;
+    const VectorR& gradient = back_propagation.gradient;
 
     VectorR& old_parameters = optimization_data.old_parameters;
     VectorR& parameter_differences = optimization_data.parameter_differences;
@@ -323,7 +323,7 @@ TrainingResults QuasiNewtonMethod::train()
                                    training_forward_propagation,
                                    training_back_propagation);
 
-        loss->add_regularization_gradient(training_back_propagation.neural_network.gradient);
+        loss->add_regularization_gradient(training_back_propagation.gradient);
 
         results.training_error_history(epoch) = training_back_propagation.error;
 

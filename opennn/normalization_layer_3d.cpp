@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensor_utilities.h"
 #include "normalization_layer_3d.h"
+#include "neural_network.h"
 
 namespace opennn
 {
@@ -28,7 +29,7 @@ Index Normalization3d::get_sequence_length() const
 
 Index Normalization3d::get_embedding_dimension() const
 {
-    return gammas.shape[0];
+    return parameters[Gammas].shape[0];
 }
 
 
@@ -44,9 +45,12 @@ Shape Normalization3d::get_output_shape() const
 }
 
 
-vector<TensorView*> Normalization3d::get_parameter_views()
+vector<Shape> Normalization3d::get_parameter_shapes() const
 {
+/*
     return {&gammas, &betas};
+*/
+    return {};
 }
 
 
@@ -56,27 +60,21 @@ void Normalization3d::set(const Index new_sequence_length,
 {
     sequence_length = new_sequence_length;
 
-    gammas.shape = {new_embedding_dimension};
-    betas.shape = {new_embedding_dimension};
+    parameters[Gammas].shape = {new_embedding_dimension};
+    parameters[Betas].shape = {new_embedding_dimension};
 
     label = new_label;
     name = "Normalization3d";
-
-#ifdef OPENNN_CUDA
-    gammas_device.set_descriptor({1, 1, 1, new_embedding_dimension});
-    betas_device.set_descriptor({1, 1, 1, new_embedding_dimension});
-#endif
 }
 
 
 void Normalization3d::set_parameters_random()
 {
-    if(gammas.size() > 0)
-        VectorMap(gammas.data, gammas.size()).setOnes();
+    VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setOnes();
 
-    if(betas.size() > 0)
-        VectorMap(betas.data, betas.size()).setZero();
+    VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
 }
+
 
 void Normalization3d::set_parameters_glorot()
 {
@@ -84,12 +82,12 @@ void Normalization3d::set_parameters_glorot()
 }
 
 
-void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                        bool)
+void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-    const Index batch_size = forward_propagation->batch_size;
+#ifndef OPENNN_CUDA
+    const Index batch_size = forward_propagation.batch_size;
     const Index embedding_dimension = get_embedding_dimension();
-
+/*
     const TensorMap3 inputs(forward_propagation->inputs[0].data, batch_size, sequence_length, embedding_dimension);
 
     TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
@@ -122,15 +120,39 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagation>& for
                           .broadcast(array<Index, 3>({batch_size, sequence_length, 1}));
 
     outputs.device(get_device()) = normalized_inputs * gamma_bcast + beta_bcast;
+*/
+#else
+    Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
+
+    const int N = static_cast<int>(fp_cuda->batch_size * sequence_length);
+    const int D = static_cast<int>(get_embedding_dimension());
+
+    layernorm_forward_cuda(
+        N, D,
+        forward_propagation->inputs[0].data,
+        fp_cuda->outputs.data,
+        fp_cuda->means_device.data,
+        fp_cuda->inv_variances_device.data,
+        gammas_device.data,
+        betas_device.data,
+        static_cast<float>(EPSILON)
+        );
+#endif
 }
 
 
-void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                     unique_ptr<LayerBackPropagation>& back_propagation) const
+void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
+                                     BackPropagation& back_propagation,
+                                     size_t index) const
 {
+<<<<<<< Updated upstream
     if(back_propagation->output_gradients.size() > 1)
         add_gradients(back_propagation->output_gradients);
 
+=======
+#ifndef OPENNN_CUDA
+/*
+>>>>>>> Stashed changes
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
@@ -188,39 +210,8 @@ void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forwar
 
     // dX = (1 / sigma) * (D - mean(D) - X_hat * mean(D * X_hat))
     dX.device(get_device()) = (D - sum_D_bcast * inv_E - X_hat * sum_D_xhat_bcast * inv_E) / std_dev_bcast;
-}
-
-#ifdef OPENNN_CUDA
-
-vector<TensorViewCuda*> Normalization3d::get_parameter_views_device()
-{
-    return {&gammas_device, &betas_device};
-}
-
-
-void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
-{
-    Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
-
-    const int N = static_cast<int>(fp_cuda->batch_size * sequence_length);
-    const int D = static_cast<int>(get_embedding_dimension());
-
-    layernorm_forward_cuda(
-        N, D,
-        forward_propagation->inputs[0].data,
-        fp_cuda->outputs.data,
-        fp_cuda->means_device.data,
-        fp_cuda->inv_variances_device.data,
-        gammas_device.data,
-        betas_device.data,
-        static_cast<float>(EPSILON)
-        );
-}
-
-
-void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                                     unique_ptr<LayerBackPropagationCuda>& back_propagation) const
-{
+*/
+#else
     Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
     Normalization3dBackPropagationCuda* bp_cuda = static_cast<Normalization3dBackPropagationCuda*>(back_propagation.get());
 
@@ -238,10 +229,9 @@ void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagationCuda>& fo
         bp_cuda->gamma_gradients.data,
         bp_cuda->beta_gradients.data
         );
-}
-
 #endif
 
+}
 
 void Normalization3d::from_XML(const XMLDocument& document)
 {
@@ -266,72 +256,7 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
 }
 
 
-Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void Normalization3dForwardPropagation::initialize()
-{
-    const Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
-
-    const Index sequence_length = normalization_3d->get_sequence_length();
-    const Index embedding_dimension = normalization_3d->get_embedding_dimension();
-
-    outputs.shape = {batch_size, sequence_length, embedding_dimension};
-
-    means.resize(batch_size, sequence_length);
-    standard_deviations.resize(batch_size, sequence_length);
-    normalized_inputs.resize(batch_size, sequence_length, embedding_dimension);
-}
-
-
-void Normalization3dForwardPropagation::print() const
-{
-    cout << "Normalization3d Outputs shape: " << outputs.shape << endl;
-}
-
-
-Normalization3dBackPropagation::Normalization3dBackPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerBackPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void Normalization3dBackPropagation::initialize()
-{
-    const Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
-
-    const Index sequence_length = normalization_layer_3d->get_sequence_length();
-    const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
-
-    input_gradients = {{nullptr, {batch_size, sequence_length, embedding_dimension}}};
-
-    gamma_gradients.shape = {embedding_dimension};
-    beta_gradients.shape = {embedding_dimension};
-}
-
-
-vector<TensorView*> Normalization3dBackPropagation::get_gradient_views()
-{
-    return {&gamma_gradients, &beta_gradients};
-}
-
-
-void Normalization3dBackPropagation::print() const
-{
-    cout << "Normalization3d BackPropagation initialized." << endl;
-}
-
 #ifdef OPENNN_CUDA
-
-Normalization3dForwardPropagationCuda::Normalization3dForwardPropagationCuda(const Index new_batch_size, Layer* new_layer) : LayerForwardPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
 
 void Normalization3dForwardPropagationCuda::initialize()
 {
@@ -346,37 +271,26 @@ void Normalization3dForwardPropagationCuda::initialize()
 }
 
 
-Normalization3dBackPropagationCuda::Normalization3dBackPropagationCuda(const Index new_batch_size, Layer* new_layer) : LayerBackPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
 void Normalization3dBackPropagationCuda::initialize()
 {
     const Normalization3d* norm_layer = static_cast<Normalization3d*>(layer);
     const Index seq = norm_layer->get_sequence_length();
     const Index dim = norm_layer->get_embedding_dimension();
 
-    input_gradients = {TensorViewCuda({batch_size, seq, dim})};
+    input_gradients = {TensorView({batch_size, seq, dim})};
 
     gamma_gradients.set_descriptor({dim});
     beta_gradients.set_descriptor({dim});
 }
 
-vector<TensorViewCuda*> Normalization3dBackPropagationCuda::get_gradient_views()
+vector<TensorView*> Normalization3dBackPropagationCuda::get_gradient_views()
 {
     return {&gamma_gradients, &beta_gradients};
 }
 
-
-REGISTER(LayerForwardPropagationCuda, Normalization3dForwardPropagationCuda, "Normalization3d")
-REGISTER(LayerBackPropagationCuda, Normalization3dBackPropagationCuda, "Normalization3d")
-
 #endif
 
 REGISTER(Layer, Normalization3d, "Normalization3d")
-REGISTER(LayerForwardPropagation, Normalization3dForwardPropagation, "Normalization3d")
-REGISTER(LayerBackPropagation, Normalization3dBackPropagation, "Normalization3d")
 
 }
 

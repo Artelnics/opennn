@@ -20,41 +20,12 @@ namespace opennn
 	using ScalingForwardPropagation4d = ScalingForwardPropagation<4>;
 
 	REGISTER(Layer, Scaling2d, "Scaling2d")
-	REGISTER(LayerForwardPropagation, ScalingForwardPropagation2d, "Scaling2d")
-
 	REGISTER(Layer, Scaling3d, "Scaling3d")
-	REGISTER(LayerForwardPropagation, ScalingForwardPropagation3d, "Scaling3d")
-
 	REGISTER(Layer, Scaling4d, "Scaling4d")
-	REGISTER(LayerForwardPropagation, ScalingForwardPropagation4d, "Scaling4d")
-
-#ifdef OPENNN_CUDA
-
-	using ScalingForwardPropagationCuda2d = ScalingForwardPropagationCuda<2>;
-	using ScalingForwardPropagationCuda3d = ScalingForwardPropagationCuda<3>;
-	using ScalingForwardPropagationCuda4d = ScalingForwardPropagationCuda<4>;
-
-	REGISTER(LayerForwardPropagationCuda, ScalingForwardPropagationCuda2d, "Scaling2d")
-	REGISTER(LayerForwardPropagationCuda, ScalingForwardPropagationCuda3d, "Scaling3d")
-	REGISTER(LayerForwardPropagationCuda, ScalingForwardPropagationCuda4d, "Scaling4d")
-
-#endif // OPENNN_CUDA
 
 	template class Scaling<2>;
 	template class Scaling<3>;
 	template class Scaling<4>;
-
-	template struct ScalingForwardPropagation<2>;
-	template struct ScalingForwardPropagation<3>;
-	template struct ScalingForwardPropagation<4>;
-
-#ifdef OPENNN_CUDA
-
-	template struct ScalingForwardPropagationCuda<2>;
-	template struct ScalingForwardPropagationCuda<3>;
-	template struct ScalingForwardPropagationCuda<4>;
-
-#endif // OPENNN_CUDA
 
 	void reference_scaling_layer() { }
 

@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S E Q U E N C E   P O O L I N G   L A Y E R   C L A S S   H E A D E R
+//   P O O L I N G   L A Y E R   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -24,6 +24,33 @@ public:
               const PoolingMethod& = PoolingMethod::MaxPooling,
               const string& = "sequence_pooling_layer");
 
+    vector<Shape> get_forward_shapes() const override
+    {
+        /*
+    const Index features = pooling_layer->get_output_shape()[0];
+    outputs.shape = {batch_size, features};
+
+    if (pooling_layer->get_pooling_method() == Pooling3d::PoolingMethod::MaxPooling)
+        maximal_indices.resize(batch_size, features);
+
+*/
+        return {};
+    }
+
+    vector<Shape> get_backward_shapes() const override
+    {
+        /*
+    const Shape layer_input_dimensions = pooling_layer->get_input_shape();
+    const Index sequence_length = layer_input_dimensions[0];
+    const Index features = layer_input_dimensions[1];
+
+    input_gradients = {{nullptr, {batch_size, sequence_length, features}}};
+
+*/
+        return {};
+    }
+
+
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
     PoolingMethod get_pooling_method() const;
@@ -34,27 +61,19 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&,
+                        BackPropagation&,
+                        size_t) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
     void print() const override;
 
-#ifdef OPENNN_CUDA
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>&) const override;
-
-#endif
-
 private:
+
     Shape input_shape;
     PoolingMethod pooling_method;
 };
@@ -62,41 +81,16 @@ private:
 
 struct Pooling3dForwardPropagation final : LayerForwardPropagation
 {
-    Pooling3dForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
     MatrixI maximal_indices;
 };
 
-
-struct Pooling3dBackPropagation final : LayerBackPropagation
-{
-    Pooling3dBackPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-};
 
 
 #ifdef OPENNN_CUDA
 
 struct Pooling3dForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    Pooling3dForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void free() override;
-
     TensorCuda maximal_indices_device;
-};
-
-
-struct Pooling3dBackPropagationCuda : public LayerBackPropagationCuda
-{
-    Pooling3dBackPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
 };
 
 #endif

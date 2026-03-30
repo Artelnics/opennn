@@ -10,17 +10,12 @@
 
 #include "layer.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
+#include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
-
-template<int Rank> struct AdditionForwardPropagation;
-template<int Rank> struct AdditionBackPropagation;
-
-#ifdef OPENNN_CUDA
-template<int Rank> struct AdditionForwardPropagationCuda;
-template<int Rank> struct AdditionBackPropagationCuda;
-#endif
 
 template<int Rank>
 class Addition final : public Layer
@@ -62,31 +57,27 @@ public:
     }
 
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                           bool) override
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorMapR<Rank> input_1 = tensor_map<Rank>(forward_propagation->inputs[0]);
-        const TensorMapR<Rank> input_2 = tensor_map<Rank>(forward_propagation->inputs[1]);
+        const TensorView& input_1 = forward_propagation.views[layer][Inputs][0];
+        const TensorView& input_2 = forward_propagation.views[layer][Inputs][1];
 
-        TensorMapR<Rank> outputs = tensor_map<Rank>(forward_propagation->outputs);
+        TensorView& output = forward_propagation.views[layer][Outputs][0];
 
-        outputs.device(get_device()) = input_1 + input_2;
+        addition(input_1, input_2, output);
     }
 
-
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>& back_propagation) const override
+    void back_propagate(ForwardPropagation&,
+                        BackPropagation& back_propagation,
+                        size_t layer) const override
     {
-        if (back_propagation->output_gradients.size() != 1)
-            throw runtime_error(name + " backpropagation requires exactly one delta input.");
+        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
 
-        const TensorMapR<Rank> output_gradients = tensor_map<Rank>(back_propagation->output_gradients[0]);
+        TensorView& input_gradient_0 = back_propagation.backward_views[layer][InputGradients][0];
+        TensorView& input_gradient_1 = back_propagation.backward_views[layer][InputGradients][1];
 
-        TensorMapR<Rank> input_gradients_0 = tensor_map<Rank>(back_propagation->input_gradients[0]);
-        TensorMapR<Rank> input_gradients_1 = tensor_map<Rank>(back_propagation->input_gradients[1]);
-
-        input_gradients_0.device(get_device()) = output_gradients;
-        input_gradients_1.device(get_device()) = output_gradients;
+        opennn::copy(output_gradient, input_gradient_0);
+        opennn::copy(output_gradient, input_gradient_1);
     }
 
 
@@ -112,172 +103,13 @@ public:
         printer.CloseElement();
     }
 
-#ifdef OPENNN_CUDA
-
-public:
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                           bool) override
-    {
-        const size_t total_elements = forward_propagation->batch_size * get_inputs_number();
-
-        // @todo substitute addition_cuda by cudnn function similar as follows
-/*
-        const float alpha_minus_one = -1.0f;
-
-        cudnnOpTensor(cudnn_handle,
-                      operator_sum_descriptor,
-                      &alpha_minus_one,
-                      output_tensor_descriptor,
-                      targets,
-                      &alpha,
-                      output_tensor_descriptor,
-                      outputs,
-                      &beta,
-                      output_tensor_descriptor,
-                      errors_device);
-
-*/
-        addition_cuda(total_elements,
-                      forward_propagation->inputs[0].data,
-                      forward_propagation->inputs[1].data,
-                      forward_propagation->outputs.data);
-    }
-
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>& back_propagation) const override
-    {
-        if (back_propagation->output_gradients.size() != 1)
-            throw runtime_error(name + " backpropagation requires exactly one delta input for CUDA.");
-
-        AdditionBackPropagationCuda<Rank>* this_back_propagation =
-            static_cast<AdditionBackPropagationCuda<Rank>*>(back_propagation.get());
-
-        const size_t inputs_number = get_inputs_number();
-        const size_t total_elements = static_cast<size_t>(back_propagation->batch_size) * inputs_number;
-
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
-    }
-
-#endif
-
 private:
+
+    enum Forward {Inputs, Outputs};
+    enum Bacward {OutputGradients, InputGradients};
 
     Shape input_shape;
 };
-
-
-template<int Rank>
-struct AdditionForwardPropagation final : LayerForwardPropagation
-{
-    AdditionForwardPropagation(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_size, new_layer);
-    }
-
-
-    void initialize() override
-    {
-        outputs.shape = Shape{batch_size}.append(layer->get_output_shape());
-    }
-
-
-    void print() const override
-    {
-        cout << "Addition Forward Propagation:" << endl
-             << "Outputs shape: " << outputs.shape << endl
-             << "Outputs data:" << endl << outputs.data << endl;
-    }
-};
-
-
-template<int Rank>
-struct AdditionBackPropagation final : LayerBackPropagation
-{
-    AdditionBackPropagation(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-        : LayerBackPropagation()
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {
-        const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
-
-        input_gradients = {{nullptr,shape}, {nullptr,shape}};
-    }
-
-
-    void print() const override
-    {
-        cout << "Addition Back Propagation:" << endl;
-
-        if(input_gradients.size() >= 1)
-        {
-            cout << "Input 1 Deltas shape: " << input_gradients[0].shape << endl;
-            cout << input_gradients[0].data << endl;
-        }
-
-        if(input_gradients.size() >= 2)
-        {
-            cout << "Input 2 Deltas shape: " << input_gradients[1].shape << endl;
-            cout << input_gradients[1].data << endl;
-        }
-    }
-};
-
-
-#ifdef OPENNN_CUDA
-
-template<int Rank>
-struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    AdditionForwardPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-        : LayerForwardPropagationCuda()
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {
-        outputs.set_descriptor(Shape{batch_size}.append(layer->get_output_shape()));
-    }
-
-    void print() const override
-    {
-        // @todo
-    }
-};
-
-
-template<int Rank>
-struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
-{
-    AdditionBackPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-        : LayerBackPropagationCuda()
-    {
-        set(new_batch_size, new_layer);
-    }
-
-
-    void initialize() override
-    {        
-        const Shape shape = Shape{batch_size}.append(layer->get_input_shape());
-
-        input_gradients = {TensorViewCuda(shape), TensorViewCuda(shape)};
-    }
-
-
-    void print() const override
-    {
-        // @todo
-    }
-};
-
-#endif // OPENNN_CUDA
 
 void reference_addition_layer();
 

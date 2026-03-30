@@ -228,7 +228,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            training_back_propagation.neural_network.gradient.setZero();
+            training_back_propagation.gradient.setZero();
 
             // Dataset
 
@@ -412,7 +412,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     VectorR& gradient_exponential_decay = optimization_data.gradient_exponential_decay;
     VectorR& square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
-    const VectorR& gradient = back_propagation.neural_network.gradient;
+    const VectorR& gradient = back_propagation.gradient;
 
     gradient_exponential_decay.array() = beta_1 * gradient_exponential_decay.array() + (type(1) - beta_1) * gradient.array();
     square_gradient_exponential_decay.array() = beta_2 * square_gradient_exponential_decay.array() + (type(1) - beta_2) * gradient.array().square();

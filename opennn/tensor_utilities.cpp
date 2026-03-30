@@ -603,12 +603,12 @@ void shuffle_rows(MatrixR& matrix)
 
 #ifdef OPENNN_CUDA
 
-type* link(type* pointer, const vector<TensorViewCuda*>& views)
+type* link(type* pointer, const vector<TensorView*>& views)
 {
     constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
     constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
 
-    for (TensorViewCuda* view : views)
+    for (TensorView* view : views)
     {
         if (!view || view->size() == 0)
             continue;
@@ -622,21 +622,21 @@ type* link(type* pointer, const vector<TensorViewCuda*>& views)
 }
 
 
-void link(type* pointer, const vector<vector<TensorViewCuda*>>& views)
+void link(type* pointer, const vector<vector<TensorView*>>& views)
 {
     for (size_t i = 0; i < views.size(); i++)
         pointer = link(pointer, views[i]);
 }
 
 
-Index get_size(const vector<TensorViewCuda*>& views)
+Index get_size(const vector<TensorView*>& views)
 {
     constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
     constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
 
     Index total_size = 0;
 
-    for (const TensorViewCuda* view : views)
+    for (const TensorView* view : views)
     {
         if (!view || view->size() == 0)
             continue;
@@ -648,7 +648,7 @@ Index get_size(const vector<TensorViewCuda*>& views)
 }
 
 
-Index get_size(const vector<vector<TensorViewCuda*>>& views)
+Index get_size(const vector<vector<TensorView*>>& views)
 {
     Index total_size = 0;
 

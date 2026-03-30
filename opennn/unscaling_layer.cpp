@@ -184,9 +184,9 @@ void Unscaling::set_scalers(const string& new_scalers)
 }
 
 
-void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  bool)
+void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool)
 {
+/*
     MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
     const Index outputs_number = get_outputs_number();
@@ -219,6 +219,7 @@ void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
         else
             throw runtime_error("Unknown scaling method\n");
     }
+*/
 }
 
 
@@ -304,28 +305,7 @@ void Unscaling::from_XML(const XMLDocument& document)
 }
 
 
-UnscalingForwardPropagation::UnscalingForwardPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void UnscalingForwardPropagation::initialize()
-{
-    outputs.shape = prepend(batch_size, layer->get_output_shape());
-}
-
-
-void UnscalingForwardPropagation::print() const
-{
-    cout << "Outputs:" << endl
-         << outputs.shape << endl;
-}
-
 REGISTER(Layer, Unscaling, "Unscaling")
-REGISTER(LayerForwardPropagation, UnscalingForwardPropagation, "Unscaling")
-
 
 #ifdef OPENNN_CUDA
 
@@ -335,27 +315,6 @@ void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forwa
 
     throw runtime_error("Unscaling layer not implemented in CUDA");
 }
-
-
-UnscalingForwardPropagationCuda::UnscalingForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void UnscalingForwardPropagationCuda::initialize()
-{
-    // @todo
-}
-
-
-void UnscalingForwardPropagationCuda::print() const
-{
-    // @todo
-}
-
-REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscaling")
 
 #endif
 

@@ -40,7 +40,65 @@ public:
 
     Shape get_output_shape() const override;
 
-    vector<TensorView*> get_parameter_views() override;
+    vector<Shape> get_parameter_shapes() const override;
+
+    vector<Shape> get_forward_shapes() const override
+    {
+        /*
+    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
+    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
+    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
+    const Index heads_number = multihead_attention_layer->get_heads_number();
+    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+
+    query.resize(batch_size, heads_number, query_sequence_length, head_dimension);
+    key.resize(batch_size, heads_number, source_sequence_length, head_dimension);
+    value.resize(batch_size, heads_number, source_sequence_length, head_dimension);
+
+    attention_weights.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
+
+    // @todo can we remove concatenated_attention_outputs and assign to outputs?
+
+    concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
+
+    outputs.shape = {batch_size, query_sequence_length, embedding_dimension};
+*/
+        return {};
+    }
+
+    vector<Shape> get_backward_shapes() const override
+    {
+    const Index query_sequence_length = get_query_sequence_length();
+    const Index source_sequence_length = get_source_sequence_length();
+    const Index embedding_dimension = get_embedding_dimension();
+    const Index heads_number = get_heads_number();
+    const Index head_dimension = get_head_dimension();
+    /*
+    query_weight_gradients.shape = {embedding_dimension, embedding_dimension};
+    key_weight_gradients.shape = {embedding_dimension, embedding_dimension};
+    value_weight_gradients.shape = {embedding_dimension, embedding_dimension};
+    projection_weight_gradients.shape = {embedding_dimension, embedding_dimension};
+
+    query_bias_gradients.shape = {embedding_dimension};
+    key_bias_gradients.shape = {embedding_dimension};
+    value_bias_gradients.shape = {embedding_dimension};
+    projection_bias_gradients.shape = {embedding_dimension};
+
+    input_gradients = {{nullptr, {batch_size, query_sequence_length, embedding_dimension}},
+                       {nullptr, {batch_size, source_sequence_length, embedding_dimension}}};
+
+    // Auxiliar
+
+    attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
+
+    concatenated_attention_output_gradients.resize(batch_size, query_sequence_length, embedding_dimension);
+
+    query_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
+    key_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
+    value_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
+*/
+        return {};
+    }
 
     void set(const Index = 0,
              Index = 0,
@@ -53,28 +111,9 @@ public:
 
     void apply_causal_mask(Tensor4&) const;
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
-
-    void calculate_projection(const TensorMap3& inputs,
-                              const TensorView& weights,
-                              const TensorView& biases,
-                              Index sequence_length,
-                              Index batch_size,
-                              Tensor4& output) const;
-
-
-    void calculate_projection_gradient(const Tensor4& d_head,
-                                       const TensorMap3& input,
-                                       const TensorView& weights,
-                                       VectorMap& d_bias,
-                                       MatrixMap& d_weights,
-                                       TensorMap3& d_input,
-                                       Index batch_size,
-                                       bool accumulate) const;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void print() const override;
 
@@ -83,34 +122,10 @@ public:
 
     void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
 
-#ifdef OPENNN_CUDA
-
-    public:
-
-        void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-
-        void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                            unique_ptr<LayerBackPropagationCuda>&) const override;
-
-        vector<TensorViewCuda*> get_parameter_views_device() override;
-
-        void linear_projection_cuda(const float*, const float*, const float*,
-                                    cudnnTensorDescriptor_t, float*, cudnnTensorDescriptor_t,
-                                    int, int, int) const;
-
-    protected:
-
-        TensorViewCuda query_weights_device;
-        TensorViewCuda query_biases_device;
-        TensorViewCuda key_weights_device;
-        TensorViewCuda key_biases_device;
-        TensorViewCuda value_weights_device;
-        TensorViewCuda value_biases_device;
-        TensorViewCuda projection_weights_device;
-        TensorViewCuda projection_biases_device;
-#endif
-
 private:
+
+    enum Parameters  {};
+    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
 
     Index heads_number = 0;
     Index query_sequence_length = 0;
@@ -139,34 +154,9 @@ private:
 };
 
 
-struct MultiHeadAttentionForwardPropagation final : LayerForwardPropagation
-{
-    MultiHeadAttentionForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-
-    Tensor4 query;
-    Tensor4 key;
-    Tensor4 value;
-
-    Tensor4 attention_weights;
-
-    Tensor3 concatenated_attention_outputs;
-};
-
 
 struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
 {
-    MultiHeadAttentionBackPropagation(const Index = 0, Layer* = nullptr);
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void initialize() override;
-
-    void print() const override;
-
     Tensor4 attention_weight_gradients;
     Tensor3 concatenated_attention_output_gradients;
 
@@ -184,59 +174,6 @@ struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
     TensorView value_bias_gradients;
     TensorView projection_bias_gradients;
 };
-
-
-#ifdef OPENNN_CUDA
-
-struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    MultiHeadAttentionForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-
-    void free() override {}
-
-    TensorCuda query, key, value;                       // [B*S, E]
-    TensorCuda attention_weights;                       // Scores [B*H*Sq, Sk]
-    //TensorCuda attention_outputs;                       // [B*H*Sq, D]
-    TensorCuda concatenated_attention_outputs;          // [B*Sq, E]
-
-    TensorCuda query_transposed, key_transposed, value_transposed;
-    TensorCuda attention_outputs_transposed;
-    TensorCuda attention_probabilities;
-};
-
-
-struct MultiHeadAttentionBackPropagationCuda : public LayerBackPropagationCuda
-{
-    MultiHeadAttentionBackPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorViewCuda*> get_gradient_views() override;
-    vector<TensorViewCuda*> get_workspace_views() override;
-
-    void print() const override;
-
-    void free() override {}
-
-    TensorViewCuda query_weight_gradients, key_weight_gradients, value_weight_gradients, projection_weight_gradients;
-    TensorViewCuda query_bias_gradients, key_bias_gradients, value_bias_gradients, projection_bias_gradients;
-
-    TensorViewCuda query_gradients, key_gradients, value_gradients;
-    TensorViewCuda attention_weight_gradients;              // dP
-    TensorViewCuda concatenated_attention_output_gradients; // dY_proj
-    TensorViewCuda softmax_gradients;                       // dS
-
-    TensorViewCuda query_gradients_transposed, key_gradients_transposed, value_gradients_transposed;
-    TensorViewCuda attention_output_gradients_transposed;
-    TensorViewCuda query_input_gradients, source_input_gradients; // dX_q, dX_s
-    TensorViewCuda ones;
-};
-
-#endif
 
 } 
 

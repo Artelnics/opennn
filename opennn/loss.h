@@ -249,17 +249,25 @@ struct BackPropagation
 
     void set(const Index = 0, const Loss* = nullptr);
 
+    NeuralNetwork* get_neural_network() const;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    VectorR gradient;
+    vector<vector<TensorView>> gradient_views;
+
+    VectorR backward;
+    vector<vector<vector<TensorView>>> backward_views;
+
     vector<vector<TensorView>> get_layer_gradients() const;
 
     TensorView get_output_gradients() const;
 
     void print() const;
 
-    Index samples_number = 0;
+    Index batch_size = 0;
 
     Loss* loss = nullptr;
-
-    NeuralNetworkBackPropagation neural_network;
 
     type error;
     MatrixR errors;
@@ -287,9 +295,9 @@ struct BackPropagationCuda
 
     void set(const Index = 0, Loss* = nullptr);
 
-    vector<vector<TensorViewCuda>> get_layer_gradients_device() const;
+    vector<vector<TensorView>> get_layer_gradients_device() const;
 
-    TensorViewCuda get_output_gradients_device() const;
+    TensorView get_output_gradients_device() const;
 
     void print() const;
 

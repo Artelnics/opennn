@@ -577,8 +577,8 @@ struct BatchCuda
                    const vector<Index>&,
                    const vector<Index>&);
 
-    vector<TensorViewCuda> get_inputs_device() const;
-    TensorViewCuda get_targets_device() const;
+    vector<TensorView> get_inputs_device() const;
+    TensorView get_targets_device() const;
 
     Index get_samples_number() const;
 

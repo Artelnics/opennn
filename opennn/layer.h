@@ -14,6 +14,10 @@
 namespace opennn
 {
 
+struct ForwardPropagation;
+struct BackPropagation;
+struct BackPropagationLM;
+
 struct LayerForwardPropagation;
 struct LayerBackPropagation;
 struct LayerBackPropagationLM;
@@ -56,10 +60,21 @@ public:
 
     Index get_parameters_number();
 
-    virtual vector<TensorView*> get_parameter_views()
+    virtual vector<Shape> get_parameter_shapes() const
     {
         return {};
     }
+
+    virtual vector<Shape> get_forward_shapes() const
+    {
+        return {};
+    }
+
+    virtual vector<Shape> get_backward_shapes() const
+    {
+        return {};
+    }
+
 
     virtual Shape get_input_shape() const = 0;
     virtual Shape get_output_shape() const = 0;
@@ -70,18 +85,15 @@ public:
 
     // Forward propagation
 
-    virtual void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                                   bool) = 0;
+    virtual void forward_propagate(ForwardPropagation&, size_t, bool) = 0;
 
     // Back propagation
 
-    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                                unique_ptr<LayerBackPropagation>&) const {}
+    virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}
 
-    virtual void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                                unique_ptr<LayerBackPropagationLM>&) const {}
+    virtual void back_propagate(ForwardPropagation&, BackPropagationLM&, size_t) const {}
 
-    virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
+    virtual void insert_squared_errors_Jacobian_lm(BackPropagationLM&,
                                                    Index,
                                                    MatrixR&) const {}
 
@@ -112,6 +124,8 @@ protected:
     // @todo set this
 
     bool is_first_layer = false;
+
+    vector<TensorView> parameters;
 
     Tensor2 empty_2;
     Tensor3 empty_3;
@@ -290,7 +304,6 @@ protected:
                               betas.transpose().array();
     }
 
-
     template <int Rank>
     void dropout(TensorMapR<Rank> tensor, type dropout_rate) const
     {
@@ -302,45 +315,9 @@ protected:
         });
     }
 
-    template <int Rank>
-    void calculate_combinations(const TensorMapR<Rank> inputs,
-                                const MatrixMap weights,
-                                const VectorMap biases,
-                                TensorMapR<Rank> outputs) const
-    {
-        const Index inputs_size = weights.rows();
-        const Index outputs_size = weights.cols();
-        const Index total_rows = inputs.size() / inputs_size;
-
-        if (outputs_size == 1)
-        {
-            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-                inputs_matrix(inputs.data(), total_rows, inputs_size);
-
-            const Map<const VectorR, AlignedMax> weights_vector(weights.data(), inputs_size);
-
-            Map<VectorR, AlignedMax> outputs_vector(outputs.data(), total_rows);
-
-            outputs_vector.noalias() = inputs_matrix * weights_vector;
-            outputs_vector.array() += biases(0);
-        }
-        else
-        {
-            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-                inputs_matrix(inputs.data(), total_rows, inputs_size);
-
-            const Map<const Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-                weights_matrix(weights.data(), inputs_size, outputs_size);
-
-            Map<Matrix<type, Dynamic, Dynamic, Layout, AlignedMax>>
-                outputs_matrix(outputs.data(), total_rows, outputs_size);
-
-            outputs_matrix.noalias() = (inputs_matrix * weights_matrix).rowwise() + biases.transpose();
-        }
-    }
-
 #ifdef OPENNN_CUDA
 
+<<<<<<< Updated upstream
 public:
 
         // Forward propagation CUDA
@@ -365,6 +342,8 @@ public:
 
     virtual void print_parameters_cuda() {}
 
+=======
+>>>>>>> Stashed changes
 protected:
 
     const float alpha = 1.0f;
@@ -378,10 +357,6 @@ protected:
 
 struct LayerForwardPropagation
 {
-    LayerForwardPropagation() {}
-    virtual ~LayerForwardPropagation() = default;
-
-    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
     virtual vector<TensorView*> get_workspace_views();
@@ -389,8 +364,6 @@ struct LayerForwardPropagation
     const vector<TensorView>& get_inputs() const { return inputs; }
 
     TensorView get_outputs() const;
-
-    virtual void print() const {}
 
     Index batch_size = 0;
 
@@ -404,10 +377,6 @@ struct LayerForwardPropagation
 
 struct LayerBackPropagation
 {
-    LayerBackPropagation() {}
-    virtual ~LayerBackPropagation() = default;
-
-    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
     virtual vector<TensorView*> get_gradient_views();
@@ -415,8 +384,6 @@ struct LayerBackPropagation
     virtual vector<TensorView*> get_workspace_views();
 
     vector<TensorView> get_input_gradients() const;
-
-    virtual void print() const {}
 
     Index batch_size = 0;
 
@@ -429,10 +396,6 @@ struct LayerBackPropagation
 
 struct LayerBackPropagationLM
 {
-    LayerBackPropagationLM() {}
-    virtual ~LayerBackPropagationLM() = default;
-
-    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
     virtual vector<TensorView*> get_gradient_views();
@@ -440,8 +403,6 @@ struct LayerBackPropagationLM
     virtual vector<TensorView*> get_workspace_views();
 
     vector<TensorView> get_input_gradients() const;
-
-    virtual void print() const {}
 
     Index batch_size = 0;
 
@@ -456,37 +417,21 @@ struct LayerBackPropagationLM
 
 struct LayerForwardPropagationCuda
 {
-    LayerForwardPropagationCuda() {}
-    virtual ~LayerForwardPropagationCuda() 
-    {
-        free();
-    }
-
-    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual void free() 
-    {
-        cudaFree(workspace);
-        workspace = nullptr;
-        workspace_size = 0;
-    }
+    virtual vector<TensorView*> get_workspace_views();
 
-    virtual vector<TensorViewCuda*> get_workspace_views();
+    const vector<TensorView>& get_inputs() const { return inputs; }
 
-    const vector<TensorViewCuda>& get_inputs() const { return inputs; }
-
-    TensorViewCuda get_outputs() const;
-
-    virtual void print() const {}
+    TensorView get_outputs() const;
 
     Index batch_size = 0;
 
     Layer* layer = nullptr;
 
-    vector<TensorViewCuda> inputs;
+    vector<TensorView> inputs;
 
-    TensorViewCuda outputs;
+    TensorView outputs;
 
     void* workspace = nullptr;
     size_t workspace_size = 0;
@@ -495,19 +440,13 @@ struct LayerForwardPropagationCuda
 
 struct LayerBackPropagationCuda
 {
-    LayerBackPropagationCuda() {}
-    virtual ~LayerBackPropagationCuda() {}
-
-    void set(const Index = 0, Layer* = nullptr);
     virtual void initialize() = 0;
 
-    virtual vector<TensorViewCuda*> get_gradient_views();
+    virtual vector<TensorView*> get_gradient_views();
 
-    virtual vector<TensorViewCuda*> get_workspace_views();
+    virtual vector<TensorView*> get_workspace_views();
 
-    vector<TensorViewCuda> get_input_gradient_views() const;
-
-    virtual void print() const {}
+    vector<TensorView> get_input_gradient_views() const;
 
     virtual void free()
     {
@@ -520,8 +459,8 @@ struct LayerBackPropagationCuda
 
     Layer* layer = nullptr;
 
-    vector<TensorViewCuda> input_gradients;
-    vector<TensorViewCuda> output_gradients;
+    vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
 
     void* workspace = nullptr;
     size_t workspace_size = 0;

@@ -59,7 +59,136 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    vector<TensorView*> get_parameter_views() override;
+    vector<Shape> get_parameter_shapes() const override
+    {
+        vector<Shape> shapes = {
+            //biases,
+            //weights}
+        };
+/*
+        if (batch_normalization)
+            shapes.insert(shapes.end(), {&gammas, &betas});
+*/
+        return shapes;
+    }
+
+    vector<Shape> get_forward_shapes() const override;
+
+    vector<Shape> get_backward_shapes() const override
+    {
+        const Index input_height = get_input_height();
+        const Index input_width = get_input_width();
+        const Index channels = get_input_channels();
+
+        const Index kernel_height = get_kernel_height();
+        const Index kernel_width = get_kernel_width();
+        const Index kernel_channels = get_kernel_channels();
+        const Index kernels_number = get_kernels_number();
+/*
+        rotated_weights.resize(kernels_number, kernel_height, kernel_width, kernel_channels);
+
+        input_gradients = {{nullptr, {batch_size, input_height, input_width, channels}}};
+
+        // Batch Normalization
+
+        if (batch_normalization)
+        {
+            gamma_gradients.shape = {kernels_number};
+            beta_gradients.shape = {kernels_number};
+        }
+
+    const Index input_height = convolutional_layer->get_input_height();
+    const Index input_width = convolutional_layer->get_input_width();
+    const Index channels = convolutional_layer->get_input_channels();
+
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+    const Index kernel_height = convolutional_layer->get_kernel_height();
+    const Index kernel_width = convolutional_layer->get_kernel_width();
+
+    const Index output_height = convolutional_layer->get_output_height();
+    const Index output_width = convolutional_layer->get_output_width();
+
+    // Input Deltas
+
+    input_gradients = {TensorView({batch_size, input_height, input_width, channels})};
+
+    // Deltas
+
+    cudnnSetTensor4dDescriptor(gradients_tensor_descriptor,
+                               CUDNN_TENSOR_NHWC,
+                               CUDNN_DATA_FLOAT,
+                               batch_size,
+                               kernels_number,
+                               output_height,
+                               output_width);
+
+    // Biases derivatives
+
+    bias_gradients.set_descriptor({ kernels_number });
+
+    // Weight derivatives
+
+    weight_gradients.set_descriptor({ kernels_number, kernel_height, kernel_width, channels });
+
+    // Workspace
+
+    int returned_algo_count;
+    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
+    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
+
+    CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
+        get_cudnn_handle(),
+        convolutional_layer->get_kernel_descriptor(),
+        gradients_tensor_descriptor,
+        convolutional_layer->get_convolution_descriptor(),
+        input_gradients[0].get_descriptor(),
+        1, &returned_algo_count, &data_perf));
+
+    algo_data = data_perf.algo;
+
+    CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
+        get_cudnn_handle(),
+        input_gradients[0].get_descriptor(),
+        gradients_tensor_descriptor,
+        convolutional_layer->get_convolution_descriptor(),
+        convolutional_layer->get_kernel_descriptor(),
+        1, &returned_algo_count, &filter_perf));
+
+    algo_filter = filter_perf.algo;
+
+    cudnnGetConvolutionBackwardDataWorkspaceSize(get_cudnn_handle(),
+                                                 convolutional_layer->get_kernel_descriptor(),
+                                                 gradients_tensor_descriptor,
+                                                 convolutional_layer->get_convolution_descriptor(),
+                                                 input_gradients[0].get_descriptor(),
+                                                 algo_data,
+                                                 &workspace_size);
+
+    cudnnGetConvolutionBackwardFilterWorkspaceSize(get_cudnn_handle(),
+                                                   input_gradients[0].get_descriptor(),
+                                                   gradients_tensor_descriptor,
+                                                   convolutional_layer->get_convolution_descriptor(),
+                                                   convolutional_layer->get_kernel_descriptor(),
+                                                   algo_filter,
+                                                   &backward_filter_workspace_bytes);
+
+    // Workspace memory
+
+    CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
+
+    CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes));
+
+    // Batch Normalization
+
+    if (convolutional_layer->get_batch_normalization())
+    {
+        beta_gradients.set_descriptor({ kernels_number });
+        gamma_gradients.set_descriptor({ kernels_number });
+    }
+
+*/
+        return {};
+    }
 
     bool use_convolutions() const
     {
@@ -93,19 +222,15 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
-    // Forward propagation
-
-    void preprocess_inputs(const Tensor4&, Tensor4&) const;
+    void pad_inputs(const Tensor4&, TensorMap4&) const;
 
     void calculate_convolutions(const Tensor4&, TensorMap4) const;
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t index, bool) override;
 
     // Back propagation
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -115,13 +240,6 @@ public:
 #ifdef OPENNN_CUDA
 
 public:
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>&) const override;
-
-    vector<TensorViewCuda*> get_parameter_views_device() override;
 
     cudnnFilterDescriptor_t get_kernel_descriptor() const
     {
@@ -136,13 +254,13 @@ public:
 
 protected:
 
-    TensorViewCuda biases_device;
-    TensorViewCuda weights_device;
+    TensorView biases_device;
+    TensorView weights_device;
 
     // Batch Normalization
 
-    TensorViewCuda gammas_device;
-    TensorViewCuda betas_device;
+    TensorView gammas_device;
+    TensorView betas_device;
 
     TensorCuda running_means_device;
     TensorCuda running_variances_device;
@@ -159,8 +277,9 @@ protected:
 
 private:
 
-    TensorView weights;
-    TensorView biases;
+    enum Parameters {Biases, Weights, Gammas, Betas};
+    enum Forward {Inputs, PreprocessedInputs, Outputs, ActivationDerivatives};
+    enum Backward {OutputGradients, InputGradients};
 
     Index row_stride = 1;
     Index column_stride = 1;
@@ -188,34 +307,20 @@ private:
 
 struct ConvolutionalForwardPropagation final : LayerForwardPropagation
 {
-    ConvolutionalForwardPropagation(const Index = 0, Layer* = nullptr);
-
     void initialize() override;
 
-    vector<TensorView*> get_workspace_views() override;
-
-    void print() const override;
-
-    Tensor4 preprocessed_inputs;
+    Tensor4 padded_inputs;
 
     TensorView means;
     TensorView standard_deviations;
 
-    TensorView activation_derivatives;
+//    TensorView activation_derivatives;
 };
 
 
-struct ConvolutionalBackPropagation final : LayerBackPropagation
+struct ConvolutionalBackPropagation final
 {
-    ConvolutionalBackPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void print() const override;
-
-    TensorView bias_gradients;
+    //TensorView bias_gradients;
     TensorView weight_gradients;
 
     TensorView gamma_gradients;
@@ -229,14 +334,6 @@ struct ConvolutionalBackPropagation final : LayerBackPropagation
 
 struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    ConvolutionalForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-
-    void free() override;
-
     TensorCuda convolutions;
     TensorCuda means;
     TensorCuda inverse_variance;
@@ -249,21 +346,19 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
 struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 {
-    ConvolutionalBackPropagationCuda(const Index = 0, Layer* = nullptr);
-
     void initialize() override;
 
-    vector<TensorViewCuda*> get_gradient_views() override;
+    vector<TensorView*> get_gradient_views() override;
 
     void print() const override;
 
     void free() override;
 
-    TensorViewCuda bias_gradients;
-    TensorViewCuda weight_gradients;
+    TensorView bias_gradients;
+    TensorView weight_gradients;
 
-    TensorViewCuda gamma_gradients;
-    TensorViewCuda beta_gradients;
+    TensorView gamma_gradients;
+    TensorView beta_gradients;
 
     void* backward_filter_workspace = nullptr;   
     size_t backward_filter_workspace_bytes = 0;

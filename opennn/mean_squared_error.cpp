@@ -155,7 +155,7 @@ void MeanSquaredError::calculate_error(const BatchCuda& batch,
 
     // Forward propagation
 
-    const TensorViewCuda outputs = forward_propagation.get_last_trainable_layer_outputs_device();
+    const TensorView outputs = forward_propagation.get_last_trainable_layer_outputs_device();
 
     // Back propagatioin
 

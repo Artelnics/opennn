@@ -24,6 +24,16 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
+    vector<Shape> get_forward_shapes() const override
+    {
+        /*
+    outputs.shape = prepend(batch_size, layer->get_output_shape());
+
+*/
+        return {};
+    }
+
+
     vector<Descriptives> get_descriptives() const;
 
     VectorR get_minimums() const;
@@ -43,10 +53,7 @@ public:
     void set_scalers(const vector<string>&);
     void set_scalers(const string&);
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&, bool) override;
-#ifdef OPENNN_CUDA
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-#endif
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void print() const override;
 
@@ -64,30 +71,6 @@ private:
     type min_range;
     type max_range;
 };
-
-
-struct UnscalingForwardPropagation final : LayerForwardPropagation
-{
-    UnscalingForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-
-#ifdef OPENNN_CUDA
-
-struct UnscalingForwardPropagationCuda final : public LayerForwardPropagationCuda
-{
-    UnscalingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-#endif
 
 }
 

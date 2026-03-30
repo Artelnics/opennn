@@ -112,7 +112,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
 
 #ifdef OPENNN_CUDA
 
-    vector<TensorViewCuda*> param_views_device = embedding_layer.get_parameter_views_device();
+    vector<TensorView*> param_views_device = embedding_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
@@ -121,7 +121,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
         make_unique<EmbeddingForwardPropagationCuda>(batch_size, &embedding_layer);
     forward_propagation_cuda_base->initialize();
 
-    vector<TensorViewCuda*> workspace_views_device = forward_propagation_cuda_base->get_workspace_views();
+    vector<TensorView*> workspace_views_device = forward_propagation_cuda_base->get_workspace_views();
     TensorCuda layer_workspace_device({get_size(workspace_views_device)});
     link(layer_workspace_device.data, workspace_views_device);
 
@@ -203,7 +203,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     const TensorView weight_gradients_cpu = back_propagation->weight_gradients;
 
 #ifdef OPENNN_CUDA
-    vector<TensorViewCuda*> param_views_device = embedding_layer.get_parameter_views_device();
+    vector<TensorView*> param_views_device = embedding_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
     link(layer_parameters_device.data, param_views_device);
     CHECK_CUDA(cudaMemcpy(layer_parameters_device.data, layer_parameters.data(), layer_parameters.size() * sizeof(type), cudaMemcpyHostToDevice));
@@ -212,7 +212,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
         make_unique<EmbeddingForwardPropagationCuda>(batch_size, &embedding_layer);
     forward_propagation_cuda_base->initialize();
 
-    vector<TensorViewCuda*> workspace_fw_views_device = forward_propagation_cuda_base->get_workspace_views();
+    vector<TensorView*> workspace_fw_views_device = forward_propagation_cuda_base->get_workspace_views();
     TensorCuda layer_workspace_fw_device({get_size(workspace_fw_views_device)});
     link(layer_workspace_fw_device.data, workspace_fw_views_device);
 
@@ -226,11 +226,11 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
         make_unique<EmbeddingBackPropagationCuda>(batch_size, &embedding_layer);
     back_propagation_cuda_base->initialize();
 
-    vector<TensorViewCuda*> gradient_views_device = back_propagation_cuda_base->get_gradient_views();
+    vector<TensorView*> gradient_views_device = back_propagation_cuda_base->get_gradient_views();
     TensorCuda layer_gradients_device({get_size(gradient_views_device)});
     link(layer_gradients_device.data, gradient_views_device);
 
-    vector<TensorViewCuda*> bp_workspace_views_device = back_propagation_cuda_base->get_workspace_views();
+    vector<TensorView*> bp_workspace_views_device = back_propagation_cuda_base->get_workspace_views();
     TensorCuda bp_workspace_device({get_size(bp_workspace_views_device)});
     if (bp_workspace_device.size() > 0)
         link(bp_workspace_device.data, bp_workspace_views_device);

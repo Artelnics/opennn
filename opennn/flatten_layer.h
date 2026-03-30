@@ -10,12 +10,12 @@
 
 #include "layer.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
+#include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
-
-template<int Rank> struct FlattenForwardPropagation;
-template<int Rank> struct FlattenBackPropagation;
 
 #ifdef OPENNN_CUDA
 
@@ -31,7 +31,7 @@ class Flatten final : public Layer
 
 public:
 
-    Flatten(const Shape& new_input_shape = {} )
+    Flatten(const Shape& new_input_shape = {})
     {
         set(new_input_shape);
     }
@@ -91,35 +91,40 @@ public:
         input_shape = new_input_shape;
     }
 
-    // Forward propagation
-    
-    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                           bool) override
+
+    vector<Shape> get_forward_shapes() const override
     {
-        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
-            throw runtime_error("Flatten layer forward propagation: inputs size != outputs size");
+        return {};
+    }
 
-        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
 
-        if (forward_propagation->inputs[0].data != forward_propagation->outputs.data)
-            memcpy(forward_propagation->outputs.data, forward_propagation->inputs[0].data, bytes_to_copy);
+    vector<Shape> get_backward_shapes() const override
+    {
+        /*
+        input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};
+        */
+
+        return {};
+    }
+
+    
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
+    {
+        const TensorView& input = forward_propagation.views[layer][Inputs][0];
+        TensorView& output = forward_propagation.views[layer][Outputs][0];
+
+        opennn::copy(input, output);
     }
     
-    // Back-propagation
     
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>& back_propagation) const override
+    void back_propagate(ForwardPropagation&,
+                        BackPropagation& back_propagation,
+                        size_t layer) const override
     {
-        FlattenBackPropagation<Rank>* flatten_back_propagation =
-            static_cast<FlattenBackPropagation<Rank>*>(back_propagation.get());
+        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+        TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
-        type* source_ptr = back_propagation->output_gradients[0].data;
-        type* dest_ptr = flatten_back_propagation->input_gradients[0].data;
-
-        const size_t bytes_to_copy = flatten_back_propagation->input_gradients[0].size() * sizeof(type);
-
-        if (source_ptr && dest_ptr && source_ptr != dest_ptr)
-            memcpy(dest_ptr, source_ptr, bytes_to_copy);
+        opennn::copy(output_gradient, input_gradient);
     }
     
     // Serialization
@@ -163,135 +168,17 @@ public:
              << "Output shape: " << get_output_shape() << endl;
     }
 
-#ifdef OPENNN_CUDA
-
-public:
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
-    {
-        if (forward_propagation->inputs[0].size() != forward_propagation->outputs.size())
-            throw runtime_error("Flatten layer forward propagation CUDA: inputs size != outputs size");
-
-        type* inputs = forward_propagation->inputs[0].data;
-        type* outputs = forward_propagation->outputs.data;
-
-        const size_t bytes_to_copy = forward_propagation->inputs[0].size() * sizeof(type);
-
-        CHECK_CUDA(cudaMemcpy(outputs,
-                              inputs,
-                              bytes_to_copy,
-                              cudaMemcpyDeviceToDevice));
-    }
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>& back_propagation) const
-    {
-        type* source_gradient = back_propagation->output_gradients[0].data;
-        type* destination_gradient = back_propagation->input_gradients[0].data;
-
-        const size_t bytes_to_copy = back_propagation->input_gradients[0].size() * sizeof(type);
-
-        if (source_gradient && destination_gradient && source_gradient != destination_gradient)
-        {
-            CHECK_CUDA(cudaMemcpy(destination_gradient,
-                                  source_gradient,
-                                  bytes_to_copy,
-                                  cudaMemcpyDeviceToDevice));
-        }
-    }
-
-#endif
-
 private:
+
+    enum Forward {Inputs, Outputs};
+    enum Backward {OutputGradients, InputGradients};
 
     Shape input_shape;
 };
 
-
-template<int Rank>
-struct FlattenForwardPropagation final : LayerForwardPropagation
-{
-    FlattenForwardPropagation(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {
-        const Shape output_shape = layer->get_output_shape();
-        outputs.shape = {batch_size, output_shape[0]};
-    }
-
-    void print() const override
-    {
-        cout << "Flatten Outputs Dimensions:" << endl << outputs.shape << endl;
-    }
-};
-
-
-template<int Rank>
-struct FlattenBackPropagation final : LayerBackPropagation
-{
-    FlattenBackPropagation(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {
-        const Flatten<Rank>* flatten_layer = static_cast<const Flatten<Rank>*>(layer);
-
-        input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};
-    }
-
-    void print() const override
-    {        
-        cout << "Flatten Deltas Dimensions:" << endl << input_gradients[0].shape << endl;
-    }
-};
-
-
-#ifdef OPENNN_CUDA
-
-template<int Rank>
-struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    FlattenForwardPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {
-        const Index outputs_number = layer->get_outputs_number();
-        outputs.set_descriptor({batch_size, outputs_number});
-    }
-};
-
-
-template<int Rank>
-struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
-{
-    FlattenBackPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    void initialize() override
-    {      
-        const Shape full_input_shape = Shape{batch_size}.append(layer->get_input_shape());
-
-        input_gradients = {TensorViewCuda(full_input_shape)};
-    }
-};
-
-#endif
-
 void reference_flatten_layer();
-
 }
 
-#pragma once
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

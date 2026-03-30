@@ -4426,7 +4426,7 @@ MatrixR BatchCuda::get_targets_from_device() const
 }
 
 
-vector<TensorViewCuda> BatchCuda::get_inputs_device() const
+vector<TensorView> BatchCuda::get_inputs_device() const
 {
     if(!decoder_shape.empty())
         return { decoder_device.view(), inputs_device.view() };
@@ -4435,7 +4435,7 @@ vector<TensorViewCuda> BatchCuda::get_inputs_device() const
 }
 
 
-TensorViewCuda BatchCuda::get_targets_device() const
+TensorView BatchCuda::get_targets_device() const
 {
     return { targets_device.view() };
 }

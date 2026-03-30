@@ -245,6 +245,12 @@ struct TensorView
         return shape.count();
     }
 
+    bool empty() const noexcept
+    {
+        return shape.empty();
+    }
+
+
     void print() const
     {
         if(!data || shape.empty())
@@ -269,6 +275,111 @@ struct TensorView
         if (shape.size() == 1 || total_size % last_dim_stride != 0)
             cout << endl;
     }
+
+    inline MatrixMap as_matrix() const {
+        // Asumimos que la primera dimensión es el batch o filas
+        return MatrixMap(data, shape[0], shape.count() / shape[0]);
+    }
+
+    inline VectorMap as_vector() const {
+        return VectorMap(data, shape.count());
+    }
+
+    template<int Rank>
+    inline TensorMapR<Rank> as_tensor() const {
+        return TensorMapR<Rank>(data, get_eigen_dims<Rank>());
+    }
+
+#ifdef OPENNN_CUDA
+    float* device = nullptr;
+    cudnnTensorDescriptor_t descriptor = nullptr;
+
+    if (descriptor == nullptr) cudnnCreateTensorDescriptor(&descriptor);
+
+    shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
+
+    TensorView() = default;
+
+    TensorView(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
+        : data(new_data), descriptor_handle(handle) {
+    }
+
+    explicit TensorView(const Shape& shape)
+    {
+        set_descriptor(shape);
+    }
+
+    cudnnTensorDescriptor_t get_descriptor() const
+    {
+        return descriptor_handle ? descriptor_handle.get() : nullptr;
+    }
+
+    void set_descriptor(const Shape& shape)
+    {
+        int n = 1, c = 1, h = 1, w = 1;
+        if (shape.size() == 4) { // NHWC
+            n = static_cast<int>(shape[0]);
+            h = static_cast<int>(shape[1]);
+            w = static_cast<int>(shape[2]);
+            c = static_cast<int>(shape[3]);
+        }
+        else if (shape.size() == 3) { // NWC
+            n = static_cast<int>(shape[0]);
+            w = static_cast<int>(shape[1]);
+            c = static_cast<int>(shape[2]);
+        }
+        else if (shape.size() == 2) { // NC
+            n = static_cast<int>(shape[0]);
+            c = static_cast<int>(shape[1]);
+        }
+        else if (shape.size() == 1) { // C
+            c = static_cast<int>(shape[0]);
+        }
+
+        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
+            return;
+
+        if (descriptor_handle == nullptr)
+        {
+            cudnnTensorDescriptor_t raw_desc;
+            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
+                throw runtime_error("TensorView: Failed to create descriptor.");
+
+            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
+                if (p) cudnnDestroyTensorDescriptor(p);
+                });
+        }
+
+        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
+
+        Index size() const
+        {
+            if (descriptor_handle == nullptr) return 0;
+
+            constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
+            cudnnDataType_t dataType;
+            int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
+
+            CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
+
+            Index total_elements = 1;
+            for (int i = 0; i < nbDims; ++i)
+                total_elements *= static_cast<Index>(dimA[i]);
+            return total_elements;
+        }
+
+        void fill(float value)
+        {
+            if (data == nullptr || descriptor_handle == nullptr) return;
+
+            if (value == 0.0f)
+                CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
+            else
+                CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
+        }
+
+#endif
+
 };
 
 
@@ -284,6 +395,18 @@ void shuffle_rows(MatrixR& matrix);
 
 type* link(type*, vector<TensorView*>);
 void link(type*, vector<vector<TensorView*>>);
+
+Index get_size(const vector<Shape>&)
+{
+    return 0;
+}
+
+
+Index get_size(const vector<vector<Shape>>&)
+{
+    return 0;
+}
+
 
 Index get_size(const vector<TensorView*>);
 Index get_size(vector<vector<TensorView*>>);
@@ -874,89 +997,6 @@ void set_threads_number(int num_threads);
 inline const float alpha_one = 1.0f;
 inline const float beta_zero = 0.0f;
 
-struct TensorViewCuda
-{
-    float* data = nullptr;
-    shared_ptr<cudnnTensorStruct> descriptor_handle = nullptr;
-
-    TensorViewCuda() = default;
-
-    TensorViewCuda(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
-        : data(new_data), descriptor_handle(handle) {}
-
-    explicit TensorViewCuda(const Shape& shape)
-    {
-        set_descriptor(shape);
-    }
-
-    cudnnTensorDescriptor_t get_descriptor() const 
-    {
-        return descriptor_handle ? descriptor_handle.get() : nullptr;
-    }
-
-    void set_descriptor(const Shape& shape)
-    {
-        int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() == 4) { // NHWC
-            n = static_cast<int>(shape[0]);
-            h = static_cast<int>(shape[1]);
-            w = static_cast<int>(shape[2]);
-            c = static_cast<int>(shape[3]);
-        } else if (shape.size() == 3) { // NWC
-            n = static_cast<int>(shape[0]);
-            w = static_cast<int>(shape[1]);
-            c = static_cast<int>(shape[2]);
-        } else if (shape.size() == 2) { // NC
-            n = static_cast<int>(shape[0]);
-            c = static_cast<int>(shape[1]);
-        } else if (shape.size() == 1) { // C
-            c = static_cast<int>(shape[0]);
-        }
-
-        if (n <= 0 || c <= 0 || h <= 0 || w <= 0)
-            return;
-
-        if (descriptor_handle == nullptr)
-        {
-            cudnnTensorDescriptor_t raw_desc;
-            if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
-                throw runtime_error("TensorViewCuda: Failed to create descriptor.");
-
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
-                if (p) cudnnDestroyTensorDescriptor(p);
-                });
-        }
-
-        CHECK_CUDNN(cudnnSetTensor4dDescriptor(descriptor_handle.get(), CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w));
-    }
-
-    Index size() const
-    {
-        if (descriptor_handle == nullptr) return 0;
-
-        constexpr int REQUESTED_DIMS = CUDNN_DIM_MAX;
-        cudnnDataType_t dataType;
-        int nbDims = 0, dimA[REQUESTED_DIMS], strideA[REQUESTED_DIMS];
-
-        CHECK_CUDNN(cudnnGetTensorNdDescriptor(descriptor_handle.get(), REQUESTED_DIMS, &dataType, &nbDims, dimA, strideA));
-
-        Index total_elements = 1;
-        for (int i = 0; i < nbDims; ++i)
-            total_elements *= static_cast<Index>(dimA[i]);
-        return total_elements;
-    }
-
-    void fill(float value)
-    {
-        if (data == nullptr || descriptor_handle == nullptr) return;
-
-        if (value == 0.0f)
-            CHECK_CUDA(cudaMemset(data, 0, size() * sizeof(float)));
-        else
-            CHECK_CUDNN(cudnnSetTensor(get_cudnn_handle(), get_descriptor(), data, &value));
-    }
-};
-
 
 struct TensorCuda
 {
@@ -1075,18 +1115,18 @@ struct TensorCuda
         descriptor_handle.reset();
     }
 
-    TensorViewCuda view() const
+    TensorView view() const
     {
-        return TensorViewCuda(data, descriptor_handle);
+        return TensorView(data, descriptor_handle);
     }
 };
 
 
-type* link(type*, const vector<TensorViewCuda*>&);
-void link(type*, const vector<vector<TensorViewCuda*>>&);
+type* link(type*, const vector<TensorView*>&);
+void link(type*, const vector<vector<TensorView*>>&);
 
-Index get_size(const vector<TensorViewCuda*>&);
-Index get_size(const vector<vector<TensorViewCuda*>>&);
+Index get_size(const vector<TensorView*>&);
+Index get_size(const vector<vector<TensorView*>>&);
 
 VectorR vector_from_device(const type*, const size_t&);
 MatrixR matrix_from_device(const type*, const size_t&, const size_t&);

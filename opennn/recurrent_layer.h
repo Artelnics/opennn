@@ -23,7 +23,43 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    vector<TensorView*> get_parameter_views() override;
+    vector<Shape> get_parameter_shapes() const override;
+
+    vector<Shape> get_forward_shapes() const override
+    {
+        /*
+    if(layer == nullptr)
+        throw runtime_error("Recurrrent layer is nullptr");
+
+    const Index batch = batch_size;
+    const Index outputs_num = layer->get_outputs_number();
+    const Index steps = layer->get_input_shape()[0];
+
+    outputs.shape = {batch, outputs_num};
+    hidden_states.shape = {batch, steps, outputs_num};
+    activation_derivatives.shape = {batch, steps, outputs_num};
+
+*/
+        return {};
+    }
+
+    vector<Shape> get_backward_shapes() const override
+    {
+        /*
+    const Index outputs_number = layer->get_outputs_number();
+    const Index inputs_number = layer->get_input_shape()[1];
+    const Index time_steps = layer->get_input_shape()[0];
+
+    bias_gradients.shape = {outputs_number};
+    input_weight_gradients.shape = {inputs_number, outputs_number};
+    recurrent_weight_gradients.shape = {outputs_number, outputs_number};
+
+    input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
+
+*/
+        return {};
+    }
+
 
     string get_activation_function() const;
 
@@ -34,13 +70,12 @@ public:
 
     void set_activation_function(const string&);
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
+    string get_expression(const vector<string>& = vector<string>(),
+                          const vector<string>& = vector<string>()) const override;
 
     void print() const override;
 
@@ -66,14 +101,6 @@ private:
 
 struct RecurrentForwardPropagation final : LayerForwardPropagation
 {
-    RecurrentForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorView*> get_workspace_views() override;
-
-    void print() const override;
-
     TensorView hidden_states;
     TensorView activation_derivatives;
 };
@@ -81,14 +108,6 @@ struct RecurrentForwardPropagation final : LayerForwardPropagation
 
 struct RecurrentBackPropagation final : LayerBackPropagation
 {
-    RecurrentBackPropagation(const Index = 0, Layer* = nullptr);
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void initialize() override;
-
-    void print() const override;
-
     TensorView bias_gradients;
     TensorView input_weight_gradients;
     TensorView recurrent_weight_gradients;

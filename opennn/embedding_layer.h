@@ -29,7 +29,20 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    vector<TensorView*> get_parameter_views() override;
+    vector<Shape> get_parameter_shapes() const override;
+
+    vector<Shape> get_forward_shapes() const override
+    {
+/*
+        outputs.shape = {batch_size, sequence_length, embedding_dimension};
+*/
+        return {};
+    }
+
+    vector<Shape> get_backward_shapes() const override
+    {
+        return {};
+    }
 
     void set(const Index = 0,
              Index = 0,
@@ -44,11 +57,9 @@ public:
     void set_parameters_random() override;
     void set_parameters_glorot() override;
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t index, bool) override;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t index) const override;
 
     void print() const override;
 
@@ -59,18 +70,11 @@ public:
 
 public:
 
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>&) const override;
-
-    vector<TensorViewCuda*> get_parameter_views_device() override;
-
     void copy_positional_encoding_device();
 
 private:
 
-    TensorViewCuda weights_device;
+    TensorView weights_device;
 
     TensorCuda positional_encoding_device;
 
@@ -78,9 +82,12 @@ private:
 
 private:
 
-    Index sequence_length = 0;
+    enum Parameters {Weights};
+    enum Forward {Inputs, Outputs};
 
-    TensorView weights;
+    Index sequence_length = 0;
+    Index embedding_dimension = 0;
+    Index vocabulary_size = 0;
 
     bool scale_embedding = false;
     bool add_positional_encoding = false;
@@ -90,57 +97,6 @@ private:
 
     type dropout_rate = type(0);
 };
-
-
-struct EmbeddingForwardPropagation final : LayerForwardPropagation
-{
-    EmbeddingForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-
-struct EmbeddingBackPropagation final : LayerBackPropagation
-{
-    EmbeddingBackPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void print() const override;
-
-    TensorView weight_gradients;
-};
-
-#ifdef OPENNN_CUDA
-
-struct EmbeddingForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    EmbeddingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-
-struct EmbeddingBackPropagationCuda : public LayerBackPropagationCuda
-{
-    EmbeddingBackPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorViewCuda*> get_gradient_views() override;
-
-    void print() const override;
-
-    TensorViewCuda weight_gradients;
-};
-
-#endif
 
 }
 

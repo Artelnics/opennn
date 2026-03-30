@@ -34,6 +34,33 @@ public:
              const string & = "MaxPooling",
              const string & = "pooling_layer");
 
+    vector<Shape> get_forward_shapes() const override
+    {
+/*
+        const Index output_height = pooling_layer->get_output_height();
+        const Index output_width = pooling_layer->get_output_width();
+        const Index channels = pooling_layer->get_channels_number();
+
+        outputs.shape = {batch_size, output_height, output_width, channels};
+
+        if (pooling_layer->get_pooling_method() == "MaxPooling")
+            maximal_indices.resize(batch_size,
+                                   output_height,
+                                   output_width,
+                                   channels);
+*/
+        return {};
+    }
+
+
+    vector<Shape> get_backward_shapes() const override
+    {
+        /*
+        input_gradients = {{nullptr, Shape{batch_size}.append(pooling_layer->get_input_shape())}};
+        */
+        return {};
+    }
+
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
@@ -68,46 +95,29 @@ public:
 
     void set_pooling_method(const string&);
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void forward_propagate_max_pooling(const Tensor4&,
-                                       unique_ptr<LayerForwardPropagation>&,
-                                       bool) const;
+    void forward_propagate_max_pooling(const Tensor4&, TensorMap4&) const;
 
-    void forward_propagate_average_pooling(const Tensor4&,
-                                           unique_ptr<LayerForwardPropagation>&,
-                                           bool) const;
+    void forward_propagate_average_pooling(const Tensor4&, TensorMap4&) const;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void back_propagate_max_pooling(const Tensor4&,
-                                    const Tensor4&,
-                                    unique_ptr<LayerForwardPropagation>&,
+                                    Tensor4&,
                                     unique_ptr<LayerBackPropagation>&) const;
 
-    void back_propagate_average_pooling(const Tensor4&,
-                                        const Tensor4&,
-                                        unique_ptr<LayerBackPropagation>&) const;
+    void back_propagate_average_pooling(const Tensor4&, Tensor4&) const;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
     void print() const override;
 
-#ifdef OPENNN_CUDA
-
-public:
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>&) const override;
-
-#endif
-
 private:
+
+    enum Forward {Inputs, Outputs, MaximalIndices};
+    enum Backward {OutputGradients, InputGradients};
 
     Shape input_shape;
 
@@ -134,60 +144,6 @@ private:
 #endif
 
 };
-
-
-struct PoolingForwardPropagation final : LayerForwardPropagation
-{
-    PoolingForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorView*> get_workspace_views() override;
-
-    void print() const override;
-
-    Tensor<Index, 4> maximal_indices;
-};
-
-
-struct PoolingBackPropagation final : LayerBackPropagation
-{
-    PoolingBackPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-
-#ifdef OPENNN_CUDA
-
-struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    PoolingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    vector<TensorViewCuda*> get_workspace_views() override;
-
-    void print() const override;
-
-    void free() override;
-
-    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
-};
-
-
-struct PoolingBackPropagationCuda : public LayerBackPropagationCuda
-{
-    PoolingBackPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-#endif
 
 }
 

@@ -27,75 +27,67 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    vector<TensorView*> get_parameter_views() override;
+    vector<Shape> get_parameter_shapes() const override;
+
+    vector<Shape> get_forward_shapes() const override
+    {
+        /*
+    const Index sequence_length = get_sequence_length();
+    const Index embedding_dimension = get_embedding_dimension();
+
+    outputs.shape = {batch_size, sequence_length, embedding_dimension};
+
+    means.resize(batch_size, sequence_length);
+    standard_deviations.resize(batch_size, sequence_length);
+    normalized_inputs.resize(batch_size, sequence_length, embedding_dimension);
+*/
+        return {};
+    }
+
+    vector<Shape> get_backward_shapes() const override
+    {
+/*
+    const Index sequence_length = normalization_layer_3d->get_sequence_length();
+    const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
+
+    input_gradients = {{nullptr, {batch_size, sequence_length, embedding_dimension}}};
+
+    gamma_gradients.shape = {embedding_dimension};
+    beta_gradients.shape = {embedding_dimension};
+
+*/
+        return {};
+    }
+
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&,
-                           bool) override;
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void back_propagate(unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
 #ifdef OPENNN_CUDA
 
-    vector<TensorViewCuda*> get_parameter_views_device() override;
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                           bool) override;
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                        unique_ptr<LayerBackPropagationCuda>&) const override;
-
 protected:
 
-    TensorViewCuda gammas_device;
-    TensorViewCuda betas_device;
+    TensorView gammas_device;
+    TensorView betas_device;
 
 #endif
 
 private:
 
+    enum Parameters {Gammas, Betas};
+    enum Forward {Inputs, Means, StandardDeviations, Outputs};
+    enum Backward {OutputGradients, InputGradients};
+
     Index sequence_length;
-
-    TensorView gammas;
-    TensorView betas;
-};
-
-
-struct Normalization3dForwardPropagation final : LayerForwardPropagation
-{
-    Normalization3dForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-
-    Tensor2 means;
-    Tensor2 standard_deviations;
-    Tensor3 normalized_inputs;
-};
-
-
-struct Normalization3dBackPropagation final : LayerBackPropagation
-{
-    Normalization3dBackPropagation(const Index new_batch_size = 0,
-                                   Layer* new_layer = nullptr);
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void initialize() override;
-
-    void print() const override;
-
-    TensorView gamma_gradients;
-    TensorView beta_gradients;
 };
 
 
@@ -103,12 +95,6 @@ struct Normalization3dBackPropagation final : LayerBackPropagation
 
 struct Normalization3dForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    Normalization3dForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void free() override {}
-
     TensorCuda means_device;
     TensorCuda inv_variances_device;
 };
@@ -116,14 +102,8 @@ struct Normalization3dForwardPropagationCuda : public LayerForwardPropagationCud
 
 struct Normalization3dBackPropagationCuda : public LayerBackPropagationCuda
 {
-    Normalization3dBackPropagationCuda(const Index new_batch_size = 0, Layer* new_layer = nullptr);
-
-    vector<TensorViewCuda*> get_gradient_views() override;
-
-    void initialize() override;
-
-    TensorViewCuda gamma_gradients;
-    TensorViewCuda beta_gradients;
+    TensorView gamma_gradients;
+    TensorView beta_gradients;
 };
 
 #endif

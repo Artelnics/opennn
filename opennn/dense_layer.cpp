@@ -11,62 +11,20 @@
 
 namespace opennn
 {
-
     using Dense2d = Dense<2>;
-    using DenseForwardPropagation2d = DenseForwardPropagation<2>;
-    using DenseBackPropagation2d = DenseBackPropagation<2>;
-
     using Dense3d = Dense<3>;
-    using DenseForwardPropagation3d = DenseForwardPropagation<3>;
-    using DenseBackPropagation3d = DenseBackPropagation<3>;
 
     using DenseBackPropagationLM2d = DenseBackPropagationLM;
 
-#ifdef OPENNN_CUDA
-    using DenseForwardPropagationCuda2d = DenseForwardPropagationCuda<2>;
-    using DenseBackPropagationCuda2d = DenseBackPropagationCuda<2>;
-    using DenseForwardPropagationCuda3d = DenseForwardPropagationCuda<3>;
-    using DenseBackPropagationCuda3d = DenseBackPropagationCuda<3>;
-#endif
-
     REGISTER(Layer, Dense2d, "Dense2d")
-    REGISTER(LayerForwardPropagation, DenseForwardPropagation2d, "Dense2d")
-    REGISTER(LayerBackPropagation, DenseBackPropagation2d, "Dense2d")
-
-#ifdef OPENNN_CUDA
-    REGISTER(LayerForwardPropagationCuda, DenseForwardPropagationCuda2d, "Dense2d")
-    REGISTER(LayerBackPropagationCuda, DenseBackPropagationCuda2d, "Dense2d")
-#endif
-
     REGISTER(Layer, Dense3d, "Dense3d")
-    REGISTER(LayerForwardPropagation, DenseForwardPropagation3d, "Dense3d")
-    REGISTER(LayerBackPropagation, DenseBackPropagation3d, "Dense3d")
-
-#ifdef OPENNN_CUDA
-    REGISTER(LayerForwardPropagationCuda, DenseForwardPropagationCuda3d, "Dense3d")
-    REGISTER(LayerBackPropagationCuda, DenseBackPropagationCuda3d, "Dense3d")
-#endif
 
     template class Dense<2>;
     template class Dense<3>;
 
-    template struct DenseForwardPropagation<2>;
-    template struct DenseForwardPropagation<3>;
-
-    template struct DenseBackPropagation<2>;
-    template struct DenseBackPropagation<3>;
-
-#ifdef OPENNN_CUDA
-    template struct DenseForwardPropagationCuda<2>;
-    template struct DenseForwardPropagationCuda<3>;
-    template struct DenseBackPropagationCuda<2>;
-    template struct DenseBackPropagationCuda<3>;
-#endif
-
     struct DenseBackPropagationLM;
 
     void reference_dense_layer() { }
-
 }
 
 

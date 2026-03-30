@@ -32,9 +32,12 @@ Shape Recurrent::get_output_shape() const
 }
 
 
-vector<TensorView*> Recurrent::get_parameter_views()
-{  
+vector<Shape> Recurrent::get_parameter_shapes() const
+{
+/*
     return {&biases, &input_weights, &recurrent_weights};
+*/
+    return {};
 }
 
 
@@ -106,11 +109,14 @@ void Recurrent::set_activation_function(const string& new_activation_function)
 }
 
 
-void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                  bool is_training)
+void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training)
 {
+<<<<<<< Updated upstream
     RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
 
+=======
+/*
+>>>>>>> Stashed changes
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index past_time_steps = forward_propagation->inputs[0].shape[1];
     const Index input_size = forward_propagation->inputs[0].shape[2];
@@ -176,17 +182,25 @@ void Recurrent::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
+<<<<<<< Updated upstream
     if(recurrent_forward_propagation->outputs.data != nullptr)
     {
         TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
         outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
     }
+=======
+    MatrixMap outputs_map = matrix_map(recurrent_forward_propagation->outputs);
+    TensorMap2(outputs_map.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
+*/
+>>>>>>> Stashed changes
 }
 
 
-void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                               unique_ptr<LayerBackPropagation>& back_propagation) const
+void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation,
+                               size_t index) const
 {
+/*
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index past_time_steps = forward_propagation->inputs[0].shape[1];
     const Index input_size = forward_propagation->inputs[0].shape[2];
@@ -195,8 +209,6 @@ void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_prop
     const MatrixMap W_in = matrix_map(input_weights);
     const MatrixMap W_rec = matrix_map(recurrent_weights);
     const MatrixMap external_output_gradients = matrix_map(back_propagation->output_gradients[0]);
-
-    RecurrentBackPropagation* recurrent_bp = static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
     VectorMap d_biases = vector_map(recurrent_bp->bias_gradients);
     MatrixMap dW_in = matrix_map(recurrent_bp->input_weight_gradients);
@@ -252,6 +264,7 @@ void Recurrent::back_propagate(unique_ptr<LayerForwardPropagation>& forward_prop
         if(t > 0)
             next_step_delta.noalias() = delta * W_rec.transpose();
     }
+*/
 }
 
 
@@ -361,6 +374,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 }
 
 
+<<<<<<< Updated upstream
 RecurrentForwardPropagation::RecurrentForwardPropagation(const Index new_batch_size, Layer* new_layer) : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
@@ -436,10 +450,9 @@ vector<TensorView*> RecurrentBackPropagation::get_gradient_views()
 }
 
 
+=======
+>>>>>>> Stashed changes
 REGISTER(Layer, Recurrent, "Recurrent")
-REGISTER(LayerForwardPropagation, RecurrentForwardPropagation, "Recurrent")
-REGISTER(LayerBackPropagation, RecurrentBackPropagation, "Recurrent")
-
 }
 
 // OpenNN: Open Neural Networks Library.

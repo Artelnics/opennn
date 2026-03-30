@@ -9,6 +9,8 @@
 #include "registry.h"
 #include "tensor_utilities.h"
 #include "pooling_layer.h"
+#include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -246,11 +248,10 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                bool is_training)
+void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
-
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation.views[layer][Inputs][0]);
+/*
     if(pooling_method == "MaxPooling")
         forward_propagate_max_pooling(inputs,
                                       forward_propagation,
@@ -259,14 +260,12 @@ void Pooling::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_pro
         forward_propagate_average_pooling(inputs,
                                           forward_propagation,
                                           is_training);
+*/
 }
 
 
-void Pooling::forward_propagate_average_pooling(const Tensor4& inputs,
-                                                unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                                bool) const
+void Pooling::forward_propagate_average_pooling(const Tensor4& inputs, TensorMap4& outputs) const
 {
-    TensorMap4 outputs = tensor_map<4>(forward_propagation->outputs);
     const Index batch_size = inputs.dimension(0);
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
@@ -301,13 +300,8 @@ void Pooling::forward_propagate_average_pooling(const Tensor4& inputs,
 }
 
 
-void Pooling::forward_propagate_max_pooling(const Tensor4& inputs,
-                                            unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                            bool is_training) const
+void Pooling::forward_propagate_max_pooling(const Tensor4& inputs, TensorMap4& outputs) const
 {
-    TensorMap4 outputs = tensor_map<4>(forward_propagation->outputs);
-    PoolingForwardPropagation* pooling_forward_propagation = static_cast<PoolingForwardPropagation*>(forward_propagation.get());
-
     const Index batch_size = inputs.dimension(0);
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
@@ -347,19 +341,22 @@ void Pooling::forward_propagate_max_pooling(const Tensor4& inputs,
 
                     outputs(batch_index, output_row, output_column, channel_index) =
                         (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
-
+/*
                     if(is_training)
                         pooling_forward_propagation->maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
+*/
                 }
 }
 
 
-void Pooling::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                             unique_ptr<LayerBackPropagation>& back_propagation) const
+void Pooling::back_propagate(ForwardPropagation& forward_propagation,
+                             BackPropagation& back_propagation,
+                             size_t layer) const
 {
-    const TensorMap4 inputs = tensor_map<4>(forward_propagation->inputs[0]);
-    const TensorMap4 output_gradients = tensor_map<4>(back_propagation->output_gradients[0]);
 
+    const TensorMap4 inputs = tensor_map<4>(forward_propagation.views[layer][Inputs][0]);
+    const TensorMap4 output_gradients = tensor_map<4>(back_propagation.backward_views[layer][OutputGradients][0]);
+/*
     if(pooling_method == "MaxPooling")
         back_propagate_max_pooling(inputs,
                                    output_gradients,
@@ -369,27 +366,24 @@ void Pooling::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propag
         back_propagate_average_pooling(inputs,
                                        output_gradients,
                                        back_propagation);
+*/
 }
 
 
-void Pooling::back_propagate_max_pooling(const Tensor4& inputs,
-                                         const Tensor4& output_gradients,
-                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
+void Pooling::back_propagate_max_pooling(const Tensor4& output_gradients,
+                                         Tensor4& input_gradients,
                                          unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
+    const Index batch_size = input_gradients.dimension(0);
+    const Index input_height = input_gradients.dimension(1);
+    const Index input_width = input_gradients.dimension(2);
+    const Index channels = input_gradients.dimension(3);
 
     const Index output_height = output_gradients.dimension(1);
     const Index output_width = output_gradients.dimension(2);
 
-    PoolingForwardPropagation* pooling_forward_propagation = static_cast<PoolingForwardPropagation*>(forward_propagation.get());
-    TensorMap4 input_gradients = tensor_map<4>(back_propagation->input_gradients[0]);
-
     input_gradients.setZero();
-
+/*
     #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for(Index channel_index = 0; channel_index < channels; ++channel_index)
@@ -408,24 +402,22 @@ void Pooling::back_propagate_max_pooling(const Tensor4& inputs,
                         input_gradients(batch_index, input_row, input_column, channel_index) +=
                             output_gradients(batch_index, output_row, output_column, channel_index);
                 }
+*/
 }
 
 
-void Pooling::back_propagate_average_pooling(const Tensor4& inputs,
-                                             const Tensor4& output_gradients,
-                                             unique_ptr<LayerBackPropagation>& back_propagation) const
+void Pooling::back_propagate_average_pooling(const Tensor4& output_gradients, Tensor4& input_gradients) const
 {
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
+    const Index batch_size = input_gradients.dimension(0);
+    const Index input_height = input_gradients.dimension(1);
+    const Index input_width = input_gradients.dimension(2);
+    const Index channels = input_gradients.dimension(3);
 
     const Index output_height = output_gradients.dimension(1);
     const Index output_width = output_gradients.dimension(2);
 
     const type inv_pool_size = type(1) / (pool_height * pool_width);
 
-    TensorMap4 input_gradients = tensor_map<4>(back_propagation->input_gradients[0]);
     input_gradients.setZero();
 
     #pragma omp parallel for collapse(2)
@@ -456,7 +448,7 @@ void Pooling::back_propagate_average_pooling(const Tensor4& inputs,
 
 void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
-    TensorViewCuda outputs = forward_propagation->outputs;
+    TensorView outputs = forward_propagation->outputs;
 
     // Forward propagation
 
@@ -483,7 +475,7 @@ void Pooling::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_pr
 {
     // Forward propagation
     
-    const TensorViewCuda& outputs = forward_propagation->outputs;
+    const TensorView& outputs = forward_propagation->outputs;
 
     const PoolingForwardPropagationCuda* pooling_forward_propagation
         = static_cast<PoolingForwardPropagationCuda*>(forward_propagation.get());
@@ -551,77 +543,7 @@ void Pooling::from_XML(const XMLDocument& document)
 }
 
 
-PoolingForwardPropagation::PoolingForwardPropagation(const Index new_batch_size,
-                                                     Layer* new_layer)
-    : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void PoolingForwardPropagation::initialize()
-{
-    const Pooling* pooling_layer = static_cast<Pooling*>(layer);
-
-    const Index output_height = pooling_layer->get_output_height();
-    const Index output_width = pooling_layer->get_output_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    outputs.shape = {batch_size, output_height, output_width, channels};
-
-    if (pooling_layer->get_pooling_method() == "MaxPooling")
-        maximal_indices.resize(batch_size,
-                               output_height,
-                               output_width,
-                               channels);
-}
-
-
-vector<TensorView*> PoolingForwardPropagation::get_workspace_views()
-{
-    return {&outputs};
-}
-
-
-void PoolingForwardPropagation::print() const
-{
-    cout << "Pooling layer forward propagation" << endl
-         << "Outputs:" << endl
-         << outputs.shape << endl;
-}
-
-
-PoolingBackPropagation::PoolingBackPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerBackPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void PoolingBackPropagation::initialize()
-{
-    const Pooling* pooling_layer = static_cast<Pooling*>(layer);
-
-    input_gradients = {{nullptr, Shape{batch_size}.append(pooling_layer->get_input_shape())}};
-}
-
-
-void PoolingBackPropagation::print() const
-{
-    cout << "Pooling layer back propagation" << endl;
-    cout << "Input output_gradients:" << endl
-         << input_gradients[0].shape << endl;
-}
-
-
 #ifdef OPENNN_CUDA
-
-PoolingForwardPropagationCuda::PoolingForwardPropagationCuda(const Index new_batch_size, Layer* new_layer)
-    : LayerForwardPropagationCuda()
-{
-    set(new_batch_size, new_layer);
-}
-
 
 void PoolingForwardPropagationCuda::initialize()
 {
@@ -636,8 +558,6 @@ void PoolingForwardPropagationCuda::initialize()
 
     // Inputs
     
-    cudnnCreateTensorDescriptor(&input_tensor_descriptor);
-
     cudnnSetTensor4dDescriptor(input_tensor_descriptor,
                                CUDNN_TENSOR_NHWC,
                                CUDNN_DATA_FLOAT,
@@ -652,29 +572,9 @@ void PoolingForwardPropagationCuda::initialize()
 }
 
 
-vector<TensorViewCuda*> PoolingForwardPropagationCuda::get_workspace_views()
+vector<TensorView*> PoolingForwardPropagationCuda::get_workspace_views()
 {
     return { &outputs };
-}
-
-
-void PoolingForwardPropagationCuda::print() const
-{
-    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
-
-    const Index output_height = pooling_layer->get_output_height();
-    const Index output_width = pooling_layer->get_output_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    cout << "Pooling layer forward propagation CUDA" << endl;
-    cout << "Batch size: " << batch_size << endl;
-    cout << "Outputs dimensions: " << output_height << "x" << output_width << "x" << channels << endl;
-    cout << "Outputs data:" << endl;
-
-    if (outputs.data)
-        cout << tensor4_from_device(outputs.data, batch_size, output_height, output_width, channels) << endl;
-    else
-        cout << "Empty (nullptr)" << endl;
 }
 
 
@@ -682,13 +582,6 @@ void PoolingForwardPropagationCuda::free()
 {
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     input_tensor_descriptor = nullptr;
-}
-
-
-PoolingBackPropagationCuda::PoolingBackPropagationCuda(const Index new_batch_size, Layer* new_layer)
-    : LayerBackPropagationCuda()
-{
-    set(new_batch_size, new_layer);
 }
 
 
@@ -702,38 +595,12 @@ void PoolingBackPropagationCuda::initialize()
 
     // Input derivatives
 
-    input_gradients = {TensorViewCuda({batch_size, input_height, input_width, channels})};
+    input_gradients = {TensorView({batch_size, input_height, input_width, channels})};
 }
-
-
-void PoolingBackPropagationCuda::print() const
-{
-    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
-
-    const Index input_height = pooling_layer->get_input_height();
-    const Index input_width = pooling_layer->get_input_width();
-    const Index channels = pooling_layer->get_channels_number();
-
-    cout << "Pooling layer back propagation CUDA" << endl;
-    cout << "Batch size: " << batch_size << endl;
-    cout << "Inputs derivatives dimensions: " << input_height << "x" << input_width << "x" << channels << endl;
-    cout << "Inputs derivatives data:" << endl;
-
-    if (!input_gradients.empty() && input_gradients[0].data)
-        cout << tensor4_from_device(input_gradients[0].data, batch_size, input_height, input_width, channels) << endl;
-    else
-        cout << "Empty (nullptr)" << endl;
-}
-
-
-REGISTER(LayerForwardPropagationCuda, PoolingForwardPropagationCuda, "Pooling")
-REGISTER(LayerBackPropagationCuda, PoolingBackPropagationCuda, "Pooling")
 
 #endif
 
 REGISTER(Layer, Pooling, "Pooling")
-REGISTER(LayerForwardPropagation, PoolingForwardPropagation, "Pooling")
-REGISTER(LayerBackPropagation, PoolingBackPropagation, "Pooling")
 
 }
 

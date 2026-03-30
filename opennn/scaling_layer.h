@@ -12,11 +12,11 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "string_utilities.h"
+#include "neural_network.h"
 
 namespace opennn
 {
 
-template<int Rank> struct ScalingForwardPropagation;
 template<int Rank> struct ScalingForwardPropagationCuda;
 
 template<int Rank>
@@ -188,9 +188,9 @@ public:
     }
 
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
-                           bool) override
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool) override
     {
+/*
         const Index features = scalers.size();
         const Index total_rows = forward_propagation->inputs[0].size() / features;
 
@@ -219,12 +219,13 @@ public:
             else
                 throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
         }
+*/
     }
 
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().size() == 0 ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
 
         ostringstream buffer;
 
@@ -239,7 +240,7 @@ public:
 
     string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().size() == 0 ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
 
         ostringstream buffer;
 
@@ -269,7 +270,7 @@ public:
 
     string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().size() == 0 ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
 
         ostringstream buffer;
 
@@ -428,6 +429,8 @@ public:
 
 private:
 
+
+
     Shape input_shape;
 
     vector<Descriptives> descriptives;
@@ -442,22 +445,9 @@ private:
 template<int Rank>
 struct ScalingForwardPropagation final : LayerForwardPropagation
 {
-    ScalingForwardPropagation(const Index new_batch_size = 0, Layer* new_layer = nullptr)
-    {
-        set(new_batch_size, new_layer);
-    }
-
-    virtual ~ScalingForwardPropagation() = default;
-
     void initialize() override
     {
         outputs.shape = Shape{batch_size}.append(layer->get_output_shape());
-    }
-
-    void print() const override
-    {
-        cout << "Outputs:" << endl
-             << outputs.shape << endl;
     }
 };
 
@@ -467,16 +457,8 @@ struct ScalingForwardPropagation final : LayerForwardPropagation
 template<int Rank>
 struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    ScalingForwardPropagationCuda(const Index & new_batch_size = 0, Layer* new_layer = nullptr)
-        : LayerForwardPropagationCuda()
-    {
-        set(new_batch_size, new_layer);
-    }
-
     void initialize() override
     {
-        const Scaling<Rank>* scaling_layer = static_cast<Scaling<Rank>*>(layer);
-
         const Index outputs_number = scaling_layer->get_outputs_number();
 
         outputs.set_descriptor({static_cast<int>(batch_size), static_cast<int>(outputs_number)});

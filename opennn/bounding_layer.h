@@ -51,11 +51,7 @@ public:
 
     // Lower and upper bounds
 
-    void forward_propagate(unique_ptr<LayerForwardPropagation>&, bool) override;
-
-#ifdef OPENNN_CUDA
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&, bool) override;
-#endif
+    void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     // Expression
 
@@ -71,36 +67,14 @@ public:
 
 private:
 
+    enum Forward {Inputs = 0, Outputs = 1};
+
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 
     VectorR lower_bounds;
 
     VectorR upper_bounds;
 };
-
-
-struct BoundingForwardPropagation final : LayerForwardPropagation
-{
-    BoundingForwardPropagation(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;   
-};
-
-
-#ifdef OPENNN_CUDA
-
-struct BoundingForwardPropagationCuda final : public LayerForwardPropagationCuda
-{
-    BoundingForwardPropagationCuda(const Index = 0, Layer* = nullptr);
-
-    void initialize() override;
-
-    void print() const override;
-};
-
-#endif
 
 }
 

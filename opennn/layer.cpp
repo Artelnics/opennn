@@ -14,40 +14,6 @@
 namespace opennn
 {
 
-
-void LayerForwardPropagation::set(const Index new_batch_size, Layer* new_layer)
-{
-    if(!new_layer) return;
-
-    batch_size = new_batch_size;
-    layer = new_layer;
-
-    initialize();
-}
-
-
-void LayerBackPropagation::set(const Index new_batch_size, Layer* new_layer)
-{
-    if(!new_layer) return;
-
-    batch_size = new_batch_size;
-    layer = new_layer;
-
-    initialize();
-}
-
-
-void LayerBackPropagationLM::set(const Index new_batch_size, Layer* new_layer)
-{
-    if(!new_layer) return;
-
-    batch_size = new_batch_size;
-    layer = new_layer;
-
-    initialize();
-}
-
-
 TensorView LayerForwardPropagation::get_outputs() const
 {
     return outputs;
@@ -129,34 +95,34 @@ void LayerBackPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
 }
 
 
-vector<TensorViewCuda *> LayerBackPropagationCuda::get_gradient_views()
+vector<TensorView *> LayerBackPropagationCuda::get_gradient_views()
 {
-    return vector<TensorViewCuda*>();
+    return vector<TensorView*>();
 }
 
 
-vector<TensorViewCuda *> LayerBackPropagationCuda::get_workspace_views()
+vector<TensorView *> LayerBackPropagationCuda::get_workspace_views()
 {
-    vector<TensorViewCuda*> views;
-    for (TensorViewCuda& view : input_gradients)
+    vector<TensorView*> views;
+    for (TensorView& view : input_gradients)
         views.push_back(&view);
     return views;
 }
 
 
-TensorViewCuda LayerForwardPropagationCuda::get_outputs() const
+TensorView LayerForwardPropagationCuda::get_outputs() const
 {
     return outputs;
 }
 
 
-vector<TensorViewCuda*> LayerForwardPropagationCuda::get_workspace_views()
+vector<TensorView*> LayerForwardPropagationCuda::get_workspace_views()
 {
     return { &outputs };
 }
 
 
-vector<TensorViewCuda> LayerBackPropagationCuda::get_input_gradient_views() const
+vector<TensorView> LayerBackPropagationCuda::get_input_gradient_views() const
 {
     return input_gradients;
 }
@@ -204,15 +170,18 @@ void Layer::set_display(bool new_display)
 
 void Layer::set_parameters_random()
 {
+/*
     const vector<TensorView*> parameter_views = get_parameter_views();
 
     for(const auto& view : parameter_views)
         set_random_uniform(VectorMap(view->data, view->size()));
+*/
 }
 
 
 void Layer::set_parameters_glorot()
 {
+/*
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
@@ -222,17 +191,18 @@ void Layer::set_parameters_glorot()
 
     for(const TensorView* view : parameter_views)
         set_random_uniform(VectorMap(view->data, view->size()), -limit, limit);
+*/
 }
 
 
 Index Layer::get_parameters_number()
 {
-    vector<TensorView*> parameter_views = get_parameter_views();
+    vector<Shape> parameter_shapes = get_parameter_shapes();
 
     Index parameters_number = 0;
 
-    for (const auto* view : parameter_views)
-        parameters_number += view->size();
+    for (const auto& shape : parameter_shapes)
+        parameters_number += shape.size();
 
     return parameters_number;
 }
@@ -305,7 +275,7 @@ Index Layer::get_outputs_number() const
 }
 
 
-void Layer::forward_propagate(unique_ptr<LayerForwardPropagation>&, bool)
+void Layer::forward_propagate(ForwardPropagation&, size_t, bool)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
