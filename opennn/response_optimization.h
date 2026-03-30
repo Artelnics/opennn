@@ -9,10 +9,11 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
+#include "scaling_layer.h"
+#include "unscaling_layer.h"
 #pragma once
 
 #include "pch.h"
-#include "dataset.h"
 #include "statistics.h"
 #include "variable.h"
 
@@ -25,7 +26,7 @@ class ResponseOptimization
 {
 public:
 
-    enum class ConditionType {None, Between, EqualTo, LessEqualTo, GreaterEqualTo, LessThan, GreaterThan, Minimize, Maximize};
+    enum class ConditionType {None, Between, EqualTo, LessEqualTo, GreaterEqualTo, LessThan, GreaterThan, Minimize, Maximize, Past};
 
     struct Condition
     {
@@ -42,23 +43,21 @@ public:
         Domain() = default;
         virtual ~Domain() = default;
 
-        Domain(const vector<Index>& feature_dimensions, const vector<Descriptives>& descriptives)
+        Domain(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor =type(1))
         {
-            set(feature_dimensions, descriptives);
+            set(variables, descriptives, deformation_domain_factor);
         }
 
-        void set(const vector<Index>& feature_dimensions, const vector<Descriptives>& descriptives);
+        void set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor =type(1));
 
-        void bound(const vector<Index>& feature_dimensions, const vector<Condition>& conditions);
+        void bound(const vector<Variable>& variables, const vector<Condition>& conditions);
 
-        void reshape(const type zoom_factor,
-                     const VectorR& center,
-                     const MatrixR& subset_optimal_points,
-                     const vector<Index>& input_feature_dimensions,
-                     const vector<VariableType>& input_variable_types);
+        void reshape(const type zoom_factor, const VectorR& center, const MatrixR& subset_optimal_points, const vector<Variable>& vars);
 
         VectorR inferior_frontier;
         VectorR superior_frontier;
+
+        MatrixR allowed_values;
     };
 
     struct Objectives
@@ -76,27 +75,46 @@ public:
         void normalize(MatrixR& objective_matrix) const;
     };
 
+    ResponseOptimization(NeuralNetwork* = nullptr);
+
+    void set(NeuralNetwork* = nullptr);
+
     Objectives build_objectives() const;
 
-    ResponseOptimization(NeuralNetwork* = nullptr, Dataset* = nullptr);
-
-    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
-
     void clear_conditions();
-    void set_condition(const string& name, const ConditionType condition, type low = 0.0, type up = 0.0);
+    void clear_conditions(const string& name);
+
+    Condition get_condition(const string& name) const;
+
+    void set_condition(const string& name, const ConditionType condition = ConditionType::None, type low = 0.0, type up = 0.0);
+
+    void set_fixed_history(const Tensor3& history);
 
     void set_iterations(const int iterations);
     void set_zoom_factor(type new_zoom_factor);
     void set_evaluations_number(const int new_evaluations_number);
     void set_relative_tolerance(type new_relative_tolerance);
 
+    void set_deformation_domain_factor(type new_deformation_domain_factor);
+    type get_deformation_domain_factor();
+
+    Scaling<2>* get_scaling_layer_2d() const;
+    Scaling<3>* get_scaling_layer_3d() const;
+    Unscaling* get_unscaling_layer() const;
+
+    vector<Descriptives> get_descriptives(const string& ) const;
+
+    pair<vector<Variable>, vector<Descriptives>> get_variables_and_descriptives(const string& role) const;
+
     vector<type> get_utopian_point() const;
 
     Domain get_original_domain(const string role) const;
 
-    Condition get_condition(const Index index) const;
-
     MatrixR calculate_random_inputs(const Domain& input_domain) const;
+
+    Tensor3 input_constructor(const MatrixR& present_random_values) const;
+
+    MatrixR calculate_outputs(const MatrixR& optimized_variables) const;
 
     pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
                                                   const MatrixR& outputs,
@@ -118,13 +136,12 @@ public:
 
     MatrixR perform_response_optimization() const;
 
+
 private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
-
-    vector<Condition> conditions;
+    map<string, Condition> conditions;
 
     Index evaluations_number = 2000;
 
@@ -136,7 +153,13 @@ private:
 
     type relative_tolerance = type(0.001);
 
+    type deformation_domain_factor = type(1);
+
     //minimum number of points?
+
+    Tensor3 fixed_history; //(1 matrix, time_steps,  features_dimentions )
+    //@simone @todo, forecasting start from here
+    bool is_forecasting = false;
 };
 
 }

@@ -11,49 +11,62 @@
 #include "pch.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
-#include "dataset.h"
 #include "neural_network.h"
 #include "variable.h"
 
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
 {
-    set(new_neural_network, new_dataset);
+    set(new_neural_network);
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
-    dataset = new_dataset;
 
-    if(!neural_network || !dataset)
+    if(!neural_network)
         return;
-
-    const Index variables_number = dataset->get_variables_number();
-
-    conditions.assign(static_cast<size_t>(variables_number), Condition(ConditionType::None));
 }
+
 
 void ResponseOptimization::set_condition(const string& name, const ConditionType condition, type low, type up)
 {
-    if(!dataset)
-        throw runtime_error("Dataset not set.");
-
-    const Index index = dataset->get_variable_index(name);
-
-    conditions[index] = Condition(condition, low, up);
+   conditions[name] = Condition(condition, low, up);
 }
+
 
 void ResponseOptimization::clear_conditions()
 {
-    if(dataset)
-        conditions.assign(static_cast<size_t>(dataset->get_variables_number()), Condition(ConditionType::None));
-    else
-        conditions.clear();
+    conditions.clear();
 }
+
+
+void ResponseOptimization::clear_conditions(const string& name)
+{
+    conditions.erase(name);
+}
+
+
+ResponseOptimization::Condition ResponseOptimization::get_condition(const string& name) const
+{
+    auto it = conditions.find(name);
+
+    if (it != conditions.end())
+        return it->second;
+
+    return Condition(ConditionType::None);
+}
+
+
+void ResponseOptimization::set_fixed_history(const Tensor3& history)
+{
+    fixed_history = history;
+    is_forecasting = true;
+}
+
 
 void ResponseOptimization::set_evaluations_number(const int new_evaluations_number)
 {
@@ -79,14 +92,108 @@ void ResponseOptimization::set_relative_tolerance(type new_relative_tolerance)
 }
 
 
-void ResponseOptimization::Domain::set(const vector<Index>& feature_dimensions, const vector<Descriptives>& descriptives)
+void ResponseOptimization::set_deformation_domain_factor(type new_deformation_domain_factor)
 {
-    const Index variables_number = static_cast<Index>(feature_dimensions.size());
+    deformation_domain_factor = new_deformation_domain_factor;
+}
+
+type ResponseOptimization::get_deformation_domain_factor()
+{
+    return deformation_domain_factor;
+}
+
+Scaling<2>* ResponseOptimization::get_scaling_layer_2d() const
+{
+    if(!neural_network->has("Scaling2d"))
+        return nullptr;
+
+    return static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"));
+}
+
+Unscaling* ResponseOptimization::get_unscaling_layer() const
+{
+    if(!neural_network->has("Unscaling"))
+        return nullptr;
+
+    return static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+}
+
+vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
+{
+    if (role == "Input")
+    {
+        if (neural_network->has("Scaling2d"))
+            return static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"))->get_descriptives();
+        if (neural_network->has("Scaling3d"))
+            return static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"))->get_descriptives();
+        if (neural_network->has("Scaling4d"))
+            return static_cast<Scaling<4>*>(neural_network->get_first("Scaling4d"))->get_descriptives();
+    }
+    else if (role == "Target")
+        if (neural_network->has("Unscaling"))
+            return static_cast<Unscaling*>(neural_network->get_first("Unscaling"))->get_descriptives();
+
+    throw runtime_error("ResponseOptimization: Required Scaling/Unscaling layer for role '" + role + "' not found.");
+}
+
+pair<vector<Variable>, vector<Descriptives>> ResponseOptimization::get_variables_and_descriptives(const string& role) const
+{
+    const bool is_input_request = (role == "Input");
+
+    const vector<Variable>& variables_uncheked = is_input_request ? neural_network->get_input_variables()
+                                                        : neural_network->get_output_variables();
+
+    const vector<Descriptives> descriptives_uncheked = get_descriptives(is_input_request ? "Input" : "Target");
+
+    if (variables_uncheked.size() != descriptives_uncheked.size())
+        throw runtime_error("ResponseOptimization: Variable count and Descriptives count mismatch.");
+
+    vector<Variable> filtered_vars;
+    vector<Descriptives> filtered_desc;
+
+    for (size_t i = 0; i < variables_uncheked.size(); ++i)
+    {
+        const string& var_role = variables_uncheked[i].role;
+
+        const Condition current_cond = get_condition(variables_uncheked[i].name);
+
+        if (current_cond.condition == ConditionType::Past)
+            continue; // Skip this variable entirely for optimization purposes
+
+        if (is_input_request)
+        {
+            if (var_role == "Input")
+            {
+                filtered_vars.push_back(variables_uncheked[i]);
+                filtered_desc.push_back(descriptives_uncheked[i]);
+            }
+        }
+        else
+            if (var_role == "Target" || var_role == "InputTarget")
+            {
+                filtered_vars.push_back(variables_uncheked[i]);
+                filtered_desc.push_back(descriptives_uncheked[i]);
+            }
+
+    }
+
+    return {filtered_vars, filtered_desc};
+}
+
+void ResponseOptimization::Domain::set(const vector<Variable>& variables, const vector<Descriptives>& descriptives, const type deformation_domain_factor)
+{
+
+    const Index variables_number = static_cast<Index>(variables.size());
+
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
     const Index total_feature_dimensions = accumulate(feature_dimensions.begin(), feature_dimensions.end(), Index(0));
 
     inferior_frontier.resize(total_feature_dimensions);
     superior_frontier.resize(total_feature_dimensions);
+
+    allowed_values.resize(total_feature_dimensions, 1);
+    allowed_values.setConstant(numeric_limits<type>::quiet_NaN());
 
     Index feature_index = 0;
 
@@ -101,47 +208,51 @@ void ResponseOptimization::Domain::set(const vector<Index>& feature_dimensions, 
         }
         else
         {
-            inferior_frontier(feature_index) = static_cast<type>(descriptives[variable].minimum);
-            superior_frontier(feature_index) = static_cast<type>(descriptives[variable].maximum);
+            const type original_minimum = static_cast<type>(descriptives[variable].minimum);
+            const type original_maximum = static_cast<type>(descriptives[variable].maximum);
+
+            const type center = (original_maximum + original_minimum) * 0.5f;
+            const type half_range = (original_maximum - original_minimum) * 0.5f * deformation_domain_factor;
+
+            inferior_frontier(feature_index) = center - half_range;
+            superior_frontier(feature_index) = center + half_range;
         }
 
         feature_index += feature_dimension;
     }
 }
 
-
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(const string role) const
 {
-    const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
+    const auto [variables, descriptives] = get_variables_and_descriptives(role);
 
-    const vector<Index> variable_indices = dataset->get_variable_indices(role);
+    const size_t variables_number = variables.size();
 
-    const vector<Index> feature_by_role_dimensions = gather_by_index(feature_dimensions, variable_indices);
+    if (descriptives.size() != variables_number)
+        throw runtime_error("ResponseOptimization: Descriptives count (" + to_string(descriptives.size()) +
+                            ") does not match variables count (" + to_string(variables_number) + ") for " + role);
 
-    const vector<Descriptives> feture_descriptives = dataset->calculate_feature_descriptives(role);
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
 
-    const vector<Condition> conditions_by_role = gather_by_index(conditions, variable_indices);
+    vector<Condition> applicable_conditions;
+    applicable_conditions.reserve(variables_number);
 
-    Domain original_domain(feature_by_role_dimensions, feture_descriptives);
+    for (const auto& variable : variables)
+        applicable_conditions.push_back(get_condition(variable.name));
 
-    original_domain.bound(feature_by_role_dimensions, conditions_by_role);
+    Domain original_domain(variables, descriptives, deformation_domain_factor);
+
+    original_domain.bound(variables, applicable_conditions);
 
     return original_domain;
-}
-
-ResponseOptimization::Condition ResponseOptimization::get_condition(const Index index) const
-{
-    return conditions[index];
 }
 
 
 ResponseOptimization::Objectives::Objectives(const ResponseOptimization& response_optimization)
 {
-    const vector<Index> feature_dimensions = response_optimization.dataset->get_feature_dimensions();
-
     Index objectives_number = 0;
 
-    for (const auto& constraints : response_optimization.conditions)
+    for (const auto& [_, constraints] : response_optimization.conditions)
         if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
             objectives_number++;
 
@@ -158,23 +269,23 @@ ResponseOptimization::Objectives::Objectives(const ResponseOptimization& respons
 
     auto process_role = [&](const string& role)
     {
-
-        const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role);
-        const vector<Index> feature_dimensions_by_role = gather_by_index(feature_dimensions, variable_indices);
-
-        const Domain domain = response_optimization.get_original_domain(role);
-
         const bool is_input = (role == "Input");
+
+        const auto [variables, descriptives] = response_optimization.get_variables_and_descriptives(role);
+
+        //const vector<Index> variable_indices = response_optimization.dataset->get_variable_indices(role, use_exact);
+        const vector<Index> feature_dimensions_by_role = get_feature_dimensions(variables);
+        const Domain domain = response_optimization.get_original_domain(role);
 
         Index feature_pointer = 0;
 
-        for (Index i = 0; i < static_cast<Index>(variable_indices.size()); ++i)
+        for (Index i = 0; i < static_cast<Index>(variables.size()); ++i)
         {
-            const Condition& current_condition = response_optimization.conditions[variable_indices[i]];
+            const Condition current_condition = response_optimization.get_condition(variables[i].name);
 
             if (current_condition.condition == ConditionType::Maximize || current_condition.condition == ConditionType::Minimize)
             {
-                objective_sources(0, current_objective_index) = is_input ? 1.0 : 0.0;
+                objective_sources(0, current_objective_index) = is_input ? 1.0f : 0.0f;
 
                 objective_sources(1, current_objective_index) = static_cast<type>(feature_pointer);
 
@@ -212,11 +323,12 @@ ResponseOptimization::Objectives ResponseOptimization::build_objectives() const
     return  Objectives(*this);
 }
 
-void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions, const vector<Condition>& conditions)
+void ResponseOptimization::Domain::bound(const vector<Variable>& variables, const vector<Condition>& conditions)
 {
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
     Index feature_index = 0;
 
-    for(size_t variable_index = 0; variable_index < feature_dimensions.size(); ++variable_index)
+    for(size_t variable_index = 0; variable_index < variables.size(); ++variable_index)
     {
         const Index feature_dimension = feature_dimensions[variable_index];
 
@@ -266,26 +378,24 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
 
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain) const
 {
-    const Index inputs_features_number = input_domain.inferior_frontier.size();
+    const auto [variables, descriptives] = get_variables_and_descriptives("Input");
 
-    const vector<Index> input_indices = dataset->get_variable_indices("Input");
-    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const vector<Index> input_feature_dimensions = get_feature_dimensions(variables);
 
-    const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
-    const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
+    const Index inputs_features_number = get_features_number(variables);
 
     MatrixR random_inputs(evaluations_number, inputs_features_number);
     set_random_uniform(random_inputs, 0, 1);
 
     Index current_feature_index = 0;
 
-    for(size_t input_variable = 0; input_variable < input_feature_dimensions.size(); ++input_variable)
+    for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
     {
         const Index categories_number = input_feature_dimensions[input_variable];
 
         if(categories_number == 1)
         {
-            if (input_variable_types[input_variable] == VariableType::Binary)
+            if (variables[input_variable].type == VariableType::Binary)
                 random_inputs.col(current_feature_index).array() = random_inputs.col(current_feature_index).array().round();
             else
             {
@@ -307,8 +417,8 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
                 if(input_domain.superior_frontier(current_feature_index + i) > 0.5)
                     allowed_categories.push_back(i);
 
-            for(Index row = 0; row < evaluations_number; ++row)
-                random_inputs(row, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
+            for(Index i = 0; i < evaluations_number; ++i)
+                random_inputs(i, current_feature_index + allowed_categories[random_integer(0, allowed_categories.size()-1)]) = 1.0;
 
             current_feature_index += categories_number;
         }
@@ -317,12 +427,78 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
     return random_inputs;
 }
 
+
+Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_candidates) const
+{
+    // Get all 8 input features
+
+    const vector<Variable> all_input_vars = neural_network->get_input_variables();
+    const Index batch_size = controllable_candidates.rows(); // 1000
+    const Shape input_shape = neural_network->get_input_shape();
+    const Index total_lags = input_shape[0]; // 2
+    const Index total_features = input_shape[1]; // 8
+
+    // Create the target tensor [1000, 2, 8]
+    Tensor3 constructed_input(batch_size, total_lags, total_features);
+
+    // Step 1: Copy the "Perfect Rectangle" (History) to all 1000 samples
+    // This fills [1000, 2, 8] with the state and previous settings
+    constructed_input.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
+
+    // Step 2: Paste the 5 "Line on Top" candidate values
+    // into the last lag (current time step)
+    Index feature_cursor = 0;      // Moves 0 to 7 (8 total)
+    Index candidate_col_cursor = 0; // Moves 0 to 4 (5 total)
+
+    for (const auto& variable : all_input_vars)
+    {
+        const Index dim = variable.is_categorical() ? variable.get_categories_number() : 1;
+
+        const Condition current_cond = get_condition(variable.name);
+
+        if (variable.role == "Input" && current_cond.condition != ConditionType::Past)
+        {
+            // Only overwrite the last time step (total_lags - 1)
+            for (Index i = 0; i < batch_size; ++i)
+            {
+                for(Index d = 0; d < dim; ++d)
+                {
+                    constructed_input(i, total_lags - 1, feature_cursor + d) =
+                        controllable_candidates(i, candidate_col_cursor + d);
+                }
+            }
+            candidate_col_cursor += dim;
+        }
+        // If role is "InputTarget", we do nothing.
+        // The value from 'fixed_history' remains there.
+
+        feature_cursor += dim;
+    }
+
+    return constructed_input;
+}
+
+MatrixR ResponseOptimization::calculate_outputs(const MatrixR& optimized_variables) const
+{
+    if (is_forecasting)
+    {
+        if(fixed_history.size() == 0)
+            throw runtime_error("ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
+
+        const Tensor3 formatted_input = input_constructor(optimized_variables);
+
+        return neural_network->calculate_outputs(formatted_input);
+    }
+        return neural_network->calculate_outputs(optimized_variables);
+}
+
 void ResponseOptimization::Domain::reshape(const type zoom_factor,
                                            const VectorR& center,
                                            const MatrixR& optimal_points_inputs,
-                                           const vector<Index>& input_feature_dimensions,
-                                           const vector<VariableType>& input_variable_types)
+                                           const vector<Variable>& variables)
 {
+    const vector<Index> feature_dimensions = get_feature_dimensions(variables);
+
     VectorR categories_to_save = optimal_points_inputs.colwise().maxCoeff();
 
     for(Index i = 0; i < categories_to_save.size(); ++i)
@@ -331,11 +507,11 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
 
     Index current_feature_index = 0;
 
-    for(size_t input_variable = 0; input_variable < input_feature_dimensions.size(); ++input_variable)
+    for(size_t input_variable = 0; input_variable < variables.size(); ++input_variable)
     {
-        const Index categories_number = input_feature_dimensions[input_variable];
+        const Index categories_number = feature_dimensions[input_variable];
 
-        if(categories_number == 1 && input_variable_types[input_variable] != VariableType::Binary)
+        if(categories_number == 1 && variables[input_variable].type != VariableType::Binary)
         {
             const type half_span = (superior_frontier(current_feature_index) - inferior_frontier(current_feature_index)) * zoom_factor / 2;
             inferior_frontier(current_feature_index) = max(center(current_feature_index) - half_span, inferior_frontier(current_feature_index));
@@ -355,9 +531,15 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
         current_feature_index += categories_number;
     }
 }
-
+/*
 pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
 {
+
+
+
+
+
+
     const vector<Index> feasible_rows = build_feasible_rows_mask(outputs, output_domain.inferior_frontier, output_domain.superior_frontier);
 
     if(feasible_rows.empty())
@@ -375,6 +557,51 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     return {feasible_inputs, feasible_outputs};
 }
 
+*/
+
+pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
+{
+    const vector<Variable>& target_vars = neural_network->get_output_variables();
+    const Index rows_count = outputs.rows();
+
+    // 1. Start with all row indices as "potentially feasible"
+    vector<Index> feasible_indices(rows_count);
+    std::iota(feasible_indices.begin(), feasible_indices.end(), 0);
+
+    // 2. Loop through columns and apply filters ONLY for Hard Constraints
+    for (size_t j = 0; j < target_vars.size(); ++j)
+    {
+        const Condition current_condition = get_condition(target_vars[j].name);
+
+        if (!(current_condition.condition == ConditionType::Maximize ||
+              current_condition.condition == ConditionType::Minimize ||
+              current_condition.condition == ConditionType::None))
+        {
+            feasible_indices = filter_selected_indices_by_column(outputs,
+                                                        feasible_indices,
+                                                        static_cast<Index>(j),
+                                                        output_domain.inferior_frontier(j),
+                                                        output_domain.superior_frontier(j));
+        }
+
+        if (feasible_indices.empty())
+            break;
+    }
+
+    if (feasible_indices.empty())
+        return {MatrixR(), MatrixR()};
+
+    MatrixR feasible_inputs((Index)feasible_indices.size(), inputs.cols());
+    MatrixR feasible_outputs((Index)feasible_indices.size(), outputs.cols());
+
+    for (Index i = 0; i < (Index)feasible_indices.size(); ++i)
+    {
+        feasible_inputs.row(i) = inputs.row(feasible_indices[i]);
+        feasible_outputs.row(i) = outputs.row(feasible_indices[i]);
+    }
+
+    return {feasible_inputs, feasible_outputs};
+}
 
 MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
@@ -425,53 +652,17 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
     return {nearest_inputs, nearest_outputs};
 }
 
-
 MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const MatrixR& outputs) const
 {
-    const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
-
-    const Index total_variables_number = (Index)feature_dimensions.size();
-
-    vector<Index> global_starts_blocks(total_variables_number, 0);
-
-    for (Index i = 1; i < total_variables_number; ++i)
-        global_starts_blocks[i] = global_starts_blocks[i - 1] + feature_dimensions[i - 1];
-
-    MatrixR result(inputs.rows(), global_starts_blocks.back() + feature_dimensions.back());
-
-    auto copy_blocks = [&](const vector<Index>& indices_in_out, const vector<Index>& hot_encoded_dimensions, const MatrixR& source_to_copy)
-    {
-        Index start_source_feature_columns = 0;
-
-        for (size_t i = 0; i < indices_in_out.size(); ++i)
-        {
-            result.block(0, global_starts_blocks[indices_in_out[i]], inputs.rows(), hot_encoded_dimensions[i])
-                = source_to_copy.block(0, start_source_feature_columns, inputs.rows(), hot_encoded_dimensions[i]);
-                  start_source_feature_columns += hot_encoded_dimensions[i];
-        }
-    };
-
-    const vector<Index> output_indices = dataset->get_variable_indices("Target");
-    const vector<Index> output_feature_dimensions = gather_by_index(feature_dimensions, output_indices);
-
-    const vector<Index> input_indices = dataset->get_variable_indices("Input");
-    const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
-
-    copy_blocks(input_indices, input_feature_dimensions, inputs);
-    copy_blocks(output_indices, output_feature_dimensions, outputs);
-
+    MatrixR result(inputs.rows(), inputs.cols() + outputs.cols());
+    result.leftCols(inputs.cols()) = inputs;
+    result.rightCols(outputs.cols()) = outputs;
     return result;
 }
 
 MatrixR ResponseOptimization::perform_single_objective_optimization(const Objectives& objectives) const
 {
-    const vector<Index> input_indices = dataset->get_variable_indices("Input");
-
-    const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
-
-    const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
-
-    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const auto [input_variables, descriptives] = get_variables_and_descriptives("Input");
 
     const Domain original_input_domain = get_original_domain("Input");
 
@@ -491,7 +682,12 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
     {
         const MatrixR random_inputs = calculate_random_inputs(input_domain_to_iterate);
 
-        auto [feasible_inputs, feasible_outputs] = filter_feasible_points(random_inputs, neural_network->calculate_outputs(random_inputs), original_output_domain);
+        const MatrixR outputs = calculate_outputs(random_inputs);
+
+        if (outputs.hasNaN())
+            cout << "Model produced NaN" << endl;
+
+        auto [feasible_inputs, feasible_outputs] = filter_feasible_points(random_inputs, outputs, original_output_domain);
 
         if (feasible_inputs.rows() == 0)
             cout << "!!! [Critical] Zero feasible points found. "
@@ -515,7 +711,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
 
         previous_optimal_point = optimal_point;
 
-        input_domain_to_iterate.reshape(zoom_factor, optimal_set.first.row(0), optimal_set.first, input_feature_dimensions, input_variable_types);
+        input_domain_to_iterate.reshape(zoom_factor, optimal_set.first.row(0), optimal_set.first, input_variables);
     }
 
     return optimal_set.first.rows() == 0
@@ -628,20 +824,21 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
 MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectives& objectives) const
 {
-    const vector<Index> input_indices = dataset->get_variable_indices("Input");
+    const auto [input_variables, input_descriptives] = get_variables_and_descriptives("Input");
 
-    const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
-    const vector<Index> input_feature_dimensions = gather_by_index(feature_dimensions, input_indices);
-
-    const vector<VariableType> input_variable_types = dataset->get_variable_types(input_indices);
+    const auto [output_variables, output_descriptives] = get_variables_and_descriptives("Target");
 
     const Domain original_input_domain = get_original_domain("Input");
 
     const Domain original_output_domain = get_original_domain("Target");
 
+    Domain input_domain_to_iterate = original_input_domain;
+
     const MatrixR first_random_inputs = calculate_random_inputs(original_input_domain);
 
-    auto [first_feasible_inputs, first_feasible_outputs] = filter_feasible_points(first_random_inputs, neural_network->calculate_outputs(first_random_inputs), original_output_domain);
+    const MatrixR first_outputs = calculate_outputs(first_random_inputs);
+
+    auto [first_feasible_inputs, first_feasible_outputs] = filter_feasible_points(first_random_inputs, first_outputs, original_output_domain);
 
     if (first_feasible_inputs.rows() == 0)
     {
@@ -677,7 +874,9 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         {
             const MatrixR local_random_inputs = calculate_random_inputs(local_input_domains[j]);
 
-            auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, neural_network->calculate_outputs(local_random_inputs), original_output_domain);
+            const MatrixR local_outputs = calculate_outputs(local_random_inputs);
+
+            auto [local_feasible_inputs, local_feasible_outputs] = filter_feasible_points(local_random_inputs, local_outputs, original_output_domain);
 
             MatrixR local_objective_matrix  = objectives.extract(local_feasible_inputs, local_feasible_outputs);
             objectives.normalize(local_objective_matrix);
@@ -731,7 +930,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         const MatrixR best_and_pareto = append_rows(optimal_set.first,global_pareto_inputs);
 
         for (Index j = 0; j < global_pareto_inputs.rows(); j++)
-            local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j),best_and_pareto , input_feature_dimensions, input_variable_types);
+            local_input_domains[j].reshape(current_zoom, global_pareto_inputs.row(j),best_and_pareto , input_variables);
 
         current_zoom *= zoom_factor;
     }
@@ -742,10 +941,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
 
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
-    if(!dataset)
-        throw runtime_error("Dataset not set\n");
-
-     const Objectives objectives = build_objectives();
+    const Objectives objectives = build_objectives();
 
     if (objectives.objective_sources.cols() == 0)
         throw runtime_error("No objectives found\n");

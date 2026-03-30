@@ -7,11 +7,14 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
+#include "tinyxml2.h"
 
 #pragma once
 
 namespace opennn
 {
+
+using namespace tinyxml2;
 
 enum class VariableType { None, Numeric, Binary, Categorical, DateTime, Constant };
 
@@ -48,6 +51,8 @@ struct Variable
     void from_XML(const XMLDocument&);
     void to_XML(XMLPrinter&) const;
 
+    void from_XML(const XMLElement*); // Note: Takes a pointer
+
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return !(role == "None" || role == "Time"); }
@@ -59,6 +64,9 @@ struct Variable
 };
 
 vector<string> get_feature_names(const vector<Variable>&);
+Index get_features_number(const vector<Variable>&);
+vector<Index> get_feature_dimensions(const vector<Variable>&);
+vector<VariableType> get_variable_types(const vector<Variable>&);
 
 //get_feature_dimension
 
