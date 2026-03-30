@@ -69,7 +69,7 @@ TEST(Dense2dTest, ForwardPropagate)
     EXPECT_EQ(output_view.shape[0], batch_size);
     EXPECT_EQ(output_view.shape[1], outputs_number);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     vector<TensorView*> param_views_device = dense_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
     link(layer_parameters_device.data, param_views_device);
@@ -145,7 +145,7 @@ TEST(Dense2dTest, BackPropagate)
 
     dense_layer.back_propagate(forward_propagation, back_propagation);
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     vector<TensorView*> param_views_device = dense_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
     link(layer_parameters_device.data, param_views_device);
@@ -276,7 +276,7 @@ TEST(Dense3dTest, ForwardPropagate)
     EXPECT_EQ(output_view.shape[1], sequence_length);
     EXPECT_EQ(output_view.shape[2], output_embedding);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     vector<TensorView*> param_views_device = dense_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
     link(layer_parameters_device.data, param_views_device);
@@ -365,7 +365,7 @@ TEST(Dense3dTest, BackPropagate)
     EXPECT_EQ(bp_cpu->input_gradients[0].shape[1], sequence_length);
     EXPECT_EQ(bp_cpu->input_gradients[0].shape[2], input_embedding);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     vector<TensorView*> param_views_device = dense_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
     link(layer_parameters_device.data, param_views_device);

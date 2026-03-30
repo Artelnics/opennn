@@ -92,7 +92,7 @@ TEST_P(MultiHeadAttentionTest, ForwardPropagate)
     layer->forward_propagate(forward_base, false);
     const TensorView output_view = forward_base->get_outputs();
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = layer->get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
@@ -190,7 +190,7 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
 
     back_base->output_gradients = { delta_view };
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     TensorCuda delta_device({params.batch_size, params.query_sequence_length, params.embedding_dimension});
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
@@ -200,7 +200,7 @@ TEST_P(MultiHeadAttentionTest, BackPropagate)
     layer->back_propagate(forward_base, back_base);
     MultiHeadAttentionBackPropagation* back = static_cast<MultiHeadAttentionBackPropagation*>(back_base.get());
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = layer->get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});

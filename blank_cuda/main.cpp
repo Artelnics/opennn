@@ -75,7 +75,7 @@ static void print_prediction_report(const string& title,
                                     const vector<string>& input_vocabulary,
                                     const vector<string>& target_vocabulary)
 {
-    cout << "\n================ " << title << " ================\n";
+    cout << "\n== " << title << " ==\n";
 
     cout << "Context ids:   " << context_row.transpose() << endl;
     cout << "Decoder ids:   " << decoder_row.transpose() << endl;
@@ -87,7 +87,7 @@ static void print_prediction_report(const string& title,
     cout << "Target text:    " << decode_ids(target_row, target_vocabulary, true) << endl;
     cout << "Predicted text: " << decode_ids(predicted_row, target_vocabulary, true) << endl;
 
-    cout << "====================================================\n";
+    cout << "===\n";
 }
 
 int main()
@@ -96,7 +96,7 @@ int main()
     {
         cout << "OpenNN. Blank Cuda." << endl;
         WeightedSquaredError();
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
         cout << "OpenNN. Transformer training on OPUS Books en-es." << endl;
 
@@ -166,7 +166,7 @@ int main()
         adam->set_maximum_epochs(10);
         adam->set_display_period(1);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
         cout << "\nTraining on CPU..." << endl;
         training_strategy.train();
 #else
@@ -178,7 +178,7 @@ int main()
         // Predictions
         // ---------------------------------------------------------------------
 
-        cout << "\n================ TRANSFORMER PREDICTIONS ================\n";
+        cout << "\n== TRANSFORMER PREDICTIONS ==\n";
 
         const vector<string> test_sources =
             {
@@ -197,7 +197,7 @@ int main()
             cout << endl;
         }
 
-        cout << "=========================================================\n";
+        cout << "=\n";
         cout << "\nDone." << endl;
 
 #endif

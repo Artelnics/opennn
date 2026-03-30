@@ -86,7 +86,7 @@ struct Pooling3dForwardPropagation final : LayerForwardPropagation
 
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct Pooling3dForwardPropagationCuda : public LayerForwardPropagationCuda
 {

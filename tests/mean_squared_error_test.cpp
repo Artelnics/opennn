@@ -62,7 +62,7 @@ TEST(MeanSquaredErrorTest, BackPropagateDense2d)
 
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     const TensorCuda gradient_cuda = mean_squared_error.calculate_gradient_cuda();
     VectorR host_gradient(gradient.size());
 

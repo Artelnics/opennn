@@ -114,7 +114,7 @@ void MinkowskiError::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void MinkowskiError::calculate_error(const BatchCuda& batch,
                                           const ForwardPropagationCuda& forward_propagation,

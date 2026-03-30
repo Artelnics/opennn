@@ -50,7 +50,7 @@ public:
 
     void from_XML(const XMLDocument& document) override;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     void calculate_error(const BatchCuda&,
                               const ForwardPropagationCuda&,

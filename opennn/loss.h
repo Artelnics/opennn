@@ -20,7 +20,7 @@ struct ForwardPropagation;
 struct BackPropagation;
 struct BackPropagationLM;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 struct BatchCuda;
 struct BackPropagationCuda;
 #endif
@@ -158,7 +158,7 @@ public:
     MatrixR calculate_numerical_hessian();
     MatrixR calculate_inverse_hessian();
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 public:
 
@@ -286,7 +286,7 @@ struct BackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct BackPropagationCuda
 {

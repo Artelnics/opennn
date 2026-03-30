@@ -110,7 +110,7 @@ TEST_P(EmbeddingLayerTest, ForwardPropagate)
     embedding_layer.forward_propagate(forward_propagation_base, false);
     const TensorView output_view = forward_propagation_base->get_outputs();
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = embedding_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
@@ -192,7 +192,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
 
     back_propagation_base->output_gradients = { delta_view };
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     TensorCuda delta_device({ output_view.shape[0], output_view.shape[1], output_view.shape[2] });
     CHECK_CUDA(cudaMemcpy(delta_device.data, deltas.data(), deltas.size() * sizeof(type), cudaMemcpyHostToDevice));
 #endif
@@ -202,7 +202,7 @@ TEST_P(EmbeddingLayerTest, BackPropagate)
     EmbeddingBackPropagation* back_propagation = static_cast<EmbeddingBackPropagation*>(back_propagation_base.get());
     const TensorView weight_gradients_cpu = back_propagation->weight_gradients;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     vector<TensorView*> param_views_device = embedding_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
     link(layer_parameters_device.data, param_views_device);

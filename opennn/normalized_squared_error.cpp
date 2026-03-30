@@ -212,7 +212,7 @@ void NormalizedSquaredError::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void NormalizedSquaredError::calculate_error(const BatchCuda&,
                                                   const ForwardPropagationCuda&,

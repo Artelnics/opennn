@@ -38,7 +38,6 @@ public:
     outputs.shape = {batch, outputs_num};
     hidden_states.shape = {batch, steps, outputs_num};
     activation_derivatives.shape = {batch, steps, outputs_num};
-
 */
         return {};
     }
@@ -55,7 +54,6 @@ public:
     recurrent_weight_gradients.shape = {outputs_number, outputs_number};
 
     input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
-
 */
         return {};
     }
@@ -92,7 +90,7 @@ private:
 
     string activation_function = "HyperbolicTangent";
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     // @todo
 #endif
 
@@ -113,7 +111,7 @@ struct RecurrentBackPropagation final : LayerBackPropagation
     TensorView recurrent_weight_gradients;
 };
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 // @todo
 #endif
 

@@ -56,7 +56,7 @@ public:
 
 private:
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 public:
 

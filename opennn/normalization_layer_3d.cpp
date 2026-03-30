@@ -84,7 +84,7 @@ void Normalization3d::set_parameters_glorot()
 
 void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     const Index batch_size = forward_propagation.batch_size;
     const Index embedding_dimension = get_embedding_dimension();
 /*
@@ -145,14 +145,14 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation,
                                      size_t index) const
 {
-<<<<<<< Updated upstream
+/*
     if(back_propagation->output_gradients.size() > 1)
         add_gradients(back_propagation->output_gradients);
+*/
 
-=======
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 /*
->>>>>>> Stashed changes
+
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
@@ -256,7 +256,7 @@ void Normalization3d::to_XML(XMLPrinter& printer) const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Normalization3dForwardPropagationCuda::initialize()
 {

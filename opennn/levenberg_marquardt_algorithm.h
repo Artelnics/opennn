@@ -78,7 +78,7 @@ public:
 
    void to_XML(XMLPrinter&) const override;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
    TrainingResults train_cuda() override 
    {

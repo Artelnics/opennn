@@ -122,11 +122,11 @@ int main()
 
         for (const auto& config : experiments)
         {
-            cout << "\n==========================================================" << endl;
+            cout << "\n==" << endl;
             cout << "RUNNING EXPERIMENT: Zoom=" << config.zoom
                  << ", Evals=" << config.evals
                  << ", Iterations=" << config.iterations << endl;
-            cout << "==========================================================" << endl;
+            cout << "==" << endl;
 
             // Apply configuration
             optimizer.set_zoom_factor(config.zoom);
@@ -268,11 +268,11 @@ int main()
 
             for (const auto& config : experiments)
             {
-                cout << "\n==========================================================" << endl;
+                cout << "\n==" << endl;
                 cout << "RUNNING EXPERIMENT: Zoom=" << config.zoom
                      << ", Evals=" << config.evals
                      << ", Iterations=" << config.iterations << endl;
-                cout << "==========================================================" << endl;
+                cout << "==" << endl;
 
                 // Apply configuration
                 optimizer.set_zoom_factor(config.zoom);

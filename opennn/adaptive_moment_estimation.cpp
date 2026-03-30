@@ -484,7 +484,7 @@ void AdaptiveMomentEstimationData::print() const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 TrainingResults AdaptiveMomentEstimation::train_cuda()
 {

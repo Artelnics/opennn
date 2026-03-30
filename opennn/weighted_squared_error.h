@@ -66,7 +66,7 @@ private:
 
     //Tensor2 errors_weights;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     // Error
 

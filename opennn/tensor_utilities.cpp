@@ -601,7 +601,7 @@ void shuffle_rows(MatrixR& matrix)
     }
 }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 type* link(type* pointer, const vector<TensorView*>& views)
 {
@@ -731,7 +731,7 @@ Device::Device()
 
     set_threads_number(max_threads);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     CHECK_CUBLAS(cublasCreate(&cublas_handle));
     CHECK_CUDNN(cudnnCreate(&cudnn_handle));
 
@@ -745,7 +745,7 @@ Device::Device()
 
 Device::~Device()
 {
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     if (operator_sum_descriptor) cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     if (operator_multiplication_descriptor) cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     if (cublas_handle) cublasDestroy(cublas_handle);
@@ -800,7 +800,7 @@ VectorR filter_missing_values(const VectorR &input)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 cublasHandle_t Device::get_cublas_handle() { return cublas_handle; }
 cudnnHandle_t Device::get_cudnn_handle() { return cudnn_handle; }
 cudnnOpTensorDescriptor_t Device::get_operator_sum_descriptor() { return operator_sum_descriptor; }

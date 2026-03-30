@@ -10,8 +10,9 @@
 
 #include "layer.h"
 #include "random_utilities.h"
-#include "neural_network.h"
 #include "math_utilities.h"
+#include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -45,7 +46,7 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 template<int Rank>
 struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
@@ -420,7 +421,7 @@ public:
 
         name = "Dense" + to_string(Rank) + "d";
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
         cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
 
@@ -517,7 +518,7 @@ public:
         else
             throw runtime_error("Unknown activation function: " + new_activation_function);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
         if (activation_descriptor == nullptr && activation_function != "Softmax")
             cudnnCreateActivationDescriptor(&activation_descriptor);
@@ -595,19 +596,8 @@ public:
 
         combination(input, weights, biases, output);
 
-
-#ifndef OPENNN_CUDA
-
-
-<<<<<<< Updated upstream
-        calculate_combinations<Rank>(tensor_map<Rank>(forward_propagation->inputs[0]),
-                                     matrix_map(weights),
-                                     vector_map(biases),
-                                     outputs);
-=======
-
+#ifndef CUDA
 /*
->>>>>>> Stashed changes
         if(batch_normalization)
         {
             auto normalized_outputs = tensor_map<Rank>(forward_propagation->normalized_outputs);
@@ -657,8 +647,6 @@ public:
 
         TensorView& outputs = forward_propagation->outputs;
 
-        type* combinations = dense_forward_propagation->combinations.data;
-
         type* outputs_buffer = use_combinations ? combinations : outputs.data;
 
         // Combinations
@@ -683,13 +671,38 @@ public:
 
     void back_propagate(ForwardPropagation& forward_propagation,
                         BackPropagation& back_propagation,
-                        size_t index) const override
+                        size_t layer) const override
     {
+/*
+        const TensorView& input = forward_propagation.views[layer][Inputs][0];
+        const TensorView& dAct = forward_propagation.views[layer][ActivationDerivatives][0];
+
+        const TensorView& dY = back_propagation.backward_views[layer][OutputGradients][0];
+
+        TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+
+        TensorView& delta = back_propagation.backward_views[layer][OutputGradients][1];
+
+        TensorView& weight_gradient = back_propagation.gradient_views[layer][1];
+        TensorView&  = back_propagation.gradient_views[layer][0];
+
+        if (activation_function == "Softmax")
+            copy(dY, delta); // Optimization: Softmax+CrossEntropy dL/dZ is just (Y-T)
+        else
+            multiply_elementwise(dY, dAct, delta);
+
+        multiply(input, true, delta, false, weight);
+
+        sum(delta, bias_gradient);
+
+        if (!is_first_layer)
+            multiply(delta, false, parameters[Weights], true, dX);
+*/
+#ifndef CUDA
+/*
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
 
-#ifndef OPENNN_CUDA
-/*
         const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, inputs_number);
@@ -738,12 +751,10 @@ public:
         const Index batch_size = forward_propagation->batch_size;
         const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
-<<<<<<< Updated upstream
+
         TensorViewCuda& outputs = forward_propagation->outputs;
 
         auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-        type* combinations = dense_forward_propagation->combinations.data;
 
         type* outputs_buffer = use_combinations ? combinations : outputs.data;
 
@@ -860,9 +871,9 @@ public:
         const TensorViewCuda& outputs_view = forward_propagation->outputs;
 
         const auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
-=======
+
         const TensorView& outputs_view = forward_propagation->outputs;
->>>>>>> Stashed changes
+
 
         type* combinations = dense_forward_propagation->combinations.data;
 
@@ -982,7 +993,7 @@ public:
                         BackPropagationLM& back_propagation,
                         size_t index) const override
     {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 /*
         const Index inputs_number = get_input_features_number();
         const Index outputs_number = get_neurons_number();
@@ -1240,7 +1251,7 @@ private:
 
     type dropout_rate = type(0);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     TensorView biases_device;
     TensorView weights_device;

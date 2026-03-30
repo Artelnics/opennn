@@ -401,7 +401,7 @@ public:
         printer.CloseElement();
     }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool) override
     {
@@ -452,7 +452,7 @@ struct ScalingForwardPropagation final : LayerForwardPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 template<int Rank>
 struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda

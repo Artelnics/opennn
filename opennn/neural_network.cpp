@@ -80,7 +80,7 @@ void NeuralNetwork::compile()
 
 //    link(parameters.data(), layer_parameter_views);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     const vector<vector<TensorView*>> layer_parameter_views_device = get_layer_parameter_views_device();
 
@@ -1344,12 +1344,8 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
 
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
-<<<<<<< Updated upstream
-    samples_number = new_samples_number;
-=======
     batch_size = new_batch_size;
 
->>>>>>> Stashed changes
     neural_network = new_neural_network;
 
     if(!neural_network) throw runtime_error("There is no neural network.");
@@ -1365,7 +1361,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         //layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
         //layers[i]->set(samples_number, neural_network_layers[i].get());
     }
-
+/*
     const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
     const Index workspace_size = get_size(layer_workspace_views);
 
@@ -1375,50 +1371,20 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         workspace.setZero();
         link(workspace.data(), layer_workspace_views);
     }
-
+*/
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
     {
         //layers[i]->inputs.clear();
 
-<<<<<<< Updated upstream
+
         for(Index input_index : layer_input_indices[i])
         {
             // Ahora la copia de 'outputs' llevará el puntero de memoria correcto
-            layers[i]->inputs.push_back(input_index >= 0 ? layers[input_index]->outputs : TensorView());
+            //layers[i]->inputs.push_back(input_index >= 0 ? layers[input_index]->outputs : TensorView());
         }
     }
-}
-
-
-vector<vector<TensorView*>> ForwardPropagation::get_layer_workspace_views()
-{
-    const Index layers_number = neural_network->get_layers_number();
-
-    vector<vector<TensorView*>> layer_workspace_views(layers_number);
-
-    for (Index i = 0; i < layers_number; i++)
-        layer_workspace_views[i] = layers[i]->get_workspace_views();
-
-    return layer_workspace_views;
-=======
-        //for(Index input_index : layer_input_indices[i])
-        //    layers[i]->inputs.push_back(input_index >= 0 ? layers[input_index]->outputs : TensorView());
-    }
-/*
-    const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
-
-    const Index workspace_size = get_size(layer_workspace_views);
-
-    if (workspace_size == 0) return;
-
-    workspace.resize(workspace_size);
-    workspace.setZero();
-
-    link(workspace.data(), layer_workspace_views);
-*/
->>>>>>> Stashed changes
 }
 
 
@@ -1580,7 +1546,7 @@ void NeuralNetworkBackPropagationLM::print()
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void NeuralNetwork::allocate_parameters_device()
 {
@@ -1715,7 +1681,7 @@ ForwardPropagationCuda::ForwardPropagationCuda(const Index new_batch_size, Neura
 
 void ForwardPropagationCuda::set(const Index new_samples_number, NeuralNetwork* new_neural_network)
 {
-    samples_number = new_samples_number;
+
 
     neural_network = new_neural_network;
 

@@ -17,7 +17,7 @@ namespace opennn
 
 class NeuralNetwork;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
@@ -45,7 +45,7 @@ struct ForwardPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct ForwardPropagationCuda
 {
@@ -260,7 +260,7 @@ public:
 
     string get_expression() const;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 public:
 
@@ -307,7 +307,7 @@ protected:
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct NeuralNetworkBackPropagationCuda
 {

@@ -384,7 +384,7 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 TrainingResults TrainingStrategy::train_cuda()
 {

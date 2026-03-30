@@ -10,6 +10,7 @@
 #include "tensor_utilities.h"
 #include "multihead_attention_layer.h"
 #include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -181,7 +182,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                            size_t layer,
                                            bool)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
     const type scaling_factor = get_scaling_factor();
@@ -397,19 +398,14 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
                                         size_t index) const
 {
-<<<<<<< Updated upstream
+/*
     if(back_propagation->output_gradients.size() > 1)
         add_gradients(back_propagation->output_gradients);
-
-    MultiHeadAttentionForwardPropagationCuda* forward =
-        static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
-    MultiHeadAttentionBackPropagationCuda* back =
-        static_cast<MultiHeadAttentionBackPropagationCuda*>(back_propagation.get());
-=======
-#ifndef OPENNN_CUDA
+*/
+#ifndef CUDA
 /*
     const TensorMap3 query_input = tensor_map<3>(forward_propagation->inputs[0]);
->>>>>>> Stashed changes
+
 
     const TensorMap3 source_input = (forward_propagation->inputs.size() == 1)
                                                         ? query_input

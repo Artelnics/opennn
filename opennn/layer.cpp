@@ -71,7 +71,7 @@ vector<TensorView> LayerBackPropagationLM::get_input_gradients() const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void LayerForwardPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
 {
@@ -412,7 +412,7 @@ void Layer::softmax_derivatives_times_tensor(const TensorMap3 softmax,
 }
 */
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Layer::add_gradients(const vector<TensorViewCuda>& output_gradient_views) const
 {

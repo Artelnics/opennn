@@ -491,7 +491,7 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 TrainingResults StochasticGradientDescent::train_cuda()
 {

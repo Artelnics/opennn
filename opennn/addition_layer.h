@@ -76,8 +76,8 @@ public:
         TensorView& input_gradient_0 = back_propagation.backward_views[layer][InputGradients][0];
         TensorView& input_gradient_1 = back_propagation.backward_views[layer][InputGradients][1];
 
-        opennn::copy(output_gradient, input_gradient_0);
-        opennn::copy(output_gradient, input_gradient_1);
+        copy(output_gradient, input_gradient_0);
+        copy(output_gradient, input_gradient_1);
     }
 
 

@@ -109,7 +109,7 @@ protected:
 
     string name;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 public:
 

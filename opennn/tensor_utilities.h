@@ -290,7 +290,7 @@ struct TensorView
         return TensorMapR<Rank>(data, get_eigen_dims<Rank>());
     }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     float* device = nullptr;
     cudnnTensorDescriptor_t descriptor = nullptr;
 
@@ -936,7 +936,7 @@ public:
     ThreadPoolDevice* get_thread_pool_device();
     void set_threads_number(int num_threads);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     cublasHandle_t get_cublas_handle();
     cudnnHandle_t get_cudnn_handle();
     cudnnOpTensorDescriptor_t get_operator_sum_descriptor();
@@ -950,7 +950,7 @@ private:
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     cublasHandle_t cublas_handle = nullptr;
     cudnnHandle_t cudnn_handle = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
@@ -965,7 +965,7 @@ inline ThreadPoolDevice& get_device()
 
 void set_threads_number(int num_threads);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     inline cublasHandle_t get_cublas_handle()
     {
@@ -992,7 +992,7 @@ void set_threads_number(int num_threads);
 
 #endif
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 inline const float alpha_one = 1.0f;
 inline const float beta_zero = 0.0f;

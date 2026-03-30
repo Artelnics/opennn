@@ -315,9 +315,9 @@ protected:
         });
     }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
-<<<<<<< Updated upstream
+
 public:
 
         // Forward propagation CUDA
@@ -342,8 +342,8 @@ public:
 
     virtual void print_parameters_cuda() {}
 
-=======
->>>>>>> Stashed changes
+
+
 protected:
 
     const float alpha = 1.0f;
@@ -413,7 +413,7 @@ struct LayerBackPropagationLM
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct LayerForwardPropagationCuda
 {

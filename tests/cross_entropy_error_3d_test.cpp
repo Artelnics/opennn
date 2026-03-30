@@ -66,7 +66,7 @@ TEST(CrossEntropyError3DTest, MultipleClassification_CPU_vs_GPU)
     loss.calculate_error(batch, fp_cpu, bp_cpu);
     loss.calculate_output_gradients(batch, fp_cpu, bp_cpu);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     // 5. Prepare GPU Batch and Forward Propagation
     BatchCuda batch_cuda(batch_size, &dataset);
@@ -155,7 +155,7 @@ TEST(CrossEntropyError3DTest, BinaryClassification_CPU_vs_GPU)
     loss.calculate_error(batch, fp_cpu, bp_cpu);
     loss.calculate_output_gradients(batch, fp_cpu, bp_cpu);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     // 5. Prepare GPU Batch and Forward Propagation
     BatchCuda batch_cuda(batch_size, &dataset);

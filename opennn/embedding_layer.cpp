@@ -85,7 +85,7 @@ void Embedding::set(const Index new_vocabulary_size,
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
 
@@ -147,7 +147,7 @@ void Embedding::set_parameters_glorot()
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * sequence_length;
@@ -231,14 +231,13 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t index) const
 {
-<<<<<<< Updated upstream
+/*
     if(back_propagation->output_gradients.size() > 1)
         add_gradients(back_propagation->output_gradients);
-
-=======
-#ifndef OPENNN_CUDA
+*/
+#ifndef CUDA
 /*
->>>>>>> Stashed changes
+
     const Index embedding_dimension = get_embedding_dimension();
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index sequence_length = forward_propagation->inputs[0].shape[1];
@@ -347,9 +346,9 @@ void Embedding::to_XML(XMLPrinter& printer) const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
-<<<<<<< Updated upstream
+
 void Embedding::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {
     const Index batch_size = forward_propagation->batch_size;
@@ -424,8 +423,8 @@ vector<TensorViewCuda*> Embedding::get_parameter_views_device()
 }
 
 
-=======
->>>>>>> Stashed changes
+
+
 void Embedding::copy_positional_encoding_device()
 {
     if (positional_encoding.size() > 0)

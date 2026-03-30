@@ -135,7 +135,7 @@ private:
 
     string pooling_method = "MaxPooling";
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 

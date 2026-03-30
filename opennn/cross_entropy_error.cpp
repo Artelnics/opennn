@@ -150,7 +150,7 @@ void CrossEntropyError2d::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void CrossEntropyError2d::calculate_error(const BatchCuda& batch,
                                                const ForwardPropagationCuda& forward_propagation,

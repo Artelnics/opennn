@@ -156,7 +156,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate)
             EXPECT_NEAR(output_tensor(i), expected_value, 1e-5);
     }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = convolutional_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});
@@ -259,7 +259,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     convolutional_layer.back_propagate(forward_propagation, back_propagation_base);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = convolutional_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({get_size(param_views_device)});

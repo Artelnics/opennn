@@ -2162,7 +2162,7 @@ void TestingAnalysis::RocAnalysis::print() const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold) const
 {

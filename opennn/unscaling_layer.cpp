@@ -307,7 +307,7 @@ void Unscaling::from_XML(const XMLDocument& document)
 
 REGISTER(Layer, Unscaling, "Unscaling")
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
 {

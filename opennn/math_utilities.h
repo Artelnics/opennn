@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-// In math_utilities.h
-
-/**
- * Clips the values of the input tensor between lower and upper bounds.
- * Assuming bounds are per-feature (columns).
- */
 inline void bounding(const TensorView& input,
                      const VectorR& lower_bounds,
                      const VectorR& upper_bounds,
@@ -27,7 +21,7 @@ inline void bounding(const TensorView& input,
 {
     const Index features = lower_bounds.size();
 
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     const MatrixMap input_matrix = input.as_matrix();
     MatrixMap output_matrix = output.as_matrix();
 
@@ -53,7 +47,7 @@ inline void copy(const TensorView& source, TensorView& destination)
     if(source.size() != destination.size())
         throw std::runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     destination.as_vector() = source.as_vector();
 #else
     if (source.data != destination.data)
@@ -69,7 +63,7 @@ void addition(const TensorView& input_1, const TensorView& input_2, TensorView& 
     if(input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
 
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     output.as_vector().array() = input_1.as_vector().array() + input_2.as_vector().array();
 #else
     const float alpha1 = 1.0f;
@@ -98,7 +92,7 @@ void projection(const TensorMap3 &inputs,
                 Index batch_size,
                 Tensor4 &output)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 /*
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
@@ -215,7 +209,7 @@ void normalization(Tensor1& means,
                    const Tensor2& inputs,
                    Tensor2& outputs)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     const Index batch_size = inputs.dimension(0);
     const Index features_number = inputs.dimension(1);
 
@@ -263,8 +257,8 @@ void normalization(Tensor1& means,
             running_means_device.data,
             running_variances_device.data,
             EPSILON,
-            dense_forward_propagation->means.data,
-            dense_forward_propagation->inverse_variance.data));
+            means.data,
+            inverse_variance.data));
     else if (batch_normalization && !is_training)
         CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
             get_cudnn_handle(),
@@ -288,7 +282,7 @@ inline void combination(const TensorView& input,
                         const TensorView& biases,
                         TensorView& output)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
     output.as_matrix().noalias()
         = (input.as_matrix() * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
 #else
@@ -316,7 +310,7 @@ inline void combination(const TensorView& input,
 
 void batch_normalization_training()
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 
 #else
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
@@ -335,8 +329,8 @@ void batch_normalization_training()
         running_means_device.data,
         running_variances_device.data,
         EPSILON,
-        dense_forward_propagation->means.data,
-        dense_forward_propagation->inverse_variance.data));
+        means.data,
+        inverse_variance.data));
 
 #endif
 }
@@ -344,7 +338,7 @@ void batch_normalization_training()
 
 void batch_normalization_inference()
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 
 #else
     CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
@@ -367,7 +361,7 @@ void batch_normalization_inference()
 
 void activation()
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 
 
 #else
@@ -397,7 +391,7 @@ void activation()
 
 void dropout()
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 
 #else
     CHECK_CUDNN(cudnnDropoutForward(get_cudnn_handle(),
@@ -413,9 +407,12 @@ void dropout()
 }
 
 
-void convolutions(const TensorView& inputs, const TensorView& kernel, TensorView& outputs)
+void convolution(const TensorView& inputs,
+                 const TensorView& kernel,
+                 const TensorView& biases,
+                 TensorView& outputs)
 {
-#ifndef OPENNN_CUDA
+#ifndef CUDA
 /*
     const Index batch_size = inputs.dimension(0);
     const Index output_height = convolutions.dimension(1);
@@ -468,6 +465,94 @@ void convolutions(const TensorView& inputs, const TensorView& kernel, TensorView
                                current_output_descriptor,
                                outputs_buffer));
 
+#endif
+}
+
+
+inline void convolution_activation(const TensorView& input,
+                                   const TensorView& weight,
+                                   const TensorView& bias,
+                                   TensorView& output)
+{
+#ifndef CUDA
+    convolution(input, weight, bias, output);
+
+    activation();
+#else
+    CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
+        get_cudnn_handle(),
+        &alpha,
+        input.descriptor,
+        input_data,
+        kernel_descriptor,
+        weights_device.data,
+        convolution_descriptor,
+        convolution_algorithm,
+        workspace,
+        workspace_size,
+        &beta,
+        current_output_descriptor,
+        outputs.data,
+        biases_device.get_descriptor(),
+        biases_device.data,
+        activation_descriptor,
+        current_output_descriptor,
+        outputs.data));
+#endif
+}
+
+
+inline void multiply(const TensorView& A, bool transA,
+                     const TensorView& B, bool transB,
+                     TensorView& C, type alpha = 1.0f, type beta = 0.0f) {
+#ifndef OPENNN_CUDA
+    auto matA = A.as_matrix();
+    auto matB = B.as_matrix();
+    auto matC = C.as_matrix();
+
+    if (!transA && !transB)      matC.noalias() = alpha * (matA * matB) + beta * matC;
+    else if (transA && !transB)  matC.noalias() = alpha * (matA.transpose() * matB) + beta * matC;
+    else if (!transA && transB)  matC.noalias() = alpha * (matA * matB.transpose()) + beta * matC;
+    else                         matC.noalias() = alpha * (matA.transpose() * matB.transpose()) + beta * matC;
+#else
+    const int m = transA ? (int)A.shape[1] : (int)A.shape[0];
+    const int n = transB ? (int)B.shape[0] : (int)B.shape[1];
+    const int k = transA ? (int)A.shape[0] : (int)A.shape[1];
+
+    const int lda = (int)A.shape[1];
+    const int ldb = (int)B.shape[1];
+    const int ldc = n;
+
+    // We compute C^T = B^T * A^T
+    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                             transB ? CUBLAS_OP_N : CUBLAS_OP_T,
+                             transA ? CUBLAS_OP_N : CUBLAS_OP_T,
+                             n, m, k,
+                             &alpha, B.data, ldb, A.data, lda,
+                             &beta, C.data, ldc));
+#endif
+}
+
+inline void multiply_elementwise(const TensorView& A, const TensorView& B, TensorView& C)
+{
+#ifndef OPENNN_CUDA
+    C.as_vector().array() = A.as_vector().array() * B.as_vector().array();
+#else
+    const float one = 1.0f;
+    const float zero = 0.0f;
+    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_multiplication_descriptor(),
+                              &one, A.get_descriptor(), A.data,
+                              &one, B.get_descriptor(), B.data,
+                              &zero, C.get_descriptor(), C.data));
+#endif
+}
+
+inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta = 0.0f)
+{
+#ifndef OPENNN_CUDA
+    B.as_vector().noalias() = alpha * A.as_matrix().colwise().sum() + beta * B.as_vector();
+#else
+    // @todo
 #endif
 }
 

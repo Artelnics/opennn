@@ -16,7 +16,7 @@ namespace opennn
 struct BackPropagation;
 struct AdaptiveMomentEstimationData;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 struct BackPropagationCuda;
 struct ADAMOptimizationDataCuda;
 #endif
@@ -98,7 +98,7 @@ private:
 
    Index batch_size = 1000;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     public:
 
@@ -132,7 +132,7 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     struct ADAMOptimizationDataCuda final : public OptimizerData
     {

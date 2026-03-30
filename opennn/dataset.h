@@ -558,7 +558,7 @@ struct Batch
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct BatchCuda
 {

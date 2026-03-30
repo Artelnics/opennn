@@ -49,7 +49,7 @@ int main()
         adam->set_maximum_epochs(200);
         adam->set_display_period(10);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     training_strategy.train_cuda();
 #else
     training_strategy.train();

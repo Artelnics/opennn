@@ -508,14 +508,8 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
     built_mask = false;
     accuracy.setZero();
 
-<<<<<<< Updated upstream
-    errors.resize(samples_number, outputs_number);
-    errors_weights.resize(samples_number, outputs_number);
-=======
     errors.resize(batch_size, outputs_number);
-
     errors_weights.resize(batch_size, outputs_number);
->>>>>>> Stashed changes
 
     output_gradient_dimensions = { batch_size };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
@@ -526,20 +520,14 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
 
     if(is_instance_of<CrossEntropyError3d>(loss))
     {
-<<<<<<< Updated upstream
-        predictions.resize(samples_number, outputs_number);
+        predictions.resize(batch_size, outputs_number);
         predictions.setZero();
 
-        matches.resize(samples_number, outputs_number);
+        matches.resize(batch_size, outputs_number);
         matches.setConstant(false);
 
-        mask.resize(samples_number, outputs_number);
-        mask.setConstant(false);
-=======
-        predictions.resize(batch_size, outputs_number);
-        matches.resize(batch_size, outputs_number);
         mask.resize(batch_size, outputs_number);
->>>>>>> Stashed changes
+        mask.setConstant(false);
     }
 }
 
@@ -1255,7 +1243,7 @@ void BackPropagationLM::set(const Index new_samples_number,
                             Loss *new_loss)
 {
     loss = new_loss;
-    samples_number = new_samples_number;
+
 
     if(!loss) return;
 
@@ -1325,7 +1313,7 @@ BackPropagationLM::BackPropagationLM(const Index new_batch_size, Loss *new_loss)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Loss::back_propagate(const BatchCuda& batch,
                           ForwardPropagationCuda& forward_propagation,
@@ -1460,7 +1448,7 @@ BackPropagationCuda::BackPropagationCuda(const Index new_samples_number, Loss* n
 
 void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 {
-    samples_number = new_samples_number;
+
     loss = new_loss;
 
     if(!loss) return;

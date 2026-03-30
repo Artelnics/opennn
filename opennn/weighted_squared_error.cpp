@@ -252,7 +252,7 @@ void WeightedSquaredError::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void WeightedSquaredError::calculate_error(const BatchCuda& batch,
                                            const ForwardPropagationCuda& forward_propagation,

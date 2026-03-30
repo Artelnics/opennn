@@ -48,7 +48,7 @@ public:
 
     TrainingResults train();
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     TrainingResults train_cuda();
 #endif
 

@@ -16,7 +16,7 @@ namespace opennn
 struct BackPropagation;
 struct StochasticGradientDescentData;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 struct SGDOptimizationDataCuda;
 #endif
 
@@ -77,7 +77,7 @@ private:
 
     Index maximum_validation_failures = numeric_limits<Index>::max();
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 public:
 
@@ -105,7 +105,7 @@ struct StochasticGradientDescentData final : public OptimizerData
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct SGDOptimizationDataCuda final : public OptimizerData
 {

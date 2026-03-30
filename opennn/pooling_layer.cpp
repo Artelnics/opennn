@@ -173,7 +173,7 @@ void Pooling::set(const Shape& new_input_shape,
 
     label = "pooling_layer";
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     // Pooling descriptor
 
@@ -239,7 +239,7 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
     pooling_method = new_pooling_method;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     if (pooling_method == "MaxPooling")
         pooling_mode = CUDNN_POOLING_MAX;
     else if (pooling_method == "AveragePooling")
@@ -444,7 +444,7 @@ void Pooling::back_propagate_average_pooling(const Tensor4& output_gradients, Te
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
@@ -543,7 +543,7 @@ void Pooling::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void PoolingForwardPropagationCuda::initialize()
 {

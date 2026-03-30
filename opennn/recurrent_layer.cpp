@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "tensor_utilities.h"
 #include "recurrent_layer.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -111,12 +112,7 @@ void Recurrent::set_activation_function(const string& new_activation_function)
 
 void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training)
 {
-<<<<<<< Updated upstream
-    RecurrentForwardPropagation* recurrent_forward_propagation = static_cast<RecurrentForwardPropagation*>(forward_propagation.get());
-
-=======
 /*
->>>>>>> Stashed changes
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index past_time_steps = forward_propagation->inputs[0].shape[1];
     const Index input_size = forward_propagation->inputs[0].shape[2];
@@ -182,17 +178,17 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-<<<<<<< Updated upstream
+
     if(recurrent_forward_propagation->outputs.data != nullptr)
     {
         TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
         outputs_map = all_hidden_states.chip(past_time_steps - 1, 1);
     }
-=======
+
     MatrixMap outputs_map = matrix_map(recurrent_forward_propagation->outputs);
     TensorMap2(outputs_map.data(), batch_size, output_size) = all_hidden_states.chip(past_time_steps - 1, 1);
 */
->>>>>>> Stashed changes
+
 }
 
 
@@ -373,85 +369,6 @@ void Recurrent::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
-<<<<<<< Updated upstream
-RecurrentForwardPropagation::RecurrentForwardPropagation(const Index new_batch_size, Layer* new_layer) : LayerForwardPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-void RecurrentForwardPropagation::initialize()
-{
-    if(layer == nullptr)
-        throw runtime_error("Recurrrent layer is nullptr");
-
-    const Index batch = batch_size;
-    const Index outputs_num = layer->get_outputs_number();
-    const Index steps = layer->get_input_shape()[0];
-
-    this->outputs.shape = {batch, outputs_num};
-    this->hidden_states.shape = {batch, steps, outputs_num};
-    this->activation_derivatives.shape = {batch, steps, outputs_num};
-}
-
-
-vector<TensorView *> RecurrentForwardPropagation::get_workspace_views()
-{
-    return {&this->outputs, &this->hidden_states, &this->activation_derivatives};
-}
-
-
-void RecurrentForwardPropagation::print() const
-{
-    cout << "Recurrent forward propagation" << endl
-         << "Batch size: " << batch_size << endl
-         << "Output shape: " << outputs.shape << endl
-         << "Hidden states shape: " << hidden_states.shape << endl
-         << "Activation derivatives shape: " << activation_derivatives.shape << endl;
-}
-
-
-void RecurrentBackPropagation::initialize()
-{
-    const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_shape()[1];
-    const Index time_steps = layer->get_input_shape()[0];
-
-    bias_gradients.shape = {outputs_number};
-    input_weight_gradients.shape = {inputs_number, outputs_number};
-    recurrent_weight_gradients.shape = {outputs_number, outputs_number};
-
-    input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
-}
-
-
-void RecurrentBackPropagation::print() const
-{
-    cout << "Recurrent back propagation" << endl
-         << "Batch size: " << batch_size << endl
-         << "Input gradients number: " << input_gradients.size() << endl
-         << "Bias gradients shape: " << bias_gradients.shape << endl
-         << "Input weight gradients shape: " << input_weight_gradients.shape << endl
-         << "Recurrent weight gradients shape: " << recurrent_weight_gradients.shape << endl;
-}
-
-
-RecurrentBackPropagation::RecurrentBackPropagation(const Index new_batch_size, Layer* new_layer)
-    : LayerBackPropagation()
-{
-    set(new_batch_size, new_layer);
-}
-
-
-vector<TensorView*> RecurrentBackPropagation::get_gradient_views()
-{
-    return {&bias_gradients, &input_weight_gradients, &recurrent_weight_gradients};
-}
-
-
-=======
->>>>>>> Stashed changes
 REGISTER(Layer, Recurrent, "Recurrent")
 }
 

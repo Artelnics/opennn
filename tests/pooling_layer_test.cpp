@@ -106,7 +106,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
                 for (Index c = 0; c < parameters.expected_output.dimension(3); ++c)
                     EXPECT_NEAR(output_tensor(b, h, w, c), parameters.expected_output(b, h, w, c), 1e-5);
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda = make_unique<PoolingForwardPropagationCuda>(batch_size, &pooling_layer);
     forward_propagation_cuda->initialize();
     vector<TensorView*> workspace_views_device = forward_propagation_cuda->get_workspace_views();
@@ -145,7 +145,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     back_propagation->output_gradients = { TensorView(deltas.data(), forward_propagation->get_outputs().shape) };
     pooling_layer.back_propagate(forward_propagation, back_propagation);
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     unique_ptr<LayerForwardPropagationCuda> forward_propagation_cuda = make_unique<PoolingForwardPropagationCuda>(batch_size, &pooling_layer);
     forward_propagation_cuda->initialize();
     vector<TensorView*> workspace_fw_device = forward_propagation_cuda->get_workspace_views();
@@ -205,7 +205,7 @@ TEST_P(Pooling3dLayerTest, ForwardPropagate)
 /*
     pooling_layer.forward_propagate(fw, false);
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     unique_ptr<LayerForwardPropagationCuda> fw_cuda = make_unique<Pooling3dForwardPropagationCuda>(batch_size, &pooling_layer);
     fw_cuda->initialize();
 
@@ -255,7 +255,7 @@ TEST_P(Pooling3dLayerTest, BackPropagate)
 /*
     pooling_layer.back_propagate(fw, bw);
 */
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     unique_ptr<LayerForwardPropagationCuda> fw_cuda = make_unique<Pooling3dForwardPropagationCuda>(batch_size, &pooling_layer);
     fw_cuda->initialize();
     vector<TensorView*> ws_fw_device = fw_cuda->get_workspace_views();

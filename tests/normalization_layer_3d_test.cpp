@@ -86,7 +86,7 @@ TEST_P(Normalization3dLayerTest, ForwardPropagate)
     EXPECT_EQ(output_view.shape[1], seq);
     EXPECT_EQ(output_view.shape[2], dim);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = norm_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });
@@ -176,7 +176,7 @@ TEST_P(Normalization3dLayerTest, BackPropagate)
     EXPECT_EQ(input_derivatives_pair[0].shape[1], seq);
     EXPECT_EQ(input_derivatives_pair[0].shape[2], dim);
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
     vector<TensorView*> param_views_device = norm_layer.get_parameter_views_device();
     TensorCuda layer_parameters_device({ get_size(param_views_device) });

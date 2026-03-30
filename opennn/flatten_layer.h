@@ -17,12 +17,12 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 template<int Rank> struct FlattenForwardPropagationCuda;
 template<int Rank> struct FlattenBackPropagationCuda;
 
-#endif // OPENNN_CUDA
+#endif // CUDA
 
 
 template<int Rank>

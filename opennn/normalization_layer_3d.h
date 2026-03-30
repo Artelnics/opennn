@@ -72,7 +72,7 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 protected:
 
@@ -91,7 +91,7 @@ private:
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 struct Normalization3dForwardPropagationCuda : public LayerForwardPropagationCuda
 {

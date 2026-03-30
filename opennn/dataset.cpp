@@ -4137,7 +4137,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
     if(!new_dataset) return;
 
-    samples_number = new_samples_number;
+    
 
     dataset = const_cast<Dataset*>(new_dataset);
 
@@ -4241,7 +4241,7 @@ TensorView Batch::get_targets() const
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
     
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,
@@ -4294,7 +4294,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 {
     if(!new_dataset) return;
 
-    samples_number = new_samples_number;
+    
     dataset = new_dataset;
 
     const Shape& dataset_input_shape = dataset->get_shape("Input");

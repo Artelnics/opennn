@@ -235,7 +235,7 @@ void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
 {
@@ -328,7 +328,7 @@ void Pooling3d::print() const
          << "Pooling Method: " << write_pooling_method() << endl;
 }
 
-#ifdef OPENNN_CUDA
+#ifdef CUDA
 
 void Pooling3dForwardPropagationCuda::initialize()
 {

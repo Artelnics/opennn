@@ -27,7 +27,7 @@ int main()
     {   
         cout << "OpenNN. Melanoma Cancer CUDA Example." << endl;
 
-        #ifdef OPENNN_CUDA
+        #ifdef CUDA
 
         // Data set
 
