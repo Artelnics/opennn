@@ -166,8 +166,6 @@ private:
 
     enum Forward {Inputs, Outputs};
     enum Backward {OutputGradients, InputGradients};
-
-    Shape input_shape;
 };
 
 void reference_flatten_layer();

@@ -32,7 +32,9 @@ Index Embedding::get_vocabulary_size() const
 
 Index Embedding::get_sequence_length() const
 {
-    return sequence_length;
+    return input_shape.empty()
+        ? 0
+        : input_shape[0];
 }
 
 
@@ -44,13 +46,13 @@ Index Embedding::get_embedding_dimension() const
 
 Shape Embedding::get_output_shape() const
 {
-    return {sequence_length, embedding_dimension};
+    return {get_sequence_length(), embedding_dimension};
 }
 
 
 vector<Shape> Embedding::get_parameter_shapes() const
-{    
-    return {{vocabulary_size, embedding_dimension}}; // weights
+{
+    return {{get_vocabulary_size(), embedding_dimension}}; // weights
 }
 
 
@@ -58,9 +60,8 @@ void Embedding::set(const Index new_vocabulary_size,
                     Index new_sequence_length,
                     Index new_embedding_dimension,
                     const string& new_label)
-{
-    parameters.resize(1);
-
+{   
+/*/
     sequence_length = new_sequence_length;
     label = new_label;
 
@@ -76,7 +77,7 @@ void Embedding::set(const Index new_vocabulary_size,
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
                 : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
-
+*/
 #ifdef CUDA
 
     weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
@@ -126,7 +127,7 @@ void Embedding::set_parameters_glorot()
 //    const Index vocabulary_size = weights.shape[0];
 //    const Index embedding_dimension = weights.shape[1];
 
-    const type limit = sqrt(type(6.0) / (vocabulary_size + embedding_dimension));
+    const type limit = sqrt(type(6.0) / (get_vocabulary_size() + embedding_dimension));
 
     MatrixMap weights = matrix_map(parameters[Weights]);
 
@@ -142,7 +143,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 #ifndef CUDA
 
     const Index batch_size = forward_propagation.batch_size;
-    const Index total_tokens = batch_size * sequence_length;
+    const Index total_tokens = batch_size * get_sequence_length();
 
     MatrixMap outputs = matrix_map(forward_propagation.views[layer][Outputs][0]);
     outputs.setZero();
@@ -150,6 +151,8 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const MatrixMap weights = matrix_map(parameters[Weights]);
 
     const type* input_indices = forward_propagation.views[layer][Inputs][0].data;
+
+    const Index sequence_length = get_sequence_length();
 
     #pragma omp parallel for
     for(Index i = 0; i < total_tokens; i++)

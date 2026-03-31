@@ -68,8 +68,6 @@ public:
 
 private:
 
-    Shape input_shape;
-
     TensorView biases;
     TensorView input_weights;
     TensorView recurrent_weights;

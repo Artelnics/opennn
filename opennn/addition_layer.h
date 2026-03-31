@@ -102,8 +102,6 @@ private:
 
     enum Forward {Inputs, Outputs};
     enum Bacward {OutputGradients, InputGradients};
-
-    Shape input_shape;
 };
 
 void reference_addition_layer();

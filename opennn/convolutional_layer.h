@@ -282,8 +282,6 @@ private:
     Index row_stride = 1;
     Index column_stride = 1;
 
-    Shape input_shape;
-
     string convolution_type = "Valid";
 
     string activation_function = "Linear";
@@ -307,31 +305,6 @@ private:
     cudnnConvolutionBwdFilterAlgo_t algo_filter;
 #endif
 };
-
-
-#ifdef CUDA
-
-struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
-{
-    void initialize() override;
-
-    vector<TensorView*> get_gradient_views() override;
-
-    void print() const override;
-
-    void free() override;
-
-    TensorView bias_gradients;
-    TensorView weight_gradients;
-
-    TensorView gamma_gradients;
-    TensorView beta_gradients;
-
-    void* backward_filter_workspace = nullptr;   
-    size_t backward_filter_workspace_bytes = 0;
-};
-
-#endif
 
 }
 

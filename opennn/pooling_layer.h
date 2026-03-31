@@ -110,18 +110,13 @@ private:
     enum Forward {Inputs, Outputs, MaximalIndices};
     enum Backward {OutputGradients, InputGradients};
 
-    Shape input_shape;
-
     Index pool_height = 1;
-
     Index pool_width = 1;
 
     Index padding_height = 0;
-
     Index padding_width = 0;
 
     Index row_stride = 1;
-
     Index column_stride = 1;
 
     string pooling_method = "MaxPooling";

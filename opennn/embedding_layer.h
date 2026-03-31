@@ -26,20 +26,18 @@ public:
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
 
-    Shape get_output_shape() const override
-    {
-        return { input_shape[0], embedding_dimension };
-    }
+    Shape get_output_shape() const override;
+
     vector<Shape> get_parameter_shapes() const override;
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {{batch_size, sequence_length, embedding_dimension}}; // Outputs
+        return {{batch_size, get_sequence_length(), embedding_dimension}}; // Outputs
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        return {{batch_size, sequence_length}};
+        return {{batch_size, get_sequence_length()}};
     }
 
     void set(const Index = 0,

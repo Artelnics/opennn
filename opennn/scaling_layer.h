@@ -429,10 +429,6 @@ public:
 
 private:
 
-
-
-    Shape input_shape;
-
     vector<Descriptives> descriptives;
 
     vector<string> scalers;

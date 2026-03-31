@@ -68,26 +68,8 @@ public:
 
 private:
 
-    Shape input_shape;
     PoolingMethod pooling_method;
 };
-
-
-struct Pooling3dForwardPropagation final : LayerForwardPropagation
-{
-    MatrixI maximal_indices;
-};
-
-
-
-#ifdef CUDA
-
-struct Pooling3dForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    TensorCuda maximal_indices_device;
-};
-
-#endif
 
 }
 

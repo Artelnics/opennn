@@ -18,16 +18,6 @@ namespace opennn
 {
 template<int Rank> class Dense;
 
-template<int Rank>
-struct DenseForwardPropagation final : LayerForwardPropagation
-{
-    TensorView means;
-    TensorView standard_deviations;
-    TensorView normalized_outputs;
-    TensorView activation_derivatives;
-};
-
-
 struct DenseBackPropagationLM final : LayerBackPropagationLM
 {
     void initialize() override
@@ -51,7 +41,6 @@ struct Dense2dForwardPropagationLM;
 template<int Rank>
 class Dense final : public Layer
 {
-
 public:
 
     Dense(const Shape& new_input_shape = {0},
@@ -105,24 +94,6 @@ public:
             return input_shape[0];
         else
             return 1;
-    }
-
-
-    Index get_total_rows(const Index batch_size) const
-    {
-        return batch_size * get_sequence_length();
-    }
-
-
-    Shape get_batch_input_shape(const Index batch_size) const
-    {
-        return Shape{batch_size}.append(get_input_shape());
-    }
-
-
-    Shape get_batch_output_shape(const Index batch_size) const
-    {
-        return Shape{batch_size}.append(get_output_shape());
     }
 
 
@@ -1012,8 +983,6 @@ public:
 
 private:
 
-    Shape input_shape;
-
     Index neurons_number;
 
     enum Parameters {Biases, Weights, Gammas, Betas};   
@@ -1034,17 +1003,8 @@ private:
 
 #ifdef CUDA
 
-    TensorView biases_device;
-    TensorView weights_device;
-
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
     cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-
-    TensorView gammas_device;
-    TensorView betas_device;
-
-    TensorCuda running_means_device;
-    TensorCuda running_variances_device;
 
 #endif
 
