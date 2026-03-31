@@ -455,8 +455,6 @@ void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward
     PoolingForwardPropagationCuda* pooling_forward_propagation
         = static_cast<PoolingForwardPropagationCuda*>(forward_propagation.get());
 
-    const cudnnTensorDescriptor_t input_tensor_descriptor = pooling_forward_propagation->input_tensor_descriptor;
-
     // Pooling
 
     CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
@@ -481,7 +479,6 @@ void Pooling::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_pr
         = static_cast<PoolingForwardPropagationCuda*>(forward_propagation.get());
 
     const type* inputs = forward_propagation->inputs[0].data;
-    const cudnnTensorDescriptor_t input_tensor_descriptor = pooling_forward_propagation->input_tensor_descriptor;
 
     // Back propagation
 

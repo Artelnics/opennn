@@ -124,7 +124,7 @@ public:
 
 private:
 
-    enum Parameters  {};
+    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
     enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
 
     Index heads_number = 0;

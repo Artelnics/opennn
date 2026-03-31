@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "layer.h"
-#include "random_utilities.h"
+//#include "random_utilities.h"
 
 namespace opennn
 {

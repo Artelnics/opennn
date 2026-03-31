@@ -14,6 +14,15 @@
 namespace opennn
 {
 
+void padding(const TensorView& input, TensorView& output)
+{
+#ifndef CUDA
+//    output = input.pad(input);
+#else
+
+#endif
+}
+
 inline void bounding(const TensorView& input,
                      const VectorR& lower_bounds,
                      const VectorR& upper_bounds,
@@ -45,7 +54,7 @@ inline void bounding(const TensorView& input,
 inline void copy(const TensorView& source, TensorView& destination)
 {
     if(source.size() != destination.size())
-        throw std::runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
+        throw runtime_error("Math Error: Tensor sizes mismatch in copy operation.");
 
 #ifndef CUDA
     destination.as_vector() = source.as_vector();
@@ -85,12 +94,10 @@ void addition(const TensorView& input_1, const TensorView& input_2, TensorView& 
 }
 
 
-void projection(const TensorMap3 &inputs,
-                const TensorView &weights,
-                const TensorView &biases,
-                Index sequence_length,
-                Index batch_size,
-                Tensor4 &output)
+void projection(const TensorView& input,
+                const TensorView& weights,
+                const TensorView& biases,
+                TensorView& output)
 {
 #ifndef CUDA
 /*
@@ -204,12 +211,11 @@ void projection_gradient(const Tensor4& d_head,
 */
 }
 
-void normalization(Tensor1& means,
-                   Tensor1& standard_deviations,
-                   const Tensor2& inputs,
-                   Tensor2& outputs)
+
+inline void batch_normalization(const TensorView& input, TensorView& output)
 {
 #ifndef CUDA
+/*
     const Index batch_size = inputs.dimension(0);
     const Index features_number = inputs.dimension(1);
 
@@ -227,7 +233,7 @@ void normalization(Tensor1& means,
 
     outputs.device(get_device()) = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)) /
                                    (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + EPSILON);
-/*
+
     if (batch_normalization && parameters[Gammas].data != nullptr && parameters[Betas].data != nullptr)
     {
         const MatrixMap gammas_map(parameters[Gammas].data, 1, features_number);
@@ -359,7 +365,7 @@ void batch_normalization_inference()
 }
 
 
-void activation()
+void activation(const TensorView& input, TensorView& output, const string& activation)
 {
 #ifndef CUDA
 
@@ -369,23 +375,23 @@ void activation()
         cudaMemcpy(outputs.data, combinations, total_rows * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     else if (activation_function == "Softmax")
         CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-                                        CUDNN_SOFTMAX_ACCURATE,
-                                        CUDNN_SOFTMAX_MODE_CHANNEL,
-                                        &alpha,
-                                        outputs.get_descriptor(),
-                                        outputs_buffer,
-                                        &beta,
-                                        outputs.get_descriptor(),
-                                        outputs.data));
+                    CUDNN_SOFTMAX_ACCURATE,
+                    CUDNN_SOFTMAX_MODE_CHANNEL,
+                    &alpha,
+                    outputs.get_descriptor(),
+                    outputs_buffer,
+                    &beta,
+                    outputs.get_descriptor(),
+                    outputs.data));
     else
         CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                                           activation_descriptor,
-                                           &alpha,
-                                           outputs.get_descriptor(),
-                                           outputs_buffer,
-                                           &beta,
-                                           outputs.get_descriptor(),
-                                           outputs.data));
+                    activation_descriptor,
+                    &alpha,
+                    outputs.get_descriptor(),
+                    outputs_buffer,
+                    &beta,
+                    outputs.get_descriptor(),
+                    outputs.data));
 #endif
 }
 
@@ -407,10 +413,10 @@ void dropout()
 }
 
 
-void convolution(const TensorView& inputs,
+void convolution(const TensorView& input,
                  const TensorView& kernel,
                  const TensorView& biases,
-                 TensorView& outputs)
+                 TensorView& output)
 {
 #ifndef CUDA
 /*
@@ -443,8 +449,8 @@ void convolution(const TensorView& inputs,
 #else
     CHECK_CUDNN(cudnnConvolutionForward(get_cudnn_handle(),
                                         &alpha,
-                                        input_tensor_descriptor,
-                                        input_data,
+                                        input.descriptor,
+                                        input.device,
                                         kernel_descriptor,
                                         weights_device.data,
                                         convolution_descriptor,
@@ -472,12 +478,13 @@ void convolution(const TensorView& inputs,
 inline void convolution_activation(const TensorView& input,
                                    const TensorView& weight,
                                    const TensorView& bias,
-                                   TensorView& output)
+                                   TensorView& output,
+                                   const string& activation)
 {
 #ifndef CUDA
     convolution(input, weight, bias, output);
 
-    activation();
+//    activation(input, output, activation);
 #else
     CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
         get_cudnn_handle(),
@@ -504,7 +511,9 @@ inline void convolution_activation(const TensorView& input,
 
 inline void multiply(const TensorView& A, bool transA,
                      const TensorView& B, bool transB,
-                     TensorView& C, type alpha = 1.0f, type beta = 0.0f) {
+                     TensorView& C,
+                     type alpha = 1.0f, type beta = 0.0f)
+{
 #ifndef OPENNN_CUDA
     auto matA = A.as_matrix();
     auto matB = B.as_matrix();
@@ -523,7 +532,7 @@ inline void multiply(const TensorView& A, bool transA,
     const int ldb = (int)B.shape[1];
     const int ldc = n;
 
-    // We compute C^T = B^T * A^T
+    // C^T = B^T * A^T (RowMajor)
     CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
                              transB ? CUBLAS_OP_N : CUBLAS_OP_T,
                              transA ? CUBLAS_OP_N : CUBLAS_OP_T,
@@ -553,6 +562,16 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
     B.as_vector().noalias() = alpha * A.as_matrix().colwise().sum() + beta * B.as_vector();
 #else
     // @todo
+#endif
+}
+
+
+inline void softmax(const TensorView& input, TensorView& output)
+{
+#ifndef OPENNN_CUDA
+
+#else
+
 #endif
 }
 

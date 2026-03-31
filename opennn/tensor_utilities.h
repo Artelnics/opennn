@@ -177,7 +177,6 @@ struct Shape
         rank = n;
     }
 
-
     void resize(size_t n, Index value)
     {
         resize(n);
@@ -250,7 +249,6 @@ struct TensorView
         return shape.empty();
     }
 
-
     void print() const
     {
         if(!data || shape.empty())
@@ -276,20 +274,21 @@ struct TensorView
             cout << endl;
     }
 
-    inline MatrixMap as_matrix() const {
-        // Asumimos que la primera dimensión es el batch o filas
+    inline MatrixMap as_matrix() const
+    {
         return MatrixMap(data, shape[0], shape.count() / shape[0]);
     }
 
-    inline VectorMap as_vector() const {
+    inline VectorMap as_vector() const
+    {
         return VectorMap(data, shape.count());
     }
-
+/*
     template<int Rank>
     inline TensorMapR<Rank> as_tensor() const {
         return TensorMapR<Rank>(data, get_eigen_dims<Rank>());
     }
-
+*/
 #ifdef CUDA
     float* device = nullptr;
     cudnnTensorDescriptor_t descriptor = nullptr;

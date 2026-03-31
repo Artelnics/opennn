@@ -199,8 +199,6 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
     TensorView beta_gradients;
 
     TensorCuda ones;
-
-    cudnnTensorDescriptor_t gradients_tensor_descriptor = nullptr;
 };
 
 #endif
@@ -301,6 +299,11 @@ public:
 
         return views;
 */
+
+
+
+    return {{}, // Biases
+            {}}; // Weights
     }
 
 
@@ -887,8 +890,6 @@ public:
         float* bias_gradients = dense_layer_back_propagation->bias_gradients.data;
         float* weight_gradients = dense_layer_back_propagation->weight_gradients.data;
 
-        const cudnnTensorDescriptor_t gradients_tensor_descriptor = dense_layer_back_propagation->gradients_tensor_descriptor;
-
         // Dropout
 
         if (dropout_rate > type(0) && activation_function != "Softmax")
@@ -987,7 +988,6 @@ public:
 #endif
 
     }
-
 
     void back_propagate(ForwardPropagation& forward_propagation,
                         BackPropagationLM& back_propagation,
@@ -1236,7 +1236,8 @@ private:
 
     Shape input_shape;
 
-    enum Parameters {Biases, Weights, Gammas, Betas};
+    enum Parameters {Biases, Weights, Gammas, Betas};   
+
     enum Forward {Inputs, Outputs};
     enum Backward {OutputGradients, InputGradients};
 

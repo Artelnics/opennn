@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "multihead_attention_layer.h"
 #include "neural_network.h"
 #include "loss.h"
@@ -182,21 +183,36 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                            size_t layer,
                                            bool)
 {
+    const TensorView& query_input = forward_propagation.views[layer][Inputs][0];
+
+    const TensorView& source_input = (forward_propagation.views[layer][Inputs].size() == 1)
+                                        ? query_input
+                                        : forward_propagation.views[layer][Inputs][1];
+
+    TensorView& query = forward_propagation.views[layer][Query][0];
+    TensorView& key = forward_propagation.views[layer][Key][0];
+    TensorView& value = forward_propagation.views[layer][Value][0];
+
+    const TensorView& query_weights = parameters[QueryWeights];
+    const TensorView& query_biases = parameters[QueryBiases];
+
+    const TensorView& key_weights = parameters[KeyWeights];
+    const TensorView& key_biases = parameters[KeyBiases];
+
+    const TensorView& value_weights = parameters[ValueWeights];
+    const TensorView& value_biases = parameters[KeyBiases];
+
+
+    projection(query_input, query_weights, query_biases, query);
+    projection(source_input, key_weights, key_biases, key);
+
+
+
 #ifndef CUDA
     const Index embedding_dimension = get_embedding_dimension();
     const Index head_dimension = get_head_dimension();
     const type scaling_factor = get_scaling_factor();
     const Index batch_size = forward_propagation.batch_size;
-
-    const TensorMap3 query_input = tensor_map<3>(forward_propagation.views[layer][Inputs][0]);
-
-    const TensorMap3 source_input = (forward_propagation.views[layer][Inputs].size() == 1)
-                                    ? query_input
-                                    : tensor_map<3>(forward_propagation.views[layer][Inputs][1]);
-
-    TensorMap4 query = tensor_map<4>(forward_propagation.views[layer][Query][0]);
-    TensorMap4 key = tensor_map<4>(forward_propagation.views[layer][Key][0]);
-    TensorMap4 value = tensor_map<4>(forward_propagation.views[layer][Value][0]);
 /*
     Tensor4& attention_weights = this_forward_propagation->attention_weights;
 

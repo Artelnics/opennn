@@ -53,17 +53,19 @@ void Convolutional::pad_inputs(const Tensor4& inputs,
 
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView inputs = forward_propagation.views[layer][Inputs][0];
+    const TensorView input = forward_propagation.views[layer][Inputs][0];
 
-    TensorView padded_inputs = forward_propagation.views[layer][PreprocessedInputs][0];
+    TensorView padded_input = forward_propagation.views[layer][PaddedInputs][0];
 
-    TensorView outputs = forward_propagation.views[layer][Outputs][0];
+    TensorView output = forward_propagation.views[layer][Outputs][0];
 
-    TensorView activation_derivatives = forward_propagation.views[layer][ActivationDerivatives][0];
+    TensorView activation_derivative = forward_propagation.views[layer][ActivationDerivatives][0];
+
+    convolution_type == "Same"
+        ? padding(input, padded_input)
+        : copy(input, padded_input);
 
 #ifndef CUDA
-
-//    pad_inputs(inputs, padded_inputs);
 
 //    convolution(padded_inputs, weights, biases, outputs);
 /*
@@ -88,11 +90,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     // Forward propagation
 
-    const Index batch_size = forward_propagation->batch_size;
-
-    TensorView& outputs = forward_propagation->outputs;
-
-    TensorCuda& convolutions = convolutions;
 
     const float* input_data = forward_propagation->inputs[0].data;
     float* outputs_buffer = use_convolutions() ? convolutions.data : outputs.data;
@@ -103,7 +100,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     }
     else
     {
-
         // Batch Normalization
 
         if (batch_normalization && is_training)
@@ -181,7 +177,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
     // Forward propagation
 
-    TensorMap4 padded_inputs = tensor_map<4>(forward_propagation.views[layer][PreprocessedInputs][0]);
+    TensorMap4 padded_inputs = tensor_map<4>(forward_propagation.views[layer][PaddedInputs][0]);
 
     TensorMap4 activation_derivatives = tensor_map<4>(forward_propagation.views[layer][ActivationDerivatives][0]);
 
@@ -277,8 +273,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
     // Back propagation
 
-    const cudnnTensorDescriptor_t input_tensor_descriptor = back_propagation->input_gradients[0].get_descriptor();
-
     TensorView input_gradients = back_propagation->input_gradients[0];
 
     float* output_gradients_data = back_propagation->output_gradients[0].data;
@@ -288,8 +282,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 
     void* backward_filter_workspace = backward_filter_workspace;
     const size_t backward_filter_workspace_bytes = backward_filter_workspace_bytes;
-
-    const cudnnTensorDescriptor_t gradients_tensor_descriptor = gradients_tensor_descriptor;
 
     // Error combinations derivatives
 

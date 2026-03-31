@@ -278,8 +278,12 @@ protected:
 private:
 
     enum Parameters {Biases, Weights, Gammas, Betas};
-    enum Forward {Inputs, PreprocessedInputs, Outputs, ActivationDerivatives};
+    enum Forward {Inputs, PaddedInputs, Outputs, ActivationDerivatives};
     enum Backward {OutputGradients, InputGradients};
+
+    // Forward TensorCuda inverse_variance;
+
+    // Backward: Rotated weights
 
     Index row_stride = 1;
     Index column_stride = 1;
@@ -302,47 +306,16 @@ private:
     VectorR running_standard_deviations;
 
     type momentum = type(0.9);
-};
 
-
-struct ConvolutionalForwardPropagation final : LayerForwardPropagation
-{
-    void initialize() override;
-
-    Tensor4 padded_inputs;
-
-    TensorView means;
-    TensorView standard_deviations;
-
-//    TensorView activation_derivatives;
-};
-
-
-struct ConvolutionalBackPropagation final
-{
-    //TensorView bias_gradients;
-    TensorView weight_gradients;
-
-    TensorView gamma_gradients;
-    TensorView beta_gradients;
-
-    Tensor4 rotated_weights;
+#ifdef CUDA
+    cudnnConvolutionFwdAlgo_t convolution_algorithm;
+    cudnnConvolutionBwdDataAlgo_t algo_data;
+    cudnnConvolutionBwdFilterAlgo_t algo_filter;
+#endif
 };
 
 
 #ifdef CUDA
-
-struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    TensorCuda convolutions;
-    TensorCuda means;
-    TensorCuda inverse_variance;
-
-    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
-
-    cudnnConvolutionFwdAlgo_t convolution_algorithm;
-};
-
 
 struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 {
@@ -362,12 +335,6 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     void* backward_filter_workspace = nullptr;   
     size_t backward_filter_workspace_bytes = 0;
-
-    cudnnTensorDescriptor_t gradients_tensor_descriptor = nullptr;
-
-    cudnnConvolutionBwdDataAlgo_t algo_data;
-    cudnnConvolutionBwdFilterAlgo_t algo_filter;
-
 };
 
 #endif
