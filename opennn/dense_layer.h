@@ -1213,9 +1213,6 @@ public:
     void back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                         unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
     {
-        if (bp_cuda->output_gradients.size() > 1)
-            add_gradients(bp_cuda->output_gradients);
-
         // Dense layer
 
         const Index inputs_number = get_input_features_number();
@@ -1330,6 +1327,7 @@ public:
                                  forward_propagation->inputs[0].data, inputs_number,
                                  &beta,
                                  weight_gradients, outputs_number));
+
         // Input derivatives
 
         CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),

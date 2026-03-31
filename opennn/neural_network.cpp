@@ -1377,6 +1377,10 @@ void NeuralNetworkBackPropagation::set(const Index new_batch_size, NeuralNetwork
 
     for(size_t i = 0; i < layers.size(); i++)
     {
+        if (layers[i]->output_gradients.size() > 1) {
+            cout << "[TOPOLOGIA CUDA] La capa " << i << " (" << neural_network->get_layer(i)->get_name()
+            << ") se ramifica. Recibe " << layers[i]->output_gradients.size() << " tensores de gradiente para sumar." << endl;
+        }
         if(!layers[i]) continue;
         layers[i]->output_gradients.clear();
 

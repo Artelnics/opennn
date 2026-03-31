@@ -4320,7 +4320,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
     }
     if(!dataset_decoder_shape.empty())
     {
-        const Index num_decoder_features = dataset->get_features_number("Decoder");
+        num_decoder_features = dataset->get_features_number("Decoder");
 
         decoder_shape = { samples_number };
         decoder_shape.insert(decoder_shape.end(), dataset_decoder_shape.begin(), dataset_decoder_shape.end());

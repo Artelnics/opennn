@@ -457,7 +457,7 @@ void Layer::add_gradients(const vector<TensorViewCuda>& output_gradient_views) c
 }
 
 #endif
-} 
+}
 
 
 // OpenNN: Open Neural Networks Library.

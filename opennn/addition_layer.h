@@ -151,14 +151,20 @@ public:
         if (back_propagation->output_gradients.size() != 1)
             throw runtime_error(name + " backpropagation requires exactly one delta input for CUDA.");
 
-        AdditionBackPropagationCuda<Rank>* this_back_propagation =
+        AdditionBackPropagationCuda<Rank>* bp_cuda =
             static_cast<AdditionBackPropagationCuda<Rank>*>(back_propagation.get());
 
-        const size_t inputs_number = get_inputs_number();
-        const size_t total_elements = static_cast<size_t>(back_propagation->batch_size) * inputs_number;
+        const size_t bytes_to_copy = bp_cuda->input_gradients[0].size() * sizeof(type);
 
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[0].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
-        CHECK_CUDA(cudaMemcpy(this_back_propagation->input_gradients[1].data, back_propagation->output_gradients[0].data, total_elements * sizeof(type), cudaMemcpyDeviceToDevice));
+        CHECK_CUDA(cudaMemcpy(bp_cuda->input_gradients[0].data,
+                              back_propagation->output_gradients[0].data,
+                              bytes_to_copy,
+                              cudaMemcpyDeviceToDevice));
+
+        CHECK_CUDA(cudaMemcpy(bp_cuda->input_gradients[1].data,
+                              back_propagation->output_gradients[0].data,
+                              bytes_to_copy,
+                              cudaMemcpyDeviceToDevice));
     }
 
 #endif

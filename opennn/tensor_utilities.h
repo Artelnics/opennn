@@ -943,6 +943,7 @@ struct TensorViewCuda
         Index total_elements = 1;
         for (int i = 0; i < nbDims; ++i)
             total_elements *= static_cast<Index>(dimA[i]);
+
         return total_elements;
     }
 
