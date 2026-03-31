@@ -11,7 +11,6 @@
 #include "layer.h"
 #include "random_utilities.h"
 #include "math_utilities.h"
-#include "neural_network.h"
 #include "loss.h"
 
 namespace opennn
@@ -41,6 +40,72 @@ struct Dense2dForwardPropagationLM;
 template<int Rank>
 class Dense final : public Layer
 {
+private:
+
+    Index neurons_number;
+
+    VectorR running_means;
+    VectorR running_standard_deviations;
+
+    bool batch_normalization = false;
+
+    type momentum = type(0.9);
+
+    string activation_function = "HyperbolicTangent";
+
+    type dropout_rate = type(0);
+
+#ifdef CUDA
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
+
+#endif
+
+    enum Parameters {Bias, Weight, Gamma, Beta};
+
+    vector<Shape> get_parameter_shapes() const override
+    {
+        const Index input_dimension = input_shape.back();
+        const Index output_dimension = get_outputs_number();
+
+        return {{output_dimension},                            // Biases
+                {input_dimension, output_dimension},          // Weights
+                {batch_normalization ? output_dimension : 0},  // Gammas
+                {batch_normalization ? output_dimension : 0}}; // Betas
+    }
+
+    enum Forward {Input, NormalizedOutput, Output};
+
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        const Index input_dimension = input_shape.back();
+        const Index output_dimension = get_outputs_number();
+
+        /*
+        vector<Shape> shapes =
+        {{batch_size, outputs_number},   // outputs
+         {{batch_size, outputs_number}}; // activation_derivatives
+
+        if (batch_normalization)
+        {
+            shapes.push_back({outputs_number});                // means
+            shapes.push_back({outputs_number});                // standard_deviations
+            shapes.push_back({batch_size, outputs_number});    // normalized_outputs
+        }
+
+        return shapes;
+*/
+        return {};
+    }
+
+    enum Backward {OutputGradients, InputGradients};
+
+    vector<Shape> get_backward_shapes(Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(get_input_shape())};
+    }
+
 public:
 
     Dense(const Shape& new_input_shape = {0},
@@ -66,7 +131,6 @@ public:
             new_label);
     }
 
-
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
@@ -75,19 +139,6 @@ public:
             return {input_shape[0], parameters[Biases].size()};
     }
 
-
-    Index get_inputs_number() const
-    {
-        return parameters[Weights].shape[0];
-    }
-
-
-    Index get_outputs_number() const
-    {
-        return parameters[Biases].size();
-    }
-
-
     Index get_sequence_length() const
     {
         if constexpr (Rank == 3)
@@ -95,48 +146,6 @@ public:
         else
             return 1;
     }
-
-
-    vector<Shape> get_parameter_shapes() const override
-    {
-        Index inputs_number;
-        Index outputs_number;
-
-        if (batch_normalization)
-            return {{outputs_number},
-                    {inputs_number, outputs_number},
-                    {outputs_number},
-                    {outputs_number}};
-
-        return {{parameters[Biases].size()},
-                {inputs_number, outputs_number}};
-    }
-
-
-    vector<Shape> get_forward_shapes(const Index batch_size) const override
-    {
-/*
-        vector<Shape> shapes =
-        {{batch_size, outputs_number}, // outputs
-         {{batch_size, outputs_number}}; // activation_derivatives
-
-        if (batch_normalization)
-        {
-            shapes.push_back({outputs_number});                // means
-            shapes.push_back({outputs_number});                // standard_deviations
-            shapes.push_back({batch_size, outputs_number});    // normalized_outputs
-        }
-
-        return shapes;
-*/
-        return {};
-    }
-
-    vector<Shape> get_backward_shapes(Index batch_size) const override
-    {
-        return {Shape{batch_size}.append(get_input_shape())};
-    }
-
 
     type get_dropout_rate() const
     {
@@ -340,8 +349,8 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) override
     {
-        const TensorView& input = forward_propagation.views[layer][Inputs][0];
-        TensorView& output = forward_propagation.views[layer][Outputs][0];
+        const TensorView& input = forward_propagation.views[layer][Input][0];
+        TensorView& output = forward_propagation.views[layer][Output][0];
 
         const TensorView& weights = parameters[Weights];
         const TensorView& biases = parameters[Biases];
@@ -980,34 +989,6 @@ public:
     }
 
     bool use_combinations = true;
-
-private:
-
-    Index neurons_number;
-
-    enum Parameters {Biases, Weights, Gammas, Betas};   
-
-    enum Forward {Inputs, Outputs};
-    enum Backward {OutputGradients, InputGradients};
-
-    VectorR running_means;
-    VectorR running_standard_deviations;
-
-    bool batch_normalization = false;
-
-    type momentum = type(0.9);
-
-    string activation_function = "HyperbolicTangent";
-
-    type dropout_rate = type(0);
-
-#ifdef CUDA
-
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-
-#endif
-
 };
 
 void reference_dense_layer();

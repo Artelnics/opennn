@@ -48,65 +48,6 @@ vector<TensorView> LayerBackPropagationLM::get_input_gradients() const
 }
 
 
-#ifdef CUDA
-
-void LayerForwardPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
-{
-    if(!new_layer) return;
-
-    batch_size = new_batch_size;
-    layer = new_layer;
-
-    initialize();
-}
-
-
-void LayerBackPropagationCuda::set(const Index new_batch_size, Layer* new_layer)
-{
-    if(!new_layer) return;
-
-    batch_size = new_batch_size;
-    layer = new_layer;
-
-    initialize();
-}
-
-
-vector<TensorView *> LayerBackPropagationCuda::get_gradient_views()
-{
-    return vector<TensorView*>();
-}
-
-
-vector<TensorView *> LayerBackPropagationCuda::get_workspace_views()
-{
-    vector<TensorView*> views;
-    for (TensorView& view : input_gradients)
-        views.push_back(&view);
-    return views;
-}
-
-
-TensorView LayerForwardPropagationCuda::get_outputs() const
-{
-    return outputs;
-}
-
-
-vector<TensorView*> LayerForwardPropagationCuda::get_workspace_views()
-{
-    return { &outputs };
-}
-
-
-vector<TensorView> LayerBackPropagationCuda::get_input_gradient_views() const
-{
-    return input_gradients;
-}
-
-#endif
-
-
 bool Layer::get_display() const
 {
     return display;
@@ -166,14 +107,7 @@ void Layer::set_parameters_glorot()
 
 Index Layer::get_parameters_number()
 {
-    vector<Shape> parameter_shapes = get_parameter_shapes();
-
-    Index parameters_number = 0;
-
-    for (const auto& shape : parameter_shapes)
-        parameters_number += shape.size();
-
-    return parameters_number;
+    return get_size(get_parameter_shapes());
 }
 
 

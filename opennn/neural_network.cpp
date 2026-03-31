@@ -407,14 +407,9 @@ Index NeuralNetwork::get_inputs_number() const
 
 Index NeuralNetwork::get_outputs_number() const
 {
-    if(layers.empty()) 
-        return 0;
+    if(layers.empty()) return 0;
 
-    const Layer* last_layer = layers[layers.size() - 1].get();
-
-    const Shape output_shape = last_layer->get_output_shape();
-
-    return output_shape.count();
+    return layers.back()->get_output_shape().count();
 }
 
 
