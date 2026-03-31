@@ -271,6 +271,24 @@ struct TensorView
     }
 };
 
+/*
+struct Interval
+{
+    type lower;
+    type upper;
+    bool left_closed = true;  // [ vs (
+    bool right_closed = true; // ] vs )
+
+    type length() const { return upper - lower; }
+
+    bool contains(type value) const
+    {
+        bool left_ok = left_closed ? (value >= lower) : (value > lower);
+        bool right_ok = right_closed ? (value <= upper) : (value < upper);
+        return left_ok && right_ok;
+    }
+};
+*/
 
 VectorR filter_missing_values(const VectorR& input);
 
@@ -394,6 +412,17 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
 
 
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
+
+vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
+                                                const vector<Index>& selected_indices,
+                                                const Index column_index,
+                                                const type minimum,
+                                                const type maximum);
+
+vector<Index> filter_indices_by_column(const MatrixR& matrix,
+                                       Index column_index,
+                                       type minimum,
+                                       type maximum);
 
 inline bool is_constant(const VectorR& tensor)
 {
@@ -541,6 +570,8 @@ inline string vector_to_string(const VectorI& x, const string& separator = " ")
 inline string vector_to_string(const VectorR& x, const string& separator = " ")
 {
     ostringstream buffer;
+
+    buffer.precision(16);
 
     for(Index i = 0; i < x.size(); i++)
         buffer << x(i) << separator;
@@ -943,6 +974,7 @@ struct TensorViewCuda
         Index total_elements = 1;
         for (int i = 0; i < nbDims; ++i)
             total_elements *= static_cast<Index>(dimA[i]);
+
         return total_elements;
     }
 

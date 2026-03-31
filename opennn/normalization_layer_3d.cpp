@@ -134,9 +134,6 @@ void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagation>& forwar
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-
     const TensorMap3 output_gradients = tensor_map<3>(back_propagation->output_gradients[0]);
 
     const Normalization3dForwardPropagation* this_forward_propagation =
@@ -221,6 +218,9 @@ void Normalization3d::forward_propagate(unique_ptr<LayerForwardPropagationCuda>&
 void Normalization3d::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
+
     Normalization3dForwardPropagationCuda* fp_cuda = static_cast<Normalization3dForwardPropagationCuda*>(forward_propagation.get());
     Normalization3dBackPropagationCuda* bp_cuda = static_cast<Normalization3dBackPropagationCuda*>(back_propagation.get());
 

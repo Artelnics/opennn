@@ -3100,7 +3100,18 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
     return Index(stoi(text));
 }
 
+bool read_xml_bool(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+    if(!element || !element->GetText()) return false; // Default to false if missing
+    string text = element->GetText();
+    // Support both integer (1) and string (true) formats
+    if(text == "true" || text == "1")
+        return true;
+    return false;
+}
 
+/*
 bool read_xml_bool(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
@@ -3115,7 +3126,7 @@ bool read_xml_bool(const XMLElement* root, const string& element_name)
 
     return bool(stoi(text));
 }
-
+*/
 
 string read_xml_string(const XMLElement* root, const string& element_name)
 {
@@ -3127,7 +3138,8 @@ string read_xml_string(const XMLElement* root, const string& element_name)
     const char* text = element->GetText();
 
     if(!text)
-        throw runtime_error("Text is nullptr: " + element_name);
+        return string("");
+        //throw runtime_eror("Text is nullptr: " + element_name);
 
     return string(text);
 }

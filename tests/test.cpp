@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "*CrossEntropyError3D*";
+    ::testing::GTEST_FLAG(filter) = "*MultiHead*";
 
     try {
         return RUN_ALL_TESTS();

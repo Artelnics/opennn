@@ -396,7 +396,6 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagation>& for
         dW.array() = W.array() * (dW.colwise() - dot_product).array();
     }
 
-
     type* q_data = const_cast<type*>(query.data());
     type* k_data = const_cast<type*>(key.data());
     type* q_grad_data = query_gradients.data();
@@ -710,7 +709,7 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
     // Softmax
 
     cudnnSoftmaxForward(get_cudnn_handle(),
-                        CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
+                        CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL,
                         &alpha_one,
                         forward->attention_weights.get_descriptor(), forward->attention_weights.data,
                         &beta_zero,
@@ -746,9 +745,6 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
 void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
                                         unique_ptr<LayerBackPropagationCuda>& back_propagation) const
 {
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-
     MultiHeadAttentionForwardPropagationCuda* forward =
         static_cast<MultiHeadAttentionForwardPropagationCuda*>(forward_propagation.get());
     MultiHeadAttentionBackPropagationCuda* back =
@@ -835,7 +831,7 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
     // Softmax gradients
 
     cudnnSoftmaxBackward(get_cudnn_handle(),
-                         CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
+                         CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL,
                          &alpha_one,
                          forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data,
                          back->attention_weight_gradients.get_descriptor(), back->attention_weight_gradients.data,

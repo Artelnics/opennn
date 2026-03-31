@@ -193,9 +193,6 @@ void Embedding::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
 void Embedding::back_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-
     const Index embedding_dimension = get_embedding_dimension();
     const Index batch_size = forward_propagation->inputs[0].shape[0];
     const Index sequence_length = forward_propagation->inputs[0].shape[1];
@@ -382,6 +379,9 @@ void Embedding::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_
     const Index total_elements = batch_size * sequence_length * embedding_dimension;
 
     EmbeddingBackPropagationCuda* embedding_back_propagation = static_cast<EmbeddingBackPropagationCuda*>(back_propagation.get());
+
+    if(back_propagation->output_gradients.size() > 1)
+        add_gradients(back_propagation->output_gradients);
 
     float* weight_gradients_data = embedding_back_propagation->weight_gradients.data;
 

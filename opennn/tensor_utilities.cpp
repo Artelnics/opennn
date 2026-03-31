@@ -84,6 +84,9 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     const auto min_bound = minimums.transpose().array();
     const auto max_bound = maximums.transpose().array();
 
+    cout << "> build_feasible_rows_mask post transpose " << endl;
+
+
     for (Index i = 0; i < rows_unfiltered; ++i)
     {
         const auto row_arr = outputs.row(i).array();
@@ -93,6 +96,44 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     }
 
     return feasible_rows;
+}
+
+vector<Index> filter_selected_indices_by_column(const MatrixR& matrix,
+                                       const vector<Index>& selected_indices,
+                                       const Index column_index,
+                                       const type minimum,
+                                       const type maximum)
+{
+    vector<Index> filtered;
+    filtered.reserve(selected_indices.size());
+
+    for (const Index row_idx : selected_indices)
+    {
+        const type value = matrix(row_idx, column_index);
+
+        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+            filtered.push_back(row_idx);
+
+    }
+    return filtered;
+}
+
+vector<Index> filter_indices_by_column(const MatrixR& matrix,
+                                       Index column_index,
+                                       type minimum,
+                                       type maximum)
+{
+    vector<Index> filtered;
+    filtered.reserve(matrix.rows());
+
+    for (Index i = 0; i < matrix.rows(); ++i)
+    {
+        const type value = matrix(i, column_index);
+        if (std::isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+            filtered.push_back(i);
+
+    }
+    return filtered;
 }
 
 
@@ -178,7 +219,8 @@ VectorI calculate_rank_less(const VectorR& vector)
 
 Index count_greater_than(const vector<Index>& data, Index bound)
 {
-    return count_if(data.begin(), data.end(), [&](const Index value) {
+    return count_if(data.begin(), data.end(), [&](const Index value)
+    {
         return value > bound;
     });
 }
