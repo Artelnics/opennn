@@ -48,47 +48,38 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     compile();
 }
 
-
-vector<vector<TensorView*>> NeuralNetwork::get_layer_parameter_views()
-{
-/*
-    const Index layers_number = get_layers_number();
-
-    vector<vector<TensorView*>> layer_parameter_views(layers_number);
-
-    for(Index i = 0; i < layers_number; i++)
-        layer_parameter_views[i] = layers[i]->get_parameter_views();
-
-    return layer_parameter_views;
-*/
-    return {};
-}
-
-
 void NeuralNetwork::compile()
 {
-    const vector<vector<Shape>> parameter_shapes = get_parameter_shapes();
+    const Index layers_number = get_layers_number();
 
-    const Index parameters_size = get_size(parameter_shapes);
+    if (layers_number == 0) return;
 
-    //const vector<vector<TensorView*>> layer_parameter_views = get_layer_parameter_views();
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        const vector<Index>& inputs = layer_input_indices[i];
 
-    //if (parameters_size == 0) return;
+        if (inputs.size() == 1 && inputs[0] >= 0)
+        {
+            const Index previous_index = inputs[0];
+            layers[i]->set_input_shape(layers[previous_index]->get_output_shape());
+        }
+    }
 
-    parameters.resize(parameters_size);
+    Index total_parameters_count = 0;
+    for (const auto& layer : layers)
+        total_parameters_count += layer->get_parameters_number();
+
+    parameters.resize(total_parameters_count);
     parameters.setZero();
 
-//    link(parameters.data(), layer_parameter_views);
+    type* pointer = parameters.data();
 
-#ifdef CUDA
+    for (Index i = 0; i < layers_number; ++i)
+    {
+        vector<Shape> parameter_shapes = layers[i]->get_parameter_shapes();
 
-    const vector<vector<TensorView*>> layer_parameter_views_device = get_layer_parameter_views_device();
-
-    allocate_parameters_device();
-
-    link(parameters_device.data, layer_parameter_views_device);
-
-#endif
+        pointer = layers[i]->link_parameters(pointer);
+    }
 }
 
 
@@ -476,8 +467,6 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 void NeuralNetwork::set_parameters(const VectorR& new_parameters)
 {
     parameters = new_parameters;
-
-    link(parameters.data(), get_layer_parameter_views());
 }
 
 

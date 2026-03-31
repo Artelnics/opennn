@@ -39,10 +39,7 @@ public:
 
     Shape get_output_shape() const override
     {
-        if (input_shape.empty() || input_shape[0] == 0)
-            return {0};
-
-        return { (Index)accumulate(input_shape.begin(), input_shape.end(), (size_t)1, multiplies<size_t>()) };
+        return { input_shape.count() };
     }
 
 

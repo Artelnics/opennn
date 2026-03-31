@@ -368,7 +368,8 @@ Index Convolutional::get_output_height() const
 {
     return (convolution_type == "Same")
         ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
-        : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;}
+        : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
+}
 
 
 Index Convolutional::get_output_width() const

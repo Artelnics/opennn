@@ -87,8 +87,6 @@ public:
     void add_layer(unique_ptr<Layer>,
                   const vector<Index>& = vector<Index>());
 
-    vector<vector<TensorView*>> get_layer_parameter_views();
-
     vector<vector<Shape>> get_parameter_shapes() const
     {
         return {};

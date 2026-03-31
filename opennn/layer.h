@@ -113,7 +113,21 @@ public:
 
     bool get_is_trainable() const;
 
-    bool get_is_first_layer() const;       
+    bool get_is_first_layer() const;
+
+    type* link_parameters(type* pointer)
+    {
+        const vector<Shape> shapes = get_parameter_shapes();
+        parameters.resize(shapes.size());
+
+        for (size_t i = 0; i < shapes.size(); ++i)
+        {
+            parameters[i] = TensorView(pointer, shapes[i]);
+            pointer += shapes[i].count();
+        }
+
+        return pointer;
+    }
 
 protected:
 
