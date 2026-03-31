@@ -34,31 +34,22 @@ public:
              const string & = "MaxPooling",
              const string & = "pooling_layer");
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-/*
-        const Index output_height = pooling_layer->get_output_height();
-        const Index output_width = pooling_layer->get_output_width();
-        const Index channels = pooling_layer->get_channels_number();
+        const Shape out_shape = get_output_shape(); // {out_h, out_w, channels}
 
-        outputs.shape = {batch_size, output_height, output_width, channels};
+        vector<Shape> shapes = {Shape{batch_size}.append(out_shape)}; // Outputs
 
-        if (pooling_layer->get_pooling_method() == "MaxPooling")
-            maximal_indices.resize(batch_size,
-                                   output_height,
-                                   output_width,
-                                   channels);
-*/
-        return {};
+        if (pooling_method == "MaxPooling")
+            shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
+
+        return shapes;
     }
 
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-        input_gradients = {{nullptr, Shape{batch_size}.append(pooling_layer->get_input_shape())}};
-        */
-        return {};
+        return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
     }
 
     Shape get_input_shape() const override;

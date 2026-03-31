@@ -42,62 +42,46 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        /*
-    const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
-    const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
-    const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
-    const Index heads_number = multihead_attention_layer->get_heads_number();
-    const Index head_dimension = multihead_attention_layer->get_head_dimension();
+        const Index embedding_dimension = get_embedding_dimension();
+        const Index head_dimension = get_head_dimension();
 
-    query.resize(batch_size, heads_number, query_sequence_length, head_dimension);
-    key.resize(batch_size, heads_number, source_sequence_length, head_dimension);
-    value.resize(batch_size, heads_number, source_sequence_length, head_dimension);
-
-    attention_weights.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
-
-    // @todo can we remove concatenated_attention_outputs and assign to outputs?
-
-    concatenated_attention_outputs.resize(batch_size, query_sequence_length, embedding_dimension);
-
-    outputs.shape = {batch_size, query_sequence_length, embedding_dimension};
-*/
-        return {};
+        return {{batch_size, query_sequence_length, embedding_dimension},                  // Outputs
+                {batch_size, heads_number, query_sequence_length, head_dimension},         // Query (split heads)
+                {batch_size, heads_number, source_sequence_length, head_dimension},        // Key (split heads)
+                {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
+                {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
+                {batch_size, heads_number, source_sequence_length, head_dimension}};       // Value (split heads)
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-    const Index query_sequence_length = get_query_sequence_length();
-    const Index source_sequence_length = get_source_sequence_length();
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index heads_number = get_heads_number();
-    const Index head_dimension = get_head_dimension();
-    /*
-    query_weight_gradients.shape = {embedding_dimension, embedding_dimension};
-    key_weight_gradients.shape = {embedding_dimension, embedding_dimension};
-    value_weight_gradients.shape = {embedding_dimension, embedding_dimension};
-    projection_weight_gradients.shape = {embedding_dimension, embedding_dimension};
+        const Index embedding_dimension = get_embedding_dimension();
+        const Index head_dimension = get_head_dimension();
 
-    query_bias_gradients.shape = {embedding_dimension};
-    key_bias_gradients.shape = {embedding_dimension};
-    value_bias_gradients.shape = {embedding_dimension};
-    projection_bias_gradients.shape = {embedding_dimension};
+        const Index q_len = query_sequence_length;
+        const Index s_len = source_sequence_length;
+        const Index h_num = heads_number;
 
-    input_gradients = {{nullptr, {batch_size, query_sequence_length, embedding_dimension}},
-                       {nullptr, {batch_size, source_sequence_length, embedding_dimension}}};
+        return {
+            // Input Query Gradients (dX_q): {batch, q_len, emb_dim}
+            {batch_size, q_len, embedding_dimension},
 
-    // Auxiliar
+            // Input Source Gradients (dX_s): {batch, s_len, emb_dim}
+            {batch_size, s_len, embedding_dimension},
 
-    attention_weight_gradients.resize(batch_size, heads_number, query_sequence_length, source_sequence_length);
+            // Intermediate: Attention Weight Gradients: {batch, h_num, q_len, s_len}
+            {batch_size, h_num, q_len, s_len},
 
-    concatenated_attention_output_gradients.resize(batch_size, query_sequence_length, embedding_dimension);
+            // Intermediate: Concatenated Output Gradients: {batch, q_len, emb_dim}
+            {batch_size, q_len, embedding_dimension},
 
-    query_gradients.resize(batch_size, heads_number, query_sequence_length, head_dimension);
-    key_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
-    value_gradients.resize(batch_size, heads_number, source_sequence_length, head_dimension);
-*/
-        return {};
+            // Head Gradients (Q, K, V): {batch, h_num, seq, h_dim}
+            {batch_size, h_num, q_len, head_dimension}, // Query Gradients
+            {batch_size, h_num, s_len, head_dimension}, // Key Gradients
+            {batch_size, h_num, s_len, head_dimension}  // Value Gradients
+        };
     }
 
     void set(const Index = 0,
@@ -124,12 +108,13 @@ public:
 
 private:
 
-    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
-    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
-
+    Index embedding_dimension;
     Index heads_number = 0;
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
+
+    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
+    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
 
     TensorView query_weights;
     TensorView query_biases;
@@ -151,28 +136,6 @@ private:
     type dropout_rate = type(0);
 
     const type minus_inf = -numeric_limits<float>::infinity();
-};
-
-
-
-struct MultiHeadAttentionBackPropagation final : LayerBackPropagation
-{
-    Tensor4 attention_weight_gradients;
-    Tensor3 concatenated_attention_output_gradients;
-
-    Tensor4 query_gradients;
-    Tensor4 key_gradients;
-    Tensor4 value_gradients;
-
-    TensorView query_weight_gradients;
-    TensorView key_weight_gradients;
-    TensorView value_weight_gradients;
-    TensorView projection_weight_gradients;
-
-    TensorView query_bias_gradients;
-    TensorView key_bias_gradients;
-    TensorView value_bias_gradients;
-    TensorView projection_bias_gradients;
 };
 
 } 

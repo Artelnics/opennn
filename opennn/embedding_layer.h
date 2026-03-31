@@ -26,22 +26,20 @@ public:
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
 
-    Shape get_input_shape() const override;
-    Shape get_output_shape() const override;
-
+    Shape get_output_shape() const override
+    {
+        return { input_shape[0], embedding_dimension };
+    }
     vector<Shape> get_parameter_shapes() const override;
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-/*
-        outputs.shape = {batch_size, sequence_length, embedding_dimension};
-*/
-        return {};
+        return {{batch_size, sequence_length, embedding_dimension}}; // Outputs
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        return {};
+        return {{batch_size, sequence_length}};
     }
 
     void set(const Index = 0,
@@ -85,9 +83,7 @@ private:
     enum Parameters {Weights};
     enum Forward {Inputs, Outputs};
 
-    Index sequence_length = 0;
     Index embedding_dimension = 0;
-    Index vocabulary_size = 0;
 
     bool scale_embedding = false;
     bool add_positional_encoding = false;

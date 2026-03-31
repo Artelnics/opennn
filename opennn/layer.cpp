@@ -25,29 +25,6 @@ vector<TensorView*> LayerForwardPropagation::get_workspace_views()
 }
 
 
-vector<TensorView *> LayerBackPropagation::get_gradient_views()
-{
-    return {};
-}
-
-
-vector<TensorView *> LayerBackPropagation::get_workspace_views()
-{
-    vector<TensorView*> views;
-
-    for (TensorView& view : input_gradients)
-        views.push_back(&view);
-
-    return views;
-}
-
-
-vector<TensorView> LayerBackPropagation::get_input_gradients() const
-{
-    return input_gradients;
-}
-
-
 vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
 {
     return {};
@@ -128,14 +105,6 @@ vector<TensorView> LayerBackPropagationCuda::get_input_gradient_views() const
 }
 
 #endif
-
-
-Layer::Layer()
-{
-}
-
-
-Layer::~Layer() = default;
 
 
 bool Layer::get_display() const
@@ -269,9 +238,7 @@ Index Layer::get_inputs_number() const
 
 Index Layer::get_outputs_number() const
 {
-    const Shape output_shape = get_output_shape();
-
-    return accumulate(output_shape.begin(), output_shape.end(), 1, multiplies<Index>());
+    return get_output_shape().count();
 }
 
 

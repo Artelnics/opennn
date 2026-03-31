@@ -31,7 +31,6 @@ public:
 
     const string& get_activation_function() const;
 
-    Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
     pair<Index, Index> get_padding() const;
@@ -61,29 +60,26 @@ public:
 
     vector<Shape> get_parameter_shapes() const override
     {
-        vector<Shape> shapes = {
-            //biases,
-            //weights}
-        };
-/*
         if (batch_normalization)
-            shapes.insert(shapes.end(), {&gammas, &betas});
-*/
-        return shapes;
+            return {{kernels_number},
+                    {kernels_number, kernel_height, kernel_width, kernel_channels},
+                    {kernels_number}, {kernels_number} };
+
+        return {{kernels_number},
+                {kernels_number, kernel_height, kernel_width, kernel_channels}};
     }
 
-    vector<Shape> get_forward_shapes() const override;
+    vector<Shape> get_forward_shapes(const Index) const override;
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
         const Index input_height = get_input_height();
         const Index input_width = get_input_width();
-        const Index channels = get_input_channels();
+        const Index input_channels = get_input_channels();
 
-        const Index kernel_height = get_kernel_height();
-        const Index kernel_width = get_kernel_width();
-        const Index kernel_channels = get_kernel_channels();
-        const Index kernels_number = get_kernels_number();
+        return {{batch_size, input_height, input_width, input_channels},
+                 // Rotated Weights (Aux): {kernels, k_h, k_w, k_c}
+                {kernels_number, kernel_height, kernel_width, kernel_channels}};
 /*
         rotated_weights.resize(kernels_number, kernel_height, kernel_width, kernel_channels);
 
@@ -100,10 +96,6 @@ public:
     const Index input_height = convolutional_layer->get_input_height();
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
-
-    const Index kernels_number = convolutional_layer->get_kernels_number();
-    const Index kernel_height = convolutional_layer->get_kernel_height();
-    const Index kernel_width = convolutional_layer->get_kernel_width();
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
@@ -275,13 +267,17 @@ protected:
 
 private:
 
+    Index kernels_number = 0;
+    Index kernel_height = 0;
+    Index kernel_width = 0;
+    Index kernel_channels = 0;
+
     enum Parameters {Biases, Weights, Gammas, Betas};
     enum Forward {Inputs, PaddedInputs, Outputs, ActivationDerivatives};
     enum Backward {OutputGradients, InputGradients};
 
-    // Forward TensorCuda inverse_variance;
-
-    // Backward: Rotated weights
+    // @todo Forward TensorCuda inverse_variance;
+    // @todo Backward: Rotated weights
 
     Index row_stride = 1;
     Index column_stride = 1;

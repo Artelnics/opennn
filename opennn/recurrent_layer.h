@@ -20,42 +20,28 @@ public:
 
     Recurrent(const Shape& = {0, 0}, const Shape& = {0});
 
-    Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
     vector<Shape> get_parameter_shapes() const override;
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        /*
-    if(layer == nullptr)
-        throw runtime_error("Recurrrent layer is nullptr");
+        const Index outputs_number = get_outputs_number();
+        const Index time_steps = input_shape[0];
 
-    const Index batch = batch_size;
-    const Index outputs_num = layer->get_outputs_number();
-    const Index steps = layer->get_input_shape()[0];
+        return {{ batch_size, outputs_number },            // Final layer outputs
+            { batch_size, time_steps, outputs_number },    // All hidden_states
+            { batch_size, time_steps, outputs_number }};   // All activation_derivatives
 
-    outputs.shape = {batch, outputs_num};
-    hidden_states.shape = {batch, steps, outputs_num};
-    activation_derivatives.shape = {batch, steps, outputs_num};
-*/
-        return {};
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-    const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_shape()[1];
-    const Index time_steps = layer->get_input_shape()[0];
+        const Index time_steps = input_shape[0];
+        const Index input_size = input_shape[1];
 
-    bias_gradients.shape = {outputs_number};
-    input_weight_gradients.shape = {inputs_number, outputs_number};
-    recurrent_weight_gradients.shape = {outputs_number, outputs_number};
-
-    input_gradients = {{nullptr, { batch_size, time_steps, inputs_number }}};
-*/
-        return {};
+        // Input Sequence Gradients (dX): {batch, time_steps, input_size}
+        return {{ batch_size, time_steps, input_size}};
     }
 
 
@@ -89,31 +75,7 @@ private:
     TensorView recurrent_weights;
 
     string activation_function = "HyperbolicTangent";
-
-#ifdef CUDA
-    // @todo
-#endif
-
 };
-
-
-struct RecurrentForwardPropagation final : LayerForwardPropagation
-{
-    TensorView hidden_states;
-    TensorView activation_derivatives;
-};
-
-
-struct RecurrentBackPropagation final : LayerBackPropagation
-{
-    TensorView bias_gradients;
-    TensorView input_weight_gradients;
-    TensorView recurrent_weight_gradients;
-};
-
-#ifdef CUDA
-// @todo
-#endif
 
 }
 

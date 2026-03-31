@@ -21,12 +21,6 @@ Recurrent::Recurrent(const Shape& new_input_shape,
 }
 
 
-Shape Recurrent::get_input_shape() const
-{
-    return input_shape;
-}
-
-
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };

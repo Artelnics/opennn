@@ -24,34 +24,28 @@ public:
               const PoolingMethod& = PoolingMethod::MaxPooling,
               const string& = "sequence_pooling_layer");
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        /*
-    const Index features = pooling_layer->get_output_shape()[0];
-    outputs.shape = {batch_size, features};
+        const Index features = input_shape[1];
 
-    if (pooling_layer->get_pooling_method() == Pooling3d::PoolingMethod::MaxPooling)
-        maximal_indices.resize(batch_size, features);
+        vector<Shape> shapes;
+        shapes.push_back({ batch_size, features }); // Outputs
 
-*/
-        return {};
+        if (pooling_method == PoolingMethod::MaxPooling)
+            shapes.push_back({ batch_size, features }); // MaximalIndices
+
+        return shapes;
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-    const Shape layer_input_dimensions = pooling_layer->get_input_shape();
-    const Index sequence_length = layer_input_dimensions[0];
-    const Index features = layer_input_dimensions[1];
+        const Index seq_len = input_shape[0];
+        const Index features = input_shape[1];
 
-    input_gradients = {{nullptr, {batch_size, sequence_length, features}}};
-
-*/
-        return {};
+        // Input Gradients (dX): {batch, seq_len, features}
+        return {{ batch_size, seq_len, features }};
     }
 
-
-    Shape get_input_shape() const override;
     Shape get_output_shape() const override;
     PoolingMethod get_pooling_method() const;
     string write_pooling_method() const;

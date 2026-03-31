@@ -31,15 +31,15 @@ public:
     }
 
 
-    Shape get_input_shape() const override
+    Shape get_output_shape() const override
     {
         return input_shape;
     }
 
 
-    Shape get_output_shape() const override
+    vector<Shape> get_forward_shapes(Index batch_size) const override
     {
-        return input_shape;
+        return {Shape{batch_size}.append(input_shape)}; // Outputs
     }
 
 

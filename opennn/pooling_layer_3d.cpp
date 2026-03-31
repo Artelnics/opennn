@@ -21,12 +21,6 @@ Pooling3d::Pooling3d(const Shape& new_input_shape,
 }
 
 
-Shape Pooling3d::get_input_shape() const
-{
-    return input_shape;
-}
-
-
 Shape Pooling3d::get_output_shape() const
 {
     return {input_shape[1]};

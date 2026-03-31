@@ -26,7 +26,7 @@ Embedding::Embedding(const Shape& new_input_shape,
 
 Index Embedding::get_vocabulary_size() const
 {
-    return vocabulary_size;
+    return parameters[Weights].shape[0];
 }
 
 
@@ -42,17 +42,9 @@ Index Embedding::get_embedding_dimension() const
 }
 
 
-Shape Embedding::get_input_shape() const
-{
-    return { sequence_length };
-}
-
-
 Shape Embedding::get_output_shape() const
 {
-    const Index embedding_dimension = get_embedding_dimension();
-
-    return { sequence_length, embedding_dimension };
+    return {sequence_length, embedding_dimension};
 }
 
 

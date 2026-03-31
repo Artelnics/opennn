@@ -37,12 +37,6 @@ public:
     }
 
 
-    Shape get_input_shape() const override
-    {
-        return input_shape;
-    }
-
-
     Shape get_output_shape() const override
     {
         if (input_shape.empty() || input_shape[0] == 0)
@@ -92,13 +86,13 @@ public:
     }
 
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        return {};
+        return {Shape{batch_size}.append(get_output_shape())}; // {batch, total_count}
     }
 
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
         /*
         input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};

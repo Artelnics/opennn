@@ -38,8 +38,7 @@ class Layer
 
 public:
 
-    Layer();
-    virtual ~Layer();
+    virtual ~Layer() = default;
 
     const string& get_label() const;
 
@@ -65,18 +64,21 @@ public:
         return {};
     }
 
-    virtual vector<Shape> get_forward_shapes() const
+    virtual vector<Shape> get_forward_shapes(Index) const
     {
         return {};
     }
 
-    virtual vector<Shape> get_backward_shapes() const
+    virtual vector<Shape> get_backward_shapes(Index) const
     {
         return {};
     }
 
+    virtual Shape get_input_shape() const
+    {
+        return input_shape;
+    }
 
-    virtual Shape get_input_shape() const = 0;
     virtual Shape get_output_shape() const = 0;
 
     Index get_inputs_number() const;
@@ -111,9 +113,13 @@ public:
 
     bool get_is_trainable() const;
 
-    bool get_is_first_layer() const;
+    bool get_is_first_layer() const;       
 
 protected:
+
+    Layer() = default;
+
+    Shape input_shape;
 
     string label = "my_layer";
 
@@ -375,25 +381,6 @@ struct LayerForwardPropagation
 };
 
 
-struct LayerBackPropagation
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_gradient_views();
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    vector<TensorView> get_input_gradients() const;
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> input_gradients;
-    vector<TensorView> output_gradients;
-};
-
-
 struct LayerBackPropagationLM
 {
     virtual void initialize() = 0;
@@ -411,63 +398,6 @@ struct LayerBackPropagationLM
     vector<TensorView> input_gradients;
     vector<TensorView> output_gradients;
 };
-
-
-#ifdef CUDA
-
-struct LayerForwardPropagationCuda
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    const vector<TensorView>& get_inputs() const { return inputs; }
-
-    TensorView get_outputs() const;
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> inputs;
-
-    TensorView outputs;
-
-    void* workspace = nullptr;
-    size_t workspace_size = 0;
-};
-
-
-struct LayerBackPropagationCuda
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_gradient_views();
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    vector<TensorView> get_input_gradient_views() const;
-
-    virtual void free()
-    {
-        cudaFree(workspace);
-        workspace = nullptr;
-        workspace_size = 0;
-    }
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> input_gradients;
-    vector<TensorView> output_gradients;
-
-    void* workspace = nullptr;
-    size_t workspace_size = 0;
-};
-
-#endif
-
 }
 
 // OpenNN: Open Neural Networks Library.

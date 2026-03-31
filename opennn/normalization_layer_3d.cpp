@@ -47,10 +47,8 @@ Shape Normalization3d::get_output_shape() const
 
 vector<Shape> Normalization3d::get_parameter_shapes() const
 {
-/*
-    return {&gammas, &betas};
-*/
-    return {};
+    return {{embedding_dimension},
+            {embedding_dimension}};
 }
 
 
@@ -59,9 +57,6 @@ void Normalization3d::set(const Index new_sequence_length,
                           const string& new_label)
 {
     sequence_length = new_sequence_length;
-
-    parameters[Gammas].shape = {new_embedding_dimension};
-    parameters[Betas].shape = {new_embedding_dimension};
 
     label = new_label;
     name = "Normalization3d";

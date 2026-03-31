@@ -46,163 +46,6 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 };
 
 
-#ifdef CUDA
-
-template<int Rank>
-struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-
-    void free() override
-    {
-        cudaFree(dropout_states);
-        dropout_states = nullptr;
-
-        cudaFree(dropout_reserve_space);
-        dropout_reserve_space = nullptr;
-
-        if (dropout_descriptor) cudnnDestroyDropoutDescriptor(dropout_descriptor);
-    }
-
-
-    vector<TensorView*> get_workspace_views() override
-    {
-        vector<TensorView*> views = { &outputs };
-
-        if (dense_layer->use_combinations)
-            views.push_back(&combinations);
-
-        return views;
-    }
-
-    void print() const override
-    {
-        const Index outputs_number = layer->get_output_shape().back();
-
-        const Index total_rows = static_cast<const Dense<Rank>*>(this->layer)->get_total_rows(batch_size);
-
-        cout << "Dense forward propagation CUDA" << endl;
-        cout << "Batch size: " << batch_size << endl;
-        cout << "Outputs dimensions: " << total_rows << "x" << outputs_number << endl;
-        cout << "Outputs data:" << endl;
-
-        if (outputs.data)
-            cout << matrix_from_device(outputs.data, total_rows, outputs_number) << endl;
-        else
-            cout << "Empty (nullptr)" << endl;
-    }
-
-    TensorView combinations;
-
-    // Batch normalization
-
-    TensorCuda means;
-    TensorCuda inverse_variance;
-
-    // Dropout
-
-    unsigned long long dropout_seed;
-
-    void* dropout_states = nullptr;
-    size_t dropout_states_size = 0;
-
-    void* dropout_reserve_space = nullptr;
-    size_t dropout_reserve_space_size = 0;
-};
-
-
-template<int Rank>
-struct DenseBackPropagationCuda : public LayerBackPropagationCuda
-{
-    void initialize() override
-    {
-        const Index outputs_number = dense_layer->get_neurons_number();
-        const Index inputs_number = dense_layer->get_input_features_number();
-        const Index total_rows = dense_layer->get_total_rows(batch_size);
-
-        ones.resize({total_rows});
-        ones.fill(1.0f);
-
-        const Shape full_input_shape = dense_layer->get_batch_input_shape(batch_size);
-        const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
-
-        input_gradients = {TensorView(full_input_shape)};
-
-        bias_gradients.set_descriptor({ outputs_number });
-        weight_gradients.set_descriptor({ inputs_number, outputs_number });
-
-        int n = 1, c = 1, h = 1, w = 1;
-        if (full_output_shape.size() == 3)
-        {
-            n = static_cast<int>(full_output_shape[0]);
-            w = static_cast<int>(full_output_shape[1]);
-            c = static_cast<int>(full_output_shape[2]);
-        }
-        else if (full_output_shape.size() == 2)
-        {
-            n = static_cast<int>(full_output_shape[0]);
-            c = static_cast<int>(full_output_shape[1]);
-        }
-        else if (full_output_shape.size() == 1)
-            c = static_cast<int>(full_output_shape[0]);
-
-        cudnnSetTensor4dDescriptor(gradients_tensor_descriptor, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, n, c, h, w);
-
-        if (dense_layer->get_batch_normalization())
-        {
-            beta_gradients.set_descriptor({outputs_number});
-            gamma_gradients.set_descriptor({outputs_number});
-        }
-    }
-
-    vector<TensorView*> get_gradient_views() override
-    {
-        vector<TensorView*> views = { &bias_gradients, &weight_gradients};
-
-        auto* dense_layer = static_cast<const Dense<Rank>*>(this->layer);
-
-        if (dense_layer && dense_layer->get_batch_normalization())
-            views.insert(views.end(), { &gamma_gradients, &beta_gradients});
-
-        return views;
-    }
-
-
-    void free() override
-    {
-        cudnnDestroyTensorDescriptor(gradients_tensor_descriptor);
-        gradients_tensor_descriptor = nullptr;
-    }
-
-    void print() const override
-    {
-        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(this->layer);
-        const Index outputs_number = dense_layer->get_neurons_number();
-        const Index inputs_number = dense_layer->get_input_features_number();
-
-        const Index total_rows = static_cast<const Dense<Rank>*>(this->layer)->get_total_rows(batch_size);
-
-        cout << "Dense back propagation CUDA" << endl;
-        cout << "Batch size: " << batch_size << endl;
-        cout << "Bias gradients (" << outputs_number << "):" << endl;
-        if (bias_gradients.data) cout << vector_from_device(bias_gradients.data, outputs_number) << endl;
-        cout << "Weight gradients (" << inputs_number << "x" << outputs_number << "):" << endl;
-        if (weight_gradients.data) cout << matrix_from_device(weight_gradients.data, inputs_number, outputs_number) << endl;
-        cout << "Input gradients (" << total_rows << "x" << inputs_number << "):" << endl;
-        if (!input_gradients.empty() && input_gradients[0].data)
-            cout << matrix_from_device(input_gradients[0].data, total_rows, inputs_number) << endl;
-    }
-
-    TensorView bias_gradients;
-    TensorView weight_gradients;
-
-    TensorView gamma_gradients;
-    TensorView beta_gradients;
-
-    TensorCuda ones;
-};
-
-#endif
-
 struct Dense2dForwardPropagationLM;
 
 template<int Rank>
@@ -235,18 +78,12 @@ public:
     }
 
 
-    Shape get_input_shape() const override
-    {
-        return input_shape;
-    }
-
-
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
-            return { parameters[Biases].size() };
+            return {parameters[Biases].size()};
         else
-            return { input_shape[0], parameters[Biases].size() };
+            return {input_shape[0], parameters[Biases].size()};
     }
 
 
@@ -291,83 +128,42 @@ public:
 
     vector<Shape> get_parameter_shapes() const override
     {
-/*
-        vector<TensorView*> views = {&biases, &weights};
+        Index inputs_number;
+        Index outputs_number;
 
         if (batch_normalization)
-            views.insert(views.end(), {&gammas, &betas});
+            return {{outputs_number},
+                    {inputs_number, outputs_number},
+                    {outputs_number},
+                    {outputs_number}};
 
-        return views;
-*/
-
-
-
-    return {{}, // Biases
-            {}}; // Weights
+        return {{parameters[Biases].size()},
+                {inputs_number, outputs_number}};
     }
 
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
 /*
-        const Index outputs_number = dense_layer->get_neurons_number();
-        const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
-        const Index total_rows = dense_layer->get_total_rows(batch_size);
-
-        if (use_combinations)
-            combinations.set_descriptor(full_output_shape);
-
-        outputs.set_descriptor(full_output_shape);
-
-        if (dropout_rate > 0)
-        {
-            dropout_seed = static_cast<unsigned long long>(get_seed());
-
-            if (dropout_descriptor == nullptr) cudnnCreateDropoutDescriptor(&dropout_descriptor);
-
-            cudnnDropoutGetStatesSize(get_cudnn_handle(), &dropout_states_size);
-
-            if (dropout_states) cudaFree(dropout_states);
-            CHECK_CUDA(cudaMalloc(&dropout_states, dropout_states_size));
-
-            cudnnSetDropoutDescriptor(dropout_descriptor, get_cudnn_handle(), (float)dropout_rate, dropout_states, dropout_states_size, dropout_seed);
-
-            cudnnDropoutGetReserveSpaceSize(outputs.get_descriptor(), &dropout_reserve_space_size);
-
-            if (dropout_reserve_space) cudaFree(dropout_reserve_space);
-            CHECK_CUDA(cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size));
-        }
-
-        if (dense_layer->get_batch_normalization())
-        {
-            const Shape batch_normalization_shape = { outputs_number };
-
-            means.resize(batch_normalization_shape);
-            inverse_variance.resize(batch_normalization_shape);
-        }
-
-        const Shape full_output_shape = Shape{batch_size}.append(get_output_shape());
-
-        outputs.shape = full_output_shape;
-        activation_derivatives.shape = full_output_shape;
+        vector<Shape> shapes =
+        {{batch_size, outputs_number}, // outputs
+         {{batch_size, outputs_number}}; // activation_derivatives
 
         if (batch_normalization)
         {
-            const Index outputs_number = get_outputs_number();
-            means.shape = {outputs_number};
-            standard_deviations.shape = {outputs_number};
-            normalized_outputs.shape = full_output_shape;
+            shapes.push_back({outputs_number});                // means
+            shapes.push_back({outputs_number});                // standard_deviations
+            shapes.push_back({batch_size, outputs_number});    // normalized_outputs
         }
+
+        return shapes;
 */
         return {};
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-        input_gradients = {{nullptr, Shape{batch_size}.append(get_input_shape())}};
-        */
-        return {};
+        return {Shape{batch_size}.append(get_input_shape())};
     }
 
 
@@ -403,9 +199,6 @@ public:
 
         input_shape = new_input_shape;
 
-        parameters[Biases].shape = { new_output_shape[0] };
-        parameters[Weights].shape = { new_input_shape.back(), new_output_shape[0] };
-
         set_activation_function(new_activation_function);
 
         set_batch_normalization(new_batch_normalization);
@@ -414,8 +207,6 @@ public:
 
         if (batch_normalization)
         {
-            parameters[Gammas].shape = {outputs_number};
-            parameters[Betas].shape = {outputs_number};
             running_means.resize(outputs_number);
             running_standard_deviations.resize(outputs_number);
         }
@@ -486,25 +277,12 @@ public:
             throw runtime_error("Input shape size must be " + to_string(Rank - 1));
 
         input_shape = new_input_shape;
-
-        const Index inputs_number = new_input_shape.back();
-        const Index outputs_number = get_inputs_number();
-
-        parameters[Biases].shape = { outputs_number };
-        parameters[Weights].shape = { inputs_number, outputs_number };
     }
 
 
     void set_output_shape(const Shape& new_output_shape) override
     {
-        if (new_output_shape.size() != 1)
-            throw runtime_error("Output shape size is not 1");
-
-        const Index inputs_number = get_inputs_number();
-        const Index neurons_number = new_output_shape[0];
-
-        parameters[Biases].shape = { neurons_number };
-        parameters[Weights].shape = { inputs_number, neurons_number };
+        neurons_number = new_output_shape.back();
     }
 
 
@@ -1235,6 +1013,8 @@ public:
 private:
 
     Shape input_shape;
+
+    Index neurons_number;
 
     enum Parameters {Biases, Weights, Gammas, Betas};   
 

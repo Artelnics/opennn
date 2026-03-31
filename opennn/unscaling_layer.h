@@ -24,7 +24,7 @@ public:
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         /*
     outputs.shape = prepend(batch_size, layer->get_output_shape());

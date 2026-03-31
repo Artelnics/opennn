@@ -106,20 +106,14 @@ Shape MultiHeadAttention::get_output_shape() const
 
 vector<Shape> MultiHeadAttention::get_parameter_shapes() const
 {
-/*
-    query_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    query_biases_device.set_descriptor({embedding_dimension});
-
-    key_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    key_biases_device.set_descriptor({embedding_dimension});
-
-    value_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    value_biases_device.set_descriptor({embedding_dimension});
-
-    projection_weights_device.set_descriptor({embedding_dimension, embedding_dimension});
-    projection_biases_device.set_descriptor({embedding_dimension});
-*/
-    return {};
+    return {{embedding_dimension, embedding_dimension},
+            {embedding_dimension},
+            {embedding_dimension, embedding_dimension},
+            {embedding_dimension},
+            {embedding_dimension, embedding_dimension},
+            {embedding_dimension},
+            {embedding_dimension, embedding_dimension},
+            {embedding_dimension}};
 }
 
 

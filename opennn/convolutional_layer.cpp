@@ -162,10 +162,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     const Index input_width = get_input_width();
     const Index input_channels = get_input_channels();
 
-    const Index kernels_number = get_kernels_number();
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index kernel_channels = get_kernel_channels();
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
     const TensorMap4 inputs = tensor_map<4>(forward_propagation.views[layer][Inputs][0]);
@@ -383,12 +379,6 @@ Index Convolutional::get_output_width() const
 }
 
 
-Shape Convolutional::get_input_shape() const
-{
-    return input_shape;
-}
-
-
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), get_kernels_number() };
@@ -501,10 +491,10 @@ void Convolutional::set(const Shape& new_input_shape,
 
     input_shape = new_input_shape;
 
-    const Index kernel_height = new_kernel_shape[0];
-    const Index kernel_width = new_kernel_shape[1];
-    const Index kernel_channels = new_kernel_shape[2];
-    const Index kernels_number = new_kernel_shape[3];
+    kernel_height = new_kernel_shape[0];
+    kernel_width = new_kernel_shape[1];
+    kernel_channels = new_kernel_shape[2];
+    kernels_number = new_kernel_shape[3];
 
     set_row_stride(new_stride_shape[0]);
     set_column_stride(new_stride_shape[1]);
@@ -513,8 +503,6 @@ void Convolutional::set(const Shape& new_input_shape,
 
     set_convolution_type(new_convolution_type);
 
-    parameters[Biases].shape = {kernels_number};
-    parameters[Weights].shape = {kernels_number, kernel_height, kernel_width, kernel_channels};
 
     batch_normalization = new_batch_normalization;
 
@@ -522,9 +510,6 @@ void Convolutional::set(const Shape& new_input_shape,
     {
         running_means.resize(kernels_number);
         running_standard_deviations.resize(kernels_number);
-
-        gammas.shape = {kernels_number};
-        betas.shape = {kernels_number};
     }
     else
     {
@@ -824,72 +809,36 @@ void Convolutional::from_XML(const XMLDocument& document)
 }
 
 
-vector<Shape> Convolutional::get_forward_shapes() const
+vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 {    
     const Index input_height = get_input_height();
     const Index input_width = get_input_width();
     const Index input_channels = get_input_channels();
-
-    const Index kernels_number = get_kernels_number();
 
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
 
     const Index padding_height = get_padding_height();
     const Index padding_width = get_padding_width();
-/*
-    const Index input_height = convolutional_layer->get_input_height();
-    const Index input_width = convolutional_layer->get_input_width();
-    const Index input_channels = convolutional_layer->get_input_channels();
 
-    const Index kernels_number = convolutional_layer->get_kernels_number();
+    vector<Shape> shapes;
 
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
+    // Padded Inputs: {batch, h+2p, w+2p, channels}
+    shapes.push_back({ batch_size, input_height + 2*padding_height, input_width + 2*padding_width, input_channels});
 
-    const Index padding_height = convolutional_layer->get_padding_height();
-    const Index padding_width = convolutional_layer->get_padding_width();
+    // Outputs: {batch, out_h, out_w, kernels}
+    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
-    padded_inputs.resize(batch_size,
-                               input_height + (padding_height*2),
-                               input_width + (padding_width*2),
-                               input_channels);
+    // Activation Derivatives: {batch, out_h, out_w, kernels}
+    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
-    outputs.shape = {batch_size, output_height, output_width, kernels_number};
-//    activation_derivatives.shape = { batch_size, output_height, output_width, kernels_number };
-
-    // Batch Normalization
-    if (convolutional_layer->get_batch_normalization())
+    if (batch_normalization)
     {
-        means.shape = { kernels_number };
-        standard_deviations.shape = { kernels_number };
+        shapes.push_back({ kernels_number }); // Means
+        shapes.push_back({ kernels_number }); // StandardDeviations
     }
-
-    padded_inputs.resize(batch_size,
-                               input_height + (padding_height*2),
-                               input_width + (padding_width*2),
-                               input_channels);
-
-    outputs.shape = {batch_size, output_height, output_width, kernels_number};
-    //    activation_derivatives.shape = { batch_size, output_height, output_width, kernels_number };
-
-    // Batch Normalization
-    if (convolutional_layer->get_batch_normalization())
-    {
-        means.shape = { kernels_number };
-        standard_deviations.shape = { kernels_number };
-    }
-
-    vector<Shape> shapes = { &outputs, &activation_derivatives };
-
-    if (convolutional_layer->get_batch_normalization())
-        shapes.insert(shapes.end(), { &means, &standard_deviations });
-
-                 outputs.shape = {batch_size, output_shape[0]};
 
     return shapes;
-*/
-    return {};
 }
 
 
@@ -905,8 +854,6 @@ void ConvolutionalForwardPropagationCuda::initialize()
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
-
-    const Index kernels_number = convolutional_layer->get_kernels_number();
 
     string layer_label = convolutional_layer->get_label();
 
@@ -995,10 +942,6 @@ void ConvolutionalBackPropagationCuda::initialize()
     const Index input_height = convolutional_layer->get_input_height();
     const Index input_width = convolutional_layer->get_input_width();
     const Index channels = convolutional_layer->get_input_channels();
-
-    const Index kernels_number = convolutional_layer->get_kernels_number();
-    const Index kernel_height = convolutional_layer->get_kernel_height();
-    const Index kernel_width = convolutional_layer->get_kernel_width();
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();

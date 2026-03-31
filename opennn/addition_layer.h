@@ -28,11 +28,6 @@ public:
         set(new_input_shape, new_name);
     }
 
-    Shape get_input_shape() const override
-    {
-        return input_shape;
-    }
-
     Shape get_output_shape() const override
     {
         return input_shape;

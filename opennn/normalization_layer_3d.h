@@ -29,36 +29,18 @@ public:
 
     vector<Shape> get_parameter_shapes() const override;
 
-    vector<Shape> get_forward_shapes() const override
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        /*
-    const Index sequence_length = get_sequence_length();
-    const Index embedding_dimension = get_embedding_dimension();
-
-    outputs.shape = {batch_size, sequence_length, embedding_dimension};
-
-    means.resize(batch_size, sequence_length);
-    standard_deviations.resize(batch_size, sequence_length);
-    normalized_inputs.resize(batch_size, sequence_length, embedding_dimension);
-*/
-        return {};
+        return {{batch_size, sequence_length, embedding_dimension},  // Outputs
+                {batch_size, sequence_length },                      // Means
+                {batch_size, sequence_length },                      // StandardDeviations
+                {batch_size, sequence_length, embedding_dimension}}; // NormalizedInputs
     }
 
-    vector<Shape> get_backward_shapes() const override
+    vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-/*
-    const Index sequence_length = normalization_layer_3d->get_sequence_length();
-    const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
-
-    input_gradients = {{nullptr, {batch_size, sequence_length, embedding_dimension}}};
-
-    gamma_gradients.shape = {embedding_dimension};
-    beta_gradients.shape = {embedding_dimension};
-
-*/
-        return {};
+        return {{ batch_size, sequence_length, embedding_dimension}};
     }
-
 
     void set(const Index = 0, Index = 0, const string& = "normalization_layer_3d");
 
@@ -83,11 +65,13 @@ protected:
 
 private:
 
+    Index embedding_dimension;
+    Index sequence_length;
+
     enum Parameters {Gammas, Betas};
     enum Forward {Inputs, Means, StandardDeviations, Outputs};
     enum Backward {OutputGradients, InputGradients};
 
-    Index sequence_length;
 };
 
 
