@@ -945,12 +945,9 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
 
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
-<<<<<<< HEAD
     const Index objectives_number = get_objectives_number();
-=======
 
-    const Objectives objectives = build_objectives();
->>>>>>> 5c710e731 (merging)
+    //const Objectives objectives = build_objectives();
 
     if (objectives_number == 0)
         throw runtime_error("No objectives found\n");
