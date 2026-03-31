@@ -42,28 +42,24 @@ bool Convolutional::get_batch_normalization() const
 }
 
 
-void Convolutional::pad_inputs(const Tensor4& inputs,
-                               TensorMap4& padded_inputs) const
-{
-    padded_inputs = (convolution_type == "Same")
-        ? inputs.pad(get_paddings())
-        : inputs;
-}
-
-
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView input = forward_propagation.views[layer][Inputs][0];
+    const TensorView& weights = parameters[Weights];
+    const TensorView& biases = parameters[Biases];
 
-    TensorView padded_input = forward_propagation.views[layer][PaddedInputs][0];
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
 
-    TensorView output = forward_propagation.views[layer][Outputs][0];
+    TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
 
-    TensorView activation_derivative = forward_propagation.views[layer][ActivationDerivatives][0];
+    TensorView& output = forward_propagation.views[layer][Outputs][0];
+
+    TensorView& activation_derivative = forward_propagation.views[layer][ActivationDerivatives][0];
 
     convolution_type == "Same"
         ? padding(input, padded_input)
-        : copy(input, padded_input);
+        : copy(input, padded_input);    
+
+    convolution(padded_input, weights, biases, output);
 
 #ifndef CUDA
 

@@ -222,8 +222,6 @@ public:
     void set_parameters_glorot() override;
     void set_parameters_random() override;
 
-    void pad_inputs(const Tensor4&, TensorMap4&) const;
-
     void calculate_convolutions(const Tensor4&, TensorMap4) const;
 
     void forward_propagate(ForwardPropagation&, size_t index, bool) override;

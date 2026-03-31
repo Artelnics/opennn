@@ -202,11 +202,13 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     const TensorView& value_weights = parameters[ValueWeights];
     const TensorView& value_biases = parameters[KeyBiases];
 
-
     projection(query_input, query_weights, query_biases, query);
     projection(source_input, key_weights, key_biases, key);
+    projection(source_input, value_weights, value_biases, value);
 
+    TensorView& attention_weights = forward_propagation.views[layer][AttentionWeights][0];
 
+    //softmax(attention_weights);
 
 #ifndef CUDA
     const Index embedding_dimension = get_embedding_dimension();
