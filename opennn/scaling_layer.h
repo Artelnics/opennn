@@ -202,7 +202,9 @@ public:
         for(Index i = 0; i < features; i++)
         {
             const string& scaler = scalers[i];
-            if(scaler == "None") continue;
+            if(scaler.empty() || scaler == "None" || scaler.length() < 4)
+                continue;
+
 
             const Descriptives& descriptive = descriptives[i];
 

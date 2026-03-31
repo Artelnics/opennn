@@ -169,4 +169,37 @@ vector<string> get_feature_names(const vector<Variable>& variables)
     return all_feature_names;
 }
 
+Index get_features_number(const vector<Variable>& variables)
+{
+    Index count = 0;
+    for (const auto& var : variables)
+    {
+        count += var.is_categorical() ? var.get_categories_number() : 1;
+    }
+    return count;
+}
+
+vector<Index> get_feature_dimensions(const vector<Variable>& variables)
+{
+    vector<Index> dimensions;
+    dimensions.reserve(variables.size());
+    for (const auto& var : variables)
+        dimensions.push_back(var.is_categorical() ? var.get_categories_number() : 1);
+
+    return dimensions;
+}
+
+
+vector<VariableType> get_variable_types(const vector<Variable>& variables)
+{
+    vector<VariableType> types;
+    types.reserve(variables.size());
+    for (const auto& var : variables)
+    {
+        types.push_back(var.type);
+    }
+    return types;
+}
+
+
 }

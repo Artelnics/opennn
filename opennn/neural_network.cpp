@@ -1700,6 +1700,15 @@ void NeuralNetworkBackPropagationLM::print()
     }
 }
 
+const vector<Variable>& NeuralNetwork::get_input_variables() const
+{
+    return input_variables;
+}
+
+const vector<Variable>& NeuralNetwork::get_output_variables() const
+{
+    return output_variables;
+}
 
 #ifdef OPENNN_CUDA
 

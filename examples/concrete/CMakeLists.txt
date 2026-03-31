@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(iris_plant)
+project(concrete)
 
 if(UNIX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -12,12 +12,12 @@ if(WIN32)
 	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
-add_executable(iris_plant main.cpp)
+add_executable(concrete.cpp)
 
-add_custom_command(TARGET iris_plant POST_BUILD
+add_custom_command(TARGET concrete POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/data"
     "${CMAKE_BINARY_DIR}/data"
 )
 
-target_link_libraries(iris_plant PUBLIC opennn)
+target_link_libraries(concrete PUBLIC opennn)
