@@ -14,10 +14,123 @@
 namespace opennn
 {
 
-inline void padding(const TensorView& input, TensorView& output)
+inline void max_pooling(const TensorView& input, TensorView& output)
 {
 #ifndef CUDA
-//    output = input.pad(input);
+    const TensorMap4 inputs = input.as_tensor<4>();
+    const TensorMap4 outputs = output.as_tensor<4>();
+
+    const Index batch_size = inputs.dimension(0);
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index channels = inputs.dimension(3);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width = outputs.dimension(2);
+/*
+#pragma omp parallel for collapse(2)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index channel_index = 0; channel_index < channels; ++channel_index)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+                for(Index output_column = 0; output_column < output_width; ++output_column)
+                {
+                    const Index input_row_start = output_row * row_stride - padding_height;
+                    const Index input_column_start = output_column * column_stride - padding_width;
+
+                    type maximum_value = -numeric_limits<type>::infinity();
+                    Index maximum_index = 0;
+
+                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
+                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
+                        {
+                            const Index input_row = input_row_start + pool_row;
+                            const Index input_column = input_column_start + pool_column;
+
+                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
+                            {
+                                const type current_value = inputs(batch_index, input_row, input_column, channel_index);
+
+                                if(current_value > maximum_value)
+                                {
+                                    maximum_value = current_value;
+                                    maximum_index = pool_row * pool_width + pool_column;
+                                }
+                            }
+                        }
+
+                    outputs(batch_index, output_row, output_column, channel_index) =
+                        (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
+
+                    if(is_training)
+                        pooling_forward_propagation->maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
+                }
+*/
+#else
+    CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
+                                    pooling_descriptor,
+                                    &alpha,
+                                    input.descriptor,
+                                    input.device,
+                                    &beta,
+                                    output.descriptor,
+                                    output.device));
+
+#endif
+
+}
+
+
+inline void average_pooling(const TensorView& input, TensorView& output)
+{
+#ifndef CUDA
+    const TensorMap4 inputs = input.as_tensor<4>();
+    const TensorMap4 outputs = output.as_tensor<4>();
+
+    const Index batch_size = inputs.dimension(0);
+    const Index input_height = inputs.dimension(1);
+    const Index input_width = inputs.dimension(2);
+    const Index channels = inputs.dimension(3);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width = outputs.dimension(2);
+/*
+    const type inv_pool_size = type(1) / (pool_height * pool_width);
+
+#pragma omp parallel for collapse(2)
+    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
+        for(Index channel_index = 0; channel_index < channels; ++channel_index)
+            for(Index output_row = 0; output_row < output_height; ++output_row)
+                for(Index output_column = 0; output_column < output_width; ++output_column)
+                {
+                    const Index input_row_start = output_row * row_stride - padding_height;
+                    const Index input_column_start = output_column * column_stride - padding_width;
+
+                    type sum = 0;
+
+                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
+                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
+                        {
+                            const Index input_row = input_row_start + pool_row;
+                            const Index input_column = input_column_start + pool_column;
+
+                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
+                                sum += inputs(batch_index, input_row, input_column, channel_index);
+                        }
+
+                    outputs(batch_index, output_row, output_column, channel_index) = sum * inv_pool_size;
+                }
+*/
+#else
+
+#endif
+}
+
+
+inline void padding(const TensorView& input, TensorView& output)
+{       
+#ifndef CUDA
+    const TensorMap4 input_map = input.as_tensor<4>();
+    TensorMap4 output_map = output.as_tensor<4>();
+
+    output_map.device(get_device()) = input_map.pad(input_map);
 #else
 
 #endif
@@ -95,9 +208,9 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
 
 
 inline void projection(const TensorView& input,
-                const TensorView& weights,
-                const TensorView& biases,
-                TensorView& output)
+                       const TensorView& weights,
+                       const TensorView& biases,
+                       TensorView& output)
 {
 #ifndef CUDA
 /*
@@ -148,13 +261,13 @@ inline void projection(const TensorView& input,
 
 
 inline void projection_gradient(const Tensor4& d_head,
-                         const TensorMap3& input,
-                         const TensorView& weights,
-                         VectorMap& d_bias,
-                         MatrixMap& d_weights,
-                         TensorMap3& d_input,
-                         Index batch_size,
-                         bool accumulate)
+                                const TensorMap3& input,
+                                const TensorView& weights,
+                                VectorMap& d_bias,
+                                MatrixMap& d_weights,
+                                TensorMap3& d_input,
+                                Index batch_size,
+                                bool accumulate)
 {
 /*
     const Index sequence_length = input.dimension(1);
@@ -292,21 +405,8 @@ inline void combination(const TensorView& input,
     output.as_matrix().noalias()
         = (input.as_matrix() * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
 #else
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
 
-    const int m = static_cast<int>(output.size() / biases.size()); // Total Rows
-    const int n = static_cast<int>(biases.size());                // Outputs Number
-    const int k = static_cast<int>(input.size() / m);              // Inputs Number
-
-    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                             CUBLAS_OP_N, CUBLAS_OP_N,
-                             n, m, k,
-                             &alpha,
-                             weights.data, n,
-                             input.data, k,
-                             &beta,
-                             output.data, n));
+    multiply(input, false, weights, false, output, 1.0f, 0.0f);
 
     CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
                                &alpha, biases.get_descriptor(), biases.data,

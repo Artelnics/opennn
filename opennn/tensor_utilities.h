@@ -218,6 +218,19 @@ struct Shape
 
         return *this;
     }
+
+    template<int Rank>
+    Eigen::array<Index, Rank> get_eigen_dims() const {
+        if (Rank != rank) {
+            throw std::runtime_error("Shape Error: Requested Rank (" + std::to_string(Rank) +
+                                     ") does not match Shape rank (" + std::to_string(rank) + ").");
+        }
+        Eigen::array<Index, Rank> dims;
+        for (size_t i = 0; i < Rank; ++i) {
+            dims[i] = shape[i];
+        }
+        return dims;
+    }
 };
 
 
@@ -283,12 +296,14 @@ struct TensorView
     {
         return VectorMap(data, shape.count());
     }
-/*
+
     template<int Rank>
     inline TensorMapR<Rank> as_tensor() const {
         return TensorMapR<Rank>(data, get_eigen_dims<Rank>());
     }
-*/
+
+
+
 #ifdef CUDA
     float* device = nullptr;
     cudnnTensorDescriptor_t descriptor = nullptr;

@@ -8,8 +8,8 @@
 
 #include "registry.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "pooling_layer.h"
-#include "neural_network.h"
 #include "loss.h"
 
 namespace opennn
@@ -250,102 +250,14 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorMap4 inputs = tensor_map<4>(forward_propagation.views[layer][Inputs][0]);
-/*
+
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
+    TensorView& output = forward_propagation.views[layer][Outputs][0];
+
     if(pooling_method == "MaxPooling")
-        forward_propagate_max_pooling(inputs,
-                                      forward_propagation,
-                                      is_training);
+        max_pooling(input, output/*, is_training*/);
     else if(pooling_method == "AveragePooling")
-        forward_propagate_average_pooling(inputs,
-                                          forward_propagation,
-                                          is_training);
-*/
-}
-
-
-void Pooling::forward_propagate_average_pooling(const Tensor4& inputs, TensorMap4& outputs) const
-{
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
-    const Index output_height = outputs.dimension(1);
-    const Index output_width = outputs.dimension(2);
-    const type inv_pool_size = type(1) / (pool_height * pool_width);
-
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index channel_index = 0; channel_index < channels; ++channel_index)
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index input_column_start = output_column * column_stride - padding_width;
-
-                    type sum = 0;
-
-                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
-                        {
-                            const Index input_row = input_row_start + pool_row;
-                            const Index input_column = input_column_start + pool_column;
-
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                                sum += inputs(batch_index, input_row, input_column, channel_index);
-                        }
-
-                    outputs(batch_index, output_row, output_column, channel_index) = sum * inv_pool_size;
-                }
-}
-
-
-void Pooling::forward_propagate_max_pooling(const Tensor4& inputs, TensorMap4& outputs) const
-{
-    const Index batch_size = inputs.dimension(0);
-    const Index input_height = inputs.dimension(1);
-    const Index input_width = inputs.dimension(2);
-    const Index channels = inputs.dimension(3);
-    const Index output_height = outputs.dimension(1);
-    const Index output_width = outputs.dimension(2);
-
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index channel_index = 0; channel_index < channels; ++channel_index)
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index input_column_start = output_column * column_stride - padding_width;
-
-                    type maximum_value = -numeric_limits<type>::infinity();
-                    Index maximum_index = 0;
-
-                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
-                        {
-                            const Index input_row = input_row_start + pool_row;
-                            const Index input_column = input_column_start + pool_column;
-
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                            {
-                                const type current_value = inputs(batch_index, input_row, input_column, channel_index);
-
-                                if(current_value > maximum_value)
-                                {
-                                    maximum_value = current_value;
-                                    maximum_index = pool_row * pool_width + pool_column;
-                                }
-                            }
-                        }
-
-                    outputs(batch_index, output_row, output_column, channel_index) =
-                        (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
-/*
-                    if(is_training)
-                        pooling_forward_propagation->maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
-*/
-                }
+        average_pooling(input, output/*, is_training*/);
 }
 
 

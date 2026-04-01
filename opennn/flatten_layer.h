@@ -104,7 +104,7 @@ public:
         const TensorView& input = forward_propagation.views[layer][Inputs][0];
         TensorView& output = forward_propagation.views[layer][Outputs][0];
 
-        opennn::copy(input, output);
+        copy(input, output);
     }
     
     

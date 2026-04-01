@@ -88,10 +88,6 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void forward_propagate_max_pooling(const Tensor4&, TensorMap4&) const;
-
-    void forward_propagate_average_pooling(const Tensor4&, TensorMap4&) const;
-
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
     void back_propagate_max_pooling(const Tensor4&,
