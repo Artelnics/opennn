@@ -574,5 +574,4 @@ inline void softmax(const TensorView& input, TensorView& output)
 
 #endif
 }
-
 }

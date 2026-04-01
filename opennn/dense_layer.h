@@ -70,12 +70,13 @@ private:
         const Index output_dimension = get_outputs_number();
 
         return {{output_dimension},                            // Biases
-                {input_dimension, output_dimension},          // Weights
+                {input_dimension, output_dimension},           // Weights
                 {batch_normalization ? output_dimension : 0},  // Gammas
                 {batch_normalization ? output_dimension : 0}}; // Betas
     }
 
     enum Forward {Input, NormalizedOutput, Output};
+
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
@@ -352,8 +353,8 @@ public:
         const TensorView& input = forward_propagation.views[layer][Input][0];
         TensorView& output = forward_propagation.views[layer][Output][0];
 
-        const TensorView& weights = parameters[Weights];
-        const TensorView& biases = parameters[Biases];
+        const TensorView& weights = parameters[Weight];
+        const TensorView& biases = parameters[Bias];
 
         combination(input, weights, biases, output);
 
