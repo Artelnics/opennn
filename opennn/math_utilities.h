@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "tensor_utilities.h"
+#include "random_utilities.h"
 
 #pragma once
 
@@ -314,52 +315,93 @@ inline void combination(const TensorView& input,
 #endif
 }
 
-inline void batch_normalization_training()
+inline void batch_normalization_training(
+    TensorView& output,
+    const TensorView& gammas,
+    const TensorView& betas,
+    VectorR& running_means,
+    VectorR& running_standard_deviations,
+    type momentum = type(0.9))
 {
 #ifndef CUDA
+    const Index neurons = running_means.size();
+    const Index total_rows = output.size() / neurons;
 
+    MatrixMap outputs_mat(output.data, total_rows, neurons);
+
+    VectorR means = outputs_mat.colwise().mean();
+    MatrixR norm_mat = outputs_mat.rowwise() - means.transpose();
+    VectorR standard_deviations = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
+
+    norm_mat.array().rowwise() /= standard_deviations.transpose().array();
+
+    running_means = running_means * momentum + means * (type(1) - momentum);
+    running_standard_deviations = running_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
+
+    const VectorMap gammas_vec(gammas.data, neurons);
+    const VectorMap betas_vec(betas.data, neurons);
+
+    outputs_mat.array() = (norm_mat.array().rowwise() * gammas_vec.transpose().array()).rowwise() +
+                          betas_vec.transpose().array();
 #else
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         get_cudnn_handle(),
         CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha,
-        &beta_add,
-        outputs.get_descriptor(),
-        outputs_buffer,
-        outputs.get_descriptor(),
-        outputs_buffer,
-        gammas_device.get_descriptor(),
-        gammas_device.data,
-        betas_device.data,
+        &alpha_one,
+        &beta_zero,
+        output.get_descriptor(),
+        output.data,
+        output.get_descriptor(),
+        output.data,
+        gammas.get_descriptor(),
+        gammas.data,
+        betas.data,
         momentum,
-        running_means_device.data,
-        running_variances_device.data,
+        running_means.data(),
+        running_standard_deviations.data(),
         EPSILON,
-        means.data,
-        inverse_variance.data));
-
+        nullptr,
+        nullptr));
 #endif
 }
 
 
-inline void batch_normalization_inference()
+inline void batch_normalization_inference(
+    TensorView& output,
+    const TensorView& gammas,
+    const TensorView& betas,
+    const VectorR& running_means,
+    const VectorR& running_standard_deviations)
 {
 #ifndef CUDA
+    const Index neurons = running_means.size();
+    const Index total_rows = output.size() / neurons;
 
+    MatrixMap outputs_mat(output.data, total_rows, neurons);
+
+    const VectorMap gammas_vec(gammas.data, neurons);
+    const VectorMap betas_vec(betas.data, neurons);
+
+    const VectorR scale = gammas_vec.array() / (running_standard_deviations.array() + EPSILON);
+    const VectorR shift = betas_vec.array() - running_means.array() * scale.array();
+
+    outputs_mat.array() = (outputs_mat.array().rowwise() * scale.transpose().array()).rowwise() +
+                          shift.transpose().array();
 #else
     CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
         get_cudnn_handle(),
         CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha, &beta_add,
-        outputs.get_descriptor(),
-        outputs_buffer,
-        outputs.get_descriptor(),
-        outputs_buffer,
-        gammas_device.get_descriptor(),
-        gammas_device.data,
-        betas_device.data,
-        running_means_device.data,
-        running_variances_device.data,
+        &alpha_one,
+        &beta_zero,
+        output.get_descriptor(),
+        output.data,
+        output.get_descriptor(),
+        output.data,
+        gammas.get_descriptor(),
+        gammas.data,
+        betas.data,
+        running_means.data(),
+        running_standard_deviations.data(),
         EPSILON));
 #endif
 }
@@ -395,21 +437,26 @@ inline void activation(const TensorView& input, TensorView& output, const string
 #endif
 }
 
-inline void dropout()
+inline void dropout(TensorView& tensor, type dropout_rate)
 {
 #ifndef CUDA
+    const type scale = type(1) / (type(1) - dropout_rate);
 
+    type* data = tensor.data;
+    const Index n = tensor.size();
+
+    for (Index i = 0; i < n; ++i)
+        data[i] = (random_uniform(type(0), type(1)) < dropout_rate) ? type(0) : data[i] * scale;
 #else
     CHECK_CUDNN(cudnnDropoutForward(get_cudnn_handle(),
                                     dropout_descriptor,
-                                    outputs.get_descriptor(),
-                                    outputs.data,
-                                    outputs.get_descriptor(),
-                                    outputs.data,
+                                    tensor.get_descriptor(),
+                                    tensor.data,
+                                    tensor.get_descriptor(),
+                                    tensor.data,
                                     dropout_reserve_space,
                                     dropout_reserve_space_size));
 #endif
-
 }
 
 
