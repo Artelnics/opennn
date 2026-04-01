@@ -298,10 +298,10 @@ struct TensorView
     }
 
     template<int Rank>
-    inline TensorMapR<Rank> as_tensor() const {
-        return TensorMapR<Rank>(data, get_eigen_dims<Rank>());
+    inline TensorMapR<Rank> as_tensor() const
+    {
+        return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
-
 
 
 #ifdef CUDA

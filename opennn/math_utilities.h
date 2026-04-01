@@ -130,8 +130,9 @@ inline void padding(const TensorView& input, TensorView& output)
 #ifndef CUDA
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
-
+/*
     output_map.device(get_device()) = input_map.pad(input_map);
+*/
 #else
 
 #endif
@@ -507,43 +508,79 @@ inline void batch_normalization_inference(
 }
 
 
-inline void activation(const TensorView& input, TensorView& output, const string& activation)
+inline void activation(TensorView& output, const string& function)
 {
+    if (function == "Linear" || output.empty()) return;
+
 #ifndef CUDA
+/*
+    auto output_array = output.as_vector().array();
 
-
-#else
-    if (activation_function == "Linear")
-        cudaMemcpy(outputs.data, combinations, total_rows * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
-    else if (activation_function == "Softmax")
-        CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-                    CUDNN_SOFTMAX_ACCURATE,
-                    CUDNN_SOFTMAX_MODE_CHANNEL,
-                    &alpha,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    &beta,
-                    outputs.get_descriptor(),
-                    outputs.data));
+    if (function == "Sigmoid" || function == "Logistic")
+    {
+        output_array = (1.0f + (-output_array).exp()).inverse();
+    }
+    else if (function == "HyperbolicTangent")
+    {
+        output_array = output_array.tanh();
+    }
+    else if (function == "RectifiedLinear")
+    {
+        output_array = output_array.cwiseMax(0.0f);
+    }
+    else if (function == "ScaledExponentialLinear")
+    {
+        const type alpha = 1.67326f;
+        const type lambda = 1.05070f;
+        output_array = lambda * (output_array > 0.0f).select(output_array, alpha * (output_array.exp() - 1.0f));
+    }
+    else if (function == "Softmax")
+    {
+        MatrixMap output_matrix = output.as_matrix();
+        VectorR row_max = output_matrix.rowwise().maxCoeff();
+        output_matrix.colwise() -= row_max;
+        output_matrix.array() = output_matrix.array().exp();
+        VectorR row_sum = output_matrix.rowwise().sum();
+        output_matrix.array().colwise() /= row_sum.array();
+    }
     else
+    {
+        throw runtime_error("Activation Error: Unknown function '" + function + "'");
+    }
+*/
+#else
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    if (function == "Softmax")
+    {
+        CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
+                                        CUDNN_SOFTMAX_ACCURATE,
+                                        CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
+                                        &alpha,
+                                        output.get_descriptor(), output.data,
+                                        &beta,
+                                        output.get_descriptor(), output.data));
+    }
+    else
+    {
         CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                    activation_descriptor,
-                    &alpha,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    &beta,
-                    outputs.get_descriptor(),
-                    outputs.data));
+                                           act_desc,
+                                           &alpha,
+                                           output.get_descriptor(), output.data,
+                                           &beta,
+                                           output.get_descriptor(), output.data));
+    }
 #endif
 }
 
-inline void dropout(TensorView& tensor, type dropout_rate)
+inline void dropout(TensorView& output, type dropout_rate)
 {
 #ifndef CUDA
     const type scale = type(1) / (type(1) - dropout_rate);
 
-    type* data = tensor.data;
-    const Index n = tensor.size();
+    type* data = output.data;
+    const Index n = output.size();
 
     for (Index i = 0; i < n; ++i)
         data[i] = (random_uniform(type(0), type(1)) < dropout_rate) ? type(0) : data[i] * scale;

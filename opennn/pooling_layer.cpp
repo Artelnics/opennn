@@ -283,9 +283,9 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
 
 
 void Pooling::back_propagate_max_pooling(const Tensor4& output_gradients,
-                                         Tensor4& input_gradients,
-                                         unique_ptr<LayerBackPropagation>& back_propagation) const
+                                         Tensor4& input_gradients) const
 {
+/*
     const Index batch_size = input_gradients.dimension(0);
     const Index input_height = input_gradients.dimension(1);
     const Index input_width = input_gradients.dimension(2);

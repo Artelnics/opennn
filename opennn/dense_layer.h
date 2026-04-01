@@ -361,14 +361,15 @@ public:
 
         combination(input, weights, biases, output);
 
-        if (batch_normalization && is_training)
-            batch_normalization_training(output, gammas, betas, running_means, running_standard_deviations);
-        else if (batch_normalization && !is_training)
-            batch_normalization_inference(output, gammas, betas, running_means, running_standard_deviations);
+        if (batch_normalization)
+            is_training
+                ? batch_normalization_training(output, gammas, betas, running_means, running_standard_deviations)
+                : batch_normalization_inference(output, gammas, betas, running_means, running_standard_deviations);
 
-        activation(output, output, activation_function);
+        activation(output, activation_function);
 
-        if(is_training && dropout_rate > type(0)) opennn::dropout(output, dropout_rate);
+        if(is_training && dropout_rate > type(0))
+            dropout(output, dropout_rate);
 
 #ifndef CUDA
 /*

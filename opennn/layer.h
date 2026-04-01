@@ -18,12 +18,7 @@ struct ForwardPropagation;
 struct BackPropagation;
 struct BackPropagationLM;
 
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
 struct LayerBackPropagationLM;
-
-struct LayerForwardPropagationCuda;
-struct LayerBackPropagationCuda;
 
 #ifdef _MSC_VER
 #define FORCE_INLINE __forceinline
@@ -323,18 +318,6 @@ protected:
         outputs_mat.array() = (norm_mat.array().rowwise() * gammas.transpose().array()).rowwise() +
                               betas.transpose().array();
     }
-
-    template <int Rank>
-    void dropout(TensorMapR<Rank> tensor, type dropout_rate) const
-    {
-        const type scale = type(1) / (type(1) - dropout_rate);
-
-        tensor = tensor.unaryExpr([dropout_rate, scale](type value)
-        {
-            return (random_uniform(0, 1) < dropout_rate) ? type(0) : value * scale;
-        });
-    }
-
 #ifdef CUDA
 
 
