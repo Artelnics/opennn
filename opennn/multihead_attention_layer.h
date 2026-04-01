@@ -200,12 +200,13 @@ struct MultiHeadAttentionForwardPropagationCuda : public LayerForwardPropagation
 
     TensorCuda query, key, value;                       // [B*S, E]
     TensorCuda attention_weights;                       // Scores [B*H*Sq, Sk]
-    //TensorCuda attention_outputs;                       // [B*H*Sq, D]
     TensorCuda concatenated_attention_outputs;          // [B*Sq, E]
 
     TensorCuda query_transposed, key_transposed, value_transposed;
     TensorCuda attention_outputs_transposed;
     TensorCuda attention_probabilities;
+
+    TensorCuda padding_mask;                            // [B*Sk]
 };
 
 

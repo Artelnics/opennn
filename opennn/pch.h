@@ -68,6 +68,8 @@
 #include <cudnn.h>
 #include <nvtx3/nvToolsExt.h>
 
+#pragma once
+
 template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
 {

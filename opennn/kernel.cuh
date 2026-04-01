@@ -64,6 +64,12 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  __global__ void cross_entropy_3d_binary_backward_kernel(const int, const float*, const float*, float*, const float);
  void cross_entropy_3d_binary_backward_cuda(const size_t, const int, const int, const float*, const float*, float*, const float);
 
+ __global__ void cross_entropy_3d_multiple_counts_kernel(const int, const int, const float*, const float*, float*);
+ void cross_entropy_3d_multiple_counts_cuda(const size_t, const int, const float*, const float*, float*);
+
+ __global__ void cross_entropy_3d_binary_counts_kernel(const int, const float*, const float*, float*);
+ void cross_entropy_3d_binary_counts_cuda(const size_t, const float*, const float*, float*);
+
  // Regularization
 
  __global__ void apply_l1_gradient_kernel(const int, float*, const float*, const float);
@@ -111,6 +117,10 @@ void sgd_update_device(const size_t, float*, float*, const float*, const float, 
  void embedding_backward_cuda(const size_t n, const float* inputs, const float* output_gradients, float* weight_gradients, const int sequence_length, const int embedding_dimension, const int vocabulary_size, const bool scale_embedding);
 
  // MultiHead Attention
+
+ __global__ void compute_padding_mask_kernel(const int, const float*, float*, const int);
+ __global__ void apply_fused_masks_kernel(const int, float*, const float*, const int, const int, const int, const bool);
+ void mha_fused_masks_cuda(const int, const int, const int, const int, const int, const float*, float*, float*, const bool);
 
  __global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D);
  void mha_transpose_qkv_cuda(const size_t n, const float* in, float* out, const int S, const int H, const int D);

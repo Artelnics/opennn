@@ -448,7 +448,7 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
 
     loss_value = type(0);
     error = type(0);
-    built_mask = false;
+
     accuracy.setZero();
 
     errors.resize(samples_number, outputs_number);
@@ -460,18 +460,6 @@ void BackPropagation::set(const Index new_samples_number, const Loss* new_loss)
     const Index size = accumulate(output_shape.begin(), output_shape.end(), samples_number, multiplies<>());
 
     output_gradients.resize(size);
-
-    if(is_instance_of<CrossEntropyError3d>(loss))
-    {
-        predictions.resize(samples_number, outputs_number);
-        predictions.setZero();
-
-        matches.resize(samples_number, outputs_number);
-        matches.setConstant(false);
-
-        mask.resize(samples_number, outputs_number);
-        mask.setConstant(false);
-    }
 }
 
 
@@ -1281,8 +1269,8 @@ void Loss::back_propagate(const BatchCuda& batch,
 
 
 void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
-                                                ForwardPropagationCuda& forward_propagation,
-                                                BackPropagationCuda& back_propagation) const
+                                            ForwardPropagationCuda& forward_propagation,
+                                            BackPropagationCuda& back_propagation) const
 {
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
     const Index layers_number = layers.size();
@@ -1303,52 +1291,47 @@ void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
 
 void Loss::add_regularization(BackPropagationCuda& back_propagation) const
 {
-    if (regularization_method == "None" || regularization_weight == 0.0f)
+    if(regularization_method == "None" || regularization_weight == 0.0f)
     {
-        back_propagation.regularization = 0.0f;
+        back_propagation.loss_value = back_propagation.error;
         return;
     }
 
     NeuralNetwork* neural_network = this->neural_network;
-
     const Index parameters_number = neural_network->get_parameters().size();
 
     float* parameters_data = neural_network->get_parameters_device().data;
     float* gradients_data = back_propagation.neural_network.gradients.data;
 
-    if (regularization_method == "L1")
+    if(regularization_method == "L1")
     {
-        float l1_norm = 0.0f;
-
-        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
-        back_propagation.regularization = regularization_weight * l1_norm;
-
-        apply_l1_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight);
+        apply_l1_gradient_cuda(parameters_number,
+                               gradients_data,
+                               parameters_data,
+                               regularization_weight);
     }
-    else if (regularization_method == "L2")
+    else if(regularization_method == "L2")
     {
-        float dot_product = 0.0f;
-
-        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
-        back_propagation.regularization = 0.5f * regularization_weight * dot_product;
-
-        CHECK_CUBLAS(cublasSaxpy(get_cublas_handle(), (int)parameters_number, &regularization_weight, parameters_data, 1, gradients_data, 1));
+        CHECK_CUBLAS(cublasSaxpy(get_cublas_handle(),
+                                 (int)parameters_number,
+                                 &regularization_weight,
+                                 parameters_data,
+                                 1,
+                                 gradients_data,
+                                 1));
     }
-    else if (regularization_method == "ElasticNet")
+    else if(regularization_method == "ElasticNet")
     {
         const float mix_factor = 0.5f;
 
-        float l1_norm = 0.0f;
-        float dot_product = 0.0f;
-        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
-        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
-
-        back_propagation.regularization = regularization_weight * (mix_factor * l1_norm + (1.0f - mix_factor) * 0.5f * dot_product);
-
-        apply_elastic_net_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight, mix_factor);
+        apply_elastic_net_gradient_cuda(parameters_number,
+                                        gradients_data,
+                                        parameters_data,
+                                        regularization_weight,
+                                        mix_factor);
     }
 
-    back_propagation.loss_value += back_propagation.regularization;
+    back_propagation.loss_value = back_propagation.error;
 }
 
 
@@ -1410,12 +1393,12 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
 
     loss_value = type(0);
     error = type(0);
-    regularization = type(0);
-    built_mask = false;
     accuracy.setZero();
 
+    active_tokens_count = 0;
+
     CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&error_device, 2 * sizeof(float)));
 
     // Outputs_delta
 
@@ -1449,20 +1432,6 @@ void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
                                    &workspace_size);
 
     CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    // Classification helpers
-
-    if(is_instance_of<CrossEntropyError3d>(loss))
-    {
-        predictions.resize({samples_number, outputs_number});
-        predictions.fill(0.0f);
-
-        matches.resize({samples_number, outputs_number});
-        matches.fill(0.0f);
-
-        mask.resize({samples_number, outputs_number});
-        mask.fill(0.0f);
-    }
 }
 
 

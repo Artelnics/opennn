@@ -34,16 +34,6 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
     const Index batch_size = outputs.dimension(0);
     const Index sequence_length = outputs.dimension(1);
 
-    if(!back_propagation.built_mask
-        || back_propagation.mask.rows() != batch_size
-        || back_propagation.mask.cols() != sequence_length)
-    {
-        back_propagation.mask.resize(batch_size, sequence_length);
-        back_propagation.predictions.resize(batch_size, sequence_length);
-        back_propagation.matches.resize(batch_size, sequence_length);
-        back_propagation.built_mask = true;
-    }
-
     type total_loss = 0.0f;
     Index active_tokens_count = 0;
     Index correct_tokens_count = 0;
@@ -57,27 +47,18 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
 
             if(target_val >= 0.0f)
             {
-                back_propagation.mask(i, j) = true;
-
                 const type y = outputs(i, j, 0);
                 const type t = target_val;
 
-                total_loss -= (t * log(y + EPSILON) + (type(1.0) - t) * log(type(1.0) - y + EPSILON));
+                total_loss -= (t * log(y + EPSILON)
+                               + (type(1.0) - t) * log(type(1.0) - y + EPSILON));
+
                 active_tokens_count++;
 
                 const type predicted = y >= type(0.5) ? type(1.0) : type(0.0);
 
-                back_propagation.predictions(i, j) = predicted;
-                back_propagation.matches(i, j) = (predicted == t);
-
                 if(predicted == t)
                     correct_tokens_count++;
-            }
-            else
-            {
-                back_propagation.mask(i, j) = false;
-                back_propagation.predictions(i, j) = type(0.0);
-                back_propagation.matches(i, j) = false;
             }
         }
     }
@@ -87,7 +68,8 @@ void CrossEntropyError3d::calculate_binary_error(const Batch& batch,
                                  : type(0);
 
     if(active_tokens_count > 0)
-        back_propagation.accuracy.setValues({static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
+        back_propagation.accuracy.setValues(
+            {static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
     else
         back_propagation.accuracy.setZero();
 }
@@ -107,16 +89,6 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
     const Index sequence_length = outputs.dimension(1);
     const Index vocabulary_size = outputs.dimension(2);
 
-    if(!back_propagation.built_mask
-        || back_propagation.mask.rows() != batch_size
-        || back_propagation.mask.cols() != sequence_length)
-    {
-        back_propagation.mask.resize(batch_size, sequence_length);
-        back_propagation.predictions.resize(batch_size, sequence_length);
-        back_propagation.matches.resize(batch_size, sequence_length);
-        back_propagation.built_mask = true;
-    }
-
     type total_log_loss = 0.0f;
     Index active_tokens_count = 0;
     Index correct_tokens_count = 0;
@@ -130,8 +102,6 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
 
             if(target_index > 0 && target_index < vocabulary_size)
             {
-                back_propagation.mask(i, j) = true;
-
                 const type probability = outputs(i, j, target_index);
                 total_log_loss -= log(probability + EPSILON);
                 active_tokens_count++;
@@ -148,17 +118,8 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
                     }
                 }
 
-                back_propagation.predictions(i, j) = static_cast<type>(best_index);
-                back_propagation.matches(i, j) = (best_index == target_index);
-
                 if(best_index == target_index)
                     correct_tokens_count++;
-            }
-            else
-            {
-                back_propagation.mask(i, j) = false;
-                back_propagation.predictions(i, j) = type(0.0);
-                back_propagation.matches(i, j) = false;
             }
         }
     }
@@ -168,11 +129,11 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
                                  : type(0);
 
     if(active_tokens_count > 0)
-        back_propagation.accuracy.setValues({static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
+        back_propagation.accuracy.setValues(
+            {static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
     else
         back_propagation.accuracy.setZero();
 }
-
 
 
 void CrossEntropyError3d::calculate_error(const Batch& batch,
@@ -333,14 +294,15 @@ void CrossEntropyError3d::calculate_binary_error(const BatchCuda& batch,
     const int seq_length = static_cast<int>(layer_output_shape[0]);
 
     const type* targets_device = batch.targets_device.data;
-    const float* outputs_device = const_cast<ForwardPropagationCuda&>(forward_propagation)
-                                      .get_last_trainable_layer_outputs_device().data;
+    const float* outputs_device =
+        const_cast<ForwardPropagationCuda&>(forward_propagation)
+            .get_last_trainable_layer_outputs_device().data;
 
     type& error = back_propagation.error;
     float* error_device = back_propagation.error_device;
     float* errors = back_propagation.errors;
 
-    const size_t size = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length);
+    const size_t token_count = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length);
 
     const cudnnTensorDescriptor_t output_reduce_tensor_descriptor = back_propagation.output_reduce_tensor_descriptor;
     const cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = back_propagation.reduce_tensor_descriptor;
@@ -351,7 +313,13 @@ void CrossEntropyError3d::calculate_binary_error(const BatchCuda& batch,
     TensorViewCuda token_errors_view(Shape{batch_size, seq_length});
     const cudnnTensorDescriptor_t token_errors_descriptor = token_errors_view.get_descriptor();
 
-    cross_entropy_3d_binary_forward_cuda(size, batch_size, seq_length, outputs_device, targets_device, errors, EPSILON);
+    cross_entropy_3d_binary_forward_cuda(token_count,
+                                         batch_size,
+                                         seq_length,
+                                         outputs_device,
+                                         targets_device,
+                                         errors,
+                                         EPSILON);
 
     CHECK_CUDNN(cudnnReduceTensor(get_cudnn_handle(),
                                   reduce_tensor_descriptor,
@@ -362,55 +330,31 @@ void CrossEntropyError3d::calculate_binary_error(const BatchCuda& batch,
                                   &beta_zero,
                                   output_reduce_tensor_descriptor, error_device));
 
-    CHECK_CUDA(cudaMemcpy(&error, error_device, sizeof(float), cudaMemcpyDeviceToHost));
+    float total_loss = 0.0f;
+    CHECK_CUDA(cudaMemcpy(&total_loss, error_device, sizeof(float), cudaMemcpyDeviceToHost));
 
-    const float* targets_cpu = batch.targets_host;
+    CHECK_CUDA(cudaMemset(error_device, 0, 2 * sizeof(float)));
 
-    // @todo calculate accuracy in gpu and not in cpu
-    vector<float> outputs_host(size);
-    CHECK_CUDA(cudaMemcpy(outputs_host.data(), outputs_device, size * sizeof(float), cudaMemcpyDeviceToHost));
+    cross_entropy_3d_binary_counts_cuda(token_count,
+                                        outputs_device,
+                                        targets_device,
+                                        error_device);
 
-    vector<float> predictions_host(size, 0.0f);
-    vector<float> matches_host(size, 0.0f);
-    vector<float> mask_host(size, 0.0f);
+    float counts_host[2] = {0.0f, 0.0f};
+    CHECK_CUDA(cudaMemcpy(counts_host, error_device, 2 * sizeof(float), cudaMemcpyDeviceToHost));
 
-    Index active_tokens_count = 0;
-    Index correct_tokens_count = 0;
+    const Index active_tokens_count = static_cast<Index>(counts_host[0]);
+    const Index correct_tokens_count = static_cast<Index>(counts_host[1]);
 
-    for(Index i = 0; i < batch_size * seq_length; ++i)
-    {
-        const float target_val = targets_cpu[i];
-
-        if(target_val >= 0.0f)
-        {
-            active_tokens_count++;
-            mask_host[i] = 1.0f;
-
-            const float predicted = outputs_host[i] >= 0.5f ? 1.0f : 0.0f;
-
-            predictions_host[i] = predicted;
-            matches_host[i] = (predicted == target_val) ? 1.0f : 0.0f;
-
-            if(predicted == target_val)
-                correct_tokens_count++;
-        }
-    }
-
-    if(back_propagation.predictions.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.predictions.data, predictions_host.data(), size * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(back_propagation.matches.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.matches.data, matches_host.data(), size * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(back_propagation.mask.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.mask.data, mask_host.data(), size * sizeof(float), cudaMemcpyHostToDevice));
+    back_propagation.active_tokens_count = active_tokens_count;
 
     error = active_tokens_count > 0
-                ? (error / static_cast<type>(active_tokens_count))
+                ? static_cast<type>(total_loss / static_cast<float>(active_tokens_count))
                 : type(0);
 
     if(active_tokens_count > 0)
-        back_propagation.accuracy.setValues({static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
+        back_propagation.accuracy.setValues(
+            {static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
     else
         back_propagation.accuracy.setZero();
 
@@ -430,15 +374,20 @@ void CrossEntropyError3d::calculate_multiple_error(const BatchCuda& batch,
     const int vocab_size = static_cast<int>(layer_output_shape[1]);
 
     const type* targets_device = batch.targets_device.data;
-    const float* outputs_device = const_cast<ForwardPropagationCuda&>(forward_propagation)
-                                      .get_last_trainable_layer_outputs_device().data;
+    const float* outputs_device =
+        const_cast<ForwardPropagationCuda&>(forward_propagation)
+            .get_last_trainable_layer_outputs_device().data;
 
     type& error = back_propagation.error;
     float* error_device = back_propagation.error_device;
     float* errors = back_propagation.errors;
 
-    const size_t n = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length) * static_cast<size_t>(vocab_size);
-    const size_t token_count = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length);
+    const size_t n = static_cast<size_t>(batch_size)
+                     * static_cast<size_t>(seq_length)
+                     * static_cast<size_t>(vocab_size);
+
+    const size_t token_count = static_cast<size_t>(batch_size)
+                               * static_cast<size_t>(seq_length);
 
     const cudnnTensorDescriptor_t output_reduce_tensor_descriptor = back_propagation.output_reduce_tensor_descriptor;
     const cudnnReduceTensorDescriptor_t reduce_tensor_descriptor = back_propagation.reduce_tensor_descriptor;
@@ -449,7 +398,14 @@ void CrossEntropyError3d::calculate_multiple_error(const BatchCuda& batch,
     TensorViewCuda token_errors_view(Shape{batch_size, seq_length});
     const cudnnTensorDescriptor_t token_errors_descriptor = token_errors_view.get_descriptor();
 
-    cross_entropy_3d_multiple_forward_cuda(n, batch_size, seq_length, vocab_size, outputs_device, targets_device, errors, EPSILON);
+    cross_entropy_3d_multiple_forward_cuda(n,
+                                           batch_size,
+                                           seq_length,
+                                           vocab_size,
+                                           outputs_device,
+                                           targets_device,
+                                           errors,
+                                           EPSILON);
 
     CHECK_CUDNN(cudnnReduceTensor(get_cudnn_handle(),
                                   reduce_tensor_descriptor,
@@ -460,70 +416,32 @@ void CrossEntropyError3d::calculate_multiple_error(const BatchCuda& batch,
                                   &beta_zero,
                                   output_reduce_tensor_descriptor, error_device));
 
-    CHECK_CUDA(cudaMemcpy(&error, error_device, sizeof(float), cudaMemcpyDeviceToHost));
+    float total_loss = 0.0f;
+    CHECK_CUDA(cudaMemcpy(&total_loss, error_device, sizeof(float), cudaMemcpyDeviceToHost));
 
-    const float* targets_cpu = batch.targets_host;
+    CHECK_CUDA(cudaMemset(error_device, 0, 2 * sizeof(float)));
 
-    vector<float> outputs_host(n);
-    CHECK_CUDA(cudaMemcpy(outputs_host.data(), outputs_device, n * sizeof(float), cudaMemcpyDeviceToHost));
+    cross_entropy_3d_multiple_counts_cuda(token_count,
+                                          vocab_size,
+                                          outputs_device,
+                                          targets_device,
+                                          error_device);
 
-    vector<float> predictions_host(token_count, 0.0f);
-    vector<float> matches_host(token_count, 0.0f);
-    vector<float> mask_host(token_count, 0.0f);
+    float counts_host[2] = {0.0f, 0.0f};
+    CHECK_CUDA(cudaMemcpy(counts_host, error_device, 2 * sizeof(float), cudaMemcpyDeviceToHost));
 
-    Index active_tokens_count = 0;
-    Index correct_tokens_count = 0;
+    const Index active_tokens_count = static_cast<Index>(counts_host[0]);
+    const Index correct_tokens_count = static_cast<Index>(counts_host[1]);
 
-    for(Index i = 0; i < batch_size; ++i)
-    {
-        for(Index j = 0; j < seq_length; ++j)
-        {
-            const Index token_index = i * seq_length + j;
-            const Index target_index = static_cast<Index>(targets_cpu[token_index]);
-
-            if(target_index > 0 && target_index < vocab_size)
-            {
-                active_tokens_count++;
-                mask_host[token_index] = 1.0f;
-
-                Index best_index = 0;
-                float best_value = outputs_host[token_index * vocab_size];
-
-                for(Index k = 1; k < vocab_size; ++k)
-                {
-                    const float value = outputs_host[token_index * vocab_size + k];
-
-                    if(value > best_value)
-                    {
-                        best_value = value;
-                        best_index = k;
-                    }
-                }
-
-                predictions_host[token_index] = static_cast<float>(best_index);
-                matches_host[token_index] = (best_index == target_index) ? 1.0f : 0.0f;
-
-                if(best_index == target_index)
-                    correct_tokens_count++;
-            }
-        }
-    }
-
-    if(back_propagation.predictions.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.predictions.data, predictions_host.data(), token_count * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(back_propagation.matches.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.matches.data, matches_host.data(), token_count * sizeof(float), cudaMemcpyHostToDevice));
-
-    if(back_propagation.mask.data)
-        CHECK_CUDA(cudaMemcpy(back_propagation.mask.data, mask_host.data(), token_count * sizeof(float), cudaMemcpyHostToDevice));
+    back_propagation.active_tokens_count = active_tokens_count;
 
     error = active_tokens_count > 0
-                ? (error / static_cast<type>(active_tokens_count))
+                ? static_cast<type>(total_loss / static_cast<float>(active_tokens_count))
                 : type(0);
 
     if(active_tokens_count > 0)
-        back_propagation.accuracy.setValues({static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
+        back_propagation.accuracy.setValues(
+            {static_cast<type>(correct_tokens_count) / static_cast<type>(active_tokens_count)});
     else
         back_propagation.accuracy.setZero();
 
@@ -557,18 +475,19 @@ void CrossEntropyError3d::calculate_binary_output_gradients(const BatchCuda& bat
     const float* outputs = forward_propagation.get_last_trainable_layer_outputs_device().data;
     float* output_gradients = back_propagation.get_output_gradients_device().data;
 
-    const size_t size = batch_size * seq_length;
+    const size_t size = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length);
 
-    const float* targets_cpu = batch.targets_host;
-    Index active_tokens_count = 0;
+    const float scale_factor = back_propagation.active_tokens_count > 0
+                                   ? (1.0f / static_cast<float>(back_propagation.active_tokens_count))
+                                   : 0.0f;
 
-    for(Index i = 0; i < batch_size * seq_length; ++i)
-        if (targets_cpu[i] >= 0.0f)
-            active_tokens_count++;
-
-    const float scale_factor = active_tokens_count > 0 ? (1.0f / static_cast<float>(active_tokens_count)) : 0.0f;
-
-    cross_entropy_3d_binary_backward_cuda(size, batch_size, seq_length, outputs, targets_device, output_gradients, scale_factor);
+    cross_entropy_3d_binary_backward_cuda(size,
+                                          batch_size,
+                                          seq_length,
+                                          outputs,
+                                          targets_device,
+                                          output_gradients,
+                                          scale_factor);
 }
 
 
@@ -586,20 +505,12 @@ void CrossEntropyError3d::calculate_multiple_output_gradients(const BatchCuda& b
     const float* outputs = forward_propagation.get_last_trainable_layer_outputs_device().data;
     float* output_gradients = back_propagation.get_output_gradients_device().data;
 
-    const size_t size = static_cast<size_t>(batch_size) * static_cast<size_t>(seq_length) * static_cast<size_t>(vocab_size);
+    const size_t size = static_cast<size_t>(batch_size)
+                        * static_cast<size_t>(seq_length)
+                        * static_cast<size_t>(vocab_size);
 
-    const float* targets_cpu = batch.targets_host;
-    Index active_tokens_count = 0;
-
-    for(Index i = 0; i < batch_size * seq_length; ++i)
-    {
-        const Index target_index = static_cast<Index>(targets_cpu[i]);
-        if(target_index > 0 && target_index < vocab_size)
-            active_tokens_count++;
-    }
-
-    const float scale_factor = active_tokens_count > 0
-                                   ? (1.0f / static_cast<float>(active_tokens_count))
+    const float scale_factor = back_propagation.active_tokens_count > 0
+                                   ? (1.0f / static_cast<float>(back_propagation.active_tokens_count))
                                    : 0.0f;
 
     cross_entropy_3d_multiple_backward_cuda(size,
