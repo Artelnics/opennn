@@ -104,6 +104,7 @@ private:
 
     enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
     enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
+    enum Backward {InputGradient, OutputGradient};
 
     bool use_causal_mask = false;
 

@@ -15,10 +15,6 @@ namespace opennn
 	using Scaling3d = Scaling<3>;
 	using Scaling4d = Scaling<4>;
 
-	using ScalingForwardPropagation2d = ScalingForwardPropagation<2>;
-	using ScalingForwardPropagation3d = ScalingForwardPropagation<3>;
-	using ScalingForwardPropagation4d = ScalingForwardPropagation<4>;
-
 	REGISTER(Layer, Scaling2d, "Scaling2d")
 	REGISTER(Layer, Scaling3d, "Scaling3d")
 	REGISTER(Layer, Scaling4d, "Scaling4d")

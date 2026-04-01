@@ -192,7 +192,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     TensorView& attention_weights = forward_propagation.views[layer][AttentionWeights][0];
 
-    //softmax(attention_weights);
+    softmax(attention_weights);
 
 #ifndef CUDA
     const Index embedding_dimension = get_embedding_dimension();
@@ -200,15 +200,9 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     const type scaling_factor = get_scaling_factor();
     const Index batch_size = forward_propagation.batch_size;
 /*
-    Tensor4& attention_weights = this_forward_propagation->attention_weights;
-
     Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
     TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
-
-    calculate_projection(query_input, query_weights, query_biases, query_sequence_length, batch_size, query);
-    calculate_projection(source_input, key_weights, key_biases, source_sequence_length, batch_size, key);
-    calculate_projection(source_input, value_weights, value_biases, source_sequence_length, batch_size, value);
 
     const Index total_heads = batch_size * heads_number;
 
@@ -398,28 +392,26 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
-                                        size_t index) const
+                                        size_t layer) const
 {
 /*
     if(back_propagation->output_gradients.size() > 1)
         add_gradients(back_propagation->output_gradients);
 */
+    const TensorView& query_input = forward_propagation.views[layer][Inputs][0];
+
+    const TensorView& source_input = (forward_propagation.views[layer][Inputs].size() == 1)
+                                         ? query_input
+                                         : forward_propagation.views[layer][Inputs][1];
+
+    const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradient][0];
+
+    const TensorView& query = forward_propagation.views[layer][Query][0];
+    const TensorView& key = forward_propagation.views[layer][Query][0];
+    const TensorView& value = forward_propagation.views[layer][Query][0];
+
 #ifndef CUDA
 /*
-    const TensorMap3 query_input = tensor_map<3>(forward_propagation->inputs[0]);
-
-
-    const TensorMap3 source_input = (forward_propagation->inputs.size() == 1)
-                                                        ? query_input
-                                                        : tensor_map<3>(forward_propagation->inputs[1]);
-
-    const TensorMap3 delta_Y = tensor_map<3>(back_propagation->output_gradients[0]);
-
-    // Forward propagation
-
-    const Tensor4& query = this_forward_propagation->query;
-    const Tensor4& key = this_forward_propagation->key;
-    const Tensor4& value = this_forward_propagation->value;
     const Tensor4& attention_weights = this_forward_propagation->attention_weights;
     const Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
