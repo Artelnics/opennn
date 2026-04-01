@@ -134,9 +134,9 @@ public:
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
-            return {parameters[Biases].size()};
+            return {parameters[Bias].size()};
         else
-            return {input_shape[0], parameters[Biases].size()};
+            return {input_shape[0], parameters[Bias].size()};
     }
 
     Index get_sequence_length() const
@@ -219,34 +219,34 @@ public:
     {
         const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
 
-        if(parameters[Biases].size() > 0)
-            VectorMap(parameters[Biases].data, parameters[Biases].size()).setZero();
+        if(parameters[Bias].size() > 0)
+            VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-        if(parameters[Weights].size() > 0)
-            set_random_uniform(VectorMap(parameters[Weights].data, parameters[Weights].size()), -limit, limit);
+        if(parameters[Weight].size() > 0)
+            set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
 
-        if(batch_normalization && parameters[Gammas].size() > 0)
-            VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setConstant(1.0);
+        if(batch_normalization && parameters[Gamma].size() > 0)
+            VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-        if(batch_normalization && parameters[Betas].size() > 0)
-            VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
+        if(batch_normalization && parameters[Beta].size() > 0)
+            VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
     }
 
     void set_parameters_random() override
     {
-        if(parameters[Biases].size() > 0)
-            VectorMap(parameters[Biases].data, parameters[Biases].size()).setZero();
+        if(parameters[Bias].size() > 0)
+            VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-        if(parameters[Weights].size() > 0)
-            set_random_uniform(VectorMap(parameters[Weights].data, parameters[Weights].size()));
+        if(parameters[Weight].size() > 0)
+            set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
 
         if (batch_normalization)
         {
-            if(parameters[Gammas].size() > 0)
-                VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setConstant(1.0);
+            if(parameters[Gamma].size() > 0)
+                VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-            if(parameters[Betas].size() > 0)
-                VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
+            if(parameters[Beta].size() > 0)
+                VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
         }
     }
 
@@ -352,8 +352,10 @@ public:
         const TensorView& input = forward_propagation.views[layer][Input][0];
         TensorView& output = forward_propagation.views[layer][Output][0];
 
-        const TensorView& weights = parameters[Weights];
-        const TensorView& biases = parameters[Biases];
+        const TensorView& weights = parameters[Weight];
+        const TensorView& biases = parameters[Bias];
+        const TensorView& gammas = parameters[Gamma];
+        const TensorView& betas = parameters[Beta];
 
         combination(input, weights, biases, output);
 
@@ -881,19 +883,19 @@ public:
         const Index inputs_number = get_inputs_number();
         const Index outputs_number = get_outputs_number();
 
-        if (parameters[Biases].data == nullptr || parameters[Weights].data == nullptr) return "";
+        if (parameters[Bias].data == nullptr || parameters[Weight].data == nullptr) return "";
 
         ostringstream buffer;
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            buffer << output_names[j] << " = " << activation_function << "( " << parameters[Biases].data[j] << " + ";
+            buffer << output_names[j] << " = " << activation_function << "( " << parameters[Bias].data[j] << " + ";
 
             for(Index i = 0; i < inputs_number; i++)
             {
                 const Index weight_index = i * outputs_number + j;
 
-                buffer << "(" << parameters[Weights].data[weight_index] << "*" << input_names[i] << ")";
+                buffer << "(" << parameters[Weight].data[weight_index] << "*" << input_names[i] << ")";
 
                 if (i < inputs_number - 1) buffer << " + ";
             }
@@ -910,8 +912,8 @@ public:
         cout << "Dense layer" << endl
              << "Input shape: " << get_input_shape() << endl
              << "Output shape: " << get_output_shape() << endl
-             << "Biases shape: " << parameters[Biases].shape << endl
-             << "Weights shape: " << parameters[Weights].shape << endl
+             << "Biases shape: " << parameters[Bias].shape << endl
+             << "Weights shape: " << parameters[Weight].shape << endl
              << "Activation function: " << activation_function << endl
              << "Batch normalization: " << (batch_normalization ? "True" : "False") << endl
              << "Dropout rate: " << dropout_rate << endl;

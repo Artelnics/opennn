@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-void padding(const TensorView& input, TensorView& output)
+inline void padding(const TensorView& input, TensorView& output)
 {
 #ifndef CUDA
 //    output = input.pad(input);
@@ -67,7 +67,7 @@ inline void copy(const TensorView& source, TensorView& destination)
 #endif
 }
 
-void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output)
+inline void addition(const TensorView& input_1, const TensorView& input_2, TensorView& output)
 {
     if(input_1.size() != input_2.size() || input_1.size() != output.size())
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
@@ -94,7 +94,7 @@ void addition(const TensorView& input_1, const TensorView& input_2, TensorView& 
 }
 
 
-void projection(const TensorView& input,
+inline void projection(const TensorView& input,
                 const TensorView& weights,
                 const TensorView& biases,
                 TensorView& output)
@@ -147,7 +147,7 @@ void projection(const TensorView& input,
 }
 
 
-void projection_gradient(const Tensor4& d_head,
+inline void projection_gradient(const Tensor4& d_head,
                          const TensorMap3& input,
                          const TensorView& weights,
                          VectorMap& d_bias,
@@ -314,7 +314,7 @@ inline void combination(const TensorView& input,
 #endif
 }
 
-void batch_normalization_training()
+inline void batch_normalization_training()
 {
 #ifndef CUDA
 
@@ -342,7 +342,7 @@ void batch_normalization_training()
 }
 
 
-void batch_normalization_inference()
+inline void batch_normalization_inference()
 {
 #ifndef CUDA
 
@@ -365,7 +365,7 @@ void batch_normalization_inference()
 }
 
 
-void activation(const TensorView& input, TensorView& output, const string& activation)
+inline void activation(const TensorView& input, TensorView& output, const string& activation)
 {
 #ifndef CUDA
 
@@ -395,7 +395,7 @@ void activation(const TensorView& input, TensorView& output, const string& activ
 #endif
 }
 
-void dropout()
+inline void dropout()
 {
 #ifndef CUDA
 
@@ -413,7 +413,7 @@ void dropout()
 }
 
 
-void convolution(const TensorView& input,
+inline void convolution(const TensorView& input,
                  const TensorView& kernel,
                  const TensorView& biases,
                  TensorView& output)

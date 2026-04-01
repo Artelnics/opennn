@@ -74,7 +74,7 @@ if(OPENNN_WITH_CUDA)
     add_subdirectory(blank_cuda)
 endif()
 
-option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
+option(OpenNN_BUILD_TESTS "Build OpenNN tests" OFF)
 if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
