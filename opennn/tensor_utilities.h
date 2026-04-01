@@ -395,13 +395,12 @@ void shuffle_rows(MatrixR& matrix);
 type* link(type*, vector<TensorView*>);
 void link(type*, vector<vector<TensorView*>>);
 
-Index get_size(const vector<Shape>&)
+inline Index get_size(const vector<Shape>&)
 {
     return 0;
 }
 
-
-Index get_size(const vector<vector<Shape>>&)
+inline Index get_size(const vector<vector<Shape>>&)
 {
     return 0;
 }
