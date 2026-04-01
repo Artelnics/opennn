@@ -76,7 +76,6 @@ inline void max_pooling(const TensorView& input, TensorView& output)
                                     output.device));
 
 #endif
-
 }
 
 
@@ -139,18 +138,21 @@ inline void padding(const TensorView& input, TensorView& output)
 }
 
 inline void bounding(const TensorView& input,
-                     const VectorR& lower_bounds,
-                     const VectorR& upper_bounds,
+                     const TensorView& lower_bounds,
+                     const TensorView& upper_bounds,
                      TensorView& output)
 {
     const Index features = lower_bounds.size();
 
 #ifndef CUDA
     const MatrixMap input_matrix = input.as_matrix();
+    const VectorMap lower_bounds_vector = lower_bounds.as_vector();
+    const VectorMap upper_bounds_vector = upper_bounds.as_vector();
+
     MatrixMap output_matrix = output.as_matrix();
 
     for(Index j = 0; j < features; ++j)
-        output_matrix.col(j) = input_matrix.col(j).cwiseMax(lower_bounds(j)).cwiseMin(upper_bounds(j));
+        output_matrix.col(j) = input_matrix.col(j).cwiseMax(lower_bounds_vector(j)).cwiseMin(upper_bounds_vector(j));
 
 #else
     const Index total_rows = input.shape[0];
@@ -159,8 +161,8 @@ inline void bounding(const TensorView& input,
                   total_rows,
                   features,
                   input.data,
-                  lower_bounds_device, // Assuming these were moved to device
-                  upper_bounds_device,
+                  lower_bounds.device, // Assuming these were moved to device
+                  upper_bounds.device,
                   output.data);
 #endif
 }
@@ -598,13 +600,17 @@ inline void dropout(TensorView& output, type dropout_rate)
 
 
 inline void convolution(const TensorView& input,
-                 const TensorView& kernel,
-                 const TensorView& biases,
-                 TensorView& output)
+                        const TensorView& kernel,
+                        const TensorView& bias,
+                        TensorView& output)
 {
 #ifndef CUDA
-/*
+
+    const TensorMap4 inputs = input.as_tensor<4>();
+    const VectorMap biases = bias.as_vector();
+
     const Index batch_size = inputs.dimension(0);
+/*
     const Index output_height = convolutions.dimension(1);
     const Index output_width = convolutions.dimension(2);
 
@@ -614,8 +620,6 @@ inline void convolution(const TensorView& input,
     const Index kernel_channels = get_kernel_channels();
 
     const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
-
-    const VectorMap biases = vector_map(parameters[Biases]);
 
     const Eigen::array<Index, 3> conv_dims({1, 2, 3});
 

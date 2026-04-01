@@ -64,7 +64,7 @@ Index MultiHeadAttention::get_source_sequence_length() const
 
 Index MultiHeadAttention::get_embedding_dimension() const
 {
-    return query_biases.shape[0];
+    return input_shape.back();
 }
 
 
@@ -142,18 +142,6 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     if(new_embedding_dimension % new_heads_number != 0)
         throw runtime_error("MultiHeadAttention Error: The embedding dimension must be divisible by the number of heads.");
 
-    query_weights.shape = {new_embedding_dimension, new_embedding_dimension};
-    query_biases.shape = {new_embedding_dimension};
-
-    key_weights.shape = {new_embedding_dimension, new_embedding_dimension};
-    key_biases.shape = {new_embedding_dimension};
-
-    value_weights.shape = {new_embedding_dimension, new_embedding_dimension};
-    value_biases.shape = {new_embedding_dimension};
-
-    projection_weights.shape = {new_embedding_dimension, new_embedding_dimension};
-    projection_biases.shape = {new_embedding_dimension};
-
     use_causal_mask = new_use_causal_mask;
 
     if (use_causal_mask)
@@ -183,21 +171,23 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                         ? query_input
                                         : forward_propagation.views[layer][Inputs][1];
 
-    TensorView& query = forward_propagation.views[layer][Query][0];
-    TensorView& key = forward_propagation.views[layer][Key][0];
-    TensorView& value = forward_propagation.views[layer][Value][0];
-
     const TensorView& query_weights = parameters[QueryWeights];
     const TensorView& query_biases = parameters[QueryBiases];
+    TensorView& query = forward_propagation.views[layer][Query][0];
+
+    projection(query_input, query_weights, query_biases, query);
+
 
     const TensorView& key_weights = parameters[KeyWeights];
     const TensorView& key_biases = parameters[KeyBiases];
+    TensorView& key = forward_propagation.views[layer][Key][0];
+
+    projection(source_input, key_weights, key_biases, key);
 
     const TensorView& value_weights = parameters[ValueWeights];
     const TensorView& value_biases = parameters[KeyBiases];
+    TensorView& value = forward_propagation.views[layer][Value][0];
 
-    projection(query_input, query_weights, query_biases, query);
-    projection(source_input, key_weights, key_biases, key);
     projection(source_input, value_weights, value_biases, value);
 
     TensorView& attention_weights = forward_propagation.views[layer][AttentionWeights][0];

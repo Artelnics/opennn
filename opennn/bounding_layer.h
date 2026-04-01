@@ -71,9 +71,9 @@ private:
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 
-    VectorR lower_bounds;
+//    VectorR lower_bounds;
 
-    VectorR upper_bounds;
+//    VectorR upper_bounds;
 };
 
 }
