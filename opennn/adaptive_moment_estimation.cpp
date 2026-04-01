@@ -486,6 +486,7 @@ void AdaptiveMomentEstimationData::print() const
 
 #ifdef OPENNN_CUDA
 
+
 TrainingResults AdaptiveMomentEstimation::train_cuda()
 {
     if(!loss || !loss->has_neural_network() || !loss->has_dataset())
@@ -756,6 +757,387 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
     return results;
 }
+/*
+TrainingResults AdaptiveMomentEstimation::train_cuda()
+{
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+        return TrainingResults();
+
+    TrainingResults results(maximum_epochs + 1);
+
+    check();
+
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
+
+    Dataset* dataset = loss->get_dataset();
+    if(!dataset) throw runtime_error("Dataset is null.");
+
+    const bool has_validation = dataset->has_validation();
+    const bool is_text_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
+
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
+
+    const Index training_batch_size = min(training_samples_number, batch_size);
+    const Index validation_batch_size = (validation_samples_number != 0) ? min(validation_samples_number, batch_size) : 0;
+
+    const Index training_batches_number = (training_batch_size != 0) ? training_samples_number / training_batch_size : 0;
+    const Index validation_batches_number = (validation_batch_size != 0) ? validation_samples_number / validation_batch_size : 0;
+
+    vector<vector<Index>> training_batches(training_batches_number);
+    vector<vector<Index>> validation_batches(validation_batches_number);
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    set_names();
+    set_scaling();
+
+    const int PREFETCH_BATCHES = 3;
+
+    ThreadSafeQueue<BatchCuda*> empty_training_queue;
+    ThreadSafeQueue<BatchCuda*> ready_training_queue;
+    vector<unique_ptr<BatchCuda>> training_batch_pool;
+
+    for(int i = 0; i < PREFETCH_BATCHES; i++)
+    {
+        training_batch_pool.push_back(make_unique<BatchCuda>(training_batch_size, dataset));
+        empty_training_queue.push(training_batch_pool.back().get());
+    }
+
+    ThreadSafeQueue<BatchCuda*> empty_validation_queue;
+    ThreadSafeQueue<BatchCuda*> ready_validation_queue;
+    vector<unique_ptr<BatchCuda>> validation_batch_pool;
+
+    if(has_validation)
+    {
+        for(int i = 0; i < PREFETCH_BATCHES; i++)
+        {
+            validation_batch_pool.push_back(make_unique<BatchCuda>(validation_batch_size, dataset));
+            empty_validation_queue.push(validation_batch_pool.back().get());
+        }
+    }
+
+    cudaStream_t memory_stream;
+    cudaStreamCreate(&memory_stream);
+
+    cudaEvent_t batch_ready_event;
+    cudaEventCreate(&batch_ready_event);
+
+    ForwardPropagationCuda training_forward_propagation(training_batch_size, neural_network);
+    unique_ptr<ForwardPropagationCuda> validation_forward_propagation;
+
+    neural_network->copy_parameters_device();
+    loss->set_normalization_coefficient();
+
+    BackPropagationCuda training_back_propagation(training_batch_size, loss);
+    unique_ptr<BackPropagationCuda> validation_back_propagation;
+
+    if(has_validation)
+    {
+        validation_forward_propagation = make_unique<ForwardPropagationCuda>(validation_batch_size, neural_network);
+        validation_back_propagation = make_unique<BackPropagationCuda>(validation_batch_size, loss);
+    }
+
+    type training_error = type(0);
+    type training_accuracy = type(0);
+    type validation_error = type(0);
+    type validation_accuracy = type(0);
+    Index validation_failures = 0;
+
+    ADAMOptimizationDataCuda optimization_data(this);
+
+    bool stop_training = false;
+    bool is_training = true;
+    bool shuffle = true;
+
+    if(neural_network->has("Recurrent")) shuffle = false;
+
+    time_t beginning_time;
+    time(&beginning_time);
+    type elapsed_time = type(0);
+    optimization_data.iteration = 1;
+
+    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    {
+        CpuTimer epoch_timer;
+        EpochCudaProfile epoch_profile;
+        g_epoch_cuda_profile = &epoch_profile;
+
+        if(display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
+
+        {
+            CpuTimer timer;
+            training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
+            epoch_profile.get_batches_ms += timer.toc_ms();
+        }
+
+        training_error = type(0);
+        if(is_text_classification_model) training_accuracy = type(0);
+
+        double training_worker_fill_host_ms_local = 0.0;
+        double training_worker_wait_empty_batch_ms_local = 0.0;
+
+        std::thread training_worker([&]()
+                                    {
+                                        CpuTimer local_timer;
+
+                                        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+                                        {
+                                            local_timer.tic();
+                                            BatchCuda* batch = empty_training_queue.pop();
+                                            training_worker_wait_empty_batch_ms_local += local_timer.toc_ms();
+
+                                            local_timer.tic();
+                                            batch->fill_host(training_batches[iteration],
+                                                             input_feature_indices,
+                                                             decoder_feature_indices,
+                                                             target_feature_indices);
+                                            training_worker_fill_host_ms_local += local_timer.toc_ms();
+
+                                            ready_training_queue.push(batch);
+                                        }
+                                    });
+
+        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        {
+            training_back_propagation.neural_network.gradients.fill(0.0f);
+
+            CpuTimer wait_timer;
+            wait_timer.tic();
+            BatchCuda* current_batch = ready_training_queue.pop();
+            epoch_profile.main_wait_ready_batch_ms += wait_timer.toc_ms();
+
+            CudaSpan h2d_span;
+            h2d_span.begin(memory_stream);
+            current_batch->copy_device_async(training_batches[iteration].size(), memory_stream);
+            h2d_span.end(memory_stream);
+
+            cudaEventRecord(batch_ready_event, memory_stream);
+
+            wait_timer.tic();
+            cudaStreamWaitEvent(0, batch_ready_event, 0);
+            epoch_profile.wait_copy_event_ms += wait_timer.toc_ms();
+
+            CudaSpan forward_span;
+            forward_span.begin(0);
+            neural_network->forward_propagate(current_batch->get_inputs_device(),
+                                              training_forward_propagation,
+                                              is_training);
+            forward_span.end(0);
+
+            CudaSpan backward_span;
+            backward_span.begin(0);
+            loss->back_propagate(*current_batch,
+                                 training_forward_propagation,
+                                 training_back_propagation);
+            backward_span.end(0);
+
+            training_error += training_back_propagation.error;
+
+            if(is_text_classification_model)
+                training_accuracy += training_back_propagation.accuracy();
+
+            CudaSpan update_span;
+            update_span.begin(0);
+            update_parameters(training_back_propagation, optimization_data);
+            update_span.end(0);
+
+            CpuTimer sync_timer;
+            sync_timer.tic();
+            cudaStreamSynchronize(0);
+            epoch_profile.sync_compute_stream_ms += sync_timer.toc_ms();
+
+            epoch_profile.h2d_copy_ms += h2d_span.elapsed_ms();
+            epoch_profile.forward_gpu_ms += forward_span.elapsed_ms();
+            epoch_profile.loss_backward_gpu_ms += backward_span.elapsed_ms();
+            epoch_profile.update_gpu_ms += update_span.elapsed_ms();
+
+            empty_training_queue.push(current_batch);
+        }
+
+        training_worker.join();
+
+        epoch_profile.worker_fill_host_ms += training_worker_fill_host_ms_local;
+        epoch_profile.worker_wait_empty_batch_ms += training_worker_wait_empty_batch_ms_local;
+
+        training_error /= type(training_batches_number);
+        if(is_text_classification_model) training_accuracy /= type(training_batches_number);
+        results.training_error_history(epoch) = training_error;
+
+        if(has_validation)
+        {
+            {
+                CpuTimer timer;
+                validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
+                epoch_profile.validation_get_batches_ms += timer.toc_ms();
+            }
+
+            validation_error = type(0);
+            if(is_text_classification_model) validation_accuracy = type(0);
+
+            double validation_worker_fill_host_ms_local = 0.0;
+            double validation_worker_wait_empty_batch_ms_local = 0.0;
+
+            std::thread validation_worker([&]()
+                                          {
+                                              CpuTimer local_timer;
+
+                                              for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+                                              {
+                                                  local_timer.tic();
+                                                  BatchCuda* batch = empty_validation_queue.pop();
+                                                  validation_worker_wait_empty_batch_ms_local += local_timer.toc_ms();
+
+                                                  local_timer.tic();
+                                                  batch->fill_host(validation_batches[iteration],
+                                                                   input_feature_indices,
+                                                                   decoder_feature_indices,
+                                                                   target_feature_indices);
+                                                  validation_worker_fill_host_ms_local += local_timer.toc_ms();
+
+                                                  ready_validation_queue.push(batch);
+                                              }
+                                          });
+
+            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            {
+                CpuTimer wait_timer;
+                wait_timer.tic();
+                BatchCuda* current_batch = ready_validation_queue.pop();
+                epoch_profile.validation_main_wait_ready_batch_ms += wait_timer.toc_ms();
+
+                CudaSpan h2d_span;
+                h2d_span.begin(memory_stream);
+                current_batch->copy_device_async(validation_batches[iteration].size(), memory_stream);
+                h2d_span.end(memory_stream);
+
+                cudaEventRecord(batch_ready_event, memory_stream);
+
+                wait_timer.tic();
+                cudaStreamWaitEvent(0, batch_ready_event, 0);
+                epoch_profile.validation_wait_copy_event_ms += wait_timer.toc_ms();
+
+                CudaSpan forward_span;
+                forward_span.begin(0);
+                neural_network->forward_propagate(current_batch->get_inputs_device(),
+                                                  *validation_forward_propagation,
+                                                  is_training);
+                forward_span.end(0);
+
+                CudaSpan loss_span;
+                loss_span.begin(0);
+                loss->calculate_error(*current_batch,
+                                      *validation_forward_propagation,
+                                      *validation_back_propagation);
+                loss_span.end(0);
+
+                validation_error += validation_back_propagation->error;
+                if(is_text_classification_model) validation_accuracy += validation_back_propagation->accuracy();
+
+                CpuTimer sync_timer;
+                sync_timer.tic();
+                cudaStreamSynchronize(0);
+                epoch_profile.validation_sync_compute_stream_ms += sync_timer.toc_ms();
+
+                epoch_profile.validation_h2d_copy_ms += h2d_span.elapsed_ms();
+                epoch_profile.validation_forward_gpu_ms += forward_span.elapsed_ms();
+                epoch_profile.validation_loss_gpu_ms += loss_span.elapsed_ms();
+
+                empty_validation_queue.push(current_batch);
+            }
+
+            validation_worker.join();
+
+            epoch_profile.validation_worker_fill_host_ms += validation_worker_fill_host_ms_local;
+            epoch_profile.validation_worker_wait_empty_batch_ms += validation_worker_wait_empty_batch_ms_local;
+
+            validation_error /= type(validation_batches_number);
+            if(is_text_classification_model) validation_accuracy /= type(validation_batches_number);
+            results.validation_error_history(epoch) = validation_error;
+
+            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch - 1))
+                validation_failures++;
+        }
+
+        elapsed_time = get_elapsed_time(beginning_time);
+        epoch_profile.epoch_total_ms = epoch_timer.toc_ms();
+
+        if(display && epoch % display_period == 0)
+        {
+            cout << "Training error: " << training_error << endl;
+            if(is_text_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if(has_validation) cout << "Validation error: " << validation_error << endl;
+            if(has_validation && is_text_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+
+            epoch_profile.print(epoch);
+        }
+
+        stop_training = true;
+
+        if(epoch == maximum_epochs)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
+        }
+        else if(elapsed_time >= maximum_time)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
+            results.stopping_condition = StoppingCondition::MaximumTime;
+        }
+        else if(results.training_error_history(epoch) < training_loss_goal)
+        {
+            results.stopping_condition = StoppingCondition::LossGoal;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+        }
+        else if(training_accuracy >= training_accuracy_goal)
+        {
+            results.stopping_condition = StoppingCondition::LossGoal;
+            if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
+        }
+        else if(validation_failures >= maximum_validation_failures)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+        }
+        else
+        {
+            stop_training = false;
+        }
+
+        g_epoch_cuda_profile = nullptr;
+
+        if(stop_training)
+        {
+            results.loss = training_back_propagation.loss_value;
+            results.validation_failures = validation_failures;
+            results.resize_training_error_history(epoch + 1);
+            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
+            results.elapsed_time = write_time(elapsed_time);
+            break;
+        }
+
+        if(epoch != 0 && epoch % save_period == 0)
+            neural_network->save(neural_network_file_name);
+    }
+
+    cudaStreamDestroy(memory_stream);
+    cudaEventDestroy(batch_ready_event);
+
+    neural_network->copy_parameters_host();
+    set_unscaling();
+
+    if(display) results.print();
+
+    return results;
+}*/
 
 
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,

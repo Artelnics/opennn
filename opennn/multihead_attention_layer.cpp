@@ -633,112 +633,146 @@ void MultiHeadAttention::forward_propagate(unique_ptr<LayerForwardPropagationCud
     const Index heads_number = this->heads_number;
     const Index head_dimension = get_head_dimension();
 
-    const Index total_weights = batch_size * heads_number * query_sequence_length * source_sequence_length;
-
     const float scaling_factor = static_cast<float>(get_scaling_factor());
 
     const float* query_input = forward_propagation->inputs[0].data;
-    const float* source_input = (forward_propagation->inputs.size() == 1) ? query_input : forward_propagation->inputs[1].data;
+    const float* source_input = (forward_propagation->inputs.size() == 1)
+                                    ? query_input
+                                    : forward_propagation->inputs[1].data;
 
     // Query projection
-    linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
-                           query_biases_device.get_descriptor(), forward->query.data,
+    linear_projection_cuda(query_input,
+                           query_weights_device.data,
+                           query_biases_device.data,
+                           query_biases_device.get_descriptor(),
+                           forward->query.data,
                            forward->query.get_descriptor(),
                            (int)(batch_size * query_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           (int)embedding_dimension,
+                           (int)embedding_dimension);
 
     // Key projection
-    linear_projection_cuda(source_input, key_weights_device.data, key_biases_device.data,
-                           key_biases_device.get_descriptor(), forward->key.data,
+    linear_projection_cuda(source_input,
+                           key_weights_device.data,
+                           key_biases_device.data,
+                           key_biases_device.get_descriptor(),
+                           forward->key.data,
                            forward->key.get_descriptor(),
                            (int)(batch_size * source_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           (int)embedding_dimension,
+                           (int)embedding_dimension);
 
     // Value projection
-    linear_projection_cuda(source_input, value_weights_device.data, value_biases_device.data,
-                           value_biases_device.get_descriptor(), forward->value.data,
+    linear_projection_cuda(source_input,
+                           value_weights_device.data,
+                           value_biases_device.data,
+                           value_biases_device.get_descriptor(),
+                           forward->value.data,
                            forward->value.get_descriptor(),
                            (int)(batch_size * source_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           (int)embedding_dimension,
+                           (int)embedding_dimension);
 
-    // Transpositions
-
+    // Transpose Q, K, V to [B*H*S, D]
     mha_transpose_qkv_cuda(batch_size * query_sequence_length * embedding_dimension,
-                           forward->query.data, forward->query_transposed.data,
-                           (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                           forward->query.data,
+                           forward->query_transposed.data,
+                           (int)query_sequence_length,
+                           (int)heads_number,
+                           (int)head_dimension);
 
     mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
-                           forward->key.data, forward->key_transposed.data,
-                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                           forward->key.data,
+                           forward->key_transposed.data,
+                           (int)source_sequence_length,
+                           (int)heads_number,
+                           (int)head_dimension);
 
     mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
-                           forward->value.data, forward->value_transposed.data,
-                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                           forward->value.data,
+                           forward->value_transposed.data,
+                           (int)source_sequence_length,
+                           (int)heads_number,
+                           (int)head_dimension);
 
-    // Attention scores (Q * K^T)
+    // Attention scores: Q * K^T
+    CHECK_CUBLAS(cublasSgemmStridedBatched(get_cublas_handle(),
+                                           CUBLAS_OP_T, CUBLAS_OP_N,
+                                           (int)source_sequence_length,
+                                           (int)query_sequence_length,
+                                           (int)head_dimension,
+                                           &scaling_factor,
+                                           forward->key_transposed.data,
+                                           (int)head_dimension,
+                                           (int)(source_sequence_length * head_dimension),
+                                           forward->query_transposed.data,
+                                           (int)head_dimension,
+                                           (int)(query_sequence_length * head_dimension),
+                                           &beta_zero,
+                                           forward->attention_weights.data,
+                                           (int)source_sequence_length,
+                                           (int)(query_sequence_length * source_sequence_length),
+                                           (int)(batch_size * heads_number)));
 
-    cublasSgemmStridedBatched(get_cublas_handle(),
-                              CUBLAS_OP_T, CUBLAS_OP_N,
-                              (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
-                              &scaling_factor,
-                              forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              &beta_zero,
-                              forward->attention_weights.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              (int)(batch_size * heads_number));
-
-    // Key padding mask
-
-    mha_key_padding_mask_cuda(
-        total_weights,
-        source_input,
-        forward->attention_weights.data,
-        (int)heads_number,
-        (int)query_sequence_length,
-        (int)source_sequence_length,
-        (int)embedding_dimension
-        );
-
-    if(use_causal_mask)
-    {
-        mha_causal_mask_cuda(batch_size * heads_number * query_sequence_length * source_sequence_length,
-                             forward->attention_weights.data,
-                             (int)query_sequence_length, (int)source_sequence_length);
-    }
+    // Fused masks: padding + causal
+    mha_fused_masks_cuda((int)batch_size,
+                         (int)heads_number,
+                         (int)query_sequence_length,
+                         (int)source_sequence_length,
+                         (int)embedding_dimension,
+                         source_input,
+                         forward->attention_weights.data,
+                         forward->padding_mask.data,
+                         use_causal_mask);
 
     // Softmax
+    CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
+                                    CUDNN_SOFTMAX_ACCURATE,
+                                    CUDNN_SOFTMAX_MODE_CHANNEL,
+                                    &alpha_one,
+                                    forward->attention_weights.get_descriptor(),
+                                    forward->attention_weights.data,
+                                    &beta_zero,
+                                    forward->attention_probabilities.get_descriptor(),
+                                    forward->attention_probabilities.data));
 
-    cudnnSoftmaxForward(get_cudnn_handle(),
-                        CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL,
-                        &alpha_one,
-                        forward->attention_weights.get_descriptor(), forward->attention_weights.data,
-                        &beta_zero,
-                        forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data);
+    // Attention context: Probabilities * V
+    CHECK_CUBLAS(cublasSgemmStridedBatched(get_cublas_handle(),
+                                           CUBLAS_OP_N, CUBLAS_OP_N,
+                                           (int)head_dimension,
+                                           (int)query_sequence_length,
+                                           (int)source_sequence_length,
+                                           &alpha_one,
+                                           forward->value_transposed.data,
+                                           (int)head_dimension,
+                                           (int)(source_sequence_length * head_dimension),
+                                           forward->attention_probabilities.data,
+                                           (int)source_sequence_length,
+                                           (int)(query_sequence_length * source_sequence_length),
+                                           &beta_zero,
+                                           forward->attention_outputs_transposed.data,
+                                           (int)head_dimension,
+                                           (int)(query_sequence_length * head_dimension),
+                                           (int)(batch_size * heads_number)));
 
-    // Attention context (Probs * V)
-
-    cublasSgemmStridedBatched(get_cublas_handle(),
-                              CUBLAS_OP_N, CUBLAS_OP_N,
-                              (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
-                              &alpha_one,
-                              forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              &beta_zero,
-                              forward->attention_outputs_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              (int)(batch_size * heads_number));
-
-    // Concatenation and output projection
-
+    // Transpose back to [B*Sq, E]
     mha_transpose_o_cuda(batch_size * query_sequence_length * embedding_dimension,
-                         forward->attention_outputs_transposed.data, forward->concatenated_attention_outputs.data,
-                         (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                         forward->attention_outputs_transposed.data,
+                         forward->concatenated_attention_outputs.data,
+                         (int)query_sequence_length,
+                         (int)heads_number,
+                         (int)head_dimension);
 
+    // Output projection
     linear_projection_cuda(forward->concatenated_attention_outputs.data,
-                           projection_weights_device.data, projection_biases_device.data,
-                           projection_biases_device.get_descriptor(), forward->outputs.data,
+                           projection_weights_device.data,
+                           projection_biases_device.data,
+                           projection_biases_device.get_descriptor(),
+                           forward->outputs.data,
                            forward->outputs.get_descriptor(),
                            (int)(batch_size * query_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           (int)embedding_dimension,
+                           (int)embedding_dimension);
 }
 
 
@@ -984,7 +1018,6 @@ void MultiHeadAttention::back_propagate(unique_ptr<LayerForwardPropagationCuda>&
 }
 
 
-
 vector<TensorViewCuda*> MultiHeadAttention::get_parameter_views_device()
 {
     return {&query_weights_device, &query_biases_device,
@@ -1217,6 +1250,8 @@ void MultiHeadAttentionForwardPropagationCuda::initialize()
 
     attention_outputs_transposed.resize({batch_size * heads_number * query_sequence_length, head_dimension});
     concatenated_attention_outputs.resize({batch_size * query_sequence_length, embedding_dimension});
+
+    padding_mask.resize({batch_size * source_sequence_length});
 
     outputs.set_descriptor({batch_size, query_sequence_length, embedding_dimension});
 }

@@ -462,6 +462,94 @@ void cross_entropy_3d_binary_backward_cuda(const size_t n,
         static_cast<int>(n), outputs, targets, output_gradients, scale_factor);
 }
 
+
+__global__ void cross_entropy_3d_multiple_counts_kernel(const int total_tokens,
+                                                        const int vocab_size,
+                                                        const float* outputs,
+                                                        const float* targets,
+                                                        float* counts)
+{
+    const int token_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(token_idx < total_tokens)
+    {
+        const int target_class = static_cast<int>(targets[token_idx]);
+
+        if(target_class > 0 && target_class < vocab_size)
+        {
+            atomicAdd(&counts[0], 1.0f);
+
+            int best_index = 0;
+            float best_value = outputs[token_idx * vocab_size];
+
+            for(int k = 1; k < vocab_size; ++k)
+            {
+                const float value = outputs[token_idx * vocab_size + k];
+                if(value > best_value)
+                {
+                    best_value = value;
+                    best_index = k;
+                }
+            }
+
+            if(best_index == target_class)
+                atomicAdd(&counts[1], 1.0f);
+        }
+    }
+}
+
+void cross_entropy_3d_multiple_counts_cuda(const size_t total_tokens,
+                                           const int vocab_size,
+                                           const float* outputs,
+                                           const float* targets,
+                                           float* counts)
+{
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
+
+    cross_entropy_3d_multiple_counts_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(total_tokens), vocab_size, outputs, targets, counts);
+}
+
+
+__global__ void cross_entropy_3d_binary_counts_kernel(const int total_tokens,
+                                                      const float* outputs,
+                                                      const float* targets,
+                                                      float* counts)
+{
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(idx < total_tokens)
+    {
+        const float target_val = targets[idx];
+
+        if(target_val >= 0.0f)
+        {
+            atomicAdd(&counts[0], 1.0f);
+
+            const float predicted = outputs[idx] >= 0.5f ? 1.0f : 0.0f;
+            if(predicted == target_val)
+                atomicAdd(&counts[1], 1.0f);
+        }
+    }
+}
+
+void cross_entropy_3d_binary_counts_cuda(const size_t total_tokens,
+                                         const float* outputs,
+                                         const float* targets,
+                                         float* counts)
+{
+    if(total_tokens == 0) return;
+
+    const int block_size = 256;
+    const int grid_size = (static_cast<int>(total_tokens) + block_size - 1) / block_size;
+
+    cross_entropy_3d_binary_counts_kernel<<<grid_size, block_size>>>(
+        static_cast<int>(total_tokens), outputs, targets, counts);
+}
+
 // Regularization
 
 __global__ void apply_l1_gradient_kernel(const int n, float* deltas, const float* params, const float weight)
@@ -712,6 +800,97 @@ void embedding_backward_cuda(const size_t n, const float* inputs, const float* o
 }
 
 // Multihead
+
+__global__ void compute_padding_mask_kernel(const int num_tokens,
+                                            const float* source_input,
+                                            float* padding_mask,
+                                            const int embedding_dimension)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(i < num_tokens)
+    {
+        bool is_pad = true;
+        const int offset = i * embedding_dimension;
+
+        for(int e = 0; e < embedding_dimension; ++e)
+        {
+            if(fabsf(source_input[offset + e]) > 1e-7f)
+            {
+                is_pad = false;
+                break;
+            }
+        }
+
+        padding_mask[i] = is_pad ? 1.0f : 0.0f;
+    }
+}
+
+
+__global__ void apply_fused_masks_kernel(const int n,
+                                         float* attention_weights,
+                                         const float* padding_mask,
+                                         const int heads_number,
+                                         const int query_sequence_length,
+                                         const int source_sequence_length,
+                                         const bool use_causal_mask)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(i < n)
+    {
+        const int sk = i % source_sequence_length;
+        const int sq = (i / source_sequence_length) % query_sequence_length;
+        const int b  = i / (source_sequence_length * query_sequence_length * heads_number);
+
+        if((use_causal_mask && sk > sq) || padding_mask[b * source_sequence_length + sk] > 0.5f)
+            attention_weights[i] = -1e9f;
+    }
+}
+
+
+void mha_fused_masks_cuda(const int batch_size,
+                          const int heads_number,
+                          const int query_sequence_length,
+                          const int source_sequence_length,
+                          const int embedding_dimension,
+                          const float* source_input,
+                          float* attention_weights,
+                          float* padding_mask,
+                          const bool use_causal_mask)
+{
+    const int num_tokens = batch_size * source_sequence_length;
+
+    if(num_tokens > 0)
+    {
+        const int threads = 256;
+        const int blocks = (num_tokens + threads - 1) / threads;
+
+        compute_padding_mask_kernel<<<blocks, threads>>>(
+            num_tokens,
+            source_input,
+            padding_mask,
+            embedding_dimension);
+    }
+
+    const int n = batch_size * heads_number * query_sequence_length * source_sequence_length;
+
+    if(n > 0)
+    {
+        const int threads = 256;
+        const int blocks = (n + threads - 1) / threads;
+
+        apply_fused_masks_kernel<<<blocks, threads>>>(
+            n,
+            attention_weights,
+            padding_mask,
+            heads_number,
+            query_sequence_length,
+            source_sequence_length,
+            use_causal_mask);
+    }
+}
+
 
 // [Batch, Seq, Heads, HeadDim] -> [Batch, Heads, Seq, HeadDim]
 __global__ void mha_transpose_qkv_kernel(const int n, const float* in, float* out, const int S, const int H, const int D)

@@ -264,16 +264,12 @@ struct BackPropagation
     type error;
     MatrixR errors;
     MatrixR errors_weights;
+
     VectorR output_gradients;
     Shape output_gradient_dimensions;
 
     Tensor0 accuracy;
-    MatrixR predictions;
 
-    MatrixB matches;
-    MatrixB mask;
-
-    bool built_mask = false;
     type loss_value = type(0);
 };
 
@@ -305,9 +301,6 @@ struct BackPropagationCuda
     float* errors = nullptr;
     float* error_device = nullptr;
 
-    type regularization = type(0);
-    type loss_value = type(0);
-
     cudnnReduceTensorDescriptor_t reduce_tensor_descriptor;
 
     void* workspace = nullptr;
@@ -318,10 +311,9 @@ struct BackPropagationCuda
     TensorCuda output_gradients;
 
     Tensor0 accuracy;
-    TensorCuda predictions;
-    TensorCuda matches;
-    TensorCuda mask;
-    bool built_mask = false;
+    Index active_tokens_count = 0;
+
+    type loss_value = type(0);
 };
 
 #endif
