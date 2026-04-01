@@ -672,7 +672,7 @@ inline void convolution_activation(const TensorView& input,
 #ifndef CUDA
     convolution(input, weight, bias, output);
 
-//    activation(input, output, activation);
+//    activation(output, activation);
 #else
     CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
         get_cudnn_handle(),
@@ -754,12 +754,124 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
 }
 
 
-inline void softmax(const TensorView& input, TensorView& output)
+void softmax(TensorView& output)
 {
-#ifndef OPENNN_CUDA
+    if (output.empty()) return;
+
+#ifndef CUDA
+
+    const Index columns = output.shape.back();
+    const Index rows = output.size() / columns;
+
+    MatrixMap mat(output.data, rows, columns);
+    mat.colwise() -= mat.rowwise().maxCoeff();
+    mat.array() = mat.array().exp();
+    mat.array().colwise() /= mat.rowwise().sum().array();
 
 #else
+    // --- GPU Implementation (cuDNN) ---
+    const float alpha = 1.0f;
+    const float beta  = 0.0f;
 
+    // cuDNN handles N-dimensional tensors via descriptors.
+    // CUDNN_SOFTMAX_MODE_CHANNEL performs softmax across the 'C' dimension
+    // of an NHWC or NCDHW tensor.
+    CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
+                                    CUDNN_SOFTMAX_ACCURATE,
+                                    CUDNN_SOFTMAX_MODE_CHANNEL,
+                                    &alpha,
+                                    output.get_descriptor(), output.data,
+                                    &beta,
+                                    output.get_descriptor(), output.data));
 #endif
 }
+
+/*
+void softmax(MatrixMap y)
+{
+    VectorR max_coeffs = y.rowwise().maxCoeff();
+    y.colwise() -= max_coeffs;
+
+    y.array() = y.array().exp();
+
+    VectorR sums = y.rowwise().sum();
+    y.array().colwise() /= sums.array();
+}
+
+
+void softmax(TensorMap3 y)
+{
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+
+#pragma omp parallel for collapse(2)
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            type max_value = -numeric_limits<type>::infinity();
+
+            for(Index k = 0; k < channels; k++)
+                if(y(i, j, k) > max_value)
+                    max_value = y(i, j, k);
+
+            type sum = 0.0;
+            for(Index k = 0; k < channels; k++)
+            {
+                y(i, j, k) = exp(y(i, j, k) - max_value);
+                sum += y(i, j, k);
+            }
+
+            if(sum > 0.0)
+            {
+                const type inv_sum = type(1.0) / sum;
+
+                for(Index k = 0; k < channels; k++)
+                    y(i, j, k) *= inv_sum;
+            }
+        }
+    }
+}
+
+
+void softmax(TensorMap4 y)
+{
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+    const Index blocks_number = y.dimension(3);
+
+#pragma omp parallel for collapse(3)
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < channels; k++)
+            {
+                type max_value = -numeric_limits<type>::infinity();
+
+                for(Index l = 0; l < blocks_number; l++)
+                    if(y(i, j, k, l) > max_value)
+                        max_value = y(i, j, k, l);
+
+                type sum = 0.0;
+                for(Index l = 0; l < blocks_number; l++)
+                {
+                    y(i, j, k, l) = exp(y(i, j, k, l) - max_value);
+                    sum += y(i, j, k, l);
+                }
+
+                if(sum > 0.0)
+                {
+                    const type inv_sum = type(1.0) / sum;
+
+                    for(Index l = 0; l < blocks_number; l++)
+                        y(i, j, k, l) *= inv_sum;
+                }
+            }
+        }
+    }
+}
+*/
 }
