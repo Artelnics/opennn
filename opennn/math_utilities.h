@@ -758,4 +758,23 @@ inline void softmax(const TensorView& input, TensorView& output)
 
 #endif
 }
+
+
+inline void activation_gradient(const TensorView& output, const TensorView& dY, TensorView& delta, const string& function)
+{
+#ifndef OPENNN_CUDA
+    const auto out = output.as_vector().array();
+    const auto dy  = dY.as_vector().array();
+    auto d         = delta.as_vector().array();
+
+    if      (function == "Linear")           d = dy;
+    else if (function == "Logistic")         d = dy * out * (type(1) - out);
+    else if (function == "HyperbolicTangent")d = dy * (type(1) - out.square());
+    else if (function == "RectifiedLinear")  d = dy * (out > type(0)).cast<type>();
+    else if (function == "ExponentialLinear")d = dy * (out > type(0)).select(out.Constant(out.rows(), out.cols(), type(1)), out + type(1));
+    else                                     d = dy;
+#else
+    // @todo
+#endif
+}
 }

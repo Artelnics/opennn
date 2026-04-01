@@ -448,31 +448,29 @@ public:
                         BackPropagation& back_propagation,
                         size_t layer) const override
     {
-/*
-        const TensorView& input = forward_propagation.views[layer][Inputs][0];
-        const TensorView& dAct = forward_propagation.views[layer][ActivationDerivatives][0];
+        const TensorView& input = forward_propagation.views[layer][Input][0];
+        const TensorView& output = forward_propagation.views[layer][Output][0];
 
         const TensorView& dY = back_propagation.backward_views[layer][OutputGradients][0];
-
-        TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
-
         TensorView& delta = back_propagation.backward_views[layer][OutputGradients][1];
 
-        TensorView& weight_gradient = back_propagation.gradient_views[layer][1];
-        TensorView&  = back_propagation.gradient_views[layer][0];
+        TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
+        TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
 
         if (activation_function == "Softmax")
             copy(dY, delta); // Optimization: Softmax+CrossEntropy dL/dZ is just (Y-T)
         else
-            multiply_elementwise(dY, dAct, delta);
+            activation_gradient(output, dY, delta, activation_function);
 
-        multiply(input, true, delta, false, weight);
-
+        multiply(input, true, delta, false, weight_gradient);
         sum(delta, bias_gradient);
 
         if (!is_first_layer)
-            multiply(delta, false, parameters[Weights], true, dX);
-*/
+        {
+            TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+            multiply(delta, false, parameters[Weight], true, input_gradient);
+        }
+        
 #ifndef CUDA
 /*
         const Index inputs_number = get_inputs_number();
