@@ -292,7 +292,7 @@ private:
 
     // @todo here or in forward propagate?
     VectorR running_means;
-    VectorR running_standard_deviations;
+    VectorR running_variances;
 
     type momentum = type(0.9);
 

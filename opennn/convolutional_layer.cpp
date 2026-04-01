@@ -61,81 +61,11 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     if(batch_normalization)
         is_training
             ? batch_normalization_training(output, parameters[Gammas], parameters[Betas],
-                                         running_means, running_standard_deviations, momentum)
+                                         running_means, running_variances, momentum)
             : batch_normalization_inference(output, parameters[Gammas], parameters[Betas],
-                                            running_means, running_standard_deviations);
+                                            running_means, running_variances);
 
     activation(output, activation_function);
-
-#ifndef CUDA
-
-#else
-
-    // Forward propagation
-
-
-    const float* input_data = forward_propagation->inputs[0].data;
-    float* outputs_buffer = use_convolutions() ? convolutions.data : outputs.data;
-    cudnnTensorDescriptor_t current_output_descriptor = use_convolutions() ? convolutions.get_descriptor() : outputs.get_descriptor();
-
-    if (!batch_normalization && activation_function != "Softmax" && activation_function != "Linear" && !use_convolutions())
-    {
-    }
-    else
-    {
-        // Batch Normalization
-
-        if (batch_normalization && is_training)
-            CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
-                get_cudnn_handle(),
-                CUDNN_BATCHNORM_SPATIAL,
-                &alpha, &beta,
-                current_output_descriptor,
-                outputs_buffer,
-                current_output_descriptor,
-                outputs_buffer,
-                gammas_device.get_descriptor(),
-                gammas_device.data,
-                betas_device.data,
-                momentum,
-                running_means_device.data,
-                running_variances_device.data,
-                CUDNN_BN_MIN_EPSILON,
-                means.data,
-                inverse_variance.data));
-        else if (batch_normalization && !is_training)
-            CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
-                get_cudnn_handle(),
-                CUDNN_BATCHNORM_SPATIAL,
-                &alpha, &beta,
-                current_output_descriptor,
-                outputs_buffer,
-                current_output_descriptor,
-                outputs_buffer,
-                gammas_device.get_descriptor(),
-                gammas_device.data,
-                betas_device.data,
-                running_means_device.data,
-                running_variances_device.data,
-                CUDNN_BN_MIN_EPSILON));
-
-        // Activations
-
-        if (activation_function != "Linear")
-            CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                                               activation_descriptor,
-                                               &alpha,
-                                               current_output_descriptor,
-                                               outputs_buffer,
-                                               &beta,
-                                               current_output_descriptor,
-                                               outputs.data));
-        else if (use_convolutions())
-            cudaMemcpy(outputs.data, outputs_buffer, batch_size * get_outputs_number() * sizeof(type), cudaMemcpyDeviceToDevice);
-    }
-
-#endif
-
 }
 
 
@@ -497,7 +427,7 @@ void Convolutional::set(const Shape& new_input_shape,
     if (batch_normalization)
     {
         running_means.resize(kernels_number);
-        running_standard_deviations.resize(kernels_number);
+        running_variances.resize(kernels_number);
     }
 
     set_label(new_label);
@@ -737,7 +667,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "Scales", tensor_to_string<type, 1>(gammas));
         add_xml_element(printer, "Offsets", tensor_to_string<type, 1>(betas));
         add_xml_element(printer, "MovingMeans", tensor_to_string<type, 1>(running_means));
-        add_xml_element(printer, "MovingStandardDeviations", tensor_to_string<type, 1>(running_standard_deviations));
+        add_xml_element(printer, "MovingStandardDeviations", tensor_to_string<type, 1>(running_variances));
     }
 */
     printer.CloseElement();
@@ -780,12 +710,12 @@ void Convolutional::from_XML(const XMLDocument& document)
         gammas.resize(kernels_number);
         betas.resize(kernels_number);
         running_means.resize(kernels_number);
-        running_standard_deviations.resize(kernels_number);
+        running_variances.resize(kernels_number);
 
         string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Scales"), gammas);
         string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Offsets"), betas);
         string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingMeans"), running_means);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingStandardDeviations"), running_standard_deviations);
+        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingStandardDeviations"), running_variances);
     }
 */
 }

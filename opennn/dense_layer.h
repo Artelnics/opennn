@@ -45,7 +45,7 @@ private:
     Index neurons_number;
 
     VectorR running_means;
-    VectorR running_standard_deviations;
+    VectorR running_variances;
 
     bool batch_normalization = false;
 
@@ -189,7 +189,7 @@ public:
         if (batch_normalization)
         {
             running_means.resize(outputs_number);
-            running_standard_deviations.resize(outputs_number);
+            running_variances.resize(outputs_number);
         }
 
         set_label(new_label);
@@ -217,35 +217,24 @@ public:
     {
         const type limit = sqrt(6.0 / (get_inputs_number() + get_outputs_number()));
 
-        if(parameters[Bias].size() > 0)
-            VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-        if(parameters[Weight].size() > 0)
-            set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
+        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()), -limit, limit);
 
-        if(batch_normalization && parameters[Gamma].size() > 0)
-            VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-        if(batch_normalization && parameters[Beta].size() > 0)
-            VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
+        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
     }
 
     void set_parameters_random() override
     {
-        if(parameters[Bias].size() > 0)
-            VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
+        VectorMap(parameters[Bias].data, parameters[Bias].size()).setZero();
 
-        if(parameters[Weight].size() > 0)
-            set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
+        set_random_uniform(VectorMap(parameters[Weight].data, parameters[Weight].size()));
 
-        if (batch_normalization)
-        {
-            if(parameters[Gamma].size() > 0)
-                VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
+        VectorMap(parameters[Gamma].data, parameters[Gamma].size()).setConstant(1.0);
 
-            if(parameters[Beta].size() > 0)
-                VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
-        }
+        VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
     }
 
 
@@ -360,84 +349,13 @@ public:
 
         if (batch_normalization)
             is_training
-                ? batch_normalization_training(output, gammas, betas, running_means, running_standard_deviations)
-                : batch_normalization_inference(output, gammas, betas, running_means, running_standard_deviations);
+                ? batch_normalization_training(output, gammas, betas, running_means, running_variances)
+                : batch_normalization_inference(output, gammas, betas, running_means, running_variances);
 
         activation(output, activation_function);
 
         if(is_training && dropout_rate > type(0))
             dropout(output, dropout_rate);
-
-#ifndef CUDA
-/*
-        if(batch_normalization)
-        {
-            auto normalized_outputs = tensor_map<Rank>(forward_propagation->normalized_outputs);
-
-            normalize_batch<Rank>(
-                outputs,
-                normalized_outputs,
-                vector_map(forward_propagation->means),
-                vector_map(forward_propagation->standard_deviations),
-                running_means,
-                running_standard_deviations,
-                vector_map(gammas),
-                vector_map(betas),
-                is_training,
-                momentum);
-
-            outputs = normalized_outputs;
-        }
-
-        TensorMapR<Rank> derivatives = [&]()
-        {
-            if constexpr (Rank == 2)
-                return is_training
-                   ? tensor_map<Rank>(forward_propagation->activation_derivatives)
-                   : TensorMap2(nullptr, 0, 0);
-            else
-                return is_training
-                   ? tensor_map<Rank>(forward_propagation->activation_derivatives)
-                   : TensorMap3(nullptr, 0, 0, 0);
-        }();
-
-        calculate_activations<Rank>(activation_function, outputs, derivatives);
-
-        if(is_training && dropout_rate > type(0))
-            dropout<Rank>(outputs, dropout_rate);
-*/
-#else
-    // Dense layer
-
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
-
-        // Forward propagation
-
-        const Index batch_size = forward_propagation->batch_size;
-        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
-
-        TensorView& outputs = forward_propagation->outputs;
-
-        type* outputs_buffer = use_combinations ? combinations : outputs.data;
-
-        // Combinations
-
-
-        // Batch Normalization
-
-        if (batch_normalization && is_training)
-        {}
-        else if (batch_normalization && !is_training)
-        {}
-
-
-        // Droput
-
-        if (is_training && activation_function != "Softmax" && dropout_rate > type(0))
-        {}
-
-#endif
     }
 
 
@@ -448,17 +366,36 @@ public:
         const TensorView& input = forward_propagation.views[layer][Input][0];
         const TensorView& output = forward_propagation.views[layer][Output][0];
 
-        const TensorView& dY = back_propagation.backward_views[layer][OutputGradients][0];
-        TensorView& delta = back_propagation.backward_views[layer][OutputGradients][1];
+        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+
+//        if (dropout_rate > type(0))
+//            dropout_gradient(incoming_gradients, dropout_mask, dropout_rate, incoming_gradients);
+
+        //output_gradient = activation_gradient(output, output_gradient)
+
+
+        if (batch_normalization)
+        {
+            const TensorView& normalized_inputs = forward_propagation.views[layer][NormalizedOutput][0];
+            const TensorView& standard_deviations = forward_propagation.views[layer][Output][1];
+
+            TensorView& gamma_gradients = back_propagation.gradient_views[layer][Gamma];
+            TensorView& beta_gradients = back_propagation.gradient_views[layer][Beta];
+/*
+            batch_normalization_backward(delta,
+                                         normalized_inputs,
+                                         standard_deviations,
+                                         parameters[Gamma],
+                                         gamma_gradients,
+                                         beta_gradients,
+                                         delta);
+*/
+        }
 
         TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
         TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
 
-        if (activation_function == "Softmax")
-            copy(dY, delta); // Optimization: Softmax+CrossEntropy dL/dZ is just (Y-T)
-        else
-            activation_gradient(output, dY, delta, activation_function);
-
+/*
         multiply(input, true, delta, false, weight_gradient);
         sum(delta, bias_gradient);
 
@@ -467,292 +404,7 @@ public:
             TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
             multiply(delta, false, parameters[Weight], true, input_gradient);
         }
-        
-#ifndef CUDA
-/*
-        const Index inputs_number = get_inputs_number();
-        const Index outputs_number = get_outputs_number();
-
-        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
-
-        const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, inputs_number);
-        const MatrixMap output_gradients(back_propagation->output_gradients[0].data, total_rows, outputs_number);
-
-        const DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<const DenseForwardPropagation<Rank>*>(forward_propagation.get());
-
-        // @todo generating memory here
-
-        MatrixR delta;
-
-        if(activation_function != "Softmax")
-        {
-            const MatrixMap activation_derivatives(dense_forward_propagation->activation_derivatives.data, total_rows, outputs_number);
-            delta = output_gradients.array() * activation_derivatives.array();
-        }
-        else
-            delta = output_gradients;
-
-        if(batch_normalization)
-        {
-            const MatrixMap normalized_outputs(dense_forward_propagation->normalized_outputs.data, total_rows, outputs_number);
-
-            VectorMap gamma_gradients(dense_back_propagation->gamma_gradients.data, dense_back_propagation->gamma_gradients.size());
-            VectorMap beta_gradients(dense_back_propagation->beta_gradients.data, dense_back_propagation->beta_gradients.size());
-
-            beta_gradients.array() = delta.colwise().sum();
-            gamma_gradients.array() = (delta.array() * normalized_outputs.array()).colwise().sum();
-        }
-
-        MatrixMap weight_gradients(dense_back_propagation->weight_gradients.data, inputs_number, outputs_number);
-        VectorMap bias_gradients(dense_back_propagation->bias_gradients.data, outputs_number);
-
-        weight_gradients.noalias() = inputs.transpose() * delta;
-        bias_gradients.noalias() = delta.colwise().sum();
-
-        if(!is_first_layer)
-        {
-            MatrixMap input_gradients(back_propagation->input_gradients[0].data, total_rows, inputs_number);
-            const MatrixMap weights = matrix_map(parameters[Weights]);
-
-            input_gradients.noalias() = delta * weights.transpose();
-        }
-*/
-#else
-        const Index batch_size = forward_propagation->batch_size;
-        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
-
-
-        TensorViewCuda& outputs = forward_propagation->outputs;
-
-        auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-        type* outputs_buffer = use_combinations ? combinations : outputs.data;
-
-        // Combinations
-
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                 CUBLAS_OP_N, CUBLAS_OP_N,
-                                 outputs_number, total_rows, inputs_number,
-                                 &alpha,
-                                 weights_device.data, outputs_number,
-                                 forward_propagation->inputs[0].data, inputs_number,
-                                 &beta,
-                                 outputs_buffer, outputs_number));
-
-        CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                                   &alpha,
-                                   biases_device.get_descriptor(),
-                                   biases_device.data,
-                                   &beta_add,
-                                   outputs.get_descriptor(),
-                                   outputs_buffer));
-
-        // Batch Normalization
-
-        if (batch_normalization && is_training)
-                CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
-                    get_cudnn_handle(),
-                    CUDNN_BATCHNORM_PER_ACTIVATION,
-                    &alpha,
-                    &beta_add,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    gammas_device.get_descriptor(),
-                    gammas_device.data,
-                    betas_device.data,
-                    momentum,
-                    running_means_device.data,
-                    running_variances_device.data,
-                    EPSILON,
-                    dense_forward_propagation->means.data,
-                    dense_forward_propagation->inverse_variance.data));
-        else if (batch_normalization && !is_training)
-                CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
-                    get_cudnn_handle(),
-                    CUDNN_BATCHNORM_PER_ACTIVATION,
-                    &alpha, &beta_add,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    outputs.get_descriptor(),
-                    outputs_buffer,
-                    gammas_device.get_descriptor(),
-                    gammas_device.data,
-                    betas_device.data,
-                    running_means_device.data,
-                    running_variances_device.data,
-                    EPSILON));
-
-        // Activations
-
-        if (activation_function == "Linear")
-            cudaMemcpy(outputs.data, combinations, total_rows * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
-        else if (activation_function == "Softmax")
-            CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-                                CUDNN_SOFTMAX_ACCURATE,
-                                CUDNN_SOFTMAX_MODE_CHANNEL,
-                                &alpha,
-                                outputs.get_descriptor(),
-                                outputs_buffer,
-                                &beta,
-                                outputs.get_descriptor(),
-                                outputs.data));
-        else
-            CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                                   activation_descriptor,
-                                   &alpha,
-                                   outputs.get_descriptor(),
-                                   outputs_buffer,
-                                   &beta,
-                                   outputs.get_descriptor(),
-                                   outputs.data));
-
-        // Droput
-
-        if (is_training && activation_function != "Softmax" && get_dropout_rate() > type(0))
-            CHECK_CUDNN(cudnnDropoutForward(get_cudnn_handle(),
-                                            dense_forward_propagation->dropout_descriptor,
-                                            outputs.get_descriptor(),
-                                            outputs.data,
-                                            outputs.get_descriptor(),
-                                            outputs.data,
-                                            dense_forward_propagation->dropout_reserve_space,
-                                            dense_forward_propagation->dropout_reserve_space_size));
-    }
-
-
-    void back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                        unique_ptr<LayerBackPropagationCuda>& bp_cuda) const
-    {
-        if (bp_cuda->output_gradients.size() > 1)
-            add_gradients(bp_cuda->output_gradients);
-
-        // Dense layer
-
-        const Index inputs_number = get_input_features_number();
-        const Index outputs_number = get_neurons_number();
-
-        // Forward propagation
-
-        const Index batch_size = forward_propagation->batch_size;
-        const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
-
-        const TensorViewCuda& outputs_view = forward_propagation->outputs;
-
-        const auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-        const TensorView& outputs_view = forward_propagation->outputs;
-
-
-        type* combinations = dense_forward_propagation->combinations.data;
-
-        // Back propagation
-
-        float* input_gradients_data = bp_cuda->input_gradients[0].data;
-        float* output_gradients_data = bp_cuda->output_gradients[0].data;
-
-        float* ones = dense_layer_back_propagation->ones.data;
-
-        float* bias_gradients = dense_layer_back_propagation->bias_gradients.data;
-        float* weight_gradients = dense_layer_back_propagation->weight_gradients.data;
-
-        // Dropout
-
-        if (dropout_rate > type(0) && activation_function != "Softmax")
-            CHECK_CUDNN(cudnnDropoutBackward(get_cudnn_handle(),
-                                             dense_forward_propagation->dropout_descriptor,
-                                             gradients_tensor_descriptor,
-                                             output_gradients_data,
-                                             gradients_tensor_descriptor,
-                                             output_gradients_data,
-                                             dense_forward_propagation->dropout_reserve_space,
-                                             dense_forward_propagation->dropout_reserve_space_size));
-
-        // Error combinations derivatives
-
-        if (activation_function != "Linear" && activation_function != "Softmax" && use_combinations)
-            CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
-                                                activation_descriptor,
-                                                &alpha,
-                                                gradients_tensor_descriptor,
-                                                outputs_view.data,
-                                                gradients_tensor_descriptor,
-                                                output_gradients_data,
-                                                gradients_tensor_descriptor,
-                                                combinations,
-                                                &beta,
-                                                gradients_tensor_descriptor,
-                                                output_gradients_data));
-        else if (activation_function != "Linear" && activation_function != "Softmax" && !use_combinations)
-            CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
-                                                activation_descriptor,
-                                                &alpha,
-                                                gradients_tensor_descriptor,
-                                                outputs_view.data,
-                                                gradients_tensor_descriptor,
-                                                output_gradients_data,
-                                                gradients_tensor_descriptor,
-                                                outputs_view.data,
-                                                &beta,
-                                                gradients_tensor_descriptor,
-                                                output_gradients_data));
-
-        // Batch Normalization
-
-        if (batch_normalization)
-            CHECK_CUDNN(cudnnBatchNormalizationBackward(
-                get_cudnn_handle(),
-                CUDNN_BATCHNORM_PER_ACTIVATION,
-                &alpha, &beta,
-                &alpha, &beta,
-                dense_forward_propagation->outputs.get_descriptor(),
-                use_combinations ? combinations : outputs_view.data,
-                gradients_tensor_descriptor,
-                output_gradients_data,
-                gradients_tensor_descriptor,
-                output_gradients_data,
-                gammas_device.get_descriptor(),
-                gammas_device.data,
-                dense_layer_back_propagation->gamma_gradients.data,
-                dense_layer_back_propagation->beta_gradients.data,
-                EPSILON,
-                dense_forward_propagation->means.data,
-                dense_forward_propagation->inverse_variance.data));
-
-        // Bias derivatives
-
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                 CUBLAS_OP_N, CUBLAS_OP_N,
-                                 outputs_number, 1, total_rows,
-                                 &alpha,
-                                 output_gradients_data, outputs_number,
-                                 ones, total_rows,
-                                 &beta,
-                                 bias_gradients, outputs_number));
-
-        // Weight derivatives
-
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                 CUBLAS_OP_N, CUBLAS_OP_T,
-                                 outputs_number, inputs_number, total_rows,
-                                 &alpha,
-                                 output_gradients_data, outputs_number,
-                                 forward_propagation->inputs[0].data, inputs_number,
-                                 &beta,
-                                 weight_gradients, outputs_number));
-        // Input derivatives
-
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                 CUBLAS_OP_T, CUBLAS_OP_N,
-                                 inputs_number, total_rows, outputs_number,
-                                 &alpha,
-                                 weights_device.data, outputs_number,
-                                 output_gradients_data, outputs_number,
-                                 &beta,
-                                 input_gradients_data, inputs_number));
-
-#endif
+ */
 
     }
 
@@ -961,10 +613,10 @@ public:
         if (batch_normalization)
         {
             running_means.resize(neurons_number);
-            running_standard_deviations.resize(neurons_number);
+            running_variances.resize(neurons_number);
 
             string_to_vector(read_xml_string(dense2d_layer_element, "RunningMeans"), running_means);
-            string_to_vector(read_xml_string(dense2d_layer_element, "RunningStandardDeviations"), running_standard_deviations);
+            string_to_vector(read_xml_string(dense2d_layer_element, "RunningStandardDeviations"), running_variances);
         }
     }
 
@@ -991,7 +643,7 @@ public:
         if (batch_normalization)
         {
             add_xml_element(printer, "RunningMeans", vector_to_string(running_means));
-            add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_standard_deviations));
+            add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_variances));
         }
 
         printer.CloseElement();

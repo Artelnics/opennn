@@ -152,7 +152,9 @@ inline void bounding(const TensorView& input,
     MatrixMap output_matrix = output.as_matrix();
 
     for(Index j = 0; j < features; ++j)
-        output_matrix.col(j) = input_matrix.col(j).cwiseMax(lower_bounds_vector(j)).cwiseMin(upper_bounds_vector(j));
+        output_matrix.col(j) = input_matrix.col(j)
+                                           .cwiseMax(lower_bounds_vector(j))
+                                           .cwiseMin(upper_bounds_vector(j));
 
 #else
     const Index total_rows = input.shape[0];
@@ -400,6 +402,59 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
 #endif
 }
 
+
+inline void batch_normalization_backward(
+    const TensorView& output_gradients,
+    const TensorView& normalized_inputs,
+    const TensorView& standard_deviations,
+    const TensorView& gammas,
+    TensorView& gamma_gradients,
+    TensorView& beta_gradients,
+    TensorView& input_gradients)
+{
+#ifndef CUDA
+    const Index neurons_number = gammas.size();
+    const Index batch_size = output_gradients.size() / neurons_number;
+
+    MatrixMap output_gradients_matrix = output_gradients.as_matrix();
+    MatrixMap normalized_inputs_matrix = normalized_inputs.as_matrix();
+/*
+    gamma_gradients.as_vector().noalias() = (output_gradients_matrix.array() * normalized_inputs_matrix.array()).colwise().sum();
+    beta_gradients.as_vector().noalias() = output_gradients_matrix.colwise().sum();
+
+    const type inverse_batch_size = type(1) / batch_size;
+
+    VectorR sum_output_gradients_gammas = (output_gradients_matrix.rowwise() * gammas.as_vector().transpose()).colwise().sum();
+    VectorR sum_output_gradients_gammas_normalized = (output_gradients_matrix.array() * gammas.as_vector().transpose().array() * normalized_inputs_matrix.array()).colwise().sum();
+
+    input_gradients.as_matrix().array() = (type(1) / (batch_size * (standard_deviations.as_vector().array() + EPSILON))).transpose() *
+                                          (batch_size * output_gradients_matrix.array() * gammas.as_vector().transpose().array() -
+                                           sum_output_gradients_gammas.transpose().array() -
+                                           normalized_inputs_matrix.array() * sum_output_gradients_gammas_normalized.transpose().array());
+*/
+#else
+    CHECK_CUDNN(cudnnBatchNormalizationBackward(
+        get_cudnn_handle(),
+        CUDNN_BATCHNORM_PER_ACTIVATION,
+        &alpha, &beta,
+        &alpha, &beta,
+        outputs.get_descriptor(),
+        use_combinations ? combinations : outputs_view.data,
+        gradients_tensor_descriptor,
+        output_gradients_data,
+        gradients_tensor_descriptor,
+        output_gradients_data,
+        gammas_device.get_descriptor(),
+        gammas_device.data,
+        gamma_gradients.data,
+        beta_gradients.data,
+        EPSILON,
+        means.data,
+        inverse_variance.data));
+#endif
+}
+
+
 inline void combination(const TensorView& input,
                         const TensorView& weights,
                         const TensorView& biases,
@@ -423,7 +478,7 @@ inline void batch_normalization_training(
     const TensorView& gammas,
     const TensorView& betas,
     VectorR& running_means,
-    VectorR& running_standard_deviations,
+    VectorR& running_variances,
     type momentum = type(0.9))
 {
 #ifndef CUDA
@@ -439,7 +494,7 @@ inline void batch_normalization_training(
     norm_mat.array().rowwise() /= standard_deviations.transpose().array();
 
     running_means = running_means * momentum + means * (type(1) - momentum);
-    running_standard_deviations = running_standard_deviations * momentum + standard_deviations * (type(1) - momentum);
+    running_variances = running_variances * momentum + standard_deviations * (type(1) - momentum);
 
     const VectorMap gammas_vec(gammas.data, neurons);
     const VectorMap betas_vec(betas.data, neurons);
@@ -458,7 +513,7 @@ inline void batch_normalization_training(
         betas.data,
         momentum,
         running_means.data(),
-        running_standard_deviations.data(),
+        running_variances.data(),
         EPSILON,
         nullptr,
         nullptr));
@@ -471,7 +526,7 @@ inline void batch_normalization_inference(
     const TensorView& gammas,
     const TensorView& betas,
     const VectorR& running_means,
-    const VectorR& running_standard_deviations)
+    const VectorR& running_variances)
 {
 #ifndef CUDA
     const Index neurons = running_means.size();
@@ -482,7 +537,7 @@ inline void batch_normalization_inference(
     const VectorMap gammas_vec(gammas.data, neurons);
     const VectorMap betas_vec(betas.data, neurons);
 
-    const VectorR scale = gammas_vec.array() / (running_standard_deviations.array() + EPSILON);
+    const VectorR scale = gammas_vec.array() / (running_variances.array() + EPSILON);
     const VectorR shift = betas_vec.array() - running_means.array() * scale.array();
 
     outputs_mat.array() = (outputs_mat.array().rowwise() * scale.transpose().array()).rowwise() +
@@ -501,7 +556,7 @@ inline void batch_normalization_inference(
         gammas.data,
         betas.data,
         running_means.data(),
-        running_standard_deviations.data(),
+        running_variances.data(),
         EPSILON));
 #endif
 }
@@ -573,6 +628,71 @@ inline void activation(TensorView& output, const string& function)
 #endif
 }
 
+
+
+inline void activation_gradient(const TensorView& outputs,
+                                const TensorView& output_gradient,
+                                TensorView& activation_derivative,
+                                const string& activation_function)
+{
+#ifndef CUDA
+    if (outputs.empty()) return;
+
+    const auto outputs_array = outputs.as_vector().array();
+    const auto output_gradients_array = output_gradient.as_vector().array();
+    auto activation_derivatives_array = activation_derivative.as_vector().array();
+
+    if (activation_function == "Linear")
+    {
+        activation_derivatives_array = output_gradients_array;
+    }
+    else if (activation_function == "Sigmoid" || activation_function == "Logistic")
+    {
+        activation_derivatives_array = output_gradients_array * (outputs_array * (type(1) - outputs_array));
+    }
+    else if (activation_function == "HyperbolicTangent")
+    {
+        activation_derivatives_array = output_gradients_array * (type(1) - outputs_array.square());
+    }
+    else if (activation_function == "RectifiedLinear")
+    {
+        activation_derivatives_array = (outputs_array > type(0)).select(output_gradients_array, type(0));
+    }
+    else if (activation_function == "ScaledExponentialLinear")
+    {
+        const type alpha = 1.67326f;
+        const type lambda = 1.05070f;
+
+        activation_derivatives_array = (outputs_array > type(0)).select(
+            lambda * output_gradients_array,
+            (outputs_array + (alpha * lambda)) * output_gradients_array);
+    }
+    else if (activation_function == "Softmax")
+    {
+        activation_derivatives_array = output_gradients_array;
+    }
+    else
+    {
+        throw runtime_error("Math Error: Unknown activation function in activation_gradient: " + activation_function);
+    }
+#else
+    CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
+                                        activation_descriptor,
+                                        &alpha,
+                                        gradients.descriptor,
+                                        outputs.data,
+                                        gradients_tensor_descriptor,
+                                        output_gradients_data,
+                                        gradients_tensor_descriptor,
+                                        (use_convolutions() && convolutions) ? convolutions : outputs_view.data,
+                                        &beta,
+                                        gradients_tensor_descriptor,
+                                        output_gradients_data));
+
+#endif
+}
+
+
 inline void dropout(TensorView& output, type dropout_rate)
 {
 #ifndef CUDA
@@ -595,6 +715,26 @@ inline void dropout(TensorView& output, type dropout_rate)
 #endif
 }
 
+
+inline void dropout_gradient(const TensorView& output_gradient,
+                             const TensorView& mask, type dropout_rate,
+                             TensorView& input_gradient)
+{
+#ifndef CUDA
+    const type scale = type(1) / (type(1) - dropout_rate);
+
+    input_gradient.as_vector().array() = output_gradient.as_vector().array() * mask.as_vector().array().cast<type>() * scale;
+#else
+    CHECK_CUDNN(cudnnDropoutBackward(get_cudnn_handle(),
+                                     dropout_descriptor,
+                                     gradients.descriptor,
+                                     output_gradients.device,
+                                     gradients.descriptor,
+                                     output_gradients.data,
+                                     dropout_reserve_space,
+                                     dropout_reserve_space_size));
+#endif
+}
 
 inline void convolution(const TensorView& input,
                         const TensorView& kernel,
@@ -783,110 +923,4 @@ inline void softmax(TensorView& output)
 #endif
 }
 
-
-inline void activation_gradient(const TensorView& output, const TensorView& dY, TensorView& delta, const string& function)
-{
-#ifndef OPENNN_CUDA
-    const auto out = output.as_vector().array();
-    const auto dy  = dY.as_vector().array();
-    auto d         = delta.as_vector().array();
-
-    if      (function == "Linear")           d = dy;
-    else if (function == "Logistic")         d = dy * out * (type(1) - out);
-    else if (function == "HyperbolicTangent")d = dy * (type(1) - out.square());
-    else if (function == "RectifiedLinear")  d = dy * (out > type(0)).cast<type>();
-    else if (function == "ExponentialLinear")d = dy * (out > type(0)).select(out.Constant(out.rows(), out.cols(), type(1)), out + type(1));
-    else                                     d = dy;
-#else
-    // @todo
-#endif
-}
-/*
-void softmax(MatrixMap y)
-{
-    VectorR max_coeffs = y.rowwise().maxCoeff();
-    y.colwise() -= max_coeffs;
-
-    y.array() = y.array().exp();
-
-    VectorR sums = y.rowwise().sum();
-    y.array().colwise() /= sums.array();
-}
-
-
-void softmax(TensorMap3 y)
-{
-    const Index rows_number = y.dimension(0);
-    const Index columns_number = y.dimension(1);
-    const Index channels = y.dimension(2);
-
-#pragma omp parallel for collapse(2)
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            type max_value = -numeric_limits<type>::infinity();
-
-            for(Index k = 0; k < channels; k++)
-                if(y(i, j, k) > max_value)
-                    max_value = y(i, j, k);
-
-            type sum = 0.0;
-            for(Index k = 0; k < channels; k++)
-            {
-                y(i, j, k) = exp(y(i, j, k) - max_value);
-                sum += y(i, j, k);
-            }
-
-            if(sum > 0.0)
-            {
-                const type inv_sum = type(1.0) / sum;
-
-                for(Index k = 0; k < channels; k++)
-                    y(i, j, k) *= inv_sum;
-            }
-        }
-    }
-}
-
-
-void softmax(TensorMap4 y)
-{
-    const Index rows_number = y.dimension(0);
-    const Index columns_number = y.dimension(1);
-    const Index channels = y.dimension(2);
-    const Index blocks_number = y.dimension(3);
-
-#pragma omp parallel for collapse(3)
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            for(Index k = 0; k < channels; k++)
-            {
-                type max_value = -numeric_limits<type>::infinity();
-
-                for(Index l = 0; l < blocks_number; l++)
-                    if(y(i, j, k, l) > max_value)
-                        max_value = y(i, j, k, l);
-
-                type sum = 0.0;
-                for(Index l = 0; l < blocks_number; l++)
-                {
-                    y(i, j, k, l) = exp(y(i, j, k, l) - max_value);
-                    sum += y(i, j, k, l);
-                }
-
-                if(sum > 0.0)
-                {
-                    const type inv_sum = type(1.0) / sum;
-
-                    for(Index l = 0; l < blocks_number; l++)
-                        y(i, j, k, l) *= inv_sum;
-                }
-            }
-        }
-    }
-}
-*/
 }
