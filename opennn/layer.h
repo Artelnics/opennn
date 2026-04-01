@@ -307,14 +307,6 @@ public:
 
     virtual void print_parameters_cuda() {}
 
-
-
-protected:
-
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-    const float beta_add = 1.0f;
-
 #endif
 
 };

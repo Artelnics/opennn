@@ -244,17 +244,6 @@ public:
 
 protected:
 
-    TensorView biases_device;
-    TensorView weights_device;
-
-    // Batch Normalization
-
-    TensorView gammas_device;
-    TensorView betas_device;
-
-    TensorCuda running_means_device;
-    TensorCuda running_variances_device;
-
     // Activations
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;

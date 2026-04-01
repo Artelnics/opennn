@@ -177,7 +177,6 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     projection(query_input, query_weights, query_biases, query);
 
-
     const TensorView& key_weights = parameters[KeyWeights];
     const TensorView& key_biases = parameters[KeyBiases];
     TensorView& key = forward_propagation.views[layer][Key][0];

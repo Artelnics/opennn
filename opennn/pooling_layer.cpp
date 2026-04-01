@@ -250,14 +250,14 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
     TensorView& output = forward_propagation.views[layer][Outputs][0];
-
+/*
     if(pooling_method == "MaxPooling")
-        max_pooling(input, output/*, is_training*/);
+        max_pooling(input, output, is_training);
     else if(pooling_method == "AveragePooling")
-        average_pooling(input, output/*, is_training*/);
+        average_pooling(input, output, is_training);
+*/
 }
 
 

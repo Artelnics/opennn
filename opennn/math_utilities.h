@@ -15,7 +15,54 @@
 namespace opennn
 {
 
-inline void max_pooling(const TensorView& input, TensorView& output)
+struct ActivationArguments
+{
+    string activation_function;
+#ifdef CUDA
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+#endif
+};
+
+struct ConvolutionArguments
+{
+    string convolution_type;
+    Shape stride_shape;
+    Shape padding_shape;
+#ifdef CUDA
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+    cudnnConvolutionBwdDataAlgo_t algorithm_data;
+    cudnnConvolutionBwdFilterAlgo_t algorithm_filter;
+#endif
+};
+
+struct PoolingArguments
+{
+    string pooling_method;
+    Shape pool_dimensions;
+    Shape stride_shape;
+    Shape padding_shape;
+
+#ifdef CUDA
+    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+#endif
+};
+
+struct BatchNormalizationArguments
+{
+    type momentum;
+
+#ifdef CUDA
+    cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
+    cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
+#endif
+};
+
+
+inline void max_pooling(const TensorView& input,
+                        TensorView& output,
+                        TensorView& maximal_indices,
+                        const PoolingArguments& arguments)
 {
 #ifndef CUDA
     const TensorMap4 inputs = input.as_tensor<4>();
@@ -25,9 +72,17 @@ inline void max_pooling(const TensorView& input, TensorView& output)
     const Index input_height = inputs.dimension(1);
     const Index input_width = inputs.dimension(2);
     const Index channels = inputs.dimension(3);
+
     const Index output_height = outputs.dimension(1);
     const Index output_width = outputs.dimension(2);
-/*
+
+    const Index pool_height = arguments.pool_dimensions[0];
+    const Index pool_width = arguments.pool_dimensions[1];
+    const Index row_stride = arguments.stride_shape[0];
+    const Index column_stride = arguments.stride_shape[1];
+    const Index padding_height = arguments.padding_shape[0];
+    const Index padding_width = arguments.padding_shape[1];
+
 #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for(Index channel_index = 0; channel_index < channels; ++channel_index)
@@ -62,24 +117,23 @@ inline void max_pooling(const TensorView& input, TensorView& output)
                         (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
 
                     if(is_training)
-                        pooling_forward_propagation->maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
+                        maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
                 }
-*/
+
 #else
     CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
-                                    pooling_descriptor,
-                                    &alpha,
+                                    arguments.pooling_descriptor,
+                                    &alpha_one,
                                     input.descriptor,
                                     input.device,
-                                    &beta,
+                                    &beta_zero,
                                     output.descriptor,
                                     output.device));
-
 #endif
 }
 
 
-inline void average_pooling(const TensorView& input, TensorView& output)
+inline void average_pooling(const TensorView& input, TensorView& output, const PoolingArguments& arguments)
 {
 #ifndef CUDA
     const TensorMap4 inputs = input.as_tensor<4>();
@@ -178,11 +232,10 @@ inline void copy(const TensorView& source, TensorView& destination)
 #ifndef CUDA
     destination.as_vector() = source.as_vector();
 #else
-    if (source.data != destination.data)
-        CHECK_CUDA(cudaMemcpy(destination.data,
-                              source.data,
-                              source.size() * sizeof(type),
-                              cudaMemcpyDeviceToDevice));
+    CHECK_CUDA(cudaMemcpy(destination.data,
+                          source.data,
+                          source.size() * sizeof(type),
+                          cudaMemcpyDeviceToDevice));
 #endif
 }
 
@@ -194,19 +247,15 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
 #ifndef CUDA
     output.as_vector().array() = input_1.as_vector().array() + input_2.as_vector().array();
 #else
-    const float alpha1 = 1.0f;
-    const float alpha2 = 1.0f;
-    const float beta   = 0.0f;
-
     CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(),
                               get_operator_sum_descriptor(),
-                              &alpha1,
+                              &alpha_one,
                               input_1.get_descriptor(),
                               input_1.data,
-                              &alpha2,
+                              &alpha_one,
                               input_2.get_descriptor(),
                               input_2.data,
-                              &beta,
+                              &beta_zero,
                               output.get_descriptor(),
                               output.data));
 #endif
@@ -218,51 +267,9 @@ inline void projection(const TensorView& input,
                        const TensorView& biases,
                        TensorView& output)
 {
-#ifndef CUDA
-/*
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index head_dimension = get_head_dimension();
+//    multiply(input, false, weights, false, output, type(1.0), type(0.0));
 
-    const MatrixMap weights_map = matrix_map(weights);
-    const VectorMap biases_map = vector_map(biases);
-
-#pragma omp parallel for collapse(2)
-    for(Index b = 0; b < batch_size; ++b)
-    {
-        for(Index h = 0; h < heads_number; ++h)
-        {
-            const type* in_ptr = inputs.data() + b * (sequence_length * embedding_dimension);
-            const MatrixMap X_b(const_cast<type*>(in_ptr), sequence_length, embedding_dimension);
-
-            type* out_ptr = output.data() + b * (heads_number * sequence_length * head_dimension)
-                            + h * (sequence_length * head_dimension);
-
-            MatrixMap Out_bh(out_ptr, sequence_length, head_dimension);
-
-            auto W_h = weights_map.block(0, h * head_dimension, embedding_dimension, head_dimension);
-
-            auto b_h = biases_map.segment(h * head_dimension, head_dimension);
-
-            Out_bh.noalias() = (X_b * W_h).rowwise() + b_h.transpose();
-        }
-    }
-*/
-#else
-    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                             CUBLAS_OP_N, CUBLAS_OP_N,
-                             output_dim, batch_seq_len, input_dim,
-                             &alpha_one,
-                             weights, output_dim,
-                             input, input_dim,
-                             &beta_zero,
-                             output, output_dim));
-
-    CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                               &alpha_one,
-                               biases_desc, biases,
-                               &alpha_one,
-                               output_desc, output));
-#endif
+//    addition(biases, output);
 }
 
 
@@ -365,7 +372,7 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
     }
 */
 #else
-    if (batch_normalization && is_training)
+    if (is_training)
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
             get_cudnn_handle(),
             CUDNN_BATCHNORM_PER_ACTIVATION,
@@ -378,13 +385,13 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
             gammas_device.get_descriptor(),
             gammas_device.data,
             betas_device.data,
-            momentum,
+            arguments.momentum,
             running_means_device.data,
             running_variances_device.data,
             EPSILON,
             means.data,
             inverse_variance.data));
-    else if (batch_normalization && !is_training)
+    else
         CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
             get_cudnn_handle(),
             CUDNN_BATCHNORM_PER_ACTIVATION,
@@ -473,19 +480,20 @@ inline void combination(const TensorView& input,
 #endif
 }
 
-inline void batch_normalization_training(
-    TensorView& output,
-    const TensorView& gammas,
-    const TensorView& betas,
-    VectorR& running_means,
-    VectorR& running_variances,
-    type momentum = type(0.9))
+inline void batch_normalization_training(TensorView& output,
+                                         const TensorView& gammas,
+                                         const TensorView& betas,
+                                         VectorR& running_means,
+                                         VectorR& running_variances,
+                                         type momentum = type(0.9))
 {
 #ifndef CUDA
     const Index neurons = running_means.size();
     const Index total_rows = output.size() / neurons;
 
     MatrixMap outputs_mat(output.data, total_rows, neurons);
+
+    // @todo memory
 
     VectorR means = outputs_mat.colwise().mean();
     MatrixR norm_mat = outputs_mat.rowwise() - means.transpose();
@@ -603,17 +611,14 @@ inline void activation(TensorView& output, const string& function)
     }
 */
 #else
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-
     if (function == "Softmax")
     {
         CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                         CUDNN_SOFTMAX_ACCURATE,
                                         CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
-                                        &alpha,
+                                        &alpha_one,
                                         output.get_descriptor(), output.data,
-                                        &beta,
+                                        &beta_zero,
                                         output.get_descriptor(), output.data));
     }
     else
@@ -834,38 +839,85 @@ inline void convolution_activation(const TensorView& input,
 }
 
 
-inline void multiply(const TensorView& A, bool transA,
-                     const TensorView& B, bool transB,
-                     TensorView& C,
+inline void multiply(const TensorView& input_A, bool transpose_A,
+                     const TensorView& input_B, bool transpose_B,
+                     TensorView& output_C,
                      type alpha = 1.0f, type beta = 0.0f)
 {
-#ifndef OPENNN_CUDA
-    auto matA = A.as_matrix();
-    auto matB = B.as_matrix();
-    auto matC = C.as_matrix();
+    const size_t rank = input_A.rank();
 
-    if (!transA && !transB)      matC.noalias() = alpha * (matA * matB) + beta * matC;
-    else if (transA && !transB)  matC.noalias() = alpha * (matA.transpose() * matB) + beta * matC;
-    else if (!transA && transB)  matC.noalias() = alpha * (matA * matB.transpose()) + beta * matC;
-    else                         matC.noalias() = alpha * (matA.transpose() * matB.transpose()) + beta * matC;
+#ifndef CUDA
+    if (rank <= 2)
+    {
+        const auto matrix_A = input_A.as_matrix();
+        const auto matrix_B = input_B.as_matrix();
+        auto matrix_C = output_C.as_matrix();
+
+        if (!transpose_A && !transpose_B)
+            matrix_C.noalias() = alpha * (matrix_A * matrix_B) + beta * matrix_C;
+        else if (transpose_A && !transpose_B)
+            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B) + beta * matrix_C;
+        else if (!transpose_A && transpose_B)
+            matrix_C.noalias() = alpha * (matrix_A * matrix_B.transpose()) + beta * matrix_C;
+        else
+            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B.transpose()) + beta * matrix_C;
+    }
+    else
+    {
+        // For Rank 3 or 4, we loop over the outer dimensions (batch/heads) on CPU
+        const Index outer_dimensions_count = input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]);
+        const Index size_A = input_A.shape[rank - 2] * input_A.shape[rank - 1];
+        const Index size_B = input_B.shape[rank - 2] * input_B.shape[rank - 1];
+        const Index size_C = output_C.shape[rank - 2] * output_C.shape[rank - 1];
+
+#pragma omp parallel for
+        for (Index i = 0; i < outer_dimensions_count; ++i)
+        {
+            const MatrixMap mat_A(input_A.data + i * size_A, input_A.shape[rank - 2], input_A.shape[rank - 1]);
+            const MatrixMap mat_B(input_B.data + i * size_B, input_B.shape[rank - 2], input_B.shape[rank - 1]);
+            MatrixMap mat_C(output_C.data + i * size_C, output_C.shape[rank - 2], output_C.shape[rank - 1]);
+
+            if (!transpose_A && !transpose_B)
+                mat_C.noalias() = alpha * (mat_A * mat_B) + beta * mat_C;
+            else if (transpose_A && !transpose_B)
+                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B) + beta * mat_C;
+            else if (!transpose_A && transpose_B)
+                mat_C.noalias() = alpha * (mat_A * mat_B.transpose()) + beta * mat_C;
+            else
+                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B.transpose()) + beta * mat_C;
+        }
+    }
 #else
-    const int m = transA ? (int)A.shape[1] : (int)A.shape[0];
-    const int n = transB ? (int)B.shape[0] : (int)B.shape[1];
-    const int k = transA ? (int)A.shape[0] : (int)A.shape[1];
+    // M, N, K are derived from the last two dimensions (the matrix dimensions)
+    const int m = transpose_B ? (int)input_B.shape[rank - 2] : (int)input_B.shape[rank - 1];
+    const int n = transpose_A ? (int)input_A.shape[rank - 1] : (int)input_A.shape[rank - 2];
+    const int k = transpose_A ? (int)input_A.shape[rank - 2] : (int)input_A.shape[rank - 1];
 
-    const int lda = (int)A.shape[1];
-    const int ldb = (int)B.shape[1];
-    const int ldc = n;
+    const int lda = (int)input_A.shape[rank - 1];
+    const int ldb = (int)input_B.shape[rank - 1];
+    const int ldc = m;
 
-    // C^T = B^T * A^T (RowMajor)
-    CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                             transB ? CUBLAS_OP_N : CUBLAS_OP_T,
-                             transA ? CUBLAS_OP_N : CUBLAS_OP_T,
-                             n, m, k,
-                             &alpha, B.data, ldb, A.data, lda,
-                             &beta, C.data, ldc));
+    // Calculate how many matrices are in the batch (e.g., batch_size * heads_number)
+    const int batch_count = (int)(input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]));
+
+    // Strides: how far to jump in memory to get to the next matrix
+    const long long stride_A = input_A.shape[rank - 2] * input_A.shape[rank - 1];
+    const long long stride_B = input_B.shape[rank - 2] * input_B.shape[rank - 1];
+    const long long stride_C = output_C.shape[rank - 2] * output_C.shape[rank - 1];
+
+    CHECK_CUBLAS(cublasSgemmStridedBatched(get_cublas_handle(),
+                                           transpose_B ? CUBLAS_OP_N : CUBLAS_OP_T,
+                                           transpose_A ? CUBLAS_OP_N : CUBLAS_OP_T,
+                                           m, n, k,
+                                           &alpha,
+                                           input_B.data, ldb, stride_B,
+                                           input_A.data, lda, stride_A,
+                                           &beta,
+                                           output_C.data, ldc, stride_C,
+                                           batch_count));
 #endif
 }
+
 
 inline void multiply_elementwise(const TensorView& A, const TensorView& B, TensorView& C)
 {
@@ -886,7 +938,13 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
 #ifndef OPENNN_CUDA
     B.as_vector().noalias() = alpha * A.as_matrix().colwise().sum() + beta * B.as_vector();
 #else
-    // @todo
+    CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
+                               &alpha_one,
+                               input_tensor.descriptor,
+                               input_tensor.device,
+                               &beta_one,
+                               output_tensor.descriptor,
+                               output_tensor.data));
 #endif
 }
 
@@ -906,19 +964,12 @@ inline void softmax(TensorView& output)
     mat.array().colwise() /= mat.rowwise().sum().array();
 
 #else
-    // --- GPU Implementation (cuDNN) ---
-    const float alpha = 1.0f;
-    const float beta  = 0.0f;
-
-    // cuDNN handles N-dimensional tensors via descriptors.
-    // CUDNN_SOFTMAX_MODE_CHANNEL performs softmax across the 'C' dimension
-    // of an NHWC or NCDHW tensor.
     CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                     CUDNN_SOFTMAX_ACCURATE,
                                     CUDNN_SOFTMAX_MODE_CHANNEL,
-                                    &alpha,
+                                    &alpha_one,
                                     output.get_descriptor(), output.data,
-                                    &beta,
+                                    &beta_zero,
                                     output.get_descriptor(), output.data));
 #endif
 }
