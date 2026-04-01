@@ -189,7 +189,6 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
         const Index outputs_number = dense_layer->get_neurons_number();
         const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
-        const Index total_rows = dense_layer->get_total_rows(batch_size);
 
         if (dense_layer->use_combinations)
             combinations.set_descriptor(full_output_shape);
@@ -689,6 +688,8 @@ public:
         if (activation_function != "Softmax")
             cudnnSetActivationDescriptor(activation_descriptor, activation_mode, CUDNN_PROPAGATE_NAN, relu_ceiling);
 
+        if (activation_function == "Softmax")
+            use_combinations = batch_normalization;
 #endif
     }
 
@@ -704,6 +705,12 @@ public:
     void set_batch_normalization(bool new_batch_normalization)
     {
         batch_normalization = new_batch_normalization;
+
+#ifdef OPENNN_CUDA
+
+        if (activation_function == "Softmax")
+            use_combinations = batch_normalization;
+#endif
     }
 
 
@@ -1105,7 +1112,6 @@ public:
 
         // Forward propagation
 
-        const Index batch_size = forward_propagation->batch_size;
         const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         TensorViewCuda& outputs = forward_propagation->outputs;
@@ -1113,7 +1119,6 @@ public:
         auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
 
         type* combinations = dense_forward_propagation->combinations.data;
-
         type* outputs_buffer = use_combinations ? combinations : outputs.data;
 
         // Combinations
@@ -1175,26 +1180,32 @@ public:
         // Activations
 
         if (activation_function == "Linear")
-            cudaMemcpy(outputs.data, combinations, total_rows * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        {
+            // Nothing
+        }
         else if (activation_function == "Softmax")
+        {
             CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-                                CUDNN_SOFTMAX_ACCURATE,
-                                CUDNN_SOFTMAX_MODE_CHANNEL,
-                                &alpha,
-                                outputs.get_descriptor(),
-                                outputs_buffer,
-                                &beta,
-                                outputs.get_descriptor(),
-                                outputs.data));
+                                            CUDNN_SOFTMAX_ACCURATE,
+                                            CUDNN_SOFTMAX_MODE_CHANNEL,
+                                            &alpha,
+                                            outputs.get_descriptor(),
+                                            outputs_buffer,
+                                            &beta,
+                                            outputs.get_descriptor(),
+                                            outputs.data));
+        }
         else
+        {
             CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                                   activation_descriptor,
-                                   &alpha,
-                                   outputs.get_descriptor(),
-                                   outputs_buffer,
-                                   &beta,
-                                   outputs.get_descriptor(),
-                                   outputs.data));
+                                               activation_descriptor,
+                                               &alpha,
+                                               outputs.get_descriptor(),
+                                               outputs_buffer,
+                                               &beta,
+                                               outputs.get_descriptor(),
+                                               outputs.data));
+        }
 
         // Droput
 
@@ -1220,7 +1231,6 @@ public:
 
         // Forward propagation
 
-        const Index batch_size = forward_propagation->batch_size;
         const Index total_rows = forward_propagation->inputs[0].size() / inputs_number;
 
         const TensorViewCuda& outputs_view = forward_propagation->outputs;
@@ -1231,7 +1241,6 @@ public:
 
         // Back propagation
 
-        float* input_gradients_data = bp_cuda->input_gradients[0].data;
         float* output_gradients_data = bp_cuda->output_gradients[0].data;
 
         auto* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
@@ -1246,6 +1255,7 @@ public:
         // Dropout
 
         if (get_dropout_rate() > type(0) && activation_function != "Softmax")
+        {
             CHECK_CUDNN(cudnnDropoutBackward(get_cudnn_handle(),
                                              dense_forward_propagation->dropout_descriptor,
                                              gradients_tensor_descriptor,
@@ -1254,10 +1264,12 @@ public:
                                              output_gradients_data,
                                              dense_forward_propagation->dropout_reserve_space,
                                              dense_forward_propagation->dropout_reserve_space_size));
+        }
 
         // Error combinations derivatives
 
         if (activation_function != "Linear" && activation_function != "Softmax" && use_combinations)
+        {
             CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
                                                 activation_descriptor,
                                                 &alpha,
@@ -1270,7 +1282,9 @@ public:
                                                 &beta,
                                                 gradients_tensor_descriptor,
                                                 output_gradients_data));
+        }
         else if (activation_function != "Linear" && activation_function != "Softmax" && !use_combinations)
+        {
             CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
                                                 activation_descriptor,
                                                 &alpha,
@@ -1283,10 +1297,12 @@ public:
                                                 &beta,
                                                 gradients_tensor_descriptor,
                                                 output_gradients_data));
+        }
 
         // Batch Normalization
 
         if (batch_normalization)
+        {
             CHECK_CUDNN(cudnnBatchNormalizationBackward(
                 get_cudnn_handle(),
                 CUDNN_BATCHNORM_PER_ACTIVATION,
@@ -1305,6 +1321,7 @@ public:
                 EPSILON,
                 dense_forward_propagation->means.data,
                 dense_forward_propagation->inverse_variance.data));
+        }
 
         // Bias derivatives
 
@@ -1330,14 +1347,19 @@ public:
 
         // Input derivatives
 
-        CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
-                                 CUBLAS_OP_T, CUBLAS_OP_N,
-                                 inputs_number, total_rows, outputs_number,
-                                 &alpha,
-                                 weights_device.data, outputs_number,
-                                 output_gradients_data, outputs_number,
-                                 &beta,
-                                 input_gradients_data, inputs_number));
+        if (!is_first_layer)
+        {
+            float* input_gradients_data = bp_cuda->input_gradients[0].data;
+
+            CHECK_CUBLAS(cublasSgemm(get_cublas_handle(),
+                                     CUBLAS_OP_T, CUBLAS_OP_N,
+                                     inputs_number, total_rows, outputs_number,
+                                     &alpha,
+                                     weights_device.data, outputs_number,
+                                     output_gradients_data, outputs_number,
+                                     &beta,
+                                     input_gradients_data, inputs_number));
+        }
     }
 
     bool use_combinations = true;
