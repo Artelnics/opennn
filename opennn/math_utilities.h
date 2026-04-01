@@ -450,12 +450,9 @@ inline void batch_normalization_training(
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         get_cudnn_handle(),
         CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha_one,
-        &beta_zero,
-        output.get_descriptor(),
-        output.data,
-        output.get_descriptor(),
-        output.data,
+        &alpha_one, &beta_zero,
+        output.get_descriptor(), output.data,
+        output.get_descriptor(), output.data,
         gammas.get_descriptor(),
         gammas.data,
         betas.data,
@@ -754,7 +751,7 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
 }
 
 
-void softmax(TensorView& output)
+inline void softmax(TensorView& output)
 {
     if (output.empty()) return;
 

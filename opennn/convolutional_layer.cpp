@@ -44,44 +44,31 @@ bool Convolutional::get_batch_normalization() const
 
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-    const TensorView& weights = parameters[Weights];
-    const TensorView& biases = parameters[Biases];
-
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
-
     TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
-
-    TensorView& output = forward_propagation.views[layer][Outputs][0];
-
-    TensorView& activation_derivative = forward_propagation.views[layer][ActivationDerivatives][0];
 
     convolution_type == "Same"
         ? padding(input, padded_input)
-        : copy(input, padded_input);    
+        : copy(input, padded_input);
+
+
+    const TensorView& weights = parameters[Weights];
+    const TensorView& biases = parameters[Biases];
+    TensorView& output = forward_propagation.views[layer][Outputs][0];
 
     convolution(padded_input, weights, biases, output);
 
+    if(batch_normalization)
+        is_training
+            ? batch_normalization_training(output, parameters[Gammas], parameters[Betas],
+                                         running_means, running_standard_deviations, momentum)
+            : batch_normalization_inference(output, parameters[Gammas], parameters[Betas],
+                                            running_means, running_standard_deviations);
+
+    activation(output, activation_function);
+
 #ifndef CUDA
 
-//    convolution(padded_inputs, weights, biases, outputs);
-/*
-    if(batch_normalization)
-        normalize_batch<4>(
-            outputs,
-            outputs,
-            vector_map(means),
-            vector_map(standard_deviations),
-            running_means,
-            running_standard_deviations,
-            vector_map(gammas),
-            vector_map(betas),
-            is_training);
-
-    if(is_training)
-        calculate_activations<4>(activation_function, outputs, activation_derivatives);
-    else
-        calculate_activations<4>(activation_function, outputs, TensorMap4(empty_4.data(), empty_4.dimensions()));
-*/
 #else
 
     // Forward propagation
@@ -512,18 +499,10 @@ void Convolutional::set(const Shape& new_input_shape,
         running_means.resize(kernels_number);
         running_standard_deviations.resize(kernels_number);
     }
-    else
-    {
-        gammas.shape.clear();
-        betas.shape.clear();
-    }
 
     set_label(new_label);
 
 #ifdef CUDA
-
-    biases_device.set_descriptor({kernels_number});
-    weights_device.set_descriptor({kernels_number, kernel_height, kernel_width, kernel_channels});
 
     if (batch_normalization)
     {
