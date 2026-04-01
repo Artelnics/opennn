@@ -73,205 +73,60 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
                                    size_t layer) const
 {
-#ifndef CUDA
-    const Index batch_size = back_propagation.batch_size;
-    const Index input_height = get_input_height();
-    const Index input_width = get_input_width();
-    const Index input_channels = get_input_channels();
+    const TensorView& inputs = forward_propagation.views[layer][Inputs][0];
 
-    const Index kernel_size = kernel_height * kernel_width * kernel_channels;
+    TensorView output_gradients = back_propagation.backward_views[layer][OutputGradients][0];
 
-    const TensorMap4 inputs = tensor_map<4>(forward_propagation.views[layer][Inputs][0]);
-    TensorMap4 output_gradients = tensor_map<4>(back_propagation.backward_views[layer][OutputGradients][0]);
+    const TensorView& padded_inputs = forward_propagation.views[layer][PaddedInputs][0];
 
-    // Forward propagation
+    //TensorMap4 activation_derivatives = tensor_map<4>(forward_propagation.views[layer][ActivationDerivatives][0]);
 
-    TensorMap4 padded_inputs = tensor_map<4>(forward_propagation.views[layer][PaddedInputs][0]);
-
-    TensorMap4 activation_derivatives = tensor_map<4>(forward_propagation.views[layer][ActivationDerivatives][0]);
-
-    // Back propagation
-/*
-    TensorMap4 input_gradients = tensor_map<4>(back_propagation.gradient_views[layer][InputGradients][0]);
-    input_gradients.setZero();
-
-    VectorMap bias_gradients = vector_map(back_propagation->bias_gradients);
-
-    Tensor4& rotated_weights = back_propagation->rotated_weights;
-
-    vector<vector<Tensor2>> precomputed_rotated_slices(kernels_number, vector<Tensor2>(input_channels));
-    precomputed_rotated_slices.resize(kernels_number);
-
-    const Index pad_height = (input_height + kernel_height - 1) - get_output_height();
-    const Index pad_width = (input_width + kernel_width - 1) - get_output_width();
-    const Index pad_top = pad_height / 2;
-    const Index pad_bottom = pad_height - pad_top;
-    const Index pad_left = pad_width / 2;
-    const Index pad_right = pad_width - pad_left;
-
-    const array<pair<Index, Index>, 2> paddings
-        = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
-
-    // Inputs (for padding same)
-
-    pad_inputs(inputs, padded_inputs);
-
-    output_gradients.device(get_device()) = output_gradients*activation_derivatives;
-    
-    // Bias derivatives
-
-    const Index features = bias_gradients.size();
-    const Index total_elements_to_sum = output_gradients.size() / features;
-
-    MatrixMap output_grads_mat(output_gradients.data(), total_elements_to_sum, features);
-
-    bias_gradients.noalias() = output_grads_mat.colwise().sum();
-
-    // Weight gradients
-
-    #pragma omp parallel for
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+//    if (dropout_rate > type(0))
     {
-        const Tensor3 kernel_convolution_gradients = output_gradients.chip(kernel_index, 3);
-
-        TensorMap4 kernel_weight_gradients(weight_gradients_data + (kernel_index * kernel_size),
-                                           1, kernel_height, kernel_width, kernel_channels);
-
-        kernel_weight_gradients.device(get_device()) =
-            padded_inputs.convolve(kernel_convolution_gradients, array<Index, 3>({0, 1, 2}));
+        // dropout_gradient(incoming_gradients, dropout_mask, dropout_rate, incoming_gradients);
     }
 
-    // Input derivatives
+//    calculate_activation_derivatives(output, activation_derivatives, activation_function);
 
-    rotated_weights.device(get_device()) = tensor_map<4>(weights).reverse(array<Index, 4>({0, 1, 1, 0}));
-
-    #pragma omp parallel for
-    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
-    {
-        auto kernel_rotated_weights = rotated_weights.chip(kernel_index, 0);
-
-        for(Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
-    }
-
-    const array<Index, 2> convolution_dimensions_2d = {0, 1};
-
-    for(Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
-    {
-        auto kernel_convolution_gradients = output_gradients.chip(kernel_index, 3);
-
-        #pragma omp parallel for
-        for(Index image_index = 0; image_index < batch_size; ++image_index)
-        {
-            const Tensor2 image_kernel_convolutions_derivatives_padded = kernel_convolution_gradients.chip(image_index, 0).pad(paddings);
-
-            for(Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            {
-                const Tensor2 convolution_result = image_kernel_convolutions_derivatives_padded
-                                                       .convolve(precomputed_rotated_slices[kernel_index][channel_index], convolution_dimensions_2d);
-
-                for(Index h = 0; h < input_height; ++h)
-                    for(Index w = 0; w < input_width; ++w)
-                        input_gradients(image_index, h, w, channel_index) += convolution_result(h, w);
-            }
-        }
-    }
-*/
-#else
-    const TensorView outputs_view = forward_propagation->outputs;
-
-    // Back propagation
-
-    TensorView input_gradients = back_propagation->input_gradients[0];
-
-    float* output_gradients_data = back_propagation->output_gradients[0].data;
-
-    void* workspace = back_propagation->workspace;
-    const size_t workspace_size = workspace_size;
-
-    void* backward_filter_workspace = backward_filter_workspace;
-    const size_t backward_filter_workspace_bytes = backward_filter_workspace_bytes;
-
-    // Error combinations derivatives
-
-    if (activation_function != "Linear")
-        CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
-            activation_descriptor,
-            &alpha,
-            gradients_tensor_descriptor,
-            outputs_view.data,
-            gradients_tensor_descriptor,
-            output_gradients_data,
-            gradients_tensor_descriptor,
-            (use_convolutions() && convolutions) ? convolutions : outputs_view.data,
-            &beta,
-            gradients_tensor_descriptor,
-            output_gradients_data));
-
-    // Batch Normalization
+//    multiply_elementwise(incoming_gradients, activation_derivatives, delta);
 
     if (batch_normalization)
-        CHECK_CUDNN(cudnnBatchNormalizationBackward(
-            get_cudnn_handle(),
-            CUDNN_BATCHNORM_SPATIAL,
-            &alpha, &beta,
-            &alpha, &alpha,
-            outputs_view.get_descriptor(),
-            use_convolutions() ? convolutions : outputs_view.data,
-            gradients_tensor_descriptor,
-            output_gradients_data,
-            gradients_tensor_descriptor,
-            output_gradients_data,
-            gammas_device.get_descriptor(),
-            gammas_device.data,
-            gamma_gradients.data,
-            beta_gradients.data,
-            CUDNN_BN_MIN_EPSILON,
-            means.data,
-            inverse_variance.data));
+    {
+        const TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
+        const TensorView& batch_means = forward_propagation.views[layer][Outputs][1];
+        const TensorView& batch_variances = forward_propagation.views[layer][Outputs][2];
 
-    // Weights derivatives
+        TensorView& gamma_gradients = back_propagation.gradient_views[layer][Gammas];
+        TensorView& beta_gradients = back_propagation.gradient_views[layer][Betas];
+/*
+        batch_normalization_backward(delta,
+                                     padded_input,
+                                     batch_means,
+                                     batch_variances,
+                                     parameters[Gammas],
+                                     gamma_gradients,
+                                     beta_gradients,
+                                     delta);
+*/
+    }
 
-    cudnnConvolutionBackwardFilter(get_cudnn_handle(),
-        &alpha,
-        input_tensor_descriptor,
-        inputs[0].data,
-        gradients_tensor_descriptor,
-        output_gradients_data,
-        convolution_descriptor,
-        algo_filter,
-        backward_filter_workspace,
-        backward_filter_workspace_bytes,
-        &beta,
-        kernel_descriptor, 
-        weight_gradients);
 
-    // Bias derivatives
+    TensorView& weigth_gradients = back_propagation.gradient_views[layer][Weights];
+    TensorView& bias_gradients = back_propagation.gradient_views[layer][Biases];
 
-    cudnnConvolutionBackwardBias(get_cudnn_handle(),
-        &alpha,
-        gradients_tensor_descriptor,
-        output_gradients_data,
-        &beta,
-        biases_device.get_descriptor(),
-        bias_gradients);
+//    const TensorView& padded_input = forward_propagation.views[layer_index][PaddedInputs][0];
 
-    // Input derivatives
+//    convolution_backward_filter(padded_input, delta, weight_gradients);
 
-    cudnnConvolutionBackwardData(get_cudnn_handle(),
-        &alpha,
-        kernel_descriptor,
-        weights_device.data,
-        gradients_tensor_descriptor,
-        output_gradients_data,
-        convolution_descriptor,
-        convolutional_back_propagation->algo_data,
-        workspace, 
-        workspace_size,
-        &beta,
-        input_tensor_descriptor, 
-        input_gradients.data);
-#endif
+//    sum(delta, bias_gradients);
+
+    if (!is_first_layer)
+    {
+        TensorView& input_gradients = back_propagation.backward_views[layer][InputGradients][0];
+
+        // input_gradients = delta *convolve_flipped* weights
+        //convolution_backward_data(delta, parameters[Weights], input_gradients);
+    }
 }
 
 
