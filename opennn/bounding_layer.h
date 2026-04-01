@@ -22,7 +22,6 @@ public:
 
     enum class BoundingMethod{NoBounding, Bounding};
 
-    Shape get_input_shape() const override;
     Shape get_output_shape() const override;
 
     const BoundingMethod& get_bounding_method() const;
@@ -71,9 +70,9 @@ private:
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 
-    VectorR lower_bounds;
+//    VectorR lower_bounds;
 
-    VectorR upper_bounds;
+//    VectorR upper_bounds;
 };
 
 }

@@ -290,9 +290,6 @@ private:
 
     bool batch_normalization = false;
 
-    TensorView gammas;
-    TensorView betas;
-
     // @todo here or in forward propagate?
     VectorR running_means;
     VectorR running_standard_deviations;

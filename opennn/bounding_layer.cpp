@@ -26,13 +26,13 @@ const Bounding::BoundingMethod& Bounding::get_bounding_method() const
     return bounding_method;
 }
 
-
-Shape Bounding::get_input_shape() const
+Shape Bounding::get_output_shape() const
 {
-    return { lower_bounds.rows() };
+    return input_shape;
 }
 
 
+/*
 type Bounding::get_lower_bound(const Index i) const
 {
     return lower_bounds[i];
@@ -42,12 +42,6 @@ type Bounding::get_lower_bound(const Index i) const
 const VectorR& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
-}
-
-
-Shape Bounding::get_output_shape() const
-{
-    return { lower_bounds.rows() };
 }
 
 
@@ -61,7 +55,7 @@ const VectorR& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
-
+*/
 
 void Bounding::set(const Shape& new_output_shape, const string& new_label)
 {
@@ -96,11 +90,15 @@ void Bounding::set_bounding_method(const string& new_method_string)
 
 void Bounding::set_input_shape(const Shape& new_input_shape)
 {
-    lower_bounds.resize(new_input_shape[0]);
-    upper_bounds.resize(new_input_shape[0]);
 }
 
 
+void Bounding::set_output_shape(const Shape& new_output_shape)
+{
+    input_shape = new_output_shape;
+}
+
+/*
 void Bounding::set_lower_bound(const Index index, type new_lower_bound)
 {
     const Shape output_shape = get_output_shape();
@@ -149,17 +147,19 @@ void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 
     upper_bounds[index] = new_upper_bound;
 }
-
+*/
 
 void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
     TensorView& output = forward_propagation.views[layer][Outputs][0];
-
+/*
     if(bounding_method == BoundingMethod::NoBounding)
-        opennn::copy(input, output);
+        copy(input, output);
     else
-        opennn::bounding(input, lower_bounds, upper_bounds, output);}
+        bounding(input, lower_bounds, upper_bounds, output);
+*/
+}
 
 
 string Bounding::get_bounding_method_string() const
@@ -192,20 +192,22 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
     buffer.precision(10);
 
     const Shape output_shape = get_output_shape();
-
+/*
     for(Index i = 0; i < output_shape[0]; i++)
         buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
                << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-
+*/
     return buffer.str();
 }
 
 
 void Bounding::print() const
 {
+/*
     cout << "Bounding layer" << endl
          << "Lower bounds: " << lower_bounds << endl
          << "Upper bounds: " << upper_bounds << endl;
+*/
 }
 
 
@@ -221,10 +223,10 @@ void Bounding::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("Item");
         printer.PushAttribute("Index", unsigned(i + 1));
-
+/*
         add_xml_element(printer, "LowerBound", to_string(lower_bounds[i]));
         add_xml_element(printer, "UpperBound", to_string(upper_bounds[i]));
-
+*/
         printer.CloseElement();
     }
 
@@ -254,10 +256,10 @@ void Bounding::from_XML(const XMLDocument& document)
 
         if (index != i + 1)
             throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
-
+/*
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");
-
+*/
         item_element = item_element->NextSiblingElement("Item");
     }
 

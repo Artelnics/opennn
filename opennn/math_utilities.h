@@ -76,7 +76,6 @@ inline void max_pooling(const TensorView& input, TensorView& output)
                                     output.device));
 
 #endif
-
 }
 
 
@@ -139,18 +138,21 @@ inline void padding(const TensorView& input, TensorView& output)
 }
 
 inline void bounding(const TensorView& input,
-                     const VectorR& lower_bounds,
-                     const VectorR& upper_bounds,
+                     const TensorView& lower_bounds,
+                     const TensorView& upper_bounds,
                      TensorView& output)
 {
     const Index features = lower_bounds.size();
 
 #ifndef CUDA
     const MatrixMap input_matrix = input.as_matrix();
+    const VectorMap lower_bounds_vector = lower_bounds.as_vector();
+    const VectorMap upper_bounds_vector = upper_bounds.as_vector();
+
     MatrixMap output_matrix = output.as_matrix();
 
     for(Index j = 0; j < features; ++j)
-        output_matrix.col(j) = input_matrix.col(j).cwiseMax(lower_bounds(j)).cwiseMin(upper_bounds(j));
+        output_matrix.col(j) = input_matrix.col(j).cwiseMax(lower_bounds_vector(j)).cwiseMin(upper_bounds_vector(j));
 
 #else
     const Index total_rows = input.shape[0];
@@ -159,8 +161,8 @@ inline void bounding(const TensorView& input,
                   total_rows,
                   features,
                   input.data,
-                  lower_bounds_device, // Assuming these were moved to device
-                  upper_bounds_device,
+                  lower_bounds.device, // Assuming these were moved to device
+                  upper_bounds.device,
                   output.data);
 #endif
 }
@@ -448,12 +450,9 @@ inline void batch_normalization_training(
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         get_cudnn_handle(),
         CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha_one,
-        &beta_zero,
-        output.get_descriptor(),
-        output.data,
-        output.get_descriptor(),
-        output.data,
+        &alpha_one, &beta_zero,
+        output.get_descriptor(), output.data,
+        output.get_descriptor(), output.data,
         gammas.get_descriptor(),
         gammas.data,
         betas.data,
@@ -598,13 +597,17 @@ inline void dropout(TensorView& output, type dropout_rate)
 
 
 inline void convolution(const TensorView& input,
-                 const TensorView& kernel,
-                 const TensorView& biases,
-                 TensorView& output)
+                        const TensorView& kernel,
+                        const TensorView& bias,
+                        TensorView& output)
 {
 #ifndef CUDA
-/*
+
+    const TensorMap4 inputs = input.as_tensor<4>();
+    const VectorMap biases = bias.as_vector();
+
     const Index batch_size = inputs.dimension(0);
+/*
     const Index output_height = convolutions.dimension(1);
     const Index output_width = convolutions.dimension(2);
 
@@ -614,8 +617,6 @@ inline void convolution(const TensorView& input,
     const Index kernel_channels = get_kernel_channels();
 
     const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
-
-    const VectorMap biases = vector_map(parameters[Biases]);
 
     const Eigen::array<Index, 3> conv_dims({1, 2, 3});
 
@@ -668,7 +669,7 @@ inline void convolution_activation(const TensorView& input,
 #ifndef CUDA
     convolution(input, weight, bias, output);
 
-//    activation(input, output, activation);
+//    activation(output, activation);
 #else
     CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
         get_cudnn_handle(),
@@ -750,12 +751,35 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
 }
 
 
-inline void softmax(const TensorView& input, TensorView& output)
+inline void softmax(TensorView& output)
 {
-#ifndef OPENNN_CUDA
+    if (output.empty()) return;
+
+#ifndef CUDA
+
+    const Index columns = output.shape.back();
+    const Index rows = output.size() / columns;
+
+    MatrixMap mat(output.data, rows, columns);
+    mat.colwise() -= mat.rowwise().maxCoeff();
+    mat.array() = mat.array().exp();
+    mat.array().colwise() /= mat.rowwise().sum().array();
 
 #else
+    // --- GPU Implementation (cuDNN) ---
+    const float alpha = 1.0f;
+    const float beta  = 0.0f;
 
+    // cuDNN handles N-dimensional tensors via descriptors.
+    // CUDNN_SOFTMAX_MODE_CHANNEL performs softmax across the 'C' dimension
+    // of an NHWC or NCDHW tensor.
+    CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
+                                    CUDNN_SOFTMAX_ACCURATE,
+                                    CUDNN_SOFTMAX_MODE_CHANNEL,
+                                    &alpha,
+                                    output.get_descriptor(), output.data,
+                                    &beta,
+                                    output.get_descriptor(), output.data));
 #endif
 }
 
@@ -777,4 +801,92 @@ inline void activation_gradient(const TensorView& output, const TensorView& dY, 
     // @todo
 #endif
 }
+/*
+void softmax(MatrixMap y)
+{
+    VectorR max_coeffs = y.rowwise().maxCoeff();
+    y.colwise() -= max_coeffs;
+
+    y.array() = y.array().exp();
+
+    VectorR sums = y.rowwise().sum();
+    y.array().colwise() /= sums.array();
+}
+
+
+void softmax(TensorMap3 y)
+{
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+
+#pragma omp parallel for collapse(2)
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            type max_value = -numeric_limits<type>::infinity();
+
+            for(Index k = 0; k < channels; k++)
+                if(y(i, j, k) > max_value)
+                    max_value = y(i, j, k);
+
+            type sum = 0.0;
+            for(Index k = 0; k < channels; k++)
+            {
+                y(i, j, k) = exp(y(i, j, k) - max_value);
+                sum += y(i, j, k);
+            }
+
+            if(sum > 0.0)
+            {
+                const type inv_sum = type(1.0) / sum;
+
+                for(Index k = 0; k < channels; k++)
+                    y(i, j, k) *= inv_sum;
+            }
+        }
+    }
+}
+
+
+void softmax(TensorMap4 y)
+{
+    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+    const Index blocks_number = y.dimension(3);
+
+#pragma omp parallel for collapse(3)
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < channels; k++)
+            {
+                type max_value = -numeric_limits<type>::infinity();
+
+                for(Index l = 0; l < blocks_number; l++)
+                    if(y(i, j, k, l) > max_value)
+                        max_value = y(i, j, k, l);
+
+                type sum = 0.0;
+                for(Index l = 0; l < blocks_number; l++)
+                {
+                    y(i, j, k, l) = exp(y(i, j, k, l) - max_value);
+                    sum += y(i, j, k, l);
+                }
+
+                if(sum > 0.0)
+                {
+                    const type inv_sum = type(1.0) / sum;
+
+                    for(Index l = 0; l < blocks_number; l++)
+                        y(i, j, k, l) *= inv_sum;
+                }
+            }
+        }
+    }
+}
+*/
 }

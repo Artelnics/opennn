@@ -188,8 +188,11 @@ public:
     }
 
 
-    void forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool) override
+    void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
+        const TensorView& input = forward_propagation.views[layer][Input][0];
+
+
 /*
         const Index features = scalers.size();
         const Index total_rows = forward_propagation->inputs[0].size() / features;
@@ -429,22 +432,14 @@ public:
 
 private:
 
+    enum Forward {Input, Output};
+
     vector<Descriptives> descriptives;
 
     vector<string> scalers;
 
     type min_range;
     type max_range;
-};
-
-
-template<int Rank>
-struct ScalingForwardPropagation final : LayerForwardPropagation
-{
-    void initialize() override
-    {
-        outputs.shape = Shape{batch_size}.append(layer->get_output_shape());
-    }
 };
 
 

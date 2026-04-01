@@ -200,9 +200,6 @@ public:
 
         cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
 
-        biases_device.set_descriptor({outputs_number});
-        weights_device.set_descriptor({ new_input_shape.back(), outputs_number });
-
         if (batch_normalization)
         {
             Shape batch_normalization_shape = { outputs_number };

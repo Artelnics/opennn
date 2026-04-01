@@ -147,39 +147,7 @@ protected:
     Tensor4 empty_4;
 
     bool display = true;
-
-    template <int Rank>
-    void calculate_activations(const string& activation_function,
-                               TensorMapR<Rank> activations,
-                               TensorMapR<Rank> activation_derivatives) const
-    {
-        string normalized_activation_function = activation_function;
-
-        // Compatibilidad con modelos antiguos
-        if(normalized_activation_function == "Logistic")
-            normalized_activation_function = "Sigmoid";
-
-        if (normalized_activation_function == "Linear")
-            linear(activations, activation_derivatives);
-        else if (normalized_activation_function == "Sigmoid")
-            logistic(activations, activation_derivatives);
-        else if (activation_function == "Softmax")
-            if constexpr (Rank == 2)
-                softmax(MatrixMap(activations.data(), activations.dimension(0), activations.dimension(1)));
-            else
-                softmax(activations);
-        else if (activation_function == "Competitive")
-            throw runtime_error("Competitive 3d not implemented");
-        else if (normalized_activation_function == "HyperbolicTangent")
-            hyperbolic_tangent(activations, activation_derivatives);
-        else if (normalized_activation_function == "RectifiedLinear")
-            rectified_linear(activations, activation_derivatives);
-        else if (normalized_activation_function == "ScaledExponentialLinear")
-            exponential_linear(activations, activation_derivatives);
-        else
-            throw runtime_error("Unknown activation: " + activation_function);
-    }
-
+/*
     template <int Rank>
     FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const
     {
@@ -270,13 +238,7 @@ protected:
 
         dy_dx.device(get_device()) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
     }
-
-    void softmax(MatrixMap) const;
-    void softmax(TensorMap3) const;
-    void softmax(TensorMap4) const;
-
-    //void softmax_derivatives_times_tensor(const TensorMap3, TensorMap3, VectorMap) const;
-
+*/
     void add_gradients(const vector<TensorView>&) const;
 
     template <int Rank>

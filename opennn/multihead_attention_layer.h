@@ -64,24 +64,13 @@ public:
         const Index s_len = source_sequence_length;
         const Index h_num = heads_number;
 
-        return {
-            // Input Query Gradients (dX_q): {batch, q_len, emb_dim}
-            {batch_size, q_len, embedding_dimension},
-
-            // Input Source Gradients (dX_s): {batch, s_len, emb_dim}
-            {batch_size, s_len, embedding_dimension},
-
-            // Intermediate: Attention Weight Gradients: {batch, h_num, q_len, s_len}
-            {batch_size, h_num, q_len, s_len},
-
-            // Intermediate: Concatenated Output Gradients: {batch, q_len, emb_dim}
-            {batch_size, q_len, embedding_dimension},
-
-            // Head Gradients (Q, K, V): {batch, h_num, seq, h_dim}
-            {batch_size, h_num, q_len, head_dimension}, // Query Gradients
-            {batch_size, h_num, s_len, head_dimension}, // Key Gradients
-            {batch_size, h_num, s_len, head_dimension}  // Value Gradients
-        };
+        return {{batch_size, q_len, embedding_dimension}, // Input Query Gradients
+                {batch_size, s_len, embedding_dimension}, // Input Source Gradients (dX_s)
+                {batch_size, h_num, q_len, s_len}, // Intermediate: Attention Weight Gradients: {batch, h_num, q_len, s_len}
+                {batch_size, q_len, embedding_dimension}, // Intermediate: Concatenated Output Gradients: {batch, q_len, emb_dim}
+                {batch_size, h_num, q_len, head_dimension}, // Query Gradients
+                {batch_size, h_num, s_len, head_dimension}, // Key Gradients
+                {batch_size, h_num, s_len, head_dimension}};  // Value Gradients
     }
 
     void set(const Index = 0,
@@ -115,18 +104,7 @@ private:
 
     enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
     enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
-
-    TensorView query_weights;
-    TensorView query_biases;
-
-    TensorView key_weights;
-    TensorView key_biases;
-
-    TensorView value_weights;
-    TensorView value_biases;
-
-    TensorView projection_weights;
-    TensorView projection_biases;
+    enum Backward {InputGradient, OutputGradient};
 
     bool use_causal_mask = false;
 
