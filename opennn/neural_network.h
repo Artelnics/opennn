@@ -17,11 +17,6 @@ namespace opennn
 
 class NeuralNetwork;
 
-#ifdef CUDA
-struct ForwardPropagationCuda;
-struct NeuralNetworkBackPropagationCuda;
-#endif
-
 struct ForwardPropagation
 {
     ForwardPropagation(const Index = 0, NeuralNetwork* = nullptr);
@@ -43,36 +38,6 @@ struct ForwardPropagation
     VectorR data;
     vector<vector<vector<TensorView>>> views;
 };
-
-
-#ifdef CUDA
-
-struct ForwardPropagationCuda
-{
-    ForwardPropagationCuda(const Index = 0, NeuralNetwork* = nullptr);
-
-    void set(const Index = 0, NeuralNetwork* = nullptr);
-
-    vector<vector<TensorView*>> get_layer_workspace_views();
-
-    TensorView get_last_trainable_layer_outputs_device() const;
-
-    vector<vector<TensorView>> get_layer_input_views_device(const vector<TensorView>&, bool) const;
-
-    TensorView get_outputs();
-
-    void print();
-
-    Index samples_number = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    vector<unique_ptr<LayerForwardPropagationCuda>> layers;
-
-    TensorCuda workspace;
-};
-
-#endif
 
 
 class NeuralNetwork
@@ -303,36 +268,6 @@ protected:
     vector<vector<vector<TensorView>>> parameter_views;
 
 };
-
-
-#ifdef CUDA
-
-struct NeuralNetworkBackPropagationCuda
-{
-    NeuralNetworkBackPropagationCuda(const Index = 0, NeuralNetwork* = nullptr);
-
-    void set(const Index = 0, NeuralNetwork* = nullptr);
-
-    const vector<unique_ptr<LayerBackPropagationCuda>>& get_layers() const;
-
-    vector<vector<TensorView*>> get_layer_gradient_views();
-
-    vector<vector<TensorView*>> get_layer_workspace_views();
-
-    void print();
-
-    Index batch_size = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    vector<unique_ptr<LayerBackPropagationCuda>> layers;
-
-    TensorCuda gradients;
-
-    TensorCuda workspace;
-};
-
-#endif
 
 
 struct NeuralNetworkBackPropagationLM
