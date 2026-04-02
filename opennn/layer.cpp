@@ -14,6 +14,7 @@
 namespace opennn
 {
 
+/*
 TensorView LayerForwardPropagation::get_outputs() const
 {
     return outputs;
@@ -23,7 +24,7 @@ vector<TensorView*> LayerForwardPropagation::get_workspace_views()
 {
     return {&outputs};
 }
-
+*/
 
 vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
 {

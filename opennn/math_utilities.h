@@ -62,11 +62,12 @@ struct BatchNormalizationArguments
 inline void max_pooling(const TensorView& input,
                         TensorView& output,
                         TensorView& maximal_indices,
-                        const PoolingArguments& arguments)
+                        const PoolingArguments& arguments,
+                        bool is_training = false)
 {
 #ifndef CUDA
     const TensorMap4 inputs = input.as_tensor<4>();
-    const TensorMap4 outputs = output.as_tensor<4>();
+    TensorMap4 outputs = output.as_tensor<4>();
 
     const Index batch_size = inputs.dimension(0);
     const Index input_height = inputs.dimension(1);
@@ -117,7 +118,10 @@ inline void max_pooling(const TensorView& input,
                         (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
 
                     if(is_training)
-                        maximal_indices(batch_index, output_row, output_column, channel_index) = maximum_index;
+                    {
+                        TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
+                        maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximum_index;
+                    }
                 }
 
 #else

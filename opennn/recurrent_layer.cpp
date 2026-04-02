@@ -29,10 +29,7 @@ Shape Recurrent::get_output_shape() const
 
 vector<Shape> Recurrent::get_parameter_shapes() const
 {
-/*
-    return {&biases, &input_weights, &recurrent_weights};
-*/
-    return {};
+    return {biases.shape, input_weights.shape, recurrent_weights.shape};
 }
 
 

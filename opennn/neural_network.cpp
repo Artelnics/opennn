@@ -616,38 +616,36 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                        : layers_number - 1;
 
     for (Index layer_index = first_layer_index; layer_index <= last_layer_index; ++layer_index)
-    {        
+    {
         const vector<Index>& input_indices = layer_input_indices[layer_index];
-/*
-        vector<TensorView>& layer_inputs = forward_propagation.layers[layer_index]->inputs;
 
-        layer_inputs.resize(input_indices.size());
+        if(static_cast<size_t>(layer_index) >= forward_propagation.views.size()
+           || forward_propagation.views[layer_index].empty())
+            continue;
 
-        for (Index i = 0; i < static_cast<Index>(input_indices.size()); ++i)
+        auto& input_slot = forward_propagation.views[layer_index][0];
+        input_slot.resize(input_indices.size());
+
+        for(Index k = 0; k < static_cast<Index>(input_indices.size()); ++k)
         {
-            const Index current_input = input_indices[i];
+            const Index current_input = input_indices[k];
 
-            if (current_input < 0)
+            if(current_input < 0)
             {
                 Index input_view_index = (-current_input) - 1;
 
-                if (input_view_index < 0 || input_view_index >= static_cast<Index>(input_view.size()))
+                if(input_view_index >= static_cast<Index>(input_view.size()))
                     input_view_index = 0;
 
-                layer_inputs[i] = input_view[input_view_index];
+                input_slot[k] = input_view[input_view_index];
             }
-            else if (is_training && current_input < first_layer_index)
+            else if(is_training && current_input < first_layer_index)
             {
-                Index input_view_index = (i < static_cast<Index>(input_view.size()))
-                                         ? i
-                                         : 0;
-
-                layer_inputs[i] = input_view[input_view_index];
+                Index input_view_index = (k < static_cast<Index>(input_view.size())) ? k : 0;
+                input_slot[k] = input_view[input_view_index];
             }
-            else
-                layer_inputs[i] = forward_propagation.layers[current_input]->get_outputs();
+            // else: already wired in ForwardPropagation::set() to upstream output
         }
-*/
     }
 
     for(Index i = first_layer_index; i <= last_layer_index; i++)
@@ -1334,39 +1332,77 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     if(!neural_network) throw runtime_error("There is no neural network.");
 
-    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+    const vector<unique_ptr<Layer>>& nn_layers = neural_network->get_layers();
+    const size_t layers_number = nn_layers.size();
 
-    const size_t layers_number = neural_network_layers.size();
+    // Step 1: collect shapes per layer (slots 1..N in views[layer]; slot 0 = inputs, wired below)
+    const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
 
-    //layers.resize(layers_number);
+    // Step 2: allocate one flat buffer for all output activations
+    const Index total_size = get_size(forward_shapes);
 
-    for(size_t i = 0; i < layers_number; i++)
+    if(total_size > 0)
     {
-        //layers[i] = Registry<LayerForwardPropagation>::instance().create(neural_network_layers[i]->get_name());
-        //layers[i]->set(samples_number, neural_network_layers[i].get());
+        data.resize(total_size);
+        data.setZero();
     }
-/*
-    const vector<vector<TensorView*>> layer_workspace_views = get_layer_workspace_views();
-    const Index workspace_size = get_size(layer_workspace_views);
 
-    if (workspace_size > 0)
+    // Step 3: create TensorView slices inside data, one per shape, at slot j+1
+    views.resize(layers_number);
+
+    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
+    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
+
+    type* pointer = (total_size > 0) ? data.data() : nullptr;
+
+    for(size_t i = 0; i < layers_number; ++i)
     {
-        workspace.resize(workspace_size);
-        workspace.setZero();
-        link(workspace.data(), layer_workspace_views);
+        const vector<Shape>& shapes = forward_shapes[i];
+        const size_t slots = shapes.size();
+
+        views[i].resize(slots + 1);  // slot 0 = inputs placeholder; slots 1..N = allocated
+
+        for(size_t j = 0; j < slots; ++j)
+        {
+            const Shape& s = shapes[j];
+            views[i][j + 1].resize(1);
+
+            if(s.count() > 0 && pointer)
+            {
+                views[i][j + 1][0] = TensorView(pointer, s);
+                pointer += (s.count() + ALIGN_ELEMENTS - 1) & MASK;
+            }
+        }
     }
-*/
+
+    // Step 4: wire input slots to upstream layer outputs
+    // Convention: output of layer j = views[j][forward_shapes[j].size()][0] (last allocated slot)
+    // Negative input indices are network inputs — wired per-batch in forward_propagate()
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
     {
-        //layers[i]->inputs.clear();
+        const vector<Index>& input_indices = layer_input_indices[i];
 
+        views[i][0].resize(input_indices.size());
 
-        for(Index input_index : layer_input_indices[i])
+        for(size_t k = 0; k < input_indices.size(); ++k)
         {
-            // Ahora la copia de 'outputs' llevará el puntero de memoria correcto
-            //layers[i]->inputs.push_back(input_index >= 0 ? layers[input_index]->outputs : TensorView());
+            const Index j = input_indices[k];
+
+            if(j >= 0)
+            {
+                const size_t output_slot = forward_shapes[j].size();
+
+                if(output_slot > 0
+                   && j < static_cast<Index>(views.size())
+                   && views[j].size() > output_slot
+                   && !views[j][output_slot].empty())
+                {
+                    views[i][0][k] = views[j][output_slot][0];
+                }
+            }
+            // j < 0: network input, set in forward_propagate() each batch
         }
     }
 }
@@ -1375,12 +1411,14 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-/*
-    const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
 
-    return layer_forward_propagation->get_outputs();
-*/
-    return {};
+    if(last_trainable_layer_index < 0
+       || static_cast<size_t>(last_trainable_layer_index) >= views.size()
+       || views[last_trainable_layer_index].size() <= 1
+       || views[last_trainable_layer_index].back().empty())
+        return {};
+
+    return views[last_trainable_layer_index].back()[0];
 }
 
 

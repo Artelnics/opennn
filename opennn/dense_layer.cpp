@@ -14,7 +14,7 @@ namespace opennn
     using Dense2d = Dense<2>;
     using Dense3d = Dense<3>;
 
-    using DenseBackPropagationLM2d = DenseBackPropagationLM;
+    // using DenseBackPropagationLM2d = DenseBackPropagationLM;
 
     REGISTER(Layer, Dense2d, "Dense2d")
     REGISTER(Layer, Dense3d, "Dense3d")
@@ -22,7 +22,7 @@ namespace opennn
     template class Dense<2>;
     template class Dense<3>;
 
-    struct DenseBackPropagationLM;
+    // struct DenseBackPropagationLM;
 
     void reference_dense_layer() { }
 }

@@ -312,6 +312,7 @@ public:
 };
 
 
+/*
 struct LayerForwardPropagation
 {
     virtual void initialize() = 0;
@@ -330,7 +331,7 @@ struct LayerForwardPropagation
 
     TensorView outputs;
 };
-
+*/
 
 struct LayerBackPropagationLM
 {

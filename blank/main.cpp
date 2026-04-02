@@ -6,7 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "../opennn/opennn.h"
+#include "../opennn/dataset.h"
+#include "../opennn/standard_networks.h"
+#include "../opennn/mean_squared_error.h"
+#include "../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
 
@@ -14,33 +17,61 @@ int main()
 {
     try
     {
-        cout << "Blank Testing OpenNN" << endl;
+        // Dataset
+        // 1000 random samples: 8 input features, 1 regression target
 
-        std::cout << "--- SIMD Support Check ---" << std::endl;
+        Dataset dataset(1000, {8}, {1});
 
-#if defined(EIGEN_VECTORIZE_AVX512)
-        std::cout << "Target SIMD: AVX-512 (64-byte alignment active)" << std::endl;
-#elif defined(EIGEN_VECTORIZE_AVX2)
-        std::cout << "Target SIMD: AVX2 (32-byte alignment req, using 64-byte padding)" << std::endl;
-#elif defined(EIGEN_VECTORIZE_AVX)
-        std::cout << "Target SIMD: AVX" << std::endl;
-#elif defined(EIGEN_VECTORIZE_SSE4_2)
-        std::cout << "Target SIMD: SSE4.2" << std::endl;
-#else
-        std::cout << "Target SIMD: None (Scalar Mode - Slow!)" << std::endl;
-#endif
+        dataset.set_data_random();
+        dataset.split_samples_random(0.8, 0.1, 0.1);
 
-#ifdef _OPENMP
-        std::cout << "OpenMP: Enabled (Threads: " << omp_get_max_threads() << ")" << std::endl;
-#else
-        std::cout << "OpenMP: Disabled" << std::endl;
-#endif
+        const Index inputs_number = dataset.get_features_number("Input");
+        const Index targets_number = dataset.get_features_number("Target");
 
-        cout << "Completed." << endl;
+        cout << "Samples: " << dataset.get_samples_number() << endl;
+        cout << "Inputs:  " << inputs_number << endl;
+        cout << "Targets: " << targets_number << endl;
+
+        // Neural network
+        // One hidden layer with 32 neurons, linear output (regression)
+
+        ApproximationNetwork network({inputs_number}, {32}, {targets_number});
+
+        network.set_parameters_glorot();
+
+        cout << "Parameters: " << network.get_parameters_number() << endl;
+
+        // Loss function
+
+        MeanSquaredError loss(&network, &dataset);
+
+        // Adam optimizer
+
+        AdaptiveMomentEstimation optimizer(&loss);
+
+        optimizer.set_learning_rate(type(0.001));
+        optimizer.set_beta_1(type(0.9));
+        optimizer.set_beta_2(type(0.999));
+        optimizer.set_batch_size(64);
+        optimizer.set_maximum_epochs(200);
+        optimizer.set_loss_goal(type(1e-4));
+        optimizer.set_display(true);
+
+        // Train
+
+        const TrainingResults results = optimizer.train();
+
+        // Results
+
+        cout << "\nStopping condition: " << results.write_stopping_condition() << endl;
+        cout << "Training loss:      " << results.get_training_error() << endl;
+        cout << "Validation loss:    " << results.get_validation_error() << endl;
+        cout << "Epochs:             " << results.get_epochs_number() << endl;
+        cout << "Elapsed time:       " << results.elapsed_time << endl;
 
         return 0;
     }
-    catch (const exception &e)
+    catch(const exception& e)
     {
         cerr << "Error: " << e.what() << endl;
         return 1;

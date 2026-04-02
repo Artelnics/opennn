@@ -17,6 +17,7 @@ namespace opennn
 {
 template<int Rank> class Dense;
 
+/*
 struct DenseBackPropagationLM final : LayerBackPropagationLM
 {
     void initialize() override
@@ -36,6 +37,7 @@ struct DenseBackPropagationLM final : LayerBackPropagationLM
 
 
 struct Dense2dForwardPropagationLM;
+*/
 
 template<int Rank>
 class Dense final : public Layer
@@ -80,24 +82,16 @@ private:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        const Index input_dimension = input_shape.back();
         const Index output_dimension = get_outputs_number();
 
-        /*
-        vector<Shape> shapes =
-        {{batch_size, outputs_number},   // outputs
-         {{batch_size, outputs_number}}; // activation_derivatives
-
-        if (batch_normalization)
-        {
-            shapes.push_back({outputs_number});                // means
-            shapes.push_back({outputs_number});                // standard_deviations
-            shapes.push_back({batch_size, outputs_number});    // normalized_outputs
-        }
-
-        return shapes;
-*/
-        return {};
+        // views[layer] slots: 0=Input (wired), 1=NormalizedOutput, 2=Output
+        // shapes[k] → slot k+1, so we return 2 shapes.
+        if(batch_normalization)
+            return {{batch_size, output_dimension},   // slot 1: NormalizedOutput
+                    {batch_size, output_dimension}};  // slot 2: Output
+        else
+            return {Shape{},                          // slot 1: NormalizedOutput (unused, placeholder)
+                    {batch_size, output_dimension}};  // slot 2: Output
     }
 
     enum Backward {OutputGradients, InputGradients};
@@ -135,9 +129,9 @@ public:
     Shape get_output_shape() const override
     {
         if constexpr (Rank == 2)
-            return {parameters[Bias].size()};
+            return {neurons_number};
         else
-            return {input_shape[0], parameters[Bias].size()};
+            return {input_shape[0], neurons_number};
     }
 
     Index get_sequence_length() const
@@ -179,6 +173,7 @@ public:
             throw runtime_error("Output shape size is not 1");
 
         input_shape = new_input_shape;
+        neurons_number = new_output_shape.back();
 
         set_activation_function(new_activation_function);
 

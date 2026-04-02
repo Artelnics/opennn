@@ -12,6 +12,7 @@
 #include "statistics.h"
 #include "scaling.h"
 #include "string_utilities.h"
+#include "math_utilities.h"
 #include "neural_network.h"
 
 namespace opennn
@@ -39,7 +40,7 @@ public:
 
     vector<Shape> get_forward_shapes(Index batch_size) const override
     {
-        return {Shape{batch_size}.append(input_shape)}; // Outputs
+        return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
     }
 
 
@@ -190,39 +191,39 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorView& input = forward_propagation.views[layer][Input][0];
+        const TensorView& input = forward_propagation.views[layer][0][0];
+        TensorView& output = forward_propagation.views[layer][Output][0];
 
-
-/*
         const Index features = scalers.size();
-        const Index total_rows = forward_propagation->inputs[0].size() / features;
+        if(features == 0) { opennn::copy(input, output); return; }
 
-        const MatrixMap inputs(forward_propagation->inputs[0].data, total_rows, features);
-        MatrixMap outputs(forward_propagation->outputs.data, total_rows, features);
-
-        outputs.noalias() = inputs;
+        const Index total_rows = input.size() / features;
+        const MatrixMap inputs(input.data, total_rows, features);
+        MatrixMap outputs(output.data, total_rows, features);
 
         for(Index i = 0; i < features; i++)
         {
             const string& scaler = scalers[i];
-            if(scaler == "None") continue;
-
             const Descriptives& descriptive = descriptives[i];
 
-            if(scaler == "MeanStandardDeviation")
-                outputs.col(i).array() = (outputs.col(i).array() - descriptive.mean) / (descriptive.standard_deviation + EPSILON);
+            if(scaler == "None")
+                outputs.col(i) = inputs.col(i);
+            else if(scaler == "MeanStandardDeviation")
+                outputs.col(i).array() = (inputs.col(i).array() - descriptive.mean)
+                                         / (descriptive.standard_deviation + EPSILON);
             else if(scaler == "MinimumMaximum")
-                outputs.col(i).array() = (outputs.col(i).array() - descriptive.minimum) / ((descriptive.maximum - descriptive.minimum) + EPSILON) * (max_range - min_range) + min_range;
+                outputs.col(i).array() = (inputs.col(i).array() - descriptive.minimum)
+                                         / ((descriptive.maximum - descriptive.minimum) + EPSILON)
+                                         * (max_range - min_range) + min_range;
             else if(scaler == "StandardDeviation")
-                outputs.col(i).array() /= (descriptive.standard_deviation + EPSILON);
+                outputs.col(i).array() = inputs.col(i).array() / (descriptive.standard_deviation + EPSILON);
             else if(scaler == "Logarithm")
-                outputs.col(i).array() = outputs.col(i).array().log();
+                outputs.col(i).array() = inputs.col(i).array().log();
             else if(scaler == "ImageMinMax")
-                outputs.col(i).array() /= type(255.0);
+                outputs.col(i).array() = inputs.col(i).array() / type(255.0);
             else
                 throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
         }
-*/
     }
 
 
@@ -432,7 +433,7 @@ public:
 
 private:
 
-    enum Forward {Input, Output};
+    enum Forward {Output = 1}; // slot 0 = wired input (implicit for all layers)
 
     vector<Descriptives> descriptives;
 

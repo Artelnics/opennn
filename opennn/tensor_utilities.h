@@ -410,14 +410,31 @@ void shuffle_rows(MatrixR& matrix);
 type* link(type*, vector<TensorView*>);
 void link(type*, vector<vector<TensorView*>>);
 
-inline Index get_size(const vector<Shape>&)
+inline Index get_size(const vector<Shape>& shapes)
 {
-    return 0;
+    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
+    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
+
+    Index total = 0;
+
+    for(const Shape& s : shapes)
+    {
+        const Index n = s.count();
+        if(n > 0)
+            total += (n + ALIGN_ELEMENTS - 1) & MASK;
+    }
+
+    return total;
 }
 
-inline Index get_size(const vector<vector<Shape>>&)
+inline Index get_size(const vector<vector<Shape>>& shapes)
 {
-    return 0;
+    Index total = 0;
+
+    for(const auto& layer_shapes : shapes)
+        total += get_size(layer_shapes);
+
+    return total;
 }
 
 

@@ -4137,7 +4137,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
     if(!new_dataset) return;
 
-    
+    samples_number = new_samples_number;
 
     dataset = const_cast<Dataset*>(new_dataset);
 
