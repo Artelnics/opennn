@@ -9,6 +9,7 @@
 #pragma once
 
 #include "dataset.h"
+#include "layer.h"
 #include "optimizer.h"
 
 namespace opennn
@@ -17,6 +18,86 @@ namespace opennn
 struct ForwardPropagation;
 struct BackPropagationLM;
 struct LevenbergMarquardtAlgorithmData;
+
+struct LayerBackPropagationLM
+{
+    virtual void initialize() = 0;
+
+    virtual vector<TensorView*> get_gradient_views();
+
+    virtual vector<TensorView*> get_workspace_views();
+
+    vector<TensorView> get_input_gradients() const;
+
+    Index batch_size = 0;
+
+    Layer* layer = nullptr;
+
+    vector<TensorView> input_gradients;
+    vector<TensorView> output_gradients;
+};
+
+struct NeuralNetworkBackPropagationLM
+{
+    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network = nullptr);
+
+    void set(const Index = 0, NeuralNetwork* = nullptr);
+
+    const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const;
+
+    NeuralNetwork* get_neural_network() const;
+
+    void print();
+
+    Index batch_size = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerBackPropagationLM>> layers;
+
+    VectorR gradient;
+
+    VectorR workspace;
+};
+
+struct BackPropagationLM
+{
+    BackPropagationLM(const Index = 0, Loss* = nullptr);
+    virtual ~BackPropagationLM() = default;
+
+    void set(const Index = 0, Loss* = nullptr);
+
+    void print() const;
+
+    TensorView get_output_gradients() const;
+
+    vector<vector<TensorView>> get_layer_gradients() const;
+
+    Index samples_number = 0;
+
+    VectorR output_gradients;
+    Shape output_gradient_dimensions;
+
+    Loss* loss = nullptr;
+
+    type error;
+    type regularization = type(0);
+    type loss_value = type(0);
+
+    NeuralNetworkBackPropagationLM neural_network;
+
+    VectorR errors;
+    VectorR squared_errors;
+    MatrixR squared_errors_jacobian;
+
+    VectorR gradient;
+    MatrixR hessian;
+
+    //VectorR regularization_gradient;
+    //MatrixR regularization_hessian;
+};
+
+
 
 class LevenbergMarquardtAlgorithm final : public Optimizer
 {
@@ -77,17 +158,21 @@ public:
    void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
-
-#ifdef CUDA
-
-   TrainingResults train_cuda() override 
-   {
-       throw runtime_error("CUDA train_cuda is not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
-   }
-
-#endif
    
 private:
+
+   VectorR calculate_numerical_gradient_lm();
+
+   void compute_jacobian(const Batch& batch,
+                         const ForwardPropagation& fp,
+                         BackPropagationLM& bp_lm);
+
+   // Specific logic for Dense layers
+   void insert_dense_jacobian(const Dense<2>* layer,
+                              const ForwardPropagation& fp,
+                              Index layer_index,
+                              Index parameter_offset,
+                              MatrixR& jacobian);
 
    type damping_parameter = type(0);
 

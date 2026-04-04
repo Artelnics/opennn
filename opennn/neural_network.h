@@ -275,30 +275,6 @@ protected:
 
 };
 
-
-struct NeuralNetworkBackPropagationLM
-{
-    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network = nullptr);
-
-    void set(const Index = 0, NeuralNetwork* = nullptr);
-
-    const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const;
-
-    NeuralNetwork* get_neural_network() const;
-
-    void print();
-
-    Index batch_size = 0;
-
-    NeuralNetwork* neural_network = nullptr;
-
-    vector<unique_ptr<LayerBackPropagationLM>> layers;
-
-    VectorR gradient;
-
-    VectorR workspace;
-};
-
 }
 
 // OpenNN: Open Neural Networks Library.

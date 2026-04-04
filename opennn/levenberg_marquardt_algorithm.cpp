@@ -162,6 +162,415 @@ void LevenbergMarquardtAlgorithm::check() const
         throw runtime_error("Pointer to neural network is nullptr.");
 }
 
+void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
+                                                   const ForwardPropagation& fp,
+                                                   BackPropagationLM& bp_lm)
+{
+    NeuralNetwork* nn = loss->get_neural_network();
+    const auto& layers = nn->get_layers();
+    const Index batch_size = fp.batch_size;
+    const Index network_outputs = nn->get_outputs_number();
+
+    bp_lm.jacobian.setZero();
+
+    // Mapping layer parameters to Jacobian columns
+    Index parameter_offset = 0;
+
+    for (Index i = 0; i < layers.size(); ++i) {
+        if (!layers[i]->get_is_trainable()) continue;
+
+        // Directly handle Dense layers
+        if (auto* dense = dynamic_cast<Dense<2>*>(layers[i].get())) {
+            insert_dense_jacobian(dense, fp, i, parameter_offset, bp_lm.jacobian);
+        }
+
+        parameter_offset += layers[i]->get_parameters_number();
+    }
+}
+
+VectorR Loss::calculate_numerical_gradient_lm()
+{
+    const Index samples_number = dataset->get_samples_number("Training");
+
+    const vector<Index> training_indices = dataset->get_sample_indices("Training");
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    Batch batch(samples_number, dataset);
+    batch.fill(training_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    BackPropagationLM back_propagation_lm(samples_number, this);
+
+    VectorR& parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+    type h = 0;
+
+    VectorR parameters_forward = parameters;
+    VectorR parameters_backward = parameters;
+
+    type error_forward = 0;
+    type error_backward = 0;
+
+    VectorR numerical_gradient_lm(parameters_number);
+    numerical_gradient_lm.setConstant(type(0));
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        h = calculate_h(parameters(i));
+
+        parameters_forward(i) += h;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          parameters_forward,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        error_forward = back_propagation_lm.error;
+
+        parameters_forward(i) -= h;
+
+        parameters_backward(i) -= h;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          parameters_backward,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        error_backward = back_propagation_lm.error;
+
+        parameters_backward(i) += h;
+
+        numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
+    }
+
+    return numerical_gradient_lm;
+}
+
+MatrixR Loss::calculate_numerical_jacobian()
+{
+    const Index samples_number = dataset->get_samples_number("Training");
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    Batch batch(samples_number, dataset);
+    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+    BackPropagationLM back_propagation_lm(samples_number, this);
+
+    VectorR& parameters = neural_network->get_parameters();
+    const Index parameters_number = parameters.size();
+
+    const Index total_error_terms = back_propagation_lm.squared_errors.size();
+
+    type perturbation;
+
+    VectorR parameters_forward(parameters);
+    VectorR parameters_backward(parameters);
+
+    VectorR error_terms_forward(total_error_terms);
+    VectorR error_terms_backward(total_error_terms);
+
+    MatrixR jacobian(total_error_terms, parameters_number);
+
+    for(Index j = 0; j < parameters_number; j++)
+    {
+        perturbation = calculate_h(parameters(j));
+
+        parameters_backward(j) -= perturbation;
+        neural_network->forward_propagate(batch.get_inputs(), parameters_backward, forward_propagation);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+        error_terms_backward = back_propagation_lm.squared_errors;
+        parameters_backward(j) += perturbation;
+
+        parameters_forward(j) += perturbation;
+        neural_network->forward_propagate(batch.get_inputs(), parameters_forward, forward_propagation);
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+        error_terms_forward = back_propagation_lm.squared_errors;
+        parameters_forward(j) -= perturbation;
+
+        for(Index i = 0; i < total_error_terms; i++)
+            jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i)) / (type(2.0) * perturbation);
+    }
+
+    return jacobian;
+}
+
+MatrixR Loss::calculate_numerical_hessian()
+{
+    const Index samples_number = dataset->get_samples_number("Training");
+
+    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+
+    Batch batch(samples_number, dataset);
+    batch.fill(sample_indices, input_feature_indices, {}, target_feature_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    BackPropagationLM back_propagation_lm(samples_number, this);
+
+    VectorR& parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+    neural_network->forward_propagate(batch.get_inputs(),
+                                      parameters,
+                                      forward_propagation);
+
+    calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+    calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+    calculate_error(batch, forward_propagation, back_propagation_lm);
+
+    const type y = back_propagation_lm.error;
+
+    MatrixR H(parameters_number, parameters_number);
+    H.setZero();
+
+    type h_i;
+    type h_j;
+
+    VectorR x_backward_2i = parameters;
+    VectorR x_backward_i = parameters;
+
+    VectorR x_forward_i = parameters;
+    VectorR x_forward_2i = parameters;
+
+    VectorR x_backward_ij = parameters;
+    VectorR x_forward_ij = parameters;
+
+    VectorR x_backward_i_forward_j = parameters;
+    VectorR x_forward_i_backward_j = parameters;
+
+    type y_backward_2i;
+    type y_backward_i;
+
+    type y_forward_i;
+    type y_forward_2i;
+
+    type y_backward_ij;
+    type y_forward_ij;
+
+    type y_backward_i_forward_j;
+    type y_forward_i_backward_j;
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        h_i = calculate_h(parameters(i));
+
+        x_backward_2i(i) -= static_cast<type>(2.0) * h_i;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          x_backward_2i,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        y_backward_2i = back_propagation_lm.error;
+
+        x_backward_2i(i) += static_cast<type>(2.0) * h_i;
+
+        x_backward_i(i) -= h_i;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          x_backward_i,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        y_backward_i = back_propagation_lm.error;
+
+        x_backward_i(i) += h_i;
+
+        x_forward_i(i) += h_i;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          x_forward_i,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        y_forward_i = back_propagation_lm.error;
+
+        x_forward_i(i) -= h_i;
+
+        x_forward_2i(i) += static_cast<type>(2.0) * h_i;
+
+        neural_network->forward_propagate(batch.get_inputs(),
+                                          x_forward_2i,
+                                          forward_propagation);
+
+        calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error(batch, forward_propagation, back_propagation_lm);
+
+        y_forward_2i = back_propagation_lm.error;
+
+        x_forward_2i(i) -= static_cast<type>(2.0) * h_i;
+
+        H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * pow(h_i, type(2)));
+
+        for(Index j = i; j < parameters_number; j++)
+        {
+            // if(j == i)
+            // continue;
+
+            h_j = calculate_h(parameters(j));
+
+            x_backward_ij(i) -= h_i;
+            x_backward_ij(j) -= h_j;
+
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              x_backward_ij,
+                                              forward_propagation);
+
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error(batch, forward_propagation, back_propagation_lm);
+
+            y_backward_ij = back_propagation_lm.error;
+
+            x_backward_ij(i) += h_i;
+            x_backward_ij(j) += h_j;
+
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
+
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              x_forward_ij,
+                                              forward_propagation);
+
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error(batch, forward_propagation, back_propagation_lm);
+
+            y_forward_ij = back_propagation_lm.error;
+
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
+
+            x_backward_i_forward_j(i) -= h_i;
+            x_backward_i_forward_j(j) += h_j;
+
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              x_backward_i_forward_j,
+                                              forward_propagation);
+
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error(batch, forward_propagation, back_propagation_lm);
+
+            y_backward_i_forward_j = back_propagation_lm.error;
+
+            x_backward_i_forward_j(i) += h_i;
+            x_backward_i_forward_j(j) -= h_j;
+
+            x_forward_i_backward_j(i) += h_i;
+            x_forward_i_backward_j(j) -= h_j;
+
+            neural_network->forward_propagate(batch.get_inputs(),
+                                              x_forward_i_backward_j,
+                                              forward_propagation);
+
+            calculate_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error(batch, forward_propagation, back_propagation_lm);
+
+            y_forward_i_backward_j = back_propagation_lm.error;
+
+            x_forward_i_backward_j(i) -= h_i;
+            x_forward_i_backward_j(j) += h_j;
+
+            H(i, j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij) / (type(4.0) * h_i * h_j);
+        }
+    }
+
+    for(Index i = 0; i < parameters_number; i++)
+        for(Index j = 0; j < i; j++)
+            H(i, j) = H(j, i);
+
+    return H;
+}
+
+void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
+                                                        const ForwardPropagation& fp,
+                                                        Index layer_index,
+                                                        Index parameter_offset,
+                                                        MatrixR& jacobian)
+{
+    const Index batch_size = fp.batch_size;
+    const Index num_neurons = layer->get_outputs_number();
+    const Index num_inputs = layer->get_input_shape().count();
+
+    // Access activations from the forward propagation views
+    // Slot 0 is usually Input, Slot 2 is usually Output (based on your Dense class)
+    const MatrixMap inputs = fp.views[layer_index][0][0].as_matrix();
+
+    // For every sample in the batch
+    for (Index s = 0; s < batch_size; ++s) {
+        // For every neuron in this layer
+        for (Index j = 0; j < num_neurons; ++j) {
+            // The row in the Jacobian corresponds to an error term.
+            // For MSE, there is one error term per output neuron per sample.
+            // Note: This logic assumes this is the output layer.
+            // If it's a hidden layer, you'd apply the chain rule (backprop delta).
+            Index row = s * num_neurons + j;
+
+            // Jacobian column for Bias
+            jacobian(row, parameter_offset + j) = 1.0f;
+
+            // Jacobian columns for Weights
+            for (Index k = 0; k < num_inputs; ++k) {
+                Index weight_col = parameter_offset + num_neurons + (k * num_neurons) + j;
+                jacobian(row, weight_col) = inputs(s, k);
+            }
+        }
+    }
+}
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {

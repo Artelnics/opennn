@@ -8,7 +8,6 @@
 
 #include "registry.h"
 #include "dataset.h"
-#include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -114,7 +113,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);

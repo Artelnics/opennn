@@ -16,9 +16,6 @@ namespace opennn
 
 struct ForwardPropagation;
 struct BackPropagation;
-struct BackPropagationLM;
-
-struct LayerBackPropagationLM;
 
 #ifdef _MSC_VER
 #define FORCE_INLINE __forceinline
@@ -87,12 +84,6 @@ public:
     // Back propagation
 
     virtual void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const {}
-
-    virtual void back_propagate(ForwardPropagation&, BackPropagationLM&, size_t) const {}
-
-    virtual void insert_squared_errors_Jacobian_lm(BackPropagationLM&,
-                                                   Index,
-                                                   MatrixR&) const {}
 
     virtual void from_XML(const tinyxml2::XMLDocument&) {}
 
@@ -333,23 +324,6 @@ struct LayerForwardPropagation
 };
 */
 
-struct LayerBackPropagationLM
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_gradient_views();
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    vector<TensorView> get_input_gradients() const;
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> input_gradients;
-    vector<TensorView> output_gradients;
-};
 }
 
 // OpenNN: Open Neural Networks Library.

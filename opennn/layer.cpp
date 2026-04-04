@@ -26,28 +26,6 @@ vector<TensorView*> LayerForwardPropagation::get_workspace_views()
 }
 */
 
-vector<TensorView *> LayerBackPropagationLM::get_gradient_views()
-{
-    return {};
-}
-
-
-vector<TensorView *> LayerBackPropagationLM::get_workspace_views()
-{
-    vector<TensorView*> views;
-
-    for(TensorView& view : input_gradients)
-        views.push_back(&view);
-
-    return views;
-}
-
-
-vector<TensorView> LayerBackPropagationLM::get_input_gradients() const
-{
-    return input_gradients;
-}
-
 
 bool Layer::get_display() const
 {

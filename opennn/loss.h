@@ -18,7 +18,6 @@ class Dataset;
 struct Batch;
 struct ForwardPropagation;
 struct BackPropagation;
-struct BackPropagationLM;
 
 #ifdef CUDA
 struct BatchCuda;
@@ -88,7 +87,6 @@ public:
                          BackPropagation&) const;
 
     void add_regularization(BackPropagation&) const;
-    void add_regularization(BackPropagationLM&) const;
 
     void set_loss_method(const LossMethod&);
     void set_loss_method(const string&);
@@ -109,47 +107,15 @@ public:
                         ForwardPropagation&,
                         BackPropagation&) const;
 
-    // Back propagation LM
-
-    void calculate_errors(const Batch&,
-                          const ForwardPropagation&,
-                          BackPropagationLM&) const;
-
-    virtual void calculate_squared_errors(const Batch&,
-                                          const ForwardPropagation&,
-                                          BackPropagationLM&) const;
-
-    virtual void calculate_error(const Batch&,
-                                 const ForwardPropagation&,
-                                 BackPropagationLM&) const {}
-
-    virtual void calculate_output_gradients(const Batch&,
-                                            ForwardPropagation&,
-                                            BackPropagationLM&) const {}
-
-    void calculate_layers_squared_errors_jacobian(const Batch&,
-                                                  ForwardPropagation&,
-                                                  BackPropagationLM&) const;
-
-    virtual void calculate_error_gradient(const Batch&,
-                                          BackPropagationLM&) const;
-
-    virtual void calculate_error_hessian(const Batch&,
-                                         BackPropagationLM&) const {}
-
-    void back_propagate(const Batch&,
-                        ForwardPropagation&,
-                        BackPropagationLM&) const;
-
     // Regularization
 
     type calculate_regularization(const VectorR&) const;
 
     // Serialization
 
-    virtual void from_XML(const XMLDocument&) = 0;
+    void from_XML(const XMLDocument&);
 
-    virtual void to_XML(XMLPrinter&) const;
+    void to_XML(XMLPrinter&) const;
 
     void regularization_from_XML(const XMLDocument&);
     void write_regularization_XML(XMLPrinter&) const;
@@ -165,7 +131,6 @@ public:
     VectorR calculate_gradient();
 
     VectorR calculate_numerical_gradient();
-    VectorR calculate_numerical_gradient_lm();
     MatrixR calculate_numerical_jacobian();
     VectorR calculate_numerical_input_gradients();
     MatrixR calculate_numerical_hessian();
@@ -192,44 +157,6 @@ protected:
 
     bool display = true;
     string name = "Loss";
-};
-
-
-struct BackPropagationLM
-{
-    BackPropagationLM(const Index = 0, Loss* = nullptr);
-    virtual ~BackPropagationLM() = default;
-
-    void set(const Index = 0, Loss* = nullptr);
-
-    void print() const;
-
-    TensorView get_output_gradients() const;
-
-    vector<vector<TensorView>> get_layer_gradients() const;
-
-    Index samples_number = 0;
-
-    VectorR output_gradients;
-    Shape output_gradient_dimensions;
-
-    Loss* loss = nullptr;
-
-    type error;
-    type regularization = type(0);
-    type loss_value = type(0);
-
-    NeuralNetworkBackPropagationLM neural_network;
-
-    VectorR errors;
-    VectorR squared_errors;
-    MatrixR squared_errors_jacobian;
-
-    VectorR gradient;
-    MatrixR hessian;
-
-    //VectorR regularization_gradient;
-    //MatrixR regularization_hessian;
 };
 
 
