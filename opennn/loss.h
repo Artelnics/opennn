@@ -31,10 +31,20 @@ class Loss
 
 public:
 
+    enum class LossMethod {MeanSquaredError,
+                           NormalizedSquaredError,
+                           WeightedSquaredError,
+                           CrossEntropy,
+                           MinkowskiError};
+
+    enum class RegularizationMethod{L1,
+                                    L2,
+                                    ElasticNet,
+                                    NoRegularization};
+
     Loss(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
     virtual ~Loss() = default;
 
-    enum class RegularizationMethod{L1, L2, ElasticNet, NoRegularization};
 
     inline NeuralNetwork* get_neural_network() const
     {
@@ -73,16 +83,19 @@ public:
 
     // Back propagation
 
-    virtual void calculate_error(const Batch&,
-                                 const ForwardPropagation&,
-                                 BackPropagation&) const = 0;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const;
 
     void add_regularization(BackPropagation&) const;
     void add_regularization(BackPropagationLM&) const;
 
-    virtual void calculate_output_gradients(const Batch&,
-                                        ForwardPropagation&,
-                                        BackPropagation&) const = 0;
+    void set_loss_method(const LossMethod&);
+    void set_loss_method(const string&);
+
+    void calculate_output_gradients(const Batch&,
+                                    ForwardPropagation&,
+                                    BackPropagation&) const;
 
     void calculate_layers_error_gradient(const Batch&,
                                          ForwardPropagation&,
@@ -158,49 +171,27 @@ public:
     MatrixR calculate_numerical_hessian();
     MatrixR calculate_inverse_hessian();
 
-#ifdef CUDA
-
-public:
-
-    virtual void calculate_error(const BatchCuda&,
-                                 const ForwardPropagationCuda&,
-                                 BackPropagationCuda&) const = 0;
-
-    virtual void calculate_output_gradients(const BatchCuda&,
-                                            ForwardPropagationCuda&,
-                                            BackPropagationCuda&) const = 0;
-
-    void calculate_layers_error_gradient(const BatchCuda&,
-                                         ForwardPropagationCuda&,
-                                         BackPropagationCuda&) const;
-
-    void back_propagate(const BatchCuda&,
-                        ForwardPropagationCuda&,
-                        BackPropagationCuda&);
-
-    void add_regularization(BackPropagationCuda&) const;
-
-
-    TensorCuda calculate_gradient_cuda();
-
-
-#endif
-
     void print(){}
 
 protected:
 
-    NeuralNetwork* neural_network = nullptr;
+    LossMethod method = LossMethod::MeanSquaredError;
 
+    // Method-specific parameters
+    type normalization_coefficient = 1.0f;
+    type positives_weight = 1.0f;
+    type negatives_weight = 1.0f;
+    type minkowski_parameter = 1.5f;
+
+    // Regularization
+    string regularization_method = "L2";
+    type regularization_weight = 0.001f;
+
+    NeuralNetwork* neural_network = nullptr;
     Dataset* dataset = nullptr;
 
-    string regularization_method = "L2";
-
-    type regularization_weight = type(0.01);
-
     bool display = true;
-
-    string name;
+    string name = "Loss";
 };
 
 
@@ -284,55 +275,6 @@ struct BackPropagation
     bool built_mask = false;
     type loss_value = type(0);
 };
-
-
-#ifdef CUDA
-
-struct BackPropagationCuda
-{
-    BackPropagationCuda(const Index = 0, Loss* = nullptr);
-    ~BackPropagationCuda() { free(); }
-
-    void set(const Index = 0, Loss* = nullptr);
-
-    vector<vector<TensorView>> get_layer_gradients_device() const;
-
-    TensorView get_output_gradients_device() const;
-
-    void print() const;
-
-    void free();
-
-    Index samples_number = 0;
-
-    Loss* loss = nullptr;
-
-    NeuralNetworkBackPropagationCuda neural_network;
-
-    type error;
-    float* errors = nullptr;
-    float* error_device = nullptr;
-
-    type regularization = type(0);
-    type loss_value = type(0);
-
-    cudnnReduceTensorDescriptor_t reduce_tensor_descriptor;
-
-    void* workspace = nullptr;
-    size_t workspace_size = 0;
-
-    cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
-
-    TensorCuda output_gradients;
-
-    Tensor0 accuracy;
-    TensorCuda predictions;
-    TensorCuda matches;
-    TensorCuda mask;
-    bool built_mask = false;
-};
-
-#endif
 
 }
 

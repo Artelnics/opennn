@@ -415,56 +415,80 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
 
 
 inline void batch_normalization_backward(
-    const TensorView& output_gradients,
-    const TensorView& normalized_inputs,
-    const TensorView& standard_deviations,
-    const TensorView& gammas,
-    TensorView& gamma_gradients,
-    TensorView& beta_gradients,
-    TensorView& input_gradients)
+    const TensorView& input,
+    const TensorView& output,
+    const TensorView& output_gradient,
+    const TensorView& mean,
+    const TensorView& inverse_variance, // Stored as 1/sqrt(variance + epsilon)
+    const TensorView& gamma,
+    TensorView& gamma_gradient,
+    TensorView& beta_gradient,
+    TensorView& input_gradient)
 {
 #ifndef CUDA
-    const Index neurons_number = gammas.size();
-    const Index batch_size = output_gradients.size() / neurons_number;
+    const Index neurons_number = gamma.size();
+    // Handles Dense (batch) and Convolutional (batch * height * width)
+    const Index effective_batch_size = input.size() / neurons_number;
 
-    MatrixMap output_gradients_matrix = output_gradients.as_matrix();
-    MatrixMap normalized_inputs_matrix = normalized_inputs.as_matrix();
-/*
-    gamma_gradients.as_vector().noalias() = (output_gradients_matrix.array() * normalized_inputs_matrix.array()).colwise().sum();
-    beta_gradients.as_vector().noalias() = output_gradients_matrix.colwise().sum();
+    const MatrixMap input_matrix(input.data, effective_batch_size, neurons_number);
+    const MatrixMap output_gradients(output_gradient.data, effective_batch_size, neurons_number);
 
-    const type inverse_batch_size = type(1) / batch_size;
+    const VectorMap means = mean.as_vector();
+    const VectorMap inverse_variances = inverse_variance.as_vector();
+    const VectorMap gammas = gamma.as_vector();
 
-    VectorR sum_output_gradients_gammas = (output_gradients_matrix.rowwise() * gammas.as_vector().transpose()).colwise().sum();
-    VectorR sum_output_gradients_gammas_normalized = (output_gradients_matrix.array() * gammas.as_vector().transpose().array() * normalized_inputs_matrix.array()).colwise().sum();
+    VectorMap gamma_gradients = gamma_gradient.as_vector();
+    VectorMap beta_gradients = beta_gradient.as_vector();
+    MatrixMap input_gradients(input_gradient.data, effective_batch_size, neurons_number);
 
-    input_gradients.as_matrix().array() = (type(1) / (batch_size * (standard_deviations.as_vector().array() + EPSILON))).transpose() *
-                                          (batch_size * output_gradients_matrix.array() * gammas.as_vector().transpose().array() -
-                                           sum_output_gradients_gammas.transpose().array() -
-                                           normalized_inputs_matrix.array() * sum_output_gradients_gammas_normalized.transpose().array());
-*/
+    // 1. Calculate x_hat (normalized input) using inverse_variance
+    const MatrixR x_hat = (input_matrix.rowwise() - means.transpose()).array().rowwise() * inverse_variances.transpose().array();
+
+    // 2. Beta gradient: sum of output gradients
+    beta_gradients.noalias() = output_gradients.colwise().sum();
+
+    // 3. Gamma gradient: sum of (output gradient * x_hat)
+    gamma_gradients.noalias() = (output_gradients.array() * x_hat.array()).colwise().sum();
+
+    // 4. Input gradient (input_gradient):
+    // Formula: (gamma * inv_std / m) * (m * dy - sum_dy - x_hat * sum_dy_xhat)
+    const type batch_size_type = static_cast<type>(effective_batch_size);
+
+    input_gradients.array() = (gammas.array() * inverse_variances.array() / batch_size_type).transpose().replicate(effective_batch_size, 1) *
+                              (batch_size_type * output_gradients.array() -
+                               beta_gradients.transpose().replicate(effective_batch_size, 1).array() -
+                               x_hat.array() * gamma_gradients.transpose().replicate(effective_batch_size, 1).array());
+
 #else
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    // Use SPATIAL for 4D (Conv) and PER_ACTIVATION for 2D (Dense)
+
+    const cudnnBatchNormMode_t mode = (input.rank() == 4)
+        ? CUDNN_BATCHNORM_SPATIAL
+        : CUDNN_BATCHNORM_PER_ACTIVATION;
+
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         get_cudnn_handle(),
-        CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha, &beta,
-        &alpha, &beta,
-        outputs.get_descriptor(),
-        use_combinations ? combinations : outputs_view.data,
-        gradients_tensor_descriptor,
-        output_gradients_data,
-        gradients_tensor_descriptor,
-        output_gradients_data,
-        gammas_device.get_descriptor(),
-        gammas_device.data,
-        gamma_gradients.data,
-        beta_gradients.data,
+        mode,
+        &alpha, &beta, // Data alpha/beta
+        &alpha, &beta, // Param alpha/beta
+        input.get_descriptor(),
+        input.data,
+        output_gradient.get_descriptor(),
+        output_gradient.data,
+        input_gradient.get_descriptor(),
+        input_gradient.data,
+        gamma.get_descriptor(),
+        gamma.data,
+        gamma_gradient.data,
+        beta_gradient.data,
         EPSILON,
-        means.data,
+        mean.data,
         inverse_variance.data));
 #endif
 }
-
 
 inline void combination(const TensorView& input,
                         const TensorView& weights,
@@ -484,95 +508,65 @@ inline void combination(const TensorView& input,
 #endif
 }
 
-inline void batch_normalization_training(TensorView& output,
-                                         const TensorView& gammas,
-                                         const TensorView& betas,
-                                         VectorR& running_means,
-                                         VectorR& running_variances,
-                                         type momentum = type(0.9))
+inline void batch_normalization_training(
+    const TensorView& input,
+    const TensorView& gamma,
+    const TensorView& beta,
+    VectorR& running_mean,
+    VectorR& running_variance,
+    TensorView& mean,             // Output: current batch mean
+    TensorView& inverse_variance, // Output: current batch 1/sqrt(var + epsilon)
+    TensorView& output,
+    type momentum = type(0.9))
 {
 #ifndef CUDA
-    const Index neurons = running_means.size();
-    const Index total_rows = output.size() / neurons;
+    const Index neurons_number = gamma.size();
+    const Index effective_batch_size = input.size() / neurons_number;
 
-    MatrixMap outputs_mat(output.data, total_rows, neurons);
+    const MatrixMap input_matrix(input.data, effective_batch_size, neurons_number);
+    MatrixMap output_matrix(output.data, effective_batch_size, neurons_number);
 
-    // @todo memory
+    const VectorMap gammas = gamma.as_vector();
+    const VectorMap betas = beta.as_vector();
 
-    VectorR means = outputs_mat.colwise().mean();
-    MatrixR norm_mat = outputs_mat.rowwise() - means.transpose();
-    VectorR standard_deviations = (norm_mat.array().square().colwise().mean() + EPSILON).sqrt();
+    VectorMap means = mean.as_vector();
+    VectorMap inverse_variances = inverse_variance.as_vector();
 
-    norm_mat.array().rowwise() /= standard_deviations.transpose().array();
+    means = input_matrix.colwise().mean();
 
-    running_means = running_means * momentum + means * (type(1) - momentum);
-    running_variances = running_variances * momentum + standard_deviations * (type(1) - momentum);
+    const VectorR batch_variance = (input_matrix.rowwise() - means.transpose()).array().square().colwise().mean();
+    inverse_variances.array() = 1.0f / (batch_variance.array() + EPSILON).sqrt();
 
-    const VectorMap gammas_vec(gammas.data, neurons);
-    const VectorMap betas_vec(betas.data, neurons);
+    running_mean = running_mean * momentum + means * (type(1) - momentum);
+    running_variance = running_variance * momentum + batch_variance * (type(1) - momentum);
 
-    outputs_mat.array() = (norm_mat.array().rowwise() * gammas_vec.transpose().array()).rowwise() +
-                          betas_vec.transpose().array();
+    output_matrix.array() = (input_matrix.rowwise() - means.transpose()).array().rowwise() *
+                            (inverse_variances.array() * gammas.array()).transpose();
+
+    output_matrix.rowwise() += betas.transpose();
+
 #else
+    const float alpha = 1.0f;
+    const float beta_add = 0.0f;
+    const cudnnBatchNormMode_t mode = (input.rank() == 4)
+        ? CUDNN_BATCHNORM_SPATIAL
+        : CUDNN_BATCHNORM_PER_ACTIVATION;
+
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         get_cudnn_handle(),
-        CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha_one, &beta_zero,
+        mode,
+        &alpha, &beta_add,
+        input.get_descriptor(), input.data,
         output.get_descriptor(), output.data,
-        output.get_descriptor(), output.data,
-        gammas.get_descriptor(),
-        gammas.data,
-        betas.data,
-        momentum,
-        running_means.data(),
-        running_variances.data(),
+        gamma.get_descriptor(), gamma.data,
+        beta.data,
+        static_cast<double>(momentum),
+        running_mean.data(), running_variance.data(),
         EPSILON,
-        nullptr,
-        nullptr));
+        mean.data,
+        inverse_variance.data));
 #endif
 }
-
-
-inline void batch_normalization_inference(
-    TensorView& output,
-    const TensorView& gammas,
-    const TensorView& betas,
-    const VectorR& running_means,
-    const VectorR& running_variances)
-{
-#ifndef CUDA
-    const Index neurons = running_means.size();
-    const Index total_rows = output.size() / neurons;
-
-    MatrixMap outputs_mat(output.data, total_rows, neurons);
-
-    const VectorMap gammas_vec(gammas.data, neurons);
-    const VectorMap betas_vec(betas.data, neurons);
-
-    const VectorR scale = gammas_vec.array() / (running_variances.array() + EPSILON);
-    const VectorR shift = betas_vec.array() - running_means.array() * scale.array();
-
-    outputs_mat.array() = (outputs_mat.array().rowwise() * scale.transpose().array()).rowwise() +
-                          shift.transpose().array();
-#else
-    CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
-        get_cudnn_handle(),
-        CUDNN_BATCHNORM_PER_ACTIVATION,
-        &alpha_one,
-        &beta_zero,
-        output.get_descriptor(),
-        output.data,
-        output.get_descriptor(),
-        output.data,
-        gammas.get_descriptor(),
-        gammas.data,
-        betas.data,
-        running_means.data(),
-        running_variances.data(),
-        EPSILON));
-#endif
-}
-
 
 inline void activation(TensorView& output, const string& function)
 {
@@ -615,28 +609,22 @@ inline void activation(TensorView& output, const string& function)
     }
 */
 #else
-    if (function == "Softmax")
-    {
-        CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-                                        CUDNN_SOFTMAX_ACCURATE,
-                                        CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
-                                        &alpha_one,
-                                        output.get_descriptor(), output.data,
-                                        &beta_zero,
-                                        output.get_descriptor(), output.data));
-    }
-    else
-    {
-        CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-                                           act_desc,
-                                           &alpha,
-                                           output.get_descriptor(), output.data,
-                                           &beta,
-                                           output.get_descriptor(), output.data));
-    }
+    function == "Softmax"
+        ? CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
+            CUDNN_SOFTMAX_ACCURATE,
+            CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
+            &alpha_one,
+            output.get_descriptor(), output.data,
+            &beta_zero,
+            output.get_descriptor(), output.data))
+        : CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
+            act_desc,
+            &alpha,
+            output.get_descriptor(), output.data,
+            &beta,
+            output.get_descriptor(), output.data));
 #endif
 }
-
 
 
 inline void activation_gradient(const TensorView& outputs,

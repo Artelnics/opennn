@@ -79,7 +79,6 @@ private:
 
     enum Forward {Input, NormalizedOutput, Output};
 
-
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         const Index output_dimension = get_outputs_number();

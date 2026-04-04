@@ -9,7 +9,8 @@
 #include "tensor_utilities.h"
 #include "dataset.h"
 #include "loss.h"
-#include "cross_entropy_error_3d.h"
+#include "error_utilities.h"
+//#include "cross_entropy_error_3d.h"
 #include "../eigen/Eigen/LU"
 
 namespace opennn
@@ -57,6 +58,8 @@ void Loss::set(const NeuralNetwork* new_neural_network, const Dataset* new_datas
     dataset = const_cast<Dataset*>(new_dataset);
 
     regularization_method = "L2";
+    set_loss_method(LossMethod::MeanSquaredError);
+
 }
 
 
@@ -133,15 +136,77 @@ void Loss::back_propagate(const Batch& batch,
     add_regularization_to_gradients(back_propagation);
 }
 
+void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+{
+    const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+    const TensorView target = batch.get_targets();
+
+    // workspace_device is used by CUDA to store intermediate diffs or CE values
+#ifdef CUDA
+    float* workspace_device = back_propagation.errors;
+#else
+    float* workspace_device = nullptr;
+#endif
+
+    switch(method)
+    {
+    case LossMethod::MeanSquaredError:
+        mean_squared_error(input, target, back_propagation.error, workspace_device);
+        break;
+    case LossMethod::NormalizedSquaredError:
+        normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
+        break;
+    case LossMethod::WeightedSquaredError:
+        weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
+        break;
+    case LossMethod::CrossEntropy:
+        // Math utility handles logic based on num_classes (input.shape.back())
+        if (input.shape.back() == 1)
+            binary_cross_entropy(input, target, back_propagation.error, workspace_device);
+        else
+            categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
+        break;
+    case LossMethod::MinkowskiError:
+        minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
+        break;
+    }
+}
+
+void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+{
+    const TensorView input = forward_propagation.get_last_trainable_layer_outputs();
+    const TensorView target = batch.get_targets();
+    TensorView input_gradient = back_propagation.get_output_gradients();
+
+    switch(method)
+    {
+    case LossMethod::MeanSquaredError:
+        mean_squared_error_gradient(input, target, input_gradient);
+        break;
+    case LossMethod::NormalizedSquaredError:
+        normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
+        break;
+    case LossMethod::WeightedSquaredError:
+        // Passing 1.0/N as coefficient to match MSE style if required
+        weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, 1.0f, input_gradient);
+        break;
+    case LossMethod::CrossEntropy:
+        cross_entropy_gradient(input, target, input_gradient);
+        break;
+    case LossMethod::MinkowskiError:
+        minkowski_error_gradient(input, target, minkowski_parameter, input_gradient);
+        break;
+    }
+}
+
+
 
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
-    if(regularization_method == "None" || regularization_weight == 0)
-        return;
+    if(regularization_method == "None") return;
 
-    const VectorR& parameters = neural_network->get_parameters();
-
-    back_propagation.loss_value += calculate_regularization(parameters);
+    const VectorR& params_vec = neural_network->get_parameters();
+    back_propagation.loss_value += calculate_regularization(params_vec);
 }
 
 
@@ -269,16 +334,19 @@ string Loss::get_name() const
 }
 
 
-type Loss::calculate_regularization(const VectorR& parameters) const
+type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
-    if(regularization_method == "None")
-        return type(0);
-    else if(regularization_method == "L1")
-        return regularization_weight * parameters.lpNorm<1>();
-    else if(regularization_method == "L2")
-        return 0.5f * regularization_weight * parameters.squaredNorm();
-    else
-        throw runtime_error("Unknown regularization method: " + regularization_method);
+    if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
+
+    TensorView parameters((type*)parameters_vec.data(), { (Index)parameters_vec.size() });
+    type penalty = 0.0f;
+
+    if (regularization_method == "L1")
+        l1_regularization(parameters, regularization_weight, penalty);
+    else if (regularization_method == "L2")
+        l2_regularization(parameters, regularization_weight, penalty);
+
+    return penalty;
 }
 
 
@@ -295,6 +363,7 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
+
 /*
     back_propagation.neural_network.layers[last_trainable_layer_index]->output_gradients[0] = back_propagation.get_output_gradients();
 
@@ -304,36 +373,48 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 }
 
 
-void Loss::add_regularization_gradient(VectorR& gradient) const
+void Loss::set_loss_method(const LossMethod& new_method)
 {
-    if (regularization_method == "None" || regularization_weight == 0)
-        return;
+    method = new_method;
 
-    const VectorR& parameters = neural_network->get_parameters();
+    if (method == LossMethod::MeanSquaredError) name = "MeanSquaredError";
+    else if (method == LossMethod::NormalizedSquaredError) name = "NormalizedSquaredError";
+    else if (method == LossMethod::WeightedSquaredError) name = "WeightedSquaredError";
+    else if (method == LossMethod::CrossEntropy) name = "CrossEntropy";
+    else if (method == LossMethod::MinkowskiError) name = "MinkowskiError";
+}
+
+void Loss::set_loss_method(const string& new_name)
+{
+    if (new_name == "MeanSquaredError") set_loss_method(LossMethod::MeanSquaredError);
+    else if (new_name == "NormalizedSquaredError") set_loss_method(LossMethod::NormalizedSquaredError);
+    else if (new_name == "WeightedSquaredError") set_loss_method(LossMethod::WeightedSquaredError);
+    else if (new_name == "CrossEntropy") set_loss_method(LossMethod::CrossEntropy);
+    else if (new_name == "MinkowskiError") set_loss_method(LossMethod::MinkowskiError);
+    else throw runtime_error("Unknown loss method: " + new_name);
+}
+
+void Loss::add_regularization_gradient(VectorR& gradient_vec) const
+{
+    if(regularization_method == "None" || regularization_weight == 0.0f) return;
+
+    const VectorR& params_vec = neural_network->get_parameters();
+
+    // Wrap vectors in views for hardware-agnostic utilities
+    TensorView parameters((type*)params_vec.data(), { (Index)params_vec.size() });
+    TensorView gradient((type*)gradient_vec.data(), { (Index)gradient_vec.size() });
 
     if (regularization_method == "L1")
-    {
-        VectorR l1_gradient = parameters.unaryExpr([](type w) {
-            if (w > 0) return type(1);
-            if (w < 0) return type(-1);
-            return type(0);
-        });
-
-        gradient += l1_gradient * regularization_weight;
-    }
+        l1_regularization_gradient(parameters, regularization_weight, gradient);
     else if (regularization_method == "L2")
-    {
-        gradient += parameters * regularization_weight;
-    }
-    else
-    {
-        throw runtime_error("Unknown regularization method: " + regularization_method);
-    }
+        l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
 
 
 void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) const
 {
+
+/*  "todo delete this method?
     if(regularization_method == "None" || regularization_weight == 0)
         return;
 
@@ -347,6 +428,7 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
         gradient += parameters*regularization_weight;
     else
         throw runtime_error("Unknown regularization method: " + regularization_method);
+*/
 }
 
 
@@ -1410,292 +1492,50 @@ BackPropagationLM::BackPropagationLM(const Index new_batch_size, Loss *new_loss)
 }
 
 
-#ifdef CUDA
-
-void Loss::back_propagate(const BatchCuda& batch,
-                          ForwardPropagationCuda& forward_propagation,
-                          BackPropagationCuda& back_propagation)
+void Loss::to_XML(XMLPrinter& printer) const
 {
-    if (batch.is_empty()) return;
+    printer.OpenElement("Loss");
+    add_xml_element(printer, "Method", get_name());
+    add_xml_element(printer, "RegularizationMethod", regularization_method);
+    add_xml_element(printer, "RegularizationWeight", to_string(regularization_weight));
 
-    // Loss index
+    if (method == LossMethod::NormalizedSquaredError)
+        add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
-    calculate_error(batch, forward_propagation, back_propagation);
-
-    calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-
-    // Loss
-
-    back_propagation.loss_value = back_propagation.error;
-
-    // Regularization
-
-    add_regularization(back_propagation);
-}
-
-
-void Loss::calculate_layers_error_gradient(const BatchCuda& batch,
-                                                ForwardPropagationCuda& forward_propagation,
-                                                BackPropagationCuda& back_propagation) const
-{
-    const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
-    const Index layers_number = layers.size();
-
-    if (layers_number == 0) return;
-
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
-    calculate_output_gradients(batch, forward_propagation, back_propagation);
-
-    back_propagation.neural_network.layers[last_trainable_layer_index]->output_gradients[0] = back_propagation.get_output_gradients_device();
-
-    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-        layers[i]->back_propagate(forward_propagation.layers[i], back_propagation.neural_network.layers[i]);
-}
-
-
-void Loss::add_regularization(BackPropagationCuda& back_propagation) const
-{
-    if (regularization_method == "None" || regularization_weight == 0.0f)
-    {
-        back_propagation.regularization = 0.0f;
-        return;
+    if (method == LossMethod::WeightedSquaredError) {
+        add_xml_element(printer, "PositivesWeight", to_string(positives_weight));
+        add_xml_element(printer, "NegativesWeight", to_string(negatives_weight));
     }
 
-    NeuralNetwork* neural_network = this->neural_network;
+    if (method == LossMethod::MinkowskiError)
+        add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
-    const Index parameters_number = neural_network->get_parameters().size();
+    printer.CloseElement();
+}
 
-    float* parameters_data = neural_network->get_parameters_device().data;
-    float* gradients_data = back_propagation.neural_network.gradients.data;
+void Loss::from_XML(const XMLDocument& document)
+{
+    const XMLElement* root = document.FirstChildElement("Loss");
+    if(!root) return;
 
-    if (regularization_method == "L1")
-    {
-        float l1_norm = 0.0f;
+    set_loss_method(read_xml_string(root, "Method"));
 
-        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
-        back_propagation.regularization = regularization_weight * l1_norm;
+    regularization_method = read_xml_string(root, "RegularizationMethod");
+    regularization_weight = read_xml_type(root, "RegularizationWeight");
 
-        apply_l1_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight);
-    }
-    else if (regularization_method == "L2")
-    {
-        float dot_product = 0.0f;
+    if (root->FirstChildElement("NormalizationCoefficient"))
+        normalization_coefficient = read_xml_type(root, "NormalizationCoefficient");
 
-        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
-        back_propagation.regularization = 0.5f * regularization_weight * dot_product;
-
-        CHECK_CUBLAS(cublasSaxpy(get_cublas_handle(), (int)parameters_number, &regularization_weight, parameters_data, 1, gradients_data, 1));
-    }
-    else if (regularization_method == "ElasticNet")
-    {
-        const float mix_factor = 0.5f;
-
-        float l1_norm = 0.0f;
-        float dot_product = 0.0f;
-        CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters_number, parameters_data, 1, &l1_norm));
-        CHECK_CUBLAS(cublasSdot(get_cublas_handle(), (int)parameters_number, parameters_data, 1, parameters_data, 1, &dot_product));
-
-        back_propagation.regularization = regularization_weight * (mix_factor * l1_norm + (1.0f - mix_factor) * 0.5f * dot_product);
-
-        apply_elastic_net_gradient_cuda(parameters_number, gradients_data, parameters_data, regularization_weight, mix_factor);
+    if (root->FirstChildElement("PositivesWeight")) {
+        positives_weight = read_xml_type(root, "PositivesWeight");
+        negatives_weight = read_xml_type(root, "NegativesWeight");
     }
 
-    back_propagation.loss_value += back_propagation.regularization;
+    if (root->FirstChildElement("MinkowskiParameter"))
+        minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
 }
 
-
-TensorCuda Loss::calculate_gradient_cuda()
-{
-    const Index samples_number = dataset->get_samples_number("Training");
-
-    const vector<Index> sample_indices = dataset->get_sample_indices("Training");
-
-    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
-    const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
-    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
-
-    BatchCuda batch(samples_number, dataset);
-    batch.fill(sample_indices, input_feature_indices, decoder_feature_indices, target_feature_indices);
-
-    ForwardPropagationCuda forward_propagation(samples_number, neural_network);
-
-    BackPropagationCuda back_propagation(samples_number, this);
-
-    const VectorR& parameters = neural_network->get_parameters();
-
-    neural_network->forward_propagate(batch.get_inputs_device(),
-                                      parameters,
-                                      forward_propagation);
-
-    back_propagate(batch, forward_propagation, back_propagation);
-
-    return move(back_propagation.neural_network.gradients);
-}
-
-
-// CUDA structs
-
-BackPropagationCuda::BackPropagationCuda(const Index new_samples_number, Loss* new_loss)
-{
-    set(new_samples_number, new_loss);
-}
-
-
-void BackPropagationCuda::set(const Index new_samples_number, Loss* new_loss)
-{
-
-    loss = new_loss;
-
-    if(!loss) return;
-
-    // Neural network
-
-    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
-
-    const Shape output_shape = neural_network_ptr->get_output_shape();
-
-    const Index outputs_number = output_shape[0];
-
-    // First order loss
-
-    neural_network.set(samples_number, neural_network_ptr);
-
-    loss_value = type(0);
-    error = type(0);
-    regularization = type(0);
-    built_mask = false;
-    accuracy.setZero();
-
-    CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
-    CHECK_CUDA(cudaMalloc(&error_device, sizeof(float)));
-
-    // Outputs_delta
-
-    Shape output_gradient_dimensions = { samples_number };
-    output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
-
-    output_gradients.resize(output_gradient_dimensions);
-
-    // Reduce
-
-    cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor);
-
-    cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor,
-                                   CUDNN_REDUCE_TENSOR_ADD,
-                                   CUDNN_DATA_FLOAT,
-                                   CUDNN_PROPAGATE_NAN,
-                                   CUDNN_REDUCE_TENSOR_NO_INDICES,
-                                   CUDNN_32BIT_INDICES);
-
-    cudnnSetTensor4dDescriptor(output_reduce_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
-                               CUDNN_DATA_FLOAT,
-                               1, 1, 1, 1);
-
-    cudnnGetReductionWorkspaceSize(get_cudnn_handle(),
-                                   reduce_tensor_descriptor,
-                                   output_gradients.get_descriptor(),
-                                   output_reduce_tensor_descriptor,
-                                   &workspace_size);
-
-    CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    // Classification helpers
-
-    if(is_instance_of<CrossEntropyError3d>(loss))
-    {
-        predictions.resize({samples_number, outputs_number});
-        predictions.fill(0.0f);
-
-        matches.resize({samples_number, outputs_number});
-        matches.fill(0.0f);
-
-        mask.resize({samples_number, outputs_number});
-        mask.fill(0.0f);
-    }
-}
-
-
-vector<vector<TensorView>> BackPropagationCuda::get_layer_gradients_device() const
-{
-    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
-
-    const Index layers_number = neural_network_ptr->get_layers_number();
-
-    const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
-    const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
-    const vector<unique_ptr<LayerBackPropagationCuda>>& layer_back_propagations = neural_network.get_layers();
-
-    vector<TensorView> input_gradient_views;
-
-    vector<vector<TensorView>> layer_gradient_views(layers_number);
-
-    const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
-
-    for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-    {
-        if (i == last_trainable_layer_index)
-        {
-            layer_gradient_views[i].push_back(get_output_gradients_device());
-
-            continue;
-        }
-
-        for(Index j = 0; j < Index(layer_output_indices[i].size()); j++)
-        {
-            const Index output_index = layer_output_indices[i][j];
-            const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
-
-            input_gradient_views = layer_back_propagations[output_index]->get_input_gradient_views();
-
-            layer_gradient_views[i].push_back(input_gradient_views[input_index]);
-        }
-    }
-
-    return layer_gradient_views;
-}
-
-
-TensorView BackPropagationCuda::get_output_gradients_device() const
-{
-    return output_gradients.view();
-}
-
-
-void BackPropagationCuda::print() const
-{
-
-}
-
-
-void BackPropagationCuda::free()
-{
-    cudaFree(error_device);
-    error_device = nullptr;
-
-    cudaFree(errors);
-    errors = nullptr;
-
-    cudaFree(workspace);
-    workspace = nullptr;
-
-    if(reduce_tensor_descriptor)
-    {
-        cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
-        reduce_tensor_descriptor = nullptr;
-    }
-
-    if(output_reduce_tensor_descriptor)
-    {
-        cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor);
-        output_reduce_tensor_descriptor = nullptr;
-    }
-}
-
-#endif
+REGISTER(Loss, Loss, "Loss");
 
 } 
 
