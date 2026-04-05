@@ -59,27 +59,21 @@ void NeuralNetwork::compile()
         const vector<Index>& inputs = layer_input_indices[i];
 
         if (inputs.size() == 1 && inputs[0] >= 0)
-        {
-            const Index previous_index = inputs[0];
-            layers[i]->set_input_shape(layers[previous_index]->get_output_shape());
-        }
+            layers[i]->set_input_shape(layers[inputs[0]]->get_output_shape());
     }
 
-    Index total_parameters_count = 0;
+    Index total_parameters = 0;
     for (const auto& layer : layers)
-        total_parameters_count += layer->get_parameters_number();
+        for (const Shape& s : layer->get_parameter_shapes())
+            total_parameters += get_aligned_size(s.count());
 
-    parameters.resize(total_parameters_count);
+    parameters.resize(total_parameters);
     parameters.setZero();
 
     type* pointer = parameters.data();
 
-    for (Index i = 0; i < layers_number; ++i)
-    {
-        vector<Shape> parameter_shapes = layers[i]->get_parameter_shapes();
-
-        pointer = layers[i]->link_parameters(pointer);
-    }
+    for (auto& layer : layers)
+        pointer = layer->link_parameters(pointer);
 }
 
 
@@ -1323,11 +1317,9 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
     set(new_batch_size, new_neural_network);
 }
 
-
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     batch_size = new_batch_size;
-
     neural_network = new_neural_network;
 
     if(!neural_network) throw runtime_error("There is no neural network.");
@@ -1335,11 +1327,13 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     const vector<unique_ptr<Layer>>& nn_layers = neural_network->get_layers();
     const size_t layers_number = nn_layers.size();
 
-    // Step 1: collect shapes per layer (slots 1..N in views[layer]; slot 0 = inputs, wired below)
     const vector<vector<Shape>> forward_shapes = neural_network->get_forward_shapes(batch_size);
 
-    // Step 2: allocate one flat buffer for all output activations
-    const Index total_size = get_size(forward_shapes);
+    Index total_size = 0;
+
+    for(const auto& layer_shapes : forward_shapes)
+        for(const Shape& s : layer_shapes)
+            total_size += get_aligned_size(s.count());
 
     if(total_size > 0)
     {
@@ -1347,12 +1341,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         data.setZero();
     }
 
-    // Step 3: create TensorView slices inside data, one per shape, at slot j+1
     views.resize(layers_number);
-
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     type* pointer = (total_size > 0) ? data.data() : nullptr;
 
     for(size_t i = 0; i < layers_number; ++i)
@@ -1360,7 +1349,8 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
         const vector<Shape>& shapes = forward_shapes[i];
         const size_t slots = shapes.size();
 
-        views[i].resize(slots + 1);  // slot 0 = inputs placeholder; slots 1..N = allocated
+        // Slot 0 reserved for inputs, Slots 1..N for activations/outputs
+        views[i].resize(slots + 1);
 
         for(size_t j = 0; j < slots; ++j)
         {
@@ -1370,20 +1360,18 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             if(s.count() > 0 && pointer)
             {
                 views[i][j + 1][0] = TensorView(pointer, s);
-                pointer += (s.count() + ALIGN_ELEMENTS - 1) & MASK;
+                // Advance pointer using the alignment utility
+                pointer += get_aligned_size(s.count());
             }
         }
     }
 
-    // Step 4: wire input slots to upstream layer outputs
-    // Convention: output of layer j = views[j][forward_shapes[j].size()][0] (last allocated slot)
-    // Negative input indices are network inputs — wired per-batch in forward_propagate()
+    // 5. Wire inputs (Slot 0) from upstream layer outputs
     const auto& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
     {
         const vector<Index>& input_indices = layer_input_indices[i];
-
         views[i][0].resize(input_indices.size());
 
         for(size_t k = 0; k < input_indices.size(); ++k)
@@ -1392,17 +1380,16 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
             if(j >= 0)
             {
+                // The layer's final output is the last slot in its forward_shapes vector
                 const size_t output_slot = forward_shapes[j].size();
 
-                if(output_slot > 0
-                   && j < static_cast<Index>(views.size())
-                   && views[j].size() > output_slot
-                   && !views[j][output_slot].empty())
+                if(output_slot > 0 && j < static_cast<Index>(views.size())
+                    && !views[j][output_slot].empty())
                 {
                     views[i][0][k] = views[j][output_slot][0];
                 }
             }
-            // j < 0: network input, set in forward_propagate() each batch
+            // Note: Indices j < 0 (external inputs) are wired in forward_propagate() per batch.
         }
     }
 }

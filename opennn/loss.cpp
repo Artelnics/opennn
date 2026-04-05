@@ -347,174 +347,84 @@ BackPropagation::BackPropagation(const Index new_batch_size, const Loss* new_los
 void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
 {
     batch_size = new_batch_size;
-
     loss = const_cast<Loss*>(new_loss);
 
     if(!loss) return;
 
-    // Neural network
-
     NeuralNetwork* neural_network = loss->get_neural_network();
-
-    batch_size = new_batch_size;
-
     if(!neural_network) return;
 
-    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
-    const Index first_traineable_layer_number = neural_network->get_first_trainable_layer_index();
-    const Index last_traineable_layer_number = neural_network->get_last_trainable_layer_index();
-
-    const Index layers_number = neural_network_layers.size();
-
-    for(Index i = first_traineable_layer_number; i <= last_traineable_layer_number; i++)
-    {
-        //        layers[i] = Registry<LayerBackPropagation>::instance().create(neural_network_layers[i]->get_name());
-        //        layers[i]->set(batch_size, neural_network_layers[i].get());
-    }
+    const Index layers_number = neural_network->get_layers_number();
 
     const vector<vector<Shape>> parameter_shapes = neural_network->get_parameter_shapes();
-    const Index parameters_number = neural_network->get_parameters_number();
 
-    gradient.resize(parameters_number);
+    Index total_parameters_size = 0;
+
+    for(const auto& layer_shapes : parameter_shapes)
+        for(const Shape& s : layer_shapes)
+            total_parameters_size += get_aligned_size(s.count());
+
+    gradient.resize(total_parameters_size);
     gradient.setZero();
 
-    // Populate gradient_views[layer][param_idx] by slicing gradient into per-parameter TensorViews.
-    // parameter_shapes[layer][i] is in Parameters-enum order, matching gradient_views[layer][i].
+    gradient_views.resize(layers_number);
+    type* g_ptr = (total_parameters_size > 0) ? gradient.data() : nullptr;
+
+    for(Index i = 0; i < layers_number; ++i)
     {
-        constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-        constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
+        const vector<Shape>& layer_param_shapes = parameter_shapes[i];
+        gradient_views[i].resize(layer_param_shapes.size());
 
-        gradient_views.resize(layers_number);
-        type* gptr = (parameters_number > 0) ? gradient.data() : nullptr;
-
-        for(Index i = 0; i < layers_number; ++i)
+        for(size_t j = 0; j < layer_param_shapes.size(); ++j)
         {
-            const vector<Shape>& layer_param_shapes = parameter_shapes[i];
-            gradient_views[i].resize(layer_param_shapes.size());
-
-            for(size_t j = 0; j < layer_param_shapes.size(); ++j)
+            const Shape& s = layer_param_shapes[j];
+            if(s.count() > 0 && g_ptr)
             {
-                const Shape& s = layer_param_shapes[j];
-                if(s.count() > 0 && gptr)
-                {
-                    gradient_views[i][j] = TensorView(gptr, s);
-                    gptr += (s.count() + ALIGN_ELEMENTS - 1) & MASK;
-                }
+                gradient_views[i][j] = TensorView(g_ptr, s);
+                g_ptr += get_aligned_size(s.count());
             }
         }
     }
 
     const vector<vector<Shape>> backward_shapes = neural_network->get_backward_shapes(batch_size);
-    const Index backward_size = get_size(backward_shapes);
 
-    backward.resize(backward_size);
+    Index total_backward_size = 0;
+
+    for(const auto& layer_shapes : backward_shapes)
+        for(const Shape& s : layer_shapes)
+            total_backward_size += get_aligned_size(s.count());
+
+    backward.resize(total_backward_size);
     backward.setZero();
 
-    // Populate backward_views[layer][slot] where slot 0 = OutputGradients (wired below)
-    // and slots 1..N are allocated from backward_shapes[layer][0..N-1].
+    backward_views.resize(layers_number);
+    type* b_ptr = (total_backward_size > 0) ? backward.data() : nullptr;
+
+    for(Index i = 0; i < layers_number; ++i)
     {
-        constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-        constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
+        const vector<Shape>& shapes = backward_shapes[i];
+        const size_t slots = shapes.size();
 
-        backward_views.resize(layers_number);
-        type* bptr = (backward_size > 0) ? backward.data() : nullptr;
+        // Slot 0: Reserved for OutputGradients (wired from downstream)
+        // Slot 1..N: Internal gradients/InputGradients allocated from backward_shapes
+        backward_views[i].resize(slots + 1);
+        backward_views[i][0].resize(1); // One OutputGradient view per layer
 
-        for(Index i = 0; i < layers_number; ++i)
+        for(size_t j = 0; j < slots; ++j)
         {
-            const vector<Shape>& shapes = backward_shapes[i];
-            const size_t slots = shapes.size();
+            const Shape& s = shapes[j];
+            backward_views[i][j + 1].resize(1);
 
-            backward_views[i].resize(slots + 1);  // slot 0 = OutputGradients placeholder
-            backward_views[i][0].resize(1);        // one output-gradient view per layer
-
-            for(size_t j = 0; j < slots; ++j)
+            if(s.count() > 0 && b_ptr)
             {
-                const Shape& s = shapes[j];
-                backward_views[i][j + 1].resize(1);
-
-                if(s.count() > 0 && bptr)
-                {
-                    backward_views[i][j + 1][0] = TensorView(bptr, s);
-                    bptr += (s.count() + ALIGN_ELEMENTS - 1) & MASK;
-                }
-            }
-        }
-
-        // Wire OutputGradients slot (slot 0) for each layer:
-        //   last trainable layer  → points to output_gradients (set after output_gradients is resized)
-        //   inner layers          → points to the downstream layer's input-gradient view (slot 1)
-        // Wiring of output_gradients is done after the resize below; inner-layer wiring requires
-        // graph traversal (use get_layer_output_indices) and is performed here.
-        const vector<vector<Index>> layer_output_indices = neural_network->get_layer_output_indices();
-
-        for(Index i = 0; i < layers_number; ++i)
-        {
-            if(backward_views[i].empty()) continue;
-
-            if(i == last_traineable_layer_number)
-                continue;  // wired to output_gradients after it is resized (see below)
-
-            for(Index consumer_idx : layer_output_indices[i])
-            {
-                if(consumer_idx < 0
-                   || consumer_idx >= layers_number
-                   || backward_views[consumer_idx].size() < 2
-                   || backward_views[consumer_idx][1].empty())
-                    continue;
-
-                // Port index of layer i among consumer's inputs
-                const auto& consumer_inputs = neural_network->get_layer_input_indices()[consumer_idx];
-                Index port = 0;
-                for(Index p = 0; p < static_cast<Index>(consumer_inputs.size()); ++p)
-                {
-                    if(consumer_inputs[p] == i) { port = p; break; }
-                }
-
-                // The consumer's InputGradients slot 1 may hold multiple views for multi-input layers.
-                // For simplicity, use view index 0 (single-input layers); multi-input layers
-                // (e.g. Addition) allocate their own input-gradient views separately.
-                if(port < static_cast<Index>(backward_views[consumer_idx][1].size()))
-                    backward_views[i][0][0] = backward_views[consumer_idx][1][port];
-                else if(!backward_views[consumer_idx][1].empty())
-                    backward_views[i][0][0] = backward_views[consumer_idx][1][0];
-
-                break;  // connect to first consumer only (single-output layers)
+                backward_views[i][j + 1][0] = TensorView(b_ptr, s);
+                b_ptr += get_aligned_size(s.count());
             }
         }
     }
-    /*
-    const Index last_trainable = neural_network->get_last_trainable_layer_index();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
-
-    for(size_t i = 0; i < layers.size(); i++)
-    {
-        if(!layers[i]) continue;
-        layers[i]->output_gradients.clear();
-
-        if (i == last_trainable)
-        {
-            layers[i]->output_gradients.push_back(TensorView());
-        }
-        else
-        {
-            for(Index consumer_idx : layer_output_indices[i])
-            {
-                if(consumer_idx == -1) continue;
-
-                const Index port = neural_network->find_input_index(layer_input_indices[consumer_idx], i);
-
-                layers[i]->output_gradients.push_back(layers[consumer_idx]->input_gradients[port]);
-            }
-        }
-    }
-    */
 
     const Shape output_shape = neural_network->get_output_shape();
-
     const Index outputs_number = output_shape[0];
-
-    // First order loss
 
     loss_value = type(0);
     error = type(0);
@@ -527,22 +437,50 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
     output_gradient_dimensions = { batch_size };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
 
-    const Index size = accumulate(output_shape.begin(), output_shape.end(), batch_size, multiplies<>());
+    const Index total_output_elements = output_shape.count() * batch_size;
+    output_gradients.resize(total_output_elements);
+    output_gradients.setZero();
 
-    output_gradients.resize(size);
-/*
-    if(is_instance_of<CrossEntropyError3d>(loss))
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+
+    for(Index i = 0; i < layers_number; ++i)
     {
-        predictions.resize(batch_size, outputs_number);
-        predictions.setZero();
+        if(backward_views[i].empty()) continue;
 
-        matches.resize(batch_size, outputs_number);
-        matches.setConstant(false);
+        if(i == last_trainable_layer_index)
+        {
+            // The very last trainable layer gets gradients from the loss's main output_gradients buffer
+            backward_views[i][0][0] = TensorView(output_gradients.data(), output_gradient_dimensions);
+        }
+        else
+        {
+            // Internal layers connect to their consumers
+            for(Index consumer_idx : layer_output_indices[i])
+            {
+                if(consumer_idx >= 0 && consumer_idx < layers_number)
+                {
+                    // Find which input port of the consumer layer connects to layer i
+                    const auto& consumer_inputs = layer_input_indices[consumer_idx];
 
-        mask.resize(batch_size, outputs_number);
-        mask.setConstant(false);
+                    Index port = 0;
+
+                    for(Index p = 0; p < static_cast<Index>(consumer_inputs.size()); ++p)
+                        if(consumer_inputs[p] == i)
+                        {
+                            port = p;
+                            break;
+                        }
+
+                    // By convention, Layer InputGradients are stored in slot 1 of backward_views
+                    if(backward_views[consumer_idx].size() > 1 && !backward_views[consumer_idx][1].empty())
+                        backward_views[i][0][0] = backward_views[consumer_idx][1][0];
+                }
+                break; // Standard implementation assumes single-path gradient flow for simplicity here
+            }
+        }
     }
-*/
 }
 
 

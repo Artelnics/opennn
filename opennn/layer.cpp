@@ -120,6 +120,25 @@ bool Layer::get_is_first_layer() const
 }
 
 
+type *Layer::link_parameters(type *pointer)
+{
+    const vector<Shape> shapes = get_parameter_shapes();
+    parameters.resize(shapes.size());
+
+    for (size_t i = 0; i < shapes.size(); ++i)
+    {
+        if (shapes[i].count() == 0) continue;
+
+        assert(is_aligned(pointer));
+
+        parameters[i] = TensorView(pointer, shapes[i]);
+
+        pointer += get_aligned_size(shapes[i].count());
+    }
+    return pointer;
+}
+
+
 void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
