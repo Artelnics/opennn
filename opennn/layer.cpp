@@ -45,12 +45,11 @@ void Layer::set_display(bool new_display)
 
 void Layer::set_parameters_random()
 {
-/*
-    const vector<TensorView*> parameter_views = get_parameter_views();
-
-    for(const auto& view : parameter_views)
-        set_random_uniform(VectorMap(view->data, view->size()));
-*/
+    for (auto& param : parameters)
+    {
+        if (param.empty()) continue;
+        set_random_uniform(param.as_vector());
+    }
 }
 
 

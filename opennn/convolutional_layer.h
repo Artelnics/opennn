@@ -10,6 +10,7 @@
 
 #include "layer.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 
 namespace opennn
 {
@@ -29,7 +30,7 @@ public:
 
     bool get_batch_normalization() const;
 
-    const string& get_activation_function() const;
+    ActivationFunction get_activation_function() const;
 
     Shape get_output_shape() const override;
 
@@ -184,9 +185,12 @@ public:
 
     bool use_convolutions() const
     {
+        /*
         return activation_function == "ScaledExponentialLinear"
             || activation_function == "ClippedRelu"
             || activation_function == "Swish";
+*/
+        return false;
     }
 
     // Set
@@ -273,7 +277,7 @@ private:
 
     string convolution_type = "Valid";
 
-    string activation_function = "Linear";
+    ActivationFunction activation_function = ActivationFunction::Linear;
 
     // Batch normalization
 

@@ -389,7 +389,7 @@ void Optimizer::set_unscaling()
 {
     Dataset* dataset = loss->get_dataset();
     NeuralNetwork* neural_network = loss->get_neural_network();
-
+/*
     // Scaling layer
 
     if(neural_network->has("Scaling2d"))
@@ -401,6 +401,7 @@ void Optimizer::set_unscaling()
     {
         Scaling<3>* layer = static_cast<Scaling<3>*>(neural_network->get_first("Scaling3d"));
         dataset->unscale_features("Input", layer->get_descriptives());
+
     }
     else if(neural_network->has("Scaling4d"))
     {
@@ -440,6 +441,7 @@ void Optimizer::set_unscaling()
 
     if(!unscaled_targets_descriptives.empty())
         dataset->unscale_features("Target", unscaled_targets_descriptives);
+*/
 }
 
 

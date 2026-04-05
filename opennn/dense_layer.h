@@ -22,6 +22,7 @@ class Dense final : public Layer
 private:
 
     Index neurons_number;
+    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
     VectorR running_means;
     VectorR running_variances;
@@ -30,7 +31,6 @@ private:
 
     type momentum = type(0.9);
 
-    string activation_function = "HyperbolicTangent";
 
     type dropout_rate = type(0);
 
@@ -130,7 +130,7 @@ public:
     }
 
 
-    const string& get_activation_function() const
+    const ActivationFunction& get_activation_function() const
     {
         return activation_function;
     }
@@ -224,18 +224,9 @@ public:
     }
 
 
-    void set_activation_function(const string& new_activation_function)
+    void set_activation_function(const string& name)
     {
-        static const unordered_set<string> activation_functions =
-            {"Sigmoid", "HyperbolicTangent", "Linear", "RectifiedLinear", "ScaledExponentialLinear", "Softmax","Logistic"};
-
-        if (activation_functions.count(new_activation_function))
-            if (get_output_shape()[0] == 1 && new_activation_function == "Softmax")
-                activation_function = "Sigmoid";
-            else
-                activation_function = new_activation_function;
-        else
-            throw runtime_error("Unknown activation function: " + new_activation_function);
+        activation_function = string_to_activation(name);
 
 #ifdef CUDA
 
@@ -396,7 +387,7 @@ public:
         if (parameters[Bias].data == nullptr || parameters[Weight].data == nullptr) return "";
 
         ostringstream buffer;
-
+/*
         for(Index j = 0; j < outputs_number; j++)
         {
             buffer << output_names[j] << " = " << activation_function << "( " << parameters[Bias].data[j] << " + ";
@@ -412,13 +403,14 @@ public:
 
             buffer << " );\n";
         }
-
+*/
         return buffer.str();
     }
 
 
     void print() const override
     {
+/*
         cout << "Dense layer" << endl
              << "Input shape: " << get_input_shape() << endl
              << "Output shape: " << get_output_shape() << endl
@@ -427,6 +419,7 @@ public:
              << "Activation function: " << activation_function << endl
              << "Batch normalization: " << (batch_normalization ? "True" : "False") << endl
              << "Dropout rate: " << dropout_rate << endl;
+*/
     }
 
 
@@ -474,6 +467,7 @@ public:
 
     void to_XML(XMLPrinter& printer) const override
     {
+
         printer.OpenElement(name.c_str());
 
         add_xml_element(printer, "Label", label);
@@ -488,9 +482,10 @@ public:
             add_xml_element(printer, "InputsNumber", to_string(get_input_shape()[0]));
             add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
         }
+/*
         add_xml_element(printer, "Activation", activation_function);
         add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
-
+*/
         if (batch_normalization)
         {
             add_xml_element(printer, "RunningMeans", vector_to_string(running_means));

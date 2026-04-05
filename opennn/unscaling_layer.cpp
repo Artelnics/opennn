@@ -23,7 +23,7 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
 
 Shape Unscaling::get_input_shape() const
 {
-    const Index neurons_number = descriptives.size();
+    const Index neurons_number = means.size();
 
     return {neurons_number};
 }
@@ -31,42 +31,20 @@ Shape Unscaling::get_input_shape() const
 
 Shape Unscaling::get_output_shape() const
 {
-    const Index neurons_number = descriptives.size();
+    const Index neurons_number = means.size();
 
     return { neurons_number };
 }
 
 
-vector<Descriptives> Unscaling::get_descriptives() const
-{
-    return descriptives;
-}
-
-
 VectorR Unscaling::get_minimums() const
 {
-    const Index outputs_number = get_outputs_number();
-
-    VectorR minimums(outputs_number);
-
-#pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
-        minimums[i] = descriptives[i].minimum;
-
     return minimums;
 }
 
 
 VectorR Unscaling::get_maximums() const
 {
-    const Index outputs_number = get_outputs_number();
-
-    VectorR maximums(outputs_number);
-
-#pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
-        maximums[i] = descriptives[i].maximum;
-
     return maximums;
 }
 
@@ -93,7 +71,7 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
     ostringstream buffer;
 
     buffer.precision(10);
-
+/*
     for(Index i = 0; i < outputs_number; i++)
     {
         const string& scaler = scalers[i];
@@ -115,7 +93,7 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
         else
             throw runtime_error("Unknown inputs scaling method.\n");
     }
-
+*/
     string expression = buffer.str();
 
     replace(expression, "+-", "-");
@@ -127,22 +105,25 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
 
 void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
-    descriptives.resize(new_input_shape[0]);
+    means.resize(new_input_shape[0]);
+    standard_deviations.resize(new_input_shape[0]);
+    minimums.resize(new_input_shape[0]);
+    maximums.resize(new_input_shape[0]);
 }
 
 
 void Unscaling::set_output_shape(const Shape& new_output_shape)
 {
-    descriptives.resize(new_output_shape[0]);
 }
 
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
-    descriptives.resize(new_neurons_number);
+    means.resize(new_neurons_number);
+    standard_deviations.resize(new_neurons_number);
+    minimums.resize(new_neurons_number);
+    maximums.resize(new_neurons_number);
 
-    for(auto& descriptive : descriptives)
-        descriptive.set(type(-1.0), type(1), type(0), type(1));
 
     scalers.resize(new_neurons_number, "MinimumMaximum");
 
@@ -167,7 +148,7 @@ void Unscaling::set_min_max_range(const type min, const type max)
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-    descriptives = new_descriptives;
+//    descriptives = new_descriptives;
 }
 
 
@@ -234,7 +215,7 @@ void Unscaling::print() const
         cout << "Neuron " << i << endl
              << "string " << scalers[i] << endl;
 
-        descriptives[i].print();
+        //descriptives[i].print();
     }
 }
 
@@ -251,7 +232,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
+        //add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
@@ -287,7 +268,7 @@ void Unscaling::from_XML(const XMLDocument& document)
         }
 
         const XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
-
+/*
         if (descriptives_element->GetText())
         {
             const vector<string> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
@@ -297,7 +278,7 @@ void Unscaling::from_XML(const XMLDocument& document)
                 type(stof(splitted_descriptives[2])),
                 type(stof(splitted_descriptives[3])));
         }
-
+*/
         scalers[i] = read_xml_string(unscaling_neuron_element, "Scaler");
 
         start_element = unscaling_neuron_element;

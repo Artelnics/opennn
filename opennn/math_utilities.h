@@ -15,6 +15,28 @@
 namespace opennn
 {
 
+enum class ActivationFunction{
+    Linear,
+    Sigmoid,
+    HyperbolicTangent,
+    RectifiedLinear,
+    ScaledExponentialLinear,
+    Softmax,
+    Logistic
+};
+
+
+inline ActivationFunction string_to_activation(const string& name)
+{
+    if (name == "Sigmoid") return ActivationFunction::Sigmoid;
+    if (name == "HyperbolicTangent") return ActivationFunction::HyperbolicTangent;
+    if (name == "RectifiedLinear") return ActivationFunction::RectifiedLinear;
+    if (name == "ScaledExponentialLinear") return ActivationFunction::ScaledExponentialLinear;
+    if (name == "Softmax") return ActivationFunction::Softmax;
+    if (name == "Logistic") return ActivationFunction::Logistic;
+    return ActivationFunction::Linear;
+}
+
 struct ActivationArguments
 {
     string activation_function;
@@ -568,109 +590,131 @@ inline void batch_normalization_training(
 #endif
 }
 
-inline void activation(TensorView& output, const string& function)
+
+inline void activation(TensorView& output, ActivationFunction func)
 {
-    if (function == "Linear" || output.empty()) return;
+    if (output.empty() || func == ActivationFunction::Linear)
+        return;
 
 #ifndef CUDA
-/*
-    auto output_array = output.as_vector().array();
+    auto arr = output.as_vector().array();
 
-    if (function == "Sigmoid" || function == "Logistic")
+    switch (func)
     {
-        output_array = (1.0f + (-output_array).exp()).inverse();
-    }
-    else if (function == "HyperbolicTangent")
+    case ActivationFunction::Sigmoid:
+    case ActivationFunction::Logistic:
     {
-        output_array = output_array.tanh();
+        arr = (1.0f + (-arr).exp()).inverse();
+        return;
     }
-    else if (function == "RectifiedLinear")
+
+    case ActivationFunction::HyperbolicTangent:
     {
-        output_array = output_array.cwiseMax(0.0f);
+        arr = arr.tanh();
+        return;
     }
-    else if (function == "ScaledExponentialLinear")
+
+    case ActivationFunction::RectifiedLinear:
     {
-        const type alpha = 1.67326f;
-        const type lambda = 1.05070f;
-        output_array = lambda * (output_array > 0.0f).select(output_array, alpha * (output_array.exp() - 1.0f));
+        arr = arr.cwiseMax(0.0f);
+        return;
     }
-    else if (function == "Softmax")
+
+    case ActivationFunction::ScaledExponentialLinear:
     {
-        MatrixMap output_matrix = output.as_matrix();
-        VectorR row_max = output_matrix.rowwise().maxCoeff();
-        output_matrix.colwise() -= row_max;
-        output_matrix.array() = output_matrix.array().exp();
-        VectorR row_sum = output_matrix.rowwise().sum();
-        output_matrix.array().colwise() /= row_sum.array();
+        const float alpha = 1.6732632423543772848170429916717f;
+        const float lambda = 1.0507009873554804934193349852946f;
+
+        arr = lambda * (arr > 0.0f).select(arr, alpha * (arr.exp() - 1.0f));
+        return;
     }
-    else
+
+    case ActivationFunction::Softmax:
     {
-        throw runtime_error("Activation Error: Unknown function '" + function + "'");
+//        softmax(output);
+        return;
     }
-*/
+
+    default:
+        return;
+    }
 #else
-    function == "Softmax"
+    func == ActivationFunction::Softmax
         ? CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
-            CUDNN_SOFTMAX_ACCURATE,
-            CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
-            &alpha_one,
-            output.get_descriptor(), output.data,
-            &beta_zero,
-            output.get_descriptor(), output.data))
+                                          CUDNN_SOFTMAX_ACCURATE,
+                                          CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
+                                          &alpha_one,
+                                          output.get_descriptor(), output.data,
+                                          &beta_zero,
+                                          output.get_descriptor(), output.data))
         : CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
-            act_desc,
-            &alpha,
-            output.get_descriptor(), output.data,
-            &beta,
-            output.get_descriptor(), output.data));
+                                             act_desc,
+                                             &alpha,
+                                             output.get_descriptor(), output.data,
+                                             &beta,
+                                             output.get_descriptor(), output.data));
+
 #endif
 }
+
 
 
 inline void activation_gradient(const TensorView& outputs,
                                 const TensorView& output_gradient,
                                 TensorView& activation_derivative,
-                                const string& activation_function)
+                                const ActivationFunction func)
 {
-#ifndef CUDA
     if (outputs.empty()) return;
 
-    const auto outputs_array = outputs.as_vector().array();
-    const auto output_gradients_array = output_gradient.as_vector().array();
-    auto activation_derivatives_array = activation_derivative.as_vector().array();
+#ifndef CUDA
+    const auto y = outputs.as_vector().array();
+    const auto dy = output_gradient.as_vector().array();
+    auto dx = activation_derivative.as_vector().array();
 
-    if (activation_function == "Linear")
+    switch (func)
     {
-        activation_derivatives_array = output_gradients_array;
+    case ActivationFunction::Linear:
+    {
+        dx = dy;
+        return;
     }
-    else if (activation_function == "Sigmoid" || activation_function == "Logistic")
-    {
-        activation_derivatives_array = output_gradients_array * (outputs_array * (type(1) - outputs_array));
-    }
-    else if (activation_function == "HyperbolicTangent")
-    {
-        activation_derivatives_array = output_gradients_array * (type(1) - outputs_array.square());
-    }
-    else if (activation_function == "RectifiedLinear")
-    {
-        activation_derivatives_array = (outputs_array > type(0)).select(output_gradients_array, type(0));
-    }
-    else if (activation_function == "ScaledExponentialLinear")
-    {
-        const type alpha = 1.67326f;
-        const type lambda = 1.05070f;
 
-        activation_derivatives_array = (outputs_array > type(0)).select(
-            lambda * output_gradients_array,
-            (outputs_array + (alpha * lambda)) * output_gradients_array);
-    }
-    else if (activation_function == "Softmax")
+    case ActivationFunction::Sigmoid:
+    case ActivationFunction::Logistic:
     {
-        activation_derivatives_array = output_gradients_array;
+        dx = dy * (y * (1.0f - y));
+        return;
     }
-    else
+
+    case ActivationFunction::HyperbolicTangent:
     {
-        throw runtime_error("Math Error: Unknown activation function in activation_gradient: " + activation_function);
+        dx = dy * (1.0f - y.square());
+        return;
+    }
+
+    case ActivationFunction::RectifiedLinear:
+    {
+        dx = (y > 0.0f).select(dy, 0.0f);
+        return;
+    }
+
+    case ActivationFunction::ScaledExponentialLinear:
+    {
+        const float alpha = 1.6732632423543772848170429916717f;
+        const float lambda = 1.0507009873554804934193349852946f;
+
+        dx = (y > 0.0f).select(lambda * dy, (y + (alpha * lambda)) * dy);
+        return;
+    }
+
+    case ActivationFunction::Softmax:
+    {
+        dx = dy;
+        return;
+    }
+
+    default:
+        throw runtime_error("Math Error: Unknown activation function in activation_gradient.");
     }
 #else
     CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),

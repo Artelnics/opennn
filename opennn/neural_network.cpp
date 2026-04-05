@@ -1268,6 +1268,7 @@ ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork
     set(new_batch_size, new_neural_network);
 }
 
+
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     batch_size = new_batch_size;

@@ -842,7 +842,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
         vector<Descriptives> inputs_descriptives;
         vector<string> descriptive_names;
         bool is_scaling_3d = false;
-
+/*
         if(neural_network->has("Scaling2d"))
             inputs_descriptives = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"))->get_descriptives();
         else if (neural_network->has("Scaling3d"))
@@ -854,7 +854,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                 if(var.role == "Input" || var.role == "InputTarget")
                     descriptive_names.push_back(var.name);
         }
-
+*/
         float min_value;
         float max_value;
 

@@ -33,9 +33,6 @@ public:
         return {};
     }
 
-
-    vector<Descriptives> get_descriptives() const;
-
     VectorR get_minimums() const;
     VectorR get_maximums() const;
 
@@ -64,12 +61,18 @@ public:
 
 private:
 
-    vector<Descriptives> descriptives;
+    VectorR means;
+    VectorR standard_deviations;
+    VectorR minimums;
+    VectorR maximums;
+
+    VectorR multipliers;
+    VectorR offsets;
 
     vector<string> scalers;
 
-    type min_range;
-    type max_range;
+    type min_range = -1.0f;
+    type max_range = 1.0f;
 };
 
 }

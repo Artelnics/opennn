@@ -130,7 +130,7 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-const string& Convolutional::get_activation_function() const
+ActivationFunction Convolutional::get_activation_function() const
 {
     return activation_function;
 }
@@ -350,7 +350,7 @@ void Convolutional::set(const Shape& new_input_shape,
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
     string normalized_activation_function = new_activation_function;
-
+/*
     if(normalized_activation_function == "Logistic")
         normalized_activation_function = "Sigmoid";
 
@@ -362,7 +362,10 @@ void Convolutional::set_activation_function(const string& new_activation_functio
         activation_function = normalized_activation_function;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
+*/
 }
+
+
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
     batch_normalization = new_batch_normalization;
@@ -512,11 +515,12 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
     add_xml_element(printer, "KernelsWidth", to_string(get_kernel_width()));
     add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
+/*
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", shape_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", convolution_type);
     add_xml_element(printer, "BatchNormalization", to_string(batch_normalization));
-/*
+
     if (batch_normalization)
     {
         add_xml_element(printer, "Scales", tensor_to_string<type, 1>(gammas));

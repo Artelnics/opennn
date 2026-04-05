@@ -10,7 +10,7 @@
 
 #include "layer.h"
 #include "statistics.h"
-#include "scaling.h"
+//#include "scaling.h"
 #include "string_utilities.h"
 #include "math_utilities.h"
 #include "neural_network.h"
@@ -44,70 +44,26 @@ public:
     }
 
 
-    vector<Descriptives> get_descriptives() const
-    {
-        return descriptives;
-    }
-
-
-    Descriptives get_descriptives(const Index index) const
-    {
-        return descriptives[index];
-    }
-
-
     VectorR get_minimums() const
     {
-        const Index outputs_number = get_outputs_number();
-
-        VectorR minimums(outputs_number);
-
-        #pragma omp parallel for
-        for(Index i = 0; i < outputs_number; i++)
-            minimums[i] = descriptives[i].minimum;
-
         return minimums;
     }
 
 
     VectorR get_maximums() const
     {
-        const Index outputs_number = get_outputs_number();
-
-        VectorR maximums(outputs_number);
-
-        #pragma omp parallel for
-        for(Index i = 0; i < outputs_number; i++)
-            maximums[i] = descriptives[i].maximum;
-
         return maximums;
     }
 
 
     VectorR get_means() const
     {
-        const Index outputs_number = get_outputs_number();
-
-        VectorR means(outputs_number);
-
-        #pragma omp parallel for
-        for(Index i = 0; i < outputs_number; i++)
-            means[i] = descriptives[i].mean;
-
         return means;
     }
 
 
     VectorR get_standard_deviations() const
     {
-        const Index outputs_number = get_outputs_number();
-
-        VectorR standard_deviations(outputs_number);
-
-        #pragma omp parallel for
-        for(Index i = 0; i < outputs_number; i++)
-            standard_deviations[i] = descriptives[i].standard_deviation;
-
         return standard_deviations;
     }
 
@@ -120,6 +76,7 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
+/*
         if (new_input_shape.size() != Rank -1) 
         {
            ostringstream buffer;
@@ -149,6 +106,7 @@ public:
         name = "Scaling" + to_string(Rank) + "d";
 
         is_trainable = false;
+*/
     }
 
 
@@ -164,9 +122,23 @@ public:
     }
 
 
-    void set_descriptives(const vector<Descriptives>& new_descriptives)
+    void set_descriptives(const vector<Descriptives>& desc)
     {
-        descriptives = new_descriptives;
+        const Index n = desc.size();
+        means.resize(n);
+        standard_deviations.resize(n);
+        minimums.resize(n);
+        maximums.resize(n);
+        multipliers.resize(n);
+        offsets.resize(n);
+
+        for(Index i = 0; i < n; ++i) {
+            means[i] = desc[i].mean;
+            standard_deviations[i] = desc[i].standard_deviation;
+            minimums[i] = desc[i].minimum;
+            maximums[i] = desc[i].maximum;
+        }
+        calculate_coefficients();
     }
 
     void set_min_max_range(const type min, type max)
@@ -191,39 +163,15 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-        const TensorView& input = forward_propagation.views[layer][0][0];
-        TensorView& output = forward_propagation.views[layer][Output][0];
+/*
+        auto inputs = as_matrix(get_input_view(forward_propagation, layer));
+        auto outputs = as_matrix(get_output_view(forward_propagation, layer, 1));
 
-        const Index features = scalers.size();
-        if(features == 0) { opennn::copy(input, output); return; }
+        outputs.array() = (inputs.array().rowwise() * multipliers.transpose().array()).rowwise() + offsets.transpose().array();
 
-        const Index total_rows = input.size() / features;
-        const MatrixMap inputs(input.data, total_rows, features);
-        MatrixMap outputs(output.data, total_rows, features);
-
-        for(Index i = 0; i < features; i++)
-        {
-            const string& scaler = scalers[i];
-            const Descriptives& descriptive = descriptives[i];
-
-            if(scaler == "None")
-                outputs.col(i) = inputs.col(i);
-            else if(scaler == "MeanStandardDeviation")
-                outputs.col(i).array() = (inputs.col(i).array() - descriptive.mean)
-                                         / (descriptive.standard_deviation + EPSILON);
-            else if(scaler == "MinimumMaximum")
-                outputs.col(i).array() = (inputs.col(i).array() - descriptive.minimum)
-                                         / ((descriptive.maximum - descriptive.minimum) + EPSILON)
-                                         * (max_range - min_range) + min_range;
-            else if(scaler == "StandardDeviation")
-                outputs.col(i).array() = inputs.col(i).array() / (descriptive.standard_deviation + EPSILON);
-            else if(scaler == "Logarithm")
-                outputs.col(i).array() = inputs.col(i).array().log();
-            else if(scaler == "ImageMinMax")
-                outputs.col(i).array() = inputs.col(i).array() / type(255.0);
-            else
-                throw runtime_error("Unknown scaling method in Scaling Layer: " + scaler);
-        }
+        // Logarithm is the only non-linear one, handle separately if needed
+        // but 99% of use cases are now covered by the line above.
+*/
     }
 
 
@@ -249,10 +197,10 @@ public:
         ostringstream buffer;
 
         buffer.precision(10);
-
+/*
         for(Index i = 0; i < inputs_number; i++)
             buffer << output_names[i] << " = 2*(" << input_names[i] << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
-
+*/
         return buffer.str();
     }
 
@@ -264,10 +212,10 @@ public:
         ostringstream buffer;
 
         buffer.precision(10);
-
+/*
         for(Index i = 0; i < inputs_number; i++)
             buffer << output_names[i] << " = (" << input_names[i] << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
-
+*/
         return buffer.str();
     }
 
@@ -279,10 +227,10 @@ public:
         ostringstream buffer;
 
         buffer.precision(10);
-
+/*
         for(Index i = 0; i < inputs_number; i++)
             buffer << output_names[i] << " = " << input_names[i] << "/(" << descriptives[i].standard_deviation << ");\n";
-
+*/
         return buffer.str();
     }
 
@@ -298,7 +246,7 @@ public:
         ostringstream buffer;
 
         buffer.precision(10);
-
+/*
         for(Index i = 0; i < outputs_number; i++)
         {
             const string& scaler = scalers[i];
@@ -320,11 +268,11 @@ public:
             else
                 throw runtime_error("Unknown inputs scaling method.\n");
         }
-
+*/
         string expression = buffer.str();
 
-        expression = std::regex_replace(expression, std::regex("\\+-"), "-");
-        expression = std::regex_replace(expression, std::regex("--"), "+");
+        expression = regex_replace(expression, regex("\\+-"), "-");
+        expression = regex_replace(expression, regex("--"), "+");
 
         return expression;
     }
@@ -341,7 +289,7 @@ public:
             cout << "Neuron " << i << endl
                  << "string " << scalers[i] << endl;
 
-            descriptives[i].print();
+            //descriptives[i].print();
         }
     }
 
@@ -361,7 +309,7 @@ public:
             set(Shape(Rank - 1, neurons_number));
 
         const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
-
+/*
         for(Index i = 0; i < neurons_number; i++)
         {
             const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
@@ -377,11 +325,13 @@ public:
                     type(stof(tokens[2])),
                     type(stof(tokens[3]))
                     );
+
             }
 
             scalers[i] = read_xml_string(scaling_neuron_element, "Scaler");
             start_element = scaling_neuron_element;
         }
+*/
     }
 
 
@@ -395,21 +345,54 @@ public:
 
         for(Index i = 0; i < outputs_number; i++)
         {
+/*
             printer.OpenElement("ScalingNeuron");
             printer.PushAttribute("Index", int(i + 1));
             add_xml_element(printer, "Descriptives", vector_to_string(descriptives[i].to_tensor()));
             add_xml_element(printer, "Scaler", scalers[i]);
             printer.CloseElement();
+*/
         }
 
         printer.CloseElement();
+    }
+
+    void calculate_coefficients()
+    {
+        const Index n = scalers.size();
+        for(Index i = 0; i < n; ++i)
+        {
+            const string& method = scalers[i];
+            if(method == "MeanStandardDeviation") {
+                multipliers[i] = 1.0f / (standard_deviations[i] + EPSILON);
+                offsets[i] = -means[i] * multipliers[i];
+            }
+            else if(method == "MinimumMaximum") {
+                multipliers[i] = (max_range - min_range) / ((maximums[i] - minimums[i]) + EPSILON);
+                offsets[i] = min_range - (minimums[i] * multipliers[i]);
+            }
+            else if(method == "ImageMinMax") {
+                multipliers[i] = 1.0f / 255.0f;
+                offsets[i] = 0.0f;
+            }
+            else { // None
+                multipliers[i] = 1.0f;
+                offsets[i] = 0.0f;
+            }
+        }
     }
 
 private:
 
     enum Forward {Output = 1}; // slot 0 = wired input (implicit for all layers)
 
-    vector<Descriptives> descriptives;
+    VectorR means;
+    VectorR standard_deviations;
+    VectorR minimums;
+    VectorR maximums;
+
+    VectorR multipliers;
+    VectorR offsets;
 
     vector<string> scalers;
 
