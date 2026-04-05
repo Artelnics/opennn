@@ -74,24 +74,6 @@ private:
 
 };
 
-
-#ifdef CUDA
-
-struct Normalization3dForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    TensorCuda means_device;
-    TensorCuda inv_variances_device;
-};
-
-
-struct Normalization3dBackPropagationCuda : public LayerBackPropagationCuda
-{
-    TensorView gamma_gradients;
-    TensorView beta_gradients;
-};
-
-#endif
-
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -271,58 +271,7 @@ protected:
         outputs_mat.array() = (norm_mat.array().rowwise() * gammas.transpose().array()).rowwise() +
                               betas.transpose().array();
     }
-#ifdef CUDA
-
-
-public:
-
-        // Forward propagation CUDA
-
-    virtual void forward_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                                   bool)
-    {
-        throw runtime_error("CUDA forward propagation not implemented for layer type: " + get_name());
-    }
-
-    virtual void back_propagate(unique_ptr<LayerForwardPropagationCuda>&,
-                                unique_ptr<LayerBackPropagationCuda>&) const
-    {
-        throw runtime_error("CUDA back propagation not implemented for layer type: " + get_name());
-    }
-
-    virtual vector<TensorViewCuda*> get_parameter_views_device() { return {}; }
-
-    void add_gradients(const vector<TensorViewCuda>&) const;
-
-    virtual void free() {}
-
-    virtual void print_parameters_cuda() {}
-
-#endif
-
 };
-
-
-/*
-struct LayerForwardPropagation
-{
-    virtual void initialize() = 0;
-
-    virtual vector<TensorView*> get_workspace_views();
-
-    const vector<TensorView>& get_inputs() const { return inputs; }
-
-    TensorView get_outputs() const;
-
-    Index batch_size = 0;
-
-    Layer* layer = nullptr;
-
-    vector<TensorView> inputs;
-
-    TensorView outputs;
-};
-*/
 
 }
 

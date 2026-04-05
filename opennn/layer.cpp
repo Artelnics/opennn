@@ -9,23 +9,9 @@
 #include <vector>
 
 #include "layer.h"
-//#include "random_utilities.h"
 
 namespace opennn
 {
-
-/*
-TensorView LayerForwardPropagation::get_outputs() const
-{
-    return outputs;
-}
-
-vector<TensorView*> LayerForwardPropagation::get_workspace_views()
-{
-    return {&outputs};
-}
-*/
-
 
 bool Layer::get_display() const
 {

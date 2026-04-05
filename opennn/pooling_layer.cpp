@@ -356,66 +356,6 @@ void Pooling::back_propagate_average_pooling(const Tensor4& output_gradients, Te
 }
 
 
-#ifdef CUDA
-
-void Pooling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool is_training)
-{
-    TensorView outputs = forward_propagation->outputs;
-
-    // Forward propagation
-
-    PoolingForwardPropagationCuda* pooling_forward_propagation
-        = static_cast<PoolingForwardPropagationCuda*>(forward_propagation.get());
-
-    // Pooling
-
-    CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
-        pooling_descriptor,
-        &alpha,
-        input_tensor_descriptor,
-        forward_propagation->inputs[0].data,
-        &beta,
-        outputs.get_descriptor(),
-        outputs.data));
-}
-
-
-void Pooling::back_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation,
-                             unique_ptr<LayerBackPropagationCuda>& back_propagation) const
-{
-    // Forward propagation
-    
-    const TensorView& outputs = forward_propagation->outputs;
-
-    const PoolingForwardPropagationCuda* pooling_forward_propagation
-        = static_cast<PoolingForwardPropagationCuda*>(forward_propagation.get());
-
-    const type* inputs = forward_propagation->inputs[0].data;
-
-    // Back propagation
-
-    type* input_gradients = back_propagation->input_gradients[0].data;
-    type* output_gradients = back_propagation->output_gradients[0].data;
-
-    // Pooling
-
-    CHECK_CUDNN(cudnnPoolingBackward(get_cudnn_handle(),
-        pooling_descriptor,
-        &alpha,
-        outputs.get_descriptor(),
-        outputs.data,
-        outputs.get_descriptor(),
-        output_gradients,
-        input_tensor_descriptor,
-        inputs,
-        &beta,
-        input_tensor_descriptor,
-        input_gradients));
-}
-
-#endif
-
-
 void Pooling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Pooling");

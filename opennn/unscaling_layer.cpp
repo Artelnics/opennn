@@ -304,19 +304,7 @@ void Unscaling::from_XML(const XMLDocument& document)
     }
 }
 
-
 REGISTER(Layer, Unscaling, "Unscaling")
-
-#ifdef CUDA
-
-void Unscaling::forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool)
-{
-    // @todo: Implement unscaling in CUDA
-
-    throw runtime_error("Unscaling layer not implemented in CUDA");
-}
-
-#endif
 
 }
 

@@ -405,32 +405,6 @@ public:
         printer.CloseElement();
     }
 
-#ifdef CUDA
-
-    void forward_propagate(unique_ptr<LayerForwardPropagationCuda>& forward_propagation, bool) override
-    {
-        ScalingForwardPropagationCuda<Rank>* scaling_forward_propagation =
-            static_cast<ScalingForwardPropagationCuda<Rank>*>(forward_propagation.get());
-
-        const Index outputs_number = get_outputs_number();
-        const size_t size = outputs_number * forward_propagation->batch_size;
-
-        scale_2d_cuda(size,
-                      forward_propagation->batch_size,
-                      outputs_number,
-                      forward_propagation->inputs[0].data,
-                      forward_propagation->outputs.data,
-                      scaling_forward_propagation->scalers_device,
-                      scaling_forward_propagation->minimums_device,
-                      scaling_forward_propagation->maximums_device,
-                      scaling_forward_propagation->means_device,
-                      scaling_forward_propagation->standard_deviations_device,
-                      min_range,
-                      max_range);
-    }
-
-#endif
-
 private:
 
     enum Forward {Output = 1}; // slot 0 = wired input (implicit for all layers)
@@ -442,92 +416,6 @@ private:
     type min_range;
     type max_range;
 };
-
-
-#ifdef CUDA
-
-template<int Rank>
-struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    void initialize() override
-    {
-        const Index outputs_number = scaling_layer->get_outputs_number();
-
-        outputs.set_descriptor({static_cast<int>(batch_size), static_cast<int>(outputs_number)});
-
-        const VectorR minimums_host = scaling_layer->get_minimums();
-        const VectorR maximums_host = scaling_layer->get_maximums();
-        const VectorR means_host = scaling_layer->get_means();
-        const VectorR std_devs_host = scaling_layer->get_standard_deviations();
-        const vector<string> scalers_host_vec = scaling_layer->get_scalers();
-
-        Tensor<int, 1> scalers_host_tensor(outputs_number);
-
-        for(Index i = 0; i < outputs_number; ++i)
-        {
-            const string & scaler_str = scalers_host_vec[i];
-
-            if (scaler_str == "None")
-                scalers_host_tensor(i) = 0;
-            else if (scaler_str == "MinimumMaximum")
-                scalers_host_tensor(i) = 1;
-            else if (scaler_str == "MeanStandardDeviation")
-                scalers_host_tensor(i) = 2;
-            else if (scaler_str == "StandardDeviation")
-                scalers_host_tensor(i) = 3;
-            else if (scaler_str == "Logarithm")
-                scalers_host_tensor(i) = 4;
-            else if (scaler_str == "ImageMinMax")
-                scalers_host_tensor(i) = 5;
-            else
-                throw runtime_error("Unknown scaler method for CUDA: " + scaler_str);
-        }
-
-        CHECK_CUDA(cudaMalloc(&minimums_device, outputs_number * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&maximums_device, outputs_number * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&means_device, outputs_number * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&standard_deviations_device, outputs_number * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&scalers_device, outputs_number * sizeof(float)));
-
-        CHECK_CUDA(cudaMemcpy(minimums_device, minimums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
-        CHECK_CUDA(cudaMemcpy(maximums_device, maximums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
-        CHECK_CUDA(cudaMemcpy(means_device, means_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
-        CHECK_CUDA(cudaMemcpy(standard_deviations_device, std_devs_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
-        CHECK_CUDA(cudaMemcpy(scalers_device, scalers_host_tensor.data(), outputs_number * sizeof(int), cudaMemcpyHostToDevice));
-    }
-
-    void print() const override
-    {
-        // @todo
-    }
-
-    void free() override
-    {
-        cudaFree(scalers_device);
-        scalers_device = nullptr;
-
-        cudaFree(minimums_device);
-        minimums_device = nullptr;
-
-        cudaFree(maximums_device);
-        maximums_device = nullptr;
-
-        cudaFree(means_device);
-        means_device = nullptr;
-
-        cudaFree(standard_deviations_device);
-        standard_deviations_device = nullptr;
-    }
-
-    int* scalers_device = nullptr;
-    type* minimums_device = nullptr;
-    type* maximums_device = nullptr;
-    type* means_device = nullptr;
-    type* standard_deviations_device = nullptr;
-};
-
-#endif
-
 
 void reference_scaling_layer();
 
