@@ -540,58 +540,34 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
     return tensor_map<3>(forward_propagation.get_outputs());
 }
 
-
-MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs)
+MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 {
-    if(layers.empty() || inputs.size() == 0) return {};
+    if(layers.empty() || input_views.empty()) return {};
 
-    ForwardPropagation forward_propagation(inputs.rows(), this);
+    // Use the first dimension of the first input as batch size
+    const Index batch_size = input_views[0].shape[0];
+    ForwardPropagation fp(batch_size, this);
 
-    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()});
+    forward_propagate(input_views, fp, false);
 
-    forward_propagate({input_view}, forward_propagation, false);
-/*
-    TensorView out = forward_propagation.layers.back()->get_outputs();
+    // Fetch final outputs from the last layer's output slot
+    TensorView out_view = fp.get_last_trainable_layer_outputs();
 
-    return MatrixMap(out.data, out.shape[0], out.shape[1]);
-*/
-    return {};
+    // Convert to MatrixR (samples x features)
+    return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);
 }
 
-
-MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs)
-{
-    if(layers.empty() || inputs.size() == 0) return {};
-
-    ForwardPropagation forward_propagation(inputs.dimension(0), this);
-
-    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)});
-
-    forward_propagate({input_view}, forward_propagation, false);
-/*
-    TensorView out = forward_propagation.layers.back()->get_outputs();
-
-    return MatrixMap(out.data, out.shape[0], out.size() / out.shape[0]);
-*/
-    return {};
+// Now the overloads become one-liners:
+MatrixR NeuralNetwork::calculate_outputs(const MatrixR& inputs) {
+    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.rows(), inputs.cols()})});
 }
 
+MatrixR NeuralNetwork::calculate_outputs(const Tensor3& inputs) {
+    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2)})});
+}
 
-MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs)
-{
-    if(layers.empty() || inputs.size() == 0) return {};
-
-    ForwardPropagation forward_propagation(inputs.dimension(0), this);
-
-    TensorView input_view(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)});
-
-    forward_propagate({input_view}, forward_propagation, false);
-/*
-    TensorView out = forward_propagation.layers.back()->get_outputs();
-
-    return MatrixMap(out.data, out.shape[0], out.size() / out.shape[0]);
-*/
-    return {};
+MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs) {
+    return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
 }
 
 

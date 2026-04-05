@@ -181,7 +181,7 @@ public:
 
     // Output
 
-    Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
+    MatrixR calculate_outputs(const vector<TensorView>&);
 
     MatrixR calculate_outputs(const MatrixR&);
 
@@ -190,6 +190,8 @@ public:
     MatrixR calculate_outputs(const Tensor4&);
 
     MatrixR calculate_directional_inputs(const Index, const VectorR&, type, type, Index = 101) const;
+
+    Tensor3 calculate_outputs(const Tensor3&, const Tensor3&);
 
     Index calculate_image_output(const filesystem::path&);
 
