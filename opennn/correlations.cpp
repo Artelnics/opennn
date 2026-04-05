@@ -16,8 +16,6 @@
 #include "bounding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
-#include "mean_squared_error.h"
-#include "cross_entropy_error.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
@@ -39,8 +37,7 @@ VectorR autocorrelations(const VectorR& x, Index past_time_steps)
 }
 
 
-Correlation correlation(const MatrixR& x,
-                        const MatrixR& y)
+Correlation correlation(const MatrixR& x, const MatrixR& y)
 {
     if(is_constant(x) || is_constant(y))
         return Correlation();

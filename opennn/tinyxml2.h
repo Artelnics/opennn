@@ -2,11 +2,11 @@
 
 #include <string>
 #include <vector>
-#include <map>
+//#include <map>
 #include <memory>
 #include <sstream>
-#include <fstream>
-#include <algorithm>
+//#include <fstream>
+//#include <algorithm>
 
 namespace tinyxml2 {
 

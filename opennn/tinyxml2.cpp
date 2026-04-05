@@ -96,5 +96,4 @@ std::string read_xml_string(const XMLElement* root, const std::string& element_n
     return (el && el->GetText()) ? std::string(el->GetText()) : "";
 }
 
-
 }
