@@ -17,12 +17,14 @@ static constexpr Index ALIGN_BYTES = EIGEN_MAX_ALIGN_BYTES; // usually 32
 static constexpr Index ALIGN_ELEMENTS = ALIGN_BYTES / sizeof(type);
 static constexpr Index ALIGN_MASK = ~(ALIGN_ELEMENTS - 1);
 
-inline Index get_aligned_size(Index size) {
+inline Index get_aligned_size(Index size)
+{
     if (size == 0) return 0;
     return (size + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
 }
 
-inline bool is_aligned(const void* ptr) {
+inline bool is_aligned(const void* ptr)
+{
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 

@@ -962,153 +962,129 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
-    inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
-    layers_from_XML(neural_network_element->FirstChildElement("Layers"));
-    outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
-    set_display(read_xml_bool(neural_network_element, "Display"));
-
-    compile();
-
-    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    VectorR xml_parameters;
-
-    if (parameters_element && parameters_element->GetText())
-        string_to_vector(parameters_element->GetText(), xml_parameters);
-
-    if (xml_parameters.size() > 0 && parameters.size() > 0)
+    // 1. Load Input Variables
+    const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
+    if(inputs_element)
     {
-        const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
+        const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
+        input_variables.resize(inputs_number);
 
-        memcpy(parameters.data(), xml_parameters.data(), elements_to_copy * sizeof(type));
-    }
-}
-
-
-void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
-{
-    if(!inputs_element)
-        throw runtime_error("Inputs element is nullptr.\n");
-
-    const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
-    input_variables.resize(inputs_number);
-
-    const XMLElement* current_element = inputs_element->FirstChildElement("InputsNumber");
-
-    for(Variable& variable : input_variables)
-    {
-        if(variable.is_categorical())
+        const XMLElement* current_input = inputs_element->FirstChildElement("Input");
+        for(Index i = 0; i < inputs_number && current_input; ++i)
         {
-            for(string& category_name : variable.categories)
-            {
-                current_element = current_element->NextSiblingElement("Input");
-                if(!current_element) break;
-
-                if(current_element->GetText())
-                    category_name = current_element->GetText();
-            }
-        }
-        else
-        {
-            current_element = current_element->NextSiblingElement("Input");
-            if(!current_element) continue;
-
-            if(current_element->GetText())
-                variable.name = current_element->GetText();
+            if(current_input->GetText())
+                input_variables[i].name = current_input->GetText();
+            current_input = current_input->NextSiblingElement("Input");
         }
     }
-}
 
+    // 2. Load Layers Topology
+    const XMLElement* layers_container = neural_network_element->FirstChildElement("Layers");
+    if(!layers_container)
+        throw runtime_error("Layers container is nullptr.\n");
 
-void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
-{
-    if(!layers_element)
-        throw runtime_error("Layers element is nullptr.\n");
-
-    const Index layers_number = read_xml_index(layers_element, "LayersNumber");
+    const Index layers_number = read_xml_index(layers_container, "LayersNumber");
 
     layers.clear();
     layer_input_indices.clear();
+    // Pre-reserve to avoid frequent reallocations during add_layer
+    layers.reserve(layers_number);
+    layer_input_indices.resize(layers_number);
 
-    const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
-
-    for(Index i = 0; i < layers_number; i++)
+    // Iterate through children of <Layers>, skipping the <LayersNumber> tag
+    const XMLElement* layer_element = layers_container->FirstChildElement();
+    while(layer_element)
     {
-        const XMLElement* layer_element = start_element->NextSiblingElement();
+        string tag_name = layer_element->Name();
 
-        if(!layer_element)
-            throw runtime_error("Layer element is nullptr.");
-
-        const string name_string = layer_element->Name();
-        unique_ptr<Layer> layer = Registry<Layer>::instance().create(name_string);
-
-        if (!layer)
-            throw runtime_error("Layer type not found: " + name_string);
-
-        XMLDocument layer_document;
-        XMLNode* element_clone = layer_element->DeepClone(&layer_document);
-        layer_document.InsertFirstChild(element_clone);
-
-        layer->from_XML(layer_document);
-        add_layer(std::move(layer));
-
-        start_element = layer_element;
-    }
-
-    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
-    if(!layer_input_indices_element)
-        throw runtime_error("LayerInputIndices element is nullptr.\n");
-
-    for(const XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
-         layer_inputs_indices_element;
-         layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
-    {
-        int layer_index;
-        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
-            throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
-
-        const char* text = layer_inputs_indices_element->GetText();
-        if(!text)
-            throw runtime_error("Text is nullptr for LayerInputsIndices element.");
-
-        Shape input_shape = string_to_shape(string(text), " ");
-        layer_input_indices[layer_index] = vector<Index>(input_shape.begin(), input_shape.end());
-    }
-}
-
-
-void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
-{
-    if(!outputs_element)
-        throw runtime_error("Outputs element is nullptr.\n");
-
-    const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
-
-    output_variables.resize(outputs_number);
-
-    const XMLElement* current_element = outputs_element->FirstChildElement("OutputsNumber");
-
-    for(Variable& variable : output_variables)
-    {
-        if(variable.is_categorical())
-            for(string& category_name : variable.categories)
-            {
-                current_element = current_element->NextSiblingElement("Output");
-                if(!current_element) break;
-
-                if(current_element->GetText())
-                    category_name = current_element->GetText();
-            }
-        else
+        // Skip metadata tags, only process actual Layer types
+        if(tag_name != "LayersNumber" && tag_name != "LayerInputIndices")
         {
-            current_element = current_element->NextSiblingElement("Output");
-            if(!current_element) continue;
+            // Use the Registry to create the specific layer type (Dense, Scaling, etc.)
+            unique_ptr<Layer> layer = Registry<Layer>::instance().create(tag_name);
 
-            if(current_element->GetText())
-                variable.name = current_element->GetText();
+            if (!layer)
+                throw runtime_error("Layer type '" + tag_name + "' not found in Registry. "
+                                                                "Ensure the layer file is linked and REGISTER macro is used.");
+
+            // Create a temporary sub-document for the layer to parse its own data
+            XMLDocument layer_doc;
+            layer_doc.InsertFirstChild(layer_element->DeepClone(&layer_doc));
+            layer->from_XML(layer_doc);
+
+            // Add to the network
+            layers.push_back(std::move(layer));
+        }
+        layer_element = layer_element->NextSiblingElement();
+    }
+
+    // 3. Load Connectivity (Layer Input Indices)
+    const XMLElement* connectivity_element = layers_container->FirstChildElement("LayerInputIndices");
+    if(connectivity_element)
+    {
+        const XMLElement* indices_element = connectivity_element->FirstChildElement("LayerInputsIndices");
+        while(indices_element)
+        {
+            int layer_idx = -1;
+            indices_element->QueryIntAttribute("LayerIndex", &layer_idx);
+
+            if(layer_idx >= 0 && layer_idx < static_cast<int>(layers.size()))
+            {
+                const char* text = indices_element->GetText();
+                if(text)
+                {
+                    Shape s = string_to_shape(text, " ");
+                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                }
+            }
+            indices_element = indices_element->NextSiblingElement("LayerInputsIndices");
+        }
+    }
+
+    // 4. Load Output Variables
+    const XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
+    if(outputs_element)
+    {
+        const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
+        output_variables.resize(outputs_number);
+
+        const XMLElement* current_output = outputs_element->FirstChildElement("Output");
+        for(Index i = 0; i < outputs_number && current_output; ++i)
+        {
+            if(current_output->GetText())
+                output_variables[i].name = current_output->GetText();
+            current_output = current_output->NextSiblingElement("Output");
+        }
+    }
+
+    // 5. Global Settings
+    set_display(read_xml_bool(neural_network_element, "Display"));
+
+    // 6. COMPILE Topology
+    // This establishes input/output shapes and allocates the 'parameters' vector
+    // with correct ALIGN_BYTES alignment for vectorized operations.
+    compile();
+
+    // 7. Load Flattened Parameters
+    const XMLElement* parameters_element = neural_network_element->FirstChildElement("Parameters");
+    if(parameters_element && parameters_element->GetText())
+    {
+        VectorR xml_parameters;
+        string_to_vector(parameters_element->GetText(), xml_parameters);
+
+        if (xml_parameters.size() > 0)
+        {
+            if(xml_parameters.size() != parameters.size())
+            {
+                // This usually happens if the XML was generated with a different architecture
+                cout << "Warning: XML parameter size (" << xml_parameters.size()
+                     << ") differs from Compiled size (" << parameters.size() << ").\n";
+            }
+
+            const Index elements_to_copy = min(parameters.size(), xml_parameters.size());
+            // Since 'parameters' is already linked to layer views via compile(),
+            // copying into 'parameters' updates all layers simultaneously.
+            std::copy(xml_parameters.data(), xml_parameters.data() + elements_to_copy, parameters.data());
         }
     }
 }
