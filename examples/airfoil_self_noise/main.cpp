@@ -60,7 +60,7 @@ int main()
         sgd->set_initial_decay(0.00001);
 
 
-        training_strategy.get_loss()->set_regularization_method("L1");
+        training_strategy.get_loss()->set_regularization("L1");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
 
         TrainingResults training_results = training_strategy.train();

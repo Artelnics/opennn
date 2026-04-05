@@ -53,7 +53,7 @@ int main()
         // Training Strategy
 
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
-        training_strategy.get_loss()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization("None");
 
         training_strategy.train();
 

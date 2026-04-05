@@ -10,6 +10,14 @@
 
 namespace tinyxml2 {
 
+enum XMLError {
+    XML_SUCCESS = 0,
+    XML_NO_ATTRIBUTE,
+    XML_WRONG_ATTRIBUTE_TYPE,
+    XML_ERROR_FILE_NOT_FOUND,
+    XML_ERROR_PARSING
+};
+
 class XMLElement;
 class XMLDocument;
 

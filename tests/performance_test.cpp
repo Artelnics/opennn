@@ -22,10 +22,10 @@ TEST(PerformanceTest, Rosenbrock)
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
     
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+    training_strategy.set_error(TrainingStrategy::Error::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-    training_strategy.get_loss()->set_regularization_method("NoRegularization");
+    training_strategy.get_loss()->set_regularization("NoRegularization");
 
     training_strategy.set_maximum_epochs(10);
     training_strategy.set_display_period(1);
@@ -61,9 +61,9 @@ TEST(PerformanceTest, ImageClassification)
 
     TrainingStrategy training_strategy(&neural_network, &image_data_set);
    
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    training_strategy.set_error(TrainingStrategy::Error::CROSS_ENTROPY_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-    training_strategy.get_loss()->set_regularization_method("NoRegularization");
+    training_strategy.get_loss()->set_regularization("NoRegularization");
     training_strategy.get_adaptive_moment_estimation()->set_batch_size(512);
     training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs(2);
     training_strategy.set_display_period(1);

@@ -387,16 +387,16 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     cout<<"005"<<endl;
 
     NeuralNetwork neural_network;
-    Shape dim1 = { 1 };
-    Shape dim2 = { 1 };
+    const Shape dim1 = { 1 };
+    const Shape dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
-    cout<<"006"<<endl;
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method("None");
+    Loss loss(&neural_network, &dataset);
+    loss.set_error("MeanSquaredError");
+    loss.set_regularization("None");
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&loss);
     levenberg_marquardt_algorithm.set_display(false);
     cout<<"007"<<endl;
 
@@ -499,10 +499,11 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method("None");
+    Loss loss(&neural_network, &dataset);
+    loss.set_error("MeanSquaredError");
+    loss.set_regularization("None");
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&loss);
     levenberg_marquardt_algorithm.set_display(false);
 
     try
@@ -608,10 +609,11 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     dense_2d->set_activation_function("Softmax");
     scaling_layer->set_display(false);
 
-    CrossEntropyError2d cross_entropy_error_2d(&neural_network, &dataset);
-    cross_entropy_error_2d.set_regularization_method("None");
+    Loss loss(&neural_network, &dataset);
+    loss.set_error("CrossEntropyError");
+    loss.set_regularization("None");
 
-    QuasiNewtonMethod quasi_newton_method(&cross_entropy_error_2d);
+    QuasiNewtonMethod quasi_newton_method(&loss);
     quasi_newton_method.set_display(false);
     quasi_newton_method.set_display_period(1000);
 
@@ -715,12 +717,14 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
 
     scaling_layer->set_display(false);
 
-    MeanSquaredError mean_squared_error(&neural_network, &dataset);
-    mean_squared_error.set_regularization_method("None");
+    Loss loss(&neural_network, &dataset);
+    loss.set_error("MeanSquaredError");
+    loss.set_regularization("None");
 
-    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
+    QuasiNewtonMethod quasi_newton_method(&loss);
     quasi_newton_method.set_maximum_epochs(500);
     quasi_newton_method.set_display(false);
+
     try
     {
         quasi_newton_method.train();
@@ -964,8 +968,7 @@ void register_layers()
 
 void register_loss_indices()
 {
-    CrossEntropyError2d cross_entropy_error_2d;//cross_entropy_error_2d.print();
-    MeanSquaredError mean_squared_error;//mean_squared_error.print();
+    Loss loss;//mean_squared_error.print();
 
 }
 

@@ -67,8 +67,6 @@ inline void mean_squared_error_gradient(const TensorView& input,
 #endif
 }
 
-// --- Normalized Squared Error ---
-
 inline void normalized_squared_error(const TensorView& input, const TensorView& target, type coefficient, type& error, float* workspace_device)
 {
 #ifndef CUDA
@@ -90,6 +88,8 @@ inline void normalized_squared_error(const TensorView& input, const TensorView& 
     error = sse / (coefficient + EPSILON);
 #endif
 }
+
+
 
 inline void weighted_squared_error(const TensorView& input,
                                    const TensorView& target,
@@ -200,7 +200,8 @@ inline void cross_entropy_gradient(const TensorView& input,
 
 
 inline void minkowski_error(const TensorView& input,
-                            const TensorView& target, type p,
+                            const TensorView& target,
+                            type p,
                             type& error,
                             float* workspace_device)
 {
@@ -219,6 +220,55 @@ inline void minkowski_error(const TensorView& input,
     CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)input.size(), workspace_device, 1, &sum_m));
 
     error = sum_m / input.size();
+#endif
+}
+
+
+inline void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_gradient)
+{
+#ifndef CUDA
+    const VectorMap inputs = input.as_vector();
+    const VectorMap targets = target.as_vector();
+    VectorMap input_gradients = input_gradient.as_vector();
+
+    // Formula: 2 * (y - t) / coefficient
+    input_gradients.array() = (inputs.array() - targets.array()) * (2.0f / (coefficient + EPSILON));
+#else
+    const int n = static_cast<int>(input.size());
+    const float alpha_pos = 1.0f;
+    const float alpha_neg = -1.0f;
+    const float beta_zero = 0.0f;
+    const float scale = 2.0f / (static_cast<float>(coefficient) + EPSILON);
+
+    // 1. gradient = input - target
+    CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_sum_descriptor(),
+                              &alpha_pos, input.get_descriptor(), input.data,
+                              &alpha_neg, target.get_descriptor(), target.data,
+                              &beta_zero, input_gradient.get_descriptor(), input_gradient.data));
+
+    // 2. Scale: gradient *= (2 / coefficient)
+    CHECK_CUBLAS(cublasSscal(get_cublas_handle(), n, &scale, input_gradient.data, 1));
+#endif
+}
+
+
+inline void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient)
+{
+#ifndef CUDA
+    const Index size = input.size();
+    const auto inputs = input.as_vector().array();
+    const auto targets = target.as_vector().array();
+    auto input_gradients = input_gradient.as_vector().array();
+
+    const auto diff = inputs - targets;
+
+    // Formula: (p / N) * sign(y - t) * |y - t|^(p - 1)
+    // We add EPSILON inside the power to ensure numerical stability if p-1 < 0
+    input_gradients = (p / static_cast<type>(size)) * diff.sign() * (diff.abs() + EPSILON).pow(p - 1.0f);
+#else
+    // Minkowski logic is too complex for standard cuBLAS/cuDNN
+    // Call custom kernel for element-wise power derivative
+    calculate_minkowski_error_delta_cuda(input.size(), input_gradient.data, target.data, input.data, p);
 #endif
 }
 

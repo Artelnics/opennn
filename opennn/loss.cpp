@@ -58,7 +58,7 @@ void Loss::set(const NeuralNetwork* new_neural_network, const Dataset* new_datas
     dataset = const_cast<Dataset*>(new_dataset);
 
     regularization_method = "L2";
-    set_loss_method(LossMethod::MeanSquaredError);
+    set_error(Error::MeanSquaredError);
 
 }
 
@@ -75,7 +75,7 @@ void Loss::set_dataset(const Dataset* new_dataset)
 }
 
 
-void Loss::set_regularization_method(const string& new_regularization_method)
+void Loss::set_regularization(const string& new_regularization_method)
 {
     regularization_method = new_regularization_method;
 }
@@ -124,25 +124,25 @@ void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward
     float* workspace_device = nullptr;
 #endif
 
-    switch(method)
+    switch(error)
     {
-    case LossMethod::MeanSquaredError:
+    case Error::MeanSquaredError:
         mean_squared_error(input, target, back_propagation.error, workspace_device);
         break;
-    case LossMethod::NormalizedSquaredError:
+    case Error::NormalizedSquaredError:
         normalized_squared_error(input, target, normalization_coefficient, back_propagation.error, workspace_device);
         break;
-    case LossMethod::WeightedSquaredError:
+    case Error::WeightedSquaredError:
         weighted_squared_error(input, target, positives_weight, negatives_weight, back_propagation.error, workspace_device);
         break;
-    case LossMethod::CrossEntropy:
+    case Error::CrossEntropy:
         // Math utility handles logic based on num_classes (input.shape.back())
         if (input.shape.back() == 1)
             binary_cross_entropy(input, target, back_propagation.error, workspace_device);
         else
             categorical_cross_entropy(input, target, back_propagation.error, workspace_device);
         break;
-    case LossMethod::MinkowskiError:
+    case Error::MinkowskiError:
         minkowski_error(input, target, minkowski_parameter, back_propagation.error, workspace_device);
         break;
     }
@@ -154,22 +154,23 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
     const TensorView target = batch.get_targets();
     TensorView input_gradient = back_propagation.get_output_gradients();
 
-    switch(method)
+    switch(error)
     {
-    case LossMethod::MeanSquaredError:
+    case Error::MeanSquaredError:
         mean_squared_error_gradient(input, target, input_gradient);
         break;
-    case LossMethod::NormalizedSquaredError:
+
+    case Error::NormalizedSquaredError:
         normalized_squared_error_gradient(input, target, normalization_coefficient, input_gradient);
         break;
-    case LossMethod::WeightedSquaredError:
+    case Error::WeightedSquaredError:
         // Passing 1.0/N as coefficient to match MSE style if required
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, 1.0f, input_gradient);
         break;
-    case LossMethod::CrossEntropy:
+    case Error::CrossEntropy:
         cross_entropy_gradient(input, target, input_gradient);
         break;
-    case LossMethod::MinkowskiError:
+    case Error::MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_gradient);
         break;
     }
@@ -231,24 +232,24 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 }
 
 
-void Loss::set_loss_method(const LossMethod& new_method)
+void Loss::set_error(const Error& new_error)
 {
-    method = new_method;
+    error = new_error;
 
-    if (method == LossMethod::MeanSquaredError) name = "MeanSquaredError";
-    else if (method == LossMethod::NormalizedSquaredError) name = "NormalizedSquaredError";
-    else if (method == LossMethod::WeightedSquaredError) name = "WeightedSquaredError";
-    else if (method == LossMethod::CrossEntropy) name = "CrossEntropy";
-    else if (method == LossMethod::MinkowskiError) name = "MinkowskiError";
+    if (error == Error::MeanSquaredError) name = "MeanSquaredError";
+    else if (error == Error::NormalizedSquaredError) name = "NormalizedSquaredError";
+    else if (error == Error::WeightedSquaredError) name = "WeightedSquaredError";
+    else if (error == Error::CrossEntropy) name = "CrossEntropy";
+    else if (error == Error::MinkowskiError) name = "MinkowskiError";
 }
 
-void Loss::set_loss_method(const string& new_name)
+void Loss::set_error(const string& new_name)
 {
-    if (new_name == "MeanSquaredError") set_loss_method(LossMethod::MeanSquaredError);
-    else if (new_name == "NormalizedSquaredError") set_loss_method(LossMethod::NormalizedSquaredError);
-    else if (new_name == "WeightedSquaredError") set_loss_method(LossMethod::WeightedSquaredError);
-    else if (new_name == "CrossEntropy") set_loss_method(LossMethod::CrossEntropy);
-    else if (new_name == "MinkowskiError") set_loss_method(LossMethod::MinkowskiError);
+    if (new_name == "MeanSquaredError") set_error(Error::MeanSquaredError);
+    else if (new_name == "NormalizedSquaredError") set_error(Error::NormalizedSquaredError);
+    else if (new_name == "WeightedSquaredError") set_error(Error::WeightedSquaredError);
+    else if (new_name == "CrossEntropy") set_error(Error::CrossEntropy);
+    else if (new_name == "MinkowskiError") set_error(Error::MinkowskiError);
     else throw runtime_error("Unknown loss method: " + new_name);
 }
 
@@ -290,14 +291,6 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
 }
 
 
-void Loss::to_XML(XMLPrinter& file_stream) const
-{
-    file_stream.OpenElement("Loss");
-
-    file_stream.CloseElement();
-}
-
-
 void Loss::regularization_from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("Regularization");
@@ -307,7 +300,7 @@ void Loss::regularization_from_XML(const XMLDocument& document)
 
     const string new_regularization_method = root_element->Attribute("Type");
 
-    set_regularization_method(new_regularization_method);
+    set_regularization(new_regularization_method);
 
     const XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
 
@@ -342,22 +335,6 @@ void Loss::write_regularization_XML(XMLPrinter& file_stream) const
     // Close regularization
 
     file_stream.CloseElement();
-}
-
-
-void Loss::from_XML(const XMLDocument& document)
-{
-    const XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
-
-    if(!root_element)
-        throw runtime_error("Mean squared element is nullptr.\n");
-
-    // Regularization
-
-    XMLDocument regularization_document;
-    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-    regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
-    regularization_from_XML(regularization_document);
 }
 
 
@@ -533,7 +510,6 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
     }
     */
 
-
     const Shape output_shape = neural_network->get_output_shape();
 
     const Index outputs_number = output_shape[0];
@@ -554,7 +530,7 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
     const Index size = accumulate(output_shape.begin(), output_shape.end(), batch_size, multiplies<>());
 
     output_gradients.resize(size);
-
+/*
     if(is_instance_of<CrossEntropyError3d>(loss))
     {
         predictions.resize(batch_size, outputs_number);
@@ -566,6 +542,7 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
         mask.resize(batch_size, outputs_number);
         mask.setConstant(false);
     }
+*/
 }
 
 
@@ -849,24 +826,22 @@ type Loss::calculate_h(const type x)
 }
 
 
-
-
 void Loss::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Loss");
     add_xml_element(printer, "Method", get_name());
-    add_xml_element(printer, "RegularizationMethod", regularization_method);
+    add_xml_element(printer, "Regularization", regularization_method);
     add_xml_element(printer, "RegularizationWeight", to_string(regularization_weight));
 
-    if (method == LossMethod::NormalizedSquaredError)
+    if (error == Error::NormalizedSquaredError)
         add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
 
-    if (method == LossMethod::WeightedSquaredError) {
+    if (error == Error::WeightedSquaredError) {
         add_xml_element(printer, "PositivesWeight", to_string(positives_weight));
         add_xml_element(printer, "NegativesWeight", to_string(negatives_weight));
     }
 
-    if (method == LossMethod::MinkowskiError)
+    if (error == Error::MinkowskiError)
         add_xml_element(printer, "MinkowskiParameter", to_string(minkowski_parameter));
 
     printer.CloseElement();
@@ -877,9 +852,9 @@ void Loss::from_XML(const XMLDocument& document)
     const XMLElement* root = document.FirstChildElement("Loss");
     if(!root) return;
 
-    set_loss_method(read_xml_string(root, "Method"));
+    set_error(read_xml_string(root, "Method"));
 
-    regularization_method = read_xml_string(root, "RegularizationMethod");
+    regularization_method = read_xml_string(root, "Regularization");
     regularization_weight = read_xml_type(root, "RegularizationWeight");
 
     if (root->FirstChildElement("NormalizationCoefficient"))
@@ -893,8 +868,6 @@ void Loss::from_XML(const XMLDocument& document)
     if (root->FirstChildElement("MinkowskiParameter"))
         minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
 }
-
-REGISTER(Loss, Loss, "Loss");
 
 } 
 

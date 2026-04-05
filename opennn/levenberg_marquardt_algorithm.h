@@ -168,12 +168,13 @@ private:
                          BackPropagationLM& bp_lm);
 
    // Specific logic for Dense layers
+/*
    void insert_dense_jacobian(const Dense<2>* layer,
                               const ForwardPropagation& fp,
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);
-
+*/
    type damping_parameter = type(0);
 
    type minimum_damping_parameter = type(0);

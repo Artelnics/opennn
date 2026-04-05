@@ -57,14 +57,14 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
     TensorView& output = forward_propagation.views[layer][Outputs][0];
 
     convolution(padded_input, weights, biases, output);
-
+/*
     if(batch_normalization)
         is_training
             ? batch_normalization_training(output, parameters[Gammas], parameters[Betas],
                                          running_means, running_variances, momentum)
             : batch_normalization_inference(output, parameters[Gammas], parameters[Betas],
                                             running_means, running_variances);
-
+*/
     activation(output, activation_function);
 }
 

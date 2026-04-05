@@ -9,9 +9,9 @@
 TEMPLATE = subdirs
 
 SUBDIRS += opennn
-SUBDIRS += examples
-SUBDIRS += blank
-SUBDIRS += tests
+#SUBDIRS += examples
+#SUBDIRS += blank
+#SUBDIRS += tests
 
 blank.depends = opennn
 examples.depends = opennn

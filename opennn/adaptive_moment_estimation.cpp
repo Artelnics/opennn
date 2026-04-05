@@ -8,6 +8,7 @@
 
 #include "registry.h"
 #include "dataset.h"
+#include "loss.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -131,7 +132,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const bool is_text_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+    const bool is_text_classification_model = false/*is_instance_of<CrossEntropyError3d>(loss)*/;
 
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");

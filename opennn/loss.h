@@ -30,16 +30,16 @@ class Loss
 
 public:
 
-    enum class LossMethod {MeanSquaredError,
-                           NormalizedSquaredError,
-                           WeightedSquaredError,
-                           CrossEntropy,
-                           MinkowskiError};
+    enum class Error{MeanSquaredError,
+                     NormalizedSquaredError,
+                     WeightedSquaredError,
+                     CrossEntropy,
+                     MinkowskiError};
 
-    enum class RegularizationMethod{L1,
-                                    L2,
-                                    ElasticNet,
-                                    NoRegularization};
+    enum class Regularization{L1,
+                              L2,
+                              ElasticNet,
+                              NoRegularization};
 
     Loss(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
     virtual ~Loss() = default;
@@ -71,7 +71,7 @@ public:
 
     virtual void set_dataset(const Dataset*);
 
-    void set_regularization_method(const string&);
+    void set_regularization(const string&);
     void set_regularization_weight(const type);
 
     void set_display(bool);
@@ -88,8 +88,8 @@ public:
 
     void add_regularization(BackPropagation&) const;
 
-    void set_loss_method(const LossMethod&);
-    void set_loss_method(const string&);
+    void set_error(const Error&);
+    void set_error(const string&);
 
     void calculate_output_gradients(const Batch&,
                                     ForwardPropagation&,
@@ -128,6 +128,10 @@ public:
 
     type calculate_numerical_error() const;
 
+    void calculate_output_gradients(const Batch& batch,
+                                    const ForwardPropagation& forward_propagation,
+                                    BackPropagation& back_propagation) const;
+
     VectorR calculate_gradient();
 
     VectorR calculate_numerical_gradient();
@@ -140,7 +144,7 @@ public:
 
 protected:
 
-    LossMethod method = LossMethod::MeanSquaredError;
+    Error error = Error::MeanSquaredError;
 
     // Method-specific parameters
     type normalization_coefficient = 1.0f;

@@ -446,10 +446,10 @@ inline void batch_normalization_backward(
 
     // 2. Beta gradient: sum of output gradients
     beta_gradients.noalias() = output_gradients.colwise().sum();
-
+/*
     // 3. Gamma gradient: sum of (output gradient * x_hat)
     gamma_gradients.noalias() = (output_gradients.array() * x_hat.array()).colwise().sum();
-
+*/
     // 4. Input gradient (input_gradient):
     // Formula: (gamma * inv_std / m) * (m * dy - sum_dy - x_hat * sum_dy_xhat)
     const type batch_size_type = static_cast<type>(effective_batch_size);

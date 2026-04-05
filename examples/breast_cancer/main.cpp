@@ -40,11 +40,11 @@ int main()
         // Training Strategy
 
         WeightedSquaredError loss(&classification_network, &dataset);
-        loss.set_regularization_method("L1");
+        loss.set_regularization("L1");
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
-        training_strategy.get_loss()->set_regularization_method("None");
+        training_strategy.get_loss()->set_regularization("None");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_maximum_epochs(1000);

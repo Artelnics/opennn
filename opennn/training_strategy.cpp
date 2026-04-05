@@ -272,7 +272,7 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Loss");
 
-    add_xml_element(printer, "LossMethod", loss->get_name());
+    add_xml_element(printer, "Error", loss->get_name());
 
     loss->to_XML(printer);
 
@@ -306,7 +306,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Loss method
 
-    const string loss_method = read_xml_string(loss_element, "LossMethod");
+    const string loss_method = read_xml_string(loss_element, "Error");
 
     const XMLElement* loss_method_element = loss_element->FirstChildElement(loss_method.c_str());
 

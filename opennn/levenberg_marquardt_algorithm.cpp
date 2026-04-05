@@ -166,6 +166,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
                                                    const ForwardPropagation& fp,
                                                    BackPropagationLM& bp_lm)
 {
+/*
     NeuralNetwork* nn = loss->get_neural_network();
     const auto& layers = nn->get_layers();
     const Index batch_size = fp.batch_size;
@@ -186,10 +187,12 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch& batch,
 
         parameter_offset += layers[i]->get_parameters_number();
     }
+*/
 }
 
-VectorR Loss::calculate_numerical_gradient_lm()
+VectorR LevenbergMarquardtAlgorithm::calculate_numerical_gradient_lm()
 {
+/*
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> training_indices = dataset->get_sample_indices("Training");
@@ -260,8 +263,11 @@ VectorR Loss::calculate_numerical_gradient_lm()
     }
 
     return numerical_gradient_lm;
+*/
+    return {};
 }
 
+/*
 MatrixR Loss::calculate_numerical_jacobian()
 {
     const Index samples_number = dataset->get_samples_number("Training");
@@ -314,9 +320,11 @@ MatrixR Loss::calculate_numerical_jacobian()
 
     return jacobian;
 }
+*/
 
 MatrixR Loss::calculate_numerical_hessian()
 {
+/*
     const Index samples_number = dataset->get_samples_number("Training");
 
     const vector<Index> sample_indices = dataset->get_sample_indices("Training");
@@ -534,8 +542,10 @@ MatrixR Loss::calculate_numerical_hessian()
             H(i, j) = H(j, i);
 
     return H;
+*/
 }
 
+/*
 void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
                                                         const ForwardPropagation& fp,
                                                         Index layer_index,
@@ -571,9 +581,11 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
         }
     }
 }
+*/
 
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
+/*
     if(!loss || !loss->has_neural_network() || !loss->has_dataset())
         return TrainingResults();
 
@@ -758,6 +770,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
     if(display) results.print();
 
     return results;
+*/
 }
 
 
@@ -766,6 +779,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
+/*
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     VectorR& parameters = neural_network->get_parameters();
@@ -854,6 +868,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     }
 
     neural_network->set_parameters(parameters);
+*/
 }
 
 
