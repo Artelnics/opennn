@@ -13,6 +13,7 @@
 #include "standard_networks.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
+#include "error_utilities.h"
 
 namespace opennn
 {
@@ -466,16 +467,27 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
 {
-    const type predictions_number = static_cast<type>(targets.size());
-
-    const type mean_squared_error = (outputs - targets).squaredNorm();
+    TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
-    errors(0) = mean_squared_error;
-    errors(1) = errors(0)/type(predictions_number);
+
+    // 1. Mean Squared Error
+    mean_squared_error(outputs_view, targets_view, errors(1), nullptr);
+
+    // 0. Sum Squared Error
+    errors(0) = errors(1) * static_cast<type>(targets.size());
+
+    // 2. Root Mean Squared Error
     errors(2) = sqrt(errors(1));
-    errors(3) = calculate_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_Minkowski_error(targets, outputs);
+
+    // 3. Normalized Squared Error
+    const VectorR targets_mean = mean(targets);
+    const type normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
+    normalized_squared_error(outputs_view, targets_view, normalization_coefficient, errors(3), nullptr);
+
+    // 4. Minkowski Error (defaulting to 1.5)
+    minkowski_error(outputs_view, targets_view, 1.5f, errors(4), nullptr);
 
     return errors;
 }
@@ -491,22 +503,29 @@ VectorR TestingAnalysis::calculate_errors(const string& sample_role) const
 
 VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
 {
-    // Dataset
+    const Index samples_number = dataset->get_samples_number(sample_role);
+    const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    const Index training_samples_number = dataset->get_samples_number(sample_role);
-
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    const type mean_squared_error = (outputs - targets).squaredNorm();
+    TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(6);
 
-    errors(0) = mean_squared_error;
-    errors(1) = errors(0)/type(training_samples_number);
-    errors(2) = sqrt(errors(1));
-    errors(3) = calculate_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_cross_entropy_error(targets, outputs);
-    errors(5) = calculate_weighted_squared_error(targets, outputs);
+    // Standard errors (SSE, MSE, RMSE, NSE)
+    const VectorR std_errors = calculate_errors(targets, outputs);
+    errors.head(4) = std_errors.head(4);
+
+    // 4. Binary Cross Entropy
+    binary_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
+
+    // 5. Weighted Squared Error
+    const VectorI target_distribution = dataset->calculate_target_distribution();
+    const type neg_w = 1.0f;
+    const type pos_w = (target_distribution[0] == 0 || target_distribution[1] == 0)
+                           ? 1.0f
+                           : static_cast<type>(target_distribution[0]) / target_distribution[1];
+
+    weighted_squared_error(outputs_view, targets_view, pos_w, neg_w, errors(5), nullptr);
 
     return errors;
 }
@@ -514,174 +533,21 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 
 VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& sample_role) const
 {
-    const Index training_samples_number = dataset->get_samples_number(sample_role);
+    const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-
-    const type mean_squared_error = (outputs - targets).squaredNorm();
+    TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
-    errors(0) = mean_squared_error;
-    errors(1) = errors(0)/type(training_samples_number);
-    errors(2) = sqrt(errors(1));
-    errors(3) = calculate_normalized_squared_error(targets, outputs);
-    errors(4) = calculate_cross_entropy_error(targets, outputs); // NO
+
+    // Standard errors (SSE, MSE, RMSE, NSE)
+    const VectorR std_errors = calculate_errors(targets, outputs);
+    errors.head(4) = std_errors.head(4);
+
+    // 4. Categorical Cross Entropy
+    categorical_cross_entropy(outputs_view, targets_view, errors(4), nullptr);
 
     return errors;
-}
-
-
-type TestingAnalysis::calculate_normalized_squared_error(const MatrixR& targets, const MatrixR& outputs) const
-{
-    const VectorR targets_mean = mean(targets);
-
-    const type mean_squared_error = (outputs - targets).squaredNorm();
-
-    const type normalization_coefficient = (targets.rowwise() - targets_mean.transpose()).squaredNorm();
-
-    return mean_squared_error/normalization_coefficient;
-}
-
-
-type TestingAnalysis::calculate_cross_entropy_error(const MatrixR& targets,
-                                                    const MatrixR& outputs) const
-{
-    const Index testing_samples_number = targets.rows();
-    const Index outputs_number = targets.cols();
-
-    VectorR targets_row(outputs_number);
-    VectorR outputs_row(outputs_number);
-
-    type cross_entropy_error_2d = type(0);
-
-#pragma omp parallel for reduction(+:cross_entropy_error_2d)
-
-    for(Index i = 0; i < testing_samples_number; i++)
-    {
-        outputs_row = outputs.row(i);
-        targets_row = targets.row(i);
-
-        for(Index j = 0; j < outputs_number; j++)
-        {
-            outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), MAX);
-
-            cross_entropy_error_2d -=
-                targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
-        }
-    }
-
-    return cross_entropy_error_2d/type(testing_samples_number);
-}
-
-
-type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor3& outputs, const MatrixR& targets) const
-{
-/*
-    const Index batch_size = outputs.rows();
-    const Index outputs_number = outputs.cols();
-
-    MatrixR errors(batch_size, outputs_number);
-    MatrixR predictions(batch_size, outputs_number);
-    MatrixB matches(batch_size, outputs_number);
-    MatrixB mask(batch_size, outputs_number);
-
-    Tensor0 cross_entropy_error_2d;
-    mask = targets != targets.constant(0);
-
-    Tensor0 mask_sum;
-    mask_sum = mask.cast<type>().sum();
-
-    for(Index i = 0; i < batch_size; i++)
-        for(Index j = 0; j < outputs_number; j++)
-            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
-
-    errors = errors * mask.cast<type>();
-
-    cross_entropy_error_2d = errors.sum();
-
-    return cross_entropy_error_2d(0) / mask_sum(0);
-*/
-    return 0;
-}
-
-
-type TestingAnalysis::calculate_weighted_squared_error(const MatrixR& targets,
-                                                       const MatrixR& outputs,
-                                                       const VectorR& weights) const
-{
-/*
-    type negatives_weight;
-    type positives_weight;
-
-    if(weights.size() != 2)
-    {
-        const VectorI target_distribution = dataset->calculate_target_distribution();
-
-        const Index negatives_number = target_distribution[0];
-        const Index positives_number = target_distribution[1];
-
-        negatives_weight = type(1);
-
-        positives_weight = (negatives_number == 0 || positives_number == 0)
-           ? type(0)
-           : type(negatives_number / positives_number);
-    }
-    else
-    {
-        positives_weight = weights[0];
-        negatives_weight = weights[1];
-    }
-
-    const MatrixB if_sentence = (targets == targets.constant(type(1))).cast<bool>();
-    const MatrixB else_sentence = (targets == targets.constant(type(0))).cast<bool>();
-
-    MatrixR f_1(targets.rows(), targets.cols());
-    MatrixR f_2(targets.rows(), targets.cols());
-    MatrixR f_3(targets.rows(), targets.cols());
-
-    f_1.device(get_device()) = (targets - outputs).square() * positives_weight;
-
-    f_2.device(get_device()) = (targets - outputs).square()*negatives_weight;
-
-    f_3.device(get_device()) = targets.constant(type(0));
-
-    Tensor0 mean_squared_error;
-    mean_squared_error.device(get_device()) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
-
-    Index negatives = 0;
-
-    VectorR target_column = targets.col(0);
-
-    for(Index i = 0; i < target_column.size(); i++)
-        if(double(target_column(i)) == 0.0)
-            negatives++;
-
-    const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
-
-    return mean_squared_error(0)/normalization_coefficient;
-*/
-    return 0;
-}
-
-
-type TestingAnalysis::calculate_Minkowski_error(const MatrixR& targets,
-                                                const MatrixR& outputs,
-                                                const type minkowski_parameter) const
-{
-/*
-    const type predictions_number = static_cast<type>(targets.size());
-
-    if (predictions_number == 0)
-        return type(0);
-
-    Tensor0 minkowski_error;
-
-    minkowski_error.device(get_device()) =
-        (((outputs - targets).array().abs().pow(minkowski_parameter).sum()) / predictions_number).pow(type(1.0) / minkowski_parameter);
-
-    return minkowski_error();
-*/
-    return 0;
 }
 
 

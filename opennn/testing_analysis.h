@@ -134,12 +134,6 @@ public:
     MatrixR calculate_multiple_classification_errors() const;
     VectorR calculate_multiple_classification_errors(const string&) const;
 
-    type calculate_normalized_squared_error(const MatrixR&, const MatrixR&) const;
-    type calculate_cross_entropy_error(const MatrixR&, const MatrixR&) const;
-    type calculate_cross_entropy_error_3d(const Tensor3&, const MatrixR&) const;
-    type calculate_weighted_squared_error(const MatrixR&, const MatrixR&, const VectorR& = VectorR()) const;
-    type calculate_Minkowski_error(const MatrixR&, const MatrixR&, const type = type(1.5)) const;
-
     type calculate_masked_accuracy(const Tensor3&, const MatrixR&) const;
 
     type calculate_determination(const VectorR&, const VectorR&) const;
