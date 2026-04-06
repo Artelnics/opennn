@@ -9,7 +9,6 @@
 #pragma once
 
 #include "layer.h"
-#include "tensor_utilities.h"
 #include "math_utilities.h"
 
 namespace opennn

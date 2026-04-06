@@ -8,9 +8,7 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <filesystem>
+#include "pch.h"
 
 namespace opennn
 {

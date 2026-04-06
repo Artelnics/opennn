@@ -60,36 +60,6 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
 }
 
 
-void save_csv(const Tensor2& data, const filesystem::path& path)
-{
-    ofstream file(path);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open matrix data file: " + path.string() + "\n");
-
-    file.precision(20);
-
-    const Index data_rows = data.dimension(0);
-    const Index data_columns = data.dimension(1);
-
-    char separator_string = ';';
-
-    for(Index i = 0; i < data_rows; i++)
-    {
-        for(Index j = 0; j < data_columns; j++)
-        {
-            file << data(i, j);
-
-            if(j != data_columns -1)
-                file << separator_string;
-        }
-
-        file << endl;
-    }
-
-    file.close();
-}
-
 
 VectorI calculate_rank_greater(const VectorR& vector)
 {

@@ -9,7 +9,6 @@
 #pragma once
 
 #include "layer.h"
-#include "random_utilities.h"
 #include "math_utilities.h"
 #include "loss.h"
 

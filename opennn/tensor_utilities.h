@@ -606,9 +606,6 @@ bool is_constant(const TensorR<Rank>& tensor)
     return true;
 }
 
-void save_csv(const Tensor2&, const filesystem::path&);
-
-
 template<int rank>
 Index count_NAN(const TensorR<rank>& x)
 {

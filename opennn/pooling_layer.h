@@ -13,8 +13,6 @@
 namespace opennn
 {
 
-class Convolutional;
-
 class Pooling final : public Layer
 {
 

@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "layer.h"
 #include "statistics.h"
 //#include "scaling.h"
 #include "string_utilities.h"

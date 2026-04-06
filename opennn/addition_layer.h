@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "layer.h"
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "neural_network.h"
@@ -101,7 +100,7 @@ public:
 private:
 
     enum Forward {Inputs, Outputs};
-    enum Bacward {OutputGradients, InputGradients};
+    enum Backward {OutputGradients, InputGradients};
 };
 
 void reference_addition_layer();

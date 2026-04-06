@@ -85,10 +85,6 @@ public:
     void set_error(const Error&);
     void set_error(const string&);
 
-    void calculate_output_gradients(const Batch&,
-                                    ForwardPropagation&,
-                                    BackPropagation&) const;
-
     void calculate_layers_error_gradient(const Batch&,
                                          ForwardPropagation&,
                                          BackPropagation&) const;

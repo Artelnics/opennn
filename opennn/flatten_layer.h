@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "layer.h"
 #include "tensor_utilities.h"
 #include "math_utilities.h"
 #include "neural_network.h"
