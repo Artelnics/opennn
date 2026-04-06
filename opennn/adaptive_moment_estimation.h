@@ -113,7 +113,7 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 
         void set(AdaptiveMomentEstimation* = nullptr);
 
-        void print() const;
+        void print() const override;
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 

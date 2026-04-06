@@ -10,7 +10,6 @@
 
 #define EIGEN_MAX_ALIGN_BYTES 32
 #define EIGEN_NO_DEBUG
-
 #define NOMINMAX
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 #define _CRT_SECURE_NO_WARNINGS
@@ -72,7 +71,7 @@ template <typename T>
 void check_cuda_status(T status, const char* file, int line, const char* msg)
 {
     if (status != 0)
-        throw runtime_error(string(msg) + " Error: " + to_string((int)status) +
+        throw runtime_error(string(msg) + " Error: " + to_string(static_cast<int>(status)) +
                             " in " + file + ":" + to_string(line));
 }
 
@@ -128,7 +127,6 @@ using Tensor1 = Tensor<type, 1, Layout | AlignedMax>;
 using Tensor2 = Tensor<type, 2, Layout | AlignedMax>;
 using Tensor3 = Tensor<type, 3, Layout | AlignedMax>;
 using Tensor4 = Tensor<type, 4, Layout | AlignedMax>;
-using Tensor5 = Tensor<type, 5, Layout | AlignedMax>;
 
 template <int Rank>
 using TensorR = Tensor<type, Rank, Layout | AlignedMax>;
@@ -141,8 +139,6 @@ using TensorMap5 = TensorMap<Tensor<type, 5, Layout | AlignedMax>, AlignedMax>;
 
 template <int Rank>
 using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax>;
-
-using ConstTensorMap4 = TensorMap<const Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
 
 #include "tinyxml2.h"
 

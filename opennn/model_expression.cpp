@@ -892,7 +892,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
             else
                 desc_idx = i;
 
-            if(desc_idx >= 0 && desc_idx < (int)inputs_descriptives.size())
+            if(desc_idx >= 0 && desc_idx < static_cast<int>(inputs_descriptives.size()))
             {
                 min_value = inputs_descriptives[desc_idx].minimum;
                 max_value = inputs_descriptives[desc_idx].maximum;

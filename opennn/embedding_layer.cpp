@@ -198,7 +198,7 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
     if (add_positional_encoding && !pos_encoding_synced)
     {
-        this->copy_positional_encoding_device();
+        copy_positional_encoding_device();
         pos_encoding_synced = true;
     }
 

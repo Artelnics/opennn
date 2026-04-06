@@ -17,8 +17,6 @@
 #include "random_utilities.h"
 #include "variable.h"
 
-#include <charconv>
-
 namespace opennn
 {
 

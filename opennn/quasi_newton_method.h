@@ -113,7 +113,7 @@ struct QuasiNewtonMethodData final : public OptimizerData
 
     void set(QuasiNewtonMethod* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     QuasiNewtonMethod* quasi_newton_method = nullptr;
 

@@ -36,7 +36,7 @@ struct Variable
     string scaler = "None";
 
     // Methods
-    string get_role() const;
+    const string& get_role() const;
     string get_type_string() const;
     Index get_categories_number() const;
 

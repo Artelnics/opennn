@@ -37,7 +37,7 @@ public:
 
     Loss* get_loss() const;
 
-    string get_hardware_use() const;
+    const string& get_hardware_use() const;
 
     void set_hardware_use(const string&);
 
@@ -67,7 +67,7 @@ public:
 
     virtual TrainingResults train() = 0;
 
-    string get_name() const;
+    const string& get_name() const;
 
     virtual void print() const {}
 

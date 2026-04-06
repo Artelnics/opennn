@@ -503,12 +503,6 @@ inline Eigen::array<Index, 4> array_4(const Index a, Index b, Index c, Index d)
 }
 
 
-inline array<Index, 5> array_5(const Index a, Index b, Index c, Index d, Index e)
-{
-    return array<Index, 5>({a, b, c, d, e});
-}
-
-
 inline bool is_contiguous(const vector<Index>& v)
 {
     const type first = v[0];

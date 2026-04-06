@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "image_dataset.h"
 #include "time_series_dataset.h"
 #include "language_dataset.h"
@@ -31,7 +30,7 @@ Loss* Optimizer::get_loss() const
 }
 
 
-string Optimizer::get_hardware_use() const
+const string& Optimizer::get_hardware_use() const
 {
     return hardware_use;
 }
@@ -110,7 +109,7 @@ void Optimizer::check() const
 }
 
 
-string Optimizer::get_name() const
+const string& Optimizer::get_name() const
 {
     return name;
 }

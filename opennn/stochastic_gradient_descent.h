@@ -98,7 +98,7 @@ struct SGDOptimizationDataCuda final : public OptimizerData
 
     void set(StochasticGradientDescent* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     StochasticGradientDescent* stochastic_gradient_descent = nullptr;
 

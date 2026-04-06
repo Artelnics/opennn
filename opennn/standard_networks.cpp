@@ -6,9 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <stdexcept>
-
-#include "pch.h"
 #include "standard_networks.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
@@ -55,8 +52,8 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Bounding>(output_shape));
 
-    this->compile();
-    this->set_parameters_glorot();
+    compile();
+    set_parameters_glorot();
 
     const Index inputs_number = get_inputs_number();
     //input_variables.resize(inputs_number);
@@ -87,8 +84,8 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                    false,
                                    "classification_layer"));
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
     //input_names.resize(inputs_number);
@@ -102,7 +99,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape) : NeuralNetwork()
 {
-    this->set_default();
+    set_default();
     // add_layer(make_unique<Scaling<3>>(input_shape));
 
     // add_layer(make_unique<Recurrent>(input_shape,
@@ -116,8 +113,8 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 
     // add_layer(make_unique<Bounding>(output_shape));
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
     // input_names.resize(inputs_number);
@@ -162,8 +159,8 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Unscaling>(output_shape));
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 }
 
 
@@ -216,8 +213,8 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                    false, // Batch normalization
                                    "dense_2d_layer"));
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 
     const Index inputs_number = get_inputs_number();
     //input_names.resize(inputs_number);
@@ -370,8 +367,8 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     add_layer(std::move(dense_layer), { last_layer_index });
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 }
 
 
@@ -552,8 +549,8 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
                                    false,
                                    "dense_classifier"));
 
-    this->compile();
-    this->set_parameters_random();
+    compile();
+    set_parameters_random();
 }
 
 
@@ -594,8 +591,8 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
 
-    this->compile();
-    this->set_parameters_glorot();
+    compile();
+    set_parameters_glorot();
 }
 
 

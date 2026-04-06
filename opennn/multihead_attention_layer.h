@@ -9,7 +9,6 @@
 #pragma once
 
 #include "layer.h"
-#include "pch.h"
 
 namespace opennn
 {

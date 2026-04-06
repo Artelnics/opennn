@@ -107,7 +107,7 @@ inline void weighted_squared_error(const TensorView& input,
     calculate_weighted_squared_error_cuda(input.size(), workspace_device, target.data, input.data, pos_w, neg_w);
 
     float result = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)input.size(), workspace_device, 1, &result));
+    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &result));
     error = result;
 #endif
 }
@@ -147,7 +147,7 @@ inline void binary_cross_entropy(const TensorView& input, const TensorView& targ
 #else
     calculate_binary_cross_entropy_cuda(input.size(), workspace_device, target.data, input.data, EPSILON);
     float sum_ce = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)input.size(), workspace_device, 1, &sum_ce));
+    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_ce));
     error = sum_ce / input.shape[0];
 #endif
 }
@@ -168,7 +168,7 @@ inline void categorical_cross_entropy(const TensorView& input,
 
     float sum_ce = 0.0f;
 
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)input.size(), workspace_device, 1, &sum_ce));
+    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_ce));
 
     error = sum_ce / input.shape[0];
 #endif
@@ -214,7 +214,7 @@ inline void minkowski_error(const TensorView& input,
 
     float sum_m = 0.0f;
 
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)input.size(), workspace_device, 1, &sum_m));
+    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(input.size()), workspace_device, 1, &sum_m));
 
     error = sum_m / input.size();
 #endif
@@ -274,7 +274,7 @@ inline void l1_regularization(const TensorView& parameters, type lambda, type& p
     penalty = lambda * parameters.as_vector().lpNorm<1>();
 #else
     float sum_abs = 0.0f;
-    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), (int)parameters.size(), parameters.data, 1, &sum_abs));
+    CHECK_CUBLAS(cublasSasum(get_cublas_handle(), static_cast<int>(parameters.size()), parameters.data, 1, &sum_abs));
     penalty = lambda * sum_abs;
 #endif
 }

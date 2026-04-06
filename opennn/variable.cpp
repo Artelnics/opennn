@@ -9,8 +9,6 @@
 #include "variable.h"
 #include "string_utilities.h"
 #include "tensor_utilities.h"
-#include "tinyxml2.h"
-#include "pch.h"
 
 namespace opennn
 {
@@ -87,7 +85,7 @@ string Variable::get_type_string() const
     }
 }
 
-string Variable::get_role() const
+const string& Variable::get_role() const
 {
     return role;
 }

@@ -920,16 +920,16 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
     }
 #else
     // M, N, K are derived from the last two dimensions (the matrix dimensions)
-    const int m = transpose_B ? (int)input_B.shape[rank - 2] : (int)input_B.shape[rank - 1];
-    const int n = transpose_A ? (int)input_A.shape[rank - 1] : (int)input_A.shape[rank - 2];
-    const int k = transpose_A ? (int)input_A.shape[rank - 2] : (int)input_A.shape[rank - 1];
+    const int m = transpose_B ? static_cast<int>(input_B.shape[rank - 2]) : static_cast<int>(input_B.shape[rank - 1]);
+    const int n = transpose_A ? static_cast<int>(input_A.shape[rank - 1]) : static_cast<int>(input_A.shape[rank - 2]);
+    const int k = transpose_A ? static_cast<int>(input_A.shape[rank - 2]) : static_cast<int>(input_A.shape[rank - 1]);
 
-    const int lda = (int)input_A.shape[rank - 1];
-    const int ldb = (int)input_B.shape[rank - 1];
+    const int lda = static_cast<int>(input_A.shape[rank - 1]);
+    const int ldb = static_cast<int>(input_B.shape[rank - 1]);
     const int ldc = m;
 
     // Calculate how many matrices are in the batch (e.g., batch_size * heads_number)
-    const int batch_count = (int)(input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]));
+    const int batch_count = static_cast<int>(input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]));
 
     // Strides: how far to jump in memory to get to the next matrix
     const long long stride_A = input_A.shape[rank - 2] * input_A.shape[rank - 1];

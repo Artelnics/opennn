@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <vector>
-
 #include "layer.h"
 
 namespace opennn

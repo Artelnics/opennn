@@ -34,7 +34,7 @@ bool Loss::has_dataset() const
 }
 
 
-string Loss::get_regularization_method() const
+const string& Loss::get_regularization_method() const
 {
     return regularization_method;
 }
@@ -169,7 +169,7 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
 }
 
 
-string Loss::get_name() const
+const string& Loss::get_name() const
 {
     return name;
 }

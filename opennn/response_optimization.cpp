@@ -8,8 +8,6 @@
 
 #include "response_optimization.h"
 
-#include "pch.h"
-#include "tensor_utilities.h"
 #include "statistics.h"
 #include "dataset.h"
 #include "neural_network.h"
@@ -409,9 +407,9 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     objectives.normalize(objective_matrix);
 
-    const VectorR normalized_utopian_point = (objectives.utopian_and_senses.row(1).array() + (type)1.0) / (type)2.0;
+    const VectorR normalized_utopian_point = (objectives.utopian_and_senses.row(1).array() + static_cast<type>(1.0)) / static_cast<type>(2.0);
 
-    const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , (int)subset_dimension);
+    const VectorI nearest_rows = get_nearest_points(objective_matrix, normalized_utopian_point , static_cast<int>(subset_dimension));
 
     MatrixR nearest_inputs(subset_dimension, feasible_inputs.cols());
     MatrixR nearest_outputs(subset_dimension, feasible_outputs.cols());

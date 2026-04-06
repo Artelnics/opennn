@@ -290,48 +290,48 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     linear_projection_cuda(query_input, query_weights_device.data, query_biases_device.data,
                            query_biases_device.get_descriptor(), forward->query.data,
                            forward->query.get_descriptor(),
-                           (int)(batch_size * query_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           static_cast<int>(batch_size * query_sequence_length),
+                           static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension));
 
     // Key projection
     linear_projection_cuda(source_input, key_weights_device.data, key_biases_device.data,
                            key_biases_device.get_descriptor(), forward->key.data,
                            forward->key.get_descriptor(),
-                           (int)(batch_size * source_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           static_cast<int>(batch_size * source_sequence_length),
+                           static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension));
 
     // Value projection
     linear_projection_cuda(source_input, value_weights_device.data, value_biases_device.data,
                            value_biases_device.get_descriptor(), forward->value.data,
                            forward->value.get_descriptor(),
-                           (int)(batch_size * source_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           static_cast<int>(batch_size * source_sequence_length),
+                           static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension));
 
     // Transpositions
 
     mha_transpose_qkv_cuda(batch_size * query_sequence_length * embedding_dimension,
                            forward->query.data, forward->query_transposed.data,
-                           (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                           static_cast<int>(query_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
                            forward->key.data, forward->key_transposed.data,
-                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                           static_cast<int>(source_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     mha_transpose_qkv_cuda(batch_size * source_sequence_length * embedding_dimension,
                            forward->value.data, forward->value_transposed.data,
-                           (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                           static_cast<int>(source_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     // Attention scores (Q * K^T)
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_T, CUBLAS_OP_N,
-                              (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
+                              static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length), static_cast<int>(head_dimension),
                               &scaling_factor,
-                              forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              forward->key_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              forward->query_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
                               &zero,
-                              forward->attention_weights.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              (int)(batch_size * heads_number));
+                              forward->attention_weights.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
+                              static_cast<int>(batch_size * heads_number));
 
     // Key padding mask
 
@@ -339,17 +339,17 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
         total_weights,
         source_input,
         forward->attention_weights.data,
-        (int)heads_number,
-        (int)query_sequence_length,
-        (int)source_sequence_length,
-        (int)embedding_dimension
+        static_cast<int>(heads_number),
+        static_cast<int>(query_sequence_length),
+        static_cast<int>(source_sequence_length),
+        static_cast<int>(embedding_dimension)
         );
 
     if(use_causal_mask)
     {
         mha_causal_mask_cuda(batch_size * heads_number * query_sequence_length * source_sequence_length,
                              forward->attention_weights.data,
-                             (int)query_sequence_length, (int)source_sequence_length);
+                             static_cast<int>(query_sequence_length), static_cast<int>(source_sequence_length));
     }
 
     // Softmax
@@ -365,26 +365,26 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_N,
-                              (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
+                              static_cast<int>(head_dimension), static_cast<int>(query_sequence_length), static_cast<int>(source_sequence_length),
                               &one,
-                              forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              forward->value_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              forward->attention_probabilities.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
                               &zero,
-                              forward->attention_outputs_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              (int)(batch_size * heads_number));
+                              forward->attention_outputs_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
+                              static_cast<int>(batch_size * heads_number));
 
     // Concatenation and output projection
 
     mha_transpose_o_cuda(batch_size * query_sequence_length * embedding_dimension,
                          forward->attention_outputs_transposed.data, forward->concatenated_attention_outputs.data,
-                         (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                         static_cast<int>(query_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     linear_projection_cuda(forward->concatenated_attention_outputs.data,
                            projection_weights_device.data, projection_biases_device.data,
                            projection_biases_device.get_descriptor(), forward->outputs.data,
                            forward->outputs.get_descriptor(),
-                           (int)(batch_size * query_sequence_length),
-                           (int)embedding_dimension, (int)embedding_dimension);
+                           static_cast<int>(batch_size * query_sequence_length),
+                           static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension));
 #endif
 }
 
@@ -579,64 +579,64 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
-                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
+                static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension), static_cast<int>(batch_size * query_sequence_length),
                 &one,
-                output_gradients_data, (int)embedding_dimension,
-                forward->concatenated_attention_outputs.data, (int)embedding_dimension,
+                output_gradients_data, static_cast<int>(embedding_dimension),
+                forward->concatenated_attention_outputs.data, static_cast<int>(embedding_dimension),
                 &zero,
-                back->projection_weight_gradients.data, (int)embedding_dimension);
+                back->projection_weight_gradients.data, static_cast<int>(embedding_dimension));
 
     // Projection bias gradients
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
+                static_cast<int>(embedding_dimension), 1, static_cast<int>(batch_size * query_sequence_length),
                 &one,
-                output_gradients_data, (int)embedding_dimension,
-                back->ones.data, (int)(batch_size * query_sequence_length),
+                output_gradients_data, static_cast<int>(embedding_dimension),
+                back->ones.data, static_cast<int>(batch_size * query_sequence_length),
                 &zero,
-                back->projection_bias_gradients.data, (int)embedding_dimension);
+                back->projection_bias_gradients.data, static_cast<int>(embedding_dimension));
 
     // Concatenated attention output gradients
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
+                static_cast<int>(embedding_dimension), static_cast<int>(batch_size * query_sequence_length), static_cast<int>(embedding_dimension),
                 &one,
-                projection_weights_device.data, (int)embedding_dimension,
-                output_gradients_data, (int)embedding_dimension,
+                projection_weights_device.data, static_cast<int>(embedding_dimension),
+                output_gradients_data, static_cast<int>(embedding_dimension),
                 &zero,
-                back->concatenated_attention_output_gradients.data, (int)embedding_dimension);
+                back->concatenated_attention_output_gradients.data, static_cast<int>(embedding_dimension));
 
     // Attention output gradients transposed
 
     mha_transpose_qkv_cuda(batch_size * query_sequence_length * embedding_dimension,
                            back->concatenated_attention_output_gradients.data, back->attention_output_gradients_transposed.data,
-                           (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                           static_cast<int>(query_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     // Value gradients transposed
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_T,
-                              (int)head_dimension, (int)source_sequence_length, (int)query_sequence_length,
+                              static_cast<int>(head_dimension), static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length),
                               &one,
-                              back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              back->attention_output_gradients_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
+                              forward->attention_probabilities.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
                               &zero,
-                              back->value_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              (int)(batch_size * heads_number));
+                              back->value_gradients_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              static_cast<int>(batch_size * heads_number));
 
     // Attention weight gradients
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_T, CUBLAS_OP_N,
-                              (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
+                              static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length), static_cast<int>(head_dimension),
                               &one,
-                              forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
+                              forward->value_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              back->attention_output_gradients_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
                               &zero,
-                              back->attention_weight_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              (int)(batch_size * heads_number));
+                              back->attention_weight_gradients.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
+                              static_cast<int>(batch_size * heads_number));
 
     // Softmax gradients
 
@@ -652,124 +652,124 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_N,
-                              (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
+                              static_cast<int>(head_dimension), static_cast<int>(query_sequence_length), static_cast<int>(source_sequence_length),
                               &scaling_factor,
-                              forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              forward->key_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              back->softmax_gradients.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
                               &zero,
-                              back->query_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              (int)(batch_size * heads_number));
+                              back->query_gradients_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
+                              static_cast<int>(batch_size * heads_number));
 
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_T,
-                              (int)head_dimension, (int)source_sequence_length, (int)query_sequence_length,
+                              static_cast<int>(head_dimension), static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length),
                               &scaling_factor,
-                              forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
+                              forward->query_transposed.data, static_cast<int>(head_dimension), static_cast<int>(query_sequence_length * head_dimension),
+                              back->softmax_gradients.data, static_cast<int>(source_sequence_length), static_cast<int>(query_sequence_length * source_sequence_length),
                               &zero,
-                              back->key_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
-                              (int)(batch_size * heads_number));
+                              back->key_gradients_transposed.data, static_cast<int>(head_dimension), static_cast<int>(source_sequence_length * head_dimension),
+                              static_cast<int>(batch_size * heads_number));
 
     // Des-transposition to flat
 
     mha_transpose_o_cuda(batch_size * query_sequence_length * embedding_dimension,
                          back->query_gradients_transposed.data, back->query_gradients.data,
-                         (int)query_sequence_length, (int)heads_number, (int)head_dimension);
+                         static_cast<int>(query_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     mha_transpose_o_cuda(batch_size * source_sequence_length * embedding_dimension,
                          back->key_gradients_transposed.data, back->key_gradients.data,
-                         (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                         static_cast<int>(source_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     mha_transpose_o_cuda(batch_size * source_sequence_length * embedding_dimension,
                          back->value_gradients_transposed.data, back->value_gradients.data,
-                         (int)source_sequence_length, (int)heads_number, (int)head_dimension);
+                         static_cast<int>(source_sequence_length), static_cast<int>(heads_number), static_cast<int>(head_dimension));
 
     // Query weight, bias and input gradients
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
-                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
+                static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension), static_cast<int>(batch_size * query_sequence_length),
                 &one,
-                back->query_gradients.data, (int)embedding_dimension,
-                query_input, (int)embedding_dimension,
+                back->query_gradients.data, static_cast<int>(embedding_dimension),
+                query_input, static_cast<int>(embedding_dimension),
                 &zero,
-                back->query_weight_gradients.data, (int)embedding_dimension);
+                back->query_weight_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
+                static_cast<int>(embedding_dimension), 1, static_cast<int>(batch_size * query_sequence_length),
                 &one,
-                back->query_gradients.data, (int)embedding_dimension,
-                back->ones.data, (int)(batch_size * query_sequence_length),
+                back->query_gradients.data, static_cast<int>(embedding_dimension),
+                back->ones.data, static_cast<int>(batch_size * query_sequence_length),
                 &zero,
-                back->query_bias_gradients.data, (int)embedding_dimension);
+                back->query_bias_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
+                static_cast<int>(embedding_dimension), static_cast<int>(batch_size * query_sequence_length), static_cast<int>(embedding_dimension),
                 &one,
-                query_weights_device.data, (int)embedding_dimension,
-                back->query_gradients.data, (int)embedding_dimension,
+                query_weights_device.data, static_cast<int>(embedding_dimension),
+                back->query_gradients.data, static_cast<int>(embedding_dimension),
                 &zero,
-                back->query_input_gradients.data, (int)embedding_dimension);
+                back->query_input_gradients.data, static_cast<int>(embedding_dimension));
 
     // Key weight, bias and source projection gradients (Temp)
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
-                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
+                static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension), static_cast<int>(batch_size * source_sequence_length),
                 &one,
-                back->key_gradients.data, (int)embedding_dimension,
-                source_input, (int)embedding_dimension,
+                back->key_gradients.data, static_cast<int>(embedding_dimension),
+                source_input, static_cast<int>(embedding_dimension),
                 &zero,
-                back->key_weight_gradients.data, (int)embedding_dimension);
+                back->key_weight_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
+                static_cast<int>(embedding_dimension), 1, static_cast<int>(batch_size * source_sequence_length),
                 &one,
-                back->key_gradients.data, (int)embedding_dimension,
-                back->ones.data, (int)(batch_size * source_sequence_length),
+                back->key_gradients.data, static_cast<int>(embedding_dimension),
+                back->ones.data, static_cast<int>(batch_size * source_sequence_length),
                 &zero,
-                back->key_bias_gradients.data, (int)embedding_dimension);
+                back->key_bias_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
+                static_cast<int>(embedding_dimension), static_cast<int>(batch_size * source_sequence_length), static_cast<int>(embedding_dimension),
                 &one,
-                key_weights_device.data, (int)embedding_dimension,
-                back->key_gradients.data, (int)embedding_dimension,
+                key_weights_device.data, static_cast<int>(embedding_dimension),
+                back->key_gradients.data, static_cast<int>(embedding_dimension),
                 &zero,
-                back->source_input_gradients.data, (int)embedding_dimension);
+                back->source_input_gradients.data, static_cast<int>(embedding_dimension));
 
     // Value weight, bias and source input gradients accumulation
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
-                (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
+                static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension), static_cast<int>(batch_size * source_sequence_length),
                 &one,
-                back->value_gradients.data, (int)embedding_dimension,
-                source_input, (int)embedding_dimension,
+                back->value_gradients.data, static_cast<int>(embedding_dimension),
+                source_input, static_cast<int>(embedding_dimension),
                 &zero,
-                back->value_weight_gradients.data, (int)embedding_dimension);
+                back->value_weight_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
-                (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
+                static_cast<int>(embedding_dimension), 1, static_cast<int>(batch_size * source_sequence_length),
                 &one,
-                back->value_gradients.data, (int)embedding_dimension,
-                back->ones.data, (int)(batch_size * source_sequence_length),
+                back->value_gradients.data, static_cast<int>(embedding_dimension),
+                back->ones.data, static_cast<int>(batch_size * source_sequence_length),
                 &zero,
-                back->value_bias_gradients.data, (int)embedding_dimension);
+                back->value_bias_gradients.data, static_cast<int>(embedding_dimension));
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
-                (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
+                static_cast<int>(embedding_dimension), static_cast<int>(batch_size * source_sequence_length), static_cast<int>(embedding_dimension),
                 &one,
-                value_weights_device.data, (int)embedding_dimension,
-                back->value_gradients.data, (int)embedding_dimension,
+                value_weights_device.data, static_cast<int>(embedding_dimension),
+                back->value_gradients.data, static_cast<int>(embedding_dimension),
                 &one,
-                back->source_input_gradients.data, (int)embedding_dimension);
+                back->source_input_gradients.data, static_cast<int>(embedding_dimension));
 
     // Final input gradients
 

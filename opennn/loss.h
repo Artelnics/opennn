@@ -24,7 +24,6 @@ struct BatchCuda;
 struct BackPropagationCuda;
 #endif
 
-
 class Loss
 {
 
@@ -42,8 +41,8 @@ public:
                               NoRegularization};
 
     Loss(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
-    virtual ~Loss() = default;
 
+    virtual ~Loss() = default;
 
     inline NeuralNetwork* get_neural_network() const
     {
@@ -59,7 +58,7 @@ public:
 
     bool has_dataset() const;
 
-    string get_regularization_method() const;
+    const string& get_regularization_method() const;
 
     void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
 
@@ -110,7 +109,7 @@ public:
     void regularization_from_XML(const XMLDocument&);
     void write_regularization_XML(XMLPrinter&) const;
 
-    string get_name() const;
+    const string& get_name() const;
 
     // Numerical differentiation
 
@@ -118,14 +117,13 @@ public:
 
     type calculate_numerical_error() const;
 
-    void calculate_output_gradients(const Batch& batch,
-                                    const ForwardPropagation& forward_propagation,
-                                    BackPropagation& back_propagation) const;
+    void calculate_output_gradients(const Batch&,
+                                    const ForwardPropagation&,
+                                    BackPropagation&) const;
 
     VectorR calculate_gradient();
 
     VectorR calculate_numerical_gradient();
-    MatrixR calculate_numerical_jacobian();
     VectorR calculate_numerical_input_gradients();
     MatrixR calculate_numerical_hessian();
     MatrixR calculate_inverse_hessian();
@@ -156,6 +154,7 @@ protected:
 struct BackPropagation
 {
     BackPropagation(const Index = 0, const Loss* = nullptr);
+
     virtual ~BackPropagation() = default;
 
     void set(const Index = 0, const Loss* = nullptr);
