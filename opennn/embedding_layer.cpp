@@ -322,6 +322,9 @@ void Embedding::from_XML(const XMLDocument& document)
     const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_label);
+
+    set_scale_embedding(read_xml_bool(embedding_layer_element, "ScaleEmbedding"));
+    set_add_positional_encoding(read_xml_bool(embedding_layer_element, "AddPositionalEncoding"));
 }
 
 
@@ -333,6 +336,8 @@ void Embedding::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
+    add_xml_element(printer, "ScaleEmbedding", to_string(scale_embedding));
+    add_xml_element(printer, "AddPositionalEncoding", to_string(add_positional_encoding));
 
     printer.CloseElement();
 }
@@ -343,14 +348,4 @@ REGISTER(Layer, Embedding, "Embedding")
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+// Licensed under the GNU Lesser General Public License v2.1 or later.
