@@ -518,12 +518,12 @@ inline void combination(const TensorView& input,
     output.as_matrix().noalias()
         = (input.as_matrix() * weights.as_matrix()).rowwise() + biases.as_vector().transpose();
 #else
-
-    multiply(input, false, weights, false, output, 1.0f, 0.0f);
-
+    // Broadcast biases into output, then accumulate GEMM with beta=1
     CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
                                &one, biases.get_descriptor(), biases.data,
-                               &one, output.get_descriptor(), output.data));
+                               &zero, output.get_descriptor(), output.data));
+
+    multiply(input, false, weights, false, output, 1.0f, 1.0f);
 #endif
 }
 
@@ -940,10 +940,10 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
                                            transpose_B ? CUBLAS_OP_N : CUBLAS_OP_T,
                                            transpose_A ? CUBLAS_OP_N : CUBLAS_OP_T,
                                            m, n, k,
-                                           &one,
+                                           &alpha,
                                            input_B.data, ldb, stride_B,
                                            input_A.data, lda, stride_A,
-                                           &zero,
+                                           &beta,
                                            output_C.data, ldc, stride_C,
                                            batch_count));
 #endif

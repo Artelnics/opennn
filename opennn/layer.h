@@ -116,6 +116,7 @@ protected:
     Tensor2 empty_2;
     Tensor3 empty_3;
     Tensor4 empty_4;
+    
     void add_gradients(const vector<TensorView>&) const;
 };
 

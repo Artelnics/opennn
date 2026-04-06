@@ -121,10 +121,10 @@ type *Layer::link_parameters(type *pointer)
 
 void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
-    TensorMap3 output_gradients = tensor_map<3>(output_gradient_views[0]);
+    VectorMap output_gradients = output_gradient_views[0].as_vector();
 
-    for(Index i = 1; i < Index(output_gradient_views.size()); i++)
-        output_gradients.device(get_device()) += tensor_map<3>(output_gradient_views[i]);
+    for(size_t i = 1; i < output_gradient_views.size(); i++)
+        output_gradients.noalias() += output_gradient_views[i].as_vector();
 }
 
 
