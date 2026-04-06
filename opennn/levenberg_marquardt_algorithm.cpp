@@ -658,36 +658,18 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        stop_training = true;
-
-        if(results.training_error_history(epoch) < training_loss_goal)
-        {
-            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
-            results.stopping_condition = StoppingCondition::LossGoal;
-        }
-        else if(loss_decrease < minimum_loss_decrease)
+        if(loss_decrease < minimum_loss_decrease)
         {
             if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << endl;
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-        }
-        else if(validation_failures >= maximum_validation_failures)
-        {
-            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << validation_failures << endl;
-            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
-        }
-        else if(epoch == maximum_epochs)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
-            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if(elapsed_time >= maximum_time)
-        {
-            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << elapsed_time << endl;
-            results.stopping_condition = StoppingCondition::MaximumTime;
+            stop_training = true;
         }
         else
         {
-            stop_training = false;
+            stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                      results.training_error_history(epoch),
+                                                      validation_failures, training_loss_goal,
+                                                      maximum_validation_failures);
         }
 
         if(stop_training)

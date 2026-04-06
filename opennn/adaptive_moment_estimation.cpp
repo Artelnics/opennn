@@ -274,36 +274,18 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        stop_training = true;
-
-        if(epoch == maximum_epochs)
+        if(training_accuracy >= training_accuracy_goal)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
-            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if(elapsed_time >= maximum_time)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
-            results.stopping_condition = StoppingCondition::MaximumTime;
-        }
-        else if(results.training_error_history(epoch) < training_loss_goal)
-        {
-            results.stopping_condition  = StoppingCondition::LossGoal;
-            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
-        }
-        else if(training_accuracy >= training_accuracy_goal)
-        {
-            results.stopping_condition  = StoppingCondition::LossGoal;
             if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
-        }
-        else if(validation_failures >= maximum_validation_failures)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
-            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+            results.stopping_condition = StoppingCondition::LossGoal;
+            stop_training = true;
         }
         else
         {
-            stop_training = false;
+            stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                      results.training_error_history(epoch),
+                                                      validation_failures, training_loss_goal,
+                                                      maximum_validation_failures);
         }
 
         if(stop_training)

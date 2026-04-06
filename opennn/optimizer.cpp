@@ -408,6 +408,43 @@ void Optimizer::set_unscaling()
 }
 
 
+bool Optimizer::check_stopping_condition(TrainingResults& results,
+                                          const Index epoch,
+                                          const type elapsed_time,
+                                          const type training_error,
+                                          const Index validation_failures,
+                                          const type training_loss_goal,
+                                          const Index maximum_validation_failures) const
+{
+    if(training_error < training_loss_goal)
+    {
+        if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << training_error << endl;
+        results.stopping_condition = StoppingCondition::LossGoal;
+    }
+    else if(validation_failures >= maximum_validation_failures)
+    {
+        if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+        results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+    }
+    else if(epoch == maximum_epochs)
+    {
+        if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+        results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
+    }
+    else if(elapsed_time >= maximum_time)
+    {
+        if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
+        results.stopping_condition = StoppingCondition::MaximumTime;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
 TrainingResults::TrainingResults(const Index epochs_number)
 {
     training_error_history.resize(1 + epochs_number);

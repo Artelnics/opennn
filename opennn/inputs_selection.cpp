@@ -154,9 +154,6 @@ string InputsSelectionResults::write_stopping_condition() const
     case InputsSelection::StoppingCondition::MaximumInputs:
         return "MaximumInputs";
 
-    case InputsSelection::StoppingCondition::MinimumInputs:
-        return "MinimumInputs";
-
     case InputsSelection::StoppingCondition::MaximumEpochs:
         return "MaximumEpochs";
 

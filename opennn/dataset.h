@@ -36,7 +36,7 @@ public:
 
     // Enumerations
 
-    enum class Separator{None, Space, Tab, Comma, Semicolon};
+    enum class Separator{Space, Tab, Comma, Semicolon};
 
     enum class MissingValuesMethod{Unuse, Mean, Median, Interpolation};
 

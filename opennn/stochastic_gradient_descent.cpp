@@ -317,32 +317,10 @@ TrainingResults StochasticGradientDescent::train()
 
         // Stopping criteria
 
-        stop_training = true;
-
-        if(epoch == maximum_epochs)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
-            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if(elapsed_time >= maximum_time)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
-            results.stopping_condition = StoppingCondition::MaximumTime;
-        }
-        else if(results.training_error_history(epoch) < training_loss_goal)
-        {
-            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
-            results.stopping_condition  = StoppingCondition::LossGoal;
-        }
-        else if(validation_failures >= maximum_validation_failures)
-        {
-            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
-            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
-        }
-        else
-        {
-            stop_training = false;
-        }
+        stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                  results.training_error_history(epoch),
+                                                  validation_failures, training_loss_goal,
+                                                  maximum_validation_failures);
 
         if(stop_training)
         {

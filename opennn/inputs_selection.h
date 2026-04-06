@@ -26,7 +26,6 @@ public:
         MaximumTime,
         SelectionErrorGoal,
         MaximumInputs,
-        MinimumInputs,
         MaximumEpochs,
         MaximumSelectionFailures
     };

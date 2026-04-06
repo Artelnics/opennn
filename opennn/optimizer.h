@@ -83,6 +83,10 @@ public:
 
 protected:
 
+    bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
+                                   type training_error, Index validation_failures,
+                                   type training_loss_goal, Index maximum_validation_failures) const;
+
     Loss* loss = nullptr;
 
     Index maximum_epochs = 10000;
