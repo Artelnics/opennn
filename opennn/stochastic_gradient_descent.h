@@ -32,6 +32,7 @@ public:
     type get_initial_decay() const;
     type get_momentum() const;
     bool get_nesterov() const;
+    Index get_maximum_validation_failures() const;
 
     type get_loss_goal() const;
 
@@ -47,6 +48,7 @@ public:
     void set_nesterov(bool);
 
     void set_maximum_epochs(const Index);
+    void set_maximum_validation_failures(const Index);
 
     void set_loss_goal(const type);
     void set_maximum_time(const type);

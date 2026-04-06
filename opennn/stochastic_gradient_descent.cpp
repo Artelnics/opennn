@@ -118,6 +118,18 @@ void StochasticGradientDescent::set_maximum_epochs(const Index new_maximum_epoch
 }
 
 
+void StochasticGradientDescent::set_maximum_validation_failures(const Index new_maximum_validation_failures)
+{
+    maximum_validation_failures = new_maximum_validation_failures;
+}
+
+
+Index StochasticGradientDescent::get_maximum_validation_failures() const
+{
+    return maximum_validation_failures;
+}
+
+
 void StochasticGradientDescent::set_loss_goal(const type new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
@@ -379,7 +391,7 @@ TrainingResults StochasticGradientDescent::train()
         }
         else if(validation_failures >= maximum_validation_failures)
         {
-            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum validation failures reached: " << validation_failures << endl;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else
@@ -415,19 +427,18 @@ TrainingResults StochasticGradientDescent::train()
 
 Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(7, 2);
+    Tensor<string, 2> string_matrix(9, 2);
 
-    const string apply_momentum = momentum > type(0)
-                                      ? "true"
-                                      : "false";
-
-    string_matrix.setValues({{"Inital learning rate", to_string(double(initial_learning_rate))},
-                             {"Inital decay", to_string(double(initial_decay))},
-                             {"Apply momentum", apply_momentum},
-                             {"Training loss goal", to_string(double(training_loss_goal))},
-                             {"Maximum epochs number", to_string(maximum_epochs)},
-                             {"Maximum time", write_time(maximum_time)},
-                             {"Batch samples number", to_string(batch_size)}});
+    string_matrix.setValues({
+    {"Initial learning rate", to_string(double(initial_learning_rate))},
+    {"Initial decay", to_string(double(initial_decay))},
+    {"Momentum", to_string(double(momentum))},
+    {"Nesterov", to_string(nesterov)},
+    {"Training loss goal", to_string(double(training_loss_goal))},
+    {"Maximum epochs number", to_string(maximum_epochs)},
+    {"Maximum validation failures", to_string(maximum_validation_failures)},
+    {"Maximum time", write_time(maximum_time)},
+    {"Batch samples number", to_string(batch_size)}});
 
     return string_matrix;
 }
@@ -439,8 +450,10 @@ void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "BatchSize", to_string(batch_size));
     add_xml_element(printer, "ApplyMomentum", to_string(momentum > type(0)));
+    add_xml_element(printer, "Momentum", to_string(momentum));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
+    add_xml_element(printer, "MaximumValidationFailures", to_string(maximum_validation_failures));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
     add_xml_element(printer, "HardwareUse", hardware_use);
 
@@ -457,11 +470,19 @@ void StochasticGradientDescent::from_XML(const XMLDocument& document)
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
 
-    const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
-    set_momentum(apply_momentum ? type(0.9) : type(0));
+    if(root_element->FirstChildElement("Momentum") != nullptr)
+    {
+        set_momentum(read_xml_type(root_element, "Momentum"));
+    }
+    else
+    {
+        const bool apply_momentum = read_xml_bool(root_element, "ApplyMomentum");
+        set_momentum(apply_momentum ? type(0.9) : type(0));
+    }
 
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_validation_failures(read_xml_index(root_element, "MaximumValidationFailures"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
@@ -670,7 +691,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
                 for(Index iteration = 0; iteration < validation_batches_number; iteration++)
                 {
                     BatchCuda* batch = empty_validation_queue.pop();
-                    batch->fill_host(training_batches[iteration],
+                    batch->fill_host(validation_batches[iteration],
                                      input_feature_indices,
                                      decoder_feature_indices,
                                      target_feature_indices);
@@ -739,7 +760,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         }
         else if (validation_failures >= maximum_validation_failures)
         {
-            if (display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+            if (display) cout << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << endl;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else

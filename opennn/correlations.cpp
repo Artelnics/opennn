@@ -352,29 +352,14 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
 
     const auto [x_filter, y_filter] = filter_missing_values(x,y);
 
-     cout<<"x_filter.size()"<<x_filter.size()<<endl;
-     cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
-     cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
-   //  cout<<"y_filter"<<y_filter<<endl;
-   //  cout<<"x_filter"<<x_filter<<endl;
-
-    cout<<"001"<<endl;
-
     if (x_filter.size() < 2
         || is_constant(x_filter)
         || is_constant(y_filter))
     {
-        cout<<"002"<<endl;
-       // cout<<"x_filter.size()"<<x_filter.size()<<endl;
-       // cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
-       // cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
-
         correlation.r = type(NAN);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    cout<<"003"<<endl;
-
 
     MatrixR data(x_filter.size(), 2);
     data.col(0) = x_filter;
@@ -387,21 +372,18 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     dataset.set_shape("Input", {1});
     dataset.set_shape("Target", {1});
     dataset.set_display(false);
-    cout<<"005"<<endl;
 
     NeuralNetwork neural_network;
     Shape dim1 = { 1 };
     Shape dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
-    cout<<"006"<<endl;
 
     MeanSquaredError mean_squared_error(&neural_network, &dataset);
     mean_squared_error.set_regularization_method("None");
 
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_display(false);
-    cout<<"007"<<endl;
 
     try
     {
@@ -409,40 +391,23 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     }
     catch(const exception& e)
     {
-        cout << "[LOGISTIC] train() excepcion capturada: " << e.what() << endl;
-        cout << "[LOGISTIC] devolviendo r=0 para este par" << endl;
         correlation.r = type(0);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    cout<<"008"<<endl;
 
-    cout<<"[POST-008-A] get_feature_data Input..."<<endl;
     const MatrixR inputs = dataset.get_feature_data("Input");
-
-    cout<<"[POST-008-B] get_feature_data Target..."<<endl;
     const MatrixR targets = dataset.get_feature_data("Target");
-
-    cout<<"[POST-008-C] calculate_outputs..."<<endl;
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
-    cout<<"[POST-008-D] outputs.rows="<<outputs.rows()<<" cols="<<outputs.cols()<<endl;
-    cout<<"[POST-008-D] outputs tiene NaN="<<outputs.hasNaN()<<endl;
-    cout<<"[POST-008-D] targets tiene NaN="<<targets.hasNaN()<<endl;
-
-    cout<<"[POST-008-E] linear_correlation..."<<endl;
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
-    cout<<"[POST-008-F] r = "<<correlation.r<<endl;
-    cout << "[LOGISTIC] correlation.r tras linear_correlation = " << correlation.r << endl;
 
     if(isnan(correlation.r) || !isfinite(correlation.r))
     {
-        cout << "[LOGISTIC] GUARD ACTIVADO -> r era NaN/Inf, devolviendo 0" << endl;
         correlation.r = type(0);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    cout << "[LOGISTIC] guard no activado, continuando..." << endl;
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
     const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.rows());
@@ -514,7 +479,6 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     }
     catch(const exception& e)
     {
-        cout << "[LOGISTIC-SPEARMAN] train() excepcion: " << e.what() << endl;
         correlation.r = type(0);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
@@ -624,7 +588,6 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     }
     catch(const exception& e)
     {
-        cout << "[LOGISTIC-VEC-MAT] train() excepcion: " << e.what() << endl;
         correlation.r = type(0);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;
@@ -730,7 +693,6 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     }
     catch(const exception& e)
     {
-        cout << "[LOGISTIC-MAT-MAT] train() excepcion: " << e.what() << endl;
         correlation.r = type(0);
         correlation.form = Correlation::Form::Sigmoid;
         return correlation;

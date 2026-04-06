@@ -324,6 +324,12 @@ void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << endl;
 
+    if(data_path.empty())
+        throw runtime_error("Error: Data path is empty.\n");
+
+    if(!filesystem::exists(data_path))
+        throw runtime_error("Error: The file " + data_path.string() + " does not exist.\n");
+
     const Index samples_number = count_non_empty_lines(data_path);
 
     ifstream file(data_path);

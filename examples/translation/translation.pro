@@ -3,7 +3,7 @@
 #   OpenNN: Open Neural Networks Library                                                          #
 #   www.opennn.net                                                                                #
 #                                                                                                 #
-#   T R A N S L A T I O N  P R O J E C T                                                                    #
+#   T R A N S L A T I O N  P R O J E C T                                                          #
 #                                                                                                 #
 #   Artificial Intelligence Techniques SL (Artelnics)                                             #
 #   artelnics@artelnics.com                                                                       #

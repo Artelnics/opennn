@@ -320,7 +320,8 @@ void BoundingForwardPropagationCuda::initialize()
 
 void BoundingForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Bounding Forward Propagation CUDA:" << endl
+         << "Batch size: " << batch_size << endl;
 }
 
 REGISTER(LayerForwardPropagationCuda, BoundingForwardPropagationCuda, "Bounding")

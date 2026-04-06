@@ -515,7 +515,7 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
         CHECK_CUDA(cudaMalloc(&maximums_device, outputs_number * sizeof(float)));
         CHECK_CUDA(cudaMalloc(&means_device, outputs_number * sizeof(float)));
         CHECK_CUDA(cudaMalloc(&standard_deviations_device, outputs_number * sizeof(float)));
-        CHECK_CUDA(cudaMalloc(&scalers_device, outputs_number * sizeof(float)));
+        CHECK_CUDA(cudaMalloc(&scalers_device, outputs_number * sizeof(int)));
 
         CHECK_CUDA(cudaMemcpy(minimums_device, minimums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
         CHECK_CUDA(cudaMemcpy(maximums_device, maximums_host.data(), outputs_number * sizeof(float), cudaMemcpyHostToDevice));
@@ -526,7 +526,9 @@ struct ScalingForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void print() const override
     {
-        // @todo
+        cout << "Scaling Forward Propagation CUDA:" << endl
+             << "Batch size: " << batch_size << endl
+             << "Outputs descriptor: " << outputs.get_descriptor() << endl;
     }
 
     void free() override

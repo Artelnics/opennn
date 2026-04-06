@@ -1,3 +1,4 @@
+# examples/concrete/CMakeLists.txt
 cmake_minimum_required(VERSION 3.18)
 
 project(concrete)
@@ -12,7 +13,7 @@ if(WIN32)
 	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
-add_executable(concrete.cpp)
+add_executable(concrete main.cpp)
 
 add_custom_command(TARGET concrete POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

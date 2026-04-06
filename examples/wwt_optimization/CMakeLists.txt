@@ -1,3 +1,4 @@
+# examples/wwt_optimization/CMakeLists.txt
 cmake_minimum_required(VERSION 3.18)
 
 project(wwt_optimization)
@@ -14,7 +15,7 @@ endif()
 
 add_executable(wwt_optimization main.cpp)
 
-add_custom_command(TARGET iris_plant POST_BUILD
+add_custom_command(TARGET wwt_optimization POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/data"
     "${CMAKE_BINARY_DIR}/data"

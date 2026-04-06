@@ -352,7 +352,9 @@ void UnscalingForwardPropagationCuda::initialize()
 
 void UnscalingForwardPropagationCuda::print() const
 {
-    // @todo
+    cout << "Unscaling Forward Propagation CUDA:" << endl
+         << "Batch size: " << batch_size << endl
+         << "Outputs descriptor: " << outputs.get_descriptor() << endl;
 }
 
 REGISTER(LayerForwardPropagationCuda, UnscalingForwardPropagationCuda, "Unscaling")

@@ -177,7 +177,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     // Start training
 
-    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << endl;;
+    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << endl;
 
     TrainingResults results(maximum_epochs+1);
 
@@ -305,7 +305,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         }
         else if(validation_failures >= maximum_validation_failures)
         {
-            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << validation_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum validation failures reached: " << validation_failures << endl;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else if(epoch == maximum_epochs)
@@ -398,7 +398,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         {
             new_loss_value = error + loss->calculate_regularization(potential_parameters);
 
-        }catch(exception)
+        }catch(const exception& e)
         {
             new_loss_value = loss_value;
         }
@@ -456,7 +456,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     {"Damping parameter factor", to_string(double(damping_parameter_factor))},
     {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
     {"Loss goal", to_string(double(training_loss_goal))},
-    {"Maximum selection error increases", to_string(maximum_validation_failures)},
+    {"Maximum validation failures", to_string(maximum_validation_failures)},
     {"Maximum epochs number", to_string(maximum_epochs)},
     {"Maximum time", write_time(maximum_time)}});
 
@@ -471,7 +471,7 @@ void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
+    add_xml_element(printer, "MaximumValidationFailures", to_string(maximum_validation_failures));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
@@ -489,7 +489,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_validation_failures(read_xml_index(root_element, "MaximumValidationFailures"));
     set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }

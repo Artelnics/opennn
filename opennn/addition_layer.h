@@ -254,7 +254,9 @@ struct AdditionForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void print() const override
     {
-        // @todo
+        cout << "Addition Forward Propagation CUDA:" << endl
+             << "Batch size: " << batch_size << endl
+             << "Outputs descriptor: " << outputs.get_descriptor() << endl;
     }
 };
 
@@ -279,7 +281,9 @@ struct AdditionBackPropagationCuda : public LayerBackPropagationCuda
 
     void print() const override
     {
-        // @todo
+        cout << "Addition Back Propagation CUDA:" << endl
+             << "Batch size: " << batch_size << endl
+             << "Input gradients descriptor: " << input_gradients[0].get_descriptor() << endl;
     }
 };
 
