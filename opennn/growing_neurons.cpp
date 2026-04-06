@@ -22,18 +22,6 @@ GrowingNeurons::GrowingNeurons(const TrainingStrategy* new_training_strategy)
 }
 
 
-Index GrowingNeurons::get_neurons_increment() const
-{
-    return neurons_increment;
-}
-
-
-Index GrowingNeurons::get_maximum_validation_failures() const
-{
-    return maximum_validation_failures;
-}
-
-
 void GrowingNeurons::set_default()
 {
     name = "GrowingNeurons";

@@ -53,24 +53,16 @@ namespace opennn
 
     void display_progress_bar(const int&, const int&);
 
-    bool contains(vector<string>&, const string&);
+    string write_time(type);
+
+
     string get_first_word(string&);
-
-    void sort_string_vector(vector<string>&);
-    vector<string> concatenate_string_vectors (const vector<string>&, const vector<string>&);
-
-    enum Language {ENG, SPA};
-
-    void set_language(const Language&);
-
-    void set_language(const string&);
 
     void tokenize_whitespace(const vector<string>&, Tensor2&);
     void tokenize_wordpiece(const vector<string>&, Tensor2&);
     void detokenize_whitespace(Tensor2&, ostringstream&);
     void detokenize_wordpiece(Tensor2&, ostringstream&);
 
-    string formatNumber(type, int);
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -14,42 +14,6 @@
 namespace opennn
 {
 
-void multiply_matrices(Tensor3& tensor, const VectorR& vector)
-{
-    const Index rows = tensor.dimension(0);
-    const Index cols = tensor.dimension(1);
-    const Index depth = tensor.dimension(2);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < depth; i++)
-    {
-        type* slice = tensor.data() + (i * rows * cols);
-        MatrixMap slice_map(slice, rows, cols);
-
-        slice_map *= vector(i);
-    }
-}
-
-
-void multiply_matrices(Tensor3& tensor, const Tensor2& matrix)
-{
-    const Index rows = tensor.dimension(0);
-    const Index cols = tensor.dimension(1);
-    const Index depth = tensor.dimension(2);
-
-    const MatrixMap multiplier(const_cast<type*>(matrix.data()), matrix.dimension(0), matrix.dimension(1));
-
-    #pragma omp parallel for
-    for(Index i = 0; i < depth; i++)
-    {
-        type* slice = tensor.data() + (i * rows * cols);
-        MatrixMap slice_map(slice, rows, cols);
-
-        slice_map = slice_map * multiplier;
-    }
-}
-
-
 MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
 {
     if (starting_matrix.size() == 0)
@@ -93,25 +57,6 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     }
 
     return feasible_rows;
-}
-
-
-void sum_matrices(const VectorR& vector, Tensor3& tensor)
-{
-    const Index rows = tensor.dimension(0);
-    const Index cols = tensor.dimension(1);
-    const Index depth = tensor.dimension(2);
-
-    if (vector.size() < depth) return;
-
-    #pragma omp parallel for
-    for(Index i = 0; i < depth; i++)
-    {
-        type* slice = tensor.data() + (i * rows * cols);
-        MatrixMap slice_map(slice, rows, cols);
-
-        slice_map.array() += vector(i);
-    }
 }
 
 
@@ -353,14 +298,6 @@ Shape string_to_shape(const string& x, const string& separator)
 bool contains(const vector<string>& data, const string& value)
 {
     return find(data.begin(), data.end(), value) != data.end();
-}
-
-
-type round_to_precision(type x, const int& precision)
-{
-    const type factor = type(pow(10, precision));
-
-    return round(factor*x)/factor;
 }
 
 

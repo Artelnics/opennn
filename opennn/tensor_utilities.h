@@ -510,12 +510,6 @@ inline array<Index, 5> array_5(const Index a, Index b, Index c, Index d, Index e
 }
 
 
-void sum_matrices(const VectorR&, Tensor3&);
-
-void multiply_matrices(Tensor3&, const VectorR&);
-void multiply_matrices(Tensor3&, const Tensor2&);
-
-
 inline bool is_contiguous(const vector<Index>& v)
 {
     const type first = v[0];
@@ -762,7 +756,6 @@ inline void string_to_vector(const string& input, VectorR& x)
         x(i) = buffer[i];
 }
 
-type round_to_precision(type, const int&);
 
 VectorMap vector_map(const MatrixR&, Index);
 

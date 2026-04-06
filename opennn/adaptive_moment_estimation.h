@@ -28,14 +28,6 @@ public:
 
    AdaptiveMomentEstimation(const Loss* = nullptr);
    
-   type get_learning_rate() const;
-   type get_beta_1() const;
-   type get_beta_2() const;
-
-   // Stopping criteria
-
-   type get_loss_goal() const;
-
    // Set
 
    void set_batch_size(const Index new_batch_size);

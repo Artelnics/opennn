@@ -148,12 +148,6 @@ type standard_deviation(const VectorR&);
 //type standard_deviation(const VectorR&, const VectorI&);
 VectorR standard_deviation(const VectorR&, Index);
 
-// Assymetry
-type asymmetry(const VectorR&);
-
-// Kurtosis
-type kurtosis(const VectorR&);
-
 // Quartiles
 VectorR quartiles(const VectorR&);
 VectorR quartiles(const VectorR&, const vector<Index>&);

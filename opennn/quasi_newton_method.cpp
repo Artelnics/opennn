@@ -22,24 +22,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(const Loss* new_loss)
 }
 
 
-type QuasiNewtonMethod::get_minimum_loss_decrease() const
-{
-    return minimum_loss_decrease;
-}
-
-
-type QuasiNewtonMethod::get_loss_goal() const
-{
-    return training_loss_goal;
-}
-
-
-Index QuasiNewtonMethod::get_maximum_validation_failures() const
-{
-    return maximum_validation_failures;
-}
-
-
 void QuasiNewtonMethod::set_loss(Loss* new_loss)
 {
     loss = new_loss;

@@ -560,12 +560,6 @@ void replace(string& source, const string& find_what, const string& replace_with
 }
 
 
-bool contains(vector<string>& v, const string& str)
-{
-    return find(v.begin(), v.end(), str) != v.end();
-}
-
-
 string get_first_word(string& line)
 {
     string word;
@@ -580,63 +574,20 @@ string get_first_word(string& line)
 }
 
 
-string round_to_precision_string(type x, const int& precision)
+string write_time(type time)
 {
-    const type factor = type(pow(10, precision));
+    const int total_seconds = static_cast<int>(time);
+    const int hours = total_seconds / 3600;
+    const int minutes = (total_seconds % 3600) / 60;
+    const int seconds = total_seconds % 60;
 
-    const type rounded_value = (round(factor*x))/factor;
+    ostringstream elapsed_time;
+    elapsed_time << setfill('0')
+                 << setw(2) << hours << ":"
+                 << setw(2) << minutes << ":"
+                 << setw(2) << seconds;
 
-    stringstream buffer;
-    buffer << fixed << setprecision(precision) << rounded_value;
-
-    return buffer.str();
-}
-
-
-Tensor<string,2> round_to_precision_string_matrix(Tensor2 matrix, const int& precision)
-{
-    Tensor<string,2> matrix_rounded(matrix.dimension(0), matrix.dimension(1));
-
-    const type factor = type(pow(10, precision));
-
-    for(int i = 0; i< matrix_rounded.dimension(0); i++)
-    {
-        for(int j = 0; j < matrix_rounded.dimension(1); j++)
-        {
-            const type rounded_value = (round(factor*matrix(i, j)))/factor;
-
-            stringstream buffer;
-            buffer << fixed << setprecision(precision) << rounded_value;
-
-            matrix_rounded(i, j) = buffer.str();
-        }
-    }
-
-    return matrix_rounded;
-}
-
-
-void sort_string_vector(vector<string>& string_vector)
-{
-    auto compare_string_length = [](const string& a, const string& b)
-    {
-        return a.length() > b.length();
-    };
-    
-    sort(string_vector.begin(), string_vector.end(), compare_string_length);
-}
-
-
-vector<string> concatenate_string_vectors(const vector<string>& string_vector_1, 
-                                          const vector<string>& string_vector_2)
-{
-    vector<string> string_vector;
-    string_vector.reserve(string_vector_1.size() + string_vector_2.size());
-
-    string_vector.insert(string_vector.end(), string_vector_2.begin(), string_vector_2.end());
-    string_vector.insert(string_vector.end(), string_vector_1.begin(), string_vector_1.end());
-
-    return string_vector;
+    return elapsed_time.str();
 }
 
 
@@ -857,26 +808,6 @@ void detokenize_wordpiece(Tensor2& predictions, ostringstream& buffer)
 */
 }
 
-
-string formatNumber(type value, int precision)
-{
-    ostringstream oss;
-    oss << fixed << setprecision(precision) << value;
-
-    string str = oss.str();
-
-    auto pos = str.find('.');
-
-    if (pos != string::npos)
-    {
-        str.erase(str.find_last_not_of('0') + 1);
-
-        if (str.back() == '.')
-            str.pop_back();
-    }
-
-    return str;
-}
 
 }
 

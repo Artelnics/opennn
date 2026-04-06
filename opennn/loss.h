@@ -55,8 +55,6 @@ public:
         return dataset;
     }
 
-    type get_regularization_weight() const;
-
     bool get_display() const;
 
     bool has_neural_network() const;

@@ -1037,17 +1037,6 @@ const filesystem::path& Dataset::get_data_path() const
 }
 
 
-bool Dataset::get_header_line() const
-{
-    return has_header;
-}
-
-
-bool Dataset::get_has_sample_ids() const
-{
-    return has_sample_ids;
-}
-
 
 vector<string> Dataset::get_sample_ids() const
 {
@@ -4100,10 +4089,6 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
 }
 
 
-bool Dataset::get_has_rows_labels() const
-{
-    return has_sample_ids;
-}
 
 
 void Batch::fill(const vector<Index>& sample_indices,

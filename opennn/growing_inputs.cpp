@@ -12,7 +12,6 @@
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "optimizer.h"
 #include "training_strategy.h"
 
@@ -35,12 +34,6 @@ Index GrowingInputs::get_minimum_inputs_number() const
 Index GrowingInputs::get_maximum_inputs_number() const
 {
     return maximum_inputs_number;
-}
-
-
-Index GrowingInputs::get_maximum_validation_failures() const
-{
-    return maximum_validation_failures;
 }
 
 

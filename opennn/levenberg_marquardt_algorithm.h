@@ -106,18 +106,6 @@ public:
 
    LevenbergMarquardtAlgorithm(const Loss* = nullptr);
 
-   type get_minimum_loss_decrease() const;
-   type get_loss_goal() const;
-
-   Index get_maximum_validation_failures() const;
-
-   type get_damping_parameter() const;
-
-   type get_damping_parameter_factor() const;
-
-   type get_minimum_damping_parameter() const;
-   type get_maximum_damping_parameter() const;
-
    // Set
 
    void set_default();

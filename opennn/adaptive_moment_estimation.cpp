@@ -27,30 +27,6 @@ Index AdaptiveMomentEstimation::get_samples_number() const
 }
 
 
-type AdaptiveMomentEstimation::get_beta_1() const
-{
-    return beta_1;
-}
-
-
-type AdaptiveMomentEstimation::get_beta_2() const
-{
-    return beta_2;
-}
-
-
-type AdaptiveMomentEstimation::get_learning_rate() const
-{
-    return learning_rate;
-}
-
-
-type AdaptiveMomentEstimation::get_loss_goal() const
-{
-    return training_loss_goal;
-}
-
-
 void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
 {
     batch_size = new_batch_size;

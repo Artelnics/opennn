@@ -78,18 +78,6 @@ Index GeneticAlgorithm::get_maximum_inputs_number() const
 }
 
 
-type GeneticAlgorithm::get_mutation_rate() const
-{
-    return mutation_rate;
-}
-
-
-Index GeneticAlgorithm::get_elitism_size() const
-{
-    return elitism_size;
-}
-
-
 const string& GeneticAlgorithm::get_initialization_method() const
 {
     return initialization_method;

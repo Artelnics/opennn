@@ -32,33 +32,9 @@ bool InputsSelection::has_training_strategy() const
 }
 
 
-Index InputsSelection::get_trials_number() const
-{
-    return trials_number;
-}
-
-
 bool InputsSelection::get_display() const
 {
     return display;
-}
-
-
-type InputsSelection::get_validation_error_goal() const
-{
-    return validation_error_goal;
-}
-
-
-Index InputsSelection::get_maximum_iterations_number() const
-{
-    return maximum_epochs;
-}
-
-
-type InputsSelection::get_maximum_time() const
-{
-    return maximum_time;
 }
 
 
@@ -233,19 +209,7 @@ void InputsSelectionResults::print() const
 
 string InputsSelection::write_time(const type time) const
 {
-    const int hours = int(time) / 3600;
-    int seconds = int(time) % 3600;
-    const int minutes = seconds / 60;
-    seconds = seconds % 60;
-
-    ostringstream elapsed_time;
-
-    elapsed_time << setfill('0')
-        << setw(2) << hours << ":"
-        << setw(2) << minutes << ":"
-        << setw(2) << seconds << endl;
-
-    return elapsed_time.str();
+    return opennn::write_time(time);
 }
 
 }

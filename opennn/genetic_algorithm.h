@@ -39,10 +39,6 @@ public:
     Index get_minimum_inputs_number() const override;
     Index get_maximum_inputs_number() const override;
 
-    type get_mutation_rate() const;
-
-    Index get_elitism_size() const;
-
     const string& get_initialization_method() const;
 
     void set_default();

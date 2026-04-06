@@ -133,9 +133,6 @@ public:
 
     const filesystem::path& get_data_path() const;
 
-    bool get_header_line() const;
-    bool get_has_sample_ids() const;
-
     vector<string> get_sample_ids() const;
 
     const Separator& get_separator() const;
@@ -418,7 +415,6 @@ public:
 
     vector<vector<Index>> split_samples(const vector<Index>&, Index) const;
 
-    bool get_has_rows_labels() const;
     //bool get_has_text_data() const;
 
     // Reader

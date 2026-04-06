@@ -22,36 +22,6 @@ StochasticGradientDescent::StochasticGradientDescent(const Loss* new_loss)
 }
 
 
-type StochasticGradientDescent::get_initial_learning_rate() const
-{
-    return initial_learning_rate;
-}
-
-
-type StochasticGradientDescent::get_initial_decay() const
-{
-    return initial_decay;
-}
-
-
-type StochasticGradientDescent::get_momentum() const
-{
-    return momentum;
-}
-
-
-bool StochasticGradientDescent::get_nesterov() const
-{
-    return nesterov;
-}
-
-
-type StochasticGradientDescent::get_loss_goal() const
-{
-    return training_loss_goal;
-}
-
-
 void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";

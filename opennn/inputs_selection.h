@@ -38,13 +38,7 @@ public:
 
     bool has_training_strategy() const;
 
-    Index get_trials_number() const;
-
     bool get_display() const;
-
-    type get_validation_error_goal() const;
-    Index get_maximum_iterations_number() const;
-    type get_maximum_time() const;
 
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;

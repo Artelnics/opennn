@@ -67,12 +67,6 @@ Index ImageDataset::get_image_padding() const
 }
 
 
-bool ImageDataset::get_augmentation() const
-{
-    return augmentation;
-}
-
-
 bool ImageDataset::get_random_reflection_axis_x() const
 {
     return random_reflection_axis_x;

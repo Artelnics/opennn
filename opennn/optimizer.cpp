@@ -55,24 +55,6 @@ bool Optimizer::get_display() const
 }
 
 
-Index Optimizer::get_display_period() const
-{
-    return display_period;
-}
-
-
-Index Optimizer::get_save_period() const
-{
-    return save_period;
-}
-
-
-const string& Optimizer::get_neural_network_file_name() const
-{
-    return neural_network_file_name;
-}
-
-
 void Optimizer::set(const Loss* new_loss)
 {
     loss = const_cast<Loss*>(new_loss);
@@ -109,18 +91,6 @@ void Optimizer::set_maximum_time(const type new_maximum_time)
 }
 
 
-void Optimizer::set_save_period(const Index new_save_period)
-{
-    save_period = new_save_period;
-}
-
-
-void Optimizer::set_neural_network_file_name(const string& new_neural_network_file_name)
-{
-    neural_network_file_name = new_neural_network_file_name;
-}
-
-
 void Optimizer::check() const
 {
     if(!loss)
@@ -151,16 +121,6 @@ void Optimizer::from_XML(const XMLDocument& document)
     set_display(read_xml_bool(root_element, "Display"));
 }
 
-
-Tensor<string, 2> Optimizer::to_string_matrix() const
-{
-    return {};
-}
-
-
-void Optimizer::print() const
-{
-}
 
 
 void Optimizer::save(const filesystem::path& file_name) const
@@ -550,19 +510,7 @@ void TrainingResults::resize_validation_error_history(const Index new_size)
 
 string Optimizer::write_time(const type time) const
 {
-    const int hours = int(time) / 3600;
-    int seconds = int(time) % 3600;
-    const int minutes = seconds / 60;
-    seconds = seconds % 60;
-
-    ostringstream elapsed_time;
-
-    elapsed_time << setfill('0')
-                 << setw(2) << hours << ":"
-                 << setw(2) << minutes << ":"
-                 << setw(2) << seconds;
-
-    return elapsed_time.str();
+    return opennn::write_time(time);
 }
 
 

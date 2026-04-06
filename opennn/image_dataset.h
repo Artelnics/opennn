@@ -28,7 +28,6 @@ public:
     Index get_image_padding() const;
     Index get_image_size() const;
 
-    bool get_augmentation() const;
     bool get_random_reflection_axis_x() const;
     bool get_random_reflection_axis_y() const;
     type get_random_rotation_minimum() const;

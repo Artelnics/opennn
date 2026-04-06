@@ -15,11 +15,6 @@
 namespace opennn
 {
 
-uint8_t read_u8(ifstream&, const string&);
-uint16_t read_u16_le(ifstream&, const string&);
-uint32_t read_u32_le(ifstream&, const string&);
-int32_t read_s32_le(ifstream&, const string&);
-
 Tensor3 load_image(const filesystem::path&);
 
 Tensor3 resize_image(const Tensor3&, Index, Index);

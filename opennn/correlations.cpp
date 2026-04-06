@@ -12,7 +12,6 @@
 #include "scaling_layer.h"
 #include "dense_layer.h"
 #include "neural_network.h"
-#include "standard_networks.h"
 #include "bounding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"

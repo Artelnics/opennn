@@ -28,13 +28,6 @@ public:
 
     StochasticGradientDescent(const Loss* = nullptr);
 
-    type get_initial_learning_rate() const;
-    type get_initial_decay() const;
-    type get_momentum() const;
-    bool get_nesterov() const;
-
-    type get_loss_goal() const;
-
     void set_default();
 
     void set_batch_size(const Index);

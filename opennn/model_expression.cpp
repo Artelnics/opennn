@@ -8,7 +8,6 @@
 
 #include "model_expression.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "string_utilities.h"
 #include "neural_network.h"
 #include "variable.h"

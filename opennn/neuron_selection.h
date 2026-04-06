@@ -28,15 +28,7 @@ public:
 
     bool has_training_strategy() const;
 
-    Index get_maximum_neurons() const;
-    Index get_minimum_neurons() const;
-    Index get_trials_number() const;
-
     bool get_display() const;
-
-    type get_validation_error_goal() const;
-    Index get_maximum_epochs_number() const;
-    type get_maximum_time() const;
 
     void set(const TrainingStrategy* = nullptr);
 

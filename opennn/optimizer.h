@@ -45,12 +45,6 @@ public:
 
     bool get_display() const;
 
-    Index get_display_period() const;
-
-    Index get_save_period() const;
-
-    const string& get_neural_network_file_name() const;
-
     string write_time(const type) const;
 
     void set(const Loss* = nullptr);
@@ -64,9 +58,6 @@ public:
     void set_maximum_epochs(const Index);
     void set_maximum_time(const type);
 
-    void set_save_period(const Index);
-    void set_neural_network_file_name(const string&);
-
     // Training
 
     virtual void check() const;
@@ -75,9 +66,9 @@ public:
 
     string get_name() const;
 
-    virtual void print() const;
+    virtual void print() const {}
 
-    virtual Tensor<string, 2> to_string_matrix() const;
+    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
 
     virtual void from_XML(const XMLDocument&);
 

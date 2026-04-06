@@ -715,54 +715,53 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    // Tensor3 image = load_image(image_path);
+    Tensor3 image = load_image(image_path);
 
-    // Scaling4d* scaling_layer = static_cast<Scaling4d*>(get_first("Scaling4d"));
+    Scaling4d* scaling_layer = static_cast<Scaling4d*>(get_first("Scaling4d"));
 
-    // const Index height = scaling_layer->get_input_shape()[0];
-    // const Index width = scaling_layer->get_input_shape()[1];
-    // const Index channels = scaling_layer->get_input_shape()[2];
+    const Index height = scaling_layer->get_input_shape()[0];
+    const Index width = scaling_layer->get_input_shape()[1];
+    const Index channels = scaling_layer->get_input_shape()[2];
 
-    // const Index current_height = image.dimension(0);
-    // const Index current_width = image.cols();
-    // const Index current_channels = image.dimension(2);
+    const Index current_height = image.dimension(0);
+    const Index current_width = image.cols();
+    const Index current_channels = image.dimension(2);
 
-    // if (current_channels != channels)
-    //     throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
+    if (current_channels != channels)
+        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    // if(current_height != height || current_width != width)
-    //     image = resize_image(image, height, width);
+    if(current_height != height || current_width != width)
+        image = resize_image(image, height, width);
 
-    // Tensor4 input_data(1, height, width, channels);
+    Tensor4 input_data(1, height, width, channels);
 
-    // const Index pixels_number = height * width * channels;
+    const Index pixels_number = height * width * channels;
 
-    // #pragma omp parallel for
-    // for(Index j = 0; j < pixels_number; j++)
-    //     input_data(j) = image(j);
+    #pragma omp parallel for
+    for(Index j = 0; j < pixels_number; j++)
+        input_data(j) = image(j);
 
-    // const Matrix outputs = calculate_outputs(input_data);
+    const Matrix outputs = calculate_outputs(input_data);
 
-    // Index predicted_index = -1;
+    Index predicted_index = -1;
 
-    // if (outputs.size() > 1)
-    // {
-    //     type max_value = outputs(0);
+    if (outputs.size() > 1)
+    {
+        type max_value = outputs(0);
 
-    //     for(Index i = 1; i < outputs.cols(); ++i)
-    //     {
-    //         if (outputs(i) > max_value)
-    //         {
-    //             max_value = outputs(i);
-    //             predicted_index = i;
-    //         }
-    //     }
-    // }
-    // else
-    //     predicted_index = outputs(0);
+        for(Index i = 1; i < outputs.cols(); ++i)
+        {
+            if (outputs(i) > max_value)
+            {
+                max_value = outputs(i);
+                predicted_index = i;
+            }
+        }
+    }
+    else
+        predicted_index = outputs(0);
 
-    // return predicted_index;
-    return 0;
+    return predicted_index;
 }
 
 

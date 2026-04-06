@@ -22,48 +22,6 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const Loss* new_loss)
 }
 
 
-type LevenbergMarquardtAlgorithm::get_minimum_loss_decrease() const
-{
-    return minimum_loss_decrease;
-}
-
-
-type LevenbergMarquardtAlgorithm::get_loss_goal() const
-{
-    return training_loss_goal;
-}
-
-
-Index LevenbergMarquardtAlgorithm::get_maximum_validation_failures() const
-{
-    return maximum_validation_failures;
-}
-
-
-type LevenbergMarquardtAlgorithm::get_damping_parameter() const
-{
-    return damping_parameter;
-}
-
-
-type LevenbergMarquardtAlgorithm::get_damping_parameter_factor() const
-{
-    return damping_parameter_factor;
-}
-
-
-type LevenbergMarquardtAlgorithm::get_minimum_damping_parameter() const
-{
-    return minimum_damping_parameter;
-}
-
-
-type LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
-{
-    return maximum_damping_parameter;
-}
-
-
 void LevenbergMarquardtAlgorithm::set_default()
 {
     name = "LevenbergMarquardt";

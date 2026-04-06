@@ -22,12 +22,6 @@ Loss::Loss(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 }
 
 
-type Loss::get_regularization_weight() const
-{
-    return regularization_weight;
-}
-
-
 bool Loss::get_display() const
 {
     return display;

@@ -24,13 +24,6 @@ public:
 
     QuasiNewtonMethod(const Loss* = nullptr);
 
-    // Stopping criteria
-
-    type get_minimum_loss_decrease() const;
-    type get_loss_goal() const;
-
-    Index get_maximum_validation_failures() const;
-
     // Set
 
     void set_loss(Loss*) override;
