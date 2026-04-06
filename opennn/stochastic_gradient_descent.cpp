@@ -111,21 +111,9 @@ void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 }
 
 
-void StochasticGradientDescent::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
 void StochasticGradientDescent::set_loss_goal(const type new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
-}
-
-
-void StochasticGradientDescent::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
 }
 
 
@@ -449,10 +437,7 @@ void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 
 void StochasticGradientDescent::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
-
-    if(!root_element)
-        throw runtime_error("Stochastic gradient descent element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "StochasticGradientDescent");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
 

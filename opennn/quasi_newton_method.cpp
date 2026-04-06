@@ -46,12 +46,6 @@ void QuasiNewtonMethod::set_loss(Loss* new_loss)
 }
 
 
-void QuasiNewtonMethod::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
 void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
@@ -90,18 +84,6 @@ void QuasiNewtonMethod::set_loss_goal(const type new_loss_goal)
 void QuasiNewtonMethod::set_maximum_validation_failures(const Index new_maximum_validation_failures)
 {
     maximum_validation_failures = new_maximum_validation_failures;
-}
-
-
-void QuasiNewtonMethod::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void QuasiNewtonMethod::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
 }
 
 
@@ -456,10 +438,7 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 
 void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
-
-    if(!root_element)
-        throw runtime_error("Quasi-Newton method element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "QuasiNewtonMethod");
 
     /*const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 

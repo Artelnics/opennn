@@ -253,10 +253,7 @@ void GrowingNeurons::to_XML(XMLPrinter& printer) const
 
 void GrowingNeurons::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
-
-    if(!root_element)
-        throw runtime_error("GrowingNeurons element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "GrowingNeurons");
 
     set_minimum_neurons(read_xml_index(root_element, "MinimumNeurons"));
     set_maximum_neurons(read_xml_index(root_element, "MaximumNeurons"));
@@ -285,12 +282,7 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 {
     set_default();
 
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");

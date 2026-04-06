@@ -425,10 +425,7 @@ public:
 
     void from_XML(const XMLDocument& document) override
     {
-        const XMLElement* dense2d_layer_element = document.FirstChildElement(name.c_str());
-
-        if(!dense2d_layer_element)
-            throw runtime_error(name + " element is nullptr.\n");
+        const XMLElement* dense2d_layer_element = get_xml_root(document, name);
 
         set_label(read_xml_string(dense2d_layer_element, "Label"));
 

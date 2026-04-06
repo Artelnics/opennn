@@ -336,10 +336,7 @@ void Recurrent::print() const
 
 void Recurrent::from_XML(const XMLDocument& document)
 {
-    const XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");
-
-    if(!recurrent_layer_element)
-        throw runtime_error("Recurrent layer element is nullptr.\n");
+    const XMLElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
 
     set_label(read_xml_string(recurrent_layer_element,"Label"));
     set_input_shape(string_to_shape(read_xml_string(recurrent_layer_element, "InputDimensions")));

@@ -10,7 +10,6 @@
 #include "dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 #include "random_utilities.h"
@@ -906,10 +905,7 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 
 void GeneticAlgorithm::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
-
-    if(!root)
-        throw runtime_error("GeneticAlgorithm element is nullptr.\n");
+    const XMLElement* root = get_xml_root(document, "GeneticAlgorithm");
 
     set_individuals_number(read_xml_index(root, "PopulationSize"));
     set_mutation_rate(read_xml_type(root, "MutationRate"));
@@ -961,12 +957,7 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
 {
     set_default();
 
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

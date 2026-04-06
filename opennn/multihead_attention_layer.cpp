@@ -880,10 +880,7 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 {
     // @todo update notation
 
-    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiHeadAttention");
-
-    if(!multihead_attention_layer_element)
-        throw runtime_error("MultiHeadAttention element is nullptr.\n");
+    const XMLElement* multihead_attention_layer_element = get_xml_root(document, "MultiHeadAttention");
 
     const string new_label = read_xml_string(multihead_attention_layer_element, "Label");
     const Index new_input_size = read_xml_index(multihead_attention_layer_element, "InputSize");

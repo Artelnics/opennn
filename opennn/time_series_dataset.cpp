@@ -175,9 +175,7 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 
 void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
-    if(!data_set_element)
-        throw runtime_error("Dataset element is nullptr.\n");
+    const XMLElement* data_set_element = get_xml_root(data_set_document, "Dataset");
 
     // Data file
 

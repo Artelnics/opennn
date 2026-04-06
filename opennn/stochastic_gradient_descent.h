@@ -46,10 +46,7 @@ public:
     void set_momentum(const type);
     void set_nesterov(bool);
 
-    void set_maximum_epochs(const Index);
-
     void set_loss_goal(const type);
-    void set_maximum_time(const type);
 
     void update_parameters(BackPropagation& , StochasticGradientDescentData&, type) const;
 

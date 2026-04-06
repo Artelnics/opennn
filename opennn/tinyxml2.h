@@ -1,10 +1,11 @@
 #pragma once
 
-#include <string>
-#include <vector>
-//#include <map>
+#include <filesystem>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 //#include <fstream>
 //#include <algorithm>
 
@@ -135,5 +136,8 @@ float read_xml_type(const XMLElement* root, const std::string& element_name);
 long  read_xml_index(const XMLElement* root, const std::string& element_name);
 bool  read_xml_bool(const XMLElement* root, const std::string& element_name);
 std::string read_xml_string(const XMLElement* root, const std::string& element_name);
+
+XMLDocument load_xml_file(const std::filesystem::path& file_name);
+const XMLElement* get_xml_root(const XMLDocument& document, const std::string& tag);
 
 } // namespace

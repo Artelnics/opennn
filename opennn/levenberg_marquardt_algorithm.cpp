@@ -134,18 +134,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_validation_failures(const Index ne
 }
 
 
-void LevenbergMarquardtAlgorithm::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void LevenbergMarquardtAlgorithm::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
-}
-
-
 void LevenbergMarquardtAlgorithm::check() const
 {
     if(!loss)
@@ -905,10 +893,7 @@ void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
 
 void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
-
-    if(!root_element)
-        throw runtime_error("Levenberg-Marquardt algorithm element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "LevenbergMarquardt");
 
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));

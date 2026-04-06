@@ -230,8 +230,7 @@ void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
 
 void Normalization3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* element = document.FirstChildElement("Normalization3d");
-    if(!element) throw runtime_error("Normalization3d element is nullptr.\n");
+    const XMLElement* element = get_xml_root(document, "Normalization3d");
 
     const string new_name = read_xml_string(element, "Label");
     const Index new_sequence_length = read_xml_index(element, "SequenceLength");

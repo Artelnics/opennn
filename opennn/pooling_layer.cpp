@@ -376,10 +376,7 @@ void Pooling::to_XML(XMLPrinter& printer) const
 
 void Pooling::from_XML(const XMLDocument& document)
 {
-    const XMLElement* pooling_layer_element = document.FirstChildElement("Pooling");
-
-    if(!pooling_layer_element)
-        throw runtime_error("Pooling layer element is nullptr.\batch_index");
+    const XMLElement* pooling_layer_element = get_xml_root(document, "Pooling");
 
     set_label(read_xml_string(pooling_layer_element, "Label"));
     set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));

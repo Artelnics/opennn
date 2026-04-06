@@ -1949,10 +1949,7 @@ void TestingAnalysis::to_XML(XMLPrinter& printer) const
 
 void TestingAnalysis::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
-
-    if(!root_element)
-        throw runtime_error("Testing analysis element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "TestingAnalysis");
 
     set_display(read_xml_bool(root_element, "Display"));
 }
@@ -1975,12 +1972,7 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
 
 void TestingAnalysis::load(const filesystem::path& file_name)
 {
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

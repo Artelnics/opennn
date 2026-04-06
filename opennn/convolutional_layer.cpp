@@ -535,10 +535,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
 
 void Convolutional::from_XML(const XMLDocument& document)
 {
-    const XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
-
-    if(!convolutional_layer_element)
-        throw runtime_error("Convolutional layer element is nullptr.\n");
+    const XMLElement* convolutional_layer_element = get_xml_root(document, "Convolutional");
 
     set_label(read_xml_string(convolutional_layer_element, "Label"));
 

@@ -349,10 +349,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");
-
-    if(!image_dataset_element)
-        throw runtime_error("ImageDataset element is nullptr.\n");
+    const XMLElement* image_dataset_element = get_xml_root(data_set_document, "ImageDataset");
 
     // Data Source
 

@@ -2678,9 +2678,7 @@ void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
 
 void Dataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
-    if(!data_set_element)
-        throw runtime_error("Dataset element is nullptr.\n");
+    const XMLElement* data_set_element = get_xml_root(data_set_document, "Dataset");
 
     // Data Source
     const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
@@ -2769,12 +2767,7 @@ void Dataset::save(const filesystem::path& file_name) const
 
 void Dataset::load(const filesystem::path& file_name)
 {
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

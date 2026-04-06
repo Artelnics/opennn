@@ -244,10 +244,7 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 
 void Unscaling::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("Unscaling");
-
-    if(!root_element)
-        throw runtime_error("Unscaling element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "Unscaling");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 

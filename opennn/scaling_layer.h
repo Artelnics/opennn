@@ -296,10 +296,7 @@ public:
 
     void from_XML(const XMLDocument& document) override
     {
-        const XMLElement* scaling_layer_element = document.FirstChildElement(name.c_str());
-
-        if(!scaling_layer_element)
-            throw runtime_error("Scaling element is nullptr.\n");
+        const XMLElement* scaling_layer_element = get_xml_root(document, name);
 
         const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
         

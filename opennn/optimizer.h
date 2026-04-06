@@ -61,6 +61,9 @@ public:
 
     void set_display_period(const Index);
 
+    void set_maximum_epochs(const Index);
+    void set_maximum_time(const type);
+
     void set_save_period(const Index);
     void set_neural_network_file_name(const string&);
 

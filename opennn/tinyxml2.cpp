@@ -96,4 +96,20 @@ std::string read_xml_string(const XMLElement* root, const std::string& element_n
     return (el && el->GetText()) ? std::string(el->GetText()) : "";
 }
 
+XMLDocument load_xml_file(const std::filesystem::path& file_name)
+{
+    XMLDocument document;
+    if (document.LoadFile(file_name.string().c_str()))
+        throw std::runtime_error("Cannot load XML file " + file_name.string() + ".\n");
+    return document;
+}
+
+const XMLElement* get_xml_root(const XMLDocument& document, const std::string& tag)
+{
+    const XMLElement* el = document.FirstChildElement(tag.c_str());
+    if (!el)
+        throw std::runtime_error(tag + " element is nullptr.\n");
+    return el;
+}
+
 }

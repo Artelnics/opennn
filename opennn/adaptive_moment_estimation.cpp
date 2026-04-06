@@ -76,12 +76,6 @@ void AdaptiveMomentEstimation::set_default()
 }
 
 
-void AdaptiveMomentEstimation::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
 void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
 {
     learning_rate = new_learning_rate;
@@ -97,18 +91,6 @@ void AdaptiveMomentEstimation::set_loss_goal(const type new_loss_goal)
 void AdaptiveMomentEstimation::set_accuracy_goal(const type new_accuracy_goal)
 {
     training_accuracy_goal = new_accuracy_goal;
-}
-
-
-void AdaptiveMomentEstimation::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void AdaptiveMomentEstimation::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
 }
 
 
@@ -439,10 +421,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
 {
 
-    const XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
-
-    if(!root_element)
-        throw runtime_error("Adaptive moment estimation element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
     set_loss_goal(read_xml_type(root_element, "LossGoal"));

@@ -238,10 +238,7 @@ void Bounding::to_XML(XMLPrinter& printer) const
 
 void Bounding::from_XML(const XMLDocument& document)
 {
-    const auto* root_element = document.FirstChildElement("Bounding");
-
-    if(!root_element)
-        throw runtime_error("Bounding element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "Bounding");
 
     const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 

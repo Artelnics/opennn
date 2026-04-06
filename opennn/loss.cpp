@@ -293,10 +293,7 @@ void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) co
 
 void Loss::regularization_from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("Regularization");
-
-    if(!root_element)
-        throw runtime_error("Regularization tag not found.\n");
+    const XMLElement* root_element = get_xml_root(document, "Regularization");
 
     const string new_regularization_method = root_element->Attribute("Type");
 

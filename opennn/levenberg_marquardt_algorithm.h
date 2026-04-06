@@ -136,9 +136,6 @@ public:
 
    void set_maximum_validation_failures(const Index);
 
-   void set_maximum_epochs(const Index);
-   void set_maximum_time(const type);
-
    // Training
 
    void check() const override;

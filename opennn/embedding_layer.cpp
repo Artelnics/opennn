@@ -314,10 +314,7 @@ void Embedding::print() const
 
 void Embedding::from_XML(const XMLDocument& document)
 {
-    const XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
-
-    if(!embedding_layer_element)
-        throw runtime_error("Embedding element is nullptr.\n");
+    const XMLElement* embedding_layer_element = get_xml_root(document, "Embedding");
 
     const string new_label = read_xml_string(embedding_layer_element, "Label");
     const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");

@@ -12,7 +12,6 @@
 #include "neural_network.h"
 #include "dense_layer.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
@@ -932,10 +931,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
-    const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
-
-    if(!neural_network_element)
-        throw runtime_error("Neural network element is nullptr.\n");
+    const XMLElement* neural_network_element = get_xml_root(document, "NeuralNetwork");
 
     // 1. Load Input Variables
     const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
@@ -1117,12 +1113,7 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

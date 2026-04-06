@@ -298,8 +298,7 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
-    if(!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "TrainingStrategy");
 
     // Loss
 
@@ -377,12 +376,7 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
 
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

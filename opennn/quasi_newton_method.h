@@ -35,8 +35,6 @@ public:
 
     void set_loss(Loss*) override;
 
-    void set_display(bool) override;
-
     void set_default();
 
     // Stopping criteria
@@ -45,9 +43,6 @@ public:
     void set_loss_goal(const type);
 
     void set_maximum_validation_failures(const Index);
-
-    void set_maximum_epochs(const Index);
-    void set_maximum_time(const type);
 
     // Training
 

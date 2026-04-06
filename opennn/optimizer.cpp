@@ -11,7 +11,6 @@
 #include "time_series_dataset.h"
 #include "language_dataset.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "loss.h"
 #include "optimizer.h"
@@ -98,6 +97,18 @@ void Optimizer::set_display_period(const Index new_display_period)
 }
 
 
+void Optimizer::set_maximum_epochs(const Index new_maximum_epochs)
+{
+    maximum_epochs = new_maximum_epochs;
+}
+
+
+void Optimizer::set_maximum_time(const type new_maximum_time)
+{
+    maximum_time = new_maximum_time;
+}
+
+
 void Optimizer::set_save_period(const Index new_save_period)
 {
     save_period = new_save_period;
@@ -135,10 +146,7 @@ void Optimizer::to_XML(XMLPrinter& printer) const
 
 void Optimizer::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("Optimizer");
-
-    if(!root_element)
-        throw runtime_error("Optimization algorithm element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "Optimizer");
 
     set_display(read_xml_bool(root_element, "Display"));
 }
@@ -184,12 +192,7 @@ void Optimizer::save(const filesystem::path& file_name) const
 
 void Optimizer::load(const filesystem::path& file_name)
 {
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 

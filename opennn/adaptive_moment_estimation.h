@@ -42,8 +42,6 @@ public:
 
    void set_default();
 
-   void set_display(bool) override;
-
    // Get
 
    Index get_samples_number() const;
@@ -54,15 +52,10 @@ public:
    void set_beta_1(const type);
    void set_beta_2(const type);
 
-   // Training parameters
-
-   void set_maximum_epochs(const Index);
-
    // Stopping criteria
 
    void set_loss_goal(const type);
    void set_accuracy_goal(const type);
-   void set_maximum_time(const type);
 
    // Training
 

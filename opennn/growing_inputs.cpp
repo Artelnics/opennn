@@ -414,10 +414,7 @@ void GrowingInputs::to_XML(XMLPrinter& printer) const
 
 void GrowingInputs::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("GrowingInputs");
-
-    if(!root_element)
-        throw runtime_error("GrowingInputs element is nullptr.\n");
+    const XMLElement* root_element = get_xml_root(document, "GrowingInputs");
 
     set_trials_number(read_xml_index(root_element, "TrialsNumber"));
     set_validation_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
@@ -448,12 +445,7 @@ void GrowingInputs::load(const filesystem::path& file_name)
 {
     set_default();
 
-    XMLDocument document;
-
-    if (document.LoadFile(file_name.string().c_str()))
-        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
-
-    from_XML(document);
+    from_XML(load_xml_file(file_name));
 }
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
