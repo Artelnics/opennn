@@ -33,9 +33,6 @@ public:
     // Stopping criteria
 
     void set_minimum_loss_decrease(const type);
-    void set_loss_goal(const type);
-
-    void set_maximum_validation_failures(const Index);
 
     // Training
 
@@ -81,10 +78,6 @@ private:
     // Stopping criteria
 
     type minimum_loss_decrease = EPSILON;
-
-    type training_loss_goal;
-
-    Index maximum_validation_failures;
 
     type learning_rate_tolerance;
 

@@ -57,17 +57,6 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type new_minimum_loss_de
 }
 
 
-void QuasiNewtonMethod::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
-void QuasiNewtonMethod::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
 
 void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {

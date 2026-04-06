@@ -91,6 +91,18 @@ void Optimizer::set_maximum_time(const type new_maximum_time)
 }
 
 
+void Optimizer::set_loss_goal(const type new_loss_goal)
+{
+    training_loss_goal = new_loss_goal;
+}
+
+
+void Optimizer::set_maximum_validation_failures(const Index new_maximum_validation_failures)
+{
+    maximum_validation_failures = new_maximum_validation_failures;
+}
+
+
 void Optimizer::check() const
 {
     if(!loss)
@@ -412,9 +424,7 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
                                           const Index epoch,
                                           const type elapsed_time,
                                           const type training_error,
-                                          const Index validation_failures,
-                                          const type training_loss_goal,
-                                          const Index maximum_validation_failures) const
+                                          const Index validation_failures) const
 {
     if(training_error < training_loss_goal)
     {

@@ -58,6 +58,9 @@ public:
     void set_maximum_epochs(const Index);
     void set_maximum_time(const type);
 
+    void set_loss_goal(const type);
+    void set_maximum_validation_failures(const Index);
+
     // Training
 
     virtual void check() const;
@@ -84,10 +87,13 @@ public:
 protected:
 
     bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
-                                   type training_error, Index validation_failures,
-                                   type training_loss_goal, Index maximum_validation_failures) const;
+                                   type training_error, Index validation_failures) const;
 
     Loss* loss = nullptr;
+
+    type training_loss_goal = type(0);
+
+    Index maximum_validation_failures = numeric_limits<Index>::max();
 
     Index maximum_epochs = 10000;
 

@@ -44,10 +44,6 @@ public:
    void set_beta_1(const type);
    void set_beta_2(const type);
 
-   // Stopping criteria
-
-   void set_loss_goal(const type);
-
    // Training
 
    TrainingResults train() override;
@@ -70,12 +66,6 @@ private:
    type beta_1 = type(0.9);
 
    type beta_2 = type(0.999);
-
-    // Stopping criteria
-
-   type training_loss_goal = type(-10);
-   
-   Index maximum_validation_failures = numeric_limits<Index>::max();
 
    Index batch_size = 1000;
 

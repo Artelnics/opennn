@@ -39,8 +39,6 @@ public:
     void set_momentum(const type);
     void set_nesterov(bool);
 
-    void set_loss_goal(const type);
-
     void update_parameters(BackPropagation& , StochasticGradientDescentData&, type) const;
 
     TrainingResults train() override;
@@ -61,10 +59,6 @@ private:
     bool nesterov = false;
 
     Index batch_size = 1000;
-
-    type training_loss_goal = type(0);
-
-    Index maximum_validation_failures = numeric_limits<Index>::max();
 
 #ifdef CUDA
 

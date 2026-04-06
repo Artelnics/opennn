@@ -82,8 +82,6 @@ public:
 
     void set_dropout_rate(const type);
 
-    void apply_causal_mask(Tensor4&) const;
-
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
@@ -93,9 +91,10 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
-
 private:
+
+    void apply_causal_mask(Tensor4&) const;
+    void apply_key_padding_mask(const TensorMap3&, Tensor4&) const;
 
     Index embedding_dimension;
     Index heads_number = 0;

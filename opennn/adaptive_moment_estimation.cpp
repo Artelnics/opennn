@@ -58,12 +58,6 @@ void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
 }
 
 
-void AdaptiveMomentEstimation::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
 
 TrainingResults AdaptiveMomentEstimation::train()
 {

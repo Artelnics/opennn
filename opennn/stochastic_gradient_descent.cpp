@@ -81,11 +81,6 @@ void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 }
 
 
-void StochasticGradientDescent::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   StochasticGradientDescentData& optimization_data,
