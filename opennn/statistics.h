@@ -181,8 +181,6 @@ Index maximal_index(const VectorR&);
 VectorI maximal_indices(const VectorR&, Index);
 VectorI maximal_indices(const MatrixR&);
 
-// Percentiles
-VectorR percentiles(const VectorR&);
 }
 
 // OpenNN: Open Neural Networks Library.

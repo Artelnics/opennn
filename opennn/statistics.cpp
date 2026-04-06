@@ -1585,45 +1585,6 @@ VectorI maximal_indices(const MatrixR& matrix)
 }
 
 
-VectorR percentiles(const VectorR& input_vector)
-{
-    const Index n = input_vector.array().isFinite().count();
-
-    if (n == 0)
-        return VectorR::Constant(1, numeric_limits<type>::quiet_NaN());
-
-    VectorR sorted(n);
-
-    Index j = 0;
-
-    for (Index i = 0; i < input_vector.size(); ++i)
-        if (isfinite(input_vector(i)))
-            sorted(j++) = input_vector(i);
-
-    sort(sorted.data(), sorted.data() + sorted.size());
-
-    VectorR result(10);
-
-    for (Index i = 0; i < 9; i++)
-    {
-        const Index pos_scaled = n * (i + 1);
-
-        if (pos_scaled % 10 == 0)
-        {
-            const Index k = pos_scaled / 10;
-            result(i) = (sorted(k - 1) + sorted(k)) / 2.0f;
-        }
-        else
-        {
-            result(i) = sorted(pos_scaled / 10);
-        }
-    }
-
-    result(9) = sorted.maxCoeff();
-
-    return result;
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.

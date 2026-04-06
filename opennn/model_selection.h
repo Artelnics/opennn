@@ -30,17 +30,11 @@ public:
     TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
 
-    NeuronSelection* get_neurons_selection() const;
-    InputsSelection* get_inputs_selection() const;
-
     // Set
 
     void set(const TrainingStrategy* = nullptr);
 
     void set_default();
-
-    void set_neurons_selection(const string&);
-    void set_inputs_selection(const string&);
 
     // Model selection
 
@@ -60,7 +54,12 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-private: 
+private:
+
+    NeuronSelection* get_neurons_selection() const;
+    InputsSelection* get_inputs_selection() const;
+    void set_neurons_selection(const string&);
+    void set_inputs_selection(const string&);
 
     TrainingStrategy* training_strategy = nullptr;
 
