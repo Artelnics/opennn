@@ -89,6 +89,9 @@ protected:
     bool check_stopping_condition(TrainingResults&, Index epoch, type elapsed_time,
                                    type training_error, Index validation_failures) const;
 
+    void write_common_xml(XMLPrinter&) const;
+    void read_common_xml(const XMLElement*);
+
     Loss* loss = nullptr;
 
     type training_loss_goal = type(0);

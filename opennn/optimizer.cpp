@@ -455,6 +455,26 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
 }
 
 
+void Optimizer::write_common_xml(XMLPrinter& printer) const
+{
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    add_xml_element(printer, "HardwareUse", hardware_use);
+}
+
+
+void Optimizer::read_common_xml(const XMLElement* root_element)
+{
+    set_loss_goal(read_xml_type(root_element, "LossGoal"));
+    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
+}
+
+
 TrainingResults::TrainingResults(const Index epochs_number)
 {
     training_error_history.resize(1 + epochs_number);

@@ -120,10 +120,6 @@ public:
    // Stopping criteria
 
    void set_minimum_loss_decrease(const type);
-   void set_loss_goal(const type);
-
-   void set_maximum_validation_failures(const Index);
-
    // Training
 
    void check() const override;
@@ -170,9 +166,6 @@ private:
 
    type minimum_loss_decrease = type(0);
 
-   type training_loss_goal = type(0);
-
-   Index maximum_validation_failures = 0;
 };
 
 

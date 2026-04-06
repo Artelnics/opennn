@@ -270,8 +270,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                   results.training_error_history(epoch),
-                                                  validation_failures, training_loss_goal,
-                                                  maximum_validation_failures);
+                                                  validation_failures);
 
         if(stop_training)
         {
@@ -329,10 +328,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
     printer.OpenElement("AdaptiveMomentEstimation");
 
     add_xml_element(printer, "BatchSize", to_string(batch_size));
-    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
-    add_xml_element(printer, "HardwareUse", get_hardware_use());
+    write_common_xml(printer);
 
     printer.CloseElement();
 }
@@ -344,10 +340,7 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     const XMLElement* root_element = get_xml_root(document, "AdaptiveMomentEstimation");
 
     set_batch_size(read_xml_index(root_element, "BatchSize"));
-    set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
+    read_common_xml(root_element);
 }
 
 
@@ -604,8 +597,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
 
         stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                   results.training_error_history(epoch),
-                                                  validation_failures, training_loss_goal,
-                                                  maximum_validation_failures);
+                                                  validation_failures);
 
         if (stop_training) 
         {

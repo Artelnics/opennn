@@ -80,17 +80,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type new_minim
 }
 
 
-void LevenbergMarquardtAlgorithm::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
-void LevenbergMarquardtAlgorithm::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
 
 void LevenbergMarquardtAlgorithm::check() const
 {
@@ -668,8 +657,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
         {
             stop_training = check_stopping_condition(results, epoch, elapsed_time,
                                                       results.training_error_history(epoch),
-                                                      validation_failures, training_loss_goal,
-                                                      maximum_validation_failures);
+                                                      validation_failures);
         }
 
         if(stop_training)
@@ -803,10 +791,7 @@ void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "DampingParameterFactor", to_string(damping_parameter_factor));
     add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
-    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_common_xml(printer);
 
     printer.CloseElement();
 }
@@ -818,10 +803,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
 
     set_damping_parameter_factor(read_xml_type(root_element, "DampingParameterFactor"));
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
-    set_loss_goal(read_xml_type(root_element, "LossGoal"));
-    set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
-    set_maximum_epochs(read_xml_index(root_element, "MaximumEpochsNumber"));
-    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+    read_common_xml(root_element);
 }
 
 
