@@ -45,8 +45,6 @@ public:
     }
 
 
-    string get_activation_function() const;
-
     void set(const Shape& = {}, const Shape& = {});
 
     void set_input_shape(const Shape&) override;

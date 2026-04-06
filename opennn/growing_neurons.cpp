@@ -205,24 +205,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 }
 
 
-Tensor<string, 2> GrowingNeurons::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(8, 2);
-
-    string_matrix.setValues({
-    {"Minimum neurons", to_string(minimum_neurons)},
-    {"Maximum neurons", to_string(maximum_neurons)},
-    {"NeuronsIncrement", to_string(neurons_increment)},
-    {"Trials number", to_string(trials_number)},
-    {"Validation loss goal", to_string(validation_error_goal)},
-    {"Maximum selection failures", to_string(maximum_validation_failures)},
-    {"Maximum iterations number", to_string(maximum_epochs)},
-    {"Maximum time", to_string(maximum_time)}});
-
-    return string_matrix;
-}
-
-
 void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingNeurons");

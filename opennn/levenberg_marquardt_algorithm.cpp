@@ -818,22 +818,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 }
 
 
-Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(6, 2);
-
-    string_matrix.setValues({
-    {"Damping parameter factor", to_string(double(damping_parameter_factor))},
-    {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
-    {"Loss goal", to_string(double(training_loss_goal))},
-    {"Maximum selection error increases", to_string(maximum_validation_failures)},
-    {"Maximum epochs number", to_string(maximum_epochs)},
-    {"Maximum time", write_time(maximum_time)}});
-
-    return string_matrix;
-}
-
-
 void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LevenbergMarquardt");

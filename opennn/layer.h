@@ -99,8 +99,6 @@ public:
 
     bool get_is_trainable() const;
 
-    bool get_is_first_layer() const;
-
     type* link_parameters(type* pointer);
 
 protected:

@@ -96,8 +96,6 @@ public:
 
     void set_display(bool);
 
-    void set_batch_size(const Index);
-
     // Checking
 
     void check() const;

@@ -856,24 +856,6 @@ vector<Index> GeneticAlgorithm::get_variable_indices(const VectorB& individual_v
 }
 
 
-Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
-{
-    const Index individuals_number = get_individuals_number();
-
-    Tensor<string, 2> string_matrix(6, 2);
-
-    string_matrix.setValues({
-    {"Population size", to_string(individuals_number)},
-    {"Elitism size", to_string(elitism_size)},
-    {"Mutation rate", to_string(mutation_rate)},
-    {"Validation loss goal", to_string(validation_error_goal)},
-    {"Maximum Generations number", to_string(maximum_epochs)},
-    {"Maximum time", to_string(maximum_time)}});
-
-    return string_matrix;
-}
-
-
 void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GeneticAlgorithm");

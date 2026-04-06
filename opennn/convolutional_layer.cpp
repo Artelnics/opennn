@@ -457,21 +457,6 @@ pair<Index, Index> Convolutional::get_padding() const
 }
 
 
-array<pair<Index, Index>, 4> Convolutional::get_paddings() const
-{
-    const Index pad_rows = get_padding().first;
-    const Index pad_columns = get_padding().second;
-
-    const array<pair<Index, Index>, 4> paddings =
-        { make_pair(0, 0),
-         make_pair(pad_rows, pad_rows),
-         make_pair(pad_columns, pad_columns),
-         make_pair(0, 0) };
-
-    return paddings;
-}
-
-
 Index Convolutional::get_input_height() const
 {
     return input_shape[0];

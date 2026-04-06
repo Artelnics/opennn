@@ -36,8 +36,6 @@ public:
 
     pair<Index, Index> get_padding() const;
 
-    array<pair<Index, Index>, 4> get_paddings() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 

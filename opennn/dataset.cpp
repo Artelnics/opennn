@@ -2000,11 +2000,6 @@ VectorR Dataset::calculate_means(const string& sample_role,
 }
 
 
-Index Dataset::get_gmt() const
-{
-    return gmt;
-}
-
 
 void Dataset::set_gmt(const Index new_gmt)
 {
@@ -3196,75 +3191,6 @@ void Dataset::set_data_binary_classification()
 }
 
 
-VectorI Dataset::filter_data(const VectorR& minimums,
-                             const VectorR& maximums)
-{
-    const vector<Index> used_feature_indices = get_used_feature_indices();
-
-    const Index used_features_number = used_feature_indices.size();
-
-    const Index samples_number = get_samples_number();
-
-    VectorR filtered_indices(samples_number);
-    filtered_indices.setZero();
-
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const Index used_samples_number = used_sample_indices.size();
-
-    Index sample_index = 0;
-
-    for(Index i = 0; i < used_features_number; i++)
-    {
-        for(Index j = 0; j < used_samples_number; j++)
-        {
-            sample_index = used_sample_indices[j];
-
-            const type value = data(sample_index, used_feature_indices[i]);
-
-            if (get_sample_role(sample_index) == "None"
-                || isnan(value))
-                continue;
-
-            if (abs(value - minimums(i)) <= EPSILON
-                || abs(value - maximums(i)) <= EPSILON)
-                continue;
-
-            if (minimums(i) == maximums(i))
-            {
-                if (value != minimums(i))
-                {
-                    filtered_indices(sample_index) = type(1);
-                    set_sample_role(sample_index, "None");
-                }
-            }
-            else if (value < minimums(i) || value > maximums(i))
-            {
-                filtered_indices(sample_index) = type(1);
-                set_sample_role(sample_index, "None");
-            }
-        }
-    }
-
-    const Index filtered_samples_number =
-        Index(count_if(filtered_indices.data(),
-                       filtered_indices.data() + filtered_indices.size(),
-                       [](type value)
-                       {
-                           return value > type(0.5);
-                       }));
-
-    VectorI filtered_samples_indices(filtered_samples_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if (filtered_indices(i) > type(0.5))
-            filtered_samples_indices(index++) = i;
-
-    return filtered_samples_indices;
-}
-
-
 void Dataset::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
@@ -3980,79 +3906,6 @@ Index Dataset::count_rows_with_nan() const
 Index Dataset::count_nan() const
 {
     return data.array().isNaN().count();
-}
-
-
-void Dataset::fix_repeated_names()
-{
-    map<string, Index> variables_count_map;
-
-    for(const Variable& variable : variables)
-    {
-        auto result = variables_count_map.insert(pair<string, Index>(variable.name, 1));
-        if(!result.second)
-            result.first->second++;
-    }
-
-    for(const auto& element : variables_count_map)
-    {
-        if (element.second > 1)
-        {
-            const string repeated_name = element.first;
-            Index repeated_index = 1;
-
-            for(Variable& variable : variables)
-                if (variable.name == repeated_name)
-                    variable.name = variable.name + "_" + to_string(repeated_index++);
-        }
-    }
-
-    if (has_categorical_variables() || has_binary_variables())
-    {
-        const vector<string> all_feature_names = get_feature_names();
-
-        map<string, Index> global_names_count;
-
-        for(const string& name : all_feature_names)
-            global_names_count[name]++;
-
-        for(Variable& variable : variables)
-        {
-            bool needs_disambiguation = false;
-
-            if (variable.type == VariableType::Categorical)
-            {
-                for(const string& category : variable.categories)
-                {
-                    if (global_names_count[category] > 1)
-                    {
-                        needs_disambiguation = true;
-                        break;
-                    }
-                }
-
-                if (needs_disambiguation)
-                    for(string& category : variable.categories)
-                        category += "_" + variable.name;
-
-            }
-            else if (variable.type == VariableType::Binary)
-            {
-                for(const string& category : variable.categories)
-                {
-                    if (global_names_count[category] > 1)
-                    {
-                        needs_disambiguation = true;
-                        break;
-                    }
-                }
-
-                if (needs_disambiguation)
-                    for(string& category : variable.categories)
-                        category += "_" + variable.name;
-            }
-        }
-    }
 }
 
 

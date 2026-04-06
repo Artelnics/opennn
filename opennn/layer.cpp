@@ -113,11 +113,6 @@ bool Layer::get_is_trainable() const
 }
 
 
-bool Layer::get_is_first_layer() const
-{
-    return is_first_layer;
-}
-
 
 type *Layer::link_parameters(type *pointer)
 {

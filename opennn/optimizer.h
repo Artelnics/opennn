@@ -68,8 +68,6 @@ public:
 
     virtual void print() const {}
 
-    virtual Tensor<string, 2> to_string_matrix() const { return {}; }
-
     virtual void from_XML(const XMLDocument&);
 
     virtual void to_XML(XMLPrinter&) const;

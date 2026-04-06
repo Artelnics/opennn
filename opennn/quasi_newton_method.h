@@ -51,8 +51,6 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    Tensor<string, 2> to_string_matrix() const override;
-
     type calculate_learning_rate(const Triplet&) const;
 
     Triplet calculate_bracketing_triplet(const Batch&,

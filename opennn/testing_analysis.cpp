@@ -67,11 +67,6 @@ void TestingAnalysis::set_display(bool new_display)
 }
 
 
-void TestingAnalysis::set_batch_size(const Index new_batch_size)
-{
-    batch_size = new_batch_size;
-}
-
 
 void TestingAnalysis::check() const
 {

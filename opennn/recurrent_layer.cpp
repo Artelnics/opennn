@@ -33,11 +33,6 @@ vector<Shape> Recurrent::get_parameter_shapes() const
 }
 
 
-string Recurrent::get_activation_function() const
-{
-    return activation_function;
-}
-
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {

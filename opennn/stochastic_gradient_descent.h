@@ -45,7 +45,6 @@ public:
 
     TrainingResults train() override;
 
-    Tensor<string, 2> to_string_matrix() const override;
 
     void from_XML(const XMLDocument&) override;
 

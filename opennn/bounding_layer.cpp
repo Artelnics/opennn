@@ -162,16 +162,6 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
 }
 
 
-string Bounding::get_bounding_method_string() const
-{
-    if(bounding_method == BoundingMethod::Bounding)
-        return "Bounding";
-    else if(bounding_method == BoundingMethod::NoBounding)
-        return "NoBounding";
-    else
-        throw runtime_error("Unknown bounding method.\n");
-}
-
 
 string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {

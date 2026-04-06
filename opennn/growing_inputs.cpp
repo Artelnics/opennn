@@ -369,24 +369,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 }
 
 
-Tensor<string, 2> GrowingInputs::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(8, 2);
-
-    string_matrix.setValues({
-    {"Trials number", to_string(trials_number)},
-    {"Validation error goal", to_string(validation_error_goal)},
-    {"Maximum selection failures", to_string(maximum_validation_failures)},
-    {"Maximum inputs number", to_string(maximum_inputs_number)},
-    {"Minimum correlations", to_string(minimum_correlation)},
-    {"Maximum correlation", to_string(maximum_correlation)},
-    {"Maximum iterations number", to_string(maximum_epochs)},
-    {"Maximum time", to_string(maximum_time)}});
-
-    return string_matrix;
-}
-
-
 void GrowingInputs::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingInputs");

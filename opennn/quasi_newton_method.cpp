@@ -402,22 +402,6 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 }
 
 
-Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(6, 2);
-
-    string_matrix.setValues({
-                             {"Learning rate tolerance", to_string(double(learning_rate_tolerance))},
-                             {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
-                             {"Loss goal", to_string(double(training_loss_goal))},
-                             {"Maximum selection error increases", to_string(maximum_validation_failures)},
-                             {"Maximum epochs number", to_string(maximum_epochs)},
-                             {"Maximum time", write_time(maximum_time)}});
-
-    return string_matrix;
-}
-
-
 void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "QuasiNewtonMethod");

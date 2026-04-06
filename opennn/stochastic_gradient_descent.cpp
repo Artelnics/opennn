@@ -370,26 +370,6 @@ TrainingResults StochasticGradientDescent::train()
 }
 
 
-Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(7, 2);
-
-    const string apply_momentum = momentum > type(0)
-                                      ? "true"
-                                      : "false";
-
-    string_matrix.setValues({{"Inital learning rate", to_string(double(initial_learning_rate))},
-                             {"Inital decay", to_string(double(initial_decay))},
-                             {"Apply momentum", apply_momentum},
-                             {"Training loss goal", to_string(double(training_loss_goal))},
-                             {"Maximum epochs number", to_string(maximum_epochs)},
-                             {"Maximum time", write_time(maximum_time)},
-                             {"Batch samples number", to_string(batch_size)}});
-
-    return string_matrix;
-}
-
-
 void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("StochasticGradientDescent");

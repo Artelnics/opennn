@@ -64,11 +64,6 @@ void AdaptiveMomentEstimation::set_loss_goal(const type new_loss_goal)
 }
 
 
-void AdaptiveMomentEstimation::set_accuracy_goal(const type new_accuracy_goal)
-{
-    training_accuracy_goal = new_accuracy_goal;
-}
-
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
@@ -334,23 +329,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     if(display) results.print();
 
     return results;
-}
-
-
-Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
-{
-    Tensor<string, 2> string_matrix(8, 2);
-
-    string_matrix.setValues({
-    {"Learning rate", to_string(double(learning_rate))},
-    {"Beta 1", to_string(double(beta_1))},
-    {"Beta 2", to_string(double(beta_2))},
-    {"Training loss goal", to_string(double(training_loss_goal))},
-    {"Maximum epochs number", to_string(maximum_epochs)},
-    {"Maximum time", write_time(maximum_time)},
-    {"Batch samples number", to_string(batch_size)}});
-
-    return string_matrix;
 }
 
 

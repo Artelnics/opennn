@@ -144,8 +144,6 @@ public:
 
     const string& get_missing_values_label() const;
 
-    Index get_gmt() const;
-
     bool get_display() const;
 
     bool is_empty() const;
@@ -324,10 +322,6 @@ public:
 
     void print_top_input_target_variables_correlations() const;
 
-    // Filtering
-
-    VectorI filter_data(const VectorR&, const VectorR&);
-
     // Scaling2d
 
     void set_default_variable_scalers();
@@ -406,10 +400,6 @@ public:
     Index count_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
-
-    // Other
-
-    void fix_repeated_names();
 
     // Eigen
 

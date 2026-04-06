@@ -47,7 +47,6 @@ public:
    // Stopping criteria
 
    void set_loss_goal(const type);
-   void set_accuracy_goal(const type);
 
    // Training
 
@@ -55,7 +54,6 @@ public:
 
    // Serialization
 
-   Tensor<string, 2> to_string_matrix() const override;
 
    void from_XML(const XMLDocument&) override;
 
