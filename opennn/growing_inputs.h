@@ -31,8 +31,6 @@ public:
     void set_maximum_correlation(const type);
     void set_minimum_correlation(const type);
 
-    void set_maximum_validation_failures(const Index);
-
     InputsSelectionResults perform_input_selection() override;
 
     void from_XML(const XMLDocument&) override;
@@ -50,7 +48,6 @@ private:
     type minimum_correlation = 0;
     type maximum_correlation = 0;
 
-    Index maximum_validation_failures = 100;
 };
 
 }

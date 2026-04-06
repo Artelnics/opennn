@@ -65,7 +65,12 @@ void InputsSelection::set_validation_error_goal(const type new_validation_error_
 void InputsSelection::set_maximum_epochs(const Index new_maximum_epochs)
 {
     maximum_epochs = new_maximum_epochs;
-    
+}
+
+
+void InputsSelection::set_maximum_validation_failures(const Index new_maximum_validation_failures)
+{
+    maximum_validation_failures = new_maximum_validation_failures;
 }
 
 

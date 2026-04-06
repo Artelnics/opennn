@@ -27,7 +27,7 @@ struct ForwardPropagation
 
     vector<vector<TensorView>> get_layer_input_views(const vector<TensorView>&, bool) const;
 
-    TensorView get_outputs();
+    TensorView get_outputs() const;
 
     void print() const;
 

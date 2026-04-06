@@ -41,11 +41,6 @@ void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
 }
 
 
-void GrowingNeurons::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {

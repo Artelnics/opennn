@@ -1318,7 +1318,7 @@ vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vecto
 }
 
 
-TensorView ForwardPropagation::get_outputs()
+TensorView ForwardPropagation::get_outputs() const
 {
 /*
     return layers.back()->get_outputs();

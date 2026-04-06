@@ -108,6 +108,12 @@ void NeuronSelection::set_maximum_epochs(const Index new_maximum_epochs)
 }
 
 
+void NeuronSelection::set_maximum_validation_failures(const Index new_maximum_validation_failures)
+{
+    maximum_validation_failures = new_maximum_validation_failures;
+}
+
+
 void NeuronSelection::set_maximum_time(const type new_maximum_time)
 {
     maximum_time = new_maximum_time;

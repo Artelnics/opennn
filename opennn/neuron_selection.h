@@ -44,6 +44,7 @@ public:
 
     void set_validation_error_goal(const type);
     void set_maximum_epochs(const Index);
+    void set_maximum_validation_failures(const Index);
     void set_maximum_time(const type);
 
     string write_stopping_condition(const TrainingResults&) const;
@@ -82,6 +83,8 @@ protected:
     type validation_error_goal = 0;
 
     Index maximum_epochs = 10;
+
+    Index maximum_validation_failures = 100;
 
     type maximum_time = 0;
 

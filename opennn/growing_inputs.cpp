@@ -81,11 +81,6 @@ void GrowingInputs::set_maximum_correlation(const type new_maximum_correlation)
 }
 
 
-void GrowingInputs::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
 
 InputsSelectionResults GrowingInputs::perform_input_selection()
 {

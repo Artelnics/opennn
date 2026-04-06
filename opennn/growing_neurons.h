@@ -26,8 +26,6 @@ public:
 
     void set_neurons_increment(const Index);
 
-    void set_maximum_validation_failures(const Index);
-
     NeuronsSelectionResults perform_neurons_selection() override;
 
     void from_XML(const XMLDocument&) override;
@@ -40,8 +38,6 @@ public:
 private:
 
    Index neurons_increment = 0;
-
-   Index maximum_validation_failures = 0;
 
 };
 
