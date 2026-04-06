@@ -151,5 +151,4 @@ vector<string> Variable::get_names() const
        : vector<string>{name};
 }
 
-
 }

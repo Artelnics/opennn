@@ -53,7 +53,6 @@ void ModelSelection::set_default()
 }
 
 
-
 void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
 {
     neurons_selection = Registry<NeuronSelection>::instance().create(new_neurons_selection);
