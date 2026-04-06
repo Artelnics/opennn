@@ -34,16 +34,12 @@ public:
 
     const string& get_label() const;
 
-    bool get_display() const;
-
     const string& get_name() const;
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
     void set_label(const string&);
-
-    void set_display(bool);
 
     virtual void set_parameters_random();
 
@@ -123,7 +119,6 @@ protected:
     Tensor3 empty_3;
     Tensor4 empty_4;
 
-    bool display = true;
 /*
     template <int Rank>
     FORCE_INLINE void binary(TensorR<Rank>& y, TensorR<Rank>& dy_dx, type threshold) const

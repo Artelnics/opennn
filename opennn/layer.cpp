@@ -13,12 +13,6 @@
 namespace opennn
 {
 
-bool Layer::get_display() const
-{
-    return display;
-}
-
-
 const string& Layer::get_label() const
 {
     return label;
@@ -34,12 +28,6 @@ const string& Layer::get_name() const
 void Layer::set_label(const string& new_label)
 {
     label = new_label;
-}
-
-
-void Layer::set_display(bool new_display)
-{
-    display = new_display;
 }
 
 

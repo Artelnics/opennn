@@ -55,8 +55,6 @@ public:
         return dataset;
     }
 
-    bool get_display() const;
-
     bool has_neural_network() const;
 
     bool has_dataset() const;
@@ -71,8 +69,6 @@ public:
 
     void set_regularization(const string&);
     void set_regularization_weight(const type);
-
-    void set_display(bool);
 
     virtual void set_normalization_coefficient() {}
 
@@ -157,7 +153,6 @@ protected:
     NeuralNetwork* neural_network = nullptr;
     Dataset* dataset = nullptr;
 
-    bool display = true;
     string name = "Loss";
 };
 

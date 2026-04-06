@@ -358,7 +358,6 @@ void GeneticAlgorithm::evaluate_population()
 
         //Training
 
-        training_strategy->get_loss()->set_display(false);
         training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();

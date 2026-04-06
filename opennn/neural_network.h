@@ -119,8 +119,6 @@ public:
 
     Layer* get_first(const string&) const;
 
-    bool get_display() const;
-
     // Set
 
     void set(const filesystem::path&);
@@ -147,8 +145,6 @@ public:
     void set_input_shape(const Shape&);
 
     void set_default();
-
-    void set_display(bool);
 
     // Layers
 
@@ -266,8 +262,6 @@ protected:
     vector<unique_ptr<Layer>> layers;
 
     vector<vector<Index>> layer_input_indices;
-
-    bool display = true;
 
     VectorR parameters;
     vector<vector<vector<TensorView>>> parameter_views;

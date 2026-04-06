@@ -606,7 +606,6 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
     dense_2d->set_activation_function("Softmax");
-    scaling_layer->set_display(false);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("CrossEntropyError");
@@ -713,8 +712,6 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
     dense_2d->set_activation_function("Softmax");
-
-    scaling_layer->set_display(false);
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");

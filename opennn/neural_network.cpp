@@ -229,12 +229,6 @@ Layer* NeuralNetwork::get_first(const string& name) const
 }
 
 
-bool NeuralNetwork::get_display() const
-{
-    return display;
-}
-
-
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
     load(file_name);
@@ -317,8 +311,6 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 void NeuralNetwork::set_default()
 {
     reference_all_layers();
-
-    display = true;
 
     layers.clear();
 
@@ -456,11 +448,6 @@ void NeuralNetwork::set_parameters(const VectorR& new_parameters)
     parameters = new_parameters;
 }
 
-
-void NeuralNetwork::set_display(bool new_display)
-{
-    display = new_display;
-}
 
 
 Index NeuralNetwork::get_layers_number() const
@@ -913,7 +900,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    add_xml_element(printer, "Display", to_string(display));
 
     // Paramaters
 
@@ -1028,7 +1014,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     }
 
     // 5. Global Settings
-    set_display(read_xml_bool(neural_network_element, "Display"));
 
     // 6. COMPILE Topology
     // This establishes input/output shapes and allocates the 'parameters' vector
