@@ -57,7 +57,7 @@ void Layer::set_parameters_glorot()
 }
 
 
-Index Layer::get_parameters_number()
+Index Layer::get_parameters_number() const
 {
     return get_size(get_parameter_shapes());
 }

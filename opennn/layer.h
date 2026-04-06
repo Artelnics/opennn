@@ -45,7 +45,7 @@ public:
 
     virtual void set_parameters_glorot();
 
-    Index get_parameters_number();
+    Index get_parameters_number() const;
 
     virtual vector<Shape> get_parameter_shapes() const
     {

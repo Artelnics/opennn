@@ -422,7 +422,6 @@ VectorR filter_missing_values(const VectorR& input);
 
 pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
 pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
-pair<VectorR, MatrixR> filter_missing_values(const MatrixR&, const VectorR&);
 pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
 
 

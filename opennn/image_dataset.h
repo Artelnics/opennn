@@ -23,9 +23,6 @@ public:
     ImageDataset(const filesystem::path&);
 
     Index get_channels_number() const;
-    Index get_image_width() const;
-    Index get_image_height() const;
-    Index get_image_padding() const;
     Index get_image_size() const;
 
     bool get_random_reflection_axis_x() const;
@@ -72,6 +69,10 @@ public:
     void perform_augmentation(type*) const;
 
 private:
+
+    Index get_image_width() const;
+    Index get_image_height() const;
+    Index get_image_padding() const;
 
     Index padding = 0;
 

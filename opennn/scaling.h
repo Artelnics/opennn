@@ -24,11 +24,6 @@ namespace opennn
     void scale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));
     void scale_logarithmic(MatrixMap, Index);
 
-    void scale_mean_standard_deviation_3d(Tensor3&, Index, const Descriptives&);
-    void scale_standard_deviation_3d(Tensor3&, Index, const Descriptives&);
-    void scale_minimum_maximum_3d(Tensor3&, Index, const Descriptives&, type, type);
-    void scale_logarithmic_3d(Tensor3&, Index);
-
     void unscale_minimum_maximum(MatrixMap, Index, const Descriptives&, type = type(-1), type = type(1));
     void unscale_mean_standard_deviation(MatrixMap, Index, const Descriptives&);
     void unscale_standard_deviation(MatrixMap, Index, const Descriptives&);

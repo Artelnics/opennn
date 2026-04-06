@@ -144,9 +144,6 @@ void Variable::print() const
     cout << endl;
 }
 
-//@simone
-//changhe and delete everywhere the logic of get_feature_names
-
 vector<string> Variable::get_names() const
 {
     return is_categorical()
@@ -154,19 +151,5 @@ vector<string> Variable::get_names() const
        : vector<string>{name};
 }
 
-
-vector<string> get_feature_names(const vector<Variable>& variables)
-{
-    vector<string> all_feature_names;
-
-    for (const auto& var : variables)
-    {
-        const vector<string> names = var.get_names();
-
-        all_feature_names.insert(all_feature_names.end(), names.begin(), names.end());
-    }
-
-    return all_feature_names;
-}
 
 }

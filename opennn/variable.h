@@ -58,8 +58,4 @@ struct Variable
 
 };
 
-vector<string> get_feature_names(const vector<Variable>&);
-
-//get_feature_dimension
-
 }
