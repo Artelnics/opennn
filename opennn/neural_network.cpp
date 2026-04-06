@@ -517,8 +517,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    const vector<TensorView> input_views = {TensorView((type*)inputs_1.data(), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
-                                            TensorView((type*)inputs_2.data(), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
+    const vector<TensorView> input_views = {TensorView(reinterpret_cast<type*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
+                                            TensorView(reinterpret_cast<type*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -768,7 +768,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     unordered_map<string, Index> vocabulary_map;
     vocabulary_map.reserve(vocabulary.size());
 
-    for(Index i = 0; i < (Index)vocabulary.size(); ++i)
+    for(Index i = 0; i < static_cast<Index>(vocabulary.size()); ++i)
         vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs(batch_size, sequence_length);
@@ -785,7 +785,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
         for(size_t j = 0; j < tokens_number; j++)
         {
-            if (1 + j >= (size_t)sequence_length) break;
+            if (1 + j >= static_cast<size_t>(sequence_length)) break;
 
             const auto it = vocabulary_map.find(tokens[j]);
 
@@ -794,7 +794,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
                                    : 1.0f; // UNK_INDEX
         }
 
-        if (1 + tokens_number < (size_t)sequence_length)
+        if (1 + tokens_number < static_cast<size_t>(sequence_length))
             inputs(i, 1 + tokens_number) = 3.0f; // END_INDEX
     }
 

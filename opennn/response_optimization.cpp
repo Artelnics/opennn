@@ -361,10 +361,10 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     if(feasible_rows.empty())
         return {};
 
-    MatrixR feasible_inputs((Index)feasible_rows.size(), inputs.cols());
-    MatrixR feasible_outputs((Index)feasible_rows.size(), outputs.cols());
+    MatrixR feasible_inputs(static_cast<Index>(feasible_rows.size()), inputs.cols());
+    MatrixR feasible_outputs(static_cast<Index>(feasible_rows.size()), outputs.cols());
 
-    for(Index j = 0; j < (Index)feasible_rows.size(); ++j)
+    for(Index j = 0; j < static_cast<Index>(feasible_rows.size()); ++j)
     {
         feasible_inputs.row(j) = inputs.row(feasible_rows[j]);
         feasible_outputs.row(j) = outputs.row(feasible_rows[j]);
@@ -428,7 +428,7 @@ MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const Matr
 {
     const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
 
-    const Index total_variables_number = (Index)feature_dimensions.size();
+    const Index total_variables_number = static_cast<Index>(feature_dimensions.size());
 
     vector<Index> global_starts_blocks(total_variables_number, 0);
 
@@ -569,7 +569,7 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
     MatrixR pareto_inputs(final_count, inputs.cols());
     MatrixR pareto_outputs(final_count, outputs.cols());
 
-    for (Index i = 0; i < (Index)non_dominated_indices.size(); ++i)
+    for (Index i = 0; i < static_cast<Index>(non_dominated_indices.size()); ++i)
     {       
         pareto_inputs.row(i) = inputs.row(non_dominated_indices[i]);
         pareto_outputs.row(i) = outputs.row(non_dominated_indices[i]);

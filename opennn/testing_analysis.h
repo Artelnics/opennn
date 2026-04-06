@@ -25,7 +25,7 @@ class TestingAnalysis
 
 public:
 
-    TestingAnalysis(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {

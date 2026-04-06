@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-Loss::Loss(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+Loss::Loss(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
     set(new_neural_network, new_dataset);
 }
@@ -40,10 +40,10 @@ const string& Loss::get_regularization_method() const
 }
 
 
-void Loss::set(const NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+void Loss::set(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
 {
-    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
-    dataset = const_cast<Dataset*>(new_dataset);
+    neural_network = new_neural_network;
+    dataset = new_dataset;
 
     regularization_method = "L2";
     set_error(Error::MeanSquaredError);
@@ -51,15 +51,15 @@ void Loss::set(const NeuralNetwork* new_neural_network, const Dataset* new_datas
 }
 
 
-void Loss::set_neural_network(const NeuralNetwork* new_neural_network)
+void Loss::set_neural_network(NeuralNetwork* new_neural_network)
 {
-    neural_network = const_cast<NeuralNetwork*>(new_neural_network);
+    neural_network = new_neural_network;
 }
 
 
-void Loss::set_dataset(const Dataset* new_dataset)
+void Loss::set_dataset(Dataset* new_dataset)
 {
-    dataset = const_cast<Dataset*>(new_dataset);
+    dataset = new_dataset;
 }
 
 
@@ -179,7 +179,7 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
 
-    TensorView parameters((type*)parameters_vec.data(), { (Index)parameters_vec.size() });
+    TensorView parameters(reinterpret_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
     type penalty = 0.0f;
 
     if (regularization_method == "L1")
@@ -242,8 +242,8 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
     const VectorR& params_vec = neural_network->get_parameters();
 
     // Wrap vectors in views for hardware-agnostic utilities
-    TensorView parameters((type*)params_vec.data(), { (Index)params_vec.size() });
-    TensorView gradient((type*)gradient_vec.data(), { (Index)gradient_vec.size() });
+    TensorView parameters(reinterpret_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
+    TensorView gradient(reinterpret_cast<type*>(gradient_vec.data()), { static_cast<Index>(gradient_vec.size()) });
 
     if (regularization_method == "L1")
         l1_regularization_gradient(parameters, regularization_weight, gradient);
@@ -326,7 +326,7 @@ BackPropagation::BackPropagation(const Index new_batch_size, const Loss* new_los
 void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
 {
     batch_size = new_batch_size;
-    loss = const_cast<Loss*>(new_loss);
+    loss = new_loss;
 
     if(!loss) return;
 
@@ -505,7 +505,7 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
 TensorView BackPropagation::get_output_gradients() const
 {
-    return {(type*)output_gradients.data(), output_gradient_dimensions};
+    return {reinterpret_cast<type*>(output_gradients.data()), output_gradient_dimensions};
 }
 
 

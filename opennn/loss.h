@@ -40,7 +40,7 @@ public:
                               ElasticNet,
                               NoRegularization};
 
-    Loss(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     virtual ~Loss() = default;
 
@@ -60,11 +60,11 @@ public:
 
     const string& get_regularization_method() const;
 
-    void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    void set_neural_network(const NeuralNetwork*);
+    void set_neural_network(NeuralNetwork*);
 
-    virtual void set_dataset(const Dataset*);
+    virtual void set_dataset(Dataset*);
 
     void set_regularization(const string&);
     void set_regularization_weight(const type);
@@ -153,11 +153,11 @@ protected:
 
 struct BackPropagation
 {
-    BackPropagation(const Index = 0, const Loss* = nullptr);
+    BackPropagation(const Index = 0, Loss* = nullptr);
 
     virtual ~BackPropagation() = default;
 
-    void set(const Index = 0, const Loss* = nullptr);
+    void set(const Index = 0, Loss* = nullptr);
 
     NeuralNetwork* get_neural_network() const;
 

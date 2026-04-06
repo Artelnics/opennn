@@ -3756,7 +3756,7 @@ void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 
     data_file_preview.clear();
 
-    for(Index i = 0; i < Index(min((size_t)num_first_rows_to_show, all_rows.size())); ++i)
+    for(Index i = 0; i < Index(min(static_cast<size_t>(num_first_rows_to_show), all_rows.size())); ++i)
         data_file_preview.push_back(all_rows[i]);
 
     if (all_rows.size() > num_first_rows_to_show)
@@ -3968,7 +3968,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     samples_number = new_samples_number;
 
-    dataset = const_cast<Dataset*>(new_dataset);
+    dataset = new_dataset;
 
     // Input
 
@@ -4015,18 +4015,18 @@ void Batch::print() const
          << "Input shape:" << input_shape << endl;
 
     if (input_shape.size() == 4)
-        cout << TensorMap4((type*)input_vector.data(),
+        cout << TensorMap4(reinterpret_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2],
                                            input_shape[3]);
     else if (input_shape.size() == 3)
-        cout << TensorMap3((type*)input_vector.data(),
+        cout << TensorMap3(reinterpret_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2]);
     else if (input_shape.size() == 2)
-        cout << MatrixMap((type*)input_vector.data(),
+        cout << MatrixMap(reinterpret_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1]);
 
@@ -4041,7 +4041,7 @@ void Batch::print() const
     cout << "Targets:" << endl
          << "Target shape:" << target_shape << endl;
 
-    cout << MatrixMap((type*)target_vector.data(),
+    cout << MatrixMap(reinterpret_cast<type*>(target_vector.data()),
                              target_shape[0],
                              target_shape[1]) << endl;
 }
@@ -4055,10 +4055,10 @@ bool Batch::is_empty() const
 
 vector<TensorView> Batch::get_inputs() const
 {
-    vector<TensorView> input_views = {{(type*)input_vector.data(), input_shape}};
+    vector<TensorView> input_views = {{reinterpret_cast<type*>(input_vector.data()), input_shape}};
 
     if(!decoder_shape.empty())
-        input_views.insert(input_views.begin(), {(type*)decoder_vector.data(), decoder_shape});
+        input_views.insert(input_views.begin(), {reinterpret_cast<type*>(decoder_vector.data()), decoder_shape});
 
     return input_views;
 }
@@ -4066,7 +4066,7 @@ vector<TensorView> Batch::get_inputs() const
 
 TensorView Batch::get_targets() const
 {
-    return {(type*)target_vector.data() , target_shape};
+    return {reinterpret_cast<type*>(target_vector.data()) , target_shape};
 }
 
 

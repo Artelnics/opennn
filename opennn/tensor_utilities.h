@@ -853,7 +853,7 @@ VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
 {
     VectorI shape(n);
 
-    memcpy(shape.data(), tensor.dimensions().data(), size_t(n)*sizeof(Index));
+    memcpy(shape.data(), tensor.dimensions().data(), static_cast<size_t>(n)*sizeof(Index));
 
     return shape;
 }

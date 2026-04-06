@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-StochasticGradientDescent::StochasticGradientDescent(const Loss* new_loss)
+StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
     : Optimizer(new_loss)
 {
     set_default();

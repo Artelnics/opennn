@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-GrowingNeurons::GrowingNeurons(const TrainingStrategy* new_training_strategy)
+GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
     : NeuronSelection(new_training_strategy)
 {
     set_default();

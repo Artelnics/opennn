@@ -22,7 +22,7 @@ class QuasiNewtonMethod final : public Optimizer
 
 public:
 
-    QuasiNewtonMethod(const Loss* = nullptr);
+    QuasiNewtonMethod(Loss* = nullptr);
 
     // Set
 
@@ -60,16 +60,6 @@ public:
                                                  BackPropagation&,
                                                  QuasiNewtonMethodData&,
                                                  type);
-
-#ifdef CUDA
-
-    TrainingResults train_cuda() override
-    {
-        throw runtime_error("CUDA train_cuda is not implemented for OptimizationMethod: QuasiNewtonMethod");
-    }
-
-#endif
-
 
 private:
 

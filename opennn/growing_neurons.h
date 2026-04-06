@@ -20,7 +20,7 @@ class GrowingNeurons final : public NeuronSelection
 
 public:
 
-    GrowingNeurons(const TrainingStrategy* = nullptr);
+    GrowingNeurons(TrainingStrategy* = nullptr);
 
     void set_default();
 

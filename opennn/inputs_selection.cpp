@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection(const TrainingStrategy* new_training_strategy)
+InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -38,9 +38,9 @@ bool InputsSelection::get_display() const
 }
 
 
-void InputsSelection::set(const TrainingStrategy* new_training_strategy)
+void InputsSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
+    training_strategy = new_training_strategy;
 }
 
 

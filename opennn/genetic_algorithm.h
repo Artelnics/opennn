@@ -18,7 +18,7 @@ class GeneticAlgorithm final : public InputsSelection
 
 public:
 
-    GeneticAlgorithm(const TrainingStrategy* = nullptr);
+    GeneticAlgorithm(TrainingStrategy* = nullptr);
 
     //enum class InitializationMethod{Random,Correlations};
 

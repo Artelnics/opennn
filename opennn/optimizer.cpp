@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-Optimizer::Optimizer(const Loss* new_loss)
+Optimizer::Optimizer(Loss* new_loss)
 {
     set(new_loss);
 }
@@ -54,9 +54,9 @@ bool Optimizer::get_display() const
 }
 
 
-void Optimizer::set(const Loss* new_loss)
+void Optimizer::set(Loss* new_loss)
 {
-    loss = const_cast<Loss*>(new_loss);
+    loss = new_loss;
 }
 
 

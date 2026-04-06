@@ -17,7 +17,7 @@
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm(const TrainingStrategy* new_training_strategy)
+GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
     set_default();

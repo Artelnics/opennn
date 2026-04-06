@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const Loss* new_loss)
+LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(Loss* new_loss)
     : Optimizer(new_loss)
 {
     set_default();
@@ -78,7 +78,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type new_minim
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
-
 
 
 void LevenbergMarquardtAlgorithm::check() const

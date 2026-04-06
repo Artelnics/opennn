@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-GrowingInputs::GrowingInputs(const TrainingStrategy* new_training_strategy)
+GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
     set_default();

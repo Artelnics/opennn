@@ -624,7 +624,7 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
 void display_progress_bar(const int& completed, const int& total)
 {
     const int width = 100;
-    const float progress = (float)completed / total;
+    const float progress = static_cast<float>(completed) / total;
     const int position = width * progress;
 
     cout << "[";

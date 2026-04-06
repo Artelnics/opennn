@@ -23,7 +23,7 @@ public:
 
     // Constructors
 
-    ModelSelection(const TrainingStrategy* = nullptr);
+    ModelSelection(TrainingStrategy* = nullptr);
 
     // Get
 
@@ -32,7 +32,7 @@ public:
 
     // Set
 
-    void set(const TrainingStrategy* = nullptr);
+    void set(TrainingStrategy* = nullptr);
 
     void set_default();
 

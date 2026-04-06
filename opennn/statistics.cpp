@@ -1514,7 +1514,7 @@ VectorI minimal_indices(const VectorR& data, Index k)
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, (Index)data.size());
+    k = min(k, static_cast<Index>(data.size()));
 
     partial_sort(indices.begin(),
                  indices.begin() + k,
@@ -1539,7 +1539,7 @@ VectorI maximal_indices(const VectorR& data, Index k)
     vector<Index> indices(data.size());
     iota(indices.begin(), indices.end(), 0);
 
-    k = min(k, (Index)data.size());
+    k = min(k, static_cast<Index>(data.size()));
 
     partial_sort(indices.begin(), indices.begin() + k, indices.end(),
                  [&data](Index i, Index j) {

@@ -30,7 +30,7 @@ public:
         MaximumSelectionFailures
     };
 
-    InputsSelection(const TrainingStrategy* = nullptr);
+    InputsSelection(TrainingStrategy* = nullptr);
     virtual ~InputsSelection() = default;
 
     TrainingStrategy* get_training_strategy() const;
@@ -42,7 +42,7 @@ public:
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;
 
-    void set(const TrainingStrategy* = nullptr);
+    void set(TrainingStrategy* = nullptr);
 
     void set_trials_number(const Index);
 

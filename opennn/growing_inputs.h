@@ -18,7 +18,7 @@ class GrowingInputs final : public InputsSelection
 
 public:
 
-    GrowingInputs(const TrainingStrategy* = nullptr);
+    GrowingInputs(TrainingStrategy* = nullptr);
 
     Index get_minimum_inputs_number() const override;
     Index get_maximum_inputs_number() const override;

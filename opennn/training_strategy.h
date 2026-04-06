@@ -24,7 +24,7 @@ class TrainingStrategy
 
 public:
 
-    TrainingStrategy(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     Dataset* get_dataset();
     NeuralNetwork* get_neural_network() const;
@@ -37,11 +37,11 @@ public:
 
     // Set
 
-    void set(const NeuralNetwork* = nullptr, const Dataset* = nullptr);
+    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
-    void set_dataset(const Dataset*);
-    void set_neural_network(const NeuralNetwork*);
+    void set_dataset(Dataset*);
+    void set_neural_network(NeuralNetwork*);
 
     void set_loss(const string&);
     void set_optimization_algorithm(const string&);

@@ -25,7 +25,7 @@ class Optimizer
 
 public:
 
-    Optimizer(const Loss* = nullptr);
+    Optimizer(Loss* = nullptr);
     virtual ~Optimizer() = default;
 
     enum class StoppingCondition{None,
@@ -47,7 +47,7 @@ public:
 
     string write_time(const type) const;
 
-    void set(const Loss* = nullptr);
+    void set(Loss* = nullptr);
 
     virtual void set_loss(Loss*);
 

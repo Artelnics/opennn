@@ -180,7 +180,7 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
 
         for(size_t i = 0; i < input_tokens_number; i++)
         {
-            if (1 + i >= (size_t)maximum_input_sequence_length) break;
+            if (1 + i >= static_cast<size_t>(maximum_input_sequence_length)) break;
 
             const auto iterator = input_vocabulary_map.find(input_tokens[i]);
 
@@ -189,7 +189,7 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
                 : UNK_INDEX;
         }
 
-        if (1 + input_tokens_number < (size_t)maximum_input_sequence_length)
+        if (1 + input_tokens_number < static_cast<size_t>(maximum_input_sequence_length))
             data(sample, 1 + input_tokens_number) = END_INDEX;
     }
 }

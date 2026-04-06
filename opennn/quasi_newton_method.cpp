@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-QuasiNewtonMethod::QuasiNewtonMethod(const Loss* new_loss)
+QuasiNewtonMethod::QuasiNewtonMethod(Loss* new_loss)
     : Optimizer(new_loss)
 {
     set_default();
@@ -394,7 +394,7 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     const Loss* loss = quasi_newton_method->get_loss();
 
-    NeuralNetwork* neural_network = const_cast<NeuralNetwork*>(loss->get_neural_network());
+    NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters().size();
 

@@ -104,7 +104,7 @@ class LevenbergMarquardtAlgorithm final : public Optimizer
 
 public:
 
-   LevenbergMarquardtAlgorithm(const Loss* = nullptr);
+   LevenbergMarquardtAlgorithm(Loss* = nullptr);
 
    // Set
 

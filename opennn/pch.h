@@ -90,7 +90,7 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
         size_t bytes = free_before - free_after;                                  \
         if (bytes == 0) {                                                         \
             printf("cudaMalloc (%s):   reutilizado (%zu bytes solicitados)\n",    \
-                   #ptr, (size_t)(size));                                         \
+                   #ptr, static_cast<size_t>(size));                                         \
         } else {                                                                  \
             printf("cudaMalloc (%s):   %.6f MB  (%zu bytes)\n", #ptr,             \
                    bytes / (1024.0 * 1024.0), bytes);                             \

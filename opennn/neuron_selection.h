@@ -21,7 +21,7 @@ public:
 
     enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
-    NeuronSelection(const TrainingStrategy* = nullptr);
+    NeuronSelection(TrainingStrategy* = nullptr);
     virtual ~NeuronSelection() = default;
 
     TrainingStrategy* get_training_strategy() const;
@@ -30,7 +30,7 @@ public:
 
     bool get_display() const;
 
-    void set(const TrainingStrategy* = nullptr);
+    void set(TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 

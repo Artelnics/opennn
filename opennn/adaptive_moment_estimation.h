@@ -26,7 +26,7 @@ class AdaptiveMomentEstimation final : public Optimizer
     
 public:
 
-   AdaptiveMomentEstimation(const Loss* = nullptr);
+   AdaptiveMomentEstimation(Loss* = nullptr);
    
    // Set
 

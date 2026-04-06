@@ -26,7 +26,7 @@ class StochasticGradientDescent final : public Optimizer
 
 public:
 
-    StochasticGradientDescent(const Loss* = nullptr);
+    StochasticGradientDescent(Loss* = nullptr);
 
     void set_default();
 

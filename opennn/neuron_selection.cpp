@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-NeuronSelection::NeuronSelection(const TrainingStrategy* new_training_strategy)
+NeuronSelection::NeuronSelection(TrainingStrategy* new_training_strategy)
 {
     set(new_training_strategy);
 }
@@ -39,9 +39,9 @@ bool NeuronSelection::get_display() const
 }
 
 
-void NeuronSelection::set(const TrainingStrategy* new_training_strategy)
+void NeuronSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy = const_cast<TrainingStrategy*>(new_training_strategy);
+    training_strategy = new_training_strategy;
 
     set_default();
 }
