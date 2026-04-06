@@ -274,19 +274,10 @@ TrainingResults AdaptiveMomentEstimation::train()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(training_accuracy >= training_accuracy_goal)
-        {
-            if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
-            results.stopping_condition = StoppingCondition::LossGoal;
-            stop_training = true;
-        }
-        else
-        {
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures, training_loss_goal,
-                                                      maximum_validation_failures);
-        }
+        stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                  results.training_error_history(epoch),
+                                                  validation_failures, training_loss_goal,
+                                                  maximum_validation_failures);
 
         if(stop_training)
         {
@@ -303,7 +294,6 @@ TrainingResults AdaptiveMomentEstimation::train()
             break;
         }
 
-        if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
     set_unscaling();
@@ -618,19 +608,10 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        if(training_accuracy >= training_accuracy_goal)
-        {
-            if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
-            results.stopping_condition = StoppingCondition::LossGoal;
-            stop_training = true;
-        }
-        else
-        {
-            stop_training = check_stopping_condition(results, epoch, elapsed_time,
-                                                      results.training_error_history(epoch),
-                                                      validation_failures, training_loss_goal,
-                                                      maximum_validation_failures);
-        }
+        stop_training = check_stopping_condition(results, epoch, elapsed_time,
+                                                  results.training_error_history(epoch),
+                                                  validation_failures, training_loss_goal,
+                                                  maximum_validation_failures);
 
         if (stop_training) 
         {
@@ -642,7 +623,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
             break;
         }
 
-        if (epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
     cudaStreamDestroy(memory_stream);

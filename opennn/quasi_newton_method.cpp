@@ -359,7 +359,6 @@ TrainingResults QuasiNewtonMethod::train()
             break;
         }
 
-        if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
     set_unscaling();

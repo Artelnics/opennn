@@ -52,7 +52,6 @@ public:
 
     vector<Index> get_used_sample_indices() const;
 
-    string get_sample_role(const Index) const;
     const vector<string>& get_sample_roles() const;
 
     vector<Index> get_sample_roles_vector() const;
@@ -432,6 +431,7 @@ public:
 
 private:
 
+    string get_sample_role(const Index) const;
     void infer_column_types(const vector<vector<string>>&);
     void read_data_file_preview(const vector<vector<string>>&);
     void check_separators(const string&) const;

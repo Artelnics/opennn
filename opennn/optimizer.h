@@ -97,10 +97,6 @@ protected:
 
     Index display_period = 10;
 
-    Index save_period = numeric_limits<Index>::max();
-
-    string neural_network_file_name = "neural_network.xml";
-
     bool display = true;
 
     string name;
