@@ -120,17 +120,6 @@ string NeuronSelection::write_stopping_condition(const TrainingResults& results)
 }
 
 
-void NeuronSelection::delete_selection_history()
-{
-    validation_error_history.resize(0);
-}
-
-
-void NeuronSelection::delete_training_error_history()
-{
-    training_error_history.resize(0);
-}
-
 
 void NeuronSelection::check() const
 {

@@ -329,7 +329,7 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                               &scaling_factor,
                               forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              &beta_zero,
+                              &zero,
                               forward->attention_weights.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
                               (int)(batch_size * heads_number));
 
@@ -356,9 +356,9 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
 
     cudnnSoftmaxForward(get_cudnn_handle(),
                         CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
-                        &alpha_one,
+                        &one,
                         forward->attention_weights.get_descriptor(), forward->attention_weights.data,
-                        &beta_zero,
+                        &zero,
                         forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data);
 
     // Attention context (Probs * V)
@@ -366,10 +366,10 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_N,
                               (int)head_dimension, (int)query_sequence_length, (int)source_sequence_length,
-                              &alpha_one,
+                              &one,
                               forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              &beta_zero,
+                              &zero,
                               forward->attention_outputs_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
                               (int)(batch_size * heads_number));
 
@@ -580,10 +580,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
-                &alpha_one,
+                &one,
                 output_gradients_data, (int)embedding_dimension,
                 forward->concatenated_attention_outputs.data, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->projection_weight_gradients.data, (int)embedding_dimension);
 
     // Projection bias gradients
@@ -591,10 +591,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
-                &alpha_one,
+                &one,
                 output_gradients_data, (int)embedding_dimension,
                 back->ones.data, (int)(batch_size * query_sequence_length),
-                &beta_zero,
+                &zero,
                 back->projection_bias_gradients.data, (int)embedding_dimension);
 
     // Concatenated attention output gradients
@@ -602,10 +602,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
                 (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
-                &alpha_one,
+                &one,
                 projection_weights_device.data, (int)embedding_dimension,
                 output_gradients_data, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->concatenated_attention_output_gradients.data, (int)embedding_dimension);
 
     // Attention output gradients transposed
@@ -619,10 +619,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_N, CUBLAS_OP_T,
                               (int)head_dimension, (int)source_sequence_length, (int)query_sequence_length,
-                              &alpha_one,
+                              &one,
                               back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
                               forward->attention_probabilities.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              &beta_zero,
+                              &zero,
                               back->value_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               (int)(batch_size * heads_number));
 
@@ -631,10 +631,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemmStridedBatched(get_cublas_handle(),
                               CUBLAS_OP_T, CUBLAS_OP_N,
                               (int)source_sequence_length, (int)query_sequence_length, (int)head_dimension,
-                              &alpha_one,
+                              &one,
                               forward->value_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               back->attention_output_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
-                              &beta_zero,
+                              &zero,
                               back->attention_weight_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
                               (int)(batch_size * heads_number));
 
@@ -642,10 +642,10 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 
     cudnnSoftmaxBackward(get_cudnn_handle(),
                          CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE,
-                         &alpha_one,
+                         &one,
                          forward->attention_probabilities.get_descriptor(), forward->attention_probabilities.data,
                          back->attention_weight_gradients.get_descriptor(), back->attention_weight_gradients.data,
-                         &beta_zero,
+                         &zero,
                          back->softmax_gradients.get_descriptor(), back->softmax_gradients.data);
 
     // Query and key gradients transposed
@@ -656,7 +656,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                               &scaling_factor,
                               forward->key_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              &beta_zero,
+                              &zero,
                               back->query_gradients_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
                               (int)(batch_size * heads_number));
 
@@ -666,7 +666,7 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                               &scaling_factor,
                               forward->query_transposed.data, (int)head_dimension, (int)(query_sequence_length * head_dimension),
                               back->softmax_gradients.data, (int)source_sequence_length, (int)(query_sequence_length * source_sequence_length),
-                              &beta_zero,
+                              &zero,
                               back->key_gradients_transposed.data, (int)head_dimension, (int)(source_sequence_length * head_dimension),
                               (int)(batch_size * heads_number));
 
@@ -689,28 +689,28 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * query_sequence_length),
-                &alpha_one,
+                &one,
                 back->query_gradients.data, (int)embedding_dimension,
                 query_input, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->query_weight_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 (int)embedding_dimension, 1, (int)(batch_size * query_sequence_length),
-                &alpha_one,
+                &one,
                 back->query_gradients.data, (int)embedding_dimension,
                 back->ones.data, (int)(batch_size * query_sequence_length),
-                &beta_zero,
+                &zero,
                 back->query_bias_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
                 (int)embedding_dimension, (int)(batch_size * query_sequence_length), (int)embedding_dimension,
-                &alpha_one,
+                &one,
                 query_weights_device.data, (int)embedding_dimension,
                 back->query_gradients.data, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->query_input_gradients.data, (int)embedding_dimension);
 
     // Key weight, bias and source projection gradients (Temp)
@@ -718,28 +718,28 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
-                &alpha_one,
+                &one,
                 back->key_gradients.data, (int)embedding_dimension,
                 source_input, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->key_weight_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
-                &alpha_one,
+                &one,
                 back->key_gradients.data, (int)embedding_dimension,
                 back->ones.data, (int)(batch_size * source_sequence_length),
-                &beta_zero,
+                &zero,
                 back->key_bias_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
                 (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
-                &alpha_one,
+                &one,
                 key_weights_device.data, (int)embedding_dimension,
                 back->key_gradients.data, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->source_input_gradients.data, (int)embedding_dimension);
 
     // Value weight, bias and source input gradients accumulation
@@ -747,28 +747,28 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_T,
                 (int)embedding_dimension, (int)embedding_dimension, (int)(batch_size * source_sequence_length),
-                &alpha_one,
+                &one,
                 back->value_gradients.data, (int)embedding_dimension,
                 source_input, (int)embedding_dimension,
-                &beta_zero,
+                &zero,
                 back->value_weight_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 (int)embedding_dimension, 1, (int)(batch_size * source_sequence_length),
-                &alpha_one,
+                &one,
                 back->value_gradients.data, (int)embedding_dimension,
                 back->ones.data, (int)(batch_size * source_sequence_length),
-                &beta_zero,
+                &zero,
                 back->value_bias_gradients.data, (int)embedding_dimension);
 
     cublasSgemm(get_cublas_handle(),
                 CUBLAS_OP_T, CUBLAS_OP_N,
                 (int)embedding_dimension, (int)(batch_size * source_sequence_length), (int)embedding_dimension,
-                &alpha_one,
+                &one,
                 value_weights_device.data, (int)embedding_dimension,
                 back->value_gradients.data, (int)embedding_dimension,
-                &alpha_one,
+                &one,
                 back->source_input_gradients.data, (int)embedding_dimension);
 
     // Final input gradients

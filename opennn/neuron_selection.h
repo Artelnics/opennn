@@ -48,9 +48,7 @@ public:
 
     string write_stopping_condition(const TrainingResults&) const;
 
-    void delete_selection_history();
-    void delete_training_error_history();
-    void check() const;
+void check() const;
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 

@@ -411,7 +411,6 @@ void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
     accuracy.setZero();
 
     errors.resize(batch_size, outputs_number);
-    errors_weights.resize(batch_size, outputs_number);
 
     output_gradient_dimensions = { batch_size };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());

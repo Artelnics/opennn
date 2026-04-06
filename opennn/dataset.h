@@ -413,13 +413,7 @@ public:
 
     virtual void read_csv();
 
-    void infer_column_types(const vector<vector<string>>&);
-
     DateFormat infer_dataset_date_format(const vector<Variable>&, const vector<vector<string>>&, bool, const string&);
-
-    void read_data_file_preview(const vector<vector<string>>&);
-
-    void check_separators(const string&) const;
 
     virtual void fill_inputs(const vector<Index>&,
                              const vector<Index>&,
@@ -435,6 +429,12 @@ public:
                               const vector<Index>&,
                               type*,
                               bool = true) const;
+
+private:
+
+    void infer_column_types(const vector<vector<string>>&);
+    void read_data_file_preview(const vector<vector<string>>&);
+    void check_separators(const string&) const;
 
 protected:
 

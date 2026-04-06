@@ -149,10 +149,10 @@ inline void max_pooling(const TensorView& input,
 #else
     CHECK_CUDNN(cudnnPoolingForward(get_cudnn_handle(),
                                     arguments.pooling_descriptor,
-                                    &alpha_one,
+                                    &one,
                                     input.descriptor,
                                     input.device,
-                                    &beta_zero,
+                                    &zero,
                                     output.descriptor,
                                     output.device));
 #endif
@@ -275,13 +275,13 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
 #else
     CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(),
                               get_operator_sum_descriptor(),
-                              &alpha_one,
+                              &one,
                               input_1.get_descriptor(),
                               input_1.data,
-                              &alpha_one,
+                              &one,
                               input_2.get_descriptor(),
                               input_2.data,
-                              &beta_zero,
+                              &zero,
                               output.get_descriptor(),
                               output.data));
 #endif
@@ -402,8 +402,8 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
         CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
             get_cudnn_handle(),
             CUDNN_BATCHNORM_PER_ACTIVATION,
-            &alpha,
-            &beta_add,
+            &one,
+            &zero,
             outputs.get_descriptor(),
             outputs_buffer,
             outputs.get_descriptor(),
@@ -421,7 +421,7 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
         CHECK_CUDNN(cudnnBatchNormalizationForwardInference(
             get_cudnn_handle(),
             CUDNN_BATCHNORM_PER_ACTIVATION,
-            &alpha, &beta_add,
+            &one, &zero,
             outputs.get_descriptor(),
             outputs_buffer,
             outputs.get_descriptor(),
@@ -482,9 +482,6 @@ inline void batch_normalization_backward(
                                x_hat.array() * gamma_gradients.transpose().replicate(effective_batch_size, 1).array());
 
 #else
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-
     // Use SPATIAL for 4D (Conv) and PER_ACTIVATION for 2D (Dense)
 
     const cudnnBatchNormMode_t mode = (input.rank() == 4)
@@ -494,8 +491,8 @@ inline void batch_normalization_backward(
     CHECK_CUDNN(cudnnBatchNormalizationBackward(
         get_cudnn_handle(),
         mode,
-        &alpha, &beta, // Data alpha/beta
-        &alpha, &beta, // Param alpha/beta
+        &one, &zero, // Data alpha/beta
+        &one, &zero, // Param alpha/beta
         input.get_descriptor(),
         input.data,
         output_gradient.get_descriptor(),
@@ -525,8 +522,8 @@ inline void combination(const TensorView& input,
     multiply(input, false, weights, false, output, 1.0f, 0.0f);
 
     CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                               &alpha, biases.get_descriptor(), biases.data,
-                               &alpha, output.get_descriptor(), output.data));
+                               &one, biases.get_descriptor(), biases.data,
+                               &one, output.get_descriptor(), output.data));
 #endif
 }
 
@@ -568,8 +565,6 @@ inline void batch_normalization_training(
     output_matrix.rowwise() += betas.transpose();
 
 #else
-    const float alpha = 1.0f;
-    const float beta_add = 0.0f;
     const cudnnBatchNormMode_t mode = (input.rank() == 4)
         ? CUDNN_BATCHNORM_SPATIAL
         : CUDNN_BATCHNORM_PER_ACTIVATION;
@@ -577,7 +572,7 @@ inline void batch_normalization_training(
     CHECK_CUDNN(cudnnBatchNormalizationForwardTraining(
         get_cudnn_handle(),
         mode,
-        &alpha, &beta_add,
+        &one, &zero,
         input.get_descriptor(), input.data,
         output.get_descriptor(), output.data,
         gamma.get_descriptor(), gamma.data,
@@ -643,15 +638,15 @@ inline void activation(TensorView& output, ActivationFunction func)
         ? CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                           CUDNN_SOFTMAX_ACCURATE,
                                           CUDNN_SOFTMAX_MODE_CHANNEL, // Softmax per spatial location
-                                          &alpha_one,
+                                          &one,
                                           output.get_descriptor(), output.data,
-                                          &beta_zero,
+                                          &zero,
                                           output.get_descriptor(), output.data))
         : CHECK_CUDNN(cudnnActivationForward(get_cudnn_handle(),
                                              act_desc,
-                                             &alpha,
+                                             &one,
                                              output.get_descriptor(), output.data,
-                                             &beta,
+                                             &zero,
                                              output.get_descriptor(), output.data));
 
 #endif
@@ -719,14 +714,14 @@ inline void activation_gradient(const TensorView& outputs,
 #else
     CHECK_CUDNN(cudnnActivationBackward(get_cudnn_handle(),
                                         activation_descriptor,
-                                        &alpha,
+                                        &one,
                                         gradients.descriptor,
                                         outputs.data,
                                         gradients_tensor_descriptor,
                                         output_gradients_data,
                                         gradients_tensor_descriptor,
                                         (use_convolutions() && convolutions) ? convolutions : outputs_view.data,
-                                        &beta,
+                                        &zero,
                                         gradients_tensor_descriptor,
                                         output_gradients_data));
 
@@ -814,7 +809,7 @@ inline void convolution(const TensorView& input,
 */
 #else
     CHECK_CUDNN(cudnnConvolutionForward(get_cudnn_handle(),
-                                        &alpha,
+                                        &one,
                                         input.descriptor,
                                         input.device,
                                         kernel_descriptor,
@@ -823,17 +818,17 @@ inline void convolution(const TensorView& input,
                                         convolution_algorithm,
                                         workspace,
                                         workspace_size,
-                                        &beta,
+                                        &zero,
                                         current_output_descriptor,
                                         outputs_buffer));
 
     // Biases
 
     CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                               &alpha,
+                               &one,
                                biases.get_descriptor(),
                                biases.data,
-                               &alpha,
+                               &one,
                                current_output_descriptor,
                                outputs_buffer));
 
@@ -854,7 +849,7 @@ inline void convolution_activation(const TensorView& input,
 #else
     CHECK_CUDNN(cudnnConvolutionBiasActivationForward(
         get_cudnn_handle(),
-        &alpha,
+        &one,
         input.descriptor,
         input_data,
         kernel_descriptor,
@@ -863,7 +858,7 @@ inline void convolution_activation(const TensorView& input,
         convolution_algorithm,
         workspace,
         workspace_size,
-        &beta,
+        &zero,
         current_output_descriptor,
         outputs.data,
         biases_device.get_descriptor(),
@@ -945,10 +940,10 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
                                            transpose_B ? CUBLAS_OP_N : CUBLAS_OP_T,
                                            transpose_A ? CUBLAS_OP_N : CUBLAS_OP_T,
                                            m, n, k,
-                                           &alpha,
+                                           &one,
                                            input_B.data, ldb, stride_B,
                                            input_A.data, lda, stride_A,
-                                           &beta,
+                                           &zero,
                                            output_C.data, ldc, stride_C,
                                            batch_count));
 #endif
@@ -960,8 +955,6 @@ inline void multiply_elementwise(const TensorView& A, const TensorView& B, Tenso
 #ifndef OPENNN_CUDA
     C.as_vector().array() = A.as_vector().array() * B.as_vector().array();
 #else
-    const float one = 1.0f;
-    const float zero = 0.0f;
     CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(), get_operator_multiplication_descriptor(),
                               &one, A.get_descriptor(), A.data,
                               &one, B.get_descriptor(), B.data,
@@ -975,7 +968,7 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
     B.as_vector().noalias() = alpha * A.as_matrix().colwise().sum() + beta * B.as_vector();
 #else
     CHECK_CUDNN(cudnnAddTensor(get_cudnn_handle(),
-                               &alpha_one,
+                               &one,
                                input_tensor.descriptor,
                                input_tensor.device,
                                &beta_one,
@@ -1003,9 +996,9 @@ inline void softmax(TensorView& output)
     CHECK_CUDNN(cudnnSoftmaxForward(get_cudnn_handle(),
                                     CUDNN_SOFTMAX_ACCURATE,
                                     CUDNN_SOFTMAX_MODE_CHANNEL,
-                                    &alpha_one,
+                                    &one,
                                     output.get_descriptor(), output.data,
-                                    &beta_zero,
+                                    &zero,
                                     output.get_descriptor(), output.data));
 #endif
 }

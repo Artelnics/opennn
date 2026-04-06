@@ -1011,6 +1011,9 @@ void set_threads_number(int num_threads);
 
 #ifdef CUDA
 
+inline const float one = 1.0f;
+inline const float zero = 0.0f;
+
     inline cublasHandle_t get_cublas_handle()
     {
         return Device::instance().get_cublas_handle();
@@ -1033,14 +1036,6 @@ void set_threads_number(int num_threads);
     {
         return Device::instance().get_operator_multiplication_descriptor();
     }
-
-#endif
-
-#ifdef CUDA
-
-inline const float alpha_one = 1.0f;
-inline const float beta_zero = 0.0f;
-
 
 struct TensorCuda
 {

@@ -186,7 +186,6 @@ struct BackPropagation
 
     type error;
     MatrixR errors;
-    MatrixR errors_weights;
     VectorR output_gradients;
     Shape output_gradient_dimensions;
 
