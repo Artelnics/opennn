@@ -61,29 +61,6 @@ public:
     void set_fitness(const VectorR&); // Used in testing
     void set_selection(const VectorB&); // Used in testing
 
-    void initialize_population();
-
-    void initialize_population_random();
-    void initialize_population_correlations();
-
-    void evaluate_population();
-
-    void perform_fitness_assignment();
-
-    void perform_selection();
-
-    VectorB cross(const VectorB&, const VectorB&);
-
-    void perform_crossover();
-
-    void perform_mutation();
-
-    Index get_selected_individuals_number() const;
-
-    vector<Index> get_selected_individual_indices() const;
-
-    vector<Index> get_variable_indices(const VectorB&);
-
     InputsSelectionResults perform_input_selection() override;
 
     void from_XML(const XMLDocument&) override;
@@ -97,6 +74,19 @@ public:
     void load(const filesystem::path&);
 
 private:
+
+    void initialize_population();
+    void initialize_population_random();
+    void initialize_population_correlations();
+    void evaluate_population();
+    void perform_fitness_assignment();
+    void perform_selection();
+    VectorB cross(const VectorB&, const VectorB&);
+    void perform_crossover();
+    void perform_mutation();
+    Index get_selected_individuals_number() const;
+    vector<Index> get_selected_individual_indices() const;
+    vector<Index> get_variable_indices(const VectorB&);
 
     Tensor<VectorR, 1> parameters;
 

@@ -118,18 +118,6 @@ public:
             return 1;
     }
 
-    type get_dropout_rate() const
-    {
-        return dropout_rate;
-    }
-
-
-    bool get_batch_normalization() const
-    {
-        return batch_normalization;
-    }
-
-
     const ActivationFunction& get_activation_function() const
     {
         return activation_function;

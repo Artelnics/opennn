@@ -85,16 +85,10 @@ public:
     NeuralNetwork* get_neural_network() const;
     Dataset* get_dataset() const;
 
-    bool get_display() const;
-
-    Index get_batch_size();
-
     // Set
 
     void set_neural_network(NeuralNetwork*);
     void set_dataset(Dataset*);
-
-    void set_display(bool);
 
     // Checking
 
@@ -266,8 +260,6 @@ private:
     NeuralNetwork* neural_network = nullptr;
 
     Dataset* dataset = nullptr;
-
-    bool display = true;
 
     Index batch_size = 0;
 };

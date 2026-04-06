@@ -804,42 +804,6 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 }
 
 
-Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index dense2d_layers_number = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_name() == "Dense2d" && layers[i]->get_label().find("classification") == string::npos)
-            dense2d_layers_number++;
-
-    Tensor<string, 2> information(dense2d_layers_number, 4);
-
-    Index dense2d_layer_index = 0;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        const string& name = layers[i]->get_name();
-        const string label = layers[i]->get_label();
-
-        if (name != "Dense2d" || label.find("classification") != string::npos)
-            continue;
-
-        information(dense2d_layer_index, 0) = label;
-        information(dense2d_layer_index, 1) = to_string(layers[i]->get_input_shape()[0]);
-        information(dense2d_layer_index, 2) = to_string(layers[i]->get_output_shape()[0]);
-
-        const Dense<2>* dense2d_layer = static_cast<Dense<2>*>(layers[i].get());
-
-        information(dense2d_layer_index, 3) = dense2d_layer->get_activation_function();
-
-        dense2d_layer_index++;
-    }
-
-    return information;
-}
-
 
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {

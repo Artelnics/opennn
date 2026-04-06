@@ -37,17 +37,6 @@ Dataset* TestingAnalysis::get_dataset() const
 }
 
 
-bool TestingAnalysis::get_display() const
-{
-    return display;
-}
-
-
-Index TestingAnalysis::get_batch_size()
-{
-    return batch_size;
-}
-
 
 void TestingAnalysis::set_neural_network(NeuralNetwork* new_neural_network)
 {
@@ -61,10 +50,6 @@ void TestingAnalysis::set_dataset(Dataset* new_dataset)
 }
 
 
-void TestingAnalysis::set_display(bool new_display)
-{
-    display = new_display;
-}
 
 
 
@@ -1936,7 +1921,6 @@ void TestingAnalysis::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TestingAnalysis");
 
-    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -1946,7 +1930,6 @@ void TestingAnalysis::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "TestingAnalysis");
 
-    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

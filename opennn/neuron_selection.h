@@ -69,8 +69,6 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    VectorI neurons_history;
-
     VectorR validation_error_history;
 
     VectorR training_error_history;

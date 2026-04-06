@@ -90,16 +90,15 @@ public:
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
-    void back_propagate_max_pooling(const Tensor4&, Tensor4&) const;
-
-    void back_propagate_average_pooling(const Tensor4&, Tensor4&) const;
-
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
     void print() const override;
 
 private:
+
+    void back_propagate_max_pooling(const Tensor4&, Tensor4&) const;
+    void back_propagate_average_pooling(const Tensor4&, Tensor4&) const;
 
     enum Forward {Inputs, Outputs, MaximalIndices};
     enum Backward {OutputGradients, InputGradients};

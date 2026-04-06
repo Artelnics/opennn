@@ -195,8 +195,6 @@ public:
 
     // Serialization
 
-    Tensor<string, 2> get_dense2d_layers_information() const;
-
     void from_XML(const XMLDocument&);
 
     void to_XML(XMLPrinter&) const;
