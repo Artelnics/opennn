@@ -108,9 +108,9 @@ public:
 
     MatrixR calculate_random_inputs(const Domain& input_domain) const;
 
-    Tensor3 input_constructor(const MatrixR& present_random_values) const;
+    Tensor3 combine_input(const MatrixR& present_random_values) const;
 
-    MatrixR calculate_outputs(const MatrixR& optimized_variables) const;
+    MatrixR calculate_outputs(const MatrixR& input) const;
 
     pair<MatrixR, MatrixR> filter_feasible_points(const MatrixR& inputs,
                                                   const MatrixR& outputs,
@@ -134,17 +134,7 @@ public:
 
     MatrixR perform_response_optimization() const;
 
-    Index get_objectives_number() const
-    {
-        Index objectives_number = 0;
-
-        for (const auto& [_, constraints] : conditions)
-            if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
-                objectives_number++;
-
-        return objectives_number;
-    }
-
+    Index get_objectives_number() const;
 
 private:
 
@@ -167,7 +157,7 @@ private:
     //minimum number of points?
 
     Tensor3 fixed_history; //(1 matrix, time_steps,  features_dimentions )
-    //@simone @todo, forecasting start from here
+
     bool is_forecasting = false;   
 };
 

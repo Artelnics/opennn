@@ -6,9 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "response_optimization.h"
-
 #include "pch.h"
+#include "response_optimization.h"
 #include "tensor_utilities.h"
 #include "statistics.h"
 #include "neural_network.h"
@@ -105,6 +104,16 @@ type ResponseOptimization::get_deformation_domain_factor()
     return deformation_domain_factor;
 }
 
+Index ResponseOptimization::get_objectives_number() const
+{
+    Index objectives_number = 0;
+
+    for (const auto& [_, constraints] : conditions)
+        if (constraints.condition == ConditionType::Maximize || constraints.condition == ConditionType::Minimize)
+            objectives_number++;
+
+    return objectives_number;
+}
 
 vector<Descriptives> ResponseOptimization::get_descriptives(const string& role) const
 {
@@ -338,6 +347,12 @@ void ResponseOptimization::Domain::bound(const vector<Variable>& variables, cons
             case ConditionType::LessEqualTo:
                 superior = min(superior, condition.up_bound);
                 break;
+            case ConditionType::LessThan:
+                superior = min(superior, condition.up_bound);
+                break;
+            case ConditionType::GreaterThan:
+                inferior = max(inferior, condition.low_bound);
+                break;
             default:
                 break;
             }
@@ -410,30 +425,26 @@ MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain
 }
 
 
-// @todo bad name constructor
-Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_candidates) const
+Tensor3 ResponseOptimization::combine_input(const MatrixR& input_control) const
 {
     // Get all 8 input features
 
-    const vector<Variable> all_input_vars = neural_network->get_input_variables();
-    const Index batch_size = controllable_candidates.rows(); // 1000
+    const vector<Variable> input_variables = neural_network->get_input_variables();
+    const Index batch_size = input_control.rows(); // 1000
     const Shape input_shape = neural_network->get_input_shape();
     const Index total_lags = input_shape[0]; // 2
     const Index total_features = input_shape[1]; // 8
 
-    // Create the target tensor [1000, 2, 8]
-    Tensor3 constructed_input(batch_size, total_lags, total_features);
+    Tensor3 input_combined(batch_size, total_lags, total_features);
 
-    // Step 1: Copy the "Perfect Rectangle" (History) to all 1000 samples
-    // This fills [1000, 2, 8] with the state and previous settings
-    constructed_input.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
+    input_combined.device(get_device()) = fixed_history.broadcast(array_3(batch_size, 1, 1));
 
     // Step 2: Paste the 5 "Line on Top" candidate values
     // into the last lag (current time step)
     Index feature_cursor = 0;      // Moves 0 to 7 (8 total)
     Index candidate_col_cursor = 0; // Moves 0 to 4 (5 total)
 
-    for (const Variable& variable : all_input_vars)
+    for (const Variable& variable : input_variables)
     {
         const Index dim = variable.is_categorical() ? variable.get_categories_number() : 1;
 
@@ -441,40 +452,35 @@ Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_cand
 
         if (variable.role == "Input" && current_cond.condition != ConditionType::Past)
         {
-            // Only overwrite the last time step (total_lags - 1)
-            for (Index i = 0; i < batch_size; ++i)
-            {
-                for(Index d = 0; d < dim; ++d)
-                {
-                    constructed_input(i, total_lags - 1, feature_cursor + d) =
-                        controllable_candidates(i, candidate_col_cursor + d);
-                }
-            }
+           const MatrixR block_data = input_control.block(0, candidate_col_cursor, batch_size, dim);
+
+            TensorMap<const Tensor<type, 3, Layout>> block_tensor(block_data.data(), batch_size, 1, dim);
+
+            input_combined.slice(array_3(0, total_lags - 1, feature_cursor), array_3(batch_size, 1, dim)).device(get_device()) = block_tensor;
+
             candidate_col_cursor += dim;
         }
-        // If role is "InputTarget", we do nothing.
-        // The value from 'fixed_history' remains there.
 
         feature_cursor += dim;
     }
 
-    return constructed_input;
+    return input_combined;
 }
 
-// @todo change name optimized_variables
-MatrixR ResponseOptimization::calculate_outputs(const MatrixR& optimized_variables) const
+
+MatrixR ResponseOptimization::calculate_outputs(const MatrixR& input) const
 {
     if (is_forecasting)
     {
         if(fixed_history.size() == 0)
             throw runtime_error("ResponseOptimization: Model is forecasting but fixed_history is empty. Call set_fixed_history() first.");
 
-        const Tensor3 formatted_input = input_constructor(optimized_variables);
+        const Tensor3 formatted_input = combine_input(input);
 
         return neural_network->calculate_outputs(formatted_input);
     }
 
-    return neural_network->calculate_outputs(optimized_variables);
+    return neural_network->calculate_outputs(input);
 }
 
 
@@ -517,54 +523,26 @@ void ResponseOptimization::Domain::reshape(const type zoom_factor,
         current_feature_index += categories_number;
     }
 }
-/*
-pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
-{
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
 
-
-
-
-
-=======
-    cout << "> entering filter_feasible_points " << endl;
->>>>>>> Stashed changes
-
->>>>>>> 5c710e731 (merging)
-    const vector<Index> feasible_rows = build_feasible_rows_mask(outputs, output_domain.inferior_frontier, output_domain.superior_frontier);
-
-    if(feasible_rows.empty())
-        return {};
-
-    MatrixR feasible_inputs((Index)feasible_rows.size(), inputs.cols());
-    MatrixR feasible_outputs((Index)feasible_rows.size(), outputs.cols());
-
-    for(Index j = 0; j < (Index)feasible_rows.size(); ++j)
-    {
-        feasible_inputs.row(j) = inputs.row(feasible_rows[j]);
-        feasible_outputs.row(j) = outputs.row(feasible_rows[j]);
-    }
-
-    return {feasible_inputs, feasible_outputs};
-}
-
-*/
 
 pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const MatrixR& inputs, const MatrixR& outputs, const Domain& output_domain) const
 {
-    const vector<Variable>& target_vars = neural_network->get_output_variables();
+    // Iterate ALL output variables so col_index stays aligned with outputs columns (unfiltered).
+    // domain_index advances only for non-Past variables, matching how output_domain was built.
+    const vector<Variable>& all_target_vars = neural_network->get_output_variables();
     const Index rows_count = outputs.rows();
 
-    // 1. Start with all row indices as "potentially feasible"
     vector<Index> feasible_indices(rows_count);
     iota(feasible_indices.begin(), feasible_indices.end(), 0);
 
-    // 2. Loop through columns and apply filters ONLY for Hard Constraints
-    for (size_t j = 0; j < target_vars.size(); ++j)
+    Index domain_index = 0;
+
+    for (Index col_index = 0; col_index < static_cast<Index>(all_target_vars.size()); ++col_index)
     {
-        const Condition current_condition = get_condition(target_vars[j].name);
+        const Condition current_condition = get_condition(all_target_vars[col_index].name);
+
+        if (current_condition.condition == ConditionType::Past)
+            continue; // not in domain — skip without advancing domain_index
 
         if (!(current_condition.condition == ConditionType::Maximize ||
               current_condition.condition == ConditionType::Minimize ||
@@ -572,10 +550,12 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
         {
             feasible_indices = filter_selected_indices_by_column(outputs,
                                                         feasible_indices,
-                                                        static_cast<Index>(j),
-                                                        output_domain.inferior_frontier(j),
-                                                        output_domain.superior_frontier(j));
+                                                        col_index,
+                                                        output_domain.inferior_frontier(domain_index),
+                                                        output_domain.superior_frontier(domain_index));
         }
+
+        ++domain_index;
 
         if (feasible_indices.empty())
             break;
@@ -648,15 +628,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
     return {nearest_inputs, nearest_outputs};
 }
 
-// @todo to tensor
-MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const MatrixR& outputs) const
-{
-    MatrixR result(inputs.rows(), inputs.cols() + outputs.cols());
-    result.leftCols(inputs.cols()) = inputs;
-    result.rightCols(outputs.cols()) = outputs;
-    return result;
-}
-
 
 MatrixR ResponseOptimization::perform_single_objective_optimization() const
 {
@@ -664,7 +635,6 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     const auto [input_variables, descriptives] = get_variables_and_descriptives("Input");
 
-    // @todo too many domains?
     const Domain original_input_domain = get_original_domain("Input");
     const Domain original_output_domain = get_original_domain("Target");
     Domain input_domain = original_input_domain;
@@ -717,7 +687,7 @@ MatrixR ResponseOptimization::perform_single_objective_optimization() const
 
     return optimal_set.first.rows() == 0
         ? MatrixR()
-        : assemble_results(optimal_set.first, optimal_set.second);
+        : assemble_matrices(optimal_set.first, optimal_set.second);
 }
 
 
@@ -939,15 +909,13 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
     }
     cout << "\n> [Optimization Complete] Assembling final results..." << endl;
 
-    return assemble_results(global_pareto_inputs, global_pareto_outputs);
+    return assemble_matrices(global_pareto_inputs, global_pareto_outputs);
 }
 
 
 MatrixR ResponseOptimization::perform_response_optimization() const
 {
     const Index objectives_number = get_objectives_number();
-
-    //const Objectives objectives = build_objectives();
 
     if (objectives_number == 0)
         throw runtime_error("No objectives found\n");

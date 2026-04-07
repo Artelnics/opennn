@@ -359,6 +359,7 @@ void sum_matrices(const VectorR&, Tensor3&);
 void multiply_matrices(Tensor3&, const VectorR&);
 void multiply_matrices(Tensor3&, const Tensor2&);
 
+MatrixR assemble_matrices(const MatrixR&, const MatrixR&);
 
 inline bool is_contiguous(const vector<Index>& v)
 {

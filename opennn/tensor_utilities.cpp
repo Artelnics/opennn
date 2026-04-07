@@ -70,6 +70,15 @@ MatrixR append_rows(const MatrixR& starting_matrix, const MatrixR& block)
     return final_matrix;
 }
 
+MatrixR assemble_matrices(const MatrixR& first_matrix, const MatrixR& second_matrix)
+{
+    MatrixR result(first_matrix.rows(), first_matrix.cols() + second_matrix.cols());
+    result.leftCols(first_matrix.cols()) = first_matrix;
+    result.rightCols(second_matrix.cols()) = second_matrix;
+    return result;
+}
+
+
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums)
 {
     const Index rows_unfiltered =  outputs.rows();

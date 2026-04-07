@@ -211,13 +211,18 @@ int main()
         vector<VectorR> error_auto = testing_analysis.calculate_error_autocorrelation(num_lags);
         auto target_names = time_series_dataset.get_variable_names("Target");
 
-        for(size_t i = 0; i < target_names.size(); ++i) {
-            cout << "Target [" << target_names[i] << "] Error Autocorr at Lag 1: " << error_auto[i][1] << endl;
-            if(abs(error_auto[i][1]) > 0.5) {
-                cout << "  WARNING: High error autocorrelation detected. Model may be simply lagging." << endl;
+        if (!error_auto.empty() && error_auto[0].size() > 1) {
+            for(size_t i = 0; i < error_auto.size(); ++i) {
+                if (i < target_names.size()) {
+                    type val = error_auto[i][1];
+                    if (std::isnan(val)) {
+                        cout << "Target [" << target_names[i] << "] Error Autocorr: [Invalid - Constant Error]" << endl;
+                    } else {
+                        cout << "Target [" << target_names[i] << "] Error Autocorr at Lag 1: " << val << endl;
+                    }
+                }
             }
         }
-
         // Diagnostic B: Mean Squared Errors (Absolute and Normalized)
         // Normalized Error < 1.0 means your model is better than just predicting the average.
         VectorR errors = testing_analysis.calculate_errors("Testing");
