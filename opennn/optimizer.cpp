@@ -24,94 +24,10 @@ Optimizer::Optimizer(Loss* new_loss)
 }
 
 
-Loss* Optimizer::get_loss() const
-{
-    return loss;
-}
-
-
-const string& Optimizer::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
-void Optimizer::set_hardware_use(const string& new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
-bool Optimizer::has_loss() const
-{
-    return loss;
-}
-
-
-bool Optimizer::get_display() const
-{
-    return display;
-}
-
-
-void Optimizer::set(Loss* new_loss)
-{
-    loss = new_loss;
-}
-
-
-void Optimizer::set_loss(Loss* new_loss)
-{
-    loss = new_loss;
-}
-
-
-void Optimizer::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
-void Optimizer::set_display_period(const Index new_display_period)
-{
-    display_period = new_display_period;
-}
-
-
-void Optimizer::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void Optimizer::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
-}
-
-
-void Optimizer::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
-void Optimizer::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
-
 void Optimizer::check() const
 {
     if(!loss)
         throw runtime_error("loss is nullptr.\n");
-}
-
-
-const string& Optimizer::get_name() const
-{
-    return name;
 }
 
 

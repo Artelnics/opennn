@@ -24,28 +24,28 @@ public:
     NeuronSelection(TrainingStrategy* = nullptr);
     virtual ~NeuronSelection() = default;
 
-    TrainingStrategy* get_training_strategy() const;
+    TrainingStrategy* get_training_strategy() const { return training_strategy; }
 
-    bool has_training_strategy() const;
+    bool has_training_strategy() const { return training_strategy; }
 
-    bool get_display() const;
+    bool get_display() const { return display; }
 
-    void set(TrainingStrategy* = nullptr);
+    void set(TrainingStrategy*);
 
-    void set_training_strategy(TrainingStrategy*);
+    void set_training_strategy(TrainingStrategy* ts) { training_strategy = ts; }
 
     void set_default();
 
-    void set_maximum_neurons(const Index);
-    void set_minimum_neurons(const Index);
-    void set_trials_number(const Index);
+    void set_maximum_neurons(const Index n) { maximum_neurons = n; }
+    void set_minimum_neurons(const Index n) { minimum_neurons = n; }
+    void set_trials_number(const Index n) { trials_number = n; }
 
-    void set_display(bool);
+    void set_display(bool d) { display = d; }
 
-    void set_validation_error_goal(const type);
-    void set_maximum_epochs(const Index);
-    void set_maximum_validation_failures(const Index);
-    void set_maximum_time(const type);
+    void set_validation_error_goal(const type v) { validation_error_goal = v; }
+    void set_maximum_epochs(const Index n) { maximum_epochs = n; }
+    void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
+    void set_maximum_time(const type t) { maximum_time = t; }
 
     string write_stopping_condition(const TrainingResults&) const;
 

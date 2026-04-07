@@ -20,66 +20,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
 }
 
 
-TrainingStrategy* InputsSelection::get_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-bool InputsSelection::has_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-bool InputsSelection::get_display() const
-{
-    return display;
-}
-
-
-void InputsSelection::set(TrainingStrategy* new_training_strategy)
-{
-    training_strategy = new_training_strategy;
-}
-
-
-void InputsSelection::set_trials_number(const Index new_trials_number)
-{
-    trials_number = new_trials_number;
-}
-
-
-void InputsSelection::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
-void InputsSelection::set_validation_error_goal(const type new_validation_error_goal)
-{
-    validation_error_goal = new_validation_error_goal;
-}
-
-
-void InputsSelection::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void InputsSelection::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
-
-void InputsSelection::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
-}
-
-
 string InputsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();

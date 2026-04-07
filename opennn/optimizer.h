@@ -35,29 +35,29 @@ public:
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
-    Loss* get_loss() const;
+    Loss* get_loss() const { return loss; }
 
-    const string& get_hardware_use() const;
+    const string& get_hardware_use() const { return hardware_use; }
 
-    void set_hardware_use(const string&);
+    void set_hardware_use(const string& new_hardware_use) { hardware_use = new_hardware_use; }
 
-    bool has_loss() const;
+    bool has_loss() const { return loss; }
 
-    bool get_display() const;
+    bool get_display() const { return display; }
 
-    void set(Loss* = nullptr);
+    void set(Loss* new_loss) { loss = new_loss; }
 
-    virtual void set_loss(Loss*);
+    virtual void set_loss(Loss* new_loss) { loss = new_loss; }
 
-    virtual void set_display(bool);
+    virtual void set_display(bool new_display) { display = new_display; }
 
-    void set_display_period(const Index);
+    void set_display_period(const Index new_display_period) { display_period = new_display_period; }
 
-    void set_maximum_epochs(const Index);
-    void set_maximum_time(const type);
+    void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
+    void set_maximum_time(const type new_maximum_time) { maximum_time = new_maximum_time; }
 
-    void set_loss_goal(const type);
-    void set_maximum_validation_failures(const Index);
+    void set_loss_goal(const type new_loss_goal) { training_loss_goal = new_loss_goal; }
+    void set_maximum_validation_failures(const Index n) { maximum_validation_failures = n; }
 
     // Training
 
@@ -65,7 +65,7 @@ public:
 
     virtual TrainingResults train() = 0;
 
-    const string& get_name() const;
+    const string& get_name() const { return name; }
 
     virtual void print() const {}
 

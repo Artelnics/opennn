@@ -21,35 +21,11 @@ NeuronSelection::NeuronSelection(TrainingStrategy* new_training_strategy)
 }
 
 
-TrainingStrategy* NeuronSelection::get_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-bool NeuronSelection::has_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-bool NeuronSelection::get_display() const
-{
-    return display;
-}
-
-
 void NeuronSelection::set(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;
 
     set_default();
-}
-
-
-void NeuronSelection::set_training_strategy(TrainingStrategy* new_training_strategy)
-{
-    training_strategy = new_training_strategy;
 }
 
 
@@ -69,54 +45,6 @@ void NeuronSelection::set_default()
     validation_error_goal = type(0);
     maximum_epochs = 1000;
     maximum_time = type(3600);
-}
-
-
-void NeuronSelection::set_maximum_neurons(const Index new_maximum_neurons)
-{
-    maximum_neurons = new_maximum_neurons;
-}
-
-
-void NeuronSelection::set_minimum_neurons(const Index new_minimum_neurons)
-{
-    minimum_neurons = new_minimum_neurons;
-}
-
-
-void NeuronSelection::set_trials_number(const Index new_trials_number)
-{
-    trials_number = new_trials_number;
-}
-
-
-void NeuronSelection::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
-void NeuronSelection::set_validation_error_goal(const type new_validation_error_goal)
-{
-    validation_error_goal = new_validation_error_goal;
-}
-
-
-void NeuronSelection::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void NeuronSelection::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
-
-void NeuronSelection::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
 }
 
 
