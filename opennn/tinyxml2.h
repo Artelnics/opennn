@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-//#include <fstream>
+#include <fstream>
 //#include <algorithm>
 
 namespace tinyxml2 {
@@ -38,6 +38,11 @@ public:
 class XMLNode {
 public:
     virtual ~XMLNode() = default;
+    XMLNode() = default;
+    XMLNode(const XMLNode&) = delete;
+    XMLNode& operator=(const XMLNode&) = delete;
+    XMLNode(XMLNode&&) = default;
+    XMLNode& operator=(XMLNode&&) = default;
     virtual XMLElement* ToElement() { return nullptr; }
     const XMLElement* FirstChildElement(const char* name = nullptr) const;
     const XMLElement* NextSiblingElement(const char* name = nullptr) const;

@@ -220,7 +220,8 @@ void Bounding::to_XML(XMLPrinter& printer) const
         printer.CloseElement();
     }
 
-    add_xml_element(printer, "BoundingMethod", get_bounding_method_string());
+    add_xml_element(printer, "BoundingMethod",
+                     bounding_method == BoundingMethod::Bounding ? "Bounding" : "NoBounding");
 
     printer.CloseElement();
 }

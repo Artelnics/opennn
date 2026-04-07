@@ -47,6 +47,11 @@ XMLElement* XMLDocument::NewElement(const char* name) {
     return el.release(); // Handing off management to the caller or Insert methods
 }
 
+void XMLDocument::InsertFirstChild(XMLNode* node) {
+    _children.insert(_children.begin(), std::unique_ptr<XMLElement>(static_cast<XMLElement*>(node)));
+    _children.front()->_parent = this;
+}
+
 void XMLDocument::InsertEndChild(XMLNode* node) {
     _children.push_back(std::unique_ptr<XMLElement>(static_cast<XMLElement*>(node)));
     _children.back()->_parent = this;

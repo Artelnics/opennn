@@ -521,9 +521,9 @@ protected:
 
 struct Batch
 {
-    Batch(const Index = 0, Dataset* = nullptr);
+    Batch(const Index = 0, const Dataset* = nullptr);
 
-    void set(const Index = 0, Dataset* = nullptr);
+    void set(const Index = 0, const Dataset* = nullptr);
 
     void fill(const vector<Index>&,
               const vector<Index>&,
@@ -542,7 +542,7 @@ struct Batch
 
     Index samples_number = 0;
 
-    Dataset* dataset = nullptr;
+    const Dataset* dataset = nullptr;
 
     Shape input_shape;
     VectorR input_vector;

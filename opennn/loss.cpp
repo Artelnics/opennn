@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-Loss::Loss(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     set(new_neural_network, new_dataset);
 }
@@ -40,7 +40,7 @@ const string& Loss::get_regularization_method() const
 }
 
 
-void Loss::set(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
     dataset = new_dataset;
@@ -179,7 +179,7 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
 
-    TensorView parameters(reinterpret_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
+    TensorView parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
     type penalty = 0.0f;
 
     if (regularization_method == "L1")
@@ -242,7 +242,7 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
     const VectorR& params_vec = neural_network->get_parameters();
 
     // Wrap vectors in views for hardware-agnostic utilities
-    TensorView parameters(reinterpret_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
+    TensorView parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
     TensorView gradient(reinterpret_cast<type*>(gradient_vec.data()), { static_cast<Index>(gradient_vec.size()) });
 
     if (regularization_method == "L1")
@@ -317,13 +317,13 @@ void Loss::write_regularization_XML(XMLPrinter& file_stream) const
 }
 
 
-BackPropagation::BackPropagation(const Index new_batch_size, const Loss* new_loss)
+BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss)
 {
     set(new_batch_size, new_loss);
 }
 
 
-void BackPropagation::set(const Index new_batch_size, const Loss* new_loss)
+void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 {
     batch_size = new_batch_size;
     loss = new_loss;
@@ -505,7 +505,7 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
 TensorView BackPropagation::get_output_gradients() const
 {
-    return {reinterpret_cast<type*>(output_gradients.data()), output_gradient_dimensions};
+    return {const_cast<type*>(output_gradients.data()), output_gradient_dimensions};
 }
 
 
@@ -541,7 +541,7 @@ type Loss::calculate_numerical_error() const
 
     neural_network->forward_propagate(batch.get_inputs(), forward_propagation);
 
-    BackPropagation back_propagation(samples_number, this);
+    BackPropagation back_propagation(samples_number, const_cast<Loss*>(this));
 
     calculate_error(batch, forward_propagation, back_propagation);
 

@@ -3522,18 +3522,18 @@ void Batch::print() const
          << "Input shape:" << input_shape << endl;
 
     if (input_shape.size() == 4)
-        cout << TensorMap4(reinterpret_cast<type*>(input_vector.data()),
+        cout << TensorMap4(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2],
                                            input_shape[3]);
     else if (input_shape.size() == 3)
-        cout << TensorMap3(reinterpret_cast<type*>(input_vector.data()),
+        cout << TensorMap3(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2]);
     else if (input_shape.size() == 2)
-        cout << MatrixMap(reinterpret_cast<type*>(input_vector.data()),
+        cout << MatrixMap(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1]);
 
@@ -3548,7 +3548,7 @@ void Batch::print() const
     cout << "Targets:" << endl
          << "Target shape:" << target_shape << endl;
 
-    cout << MatrixMap(reinterpret_cast<type*>(target_vector.data()),
+    cout << MatrixMap(const_cast<type*>(target_vector.data()),
                              target_shape[0],
                              target_shape[1]) << endl;
 }
@@ -3562,10 +3562,10 @@ bool Batch::is_empty() const
 
 vector<TensorView> Batch::get_inputs() const
 {
-    vector<TensorView> input_views = {{reinterpret_cast<type*>(input_vector.data()), input_shape}};
+    vector<TensorView> input_views = {{const_cast<type*>(input_vector.data()), input_shape}};
 
     if(!decoder_shape.empty())
-        input_views.insert(input_views.begin(), {reinterpret_cast<type*>(decoder_vector.data()), decoder_shape});
+        input_views.insert(input_views.begin(), {const_cast<type*>(decoder_vector.data()), decoder_shape});
 
     return input_views;
 }
@@ -3573,7 +3573,7 @@ vector<TensorView> Batch::get_inputs() const
 
 TensorView Batch::get_targets() const
 {
-    return {reinterpret_cast<type*>(target_vector.data()) , target_shape};
+    return {const_cast<type*>(target_vector.data()) , target_shape};
 }
 
 

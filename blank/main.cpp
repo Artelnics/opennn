@@ -8,7 +8,7 @@
 
 #include "../opennn/dataset.h"
 #include "../opennn/standard_networks.h"
-#include "../opennn/mean_squared_error.h"
+#include "../opennn/loss.h"
 #include "../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
@@ -43,7 +43,7 @@ int main()
 
         // Loss function
 
-        MeanSquaredError loss(&network, &dataset);
+        Loss loss(&network, &dataset);
 
         // Adam optimizer
 
