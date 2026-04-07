@@ -79,6 +79,12 @@ void add_xml_element_attribute(XMLPrinter& printer, const std::string& element_n
     printer.CloseElement();
 }
 
+void write_xml_properties(XMLPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props) {
+    for(const auto& [name, value] : props)
+        add_xml_element(printer, name, value);
+}
+
+
 float read_xml_type(const XMLElement* root, const std::string& element_name) {
     const XMLElement* el = root->FirstChildElement(element_name.c_str());
     return (el && el->GetText()) ? std::stof(el->GetText()) : 0.0f;
@@ -100,6 +106,24 @@ std::string read_xml_string(const XMLElement* root, const std::string& element_n
     const XMLElement* el = root->FirstChildElement(element_name.c_str());
     return (el && el->GetText()) ? std::string(el->GetText()) : "";
 }
+
+std::string read_xml_string_fallback(const XMLElement* root, std::initializer_list<std::string> names) {
+    for(const auto& name : names) {
+        const XMLElement* el = root->FirstChildElement(name.c_str());
+        if(el && el->GetText()) return std::string(el->GetText());
+    }
+    std::string all_names;
+    for(const auto& name : names) { if(!all_names.empty()) all_names += "/"; all_names += name; }
+    throw std::runtime_error("Element is nullptr: " + all_names);
+}
+
+
+const XMLElement* require_xml_element(const XMLElement* root, const std::string& element_name) {
+    const XMLElement* el = root->FirstChildElement(element_name.c_str());
+    if(!el) throw std::runtime_error(element_name + " element is nullptr.\n");
+    return el;
+}
+
 
 XMLDocument load_xml_file(const std::filesystem::path& file_name)
 {

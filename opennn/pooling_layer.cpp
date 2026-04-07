@@ -360,15 +360,17 @@ void Pooling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Pooling");
 
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "InputDimensions", shape_to_string(get_input_shape()));
-    add_xml_element(printer, "PoolHeight", to_string(get_pool_height()));
-    add_xml_element(printer, "PoolWidth", to_string(get_pool_width()));
-    add_xml_element(printer, "PoolingMethod", pooling_method);
-    add_xml_element(printer, "ColumnStride", to_string(get_column_stride()));
-    add_xml_element(printer, "RowStride", to_string(get_row_stride()));
-    add_xml_element(printer, "PaddingHeight", to_string(get_padding_height()));
-    add_xml_element(printer, "PaddingWidth", to_string(get_padding_width()));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"InputDimensions", shape_to_string(get_input_shape())},
+        {"PoolHeight", to_string(get_pool_height())},
+        {"PoolWidth", to_string(get_pool_width())},
+        {"PoolingMethod", pooling_method},
+        {"ColumnStride", to_string(get_column_stride())},
+        {"RowStride", to_string(get_row_stride())},
+        {"PaddingHeight", to_string(get_padding_height())},
+        {"PaddingWidth", to_string(get_padding_width())}
+    });
 
     printer.CloseElement();
 }
