@@ -70,9 +70,9 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
 
 void TrainingStrategy::set_loss(const string& new_loss)
 {
-    loss = Registry<Loss>::instance().create(new_loss);
+    loss = make_unique<Loss>(neural_network, dataset);
 
-    loss->set(neural_network, dataset);
+    loss->set_error(new_loss);
 
     if(optimizer){
         if(optimizer->get_name() == "QuasiNewtonMethod")

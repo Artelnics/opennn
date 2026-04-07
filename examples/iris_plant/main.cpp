@@ -44,19 +44,6 @@ int main()
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 
-        // Deployment
-
-        MatrixR input_vector(1, 4);
-        input_vector << 5.1, 3.5, 1.4, 0.2;
-
-        const MatrixR output_tensor = classification_network.calculate_outputs(input_vector);
-
-        cout << "Class probabilities: " << output_tensor << endl;
-
-        // Export
-
-        classification_network.save("iris_model.xml");
-
         return 0;
     }
     catch(const exception& e)

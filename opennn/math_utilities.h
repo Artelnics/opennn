@@ -626,7 +626,7 @@ inline void activation(TensorView& output, ActivationFunction func)
 
     case ActivationFunction::Softmax:
     {
-//        softmax(output);
+        //softmax(output);
         return;
     }
 

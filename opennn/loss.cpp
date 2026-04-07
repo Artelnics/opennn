@@ -230,7 +230,7 @@ void Loss::set_error(const string& new_name)
     if (new_name == "MeanSquaredError") set_error(Error::MeanSquaredError);
     else if (new_name == "NormalizedSquaredError") set_error(Error::NormalizedSquaredError);
     else if (new_name == "WeightedSquaredError") set_error(Error::WeightedSquaredError);
-    else if (new_name == "CrossEntropy") set_error(Error::CrossEntropy);
+    else if (new_name == "CrossEntropy" || new_name == "CrossEntropyError2d" || new_name == "CrossEntropyError3d") set_error(Error::CrossEntropy);
     else if (new_name == "MinkowskiError") set_error(Error::MinkowskiError);
     else throw runtime_error("Unknown loss method: " + new_name);
 }
