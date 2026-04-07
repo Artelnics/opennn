@@ -21,24 +21,6 @@ Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 }
 
 
-bool Loss::has_neural_network() const
-{
-    return neural_network;
-}
-
-
-bool Loss::has_dataset() const
-{
-    return dataset;
-}
-
-
-const string& Loss::get_regularization_method() const
-{
-    return regularization_method;
-}
-
-
 void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -47,30 +29,6 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
     regularization_method = "L2";
     set_error(Error::MeanSquaredError);
 
-}
-
-
-void Loss::set_neural_network(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
-}
-
-
-void Loss::set_dataset(Dataset* new_dataset)
-{
-    dataset = new_dataset;
-}
-
-
-void Loss::set_regularization(const string& new_regularization_method)
-{
-    regularization_method = new_regularization_method;
-}
-
-
-void Loss::set_regularization_weight(const type new_regularization_weight)
-{
-    regularization_weight = new_regularization_weight;
 }
 
 
@@ -167,11 +125,6 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     back_propagation.loss_value += calculate_regularization(params_vec);
 }
 
-
-const string& Loss::get_name() const
-{
-    return name;
-}
 
 
 type Loss::calculate_regularization(const VectorR& parameters_vec) const

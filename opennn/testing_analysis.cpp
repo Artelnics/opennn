@@ -25,32 +25,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
 }
 
 
-NeuralNetwork* TestingAnalysis::get_neural_network() const
-{
-    return neural_network;
-}
-
-
-Dataset* TestingAnalysis::get_dataset() const
-{
-    return dataset;
-}
-
-
-
-void TestingAnalysis::set_neural_network(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
-}
-
-
-void TestingAnalysis::set_dataset(Dataset* new_dataset)
-{
-    dataset = new_dataset;
-}
-
-
-
 
 
 void TestingAnalysis::check() const

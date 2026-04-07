@@ -26,22 +26,22 @@ public:
 
     TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    Dataset* get_dataset();
-    NeuralNetwork* get_neural_network() const;
+    Dataset* get_dataset() const { return dataset; }
+    NeuralNetwork* get_neural_network() const { return neural_network; }
 
-    Loss* get_loss() const;
-    Optimizer* get_optimization_algorithm() const;
+    Loss* get_loss() const { return loss.get(); }
+    Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
 
-    bool has_neural_network() const;
-    bool has_dataset() const;
+    bool has_neural_network() const { return neural_network; }
+    bool has_dataset() const { return dataset; }
 
     // Set
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
-    void set_dataset(Dataset*);
-    void set_neural_network(NeuralNetwork*);
+    void set_dataset(Dataset* ds) { dataset = ds; }
+    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
 
     void set_loss(const string&);
     void set_optimization_algorithm(const string&);

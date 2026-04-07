@@ -11,24 +11,6 @@
 namespace opennn
 {
 
-const string& Layer::get_label() const
-{
-    return label;
-}
-
-
-const string& Layer::get_name() const
-{
-    return name;
-}
-
-
-void Layer::set_label(const string& new_label)
-{
-    label = new_label;
-}
-
-
 void Layer::set_parameters_random()
 {
     for (auto& param : parameters)
@@ -93,13 +75,6 @@ vector<string> Layer::get_default_output_names() const
 }
 
 
-bool Layer::get_is_trainable() const
-{
-    return is_trainable;
-}
-
-
-
 type *Layer::link_parameters(type *pointer)
 {
     const vector<Shape> shapes = get_parameter_shapes();
@@ -125,18 +100,6 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 
     for(size_t i = 1; i < output_gradient_views.size(); i++)
         output_gradients.noalias() += output_gradient_views[i].as_vector();
-}
-
-
-Index Layer::get_inputs_number() const
-{
-    return get_input_shape().size();
-}
-
-
-Index Layer::get_outputs_number() const
-{
-    return get_output_shape().size();
 }
 
 

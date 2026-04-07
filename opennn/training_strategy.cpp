@@ -23,42 +23,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* n
 }
 
 
-Dataset* TrainingStrategy::get_dataset()
-{
-    return dataset;
-}
-
-
-NeuralNetwork* TrainingStrategy::get_neural_network() const
-{
-    return neural_network;
-}
-
-
-Loss* TrainingStrategy::get_loss() const
-{
-    return loss.get();
-}
-
-
-Optimizer* TrainingStrategy::get_optimization_algorithm() const
-{
-    return optimizer.get();
-}
-
-
-bool TrainingStrategy::has_neural_network() const
-{
-    return neural_network;
-}
-
-
-bool TrainingStrategy::has_dataset() const
-{
-    return dataset;
-}
-
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -88,18 +52,6 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
     optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
 
     optimizer->set(loss.get());
-}
-
-
-void TrainingStrategy::set_dataset(Dataset* new_dataset)
-{
-    dataset = new_dataset;
-}
-
-
-void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
 }
 
 

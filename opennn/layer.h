@@ -32,14 +32,14 @@ public:
 
     virtual ~Layer() = default;
 
-    const string& get_label() const;
+    const string& get_label() const { return label; }
 
-    const string& get_name() const;
+    const string& get_name() const { return name; }
 
     virtual void set_input_shape(const Shape&);
     virtual void set_output_shape(const Shape&);
 
-    void set_label(const string&);
+    void set_label(const string& new_label) { label = new_label; }
 
     virtual void set_parameters_random();
 
@@ -69,9 +69,9 @@ public:
 
     virtual Shape get_output_shape() const = 0;
 
-    Index get_inputs_number() const;
+    Index get_inputs_number() const { return get_input_shape().size(); }
 
-    Index get_outputs_number() const;
+    Index get_outputs_number() const { return get_output_shape().size(); }
 
     // Forward propagation
 
@@ -93,7 +93,7 @@ public:
 
     vector<string> get_default_output_names() const;
 
-    bool get_is_trainable() const;
+    bool get_is_trainable() const { return is_trainable; }
 
     type* link_parameters(type* pointer);
 

@@ -79,13 +79,13 @@ public:
 
     // Get
 
-    NeuralNetwork* get_neural_network() const;
-    Dataset* get_dataset() const;
+    NeuralNetwork* get_neural_network() const { return neural_network; }
+    Dataset* get_dataset() const { return dataset; }
 
     // Set
 
-    void set_neural_network(NeuralNetwork*);
-    void set_dataset(Dataset*);
+    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
+    void set_dataset(Dataset* ds) { dataset = ds; }
 
     // Checking
 
