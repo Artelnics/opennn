@@ -541,8 +541,6 @@ void Pooling::from_XML(const XMLDocument& document)
         throw runtime_error("Pooling layer element is nullptr.\batch_index");
 
     const string inputDimsStr = read_xml_string(pooling_layer_element, "InputDimensions");
-    cout << "[Pooling::from_XML] InputDimensions='" << inputDimsStr << "'" << endl;
-
 
     set_label(read_xml_string(pooling_layer_element, "Label"));
     set_input_shape(string_to_shape(read_xml_string(pooling_layer_element, "InputDimensions")));

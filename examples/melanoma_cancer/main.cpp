@@ -53,10 +53,9 @@ int main()
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
         adam->set_display_period(1);
         adam->set_batch_size(16);
-        adam->set_maximum_epochs(10);
+        adam->set_maximum_epochs(25);
 
         training_strategy.train_cuda();
-
 
         // Testing analysis
 

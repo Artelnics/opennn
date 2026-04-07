@@ -95,12 +95,13 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 
     ImageClassificationNetwork neural_network({height, width, channels}, { complexity }, { outputs_number });
  
-    EXPECT_EQ(neural_network.get_layers_number(), 5);
+    EXPECT_EQ(neural_network.get_layers_number(), 6);
     EXPECT_EQ(neural_network.get_layer(0)->get_name(), "Scaling4d");
     EXPECT_EQ(neural_network.get_layer(1)->get_name(), "Convolutional");
     EXPECT_EQ(neural_network.get_layer(2)->get_name(), "Pooling");
     EXPECT_EQ(neural_network.get_layer(3)->get_name(), "Flatten4d");
     EXPECT_EQ(neural_network.get_layer(4)->get_name(), "Dense2d");
+    EXPECT_EQ(neural_network.get_layer(5)->get_name(), "Dense2d");
 }
 
 

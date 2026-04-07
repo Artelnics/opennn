@@ -229,9 +229,6 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
     {
-        cout << "Epoch: " << epoch << endl;
-
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);

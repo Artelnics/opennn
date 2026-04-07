@@ -82,8 +82,6 @@ public:
 
     void set(const Shape& new_input_shape)
     {
-        cout<<"Rank"<<Rank<<endl;
-        cout<<"new_input_shape"<<new_input_shape.size()<<endl;
         if (new_input_shape.size() != Rank - 1)
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 

@@ -100,7 +100,6 @@ Index Variable::get_categories_number() const
 // XML Serialization
 void Variable::from_XML(const XMLDocument& document)
 {
-    cout<<"FROM_XML CML SERIALIZATION)"<<endl;
     name = read_xml_string(document.FirstChildElement(), "Name");
     set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
     set_role(read_xml_string(document.FirstChildElement(), "Role"));
@@ -108,8 +107,6 @@ void Variable::from_XML(const XMLDocument& document)
 
     if (type == VariableType::Categorical)
     {
-        cout<<"ENTRA en CATEGORICAL"<<endl;
-
         const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
         categories = get_tokens(categories_text, ";");
     }

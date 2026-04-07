@@ -684,10 +684,8 @@ void Convolutional::from_XML(const XMLDocument& document)
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
     const string inputDimsStr = read_xml_string(convolutional_layer_element, "InputDimensions");
-    cout << "[Convolutional::from_XML] InputDimensions='" << inputDimsStr << "'" << endl;
 
     const string strideStr = read_xml_string(convolutional_layer_element, "StrideDimensions");
-    cout << "[Convolutional::from_XML] StrideDimensions='" << strideStr << "'" << endl;
 
     set_label(read_xml_string(convolutional_layer_element, "Label"));
     set_input_shape(string_to_shape(inputDimsStr));

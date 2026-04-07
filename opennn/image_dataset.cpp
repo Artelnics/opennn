@@ -259,7 +259,6 @@ void ImageDataset::set_random_vertical_translation_maximum(const type new_random
 
 void ImageDataset::to_XML(XMLPrinter& printer) const
 {
-    cout<<"1a"<<endl;
     printer.OpenElement("ImageDataset");
 
     printer.OpenElement("DataSource");
@@ -282,17 +281,14 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Codification", get_codification_string());
 
     printer.CloseElement();
-cout<<"2a"<<endl;
+
     variables_to_XML(printer);
-cout<<"3a"<<endl;
+
     samples_to_XML(printer);
-cout<<"4a"<<endl;
+
     add_xml_element(printer, "Display", to_string(display));
-cout<<"5a"<<endl;
+
     printer.CloseElement();
-cout<<"6a"<<endl;
-
-
 }
 
 

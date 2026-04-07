@@ -38,6 +38,7 @@
          <NeuronsNumber>1</NeuronsNumber>
          <Activation>HyperbolicTangent</Activation>
          <BatchNormalization>false</BatchNormalization>
+         <DropoutRate>0.000000</DropoutRate>
       </Dense2d>
       <Dense2d>
          <Label>approximation_layer</Label>
@@ -45,6 +46,7 @@
          <NeuronsNumber>3</NeuronsNumber>
          <Activation>Linear</Activation>
          <BatchNormalization>false</BatchNormalization>
+         <DropoutRate>0.000000</DropoutRate>
       </Dense2d>
       <Unscaling>
          <NeuronsNumber>3</NeuronsNumber>
@@ -92,5 +94,5 @@
       <Output Index="3">output_3</Output>
    </Outputs>
    <Display>1</Display>
-   <Parameters>0 0 0 0 0 0 0 0 0.3812433481216431 -0.7486003637313843 -0.01747423410415649 -0.259113609790802 -0.005976319313049316 0 0 0 0 0 0 0 0 0 0 0 -0.1103723049163818 0.6025896072387695 -0.8747032880783081 0 0 0 0 0 </Parameters>
+   <Parameters>0 0 0 0 0 0 0 0 0.6431425809860229 0.1926859617233276 -0.3346401453018188 -0.1273961663246155 0.3503750562667847 0 0 0 0 0 0 0 0 0 0 0 0.2720129489898682 -0.2607494592666626 -0.5467162728309631 0 0 0 0 0 </Parameters>
 </NeuralNetwork>

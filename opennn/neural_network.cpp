@@ -410,10 +410,7 @@ Index NeuralNetwork::get_inputs_number() const
 
 
     const Shape input_shape = layers[0]->get_input_shape();
-    cout << "input_shape rank: " << input_shape.rank << endl;
-    for(size_t i = 0; i < input_shape.rank; i++)
-        cout << "input_shape[" << i << "] = " << input_shape.shape[i] << endl;
-    cout << "count: " << input_shape.count() << endl;
+
     return input_shape.count();
 }
 
@@ -971,18 +968,11 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 }
 
 
-
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
-    cout << "[to_XML] ENTER" << endl;
-
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
-
-    cout << "[to_XML] inputs=" << inputs_number
-         << " layers=" << layers_number
-         << " outputs=" << outputs_number << endl;
 
     vector<string> input_names = get_input_feature_names();
     while (input_names.size() < static_cast<size_t>(inputs_number))
@@ -992,9 +982,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     while (output_names.size() < static_cast<size_t>(outputs_number))
         output_names.push_back("output_" + to_string(output_names.size() + 1));
 
-    cout << "[to_XML] input_names.size=" << input_names.size()
-         << " output_names.size=" << output_names.size() << endl;
-
     printer.OpenElement("NeuralNetwork");
 
     // Inputs
@@ -1003,63 +990,42 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for(Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
     printer.CloseElement();
-    cout << "[to_XML] Inputs section done" << endl;
 
     // Layers
     printer.OpenElement("Layers");
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    cout << "[to_XML] Starting layers loop, layers_number=" << layers_number << endl;
     for(Index i = 0; i < layers_number; i++)
-    {
-        cout << "[to_XML] Layer " << i
-             << " name=" << layers[i]->get_name();
         layers[i]->to_XML(printer);
-        cout << "[to_XML] Layer " << i << " serialized OK" << endl;
-    }
-    cout << "[to_XML] Layers loop done" << endl;
-
-    // LayerInputIndices
-    cout << "[to_XML] layer_input_indices.size=" << layer_input_indices.size()
-         << " layers_number=" << layers_number << endl;
-
-    if(Index(layer_input_indices.size()) != layers_number)
-        cout << "[to_XML] *** WARNING MISMATCH layer_input_indices vs layers_number ***" << endl;
 
     printer.OpenElement("LayerInputIndices");
     for(Index i = 0; i < Index(layer_input_indices.size()); i++)
     {
-        cout << "[to_XML] indices[" << i << "]="
-             << vector_to_string(layer_input_indices[i]) << endl;
         add_xml_element_attribute(printer, "LayerInputsIndices",
                                   vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
     }
     printer.CloseElement();
     printer.CloseElement(); // Layers
-    cout << "[to_XML] LayerInputIndices done" << endl;
 
     // Outputs
     printer.OpenElement("Outputs");
     const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
-    cout << "[to_XML] outputs_count=" << outputs_count << endl;
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
     for(Index i = 0; i < outputs_count; i++)
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
     printer.CloseElement();
-    cout << "[to_XML] Outputs done" << endl;
 
     add_xml_element(printer, "Display", to_string(display));
 
     // Parameters
     printer.OpenElement("Parameters");
-    cout << "[to_XML] parameters_number=" << get_parameters_number() << endl;
     if(get_parameters_number() > 0)
         printer.PushText(vector_to_string(parameters, " ").c_str());
     printer.CloseElement();
 
     printer.CloseElement(); // NeuralNetwork
-    cout << "[to_XML] EXIT OK" << endl;
 }
+
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {

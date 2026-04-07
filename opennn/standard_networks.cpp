@@ -210,7 +210,8 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
 
-    const Shape hidden_shape = { get_output_shape()[0] };
+    const Index flatten_size = get_output_shape()[0];
+    const Shape hidden_shape = { min(flatten_size, Index(128)) };
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                     hidden_shape,
                                     "RectifiedLinear",
