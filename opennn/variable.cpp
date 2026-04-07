@@ -13,13 +13,11 @@
 namespace opennn
 {
 
-// Constructor
 Variable::Variable(const string& new_name, const string& new_variable_role, const VariableType& new_type, const string& new_scaler, const vector<string>& new_categories)
 {
     set(new_name, new_variable_role, new_type, new_scaler, new_categories);
 }
 
-// Set all members
 void Variable::set(const string& new_name, const string& new_variable_role, const VariableType& new_type, const string& new_scaler, const vector<string>& new_categories)
 {
     name = new_name;
@@ -29,17 +27,6 @@ void Variable::set(const string& new_name, const string& new_variable_role, cons
     categories = new_categories;
 }
 
-void Variable::set_scaler(const string& new_scaler)
-{
-    scaler = new_scaler;
-}
-
-void Variable::set_role(const string& new_variable_role)
-{
-    role = new_variable_role;
-}
-
-// Convert string to VariableType enum
 void Variable::set_type(const string& new_variable_type)
 {
     if (new_variable_type == "Numeric")
@@ -58,12 +45,6 @@ void Variable::set_type(const string& new_variable_type)
         throw runtime_error("Variable type is not valid (" + new_variable_type + ").\n");
 }
 
-void Variable::set_categories(const vector<string>& new_categories)
-{
-    categories = new_categories;
-}
-
-// Convert VariableType enum to string
 string Variable::get_type_string() const
 {
     switch (type)
@@ -85,20 +66,13 @@ string Variable::get_type_string() const
     }
 }
 
-const string& Variable::get_role() const
-{
-    return role;
-}
-
 Index Variable::get_categories_number() const
 {
     return static_cast<Index>(categories.size());
 }
 
-// XML Serialization
 void Variable::from_XML(const XMLDocument& document)
 {
-    cout<<"FROM_XML CML SERIALIZATION)"<<endl;
     name = read_xml_string(document.FirstChildElement(), "Name");
     set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
     set_role(read_xml_string(document.FirstChildElement(), "Role"));
@@ -106,8 +80,6 @@ void Variable::from_XML(const XMLDocument& document)
 
     if (type == VariableType::Categorical)
     {
-        cout<<"ENTRA en CATEGORICAL"<<endl;
-
         const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
@@ -123,8 +95,6 @@ void Variable::to_XML(XMLPrinter& printer) const
     if (type == VariableType::Categorical || type == VariableType::Binary)
         add_xml_element(printer, "Categories", vector_to_string(categories, ";"));
 }
-
-// Console output
 
 vector<string> Variable::get_names() const
 {

@@ -3322,8 +3322,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
         num_input_features = dataset->get_features_number("Input");
         const Index input_size = samples_number * num_input_features;
 
-        input_shape = { samples_number };
-        input_shape.insert(input_shape.end(), dataset_input_shape.begin(), dataset_input_shape.end());
+        input_shape = Shape({samples_number}).append(dataset_input_shape);
 
         if (input_size > inputs_host_allocated_size)
         {
@@ -3338,8 +3337,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
     {
         const Index num_decoder_features = dataset->get_features_number("Decoder");
 
-        decoder_shape = { samples_number };
-        decoder_shape.insert(decoder_shape.end(), dataset_decoder_shape.begin(), dataset_decoder_shape.end());
+        decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
 
         const Index decoder_size = samples_number * num_decoder_features;
 
@@ -3357,8 +3355,7 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
         num_target_features = dataset->get_features_number("Target");
         const Index target_size = samples_number * num_target_features;
 
-        target_shape = { samples_number };
-        target_shape.insert(target_shape.end(), dataset_target_shape.begin(), dataset_target_shape.end());
+        target_shape = Shape({samples_number}).append(dataset_target_shape);
 
         if (target_size > targets_host_allocated_size)
         {

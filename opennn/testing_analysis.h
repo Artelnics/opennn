@@ -215,14 +215,6 @@ public:
 
     void save_misclassified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_well_classified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
-
-    void save_misclassified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
-
     // Forecasting
 
     vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;

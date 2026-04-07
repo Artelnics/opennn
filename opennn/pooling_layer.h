@@ -50,35 +50,35 @@ public:
         return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};
     }
 
-    Shape get_input_shape() const override;
+    Shape get_input_shape() const override { return input_shape; }
     Shape get_output_shape() const override;
 
-    Index get_input_height() const;
-    Index get_input_width() const;
+    Index get_input_height() const { return input_shape[0]; }
+    Index get_input_width() const { return input_shape[1]; }
 
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_channels_number() const;
+    Index get_channels_number() const { return input_shape[2]; }
 
-    Index get_padding_height() const;
-    Index get_padding_width() const;
+    Index get_padding_height() const { return padding_height; }
+    Index get_padding_width() const { return padding_width; }
 
-    Index get_row_stride() const;
-    Index get_column_stride() const;
+    Index get_row_stride() const { return row_stride; }
+    Index get_column_stride() const { return column_stride; }
 
-    Index get_pool_height() const;
-    Index get_pool_width() const;
+    Index get_pool_height() const { return pool_height; }
+    Index get_pool_width() const { return pool_width; }
 
-    string get_pooling_method() const;
+    string get_pooling_method() const { return pooling_method; }
 
     void set_input_shape(const Shape&) override;
 
-    void set_padding_height(const Index);
-    void set_padding_width(const Index);
+    void set_padding_height(const Index h) { padding_height = h; }
+    void set_padding_width(const Index w) { padding_width = w; }
 
-    void set_row_stride(const Index);
-    void set_column_stride(const Index);
+    void set_row_stride(const Index s) { row_stride = s; }
+    void set_column_stride(const Index s) { column_stride = s; }
 
     void set_pool_size(const Index, Index);
 

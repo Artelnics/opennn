@@ -27,12 +27,6 @@ Shape Pooling3d::get_output_shape() const
 }
 
 
-Pooling3d::PoolingMethod Pooling3d::get_pooling_method() const
-{
-    return pooling_method;
-}
-
-
 string Pooling3d::write_pooling_method() const
 {
     return pooling_method == PoolingMethod::MaxPooling ? "MaxPooling" : "AveragePooling";
@@ -47,17 +41,6 @@ void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooli
     set_label(new_label);
 }
 
-
-void Pooling3d::set_input_shape(const Shape& new_input_shape)
-{
-    input_shape = new_input_shape;
-}
-
-
-void Pooling3d::set_pooling_method(const PoolingMethod& new_pooling_method)
-{
-    pooling_method = new_pooling_method;
-}
 
 
 void Pooling3d::set_pooling_method(const string& new_pooling_method)

@@ -11,6 +11,7 @@
 #include "optimizer.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
+#include "string_utilities.h"
 
 namespace opennn
 {

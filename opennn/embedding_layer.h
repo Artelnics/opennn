@@ -22,9 +22,9 @@ public:
               Index = 0,
               const string& = "embedding_layer");
 
-    Index get_vocabulary_size() const;
-    Index get_sequence_length() const;
-    Index get_embedding_dimension() const;
+    Index get_vocabulary_size() const { return parameters[Weights].shape[0]; }
+    Index get_sequence_length() const { return input_shape.empty() ? 0 : input_shape[0]; }
+    Index get_embedding_dimension() const { return embedding_dimension; }
 
     Shape get_output_shape() const override;
 
@@ -45,10 +45,10 @@ public:
              Index = 0,
              const string & = "embedding_layer");
 
-    void set_scale_embedding(bool);
-    void set_add_positional_encoding(bool);
+    void set_scale_embedding(bool v) { scale_embedding = v; }
+    void set_add_positional_encoding(bool v) { add_positional_encoding = v; }
 
-    void set_dropout_rate(const type);
+    void set_dropout_rate(const type r) { dropout_rate = r; }
 
     void set_parameters_random() override;
     void set_parameters_glorot() override;

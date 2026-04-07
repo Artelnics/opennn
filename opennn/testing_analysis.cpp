@@ -186,11 +186,13 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
     {
+        const type range = abs(output_maximums(i) - output_minimums(i));
+
         for(Index j = 0; j < testing_samples_number; j++)
         {
             error_data(j, 0, i) = absolute_errors(j,i);
-            error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
-            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
+            error_data(j, 1, i) = absolute_errors(j,i) / range;
+            error_data(j, 2, i) = error_data(j, 1, i) * type(100.0);
         }
     }
 
@@ -448,7 +450,6 @@ VectorR TestingAnalysis::calculate_errors(const string& sample_role) const
 
 VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
 {
-    const Index samples_number = dataset->get_samples_number(sample_role);
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
     TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
@@ -701,27 +702,13 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     if(total_negatives == 0)
         throw runtime_error("Number of negative samples (" + to_string(total_negatives) + ") must be greater than zero.\n");
 
-    const Index maximum_points_number = 100;
-
-    Index points_number = maximum_points_number;
+    const Index points_number = 100;
 
     if(targets.cols() != 1)
         throw runtime_error("Number of of target variables (" +  to_string(targets.cols()) + ") must be one.\n");
 
     if(outputs.cols() != 1)
-        throw runtime_error("Number of of output variables (" + to_string(targets.cols()) + ") must be one.\n");
-
-    // Sort by ascending values of outputs vector
-
-    VectorI sorted_indices(outputs.rows());
-
-    Index* sorted_indices_data = sorted_indices.data();
-
-    iota(sorted_indices_data, sorted_indices_data + sorted_indices.size(), 0);
-
-    stable_sort(sorted_indices.data(),
-                sorted_indices_data + sorted_indices.size(),
-                [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+        throw runtime_error("Number of of output variables (" + to_string(outputs.cols()) + ") must be one.\n");
 
     MatrixR roc_curve(points_number + 1, 3);
     roc_curve.setZero();
@@ -807,7 +794,7 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR&
     const type area_under_curve = calculate_area_under_curve(roc_curve);
 
     const type Q_1 = area_under_curve/(type(2.0) - area_under_curve);
-    const type Q_2 = (type(2.0) *area_under_curve*area_under_curve)/(type(1) *area_under_curve);
+    const type Q_2 = (type(2.0) * area_under_curve * area_under_curve) / (type(1) + area_under_curve);
 
     const type confidence_limit = type(type(1.64485)*sqrt((area_under_curve*(type(1) - area_under_curve)
                                                              + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
@@ -1076,14 +1063,13 @@ VectorR TestingAnalysis::calculate_multiple_classification_precision() const
 
     const MatrixI confusion_matrix = calculate_confusion(targets, outputs);
 
-    const type total_sum = static_cast<type>(confusion_matrix.sum());
+    const Index n = confusion_matrix.rows() - 1;
+    const type total = static_cast<type>(confusion_matrix(n, n));
 
-    const type diagonal_sum = static_cast<type>(confusion_matrix.diagonal().sum());
+    const type diagonal_sum = static_cast<type>(confusion_matrix.topLeftCorner(n, n).diagonal().sum());
 
-    const type off_diagonal_sum = total_sum - diagonal_sum;
-
-    multiple_classification_tests(0) = diagonal_sum/type(total_sum);
-    multiple_classification_tests(1) = off_diagonal_sum/type(total_sum);
+    multiple_classification_tests(0) = diagonal_sum / total;
+    multiple_classification_tests(1) = (total - diagonal_sum) / total;
 
     return multiple_classification_tests;
 }
@@ -1093,7 +1079,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 {
     const MatrixI confusion = calculate_confusion();
 
-    const Index variables_number = confusion.rows();
+    const Index classes_number = confusion.rows() - 1;
 
     ofstream file(file_name);
 
@@ -1101,22 +1087,22 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 
     file << ",";
 
-    for(Index i = 0; i < confusion.rows(); i++)
+    for(Index i = 0; i < classes_number; i++)
     {
         file << target_variable_names[i];
 
-        if(i != Index(target_variable_names.size()) - 1)
+        if(i != classes_number - 1)
             file << ",";
     }
 
     file << endl;
 
-    for(Index i = 0; i < variables_number; i++)
+    for(Index i = 0; i < classes_number; i++)
     {
         file << target_variable_names[i] << ",";
 
-        for(Index j = 0; j < variables_number; j++)
-            j == variables_number - 1
+        for(Index j = 0; j < classes_number; j++)
+            j == classes_number - 1
                 ? file << confusion(i, j) << endl
                 : file << confusion(i, j) << ",";
     }
@@ -1301,34 +1287,6 @@ void TestingAnalysis::save_misclassified_samples_statistics(const MatrixR& targe
                                                             const vector<string>& labels, const filesystem::path& file_name) const
 {
     save_classified_samples_statistics_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
-}
-
-
-void TestingAnalysis::save_well_classified_samples_probability_histogram(const MatrixR& targets, const MatrixR& outputs,
-                                                                         const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_probability_histogram(calculate_well_classified_samples(targets, outputs, labels), file_name);
-}
-
-
-void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<string, 2>& samples,
-                                                                         const filesystem::path& file_name) const
-{
-    save_classified_samples_probability_histogram(samples, file_name);
-}
-
-
-void TestingAnalysis::save_misclassified_samples_probability_histogram(const MatrixR& targets, const MatrixR& outputs,
-                                                                       const vector<string>& labels, const filesystem::path& file_name) const
-{
-    save_classified_samples_probability_histogram(calculate_misclassified_samples(targets, outputs, labels), file_name);
-}
-
-
-void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<string, 2>& samples,
-                                                                       const filesystem::path& file_name) const
-{
-    save_classified_samples_probability_histogram(samples, file_name);
 }
 
 

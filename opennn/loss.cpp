@@ -350,8 +350,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     errors.resize(batch_size, outputs_number);
 
-    output_gradient_dimensions = { batch_size };
-    output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
+    output_gradient_dimensions = Shape({batch_size}).append(output_shape);
 
     const Index total_output_elements = output_shape.size() * batch_size;
     output_gradients.resize(total_output_elements);

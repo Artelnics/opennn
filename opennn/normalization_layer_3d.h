@@ -21,8 +21,8 @@ public:
     Normalization3d(const Shape& = Shape({0,0}),
                     const string& = "normalization_layer_3d");
 
-    Index get_sequence_length() const;
-    Index get_embedding_dimension() const;
+    Index get_sequence_length() const { return sequence_length; }
+    Index get_embedding_dimension() const { return parameters[Gammas].shape[0]; }
 
     Shape get_input_shape() const override;
     Shape get_output_shape() const override;

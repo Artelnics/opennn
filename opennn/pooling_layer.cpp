@@ -43,24 +43,6 @@ Shape Pooling::get_output_shape() const
 }
 
 
-Index Pooling::get_input_height() const
-{
-    return input_shape[0];
-}
-
-
-Index Pooling::get_input_width() const
-{
-    return input_shape[1];
-}
-
-
-Index Pooling::get_channels_number() const
-{
-    return input_shape[2];
-}
-
-
 Index Pooling::get_output_height() const
 {
     return (get_input_height() - pool_height + 2 * padding_height) / row_stride + 1;
@@ -70,54 +52,6 @@ Index Pooling::get_output_height() const
 Index Pooling::get_output_width() const
 {
     return (get_input_width() - pool_width + 2 * padding_width) / column_stride + 1;
-}
-
-
-Index Pooling::get_padding_height() const
-{
-    return padding_height;
-}
-
-
-Index Pooling::get_padding_width() const
-{
-    return padding_width;
-}
-
-
-Index Pooling::get_row_stride() const
-{
-    return row_stride;
-}
-
-
-Index Pooling::get_column_stride() const
-{
-    return column_stride;
-}
-
-
-Index Pooling::get_pool_height() const
-{
-    return pool_height;
-}
-
-
-Index Pooling::get_pool_width() const
-{
-    return pool_width;
-}
-
-
-string Pooling::get_pooling_method() const
-{
-    return pooling_method;
-}
-
-
-Shape Pooling::get_input_shape() const
-{
-    return input_shape;
 }
 
 
@@ -189,30 +123,6 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
         throw runtime_error("Input shape must be 3");
 
     input_shape = new_input_shape;
-}
-
-
-void Pooling::set_padding_height(const Index new_padding_height)
-{
-    padding_height = new_padding_height;
-}
-
-
-void Pooling::set_padding_width(const Index new_padding_width)
-{
-    padding_width = new_padding_width;
-}
-
-
-void Pooling::set_row_stride(const Index new_row_stride)
-{
-    row_stride = new_row_stride;
-}
-
-
-void Pooling::set_column_stride(const Index new_column_stride)
-{
-    column_stride = new_column_stride;
 }
 
 

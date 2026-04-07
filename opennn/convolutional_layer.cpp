@@ -36,12 +36,6 @@ Convolutional::Convolutional(const Shape& new_input_shape,
 }
 
 
-bool Convolutional::get_batch_normalization() const
-{
-    return batch_normalization;
-}
-
-
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
@@ -130,12 +124,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-ActivationFunction Convolutional::get_activation_function() const
-{
-    return activation_function;
-}
-
-
 Index Convolutional::get_output_height() const
 {
     return (convolution_type == "Same")
@@ -155,48 +143,6 @@ Index Convolutional::get_output_width() const
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), get_kernels_number() };
-}
-
-
-string Convolutional::get_convolution_type() const
-{
-    return convolution_type;
-}
-
-
-Index Convolutional::get_column_stride() const
-{
-    return column_stride;
-}
-
-
-Index Convolutional::get_row_stride() const
-{
-    return row_stride;
-}
-
-
-Index Convolutional::get_kernel_height() const
-{
-    return parameters[Weights].shape[1];
-}
-
-
-Index Convolutional::get_kernel_width() const
-{
-    return parameters[Weights].shape[2];
-}
-
-
-Index Convolutional::get_kernel_channels() const
-{
-    return parameters[Weights].shape[3];
-}
-
-
-Index Convolutional::get_kernels_number() const
-{
-    return parameters[Weights].shape[0];
 }
 
 

@@ -477,6 +477,7 @@ MatrixR Loss::calculate_numerical_hessian()
 
     return H;
 */
+    return {};
 }
 
 /*
@@ -683,6 +684,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     return results;
 */
+    return {};
 }
 
 

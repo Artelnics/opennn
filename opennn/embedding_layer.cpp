@@ -24,26 +24,6 @@ Embedding::Embedding(const Shape& new_input_shape,
 }
 
 
-Index Embedding::get_vocabulary_size() const
-{
-    return parameters[Weights].shape[0];
-}
-
-
-Index Embedding::get_sequence_length() const
-{
-    return input_shape.empty()
-        ? 0
-        : input_shape[0];
-}
-
-
-Index Embedding::get_embedding_dimension() const
-{
-    return embedding_dimension;
-}
-
-
 Shape Embedding::get_output_shape() const
 {
     return {get_sequence_length(), embedding_dimension};
@@ -87,22 +67,6 @@ void Embedding::set(const Index new_vocabulary_size,
 #endif
 }
 
-void Embedding::set_scale_embedding(bool new_scale_embedding)
-{
-    scale_embedding = new_scale_embedding;
-}
-
-
-void Embedding::set_add_positional_encoding(bool new_add_positional_encoding)
-{
-    add_positional_encoding = new_add_positional_encoding;
-}
-
-
-void Embedding::set_dropout_rate(const type new_dropout_rate)
-{
-    dropout_rate = new_dropout_rate;
-}
 
 
 void Embedding::set_parameters_random()

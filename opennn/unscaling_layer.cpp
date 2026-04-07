@@ -37,17 +37,6 @@ Shape Unscaling::get_output_shape() const
 }
 
 
-VectorR Unscaling::get_minimums() const
-{
-    return minimums;
-}
-
-
-VectorR Unscaling::get_maximums() const
-{
-    return maximums;
-}
-
 
 
 string Unscaling::get_expression(const vector<string>& new_input_names,

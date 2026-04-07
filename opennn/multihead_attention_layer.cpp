@@ -50,30 +50,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
 }
 
 
-Index MultiHeadAttention::get_query_sequence_length() const
-{
-    return query_sequence_length;
-}
-
-
-Index MultiHeadAttention::get_source_sequence_length() const
-{
-    return source_sequence_length;
-}
-
-
-Index MultiHeadAttention::get_embedding_dimension() const
-{
-    return input_shape.back();
-}
-
-
-Index MultiHeadAttention::get_heads_number() const
-{
-    return heads_number;
-}
-
-
 type MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
@@ -154,11 +130,6 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     }
 }
 
-
-void MultiHeadAttention::set_dropout_rate(const type new_dropout_rate)
-{
-    dropout_rate = new_dropout_rate;
-}
 
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
