@@ -15,6 +15,9 @@
 namespace opennn
 {
 
+constexpr float SELU_ALPHA = 1.6732632423543772848170429916717f;
+constexpr float SELU_LAMBDA = 1.0507009873554804934193349852946f;
+
 enum class ActivationFunction{
     Linear,
     Sigmoid,
@@ -617,10 +620,7 @@ inline void activation(TensorView& output, ActivationFunction func)
 
     case ActivationFunction::ScaledExponentialLinear:
     {
-        const float alpha = 1.6732632423543772848170429916717f;
-        const float lambda = 1.0507009873554804934193349852946f;
-
-        arr = lambda * (arr > 0.0f).select(arr, alpha * (arr.exp() - 1.0f));
+        arr = SELU_LAMBDA * (arr > 0.0f).select(arr, SELU_ALPHA * (arr.exp() - 1.0f));
         return;
     }
 
@@ -695,10 +695,7 @@ inline void activation_gradient(const TensorView& outputs,
 
     case ActivationFunction::ScaledExponentialLinear:
     {
-        const float alpha = 1.6732632423543772848170429916717f;
-        const float lambda = 1.0507009873554804934193349852946f;
-
-        dx = (y > 0.0f).select(lambda * dy, (y + (alpha * lambda)) * dy);
+        dx = (y > 0.0f).select(SELU_LAMBDA * dy, (y + (SELU_ALPHA * SELU_LAMBDA)) * dy);
         return;
     }
 
@@ -878,44 +875,39 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
     const size_t rank = input_A.get_rank();
 
 #ifndef CUDA
+    auto gemm = [&](const MatrixMap& A, const MatrixMap& B, MatrixMap& C)
+    {
+        if (!transpose_A && !transpose_B)
+            C.noalias() = alpha * (A * B) + beta * C;
+        else if (transpose_A && !transpose_B)
+            C.noalias() = alpha * (A.transpose() * B) + beta * C;
+        else if (!transpose_A && transpose_B)
+            C.noalias() = alpha * (A * B.transpose()) + beta * C;
+        else
+            C.noalias() = alpha * (A.transpose() * B.transpose()) + beta * C;
+    };
+
     if (rank <= 2)
     {
-        const auto matrix_A = input_A.as_matrix();
-        const auto matrix_B = input_B.as_matrix();
+        auto matrix_A = input_A.as_matrix();
+        auto matrix_B = input_B.as_matrix();
         auto matrix_C = output_C.as_matrix();
-
-        if (!transpose_A && !transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A * matrix_B) + beta * matrix_C;
-        else if (transpose_A && !transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B) + beta * matrix_C;
-        else if (!transpose_A && transpose_B)
-            matrix_C.noalias() = alpha * (matrix_A * matrix_B.transpose()) + beta * matrix_C;
-        else
-            matrix_C.noalias() = alpha * (matrix_A.transpose() * matrix_B.transpose()) + beta * matrix_C;
+        gemm(matrix_A, matrix_B, matrix_C);
     }
     else
     {
-        // For Rank 3 or 4, we loop over the outer dimensions (batch/heads) on CPU
-        const Index outer_dimensions_count = input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]);
+        const Index outer = input_A.size() / (input_A.shape[rank - 2] * input_A.shape[rank - 1]);
         const Index size_A = input_A.shape[rank - 2] * input_A.shape[rank - 1];
         const Index size_B = input_B.shape[rank - 2] * input_B.shape[rank - 1];
         const Index size_C = output_C.shape[rank - 2] * output_C.shape[rank - 1];
 
 #pragma omp parallel for
-        for (Index i = 0; i < outer_dimensions_count; ++i)
+        for (Index i = 0; i < outer; ++i)
         {
-            const MatrixMap mat_A(input_A.data + i * size_A, input_A.shape[rank - 2], input_A.shape[rank - 1]);
-            const MatrixMap mat_B(input_B.data + i * size_B, input_B.shape[rank - 2], input_B.shape[rank - 1]);
+            MatrixMap mat_A(input_A.data + i * size_A, input_A.shape[rank - 2], input_A.shape[rank - 1]);
+            MatrixMap mat_B(input_B.data + i * size_B, input_B.shape[rank - 2], input_B.shape[rank - 1]);
             MatrixMap mat_C(output_C.data + i * size_C, output_C.shape[rank - 2], output_C.shape[rank - 1]);
-
-            if (!transpose_A && !transpose_B)
-                mat_C.noalias() = alpha * (mat_A * mat_B) + beta * mat_C;
-            else if (transpose_A && !transpose_B)
-                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B) + beta * mat_C;
-            else if (!transpose_A && transpose_B)
-                mat_C.noalias() = alpha * (mat_A * mat_B.transpose()) + beta * mat_C;
-            else
-                mat_C.noalias() = alpha * (mat_A.transpose() * mat_B.transpose()) + beta * mat_C;
+            gemm(mat_A, mat_B, mat_C);
         }
     }
 #else

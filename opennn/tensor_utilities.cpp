@@ -157,19 +157,7 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
 
 VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 {
-    const Index n = A.rows();
-
-    VectorR x(n);
-
-    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen(const_cast<type*>(A.data()), n, n);
-
-    const Map<Matrix<type, Dynamic, 1>> b_eigen(const_cast<type*>(b.data()), n, 1);
-
-    Map<Matrix<type, Dynamic, 1>> x_eigen(reinterpret_cast<type*>(x.data()), n);
-
-    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-
-    return x;
+    return A.colPivHouseholderQr().solve(b);
 }
 
 
@@ -282,14 +270,6 @@ MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 {
     return MatrixMap(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
                                       tensor.dimension(0), tensor.dimension(1));
-}
-
-
-Shape prepend(const Index &x, const Shape&d)
-{
-    Shape result = {x};
-    result.insert(result.end(), d.begin(), d.end());
-    return result;
 }
 
 

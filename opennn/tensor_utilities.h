@@ -153,16 +153,6 @@ struct Shape
     }
 
 
-    void insert(const Index* /*pos*/, const Index* first, const Index* last)
-    {
-        while (first != last)
-        {
-            this->push_back(*first);
-            ++first;
-        }
-    }
-
-
     Index size() const noexcept
     {
         if (rank == 0) return 0;
@@ -650,8 +640,6 @@ void push_back(Tensor<T, 1, AlignedMax>& tensor, const T& value)
 
 string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
-
-Shape prepend(const Index&, const Shape&);
 
 template <typename T>
 string vector_to_string(const vector<T>& x, const string& separator = " ")

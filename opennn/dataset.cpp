@@ -3163,7 +3163,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     if(!dataset_input_shape.empty())
     {
-        input_shape = prepend(samples_number, dataset_input_shape);
+        input_shape = Shape({samples_number}).append(dataset_input_shape);
         input_vector.resize(input_shape.size());
     }
 
@@ -3173,7 +3173,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     if(!dataset_target_shape.empty())
     {
-        target_shape = prepend(samples_number, dataset_target_shape);
+        target_shape = Shape({samples_number}).append(dataset_target_shape);
         target_vector.resize(target_shape.size());
     }
 
@@ -3183,7 +3183,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 
     if(!dataset_decoder_shape.empty())
     {
-         decoder_shape = prepend(samples_number, dataset_decoder_shape);
+         decoder_shape = Shape({samples_number}).append(dataset_decoder_shape);
          decoder_vector.resize(decoder_shape.size());
     }
 }
