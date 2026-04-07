@@ -191,16 +191,6 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
 }
 
 
-void Bounding::print() const
-{
-/*
-    cout << "Bounding layer" << endl
-         << "Lower bounds: " << lower_bounds << endl
-         << "Upper bounds: " << upper_bounds << endl;
-*/
-}
-
-
 void Bounding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Bounding");

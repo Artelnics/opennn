@@ -121,14 +121,6 @@ Shape Pooling::get_input_shape() const
 }
 
 
-void Pooling::print() const
-{
-    cout << "Pooling layer" << endl
-         << "Input shape: " << input_shape << endl
-         << "Output shape: " << get_output_shape() << endl;
-}
-
-
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
                   const Shape& new_stride_shape,

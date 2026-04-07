@@ -281,22 +281,6 @@ public:
     }
 
 
-    void print() const override
-    {
-        cout << "Scaling layer" << endl;
-
-        const Index inputs_number = get_inputs_number();
-
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            cout << "Neuron " << i << endl
-                 << "string " << scalers[i] << endl;
-
-            //descriptives[i].print();
-        }
-    }
-
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* scaling_layer_element = get_xml_root(document, name);

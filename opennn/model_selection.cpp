@@ -195,13 +195,6 @@ void ModelSelection::from_XML(const XMLDocument& document)
 }
 
 
-void ModelSelection::print() const
-{
-    cout << get_neurons_selection() << endl;
-    cout << get_inputs_selection() << endl;
-}
-
-
 void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);

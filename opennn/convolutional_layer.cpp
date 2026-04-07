@@ -475,21 +475,6 @@ Index Convolutional::get_input_channels() const
 }
 
 
-void Convolutional::print() const
-{
-
-    cout << "Convolutional layer" << endl
-         << "Input shape: " << input_shape << endl
-         << "Output shape: " << get_output_shape() << endl
-         << "Biases shape: " << parameters[Biases].shape << endl
-         << "Weights shape: " << parameters[Weights].shape << endl
-         << "biases:" << endl;
-    //cout << biases << endl;
-    cout << "Weights:" << endl;
-    //cout << weights << endl;
-}
-
-
 void Convolutional::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Convolutional");

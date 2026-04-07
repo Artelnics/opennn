@@ -259,14 +259,6 @@ void TrainingStrategy::fix_forecasting()
 }
 
 
-void TrainingStrategy::print() const
-{
-    cout << "Training strategy object" << endl
-         << "Loss: " << loss->get_name() << endl
-         << "Optimization algorithm: " << optimizer->get_name() << endl;
-}
-
-
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
 

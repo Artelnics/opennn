@@ -50,8 +50,6 @@ public:
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
-    void print() const override;
-
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 

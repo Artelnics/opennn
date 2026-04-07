@@ -935,115 +935,66 @@ MatrixR TestingAnalysis::perform_cumulative_gain_analysis() const
 }
 
 
-MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
+MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, const MatrixR& outputs, bool positive) const
 {
-    const Index total_positives = calculate_positives_negatives_rate(targets, outputs)[0];
+    const VectorI rates = calculate_positives_negatives_rate(targets, outputs);
+    const Index total = positive ? rates[0] : rates[1];
+    const string label = positive ? "positive" : "negative";
 
-    if(total_positives == 0)
-        throw runtime_error("Number of positive samples(" + to_string(total_positives) + ") must be greater than zero.\n");
+    if(total == 0)
+        throw runtime_error("Number of " + label + " samples(" + to_string(total) + ") must be greater than zero.\n");
 
     const Index testing_samples_number = targets.rows();
-
-    // Sort by ascending values of outputs vector
 
     VectorI sorted_indices(outputs.rows());
     iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
 
     stable_sort(sorted_indices.data(),
-                sorted_indices.data()+sorted_indices.size(),
-                [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
+                sorted_indices.data() + sorted_indices.size(),
+                [outputs](Index i1, Index i2) { return outputs(i1, 0) > outputs(i2, 0); });
 
     VectorR sorted_targets(testing_samples_number);
 
     for(Index i = 0; i < testing_samples_number; i++)
-        sorted_targets(i) = targets(sorted_indices(i),0);
+        sorted_targets(i) = targets(sorted_indices(i), 0);
 
     const Index points_number = 21;
     const type percentage_increment = type(0.05);
 
     MatrixR cumulative_gain(points_number, 2);
-
-    cumulative_gain(0,0) = type(0);
-    cumulative_gain(0,1) = type(0);
-
-    Index positives = 0;
+    cumulative_gain(0, 0) = type(0);
+    cumulative_gain(0, 1) = type(0);
 
     type percentage = type(0);
-
-    Index maximum_index;
 
     for(Index i = 0; i < points_number - 1; i++)
     {
         percentage += percentage_increment;
 
-        positives = 0;
-
-        maximum_index = Index(percentage*testing_samples_number);
+        Index count = 0;
+        const Index maximum_index = Index(percentage * type(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; j++)
-            if(double(sorted_targets(j)) == 1.0)
-                positives++;
+            if(positive ? double(sorted_targets(j)) == 1.0 : sorted_targets(j) < EPSILON)
+                count++;
 
         cumulative_gain(i + 1, 0) = percentage;
-        cumulative_gain(i + 1, 1) = type(positives)/type(total_positives);
+        cumulative_gain(i + 1, 1) = type(count) / type(total);
     }
 
     return cumulative_gain;
 }
 
 
+MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
+{
+    return calculate_cumulative_gain_impl(targets, outputs, true);
+}
+
+
 MatrixR TestingAnalysis::calculate_negative_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const Index total_negatives = calculate_positives_negatives_rate(targets, outputs)[1];
-
-    if(total_negatives == 0)
-        throw runtime_error("Number of negative samples(" + to_string(total_negatives) + ") must be greater than zero.\n");
-
-    const Index testing_samples_number = targets.rows();
-
-    // Sort by ascending values of outputs vector
-
-    VectorI sorted_indices(outputs.rows());
-    iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
-
-    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) > outputs(i2,0);});
-
-    VectorR sorted_targets(testing_samples_number);
-
-    for(Index i = 0; i < testing_samples_number; i++)
-        sorted_targets(i) = targets(sorted_indices(i),0);
-
-    const Index points_number = 21;
-    const type percentage_increment = type(0.05);
-
-    MatrixR negative_cumulative_gain(points_number, 2);
-
-    negative_cumulative_gain(0,0) = type(0);
-    negative_cumulative_gain(0,1) = type(0);
-
-    Index negatives = 0;
-
-    type percentage = type(0);
-
-    Index maximum_index;
-
-    for(Index i = 0; i < points_number - 1; i++)
-    {
-        percentage += percentage_increment;
-
-        negatives = 0;
-
-        maximum_index = Index(percentage* type(testing_samples_number));
-
-        for(Index j = 0; j < maximum_index; j++)
-            if(sorted_targets(j) < EPSILON)
-                negatives++;
-
-        negative_cumulative_gain(i + 1, 0) = percentage;
-        negative_cumulative_gain(i + 1, 1) = type(negatives)/type(total_negatives);
-    }
-
-    return negative_cumulative_gain;
+    return calculate_cumulative_gain_impl(targets, outputs, false);
 }
 
 
@@ -1150,94 +1101,56 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 }
 
 
-vector<Index> TestingAnalysis::calculate_true_positive_samples(const MatrixR& targets,
-                                                               const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices,
-                                                               type decision_threshold) const
+vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targets,
+                                                              const MatrixR& outputs,
+                                                              const vector<Index>& testing_indices,
+                                                              type decision_threshold,
+                                                              bool target_positive,
+                                                              bool output_positive) const
 {
     const Index rows_number = targets.rows();
 
-    VectorI true_positives_indices_copy(rows_number);
-
-    Index index = 0;
+    vector<Index> result;
+    result.reserve(rows_number);
 
     for(Index i = 0; i < rows_number; i++)
-        if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
-            true_positives_indices_copy(index++) = testing_indices[i];
+    {
+        const bool t_pos = targets(i, 0) >= decision_threshold;
+        const bool o_pos = outputs(i, 0) >= decision_threshold;
 
-    vector<Index> true_positives_indices(index);
+        if(t_pos == target_positive && o_pos == output_positive)
+            result.push_back(testing_indices[i]);
+    }
 
-    copy(true_positives_indices_copy.data(),
-         true_positives_indices_copy.data() + index,
-         true_positives_indices.data());
-
-    return true_positives_indices;
+    return result;
 }
 
 
-vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& targets,
-                                                                const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices,
-                                                                type decision_threshold) const
+vector<Index> TestingAnalysis::calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                               const vector<Index>& testing_indices, type threshold) const
 {
-    const Index rows_number = targets.rows();
-
-    vector<Index> false_positives_indices_copy(rows_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-        if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-            false_positives_indices_copy[index++] = testing_indices[i];
-
-    const vector<Index> false_positives_indices(false_positives_indices_copy.begin(),
-                                                false_positives_indices_copy.begin() + index);
-
-    return false_positives_indices;
+    return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true);
 }
 
 
-vector<Index> TestingAnalysis::calculate_false_negative_samples(const MatrixR& targets,
-                                                                const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices,
-                                                                type decision_threshold) const
+vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                                const vector<Index>& testing_indices, type threshold) const
 {
-    const Index rows_number = targets.rows();
-
-    vector<Index> false_negatives_indices_copy(rows_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-        if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-            false_negatives_indices_copy[index++] = testing_indices[i];
-
-    const vector<Index> false_negatives_indices(false_negatives_indices_copy.begin(),
-                                                false_negatives_indices_copy.begin() + index);
-
-    return false_negatives_indices;
+    return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true);
 }
 
 
-vector<Index> TestingAnalysis::calculate_true_negative_samples(const MatrixR& targets,
-                                                               const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices,
-                                                               type decision_threshold) const
+vector<Index> TestingAnalysis::calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                                const vector<Index>& testing_indices, type threshold) const
 {
-    const Index rows_number = targets.rows();
+    return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false);
+}
 
-    vector<Index> true_negatives_indices_copy(rows_number);
 
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
-        if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
-            true_negatives_indices_copy[index++] = testing_indices[i];
-
-    vector<Index> true_negatives_indices(true_negatives_indices_copy.begin(),
-                                         true_negatives_indices_copy.begin() + index);
-
-    return true_negatives_indices;
+vector<Index> TestingAnalysis::calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                               const vector<Index>& testing_indices, type threshold) const
+{
+    return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false);
 }
 
 
@@ -1442,165 +1355,105 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const MatrixR
 }
 
 
-void TestingAnalysis::save_well_classified_samples(const MatrixR& targets,
-                                                   const MatrixR& outputs,
-                                                   const vector<string>& labels,
-                                                   const filesystem::path& file_name) const
+void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
-    const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
-                                                                                        outputs,
-                                                                                        labels);
-
     ofstream file(file_name);
 
     file << "sample_name,actual_class,predicted_class,probability" << endl;
 
-    for(Index i = 0; i < well_classified_samples.dimension(0); i++)
-        file << well_classified_samples(i, 0) << ","
-             << well_classified_samples(i, 1) << ","
-             << well_classified_samples(i, 2) << ","
-             << well_classified_samples(i, 3) << endl;
+    for(Index i = 0; i < samples.dimension(0); i++)
+        file << samples(i, 0) << "," << samples(i, 1) << ","
+             << samples(i, 2) << "," << samples(i, 3) << endl;
 
     file.close();
 }
 
 
-void TestingAnalysis::save_misclassified_samples(const MatrixR& targets,
-                                                 const MatrixR& outputs,
-                                                 const vector<string>& labels,
-                                                 const filesystem::path& file_name) const
+void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
-    const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
-                                                                                    outputs,
-                                                                                    labels);
-
-    ofstream file(file_name);
-
-    file << "sample_name,actual_class,predicted_class,probability" << endl;
-
-    for(Index i = 0; i < misclassified_samples.dimension(0); i++)
-        file << misclassified_samples(i, 0) << ","
-             << misclassified_samples(i, 1) << ","
-             << misclassified_samples(i, 2) << ","
-             << misclassified_samples(i, 3) << endl;
-
-    file.close();
-}
-
-
-void TestingAnalysis::save_well_classified_samples_statistics(const MatrixR& targets,
-                                                              const MatrixR& outputs,
-                                                              const vector<string>& labels,
-                                                              const filesystem::path& file_name) const
-{
-    const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
-                                                                                        outputs,
-                                                                                        labels);
-
-    VectorR well_classified_numerical_probabilities(well_classified_samples.dimension(0));
-
-    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
-        well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
+    const VectorR probabilities = extract_probabilities(samples);
 
     ofstream file(file_name);
 
     file << "minimum,maximum,mean,std" << endl
-         << well_classified_numerical_probabilities.minCoeff() << ","
-         << well_classified_numerical_probabilities.maxCoeff() << ","
-         << well_classified_numerical_probabilities.mean() << ","
-         << standard_deviation(well_classified_numerical_probabilities);
+         << probabilities.minCoeff() << ","
+         << probabilities.maxCoeff() << ","
+         << probabilities.mean() << ","
+         << standard_deviation(probabilities);
 }
 
 
-void TestingAnalysis::save_misclassified_samples_statistics(const MatrixR& targets,
-                                                            const MatrixR& outputs,
-                                                            const vector<string>& labels,
-                                                            const filesystem::path& statistics_file_name) const
+void TestingAnalysis::save_classified_samples_probability_histogram(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
-    const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
-                                                                                    outputs,
-                                                                                    labels);
-
-    VectorR misclassified_numerical_probabilities(misclassified_samples.dimension(0));
-
-    for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
-        misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
-
-    ofstream classification_statistics_file(statistics_file_name);
-
-    classification_statistics_file << "minimum,maximum,mean,std" << endl
-                                   << misclassified_numerical_probabilities.minCoeff() << ","
-                                   << misclassified_numerical_probabilities.maxCoeff() << ","
-                                   << misclassified_numerical_probabilities.mean() << ","
-                                   << standard_deviation(misclassified_numerical_probabilities);
+    const Histogram h(extract_probabilities(samples));
+    h.save(file_name);
 }
 
 
-void TestingAnalysis::save_well_classified_samples_probability_histogram(const MatrixR& targets,
-                                                                         const MatrixR& outputs,
-                                                                         const vector<string>& labels,
-                                                                         const filesystem::path& histogram_file_name) const
+VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
 {
-    const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
-                                                                                        outputs,
-                                                                                        labels);
+    VectorR probabilities(samples.dimension(0));
 
-    VectorR well_classified_numerical_probabilities(well_classified_samples.dimension(0));
+    for(Index i = 0; i < probabilities.size(); i++)
+        probabilities(i) = type(::atof(samples(i, 3).c_str()));
 
-    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
-        well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
-
-    const Histogram misclassified_samples_histogram(well_classified_numerical_probabilities);
-
-    misclassified_samples_histogram.save(histogram_file_name);
+    return probabilities;
 }
 
 
-void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<string, 2>& well_classified_samples,
-                                                                         const filesystem::path& histogram_file_name) const
+void TestingAnalysis::save_well_classified_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                   const vector<string>& labels, const filesystem::path& file_name) const
 {
-    VectorR well_classified_numerical_probabilities(well_classified_samples.dimension(0));
-
-    for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
-        well_classified_numerical_probabilities(i) = type(::atof(well_classified_samples(i, 3).c_str()));
-
-    const Histogram misclassified_samples_histogram(well_classified_numerical_probabilities);
-
-    misclassified_samples_histogram.save(histogram_file_name);
+    save_classified_samples_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
 }
 
 
-void TestingAnalysis::save_misclassified_samples_probability_histogram(const MatrixR& targets,
-                                                                       const MatrixR& outputs,
-                                                                       const vector<string>& labels,
-                                                                       const filesystem::path& histogram_file_name) const
+void TestingAnalysis::save_misclassified_samples(const MatrixR& targets, const MatrixR& outputs,
+                                                 const vector<string>& labels, const filesystem::path& file_name) const
 {
-    const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
-                                                                                    outputs,
-                                                                                    labels);
-
-    VectorR misclassified_numerical_probabilities(misclassified_samples.dimension(0));
-
-    for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
-        misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
-
-    const Histogram misclassified_samples_histogram(misclassified_numerical_probabilities);
-
-    misclassified_samples_histogram.save(histogram_file_name);
+    save_classified_samples_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
 }
 
 
-void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<string, 2>& misclassified_samples,
-                                                                       const filesystem::path& histogram_file_name) const
+void TestingAnalysis::save_well_classified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
+                                                              const vector<string>& labels, const filesystem::path& file_name) const
 {
-    VectorR misclassified_numerical_probabilities(misclassified_samples.dimension(0));
+    save_classified_samples_statistics_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
+}
 
-    for(Index i = 0; i < misclassified_numerical_probabilities.size(); i++)
-        misclassified_numerical_probabilities(i) = type(::atof(misclassified_samples(i, 3).c_str()));
 
-    const Histogram misclassified_samples_histogram(misclassified_numerical_probabilities);
+void TestingAnalysis::save_misclassified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
+                                                            const vector<string>& labels, const filesystem::path& file_name) const
+{
+    save_classified_samples_statistics_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
+}
 
-    misclassified_samples_histogram.save(histogram_file_name);
+
+void TestingAnalysis::save_well_classified_samples_probability_histogram(const MatrixR& targets, const MatrixR& outputs,
+                                                                         const vector<string>& labels, const filesystem::path& file_name) const
+{
+    save_classified_samples_probability_histogram(calculate_well_classified_samples(targets, outputs, labels), file_name);
+}
+
+
+void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<string, 2>& samples,
+                                                                         const filesystem::path& file_name) const
+{
+    save_classified_samples_probability_histogram(samples, file_name);
+}
+
+
+void TestingAnalysis::save_misclassified_samples_probability_histogram(const MatrixR& targets, const MatrixR& outputs,
+                                                                       const vector<string>& labels, const filesystem::path& file_name) const
+{
+    save_classified_samples_probability_histogram(calculate_misclassified_samples(targets, outputs, labels), file_name);
+}
+
+
+void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<string, 2>& samples,
+                                                                       const filesystem::path& file_name) const
+{
+    save_classified_samples_probability_histogram(samples, file_name);
 }
 
 

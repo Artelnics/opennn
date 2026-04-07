@@ -246,15 +246,6 @@ void Pooling3d::from_XML(const XMLDocument& document)
     set_pooling_method(read_xml_string(element, "PoolingMethod"));
 }
 
-
-void Pooling3d::print() const
-{
-    cout << "Pooling3d layer" << endl
-         << "Input shape: " << shape_to_string(input_shape) << endl
-         << "Output shape: " << shape_to_string(get_output_shape()) << endl
-         << "Pooling Method: " << write_pooling_method() << endl;
-}
-
 #ifdef CUDA
 
 void Pooling3dForwardPropagationCuda::initialize()

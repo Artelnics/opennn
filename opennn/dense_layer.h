@@ -395,21 +395,6 @@ public:
     }
 
 
-    void print() const override
-    {
-/*
-        cout << "Dense layer" << endl
-             << "Input shape: " << get_input_shape() << endl
-             << "Output shape: " << get_output_shape() << endl
-             << "Biases shape: " << parameters[Bias].shape << endl
-             << "Weights shape: " << parameters[Weight].shape << endl
-             << "Activation function: " << activation_function << endl
-             << "Batch normalization: " << (batch_normalization ? "True" : "False") << endl
-             << "Dropout rate: " << dropout_rate << endl;
-*/
-    }
-
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* dense2d_layer_element = get_xml_root(document, name);

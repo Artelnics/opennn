@@ -2316,36 +2316,6 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-void Dataset::print() const
-{
-    if(!display) return;
-
-    const Index features_number = get_features_number();
-    const Index input_features_number = get_features_number("Input");
-    const Index samples_number = get_samples_number();
-    const Index target_variables_number = get_features_number("Target");
-    const Index training_samples_number = get_samples_number("Training");
-    const Index validation_samples_number = get_samples_number("Validation");
-    const Index testing_samples_number = get_samples_number("Testing");
-    const Index unused_samples_number = get_samples_number("None");
-
-    cout << "Dataset object summary:\n"
-         << "Number of samples: " << samples_number << "\n"
-         << "Number of variables: " << features_number << "\n"
-         << "Number of input variables: " << input_features_number << "\n"
-         << "Number of target variables: " << target_variables_number << "\n"
-         << "Input shape: " << get_shape("Input") << "\n"
-         << "Target shape: " << get_shape("Target") << endl;
-
-    cout << "Number of training samples: " << training_samples_number << endl
-         << "Number of selection samples: " << validation_samples_number << endl
-         << "Number of testing samples: " << testing_samples_number << endl
-         << "Number of unused samples: " << unused_samples_number << endl;
-
-    //for(const Variable& variable : variables)
-    //    variable.print();
-}
-
 
 void Dataset::save(const filesystem::path& file_name) const
 {
@@ -2368,13 +2338,6 @@ void Dataset::load(const filesystem::path& file_name)
 }
 
 
-void Dataset::print_variables() const
-{
-    for(const Variable& variable : variables)
-        variable.print();
-
-    cout << endl;
-}
 
 
 void Dataset::print_data() const
@@ -3386,9 +3349,6 @@ vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices
 
     return batches;
 }
-
-
-
 
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,

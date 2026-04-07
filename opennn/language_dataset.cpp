@@ -636,26 +636,6 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 }
 
 
-void LanguageDataset::print() const
-{
-    cout << "Language dataset" << endl
-         << "Samples number: " << get_samples_number() << endl
-         << "Input vocabulary size: " << get_input_vocabulary_size() << endl
-         << "Target vocabulary size: " << get_target_vocabulary_size() << endl
-         << "Maximum input sequence length: " << get_maximum_input_sequence_length() << endl
-         << "Maximum target sequence length: " << get_maximum_target_sequence_length() << endl
-         << "Input shape: " << get_shape("Input") << endl
-         << "Decoder shape: " << get_shape("Decoder") << endl
-         << "Target shape: " << get_shape("Target") << endl
-         << "Input variables number: " << get_variables_number("Input") << endl
-         << "Decoder variables number: " << get_variables_number("Decoder") << endl
-         << "Target variables number: " << get_variables_number("Target") << endl
-         << "Input features number: " << get_features_number("Input") << endl
-         << "Decoder features number: " << get_features_number("Decoder") << endl
-         << "Target features number: " << get_features_number("Target") << endl
-         << "Has decoder: " << (get_variables_number("Decoder") > 0 ? "True" : "False") << endl;
-}
-
 }
 
 // OpenNN: Open Neural Networks Library.

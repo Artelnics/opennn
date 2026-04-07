@@ -254,6 +254,17 @@ public:
 
 private:
 
+    vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type,
+                                                bool target_positive, bool output_positive) const;
+
+    MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;
+
+    static VectorR extract_probabilities(const Tensor<string, 2>&);
+
+    void save_classified_samples_csv(const Tensor<string, 2>&, const filesystem::path&) const;
+    void save_classified_samples_statistics_csv(const Tensor<string, 2>&, const filesystem::path&) const;
+    void save_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
+
     NeuralNetwork* neural_network = nullptr;
 
     Dataset* dataset = nullptr;

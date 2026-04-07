@@ -125,22 +125,6 @@ void Variable::to_XML(XMLPrinter& printer) const
 }
 
 // Console output
-void Variable::print() const
-{
-    cout << "Variable" << endl
-         << "Name: " << name << endl
-         << "Role: " << get_role() << endl
-         << "Type: " << get_type_string() << endl
-         << "Scaler: " << scaler << endl;
-
-    if (!categories.empty())
-    {
-        cout << "Categories: " << endl
-             << categories;
-    }
-
-    cout << endl;
-}
 
 vector<string> Variable::get_names() const
 {

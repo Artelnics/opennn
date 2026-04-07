@@ -91,8 +91,6 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print() const override;
-
 private:
 
     void back_propagate_max_pooling(const Tensor4&, Tensor4&) const;

@@ -226,8 +226,6 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print() const override;
-
 #ifdef CUDA
 
 public:

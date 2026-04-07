@@ -54,8 +54,6 @@ public:
 
     // Serialization
 
-    void print() const;
-
     void from_XML(const XMLDocument&);
     void to_XML(XMLPrinter&) const;
 

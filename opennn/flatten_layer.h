@@ -121,13 +121,6 @@ public:
         printer.CloseElement();
     }
 
-    void print() const override
-    {
-        cout << "Flatten layer" << endl
-             << "Input shape: " << input_shape << endl
-             << "Output shape: " << get_output_shape() << endl;
-    }
-
 private:
 
     Index get_input_height() const

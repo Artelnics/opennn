@@ -96,23 +96,23 @@ public:
 
     bool has(const string&) const;
 
-    bool is_empty() const;
+    bool is_empty() const { return layers.empty(); }
 
-    VectorR& get_parameters();
+    VectorR& get_parameters() { return parameters; }
 
-    const vector<Variable>& get_input_variables() const;
+    const vector<Variable>& get_input_variables() const { return input_variables; }
     const vector<string> get_input_feature_names() const;
 
-    const vector<Variable>& get_output_variables() const;
+    const vector<Variable>& get_output_variables() const { return output_variables; }
     const vector<string> get_output_feature_names() const;
 
-    const vector<unique_ptr<Layer>>& get_layers() const;
-    const unique_ptr<Layer>& get_layer(const Index) const;
+    const vector<unique_ptr<Layer>>& get_layers() const { return layers; }
+    const unique_ptr<Layer>& get_layer(const Index i) const { return layers[i]; }
     const unique_ptr<Layer>& get_layer(const string&) const;
 
     Index get_layer_index(const string&) const;
 
-    const vector<vector<Index>>& get_layer_input_indices() const;
+    const vector<vector<Index>>& get_layer_input_indices() const { return layer_input_indices; }
     vector<vector<Index>> get_layer_output_indices() const;
 
     Index find_input_index(const vector<Index>&, Index) const;
@@ -121,19 +121,19 @@ public:
 
     // Set
 
-    void set(const filesystem::path&);
+    void set(const filesystem::path& f) { load(f); }
 
-    void set_layers_number(const Index);
+    void set_layers_number(const Index n) { layers.resize(n); layer_input_indices.resize(n); }
 
-    void set_layer_input_indices(const vector<vector<Index>>&);
-    void set_layer_input_indices(const Index, const vector<Index>&);
+    void set_layer_input_indices(const vector<vector<Index>>& v) { layer_input_indices = v; }
+    void set_layer_input_indices(const Index i, const vector<Index>& v) { layer_input_indices[i] = v; }
 
     void set_layer_input_indices(const string&, const vector<string>&);
     void set_layer_input_indices(const string&, const initializer_list<string>&);
     void set_layer_input_indices(const string&, const string&);
 
-    void set_input_variables(const vector<Variable>&);
-    void set_output_variables(const vector<Variable>&);
+    void set_input_variables(const vector<Variable>& v) { input_variables = v; }
+    void set_output_variables(const vector<Variable>& v) { output_variables = v; }
 
 
     void set_input_names(const vector<string>&);
@@ -148,7 +148,7 @@ public:
 
     // Layers
 
-    Index get_layers_number() const;
+    Index get_layers_number() const { return layers.size(); }
     Index get_layers_number(const string&) const;
 
     Index get_first_trainable_layer_index() const;
@@ -168,7 +168,7 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const VectorR&);
+    void set_parameters(const VectorR& p) { parameters = p; }
 
     // Parameters initialization
 
@@ -199,7 +199,6 @@ public:
 
     void to_XML(XMLPrinter&) const;
 
-    virtual void print() const;
     void save(const filesystem::path&) const;
     void save_parameters(const filesystem::path&) const;
 

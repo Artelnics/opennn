@@ -52,8 +52,6 @@ struct Variable
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return !(role == "None" || role == "Time"); }
 
-    void print() const;
-
     vector<string> get_names() const;
 
 };

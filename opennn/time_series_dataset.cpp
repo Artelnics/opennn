@@ -121,27 +121,6 @@ void TimeSeriesDataset::set_multi_target(bool new_multi_target)
 }
 
 
-void TimeSeriesDataset::print() const
-{
-    if(!display) return;
-
-    const Index features_number = get_features_number();
-    const Index input_features_number = get_features_number("Input");
-    const Index samples_number = get_samples_number();
-    const Index target_variables_number = get_features_number("Target");
-
-    cout << "Time series dataset object summary:\n"
-         << "Number of samples: " << samples_number << "\n"
-         << "Number of variables: " << features_number << "\n"
-         << "Number of input variables: " << input_features_number << "\n"
-         << "Number of target variables: " << target_variables_number << "\n"
-         << "Input variables shape: " << get_shape("Input") << "\n"
-         << "Target variables shape: " << get_shape("Target") << "\n"
-         << "Multi target activate: " << std::boolalpha << get_multi_target() << "\n"
-         << "Past time steps: " << get_past_time_steps() << "\n"
-         << "Future time steps: " << get_future_time_steps() << "\n";
-}
-
 
 void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 {

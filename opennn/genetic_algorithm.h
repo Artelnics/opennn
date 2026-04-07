@@ -67,8 +67,6 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    void print() const override;
-    
     void save(const filesystem::path&) const;
 
     void load(const filesystem::path&);

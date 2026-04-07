@@ -102,57 +102,32 @@ bool NeuralNetwork::has(const string& name) const
 }
 
 
-bool NeuralNetwork::is_empty() const
-{
-    return layers.empty();
-}
 
-
-VectorR &NeuralNetwork::get_parameters()
+static vector<string> get_feature_names_from(const vector<Variable>& vars)
 {
-    return parameters;
+    vector<string> feature_names;
+
+    for (const auto& var : vars)
+    {
+        const vector<string> names = var.get_names();
+        feature_names.insert(feature_names.end(), names.begin(), names.end());
+    }
+
+    return feature_names;
 }
 
 
 const vector<string> NeuralNetwork::get_input_feature_names() const
 {
-    vector<string> input_feature_names;
-
-    for (const auto& var : input_variables)
-    {
-        const vector<string> names = var.get_names();
-
-        input_feature_names.insert(input_feature_names.end(), names.begin(), names.end());
-    }
-
-    return input_feature_names;
+    return get_feature_names_from(input_variables);
 }
+
 
 const vector<string> NeuralNetwork::get_output_feature_names() const
 {
-    vector<string> output_feature_names;
-
-    for (const auto& var : output_variables)
-    {
-        const vector<string> names = var.get_names();
-
-        output_feature_names.insert(output_feature_names.end(), names.begin(), names.end());
-    }
-
-    return output_feature_names;
+    return get_feature_names_from(output_variables);
 }
 
-
-const vector<unique_ptr<Layer>>& NeuralNetwork::get_layers() const
-{
-    return layers;
-}
-
-
-const unique_ptr<Layer>& NeuralNetwork::get_layer(const Index layer_index) const
-{
-    return layers[layer_index];
-}
 
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
@@ -184,11 +159,6 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     throw runtime_error("Layer not found: " + new_label);
 }
 
-
-const vector<vector<Index>>& NeuralNetwork::get_layer_input_indices() const
-{
-    return layer_input_indices;
-}
 
 
 vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
@@ -230,64 +200,38 @@ Layer* NeuralNetwork::get_first(const string& name) const
 }
 
 
-void NeuralNetwork::set(const filesystem::path& file_name)
+
+static void set_variable_names(vector<Variable>& vars, const vector<string>& new_names)
 {
-    load(file_name);
+    Index j = 0;
+    for(size_t i = 0; i < vars.size(); ++i)
+    {
+        if(vars[i].is_categorical())
+        {
+            size_t num_cats = vars[i].get_categories_number();
+            vars[i].categories.assign(new_names.begin() + j, new_names.begin() + j + num_cats);
+            j += num_cats;
+        }
+        else
+        {
+            vars[i].name = new_names[j];
+            j++;
+        }
+    }
 }
 
 
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
-    Index j = 0;
-    for(size_t i = 0; i < input_variables.size(); ++i)
-    {
-        if(input_variables[i].is_categorical())
-        {
-            size_t num_cats = input_variables[i].get_categories_number();
-
-            input_variables[i].categories.assign(new_input_names.begin() + j, new_input_names.begin() + j + num_cats);
-
-            j += num_cats;
-        }
-        else
-        {
-            input_variables[i].name = new_input_names[j];
-            j++;
-        }
-    }
+    set_variable_names(input_variables, new_input_names);
 }
 
 
-void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
+void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 {
-    Index j = 0;
-    for(size_t i = 0; i < output_variables.size(); ++i)
-    {
-        if(output_variables[i].is_categorical())
-        {
-            size_t num_cats = output_variables[i].get_categories_number();
-
-            output_variables[i].categories.assign(new_output_namess.begin() + j, new_output_namess.begin() + j + num_cats);
-
-            j += num_cats;
-        }
-        else
-        {
-            output_variables[i].name = new_output_namess[j];
-            j++;
-        }
-    }
+    set_variable_names(output_variables, new_output_names);
 }
 
-void NeuralNetwork::set_input_variables(const vector<Variable>& new_input_variables)
-{
-    input_variables = new_input_variables;
-}
-
-void NeuralNetwork::set_output_variables(const vector<Variable>& new_output_variables)
-{
-    output_variables = new_output_variables;
-}
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
@@ -323,23 +267,6 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_layers_number(const Index new_layers_number)
-{
-    layers.resize(new_layers_number);
-    layer_input_indices.resize(new_layers_number);
-}
-
-
-void NeuralNetwork::set_layer_input_indices(const vector<vector<Index>>& new_layer_input_indices)
-{
-    layer_input_indices = new_layer_input_indices;
-}
-
-
-void NeuralNetwork::set_layer_input_indices(const Index layer_index, const vector<Index>& new_layer_input_indices)
-{
-    layer_input_indices[layer_index] = new_layer_input_indices;
-}
 
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
@@ -443,18 +370,6 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
     return layer_parameter_numbers;
 }
 
-
-void NeuralNetwork::set_parameters(const VectorR& new_parameters)
-{
-    parameters = new_parameters;
-}
-
-
-
-Index NeuralNetwork::get_layers_number() const
-{
-    return layers.size();
-}
 
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
@@ -1003,27 +918,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     }
 }
 
-
-void NeuralNetwork::print() const
-{
-    cout << "Neural network" << endl;
-
-    cout << "Input number: " << get_inputs_number() << endl;
-
-    const Index layers_number = get_layers_number();
-
-    cout << "Layers number: " << layers_number << endl;
-
-    for(Index i = 0; i < layers_number; i++)
-        cout << "\nLayer " << i << ": " << layers[i]->get_name() << endl;
-    
-    cout << "Outputs number: " << get_outputs_number() << endl;
-
-    cout << "Outputs:" << endl
-         << get_output_feature_names() << endl;
-
-    cout << "Parameters number: " << get_parameters_number() << endl;
-}
 
 
 void NeuralNetwork::save(const filesystem::path& file_name) const

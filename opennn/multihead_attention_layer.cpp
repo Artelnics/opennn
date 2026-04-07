@@ -846,22 +846,6 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
 }
 
 
-void MultiHeadAttention::print() const
-{
-    cout << "Multi-head attention layer" << endl
-         << "Label: " << label << endl
-         << "Type: MultiHeadAttention" << endl
-         << "Input shape: " << get_input_shape() << endl
-         << "Output shape: " << get_output_shape() << endl
-         << "Query sequence length: " << get_query_sequence_length() << endl
-         << "Source sequence length: " << get_source_sequence_length() << endl
-         << "Embedding dimension: " << get_embedding_dimension() << endl
-         << "Heads number: " << get_heads_number() << endl
-         << "Head dimension: " << get_head_dimension() << endl
-         << "Use causal mask: " << (use_causal_mask ? "True" : "False") << endl;
-}
-
-
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiHeadAttention");

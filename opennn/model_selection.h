@@ -50,7 +50,6 @@ public:
 
     void to_XML(XMLPrinter&) const;
 
-    void print() const;
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 

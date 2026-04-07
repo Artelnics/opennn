@@ -288,11 +288,6 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 }
 
 
-void ImageDataset::print() const
-{
-    Dataset::print();
-}
-
 
 void ImageDataset::perform_augmentation(type* input_data) const
 {

@@ -294,24 +294,6 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-void Embedding::print() const
-{    
-    cout << "Embedding Layer" << endl
-         << "Label: " << label << endl
-         << "Type: Embedding" << endl
-         << "Input shape: " << get_input_shape() << endl
-         << "Output shape: " << get_output_shape() << endl
-         << "Vocabulary size: " << get_vocabulary_size() << endl
-         << "Sequence length: " << get_sequence_length() << endl
-         << "Embedding dimension: " << get_embedding_dimension() << endl
-         << "Dropout rate: " << dropout_rate << endl;
-         //<< "Weights shape: " << weights.shape << endl;
-
-    //cout << "Weights:\n " << weights.shape << endl;
-    cout << "Positional encoding:\n" << positional_encoding << endl;
-}
-
-
 void Embedding::from_XML(const XMLDocument& document)
 {
     const XMLElement* embedding_layer_element = get_xml_root(document, "Embedding");

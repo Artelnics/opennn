@@ -367,15 +367,11 @@ public:
 
     // Serialization
 
-    virtual void print() const;
-
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
-
-    void print_variables() const;
 
     void print_data() const;
     void print_data_preview() const;

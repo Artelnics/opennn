@@ -199,22 +199,6 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 }
 
 
-void Unscaling::print() const
-{
-    cout << "Unscaling layer" << endl;
-
-    const Index inputs_number = get_inputs_number();
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        cout << "Neuron " << i << endl
-             << "string " << scalers[i] << endl;
-
-        //descriptives[i].print();
-    }
-}
-
-
 void Unscaling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");

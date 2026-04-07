@@ -887,14 +887,6 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
 }
 
 
-void GeneticAlgorithm::print() const
-{
-    cout << "Genetic algorithm" << endl
-         << "Individuals number: " << get_individuals_number() << endl
-         << "Genes number: " << get_genes_number() << endl;
-}
-
-
 void GeneticAlgorithm::save(const filesystem::path& file_name) const
 {
     try

@@ -315,20 +315,6 @@ string Recurrent::get_expression(const vector<string>& feature_names,
 }
 
 
-void Recurrent::print() const
-{
-
-    cout << "Recurrent layer" << endl
-         << "Time steps: " << get_input_shape()[0] << endl
-         << "Input shape: " << get_input_shape()[1] << endl
-         << "Output shape: " << get_output_shape()[0] << endl
-         << "Biases shape: " << biases.shape << endl
-         << "Input weights shape: " << input_weights.shape << endl
-         << "Recurrent weights shape: " << recurrent_weights.shape << endl
-         << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
-}
-
-
 void Recurrent::from_XML(const XMLDocument& document)
 {
     const XMLElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
