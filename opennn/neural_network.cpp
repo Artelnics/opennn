@@ -11,6 +11,8 @@
 #include "tensor_utilities.h"
 #include "neural_network.h"
 #include "dense_layer.h"
+#include "convolutional_layer.h"
+#include "pooling_layer.h"
 #include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
@@ -321,6 +323,11 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
         Scaling<3>* scaling_layer = static_cast<Scaling<3>*>(get_first("Scaling3d"));
         scaling_layer->set_input_shape(new_input_shape);
     }
+    else if(has("Scaling4d"))
+    {
+        Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(get_first("Scaling4d"));
+        scaling_layer->set_input_shape(new_input_shape);
+    }
 
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }
@@ -396,15 +403,18 @@ Index NeuralNetwork::get_inputs_number() const
 {
     if(layers.empty())
         return 0;
-
     if(has("Embedding"))
         return get_layer(0)->get_inputs_number();
 
     if(has("Recurrent"))
         return get_first("Recurrent")->get_input_shape()[1];
 
-    const Shape input_shape = layers[0]->get_input_shape();
 
+    const Shape input_shape = layers[0]->get_input_shape();
+    cout << "input_shape rank: " << input_shape.rank << endl;
+    for(size_t i = 0; i < input_shape.rank; i++)
+        cout << "input_shape[" << i << "] = " << input_shape.shape[i] << endl;
+    cout << "count: " << input_shape.count() << endl;
     return input_shape.count();
 }
 
@@ -855,6 +865,82 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 }
 
 
+Tensor<string, 2> NeuralNetwork::get_convolutional_layers_information() const
+{
+    const Index layers_number = get_layers_number();
+    Index conv_layers_number = 0;
+    for(Index i = 0; i < layers_number; i++)
+        if(layers[i]->get_name() == "Convolutional")
+            conv_layers_number++;
+
+    Tensor<string, 2> information(conv_layers_number, 9);
+    Index conv_layer_index = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers[i]->get_name() != "Convolutional") continue;
+
+        const Convolutional* conv = static_cast<Convolutional*>(layers[i].get());
+        const Shape input_shape   = conv->get_input_shape();
+        const Shape output_shape  = conv->get_output_shape();
+
+        const string input_str  = input_shape.size() >= 3 ?
+                                     to_string(input_shape[0]) + " x " + to_string(input_shape[1]) + " x " + to_string(input_shape[2]) : "?";
+        const string output_str = output_shape.size() >= 3 ?
+                                      to_string(output_shape[0]) + " x " + to_string(output_shape[1]) + " x " + to_string(output_shape[2]) : "?";
+
+        information(conv_layer_index, 0) = conv->get_label();
+        information(conv_layer_index, 1) = input_str;
+        information(conv_layer_index, 2) = output_str;
+        information(conv_layer_index, 3) = to_string(conv->get_kernels_number());
+        information(conv_layer_index, 4) = to_string(conv->get_kernel_height()) + " x " + to_string(conv->get_kernel_width());
+        information(conv_layer_index, 5) = to_string(conv->get_column_stride());
+        information(conv_layer_index, 6) = conv->get_convolution_type();
+        information(conv_layer_index, 7) = conv->get_activation_function();
+        information(conv_layer_index, 8) = conv->get_batch_normalization() ? "Yes" : "No";
+
+        conv_layer_index++;
+    }
+    return information;
+}
+
+
+Tensor<string, 2> NeuralNetwork::get_pooling_layers_information() const
+{
+    const Index layers_number = get_layers_number();
+    Index pooling_layers_number = 0;
+    for(Index i = 0; i < layers_number; i++)
+        if(layers[i]->get_name() == "Pooling")
+            pooling_layers_number++;
+
+    Tensor<string, 2> information(pooling_layers_number, 6);
+    Index pooling_layer_index = 0;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers[i]->get_name() != "Pooling") continue;
+
+        const Pooling* pooling   = static_cast<Pooling*>(layers[i].get());
+        const Shape input_shape  = pooling->get_input_shape();
+        const Shape output_shape = pooling->get_output_shape();
+
+        const string input_str  = input_shape.size() >= 3 ?
+                                     to_string(input_shape[0]) + " x " + to_string(input_shape[1]) + " x " + to_string(input_shape[2]) : "?";
+        const string output_str = output_shape.size() >= 3 ?
+                                      to_string(output_shape[0]) + " x " + to_string(output_shape[1]) + " x " + to_string(output_shape[2]) : "?";
+
+        information(pooling_layer_index, 0) = pooling->get_label();
+        information(pooling_layer_index, 1) = input_str;
+        information(pooling_layer_index, 2) = output_str;
+        information(pooling_layer_index, 3) = pooling->get_pooling_method();
+        information(pooling_layer_index, 4) = to_string(pooling->get_pool_height()) + " x " + to_string(pooling->get_pool_width());
+        information(pooling_layer_index, 5) = to_string(pooling->get_row_stride());
+
+        pooling_layer_index++;
+    }
+    return information;
+}
+
 Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 {
     const Index layers_number = get_layers_number();
@@ -892,11 +978,18 @@ Tensor<string, 2> NeuralNetwork::get_dense2d_layers_information() const
 }
 
 
+
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
+    cout << "[to_XML] ENTER" << endl;
+
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
     const Index outputs_number = get_outputs_number();
+
+    cout << "[to_XML] inputs=" << inputs_number
+         << " layers=" << layers_number
+         << " outputs=" << outputs_number << endl;
 
     vector<string> input_names = get_input_feature_names();
     while (input_names.size() < static_cast<size_t>(inputs_number))
@@ -906,65 +999,74 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     while (output_names.size() < static_cast<size_t>(outputs_number))
         output_names.push_back("output_" + to_string(output_names.size() + 1));
 
+    cout << "[to_XML] input_names.size=" << input_names.size()
+         << " output_names.size=" << output_names.size() << endl;
+
     printer.OpenElement("NeuralNetwork");
 
-    // Input
-
+    // Inputs
     printer.OpenElement("Inputs");
-
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
-
     for(Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
-
     printer.CloseElement();
+    cout << "[to_XML] Inputs section done" << endl;
 
     // Layers
-
     printer.OpenElement("Layers");
-
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
+    cout << "[to_XML] Starting layers loop, layers_number=" << layers_number << endl;
     for(Index i = 0; i < layers_number; i++)
+    {
+        cout << "[to_XML] Layer " << i
+             << " name=" << layers[i]->get_name();
         layers[i]->to_XML(printer);
+        cout << "[to_XML] Layer " << i << " serialized OK" << endl;
+    }
+    cout << "[to_XML] Layers loop done" << endl;
 
-    // Layer input indices
+    // LayerInputIndices
+    cout << "[to_XML] layer_input_indices.size=" << layer_input_indices.size()
+         << " layers_number=" << layers_number << endl;
+
+    if(Index(layer_input_indices.size()) != layers_number)
+        cout << "[to_XML] *** WARNING MISMATCH layer_input_indices vs layers_number ***" << endl;
 
     printer.OpenElement("LayerInputIndices");
-
     for(Index i = 0; i < Index(layer_input_indices.size()); i++)
-        add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
-
+    {
+        cout << "[to_XML] indices[" << i << "]="
+             << vector_to_string(layer_input_indices[i]) << endl;
+        add_xml_element_attribute(printer, "LayerInputsIndices",
+                                  vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
+    }
     printer.CloseElement();
-
-    printer.CloseElement();
+    printer.CloseElement(); // Layers
+    cout << "[to_XML] LayerInputIndices done" << endl;
 
     // Outputs
-
     printer.OpenElement("Outputs");
-
     const Index outputs_count = has("Embedding") ? outputs_number : output_names.size();
+    cout << "[to_XML] outputs_count=" << outputs_count << endl;
     add_xml_element(printer, "OutputsNumber", to_string(outputs_count));
-
     for(Index i = 0; i < outputs_count; i++)
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
-
     printer.CloseElement();
+    cout << "[to_XML] Outputs done" << endl;
 
     add_xml_element(printer, "Display", to_string(display));
 
-    // Paramaters
-
+    // Parameters
     printer.OpenElement("Parameters");
-
-    if (parameters.size() > 0)
+    cout << "[to_XML] parameters_number=" << get_parameters_number() << endl;
+    if(get_parameters_number() > 0)
         printer.PushText(vector_to_string(parameters, " ").c_str());
-
     printer.CloseElement();
 
-    printer.CloseElement();
+    printer.CloseElement(); // NeuralNetwork
+    cout << "[to_XML] EXIT OK" << endl;
 }
-
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
@@ -1033,7 +1135,6 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     }
 }
 
-
 void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 {
     if(!layers_element)
@@ -1054,10 +1155,21 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
             throw runtime_error("Layer element is nullptr.");
 
         const string name_string = layer_element->Name();
-        unique_ptr<Layer> layer = Registry<Layer>::instance().create(name_string);
+        string registry_name = name_string;
 
-        if (!layer)
-            throw runtime_error("Layer type not found: " + name_string);
+        if(name_string == "Flatten")
+        {
+            const XMLElement* rank_element = layer_element->FirstChildElement("Rank");
+            if(rank_element && rank_element->GetText())
+                registry_name = "Flatten" + string(rank_element->GetText()) + "d";
+            else
+                registry_name = "Flatten4d";
+        }
+
+        unique_ptr<Layer> layer = Registry<Layer>::instance().create(registry_name);
+
+        if(!layer)
+            throw runtime_error("Layer type not found: " + registry_name);
 
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
@@ -1078,8 +1190,11 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
          layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
     {
         int layer_index;
-        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
+        if(layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
             throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
+
+        if(layer_index < 0 || layer_index >= layers_number)
+            throw runtime_error("Error: LayerIndex out of range.\n");
 
         const char* text = layer_inputs_indices_element->GetText();
         if(!text)
@@ -1089,8 +1204,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         layer_input_indices[layer_index] = vector<Index>(input_shape.begin(), input_shape.end());
     }
 }
-
-
 void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 {
     if(!outputs_element)

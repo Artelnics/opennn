@@ -47,15 +47,35 @@ Correlation correlation(const MatrixR& x,
 
     const Index x_rows = x.rows();
     const Index x_columns = x.cols();
+    const Index y_rows = y.rows();
     const Index y_columns = y.cols();
 
-    const bool x_binary = is_binary(x);
-    const bool y_binary = is_binary(y);
+    if(x_rows != y_rows)
+        throw runtime_error("Correlations Exception: x and y must have the same number of rows.");
+
+    auto matrix_is_binary = [](const MatrixR& m) -> bool
+    {
+        for(Index i = 0; i < m.rows(); ++i)
+        {
+            for(Index j = 0; j < m.cols(); ++j)
+            {
+                const type value = m(i,j);
+
+                if(value != type(0) && value != type(1))
+                    return false;
+            }
+        }
+
+        return true;
+    };
+
+    const bool x_binary = matrix_is_binary(x);
+    const bool y_binary = matrix_is_binary(y);
 
     if(x_columns == 1 && y_columns == 1)
     {
-        const VectorR x_vector = x.reshaped(x_rows, 1);
-        const VectorR y_vector = y.reshaped(x_rows, 1);
+        const VectorR x_vector = x.col(0);
+        const VectorR y_vector = y.col(0);
 
         if(!x_binary && !y_binary)
         {
@@ -72,32 +92,35 @@ Correlation correlation(const MatrixR& x,
                 = opennn::power_correlation(x_vector, y_vector);
 
             return max({linear_correlation, exponential_correlation, logarithmic_correlation, power_correlation},
-                       [](const Correlation& a, const Correlation& b) {
+                       [](const Correlation& a, const Correlation& b)
+                       {
                            return abs(a.r) < abs(b.r);
                        });
         }
 
         if(!x_binary && y_binary)
-            return opennn::point_biserial_correlation(x_vector, y_vector);
+            return logistic_correlation_vector_vector(x_vector, y_vector);
 
         if(x_binary && !y_binary)
-            return opennn::point_biserial_correlation(y_vector, x_vector);
+            return logistic_correlation_vector_vector(y_vector, x_vector);
 
         if(x_binary && y_binary)
             return opennn::linear_correlation(x_vector, y_vector);
     }
 
     if(x_columns != 1 && y_columns == 1)
-        return eta_squared_correlation(y.reshaped(x_rows, 1), x);
+        return logistic_correlation_matrix_vector(x, y.col(0));
 
     if(x_columns == 1 && y_columns != 1)
-        return eta_squared_correlation(x.reshaped(x_rows, 1), y);
+        return logistic_correlation_vector_matrix(x.col(0), y);
 
     if(x_columns != 1 && y_columns != 1)
         return logistic_correlation_matrix_matrix(x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 }
+
+
 
 
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
