@@ -123,7 +123,7 @@ public:
 
 struct OptimizerData
 {
-    OptimizerData();
+    OptimizerData() = default;
     virtual ~OptimizerData() = default;
 
     virtual void print() const;

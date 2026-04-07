@@ -22,12 +22,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(Loss* new_loss)
 }
 
 
-void QuasiNewtonMethod::set_loss(Loss* new_loss)
-{
-    loss = new_loss;
-}
-
-
 void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
@@ -198,8 +192,6 @@ TrainingResults QuasiNewtonMethod::train()
 
     const bool has_validation = dataset->has_validation();
 
-    const string error_type = loss->get_name();
-
     const Index training_samples_number = dataset->get_samples_number("Training");
 
     const Index validation_samples_number = dataset->get_samples_number("Validation");
@@ -253,8 +245,6 @@ TrainingResults QuasiNewtonMethod::train()
     type elapsed_time;
 
     QuasiNewtonMethodData optimization_data(this);
-
-    const Index parameters_number = neural_network->get_parameters().size();
 
     // Main loop
 
@@ -605,14 +595,6 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     }
 
     return {0.0, current_loss};
-}
-
-
-Triplet::Triplet()
-{
-    A = make_pair(MAX, MAX);
-    U = make_pair(MAX, MAX);
-    B = make_pair(MAX, MAX);
 }
 
 
