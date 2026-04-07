@@ -17,7 +17,7 @@
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     set(new_neural_network, new_dataset);
 }
@@ -59,7 +59,7 @@ bool TrainingStrategy::has_dataset() const
 }
 
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
     dataset = new_dataset;

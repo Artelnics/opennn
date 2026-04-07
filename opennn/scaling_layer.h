@@ -75,8 +75,7 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
-/*
-        if (new_input_shape.size() != Rank -1) 
+        if (new_input_shape.size() != Rank -1)
         {
            ostringstream buffer;
            buffer << "OpenNN Exception: Scaling Layer.\n"
@@ -89,23 +88,28 @@ public:
 
         const Index new_inputs_number = new_input_shape.count();
 
-        descriptives.resize(new_inputs_number);
-
-        for(Index i = 0; i < new_inputs_number; i++)
-            descriptives[i].set(type(-1.0), type(1), type(0), type(1));
+        means.resize(new_inputs_number);
+        means.setZero();
+        standard_deviations.resize(new_inputs_number);
+        standard_deviations.setOnes();
+        minimums.resize(new_inputs_number);
+        minimums.setConstant(type(-1.0));
+        maximums.resize(new_inputs_number);
+        maximums.setOnes();
+        multipliers.resize(new_inputs_number);
+        offsets.resize(new_inputs_number);
 
         scalers.resize(new_inputs_number, "MeanStandardDeviation");
 
         label = "scaling_layer";
 
-        set_scalers("MeanStandardDeviation");
-
         set_min_max_range(type(-1), type(1));
+
+        calculate_coefficients();
 
         name = "Scaling" + to_string(Rank) + "d";
 
         is_trainable = false;
-*/
     }
 
 

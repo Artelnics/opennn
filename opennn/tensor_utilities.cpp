@@ -163,9 +163,9 @@ VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 
     VectorR x(n);
 
-    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen(reinterpret_cast<type*>(A.data()), n, n);
+    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen(const_cast<type*>(A.data()), n, n);
 
-    const Map<Matrix<type, Dynamic, 1>> b_eigen(reinterpret_cast<type*>(b.data()), n, 1);
+    const Map<Matrix<type, Dynamic, 1>> b_eigen(const_cast<type*>(b.data()), n, 1);
 
     Map<Matrix<type, Dynamic, 1>> x_eigen(reinterpret_cast<type*>(x.data()), n);
 
@@ -273,26 +273,26 @@ bool contains(const vector<string>& data, const string& value)
 
 VectorMap vector_map(const MatrixR& tensor, Index index_1)
 {
-    return VectorMap(reinterpret_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
+    return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
 }
 
 
 VectorMap tensor_map(const Tensor2& tensor, Index index_1)
 {
-    return VectorMap(reinterpret_cast<type*>(tensor.data()) + tensor.dimension(0)*index_1, tensor.dimension(0));
+    return VectorMap(const_cast<type*>(tensor.data()) + tensor.dimension(0)*index_1, tensor.dimension(0));
 }
 
 
 MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
 {
-    return MatrixMap(reinterpret_cast<type*>(tensor.data()) +  tensor.dimension(0) * tensor.dimension(1)* index_2,
+    return MatrixMap(const_cast<type*>(tensor.data()) +  tensor.dimension(0) * tensor.dimension(1)* index_2,
                                       tensor.dimension(0), tensor.dimension(1));
 }
 
 
 TensorMap3 tensor_map(const Tensor4& tensor, Index index_3)
 {
-    return TensorMap3(reinterpret_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
+    return TensorMap3(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
                                       tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
 }
 
@@ -306,7 +306,7 @@ TensorMap3 tensor_map_(const TensorMap4 tensor, Index index_3)
 
 MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 {
-    return MatrixMap(reinterpret_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
+    return MatrixMap(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
                                       tensor.dimension(0), tensor.dimension(1));
 }
 

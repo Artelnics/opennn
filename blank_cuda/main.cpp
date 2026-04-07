@@ -6,8 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "../opennn/opennn.h"
 #include <iostream>
+
+#include "../opennn/language_dataset.h"
+#include "../opennn/standard_networks.h"
+#include "../opennn/loss.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
 
@@ -95,7 +100,6 @@ int main()
     try
     {
         cout << "OpenNN. Blank Cuda." << endl;
-        WeightedSquaredError();
 #ifdef CUDA
 
         cout << "OpenNN. Transformer training on OPUS Books en-es." << endl;

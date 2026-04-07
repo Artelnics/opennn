@@ -20,7 +20,7 @@
 #include "../../opennn/time_series_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/standard_networks.h"
-#include "../../opennn/normalized_squared_error.h"
+#include "../../opennn/loss.h"
 #include "../../opennn/training_strategy.h"
 #include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"

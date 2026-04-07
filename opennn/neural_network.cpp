@@ -13,6 +13,7 @@
 #include "dense_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
+#include "image_utilities.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
@@ -517,8 +518,8 @@ Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3&
 
     ForwardPropagation forward_propagation(batch_size, this);
 
-    const vector<TensorView> input_views = {TensorView(reinterpret_cast<type*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
-                                            TensorView(reinterpret_cast<type*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
+    const vector<TensorView> input_views = {TensorView(const_cast<type*>(inputs_1.data()), {{inputs_1.dimension(0), inputs_1.dimension(1), inputs_1.dimension(2)}}),
+                                            TensorView(const_cast<type*>(inputs_2.data()), {{inputs_2.dimension(0), inputs_2.dimension(1), inputs_2.dimension(2)}})};
 
     forward_propagate(input_views, forward_propagation, false);
 
@@ -704,14 +705,14 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     Tensor3 image = load_image(image_path);
 
-    Scaling4d* scaling_layer = static_cast<Scaling4d*>(get_first("Scaling4d"));
+    Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(get_first("Scaling4d"));
 
     const Index height = scaling_layer->get_input_shape()[0];
     const Index width = scaling_layer->get_input_shape()[1];
     const Index channels = scaling_layer->get_input_shape()[2];
 
     const Index current_height = image.dimension(0);
-    const Index current_width = image.cols();
+    const Index current_width = image.dimension(1);
     const Index current_channels = image.dimension(2);
 
     if (current_channels != channels)

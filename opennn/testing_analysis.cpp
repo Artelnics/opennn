@@ -18,7 +18,7 @@
 namespace opennn
 {
 
-TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, const Dataset* new_dataset)
+TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
     dataset = new_dataset;
