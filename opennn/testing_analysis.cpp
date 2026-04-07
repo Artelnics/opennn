@@ -717,9 +717,9 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 
         MatrixR batch_outputs;
 
-        if(input_shape.size() == 1)
+        if(input_shape.rank == 1)
             batch_outputs = neural_network->calculate_outputs(batch_inputs_flat);
-        else if(input_shape.size() == 3)
+        else if(input_shape.rank == 3)
         {
             Tensor4 inputs_4d(current_batch_size,
                               input_shape[0],

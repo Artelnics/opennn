@@ -36,7 +36,7 @@ vector<Shape> Recurrent::get_parameter_shapes() const
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
-    if(new_input_shape.size() != 2)
+    if(new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     input_shape = new_input_shape;
@@ -55,7 +55,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 
 void Recurrent::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.size() != 2)
+    if (new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     input_shape = new_input_shape;

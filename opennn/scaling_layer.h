@@ -75,18 +75,18 @@ public:
 
     void set(const Shape& new_input_shape = {})
     {
-        if (new_input_shape.size() != Rank -1)
+        if (new_input_shape.rank != Rank -1)
         {
            ostringstream buffer;
            buffer << "OpenNN Exception: Scaling Layer.\n"
                   << "void set(const Shape& new_input_shape) method.\n"
-                  << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.size() << ".\n";
+                  << "Input shape size must be " << Rank - 1 << ", but is " << new_input_shape.rank << ".\n";
            throw logic_error(buffer.str());
         }
 
         input_shape = new_input_shape;
 
-        const Index new_inputs_number = new_input_shape.count();
+        const Index new_inputs_number = new_input_shape.size();
 
         means.resize(new_inputs_number);
         means.setZero();
@@ -180,7 +180,7 @@ public:
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().size();
 
         ostringstream buffer;
 
@@ -195,7 +195,7 @@ public:
 
     string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().size();
 
         ostringstream buffer;
 
@@ -225,7 +225,7 @@ public:
 
     string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
-        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().count();
+        const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().size();
 
         ostringstream buffer;
 

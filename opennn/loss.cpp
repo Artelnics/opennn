@@ -90,7 +90,7 @@ void Loss::back_propagate(const Batch& batch,
 
     add_regularization(back_propagation);
 
-    add_regularization_to_gradients(back_propagation);
+    add_regularization_gradient(back_propagation.gradient);
 }
 
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
@@ -213,25 +213,30 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 }
 
 
+static const vector<pair<Loss::Error, string>> error_map = {
+    {Loss::Error::MeanSquaredError,      "MeanSquaredError"},
+    {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
+    {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
+    {Loss::Error::CrossEntropy,           "CrossEntropy"},
+    {Loss::Error::MinkowskiError,         "MinkowskiError"}
+};
+
+
 void Loss::set_error(const Error& new_error)
 {
     error = new_error;
 
-    if (error == Error::MeanSquaredError) name = "MeanSquaredError";
-    else if (error == Error::NormalizedSquaredError) name = "NormalizedSquaredError";
-    else if (error == Error::WeightedSquaredError) name = "WeightedSquaredError";
-    else if (error == Error::CrossEntropy) name = "CrossEntropy";
-    else if (error == Error::MinkowskiError) name = "MinkowskiError";
+    for(const auto& [e, n] : error_map)
+        if (e == error) { name = n; return; }
 }
+
 
 void Loss::set_error(const string& new_name)
 {
-    if (new_name == "MeanSquaredError") set_error(Error::MeanSquaredError);
-    else if (new_name == "NormalizedSquaredError") set_error(Error::NormalizedSquaredError);
-    else if (new_name == "WeightedSquaredError") set_error(Error::WeightedSquaredError);
-    else if (new_name == "CrossEntropy") set_error(Error::CrossEntropy);
-    else if (new_name == "MinkowskiError") set_error(Error::MinkowskiError);
-    else throw runtime_error("Unknown loss method: " + new_name);
+    for(const auto& [e, n] : error_map)
+        if (n == new_name) { set_error(e); return; }
+
+    throw runtime_error("Unknown loss method: " + new_name);
 }
 
 void Loss::add_regularization_gradient(VectorR& gradient_vec) const
@@ -251,25 +256,6 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
 }
 
 
-void Loss::add_regularization_to_gradients(BackPropagation& back_propagation) const
-{
-
-/*  "todo delete this method?
-    if(regularization_method == "None" || regularization_weight == 0)
-        return;
-
-    const VectorR& parameters = neural_network->get_parameters();
-
-    VectorR& gradient = back_propagation.gradient;
-
-    if(regularization_method == "L1")
-        gradient.array() += regularization_weight * parameters.array().sign();
-    else if(regularization_method == "L2")
-        gradient += parameters*regularization_weight;
-    else
-        throw runtime_error("Unknown regularization method: " + regularization_method);
-*/
-}
 
 
 void Loss::regularization_from_XML(const XMLDocument& document)
@@ -340,7 +326,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     for(const auto& layer_shapes : parameter_shapes)
         for(const Shape& s : layer_shapes)
-            total_parameters_size += get_aligned_size(s.count());
+            total_parameters_size += get_aligned_size(s.size());
 
     gradient.resize(total_parameters_size);
     gradient.setZero();
@@ -356,10 +342,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         for(size_t j = 0; j < layer_param_shapes.size(); ++j)
         {
             const Shape& s = layer_param_shapes[j];
-            if(s.count() > 0 && g_ptr)
+            if(s.size() > 0 && g_ptr)
             {
                 gradient_views[i][j] = TensorView(g_ptr, s);
-                g_ptr += get_aligned_size(s.count());
+                g_ptr += get_aligned_size(s.size());
             }
         }
     }
@@ -370,7 +356,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     for(const auto& layer_shapes : backward_shapes)
         for(const Shape& s : layer_shapes)
-            total_backward_size += get_aligned_size(s.count());
+            total_backward_size += get_aligned_size(s.size());
 
     backward.resize(total_backward_size);
     backward.setZero();
@@ -393,10 +379,10 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
             const Shape& s = shapes[j];
             backward_views[i][j + 1].resize(1);
 
-            if(s.count() > 0 && b_ptr)
+            if(s.size() > 0 && b_ptr)
             {
                 backward_views[i][j + 1][0] = TensorView(b_ptr, s);
-                b_ptr += get_aligned_size(s.count());
+                b_ptr += get_aligned_size(s.size());
             }
         }
     }
@@ -414,7 +400,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     output_gradient_dimensions = { batch_size };
     output_gradient_dimensions.insert(output_gradient_dimensions.end(), output_shape.begin(), output_shape.end());
 
-    const Index total_output_elements = output_shape.count() * batch_size;
+    const Index total_output_elements = output_shape.size() * batch_size;
     output_gradients.resize(total_output_elements);
     output_gradients.setZero();
 

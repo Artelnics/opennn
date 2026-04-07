@@ -107,13 +107,13 @@ type *Layer::link_parameters(type *pointer)
 
     for (size_t i = 0; i < shapes.size(); ++i)
     {
-        if (shapes[i].count() == 0) continue;
+        if (shapes[i].size() == 0) continue;
 
         assert(is_aligned(pointer));
 
         parameters[i] = TensorView(pointer, shapes[i]);
 
-        pointer += get_aligned_size(shapes[i].count());
+        pointer += get_aligned_size(shapes[i].size());
     }
     return pointer;
 }
@@ -130,13 +130,13 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 
 Index Layer::get_inputs_number() const
 {
-    return get_input_shape().count();
+    return get_input_shape().size();
 }
 
 
 Index Layer::get_outputs_number() const
 {
-    return get_output_shape().count();
+    return get_output_shape().size();
 }
 
 

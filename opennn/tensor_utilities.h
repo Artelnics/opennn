@@ -41,9 +41,10 @@ public:
 
     void push(T item)
     {
-        unique_lock<mutex> lock(mutex_);
-        queue_.push(item);
-        lock.unlock();
+        {
+            lock_guard<mutex> lock(mutex_);
+            queue_.push(move(item));
+        }
         cond_.notify_one();
     }
 
@@ -66,7 +67,7 @@ public:
 
 struct Shape
 {
-    static constexpr size_t MaxRank = 6;
+    static constexpr size_t MaxRank = 4;
     Index shape[MaxRank] = {0};
     size_t rank = 0;
 
@@ -120,11 +121,6 @@ struct Shape
         return shape[rank - 1];
     }
 
-    size_t size() const noexcept
-    {
-        return rank;
-    }
-
     bool empty() const noexcept
     {
         return rank == 0;
@@ -167,7 +163,7 @@ struct Shape
     }
 
 
-    Index count() const noexcept
+    Index size() const noexcept
     {
         if (rank == 0) return 0;
 
@@ -187,7 +183,7 @@ struct Shape
     void resize(size_t n)
     {
         if (n > MaxRank)
-            throw out_of_range("Shape::resize: rank exceeds MaxRank (8)");
+            throw out_of_range("Shape::resize: rank exceeds MaxRank (" + to_string(MaxRank) + ")");
 
         rank = n;
     }
@@ -262,14 +258,14 @@ struct TensorView
         shape = new_shape;
     }
 
-    Index rank() const noexcept
+    Index get_rank() const noexcept
     {
-        return shape.size();
+        return shape.rank;
     }
 
     Index size() const noexcept
     {
-        return shape.count();
+        return shape.size();
     }
 
     bool empty() const noexcept
@@ -294,32 +290,32 @@ struct TensorView
         {
             cout << data[i] << " ";
 
-            if (shape.size() > 1 && (i + 1) % last_dim_stride == 0)
+            if (shape.rank > 1 && (i + 1) % last_dim_stride == 0)
                 cout << endl;
         }
 
-        if (shape.size() == 1 || total_size % last_dim_stride != 0)
+        if (shape.rank == 1 || total_size % last_dim_stride != 0)
             cout << endl;
     }
 
     inline MatrixMap as_matrix() const
     {
-        assert(data && shape.size() >= 2);
+        assert(data && shape.rank >= 2);
 
-        return MatrixMap(data, shape[0], shape.count() / shape[0]);
+        return MatrixMap(data, shape[0], shape.size() / shape[0]);
     }
 
     inline VectorMap as_vector() const
     {
         assert(data);
 
-        return VectorMap(data, shape.count());
+        return VectorMap(data, shape.size());
     }
 
     template<int Rank>
     inline TensorMapR<Rank> as_tensor() const
     {
-        assert(data && shape.size() == Rank);
+        assert(data && shape.rank == Rank);
 
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
@@ -352,22 +348,22 @@ struct TensorView
     void set_descriptor(const Shape& shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() == 4) { // NHWC
+        if (shape.rank == 4) { // NHWC
             n = static_cast<int>(shape[0]);
             h = static_cast<int>(shape[1]);
             w = static_cast<int>(shape[2]);
             c = static_cast<int>(shape[3]);
         }
-        else if (shape.size() == 3) { // NWC
+        else if (shape.rank == 3) { // NWC
             n = static_cast<int>(shape[0]);
             w = static_cast<int>(shape[1]);
             c = static_cast<int>(shape[2]);
         }
-        else if (shape.size() == 2) { // NC
+        else if (shape.rank == 2) { // NC
             n = static_cast<int>(shape[0]);
             c = static_cast<int>(shape[1]);
         }
-        else if (shape.size() == 1) { // C
+        else if (shape.rank == 1) { // C
             c = static_cast<int>(shape[0]);
         }
 
@@ -432,16 +428,13 @@ void link(type*, vector<vector<TensorView*>>);
 
 inline Index get_size(const vector<Shape>& shapes)
 {
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     Index total = 0;
 
     for(const Shape& s : shapes)
     {
-        const Index n = s.count();
+        const Index n = s.size();
         if(n > 0)
-            total += (n + ALIGN_ELEMENTS - 1) & MASK;
+            total += (n + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
     }
 
     return total;
@@ -621,13 +614,9 @@ VectorI get_nearest_points(const MatrixR& ,const VectorR& , int = 1);
 void fill_tensor_data(const MatrixR&, const vector<Index>&, const vector<Index>&, type*, bool = true);
 
 template <typename Type, int Rank>
-bool contains(const TensorR<Rank>& vector, const Type& value)
+bool contains(const TensorR<Rank>& tensor, const Type& value)
 {
-    Tensor<Type, 1> copy(vector);
-
-    const Type* it = find(copy.data(), copy.data() + copy.size(), value);
-
-    return it != (copy.data() + copy.size());
+    return find(tensor.data(), tensor.data() + tensor.size(), value) != (tensor.data() + tensor.size());
 }
 
 template <typename Derived, typename T>
@@ -645,19 +634,16 @@ bool contains(const vector<string>&, const string&);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
 
-vector<Index> join_vector_vector(const vector<Index>&, const vector<Index>&);
-
 template <typename T>
 void push_back(Tensor<T, 1, AlignedMax>& tensor, const T& value)
 {
-    const int new_size = tensor.dimension(0) + 1;
+    const Index old_size = tensor.dimension(0);
 
-    Tensor<T, 1> new_tensor(new_size);
+    Tensor<T, 1> new_tensor(old_size + 1);
 
-    for(int i = 0; i < tensor.dimension(0); i++)
-        new_tensor(i) = tensor(i);
+    memcpy(new_tensor.data(), tensor.data(), old_size * sizeof(T));
 
-    new_tensor(new_size - 1) = value;
+    new_tensor(old_size) = value;
 
     tensor = new_tensor;
 }
@@ -666,8 +652,6 @@ string shape_to_string(const Shape&, const string& = " ");
 Shape string_to_shape(const string&, const string& = " ");
 
 Shape prepend(const Index&, const Shape&);
-
-Index get_size(const Shape&);
 
 template <typename T>
 string vector_to_string(const vector<T>& x, const string& separator = " ")
@@ -753,8 +737,6 @@ MatrixMap matrix_map(const Tensor3&, Index);
 TensorMap3 tensor_map(const Tensor4&, Index);
 MatrixMap matrix_map(const Tensor4&, Index, Index);
 
-TensorMap3 tensor_map_(const TensorMap4, Index);
-
 inline VectorMap vector_map(const TensorView& tensor_view)
 {
     assert(tensor_view.data != nullptr);
@@ -780,41 +762,15 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
     assert(reinterpret_cast<uintptr_t>(tensor_view.data) % EIGEN_MAX_ALIGN_BYTES == 0);
 
     if constexpr (rank == 2) // @todo For what is this? Can we simplify?
-        if (tensor_view.rank() == 4)
+        if (tensor_view.get_rank() == 4)
             return TensorMap2(tensor_view.data,
                               tensor_view.shape[0],
                               tensor_view.size() / tensor_view.shape[0]);
 
-    if (tensor_view.rank() != rank)
-        throw runtime_error("Dimensions is " + to_string(tensor_view.rank()) + " and must be " + to_string(rank));
+    if (tensor_view.get_rank() != rank)
+        throw runtime_error("Dimensions is " + to_string(tensor_view.get_rank()) + " and must be " + to_string(rank));
 
-    if constexpr (rank == 1)
-        return TensorMap1(tensor_view.data, tensor_view.shape[0]);
-    else if constexpr (rank == 2)
-        return TensorMap2(tensor_view.data,
-                          tensor_view.shape[0],
-                          tensor_view.shape[1]);
-    else if constexpr (rank == 3)
-        return TensorMap3(tensor_view.data,
-                          tensor_view.shape[0],
-                          tensor_view.shape[1],
-                          tensor_view.shape[2]);
-    else if constexpr (rank == 4)
-        return TensorMap4(tensor_view.data,
-                          tensor_view.shape[0],
-                          tensor_view.shape[1],
-                          tensor_view.shape[2],
-                          tensor_view.shape[3]);
-    else if constexpr (rank == 5)
-        return TensorMap5(tensor_view.data,
-                          tensor_view.shape[0],
-                          tensor_view.shape[1],
-                          tensor_view.shape[2],
-                          tensor_view.shape[3],
-                          tensor_view.shape[4]);
-
-    else
-        static_assert(rank >= 1 && rank <= 5, "Unsupported tensor rank");
+    return TensorMapR<rank>(tensor_view.data, tensor_view.shape.get_eigen_dims<rank>());
 }
 
 
@@ -823,9 +779,9 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 {
     size_t maximum_size = 0;
 
-    for(size_t i = 0; i < v.size(); i++)
-        if (v[i].size() > maximum_size)
-            maximum_size = v[i].size();
+    for(const auto& inner : v)
+        if (inner.size() > maximum_size)
+            maximum_size = inner.size();
 
     return maximum_size;
 }
@@ -867,14 +823,18 @@ bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
     const Index size = tensor.size();
 
     for(Index i = 0; i < size; i++)
+    {
         if constexpr (is_same_v<Type, bool>)
         {
             if (tensor(i) != value)
                 return false;
-            else
-                if (std::abs(tensor(i) - value) > tolerance)
-                    return false;
         }
+        else
+        {
+            if (std::abs(tensor(i) - value) > tolerance)
+                return false;
+        }
+    }
 
     return true;
 }
@@ -1088,19 +1048,19 @@ struct TensorCuda
     void set_descriptor(const Shape& shape)
     {
         int n = 1, c = 1, h = 1, w = 1;
-        if (shape.size() == 4) { // NHWC
+        if (shape.rank == 4) { // NHWC
             n = static_cast<int>(shape[0]);
             h = static_cast<int>(shape[1]);
             w = static_cast<int>(shape[2]);
             c = static_cast<int>(shape[3]);
-        } else if (shape.size() == 3) { // NWC
+        } else if (shape.rank == 3) { // NWC
             n = static_cast<int>(shape[0]);
             w = static_cast<int>(shape[1]);
             c = static_cast<int>(shape[2]);
-        } else if (shape.size() == 2) { // NC
+        } else if (shape.rank == 2) { // NC
             n = static_cast<int>(shape[0]);
             c = static_cast<int>(shape[1]);
-        } else if (shape.size() == 1) { // C
+        } else if (shape.rank == 1) { // C
             c = static_cast<int>(shape[0]);
         }
 

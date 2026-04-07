@@ -380,8 +380,6 @@ public:
 
     bool has_nan_row(const Index) const;
 
-    void print_missing_values_information() const;
-
     virtual void impute_missing_values_unuse();
     void impute_missing_values_statistic(const MissingValuesMethod&);
     virtual void impute_missing_values_interpolate();

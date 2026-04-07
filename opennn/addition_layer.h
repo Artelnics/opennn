@@ -35,7 +35,7 @@ public:
 
     void set(const Shape& new_input_shape, const string& new_label)
     {
-        if(!new_input_shape.empty() && new_input_shape.size() != Rank - 1)
+        if(!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
             throw runtime_error("Input shape rank for AdditionLayer<" + to_string(Rank) + "> must be " + to_string(Rank - 1) + " (without batch dimension).");
 
         input_shape = new_input_shape;

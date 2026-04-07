@@ -117,15 +117,13 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 
 vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, Index bound)
 {
-    const Index vectors_number = vectors.size();
+    vector<Index> indices;
 
-    vector<Index> indices(0);
-
-    for(Index i = 0; i < vectors_number; i++)
+    for(const auto& v : vectors)
     {
-        const vector<Index> indices_vector = get_elements_greater_than(vectors[i], bound);
+        const vector<Index> filtered = get_elements_greater_than(v, bound);
 
-        indices = join_vector_vector(indices, indices_vector);
+        indices.insert(indices.end(), filtered.begin(), filtered.end());
     }
 
     return indices;
@@ -211,17 +209,6 @@ void fill_tensor_data(const MatrixR& matrix,
 }
 
 
-vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
-{
-    vector<Index> result = x;
-    result.reserve(x.size() + y.size());
-
-    result.insert(result.end(), y.begin(), y.end());
-
-    return result;
-}
-
-
 string shape_to_string(const Shape& x, const string& separator)
 {
     const Index size = x.size();
@@ -277,12 +264,6 @@ VectorMap vector_map(const MatrixR& tensor, Index index_1)
 }
 
 
-VectorMap tensor_map(const Tensor2& tensor, Index index_1)
-{
-    return VectorMap(const_cast<type*>(tensor.data()) + tensor.dimension(0)*index_1, tensor.dimension(0));
-}
-
-
 MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
 {
     return MatrixMap(const_cast<type*>(tensor.data()) +  tensor.dimension(0) * tensor.dimension(1)* index_2,
@@ -297,23 +278,10 @@ TensorMap3 tensor_map(const Tensor4& tensor, Index index_3)
 }
 
 
-TensorMap3 tensor_map_(const TensorMap4 tensor, Index index_3)
-{
-    return TensorMap3(tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
-                                      tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
-}
-
-
 MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 {
     return MatrixMap(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
                                       tensor.dimension(0), tensor.dimension(1));
-}
-
-
-Index get_size(const Shape& shape)
-{
-    return accumulate(shape.begin(), shape.end(), 1, multiplies<Index>());
 }
 
 
@@ -327,9 +295,6 @@ Shape prepend(const Index &x, const Shape&d)
 
 type* link(type *pointer, vector<TensorView*> views)
 {
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     for(TensorView* view : views)
     {
         if(!view || view->size() == 0)
@@ -340,7 +305,7 @@ type* link(type *pointer, vector<TensorView*> views)
         if (reinterpret_cast<uintptr_t>(pointer) % EIGEN_MAX_ALIGN_BYTES != 0)
             throw runtime_error("Master pointer in link() is not aligned.");
 
-        pointer += (view->size() + ALIGN_ELEMENTS - 1) & MASK;
+        pointer += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
     }
 
     return pointer;
@@ -356,9 +321,6 @@ void link(type *pointer, vector<vector<TensorView*>> views)
 
 Index get_size(const vector<TensorView*> views)
 {
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     Index total_size = 0;
 
     for(const TensorView* view : views)
@@ -366,7 +328,7 @@ Index get_size(const vector<TensorView*> views)
         if(!view || view->size() == 0)
             continue;
 
-        total_size += (view->size() + ALIGN_ELEMENTS - 1) & MASK;
+        total_size += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
     }
 
     return total_size;
@@ -421,35 +383,21 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
     const Index rows_number = x.size();
     const Index y_columns_number = y.cols();
 
-    Index new_rows_number = 0;
-
-    VectorB not_NAN_row(rows_number);
+    vector<Index> valid_indices;
+    valid_indices.reserve(rows_number);
 
     for(Index i = 0; i < rows_number; i++)
-    {
-        not_NAN_row(i) = true;
+        if(!isnan(x(i)) && !isnan(y(i)))
+            valid_indices.push_back(i);
 
-        if(isnan(x(i)) || isnan(y(i)))
-            not_NAN_row(i) = false;
-
-        if(not_NAN_row(i))
-            new_rows_number++;
-    }
-
+    const Index new_rows_number = static_cast<Index>(valid_indices.size());
     VectorR new_x(new_rows_number);
     MatrixR new_y(new_rows_number, y_columns_number);
 
-    Index index = 0;
-
-    for(Index i = 0; i < rows_number; i++)
+    for(Index i = 0; i < new_rows_number; i++)
     {
-        if(!not_NAN_row(i))
-            continue;
-
-        for(Index j = 0; j < y_columns_number; j++)
-            new_y(index, j) = y(i, j);
-
-        new_x(index++) = x(i);
+        new_x(i) = x(valid_indices[i]);
+        new_y.row(i) = y.row(valid_indices[i]);
     }
 
     return {new_x, new_y};
@@ -512,9 +460,6 @@ void shuffle_rows(MatrixR& matrix)
 
 type* link(type* pointer, const vector<TensorView*>& views)
 {
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     for (TensorView* view : views)
     {
         if (!view || view->size() == 0)
@@ -522,7 +467,7 @@ type* link(type* pointer, const vector<TensorView*>& views)
 
         view->data = pointer;
 
-        pointer += (view->size() + ALIGN_ELEMENTS - 1) & MASK;
+        pointer += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
     }
 
     return pointer;
@@ -538,9 +483,6 @@ void link(type* pointer, const vector<vector<TensorView*>>& views)
 
 Index get_size(const vector<TensorView*>& views)
 {
-    constexpr Index ALIGN_ELEMENTS = EIGEN_MAX_ALIGN_BYTES / sizeof(type);
-    constexpr Index MASK = ~(ALIGN_ELEMENTS - 1);
-
     Index total_size = 0;
 
     for (const TensorView* view : views)
@@ -548,7 +490,7 @@ Index get_size(const vector<TensorView*>& views)
         if (!view || view->size() == 0)
             continue;
 
-        total_size += (view->size() + ALIGN_ELEMENTS - 1) & MASK;
+        total_size += (view->size() + ALIGN_ELEMENTS - 1) & ALIGN_MASK;
     }
 
     return total_size;

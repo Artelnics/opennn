@@ -244,10 +244,10 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    if(new_kernel_shape.size() != 4)
+    if(new_kernel_shape.rank != 4)
         throw runtime_error("Kernel shape must be 4");
 
-    if (new_stride_shape.size() != 2)
+    if (new_stride_shape.rank != 2)
         throw runtime_error("Stride shape must be 2");
 
     if (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1])
@@ -401,8 +401,8 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.size() != 3)
-        throw runtime_error("Input new_input_shape.size() must be 3");
+    if (new_input_shape.rank != 3)
+        throw runtime_error("Input new_input_shape.rank must be 3");
 
     input_shape = new_input_shape;
 }

@@ -1182,9 +1182,9 @@ void Dataset::set(const Index new_samples_number,
 
     input_shape = new_input_shape;
 
-    const Index new_inputs_number = new_input_shape.count();
+    const Index new_inputs_number = new_input_shape.size();
 
-    Index new_targets_number = new_target_shape.count();
+    Index new_targets_number = new_target_shape.size();
 
     new_targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
 
@@ -3164,7 +3164,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_input_shape.empty())
     {
         input_shape = prepend(samples_number, dataset_input_shape);
-        input_vector.resize(get_size(input_shape));
+        input_vector.resize(input_shape.size());
     }
 
     // Target
@@ -3174,7 +3174,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_target_shape.empty())
     {
         target_shape = prepend(samples_number, dataset_target_shape);
-        target_vector.resize(get_size(target_shape));
+        target_vector.resize(target_shape.size());
     }
 
     // Decoder
@@ -3184,7 +3184,7 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     if(!dataset_decoder_shape.empty())
     {
          decoder_shape = prepend(samples_number, dataset_decoder_shape);
-         decoder_vector.resize(get_size(decoder_shape));
+         decoder_vector.resize(decoder_shape.size());
     }
 }
 
@@ -3201,18 +3201,18 @@ void Batch::print() const
          << "Inputs:" << endl
          << "Input shape:" << input_shape << endl;
 
-    if (input_shape.size() == 4)
+    if (input_shape.rank == 4)
         cout << TensorMap4(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2],
                                            input_shape[3]);
-    else if (input_shape.size() == 3)
+    else if (input_shape.rank == 3)
         cout << TensorMap3(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1],
                                            input_shape[2]);
-    else if (input_shape.size() == 2)
+    else if (input_shape.rank == 2)
         cout << MatrixMap(const_cast<type*>(input_vector.data()),
                                            input_shape[0],
                                            input_shape[1]);

@@ -38,13 +38,13 @@ public:
 
     Shape get_output_shape() const override
     {
-        return { input_shape.count() };
+        return { input_shape.size() };
     }
 
 
     void set(const Shape& new_input_shape)
     {
-        if (new_input_shape.size() != Rank - 1)
+        if (new_input_shape.rank != Rank - 1)
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 
         name = "Flatten" + to_string(Rank) + "d";

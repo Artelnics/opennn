@@ -488,7 +488,7 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 {
     const Index batch_size = fp.batch_size;
     const Index num_neurons = layer->get_outputs_number();
-    const Index num_inputs = layer->get_input_shape().count();
+    const Index num_inputs = layer->get_input_shape().size();
 
     // Access activations from the forward propagation views
     // Slot 0 is usually Input, Slot 2 is usually Output (based on your Dense class)

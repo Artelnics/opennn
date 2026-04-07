@@ -166,7 +166,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape) : NeuralNetwork()
 {
-    if (input_shape.size() != 3)
+    if (input_shape.rank != 3)
         throw runtime_error("Input shape size is not 3.");
 
     reference_all_layers();
@@ -227,7 +227,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                            const Shape& initial_filters,
                            const Shape& output_shape) : NeuralNetwork()
 {
-    if (input_shape.size() != 3)
+    if (input_shape.rank != 3)
         throw runtime_error("Input shape size must be 3.");
     if (blocks_per_stage.size() != initial_filters.size())
         throw runtime_error("blocks_per_stage and initial_filters must have the same size.");

@@ -90,8 +90,6 @@ public:
 
     void add_regularization_gradient(VectorR&) const;
 
-    void add_regularization_to_gradients(BackPropagation&) const;
-
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;

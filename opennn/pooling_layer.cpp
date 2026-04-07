@@ -131,7 +131,7 @@ void Pooling::set(const Shape& new_input_shape,
     if(new_pool_dimensions.size() != 2)
         throw runtime_error("Pool shape must be 2");
 
-    if (new_stride_shape.size() != 2)
+    if (new_stride_shape.rank != 2)
         throw runtime_error("Stride shape must be 2");
 
     if (new_padding_dimensions.size() != 2)
@@ -185,7 +185,7 @@ void Pooling::set(const Shape& new_input_shape,
 
 void Pooling::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.size() != 3)
+    if (new_input_shape.rank != 3)
         throw runtime_error("Input shape must be 3");
 
     input_shape = new_input_shape;

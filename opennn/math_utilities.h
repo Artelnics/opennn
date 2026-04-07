@@ -484,7 +484,7 @@ inline void batch_normalization_backward(
 #else
     // Use SPATIAL for 4D (Conv) and PER_ACTIVATION for 2D (Dense)
 
-    const cudnnBatchNormMode_t mode = (input.rank() == 4)
+    const cudnnBatchNormMode_t mode = (input.get_rank() == 4)
         ? CUDNN_BATCHNORM_SPATIAL
         : CUDNN_BATCHNORM_PER_ACTIVATION;
 
@@ -565,7 +565,7 @@ inline void batch_normalization_training(
     output_matrix.rowwise() += betas.transpose();
 
 #else
-    const cudnnBatchNormMode_t mode = (input.rank() == 4)
+    const cudnnBatchNormMode_t mode = (input.get_rank() == 4)
         ? CUDNN_BATCHNORM_SPATIAL
         : CUDNN_BATCHNORM_PER_ACTIVATION;
 
@@ -875,7 +875,7 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
                      TensorView& output_C,
                      type alpha = 1.0f, type beta = 0.0f)
 {
-    const size_t rank = input_A.rank();
+    const size_t rank = input_A.get_rank();
 
 #ifndef CUDA
     if (rank <= 2)

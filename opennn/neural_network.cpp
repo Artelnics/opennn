@@ -64,7 +64,7 @@ void NeuralNetwork::compile()
     Index total_parameters = 0;
     for (const auto& layer : layers)
         for (const Shape& s : layer->get_parameter_shapes())
-            total_parameters += get_aligned_size(s.count());
+            total_parameters += get_aligned_size(s.size());
 
     parameters.resize(total_parameters);
     parameters.setZero();
@@ -235,7 +235,7 @@ void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
-    const Index total_inputs = new_input_shape.count();
+    const Index total_inputs = new_input_shape.size();
     input_variables.resize(total_inputs);
 
     if(has("Scaling2d"))
@@ -313,7 +313,7 @@ Index NeuralNetwork::get_inputs_number() const
 
     const Shape input_shape = layers[0]->get_input_shape();
 
-    return input_shape.count();
+    return input_shape.size();
 }
 
 
@@ -321,7 +321,7 @@ Index NeuralNetwork::get_outputs_number() const
 {
     if(layers.empty()) return 0;
 
-    return layers.back()->get_output_shape().count();
+    return layers.back()->get_output_shape().size();
 }
 
 
@@ -1113,7 +1113,7 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
 
     for(const auto& layer_shapes : forward_shapes)
         for(const Shape& s : layer_shapes)
-            total_size += get_aligned_size(s.count());
+            total_size += get_aligned_size(s.size());
 
     if(total_size > 0)
     {
@@ -1137,11 +1137,11 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
             const Shape& s = shapes[j];
             views[i][j + 1].resize(1);
 
-            if(s.count() > 0 && pointer)
+            if(s.size() > 0 && pointer)
             {
                 views[i][j + 1][0] = TensorView(pointer, s);
                 // Advance pointer using the alignment utility
-                pointer += get_aligned_size(s.count());
+                pointer += get_aligned_size(s.size());
             }
         }
     }
