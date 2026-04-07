@@ -13,7 +13,6 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/weighted_squared_error.h"
 #include "../../opennn/adaptive_moment_estimation.h"
 
 using namespace opennn;
@@ -48,10 +47,8 @@ int main()
         TrainingStrategy training_strategy(&text_classification_network, &language_dataset);
 
         AdaptiveMomentEstimation* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());
-        adam->set_maximum_epochs(100);
+        adam->set_maximum_epochs(75);
         adam->set_display_period(10);
-
-        WeightedSquaredError wse;
 
         training_strategy.set_loss("CrossEntropyError2d");
 

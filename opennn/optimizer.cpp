@@ -11,7 +11,6 @@
 #include "time_series_dataset.h"
 #include "language_dataset.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "loss.h"
 #include "optimizer.h"
@@ -253,7 +252,7 @@ void Optimizer::set_names()
 
         if(target_names[i].empty())
         {
-            auto input_iterator = find(input_feature_indices.begin(), input_feature_indices.end(), target_feature_indices[i]);
+            vector<Index>::const_iterator input_iterator = find(input_feature_indices.begin(), input_feature_indices.end(), target_feature_indices[i]);
 
             if(input_iterator == input_feature_indices.end())
                 current_target_name = "variable_" + to_string(input_features_number + i + 1);
@@ -359,7 +358,7 @@ void Optimizer::set_scaling()
     {
         Index target_index = target_feature_indices[i];
 
-        auto it = find(input_feature_indices.begin(), input_feature_indices.end(), target_index);
+        vector<Index>::const_iterator it = find(input_feature_indices.begin(), input_feature_indices.end(), target_index);
 
         if(it != input_feature_indices.end())
         {

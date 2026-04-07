@@ -293,10 +293,8 @@ void EmbeddingForwardPropagation::initialize()
 
 void EmbeddingForwardPropagation::print() const
 {
-    cout << "Output shape:" << endl;
-    //       cout << output_shape << endl;
-    cout << "Outputs:" << endl;
-    //       cout << TensorMap<Tensor<type,3>>(outputs_data, output_shape(0), output_shape(1), output_shape(2)) << endl;
+    cout << "Embedding forward propagation" << endl;
+    cout << "Outputs dimensions: " << outputs.shape << endl;
 }
 
 

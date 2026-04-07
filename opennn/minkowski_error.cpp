@@ -65,7 +65,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
     const type p = minkowski_parameter;
 
     const type minkowski_sum = errors.array().unaryExpr([p](type e) {
-                                                 return std::pow(std::abs(e) + EPSILON, p);
+                                                 return pow(abs(e) + EPSILON, p);
                                              }).sum();
 
     back_propagation.error = minkowski_sum / static_cast<type>(samples_number);
@@ -88,7 +88,7 @@ void MinkowskiError::calculate_output_gradients(const Batch& batch,
     const type coeff = minkowski_parameter / static_cast<type>(samples_number);
 
     output_gradients.array() = coeff * errors.array() * errors.array().unaryExpr([exponent](type e) {
-        return std::pow(std::abs(e) + EPSILON, exponent);
+        return pow(abs(e) + EPSILON, exponent);
     });
 }
 

@@ -248,12 +248,6 @@ public:
 
     vector<VectorR> calculate_inputs_errors_cross_correlation(const Index = 10) const;
 
-    // Transformer
-
-    pair<type, type> test_transformer() const;
-
-    string test_transformer(const vector<string>& context_string, bool imported_vocabulary) const;
-
     // Serialization
 
     void from_XML(const XMLDocument&);

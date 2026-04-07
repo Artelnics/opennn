@@ -31,6 +31,7 @@ TEST(TimeSeriesDataset, GeneralConstructor)
 TEST(TimeSeriesDataset, Autocorrelations)
 {
     TimeSeriesDataset dataset;
+    dataset.set_display(false);
 
     MatrixR autocorrelations;
 
@@ -60,7 +61,8 @@ TEST(TimeSeriesDataset, CrossCorrelations)
     Shape target_shape = { 2 };
 
     TimeSeriesDataset dataset(6, input_shape, target_shape);
-    
+    dataset.set_display(false);
+
     Index lags_number;
 
     Tensor3 cross_correlations;

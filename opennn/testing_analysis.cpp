@@ -576,32 +576,22 @@ type TestingAnalysis::calculate_cross_entropy_error(const MatrixR& targets,
 
 type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor3& outputs, const MatrixR& targets) const
 {
-/*
-    const Index batch_size = outputs.rows();
-    const Index outputs_number = outputs.cols();
+    const Index batch_size = outputs.dimension(0);
+    const Index sequence_length = outputs.dimension(1);
 
-    MatrixR errors(batch_size, outputs_number);
-    MatrixR predictions(batch_size, outputs_number);
-    MatrixB matches(batch_size, outputs_number);
-    MatrixB mask(batch_size, outputs_number);
+    const MatrixB mask = targets.array() != type(0);
+    const type mask_sum = mask.cast<type>().sum();
 
-    Tensor0 cross_entropy_error_2d;
-    mask = targets != targets.constant(0);
+    if(mask_sum == type(0)) return type(0);
 
-    Tensor0 mask_sum;
-    mask_sum = mask.cast<type>().sum();
+    type error = type(0);
 
     for(Index i = 0; i < batch_size; i++)
-        for(Index j = 0; j < outputs_number; j++)
-            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
+        for(Index j = 0; j < sequence_length; j++)
+            if(mask(i, j))
+                error -= log(max(outputs(i, j, Index(targets(i, j))), type(1e-6)));
 
-    errors = errors * mask.cast<type>();
-
-    cross_entropy_error_2d = errors.sum();
-
-    return cross_entropy_error_2d(0) / mask_sum(0);
-*/
-    return 0;
+    return error / mask_sum;
 }
 
 
@@ -609,9 +599,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const MatrixR& targets,
                                                        const MatrixR& outputs,
                                                        const VectorR& weights) const
 {
-/*
-    type negatives_weight;
     type positives_weight;
+    type negatives_weight;
 
     if(weights.size() != 2)
     {
@@ -623,8 +612,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const MatrixR& targets,
         negatives_weight = type(1);
 
         positives_weight = (negatives_number == 0 || positives_number == 0)
-           ? type(0)
-           : type(negatives_number / positives_number);
+            ? type(0)
+            : type(negatives_number) / type(positives_number);
     }
     else
     {
@@ -632,35 +621,26 @@ type TestingAnalysis::calculate_weighted_squared_error(const MatrixR& targets,
         negatives_weight = weights[1];
     }
 
-    const MatrixB if_sentence = (targets == targets.constant(type(1))).cast<bool>();
-    const MatrixB else_sentence = (targets == targets.constant(type(0))).cast<bool>();
+    const MatrixR squared_errors = (targets - outputs).array().square();
 
-    MatrixR f_1(targets.rows(), targets.cols());
-    MatrixR f_2(targets.rows(), targets.cols());
-    MatrixR f_3(targets.rows(), targets.cols());
+    const MatrixB positives = targets.array() == type(1);
+    const MatrixB negatives = targets.array() == type(0);
 
-    f_1.device(get_device()) = (targets - outputs).square() * positives_weight;
+    const type weighted_error = (positives.cast<type>().array() * squared_errors.array() * positives_weight
+                               + negatives.cast<type>().array() * squared_errors.array() * negatives_weight).sum();
 
-    f_2.device(get_device()) = (targets - outputs).square()*negatives_weight;
-
-    f_3.device(get_device()) = targets.constant(type(0));
-
-    Tensor0 mean_squared_error;
-    mean_squared_error.device(get_device()) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
-
-    Index negatives = 0;
-
-    VectorR target_column = targets.col(0);
+    Index negatives_count = 0;
+    const VectorR target_column = targets.col(0);
 
     for(Index i = 0; i < target_column.size(); i++)
-        if(double(target_column(i)) == 0.0)
-            negatives++;
+        if(target_column(i) == type(0))
+            negatives_count++;
 
-    const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
+    const type normalization_coefficient = type(negatives_count) * negatives_weight * type(0.5);
 
-    return mean_squared_error(0)/normalization_coefficient;
-*/
-    return 0;
+    if(normalization_coefficient == type(0)) return type(0);
+
+    return weighted_error / normalization_coefficient;
 }
 
 
@@ -668,50 +648,33 @@ type TestingAnalysis::calculate_Minkowski_error(const MatrixR& targets,
                                                 const MatrixR& outputs,
                                                 const type minkowski_parameter) const
 {
-/*
     const type predictions_number = static_cast<type>(targets.size());
 
-    if (predictions_number == 0)
-        return type(0);
+    if(predictions_number == type(0)) return type(0);
 
-    Tensor0 minkowski_error;
+    const type sum = (outputs - targets).array().abs().pow(minkowski_parameter).sum();
 
-    minkowski_error.device(get_device()) =
-        (((outputs - targets).array().abs().pow(minkowski_parameter).sum()) / predictions_number).pow(type(1.0) / minkowski_parameter);
-
-    return minkowski_error();
-*/
-    return 0;
+    return pow(sum / predictions_number, type(1) / minkowski_parameter);
 }
 
 
 type TestingAnalysis::calculate_masked_accuracy(const Tensor3& outputs, const MatrixR& targets) const
 {
-/*
-    const Index batch_size = outputs.rows();
-    const Index outputs_number = outputs.cols();
+    const Index batch_size = outputs.dimension(0);
+    const Index sequence_length = outputs.dimension(1);
 
-    MatrixR predictions(batch_size, outputs_number);
-    MatrixB matches(batch_size, outputs_number);
-    MatrixB mask(batch_size, outputs_number);
+    const MatrixB mask = targets.array() != type(0);
+    const type mask_sum = mask.cast<type>().sum();
 
-    Tensor0 accuracy;
+    if(mask_sum == type(0)) return type(0);
 
-    mask = targets != targets.constant(0);
+    Tensor2 predictions_tensor = outputs.argmax(2).cast<type>();
 
-    const Tensor0 mask_sum = mask.cast<type>().sum();
+    MatrixMap predictions(predictions_tensor.data(), batch_size, sequence_length);
 
-    predictions = outputs.argmax(2).cast<type>();
+    const MatrixB matches = (predictions.array() == targets.array()) && mask.array();
 
-    matches = predictions == targets;
-
-    matches = matches && mask;
-
-    accuracy = matches.cast<type>().sum() / mask_sum(0);
-
-    return accuracy(0);
-*/
-    return 0;
+    return matches.cast<type>().sum() / mask_sum;
 }
 
 
@@ -1796,95 +1759,6 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 }
 
 
-pair<type, type> TestingAnalysis::test_transformer() const
-{
-    cout << "Testing transformer..." << endl;
-
-    Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
-
-    const MatrixR context = language_dataset->get_data("Testing", "Input");
-    const MatrixR input = language_dataset->get_data("Testing", "Decoder");
-    const MatrixR target = language_dataset->get_data("Testing", "Target");
-
-    const Index testing_batch_size = input.rows() > 2000 ? 2000 : input.rows();
-
-    MatrixR testing_input(testing_batch_size, input.cols());
-
-    for(Index i = 0; i < testing_batch_size; i++)
-        testing_input.row(i) = input.row(i);
-
-    MatrixR testing_context(testing_batch_size, context.cols());
-    MatrixR testing_target(testing_batch_size, target.cols());
-
-    for(Index i = 0; i < testing_batch_size; i++)
-    {
-        testing_context.row(i) = context.row(i);
-        testing_target.row(i) = target.row(i);
-    }
-
-    //const Tensor3 outputs = transformer->calculate_outputs(testing_input, testing_context);
-
-    // cout<<"English:"<<endl;
-    // cout<<testing_context.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_context.dimension(1); i++)
-    //     cout<<language_dataset->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
-    // cout<<endl;
-    // cout<<endl;
-    // cout<<"Spanish:"<<endl;
-    // cout<<testing_input.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_input.dimension(1); i++)
-    //     cout<<language_dataset->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
-    // cout<<endl;
-    // cout<<endl;
-    // cout<<"Prediction:"<<endl;
-
-    // for(Index j = 0; j < outputs.dimension(1); j++){
-    //     type max = outputs(10, j, 0);
-    //     Index index = 0;
-    //     for(Index i = 1; i < outputs.dimension(2); i++){
-    //         if(max < outputs(10,j,i)){
-    //             index = i;
-    //             max = outputs(10,j,i);
-    //         }else{continue;}
-    //     }
-    //     cout<<index<<" ";
-    // }
-    // cout<<endl;
-    // for(Index j = 0; j < outputs.dimension(1); j++){
-    //     type max = outputs(10, j, 0);
-    //     Index index = 0;
-    //     for(Index i = 1; i < outputs.dimension(2); i++){
-    //         if(max < outputs(10,j,i)){
-    //             index = i;
-    //             max = outputs(10,j,i);
-    //         }else{continue;}
-    //     }
-    //     cout<<language_dataset->get_completion_vocabulary()[index]<<" ";
-    // }
-/*
-    const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
-
-    const type accuracy = calculate_masked_accuracy(outputs, testing_target);
-
-    return pair<type, type>(error, accuracy);
-*/
-    return {};
-}
-
-
-string TestingAnalysis::test_transformer(const vector<string>& context_string, bool imported_vocabulary) const
-{
-    cout<<"Testing transformer..."<<endl;
-/*
-    Transformer* transformer = static_cast<Transformer*>(neural_network);
-
-    return transformer->calculate_outputs(context_string);
-*/
-    return string();
-}
-
-
 VectorR TestingAnalysis::calculate_binary_classification_tests(const type decision_threshold) const
 {
     const MatrixI confusion = calculate_confusion(decision_threshold);
@@ -2220,7 +2094,7 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
     neural_network->allocate_parameters_device();
     neural_network->copy_parameters_device();
 
-    std::thread testing_worker([&]() 
+    thread testing_worker([&]() 
     {
         for(Index iteration = 0; iteration < testing_batches_number; iteration++) 
         {

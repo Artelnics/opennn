@@ -63,6 +63,11 @@ int main()
         const MatrixI confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
+        // Single image classification test
+
+        const Index predicted_class = image_classification_network.calculate_image_output("../data/mnist_data/three/3_21.bmp");
+        cout << "Predicted class for image 3_21.bmp: " << predicted_class << endl;
+
         cout << "Bye!" << endl;
         
         return 0;

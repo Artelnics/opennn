@@ -65,7 +65,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     if(display) cout << "Performing growing neuron selection..." << endl;
 
-    // Neural network    
+    training_strategy->get_optimization_algorithm()->set_display(display);
+
+    // Neural network
 
     NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
@@ -104,9 +106,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neurons_number });
         neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neurons_number });
-
-        //neural_network->print();
-        // throw runtime_error("Checking the network");
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -204,8 +203,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     }
 
     // Save neural network
-
-    cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << endl;
 
     neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape({ neuron_selection_results.optimal_neurons_number });
     neural_network->get_layer(last_trainable_layer_index)->set_input_shape({ neuron_selection_results.optimal_neurons_number });

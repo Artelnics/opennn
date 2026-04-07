@@ -474,7 +474,7 @@ void save_csv(const Tensor2&, const filesystem::path&);
 template<int rank>
 Index count_NAN(const TensorR<rank>& x)
 {
-    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
+    return count_if(x.data(), x.data() + x.size(), [](type value) {return isnan(value); });
 }
 
 //Index count_between(const VectorR&, type, type);
@@ -746,7 +746,7 @@ bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
             if (tensor(i) != value)
                 return false;
             else
-                if (std::abs(tensor(i) - value) > tolerance)
+                if (abs(tensor(i) - value) > tolerance)
                     return false;
         }
 
@@ -761,7 +761,7 @@ inline bool is_equal(const MatrixR& matrix,
     const Index size = matrix.size();
 
     for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
+        if(abs(data[i] - value) > tolerance)
             return false;
 
     return true;
@@ -775,7 +775,7 @@ inline bool is_equal(const VectorR& vector,
     const Index size = vector.size();
 
     for(Index i = 0; i < size; ++i)
-        if(std::abs(data[i] - value) > tolerance)
+        if(abs(data[i] - value) > tolerance)
             return false;
 
     return true;
@@ -912,7 +912,7 @@ struct TensorViewCuda
 
     TensorViewCuda() = default;
 
-    TensorViewCuda(float* new_data, std::shared_ptr<cudnnTensorStruct> handle)
+    TensorViewCuda(float* new_data, shared_ptr<cudnnTensorStruct> handle)
         : data(new_data), descriptor_handle(handle) {}
 
     explicit TensorViewCuda(const Shape& shape)
@@ -953,7 +953,7 @@ struct TensorViewCuda
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
                 throw runtime_error("TensorViewCuda: Failed to create descriptor.");
 
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
+            descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
                 });
         }
@@ -1008,7 +1008,7 @@ struct TensorCuda
     TensorCuda& operator=(const TensorCuda&) = delete;
 
     TensorCuda(TensorCuda&& other) noexcept
-        : data(other.data), descriptor_handle(std::move(other.descriptor_handle))
+        : data(other.data), descriptor_handle(move(other.descriptor_handle))
     {
         other.data = nullptr;
     }
@@ -1019,7 +1019,7 @@ struct TensorCuda
         {
             free();
             data = other.data;
-            descriptor_handle = std::move(other.descriptor_handle);
+            descriptor_handle = move(other.descriptor_handle);
             other.data = nullptr;
         }
 
@@ -1076,7 +1076,7 @@ struct TensorCuda
             if (cudnnCreateTensorDescriptor(&raw_desc) != CUDNN_STATUS_SUCCESS)
                 throw runtime_error("TensorCuda: Failed to create descriptor.");
 
-            descriptor_handle = std::shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
+            descriptor_handle = shared_ptr<cudnnTensorStruct>(raw_desc, [](cudnnTensorDescriptor_t p) {
                 if (p) cudnnDestroyTensorDescriptor(p);
             });
         }

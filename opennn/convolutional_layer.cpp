@@ -648,11 +648,7 @@ void Convolutional::print() const
          << "Input shape: " << input_shape << endl
          << "Output shape: " << get_output_shape() << endl
          << "Biases shape: " << biases.shape << endl
-         << "Weights shape: " << weights.shape << endl
-         << "biases:" << endl;
-    //cout << biases << endl;
-    cout << "Weights:" << endl;
-    //cout << weights << endl;
+         << "Weights shape: " << weights.shape << endl;
 }
 
 
@@ -670,15 +666,13 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "StrideDimensions", shape_to_string({ get_column_stride(), get_row_stride() }));
     add_xml_element(printer, "Convolution", convolution_type);
     add_xml_element(printer, "BatchNormalization", to_string(batch_normalization));
-/*
+
     if (batch_normalization)
     {
-        add_xml_element(printer, "Scales", tensor_to_string<type, 1>(gammas));
-        add_xml_element(printer, "Offsets", tensor_to_string<type, 1>(betas));
-        add_xml_element(printer, "MovingMeans", tensor_to_string<type, 1>(running_means));
-        add_xml_element(printer, "MovingStandardDeviations", tensor_to_string<type, 1>(running_standard_deviations));
+        add_xml_element(printer, "RunningMeans", vector_to_string(running_means));
+        add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_standard_deviations));
     }
-*/
+
     printer.CloseElement();
 }
 
@@ -708,25 +702,17 @@ void Convolutional::from_XML(const XMLDocument& document)
         use_batch_normalization = (string(bn_element->GetText()) == "true");
 
     set_batch_normalization(use_batch_normalization);
-/*
+
     if (batch_normalization)
     {
-        const Index kernel_height = read_xml_index(convolutional_layer_element, "KernelsHeight");
-        const Index kernel_width = read_xml_index(convolutional_layer_element, "KernelsWidth");
-        const Index kernel_channels = read_xml_index(convolutional_layer_element, "KernelsChannels");
         const Index kernels_number = read_xml_index(convolutional_layer_element, "KernelsNumber");
 
-        gammas.resize(kernels_number);
-        betas.resize(kernels_number);
         running_means.resize(kernels_number);
         running_standard_deviations.resize(kernels_number);
 
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Scales"), gammas);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "Offsets"), betas);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingMeans"), running_means);
-        string_to_tensor<type, 1>(read_xml_string(convolutional_layer_element, "MovingStandardDeviations"), running_standard_deviations);
+        string_to_vector(read_xml_string(convolutional_layer_element, "RunningMeans"), running_means);
+        string_to_vector(read_xml_string(convolutional_layer_element, "RunningStandardDeviations"), running_standard_deviations);
     }
-*/
 }
 
 
@@ -772,7 +758,7 @@ void ConvolutionalForwardPropagation::initialize()
 
 vector<TensorView*> ConvolutionalForwardPropagation::get_workspace_views()
 {
-    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+    const Convolutional* convolutional_layer = static_cast<const Convolutional*>(layer);
 
     vector<TensorView*> views = { &outputs, &activation_derivatives };
 
@@ -833,7 +819,7 @@ void ConvolutionalBackPropagation::initialize()
 
 vector<TensorView*> ConvolutionalBackPropagation::get_gradient_views()
 {
-    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+    const Convolutional* convolutional_layer = static_cast<const Convolutional*>(layer);
 
     vector<TensorView*> views = {&bias_gradients, &weight_gradients};
 
@@ -1314,7 +1300,7 @@ vector<TensorViewCuda*> ConvolutionalBackPropagationCuda::get_gradient_views()
 {
     vector<TensorViewCuda*> views = { &bias_gradients, &weight_gradients };
 
-    const auto* convolutional_layer = static_cast<const Convolutional*>(layer);
+    const Convolutional* convolutional_layer = static_cast<const Convolutional*>(layer);
 
     if (convolutional_layer && convolutional_layer->get_batch_normalization())
         views.insert(views.end(), { &gamma_gradients, &beta_gradients });

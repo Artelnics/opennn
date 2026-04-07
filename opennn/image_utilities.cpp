@@ -111,7 +111,7 @@ Tensor3 load_image(const filesystem::path& path)
 
     const uint8_t* pixel_data = buffer.data() + bfOffBits;
     
-    auto* img_data = image.data();
+    type* img_data = image.data();
 
     for(Index y = 0; y < height; y++)
     {

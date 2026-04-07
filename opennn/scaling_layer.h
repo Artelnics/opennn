@@ -320,8 +320,8 @@ public:
 
         string expression = buffer.str();
 
-        expression = std::regex_replace(expression, std::regex("\\+-"), "-");
-        expression = std::regex_replace(expression, std::regex("--"), "+");
+        expression = regex_replace(expression, regex("\\+-"), "-");
+        expression = regex_replace(expression, regex("--"), "+");
 
         return expression;
     }

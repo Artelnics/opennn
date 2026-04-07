@@ -12,7 +12,6 @@
 #include "growing_inputs.h"
 #include "correlations.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "optimizer.h"
 #include "training_strategy.h"
 
@@ -112,6 +111,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const Loss* loss = training_strategy->get_loss();
     training_strategy->get_optimization_algorithm()->set_display(false);
+    dataset->set_display(display);
 
     type previus_validation_error = MAX;
     type previus_training_error = MAX;
@@ -327,7 +327,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_shape({ optimal_processed_variables_number });
     }
 
-    dataset->print();
+    if(display) dataset->print();
 
     const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");

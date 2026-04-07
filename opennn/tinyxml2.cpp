@@ -1373,7 +1373,6 @@ XMLDeclaration::XMLDeclaration(XMLDocument* doc ) : XMLNode(doc )
 
 XMLDeclaration::~XMLDeclaration()
 {
-    //printf("~XMLDeclaration\n");
 }
 
 

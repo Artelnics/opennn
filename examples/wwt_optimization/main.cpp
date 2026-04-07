@@ -15,7 +15,6 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/variable.h"
 #include "../../opennn/response_optimization.h"
@@ -30,6 +29,8 @@ int main()
 {
     try
     {
+        throw runtime_error("wwt_optimization example is not implemented yet");
+
         //WWTP EXPERIMENT
 
         cout << "OpenNN. Forecasting WWTP EXPERIMENT Example." << endl;

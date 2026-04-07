@@ -54,7 +54,7 @@ void ResponseOptimization::clear_conditions(const string& name)
 
 ResponseOptimization::Condition ResponseOptimization::get_condition(const string& name) const
 {
-    auto it = conditions.find(name);
+    map<string, Condition>::const_iterator it = conditions.find(name);
 
     if (it != conditions.end())
         return it->second;
@@ -226,7 +226,7 @@ ResponseOptimization::Domain ResponseOptimization::get_original_domain(const str
     vector<Condition> applicable_conditions;
     applicable_conditions.reserve(variables_number);
 
-    for (const auto& variable : variables)
+    for (const Variable& variable : variables)
         applicable_conditions.push_back(get_condition(variable.name));
 
     Domain original_domain(variables, descriptives, deformation_domain_factor);
@@ -433,7 +433,7 @@ Tensor3 ResponseOptimization::input_constructor(const MatrixR& controllable_cand
     Index feature_cursor = 0;      // Moves 0 to 7 (8 total)
     Index candidate_col_cursor = 0; // Moves 0 to 4 (5 total)
 
-    for (const auto& variable : all_input_vars)
+    for (const Variable& variable : all_input_vars)
     {
         const Index dim = variable.is_categorical() ? variable.get_categories_number() : 1;
 
@@ -896,7 +896,7 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization() const
         if (candidate_inputs.rows() == 0)
             break;
 
-        auto optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives);
+        pair<MatrixR, MatrixR> optimal_set = calculate_optimal_points(candidate_inputs, candidate_outputs, objectives);
 
         MatrixR objective_matrix = objectives.extract(candidate_inputs, candidate_outputs);
         objectives.normalize(objective_matrix);

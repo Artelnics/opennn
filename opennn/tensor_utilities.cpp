@@ -129,7 +129,7 @@ vector<Index> filter_indices_by_column(const MatrixR& matrix,
     for (Index i = 0; i < matrix.rows(); ++i)
     {
         const type value = matrix(i, column_index);
-        if (std::isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
+        if (isfinite(value) && value >= (minimum - 1e-6f) && value <= (maximum + 1e-6f))
             filtered.push_back(i);
 
     }
@@ -767,7 +767,7 @@ Tensor4 tensor4_from_device(const type* pointer, const size_t& new_batch_samples
 
 Device::Device()
 {
-    int max_threads = std::thread::hardware_concurrency();
+    int max_threads = thread::hardware_concurrency();
     if (max_threads <= 0) max_threads = omp_get_max_threads();
     if (max_threads <= 0) max_threads = 1;
 
@@ -829,7 +829,7 @@ VectorR filter_missing_values(const VectorR &input)
 {
     VectorR result(input.size());
 
-    auto end_iterator = copy_if(input.data(),
+    type* end_iterator = copy_if(input.data(),
                                 input.data() + input.size(),
                                 result.data(),
                                 [](type value) {

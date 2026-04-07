@@ -182,7 +182,7 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
         {
             if (1 + i >= (size_t)maximum_input_sequence_length) break;
 
-            const auto iterator = input_vocabulary_map.find(input_tokens[i]);
+            const unordered_map<string, Index>::const_iterator iterator = input_vocabulary_map.find(input_tokens[i]);
 
             data(sample, 1 + i) = (iterator != input_vocabulary_map.end())
                 ? static_cast<type>(iterator->second)
@@ -215,7 +215,7 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
         {
             if(i + 1 >= maximum_target_sequence_length) break;
 
-            const auto iterator = target_vocabulary_map.find(target_tokens[i]);
+            const unordered_map<string, Index>::const_iterator iterator = target_vocabulary_map.find(target_tokens[i]);
 
             data(sample, decoder_offset + 1 + i) =
                 (iterator != target_vocabulary_map.end())
@@ -227,7 +227,7 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
         {
             if(i >= maximum_target_sequence_length) break;
 
-            const auto iterator = target_vocabulary_map.find(target_tokens[i]);
+            const unordered_map<string, Index>::const_iterator iterator = target_vocabulary_map.find(target_tokens[i]);
 
             data(sample, target_offset + i) =
                 (iterator != target_vocabulary_map.end())
@@ -275,7 +275,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         {
             const string& token = target_document_tokens[sample_index][0];
 
-            auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), token);
+            vector<string>::iterator iterator = find(target_vocabulary.begin(), target_vocabulary.end(), token);
 
             const Index token_index = (iterator != target_vocabulary.end())
                                           ? distance(target_vocabulary.begin(), iterator)
@@ -309,7 +309,7 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
 
                 const string& current_token = target_tokens[token_index];
 
-                auto iterator = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
+                vector<string>::iterator iterator = find(target_vocabulary.begin(), target_vocabulary.end(), current_token);
 
                 data(sample, variable) = (iterator != target_vocabulary.end()) ? distance(target_vocabulary.begin(), iterator) : 1;
             }

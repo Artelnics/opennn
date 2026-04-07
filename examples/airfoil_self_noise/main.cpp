@@ -15,7 +15,6 @@
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/stochastic_gradient_descent.h"
 
@@ -27,19 +26,18 @@ int main()
     {
         cout << "Airfoil self noise" << endl;
 
-        const Index neurons_number = 3;
-        const type regularization_weight = 0.0001;
+        const Index neurons_number = 12;
+        const type regularization_weight = type(0.001);
 
         // DataSet
 
         Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        dataset.split_samples_random(type(0.8), type(0), type(0.2));
+        dataset.split_samples_random(type(0.8), type(0.0), type(0.2));
 
         // Neural Network
 
         ApproximationNetwork approximation_network(dataset.get_input_shape(), {neurons_number}, dataset.get_target_shape());
-
 
         Bounding* bounding_layer = (Bounding*)approximation_network.get_first("Bounding");
 
@@ -50,18 +48,9 @@ int main()
 
         TrainingStrategy training_strategy(&approximation_network, &dataset);
 
-        training_strategy.set_optimization_algorithm("StochasticGradientDescent");
-
-        StochasticGradientDescent* sgd = (StochasticGradientDescent*)training_strategy.get_optimization_algorithm();
-        sgd->set_batch_size(32);
-        sgd->set_initial_learning_rate(0.01);
-        sgd->set_momentum(0.9);
-        sgd->set_nesterov(true);
-        sgd->set_initial_decay(0.00001);
-
-
-        training_strategy.get_loss()->set_regularization_method("L1");
+        training_strategy.get_loss()->set_regularization_method("L2");
         training_strategy.get_loss()->set_regularization_weight(regularization_weight);
+        training_strategy.get_optimization_algorithm()->set_display_period(50);
 
         TrainingResults training_results = training_strategy.train();
 

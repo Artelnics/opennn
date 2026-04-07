@@ -154,7 +154,7 @@ void TrainingStrategy::set_default()
         set_loss("CrossEntropyError3d");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
-        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
+        AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
         adam->set_learning_rate(0.0001);
         return;
     }

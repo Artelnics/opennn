@@ -159,7 +159,7 @@ vector<string> get_feature_names(const vector<Variable>& variables)
 {
     vector<string> all_feature_names;
 
-    for (const auto& var : variables)
+    for (const Variable& var : variables)
     {
         const vector<string> names = var.get_names();
 
@@ -172,7 +172,7 @@ vector<string> get_feature_names(const vector<Variable>& variables)
 Index get_features_number(const vector<Variable>& variables)
 {
     Index count = 0;
-    for (const auto& var : variables)
+    for (const Variable& var : variables)
     {
         count += var.is_categorical() ? var.get_categories_number() : 1;
     }
@@ -183,7 +183,7 @@ vector<Index> get_feature_dimensions(const vector<Variable>& variables)
 {
     vector<Index> dimensions;
     dimensions.reserve(variables.size());
-    for (const auto& var : variables)
+    for (const Variable& var : variables)
         dimensions.push_back(var.is_categorical() ? var.get_categories_number() : 1);
 
     return dimensions;
@@ -194,7 +194,7 @@ vector<VariableType> get_variable_types(const vector<Variable>& variables)
 {
     vector<VariableType> types;
     types.reserve(variables.size());
-    for (const auto& var : variables)
+    for (const Variable& var : variables)
     {
         types.push_back(var.type);
     }

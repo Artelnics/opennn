@@ -23,7 +23,6 @@
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "normalization_layer_3d.h"
-#include "multihead_attention_layer.h"
 #include "string_utilities.h"
 
 using namespace std;
@@ -177,9 +176,9 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     reference_all_layers();
 
-    auto scaling_layer = make_unique<Scaling<4>>(input_shape);
+    unique_ptr<Scaling<4>> scaling_layer = make_unique<Scaling<4>>(input_shape);
     scaling_layer->set_scalers("ImageMinMax");
-    add_layer(std::move(scaling_layer));
+    add_layer(move(scaling_layer));
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -244,7 +243,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     Index last_layer_index = 0;
 
-    auto stem_conv = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
+    unique_ptr<Convolutional> stem_conv = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
                                                 Shape{ 7, 7, input_shape[2], initial_filters[0] },
                                                 "RectifiedLinear",
                                                 Shape{ 2, 2 },
@@ -252,18 +251,18 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                                                 false,
                                                 "stem_conv_1");
 
-    add_layer(std::move(stem_conv), { last_layer_index });
+    add_layer(move(stem_conv), { last_layer_index });
 
     last_layer_index = get_layers_number() - 1;
 
-    auto stem_pool = make_unique<Pooling>(get_layer(last_layer_index)->get_output_shape(),
+    unique_ptr<Pooling> stem_pool = make_unique<Pooling>(get_layer(last_layer_index)->get_output_shape(),
                                           Shape{ 3, 3 },
                                           Shape{ 2, 2 },
                                           Shape{ 1, 1 },
                                           "MaxPooling",
                                           "stem_pool");
 
-    add_layer(std::move(stem_pool), { last_layer_index });
+    add_layer(move(stem_pool), { last_layer_index });
 
     last_layer_index = get_layers_number() - 1;
 
@@ -280,7 +279,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
             const Index stride = (stage > 0 && block == 0) ? 2 : 1;
 
             // Main
-            auto conv1 = make_unique<Convolutional>(current_input_shape,
+            unique_ptr<Convolutional> conv1 = make_unique<Convolutional>(current_input_shape,
                                                     Shape{ 3, 3, current_input_shape[2], filters },
                                                     "RectifiedLinear",
                                                     Shape{ stride, stride },
@@ -288,11 +287,11 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                                                     false,
                                                     "s" + to_string(stage) + "b" + to_string(block) + "_conv1");
 
-            add_layer(std::move(conv1), { block_input_index });
+            add_layer(move(conv1), { block_input_index });
 
             Index main_path_index = get_layers_number() - 1;
 
-            auto conv2 = make_unique<Convolutional>(get_layer(main_path_index)->get_output_shape(),
+            unique_ptr<Convolutional> conv2 = make_unique<Convolutional>(get_layer(main_path_index)->get_output_shape(),
                                                     Shape{ 3, 3, filters, filters },
                                                     "Linear",
                                                     Shape{ 1, 1 },
@@ -300,7 +299,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                                                     false,
                                                     "s" + to_string(stage) + "b" + to_string(block) + "_conv2");
 
-            add_layer(std::move(conv2), { main_path_index });
+            add_layer(move(conv2), { main_path_index });
 
             main_path_index = get_layers_number() - 1;
 
@@ -309,7 +308,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
             if (stride != 1 || current_input_shape[2] != filters)
             {
-                auto skip_conv = make_unique<Convolutional>(current_input_shape,
+                unique_ptr<Convolutional> skip_conv = make_unique<Convolutional>(current_input_shape,
                                                             Shape{ 1, 1, current_input_shape[2], filters },
                                                             "Linear",
                                                             Shape{ stride, stride },
@@ -317,20 +316,20 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                                                             false,
                                                             "s" + to_string(stage) + "b" + to_string(block) + "_skip");
 
-                add_layer(std::move(skip_conv), { block_input_index });
+                add_layer(move(skip_conv), { block_input_index });
 
                 skip_path_index = get_layers_number() - 1;
             }
 
             const Shape main_out_shape = get_layer(main_path_index)->get_output_shape();
 
-            auto addition_layer = make_unique<Addition<4>>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
+            unique_ptr<Addition<4>> addition_layer = make_unique<Addition<4>>(main_out_shape, "s" + to_string(stage) + "b" + to_string(block) + "_add");
 
-            add_layer(std::move(addition_layer), { main_path_index, skip_path_index });
+            add_layer(move(addition_layer), { main_path_index, skip_path_index });
 
             last_layer_index = get_layers_number() - 1;
 
-            auto activation_layer = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
+            unique_ptr<Convolutional> activation_layer = make_unique<Convolutional>(get_layer(last_layer_index)->get_output_shape(),
                                                                Shape{ 1, 1, filters, filters },
                                                                "RectifiedLinear",
                                                                Shape{ 1, 1 },
@@ -338,7 +337,7 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
                                                                false,
                                                                "s" + to_string(stage) + "b" + to_string(block) + "_relu");
 
-            add_layer(std::move(activation_layer), { last_layer_index });
+            add_layer(move(activation_layer), { last_layer_index });
 
             last_layer_index = get_layers_number() - 1;
         }
@@ -346,30 +345,30 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
 
     const Shape pre_pool_shape = get_layer(last_layer_index)->get_output_shape();
 
-    auto global_pool = make_unique<Pooling>(pre_pool_shape,
+    unique_ptr<Pooling> global_pool = make_unique<Pooling>(pre_pool_shape,
                                             Shape{ pre_pool_shape[0], pre_pool_shape[1] },
                                             Shape{ 1, 1 },
                                             Shape{ 0, 0 },
                                             "AveragePooling",
                                             "global_avg_pool");
 
-    add_layer(std::move(global_pool), { last_layer_index });
+    add_layer(move(global_pool), { last_layer_index });
 
     last_layer_index = get_layers_number() - 1;
 
-    auto flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_shape());
+    unique_ptr<Flatten<2>> flatten_layer = make_unique<Flatten<2>>(get_layer(last_layer_index)->get_output_shape());
 
-    add_layer(std::move(flatten_layer), { last_layer_index });
+    add_layer(move(flatten_layer), { last_layer_index });
 
     last_layer_index = get_layers_number() - 1;
 
-    auto dense_layer = make_unique<Dense<2>>(get_layer(last_layer_index)->get_output_shape(),
+    unique_ptr<Dense<2>> dense_layer = make_unique<Dense<2>>(get_layer(last_layer_index)->get_output_shape(),
                                             output_shape,
                                             "Softmax",
                                             false,
                                             "dense_classifier");
 
-    add_layer(std::move(dense_layer), { last_layer_index });
+    add_layer(move(dense_layer), { last_layer_index });
 
     this->compile();
     this->set_parameters_random();
@@ -576,12 +575,12 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     const Index embedding_dimension = input_shape[2];
     const Index heads_number = complexity_dimensions[0];
 
-    auto embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
+    unique_ptr<Embedding> embedding_layer = make_unique<Embedding>(Shape({vocabulary_size, sequence_length}),
                                                   embedding_dimension,
                                                   "embedding_layer");
     embedding_layer->set_scale_embedding(true);
     embedding_layer->set_add_positional_encoding(true);
-    add_layer(std::move(embedding_layer));
+    add_layer(move(embedding_layer));
 
     add_layer(make_unique<MultiHeadAttention>(
         Shape({sequence_length, embedding_dimension}),
@@ -593,7 +592,9 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Dense<2>>(get_output_shape(), Shape({16}), "RectifiedLinear", false, "hidden_layer"));
 
-    add_layer(make_unique<Dense<2>>(get_output_shape(), output_shape, "Sigmoid", false, "classification_layer"));
+    const string output_activation = (output_shape[0] > 1) ? "Softmax" : "Sigmoid";
+
+    add_layer(make_unique<Dense<2>>(get_output_shape(), output_shape, output_activation, false, "classification_layer"));
 
     this->compile();
     this->set_parameters_glorot();
@@ -666,7 +667,7 @@ void Transformer::set(const Index input_sequence_length,
     // Input embeddings
     // -------------------------------------------------------------------------
 
-    auto decoder_embedding = make_unique<Embedding>(
+    unique_ptr<Embedding> decoder_embedding = make_unique<Embedding>(
         Shape{output_vocabulary_size, decoder_sequence_length},
         embedding_dimension,
         "decoder_embedding");
@@ -674,10 +675,10 @@ void Transformer::set(const Index input_sequence_length,
     decoder_embedding->set_scale_embedding(true);
     decoder_embedding->set_add_positional_encoding(true);
 
-    add_layer(std::move(decoder_embedding), {-1});
+    add_layer(move(decoder_embedding), {-1});
     Index current_decoder_idx = get_layers_number() - 1;
 
-    auto encoder_embedding = make_unique<Embedding>(
+    unique_ptr<Embedding> encoder_embedding = make_unique<Embedding>(
         Shape{input_vocabulary_size, input_sequence_length},
         embedding_dimension,
         "encoder_embedding");
@@ -685,7 +686,7 @@ void Transformer::set(const Index input_sequence_length,
     encoder_embedding->set_scale_embedding(true);
     encoder_embedding->set_add_positional_encoding(true);
 
-    add_layer(std::move(encoder_embedding), {-2});
+    add_layer(move(encoder_embedding), {-2});
     Index current_encoder_idx = get_layers_number() - 1;
 
     // -------------------------------------------------------------------------
@@ -771,7 +772,7 @@ void Transformer::set(const Index input_sequence_length,
         // Important:
         // The current MultiHeadAttention constructors default to use_causal_mask=false,
         // so we must call set(...) explicitly to enable the decoder causal mask.
-        auto decoder_self_attention = make_unique<MultiHeadAttention>(
+        unique_ptr<MultiHeadAttention> decoder_self_attention = make_unique<MultiHeadAttention>(
             Shape{decoder_sequence_length, embedding_dimension},
             heads_number,
             "decoder_self_attention" + suffix);
@@ -784,7 +785,7 @@ void Transformer::set(const Index input_sequence_length,
             true,                      // use_causal_mask
             "decoder_self_attention" + suffix);
 
-        add_layer(std::move(decoder_self_attention), {current_decoder_idx});
+        add_layer(move(decoder_self_attention), {current_decoder_idx});
         const Index decoder_self_attention_idx = get_layers_number() - 1;
 
         // Residual
@@ -938,7 +939,7 @@ Index Transformer::get_embedding_dimension() const
 
 Index Transformer::get_heads_number() const
 {
-    for(const auto& layer : layers)
+    for(const unique_ptr<Layer>& layer : layers)
         if(layer->get_name() == "MultiHeadAttention")
             return static_cast<MultiHeadAttention*>(layer.get())->get_heads_number();
 
@@ -973,7 +974,7 @@ string Transformer::calculate_outputs(const string& source)
 
     for(size_t i = 0; i < source_tokens.size() && write_index < input_sequence_length; i++, write_index++)
     {
-        const auto it = input_vocabulary_map.find(source_tokens[i]);
+        const unordered_map<string, Index>::const_iterator it = input_vocabulary_map.find(source_tokens[i]);
 
         source_ids(0, write_index) = (it != input_vocabulary_map.end())
                                          ? static_cast<type>(it->second)
@@ -1024,7 +1025,7 @@ string Transformer::calculate_outputs(const string& source)
         if(id == END || id == PAD)
             break;
 
-        const auto it = output_inverse_vocabulary_map.find(id);
+        const unordered_map<Index, string>::const_iterator it = output_inverse_vocabulary_map.find(id);
 
         if(it == output_inverse_vocabulary_map.end())
             continue;

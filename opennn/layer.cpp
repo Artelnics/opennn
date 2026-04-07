@@ -206,7 +206,7 @@ void Layer::set_parameters_random()
 {
     const vector<TensorView*> parameter_views = get_parameter_views();
 
-    for(const auto& view : parameter_views)
+    for(const TensorView* view : parameter_views)
         set_random_uniform(VectorMap(view->data, view->size()));
 }
 
@@ -231,7 +231,7 @@ Index Layer::get_parameters_number()
 
     Index parameters_number = 0;
 
-    for (const auto* view : parameter_views)
+    for (const TensorView* view : parameter_views)
         parameters_number += view->size();
 
     return parameters_number;
@@ -385,7 +385,7 @@ void Layer::softmax(TensorMap4 y) const
         {
             for(Index k = 0; k < channels; k++)
             {
-                type max_value = -std::numeric_limits<type>::infinity();
+                type max_value = -numeric_limits<type>::infinity();
 
                 for(Index l = 0; l < blocks_number; l++)
                     if(y(i, j, k, l) > max_value)

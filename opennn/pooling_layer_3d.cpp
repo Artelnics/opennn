@@ -80,7 +80,7 @@ void Pooling3d::forward_propagate(unique_ptr<LayerForwardPropagation>& forward_p
     const TensorMap3 inputs = tensor_map<3>(forward_propagation->inputs[0]);
     MatrixMap outputs = matrix_map(forward_propagation->outputs);
 
-    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
+    Pooling3dForwardPropagation* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
 
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);

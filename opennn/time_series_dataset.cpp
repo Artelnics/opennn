@@ -137,7 +137,7 @@ void TimeSeriesDataset::print() const
          << "Number of target variables: " << target_variables_number << "\n"
          << "Input variables shape: " << get_shape("Input") << "\n"
          << "Target variables shape: " << get_shape("Target") << "\n"
-         << "Multi target activate: " << std::boolalpha << get_multi_target() << "\n"
+         << "Multi target activate: " << boolalpha << get_multi_target() << "\n"
          << "Past time steps: " << get_past_time_steps() << "\n"
          << "Future time steps: " << get_future_time_steps() << "\n";
 }
@@ -544,7 +544,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
             continue;
 
         input_i = get_variable_data(i);
-        cout << "Calculating " << variables[i].name << " autocorrelations" << endl;
+        if(display) cout << "Calculating " << variables[i].name << " autocorrelations" << endl;
 
         const VectorMap current_input_i(input_i.data(), input_i.rows());
         

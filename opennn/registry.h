@@ -33,12 +33,12 @@ public:
 
     void register_component(const string& name, Creator creator)
     {
-        creators[name] = std::move(creator);
+        creators[name] = move(creator);
     }
 
     unique_ptr<T> create(const string& name) const
     {
-        auto it = creators.find(name);
+        typename unordered_map<string, Creator>::const_iterator it = creators.find(name);
 
         if(it == creators.end())
             throw runtime_error("Component not found: " + name);
@@ -51,7 +51,7 @@ public:
     {
         vector<string> names;
 
-        for(const auto& pair : creators)
+        for(const typename unordered_map<string, Creator>::value_type& pair : creators)
             names.push_back(pair.first);
 
         return names;
@@ -65,7 +65,7 @@ private:
 namespace { \
     const bool CLASS##_registered = []() { \
               Registry<BASE>::instance().register_component(NAME, [](){ \
-                          return std::make_unique<CLASS>(); \
+                          return make_unique<CLASS>(); \
                   }); \
               return true; \
       }(); \

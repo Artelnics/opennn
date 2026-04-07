@@ -1063,7 +1063,7 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
             const Index row_index = row_indices[i];
             const type value = matrix(row_index, column_index);
 
-            if (std::isnan(value)) continue;
+            if (isnan(value)) continue;
 
             if (first_iteration)
             {

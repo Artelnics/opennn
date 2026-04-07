@@ -16,25 +16,7 @@ int main()
     {
         cout << "Blank Testing OpenNN" << endl;
 
-        std::cout << "--- SIMD Support Check ---" << std::endl;
-
-#if defined(EIGEN_VECTORIZE_AVX512)
-        std::cout << "Target SIMD: AVX-512 (64-byte alignment active)" << std::endl;
-#elif defined(EIGEN_VECTORIZE_AVX2)
-        std::cout << "Target SIMD: AVX2 (32-byte alignment req, using 64-byte padding)" << std::endl;
-#elif defined(EIGEN_VECTORIZE_AVX)
-        std::cout << "Target SIMD: AVX" << std::endl;
-#elif defined(EIGEN_VECTORIZE_SSE4_2)
-        std::cout << "Target SIMD: SSE4.2" << std::endl;
-#else
-        std::cout << "Target SIMD: None (Scalar Mode - Slow!)" << std::endl;
-#endif
-
-#ifdef _OPENMP
-        std::cout << "OpenMP: Enabled (Threads: " << omp_get_max_threads() << ")" << std::endl;
-#else
-        std::cout << "OpenMP: Disabled" << std::endl;
-#endif
+        
 
         cout << "Completed." << endl;
 

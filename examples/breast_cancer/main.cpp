@@ -13,11 +13,8 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/standard_networks.h"
-#include "../../opennn/training_strategy.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/adaptive_moment_estimation.h"
-#include "../../opennn/weighted_squared_error.h"
 
 using namespace opennn;
 
@@ -38,9 +35,6 @@ int main()
         ClassificationNetwork classification_network(dataset.get_input_shape(), { neurons_number}, dataset.get_target_shape());
 
         // Training Strategy
-
-        WeightedSquaredError loss(&classification_network, &dataset);
-        loss.set_regularization_method("L1");
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 

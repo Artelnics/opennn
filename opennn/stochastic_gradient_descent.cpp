@@ -637,7 +637,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
         training_error = type(0);
         if (is_text_classification_model) training_accuracy = type(0);
 
-        std::thread training_worker([&]()
+        thread training_worker([&]()
                                     {
                                         for(Index iteration = 0; iteration < training_batches_number; iteration++)
                                         {

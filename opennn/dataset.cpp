@@ -188,8 +188,8 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
     #pragma omp parallel for if(batches_number > 64)
     for(Index i = 0; i < batches_number; i++)
     {
-        const auto start_it = indices.begin() + (i * batch_size);
-        const auto end_it = indices.begin() + min((i + 1) * batch_size, samples_number);
+        const vector<Index>::const_iterator start_it = indices.begin() + (i * batch_size);
+        const vector<Index>::const_iterator end_it = indices.begin() + min((i + 1) * batch_size, samples_number);
 
         batches[i].assign(start_it, end_it);
     }
@@ -250,7 +250,7 @@ void Dataset::set_sample_roles(const vector<string>& new_roles)
 
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
 {
-    for(const auto& i : indices)
+    for(const Index& i : indices)
         set_sample_role(i, sample_role);
 }
 
@@ -479,7 +479,7 @@ vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
 
-    for (const auto& variable : variables)
+    for (const Variable& variable : variables)
     {
         const vector<string> names = variable.get_names();
 
@@ -493,7 +493,7 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
     vector<string> feature_names;
 
-    for (const auto& variable : get_variables(variable_role))
+    for (const Variable& variable : get_variables(variable_role))
     {
         const vector<string> names = variable.get_names();
 
@@ -861,7 +861,7 @@ void Dataset::set_variable_type(const string& name, const VariableType& new_type
 
 void Dataset::set_variable_types(const VariableType& new_type)
 {
-    for(auto& variable : variables)
+    for(Variable& variable : variables)
         variable.type = new_type;
 }
 
@@ -1846,7 +1846,7 @@ Index Dataset::calculate_negatives(const Index target_index, const string& sampl
 {
     Index negatives = 0;
 
-    const auto indices = get_sample_indices(sample_role);
+    const vector<Index> indices = get_sample_indices(sample_role);
     const Index samples_number = get_samples_number(sample_role);
 
     const bool is_testing  = (sample_role == "Testing");
@@ -3798,7 +3798,7 @@ void Dataset::read_csv()
                         data(sample_index, cat_idx) = NAN;
                 else
                 {
-                    auto it = find(variable.categories.begin(), variable.categories.end(), token);
+                    vector<string>::const_iterator it = find(variable.categories.begin(), variable.categories.end(), token);
                     if(it != variable.categories.end())
                     {
                         const Index category_index = distance(variable.categories.begin(), it);
@@ -4002,12 +4002,12 @@ void Dataset::fix_repeated_names()
 
     for(const Variable& variable : variables)
     {
-        auto result = variables_count_map.insert(pair<string, Index>(variable.name, 1));
+        pair<map<string, Index>::iterator, bool> result = variables_count_map.insert(pair<string, Index>(variable.name, 1));
         if(!result.second)
             result.first->second++;
     }
 
-    for(const auto& element : variables_count_map)
+    for(const pair<const string, Index>& element : variables_count_map)
     {
         if (element.second > 1)
         {

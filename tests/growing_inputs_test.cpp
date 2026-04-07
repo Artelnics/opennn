@@ -83,42 +83,33 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
 }
 
-/*
-void GrowingInputsTest::test_perform_inputs_selection()
+
+TEST(GrowingInputsTest, InputSelectionMultipleInputs)
 {
+    const Index samples = 30;
 
+    Dataset dataset(samples, {2}, {1});
 
-    // Test
+    MatrixR data(samples, 3);
+    for(Index i = 0; i < samples; i++)
+    {
+        data(i, 0) = type(i) / samples;
+        data(i, 1) = type(i) / samples * type(2);
+        data(i, 2) = data(i, 0) + data(i, 1);
+    }
 
-    dataset.generate_random_data(30, 3);
-
-    Tensor<string, 1> columns_uses(3);
-    columns_uses.setValues({"Input","Input","Target"});
-
-    dataset.set_raw_variable_uses(columns_uses);
-
+    dataset.set_data(data);
+    dataset.set_variable_roles({"Input", "Input", "Target"});
     dataset.split_samples_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
+    ApproximationNetwork neural_network({2}, {1}, {1});
 
+    TrainingStrategy training_strategy(&neural_network, &dataset);
 
-    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
+    GrowingInputs growing_inputs(&training_strategy);
+    growing_inputs.set_display(false);
 
-    // Test
+    InputsSelectionResults results = growing_inputs.perform_input_selection();
 
-    dataset.generate_sum_data(20,3);
-
-    neural_network.set();
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {2,6,1});
-
-    TrainingStrategy training_strategy1(&neural_network, &dataset);
-
-    //input_selection_results = growing_inputs.perform_input_selection();
-
-    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
-
+    EXPECT_TRUE(results.optimal_input_variables_indices[0] < 2);
 }
-
-}
-*/

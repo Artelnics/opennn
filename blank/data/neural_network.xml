@@ -1,0 +1,96 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>5</InputsNumber>
+      <Input Index="1">input_1</Input>
+      <Input Index="2">input_2</Input>
+      <Input Index="3">input_3</Input>
+      <Input Index="4">input_4</Input>
+      <Input Index="5">input_5</Input>
+   </Inputs>
+   <Layers>
+      <LayersNumber>5</LayersNumber>
+      <Scaling2d>
+         <NeuronsNumber>5</NeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </Scaling2d>
+      <Dense2d>
+         <Label>dense2d_layer_1</Label>
+         <InputsNumber>5</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <Activation>HyperbolicTangent</Activation>
+         <BatchNormalization>false</BatchNormalization>
+      </Dense2d>
+      <Dense2d>
+         <Label>approximation_layer</Label>
+         <InputsNumber>1</InputsNumber>
+         <NeuronsNumber>3</NeuronsNumber>
+         <Activation>Linear</Activation>
+         <BatchNormalization>false</BatchNormalization>
+      </Dense2d>
+      <Unscaling>
+         <NeuronsNumber>3</NeuronsNumber>
+         <UnscalingNeuron Index="1">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+         <UnscalingNeuron Index="2">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+         <UnscalingNeuron Index="3">
+            <Descriptives>-1 1 0 1 </Descriptives>
+            <Scaler>MinimumMaximum</Scaler>
+         </UnscalingNeuron>
+      </Unscaling>
+      <Bounding>
+         <NeuronsNumber>3</NeuronsNumber>
+         <Item Index="1">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <Item Index="2">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <Item Index="3">
+            <LowerBound>-340282346638528859811704183484516925440.000000</LowerBound>
+            <UpperBound>340282346638528859811704183484516925440.000000</UpperBound>
+         </Item>
+         <BoundingMethod>Bounding</BoundingMethod>
+      </Bounding>
+      <LayerInputIndices>
+         <LayerInputsIndices LayerIndex="0">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="1">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">2</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="4">3</LayerInputsIndices>
+      </LayerInputIndices>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>3</OutputsNumber>
+      <Output Index="1">output_1</Output>
+      <Output Index="2">output_2</Output>
+      <Output Index="3">output_3</Output>
+   </Outputs>
+   <Display>1</Display>
+   <Parameters>0 0 0 0 0 0 0 0 0.3812433481216431 -0.7486003637313843 -0.01747423410415649 -0.259113609790802 -0.005976319313049316 0 0 0 0 0 0 0 0 0 0 0 -0.1103723049163818 0.6025896072387695 -0.8747032880783081 0 0 0 0 0 </Parameters>
+</NeuralNetwork>

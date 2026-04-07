@@ -197,22 +197,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmbedding)
     const VectorR gradient = mean_squared_error.calculate_gradient();
 
     const VectorR numerical_gradient = mean_squared_error.calculate_numerical_gradient();
-    cout << "\nIdx | Gradient      | Numerical     | Diff" << endl;
-    cout << "----+---------------+---------------+----------" << endl;
-    for(Index i = 0; i < gradient.size(); i++)
-    {
-        if(gradient(i) != 0 || numerical_gradient(i) != 0)
-            cout << setw(4) << i << " | "
-                 << setw(13) << gradient(i) << " | "
-                 << setw(13) << numerical_gradient(i) << " | "
-                 << setw(10) << abs(gradient(i) - numerical_gradient(i))
-                 << endl;
-    }
 
-
-    //@todo
-    //EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-3)), true);
-    //RElajar tolerancia , 0,004 error permitido.
     EXPECT_EQ(are_equal(gradient, numerical_gradient, type(1.0e-2)), true);
 }
 

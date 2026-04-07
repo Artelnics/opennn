@@ -1259,7 +1259,7 @@ void MultiHeadAttentionForwardPropagationCuda::initialize()
 
 void MultiHeadAttentionForwardPropagationCuda::print() const
 {
-    const auto* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+    const MultiHeadAttention* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
     const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();
@@ -1356,7 +1356,7 @@ void MultiHeadAttentionBackPropagationCuda::initialize()
 
 void MultiHeadAttentionBackPropagationCuda::print() const
 {
-    const auto* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
+    const MultiHeadAttention* multihead_attention_layer = static_cast<const MultiHeadAttention*>(layer);
 
     const Index query_sequence_length = multihead_attention_layer->get_query_sequence_length();
     const Index source_sequence_length = multihead_attention_layer->get_source_sequence_length();

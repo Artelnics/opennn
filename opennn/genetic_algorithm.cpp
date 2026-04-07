@@ -10,7 +10,6 @@
 #include "dataset.h"
 #include "time_series_dataset.h"
 #include "scaling_layer.h"
-#include "scaling_layer.h"
 #include "training_strategy.h"
 #include "genetic_algorithm.h"
 #include "random_utilities.h"
@@ -594,7 +593,7 @@ void GeneticAlgorithm::perform_mutation()
         shuffle_vector(to_true_mutations);
         shuffle_vector(to_false_mutations);
 
-        Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        Index swap_count = min(to_true_mutations.size(), to_false_mutations.size());
         for(Index k = 0; k < swap_count; ++k)
         {
             individual(to_true_mutations[k]) = true;

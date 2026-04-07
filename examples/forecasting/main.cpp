@@ -36,7 +36,7 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
-        //throw runtime_error("Forecasting Example is not yet implemented. Please check back in a future version.");
+        throw runtime_error("Forecasting Example is not yet implemented. Please check back in a future version.");
 
         // TimeSeriesDataset time_series_dataset("../data/funcion_seno_inputTarget.csv", ",", false, false);
         TimeSeriesDataset time_series_dataset("../data/funcion_seno_missing.csv", ",", false, false);
@@ -45,8 +45,6 @@ int main()
         // TimeSeriesDataset time_series_dataset("../data/Pendulum.csv", ",", false, false);
         // TimeSeriesDataset time_series_dataset("../data/twopendulum.csv", ";", false, false);
 
-
-        cout << "dataset leido" << endl;
         const Index lags = 2;
         time_series_dataset.set_multi_target(false);
         time_series_dataset.set_past_time_steps(lags);

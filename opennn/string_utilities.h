@@ -65,11 +65,6 @@ namespace opennn
 
     void set_language(const string&);
 
-    void tokenize_whitespace(const vector<string>&, Tensor2&);
-    void tokenize_wordpiece(const vector<string>&, Tensor2&);
-    void detokenize_whitespace(Tensor2&, ostringstream&);
-    void detokenize_wordpiece(Tensor2&, ostringstream&);
-
     string formatNumber(type, int);
 }
 

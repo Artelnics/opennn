@@ -27,7 +27,7 @@ struct DenseForwardPropagation final : LayerForwardPropagation
 
     void initialize() override
     {
-        const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
+        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(layer);
 
         const Shape full_output_shape = Shape{batch_size}.append(dense_layer->get_output_shape());
 
@@ -83,7 +83,7 @@ struct DenseBackPropagation final : LayerBackPropagation
 
     void initialize() override
     {
-        const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
+        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(layer);
 
         const Index outputs_number = dense_layer->get_neurons_number();
 
@@ -106,7 +106,7 @@ struct DenseBackPropagation final : LayerBackPropagation
     {
         vector<TensorView*> views = {&bias_gradients, &weight_gradients};
 
-        const auto* dense_layer = static_cast<const Dense<Rank>*>(layer);
+        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(layer);
 
         if (dense_layer->get_batch_normalization())
             views.insert(views.end(), {&gamma_gradients, &beta_gradients});
@@ -185,7 +185,7 @@ struct DenseForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void initialize() override
     {
-        auto* dense_layer = static_cast<Dense<Rank>*>(this->layer);
+        Dense<Rank>* dense_layer = static_cast<Dense<Rank>*>(this->layer);
 
         const Index outputs_number = dense_layer->get_neurons_number();
         const Shape full_output_shape = dense_layer->get_batch_output_shape(batch_size);
@@ -344,7 +344,7 @@ struct DenseBackPropagationCuda : public LayerBackPropagationCuda
     {
         vector<TensorViewCuda*> views = { &bias_gradients, &weight_gradients};
 
-        auto* dense_layer = static_cast<const Dense<Rank>*>(this->layer);
+        const Dense<Rank>* dense_layer = static_cast<const Dense<Rank>*>(this->layer);
 
         if (dense_layer && dense_layer->get_batch_normalization())
             views.insert(views.end(), { &gamma_gradients, &beta_gradients});
@@ -750,9 +750,9 @@ public:
     void forward_propagate(unique_ptr<LayerForwardPropagation>& forward_propagation,
                            bool is_training) override
     {
-        auto* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
+        DenseForwardPropagation<Rank>* dense_forward_propagation = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
 
-        auto outputs = tensor_map<Rank>(dense_forward_propagation->outputs);
+        TensorMapR<Rank> outputs = tensor_map<Rank>(dense_forward_propagation->outputs);
 
         calculate_combinations<Rank>(tensor_map<Rank>(forward_propagation->inputs[0]),
                                      matrix_map(weights),
@@ -760,7 +760,7 @@ public:
                                      outputs);
         if(batch_normalization)
         {
-            auto normalized_outputs = tensor_map<Rank>(dense_forward_propagation->normalized_outputs);
+            TensorMapR<Rank> normalized_outputs = tensor_map<Rank>(dense_forward_propagation->normalized_outputs);
 
             normalize_batch<Rank>(
                 outputs,
@@ -860,8 +860,8 @@ public:
         const MatrixMap inputs(forward_propagation->inputs[0].data, batch_size, inputs_number);
         MatrixMap output_gradients(back_propagation->output_gradients[0].data, batch_size, outputs_number);
 
-        auto* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
-        auto* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
+        DenseForwardPropagation<Rank>* dense_fp = static_cast<DenseForwardPropagation<Rank>*>(forward_propagation.get());
+        DenseBackPropagationLM* dense_bp_lm = static_cast<DenseBackPropagationLM*>(back_propagation.get());
 
         MatrixMap jacobian = matrix_map(dense_bp_lm->squared_errors_Jacobian);
         jacobian.setZero();
@@ -1116,7 +1116,7 @@ public:
 
         TensorViewCuda& outputs = forward_propagation->outputs;
 
-        auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
+        DenseForwardPropagationCuda<Rank>* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
 
         type* combinations = dense_forward_propagation->combinations.data;
         type* outputs_buffer = use_combinations ? combinations : outputs.data;
@@ -1235,7 +1235,7 @@ public:
 
         const TensorViewCuda& outputs_view = forward_propagation->outputs;
 
-        const auto* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
+        const DenseForwardPropagationCuda<Rank>* dense_forward_propagation = static_cast<DenseForwardPropagationCuda<Rank>*>(forward_propagation.get());
 
         type* combinations = dense_forward_propagation->combinations.data;
 
@@ -1243,7 +1243,7 @@ public:
 
         float* output_gradients_data = bp_cuda->output_gradients[0].data;
 
-        auto* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
+        DenseBackPropagationCuda<Rank>* dense_layer_back_propagation = static_cast<DenseBackPropagationCuda<Rank>*>(bp_cuda.get());
 
         float* ones = dense_layer_back_propagation->ones.data;
 

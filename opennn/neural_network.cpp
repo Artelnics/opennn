@@ -6,17 +6,16 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "registry.h"
-//#include "string_utilities.h"
-#include "tensor_utilities.h"
 #include "neural_network.h"
+#include "registry.h"
+#include "tensor_utilities.h"
 #include "dense_layer.h"
-#include "scaling_layer.h"
 #include "scaling_layer.h"
 #include "flatten_layer.h"
 #include "addition_layer.h"
 #include "embedding_layer.h"
 #include "variable.h"
+#include "image_utilities.h"
 
 namespace opennn
 {
@@ -39,7 +38,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     if (!layers.empty() && !validate_name(layers.back()->get_name())) return;
 
-    layers.push_back(std::move(layer));
+    layers.push_back(move(layer));
 
     layer_input_indices.push_back(input_indices.empty()
         ? vector<Index>(1, old_layers_number )
@@ -129,7 +128,7 @@ const vector<string> NeuralNetwork::get_input_feature_names() const
 {
     vector<string> input_feature_names;
 
-    for (const auto& var : input_variables)
+    for (const Variable& var : input_variables)
     {
         const vector<string> names = var.get_names();
 
@@ -143,7 +142,7 @@ const vector<string> NeuralNetwork::get_output_feature_names() const
 {
     vector<string> output_feature_names;
 
-    for (const auto& var : output_variables)
+    for (const Variable& var : output_variables)
     {
         const vector<string> names = var.get_names();
 
@@ -213,7 +212,7 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
             if (input_index >= 0)
                 layer_output_indices[input_index].push_back(i);
 
-    for(auto& outputs : layer_output_indices)
+    for(vector<Index>& outputs : layer_output_indices)
         if(outputs.empty())
             outputs.push_back(-1);
 
@@ -752,54 +751,48 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    // Tensor3 image = load_image(image_path);
+    Tensor3 image = load_image(image_path);
 
-    // Scaling4d* scaling_layer = static_cast<Scaling4d*>(get_first("Scaling4d"));
+    Scaling<4>* scaling_layer = static_cast<Scaling<4>*>(get_first("Scaling4d"));
 
-    // const Index height = scaling_layer->get_input_shape()[0];
-    // const Index width = scaling_layer->get_input_shape()[1];
-    // const Index channels = scaling_layer->get_input_shape()[2];
+    const Index height = scaling_layer->get_input_shape()[0];
+    const Index width = scaling_layer->get_input_shape()[1];
+    const Index channels = scaling_layer->get_input_shape()[2];
 
-    // const Index current_height = image.dimension(0);
-    // const Index current_width = image.cols();
-    // const Index current_channels = image.dimension(2);
+    const Index current_height = image.dimension(0);
+    const Index current_width = image.dimension(1);
+    const Index current_channels = image.dimension(2);
 
-    // if (current_channels != channels)
-    //     throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
+    if(current_channels != channels)
+        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    // if(current_height != height || current_width != width)
-    //     image = resize_image(image, height, width);
+    if(current_height != height || current_width != width)
+        image = resize_image(image, height, width);
 
-    // Tensor4 input_data(1, height, width, channels);
+    Tensor4 input_data(1, height, width, channels);
 
-    // const Index pixels_number = height * width * channels;
+    const Index pixels_number = height * width * channels;
 
-    // #pragma omp parallel for
-    // for(Index j = 0; j < pixels_number; j++)
-    //     input_data(j) = image(j);
+    #pragma omp parallel for
+    for(Index j = 0; j < pixels_number; j++)
+        input_data(j) = image(j);
 
-    // const Matrix outputs = calculate_outputs(input_data);
+    const MatrixR outputs = calculate_outputs(input_data);
 
-    // Index predicted_index = -1;
+    Index predicted_index = 0;
 
-    // if (outputs.size() > 1)
-    // {
-    //     type max_value = outputs(0);
+    type max_value = outputs(0);
 
-    //     for(Index i = 1; i < outputs.cols(); ++i)
-    //     {
-    //         if (outputs(i) > max_value)
-    //         {
-    //             max_value = outputs(i);
-    //             predicted_index = i;
-    //         }
-    //     }
-    // }
-    // else
-    //     predicted_index = outputs(0);
+    for(Index i = 1; i < outputs.cols(); ++i)
+    {
+        if(outputs(i) > max_value)
+        {
+            max_value = outputs(i);
+            predicted_index = i;
+        }
+    }
 
-    // return predicted_index;
-    return 0;
+    return predicted_index;
 }
 
 
@@ -838,7 +831,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
         {
             if (1 + j >= (size_t)sequence_length) break;
 
-            const auto it = vocabulary_map.find(tokens[j]);
+            const unordered_map<string, Index>::const_iterator it = vocabulary_map.find(tokens[j]);
 
             inputs(i, 1 + j) = (it != vocabulary_map.end())
                                    ? static_cast<type>(it->second)
@@ -1064,7 +1057,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         layer_document.InsertFirstChild(element_clone);
 
         layer->from_XML(layer_document);
-        add_layer(std::move(layer));
+        add_layer(move(layer));
 
         start_element = layer_element;
     }
@@ -1268,7 +1261,7 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     const Index outputs_number = get_outputs_number();
 
     const vector<string> input_names = get_input_feature_names();
-    for(const auto& name : input_names)
+    for(const string& name : input_names)
         file << name << ";";
 
     for(size_t i = 0; i < size_t(outputs_number); ++i)
@@ -1372,8 +1365,8 @@ void NeuralNetworkBackPropagation::set(const Index new_batch_size, NeuralNetwork
     }
 
     const Index last_trainable = neural_network->get_last_trainable_layer_index();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+    const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
+    const vector<vector<Index>> layer_output_indices = neural_network->get_layer_output_indices();
 
     for(size_t i = 0; i < layers.size(); i++)
     {
@@ -1493,7 +1486,7 @@ void ForwardPropagation::set(const Index new_samples_number, NeuralNetwork* new_
         link(workspace.data(), layer_workspace_views);
     }
 
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
     {
@@ -1860,7 +1853,7 @@ void ForwardPropagationCuda::set(const Index new_samples_number, NeuralNetwork* 
         layers[i]->set(samples_number, neural_network_layers[i].get());
     }
 
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
+    const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
     for(size_t i = 0; i < layers_number; ++i)
     {
@@ -1987,8 +1980,8 @@ void NeuralNetworkBackPropagationCuda::set(const Index new_batch_size, NeuralNet
     }
 
     const Index last_trainable = neural_network->get_last_trainable_layer_index();
-    const auto& layer_input_indices = neural_network->get_layer_input_indices();
-    const auto& layer_output_indices = neural_network->get_layer_output_indices();
+    const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
+    const vector<vector<Index>> layer_output_indices = neural_network->get_layer_output_indices();
 
     for(size_t i = 0; i < layers.size(); i++)
     {
@@ -2026,7 +2019,7 @@ vector<vector<TensorViewCuda*>> NeuralNetworkBackPropagationCuda::get_layer_grad
     vector<vector<TensorViewCuda*>> layer_gradient_views(layers.size());
     Index i = 0;
 
-    for (const auto& layer_bp : layers)
+    for (const unique_ptr<LayerBackPropagationCuda>& layer_bp : layers)
     {
         if (layer_bp)
             layer_gradient_views[i] = layer_bp->get_gradient_views();

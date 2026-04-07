@@ -45,7 +45,7 @@ int main()
         // Transformer
 
         const Index embedding_dimension = 256;
-        const Index heads_number = 4;
+        const Index heads_number = 8;
         const Index feed_forward_dimension = 1024;
         const Index layers_number = 1;
 
@@ -82,7 +82,7 @@ int main()
         cout << "\nTraining on GPU..." << endl;
         training_strategy.train_cuda();
 #else
-        cout << "\nTraining on CPU..." << endl;
+        cout << "\nTraining on CPU... (It might take a lot of time...)" << endl;
         training_strategy.train();
 #endif
 
@@ -95,7 +95,6 @@ int main()
                 "yo tengo hambre",
                 "tu estas feliz",
                 "el esta cansado",
-                "el perro es grande",
                 "yo veo el gato"
             };
 

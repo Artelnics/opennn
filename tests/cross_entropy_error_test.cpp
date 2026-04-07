@@ -89,8 +89,6 @@ TEST(CrossEntropyError2d, calculate_binary_error)
     ForwardPropagation forward_propagation(5, &neural_network);
 
 
-    if(!forward_propagation.layers.empty())
-        cout << "layer 0 outputs data: " << forward_propagation.layers[0]->outputs.data << endl;
     BackPropagation back_propagation(5, &cross_entropy_error);
 
     const vector<TensorView> batch_input_pairs = batch.get_inputs();

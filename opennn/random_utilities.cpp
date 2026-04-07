@@ -147,8 +147,8 @@ void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
 
     for (size_t i = 0; i < n; i += block_size)
     {
-        const auto start = vec.begin() + i;
-        const auto end = (i + block_size > n) ? vec.end() : start + block_size;
+        const vector<Index>::iterator start = vec.begin() + i;
+        const vector<Index>::iterator end = (i + block_size > n) ? vec.end() : start + block_size;
 
         shuffle(start, end, get_generator());
     }
