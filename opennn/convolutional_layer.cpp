@@ -680,13 +680,17 @@ void Convolutional::to_XML(XMLPrinter& printer) const
 void Convolutional::from_XML(const XMLDocument& document)
 {
     const XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
-
     if(!convolutional_layer_element)
         throw runtime_error("Convolutional layer element is nullptr.\n");
 
-    set_label(read_xml_string(convolutional_layer_element, "Label"));
+    const string inputDimsStr = read_xml_string(convolutional_layer_element, "InputDimensions");
+    cout << "[Convolutional::from_XML] InputDimensions='" << inputDimsStr << "'" << endl;
 
-    set_input_shape(string_to_shape(read_xml_string(convolutional_layer_element, "InputDimensions")));
+    const string strideStr = read_xml_string(convolutional_layer_element, "StrideDimensions");
+    cout << "[Convolutional::from_XML] StrideDimensions='" << strideStr << "'" << endl;
+
+    set_label(read_xml_string(convolutional_layer_element, "Label"));
+    set_input_shape(string_to_shape(inputDimsStr));
 
     set_activation_function(read_xml_string(convolutional_layer_element, "Activation"));
 

@@ -207,6 +207,8 @@ public:
     // Serialization
 
     Tensor<string, 2> get_dense2d_layers_information() const;
+    Tensor<string, 2> get_convolutional_layers_information() const;
+    Tensor<string, 2> get_pooling_layers_information() const;
 
     void from_XML(const XMLDocument&);
     void inputs_from_XML(const XMLElement*);

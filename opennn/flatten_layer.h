@@ -33,7 +33,8 @@ public:
 
     Flatten(const Shape& new_input_shape = {} )
     {
-        set(new_input_shape);
+        if(!new_input_shape.empty())
+            set(new_input_shape);
     }
 
 
@@ -81,6 +82,8 @@ public:
 
     void set(const Shape& new_input_shape)
     {
+        cout<<"Rank"<<Rank<<endl;
+        cout<<"new_input_shape"<<new_input_shape.size()<<endl;
         if (new_input_shape.size() != Rank - 1)
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 
@@ -123,7 +126,7 @@ public:
     }
     
     // Serialization
-
+/*
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* element = document.FirstChildElement("Flatten");
@@ -153,6 +156,37 @@ public:
         if constexpr (Rank == 3)
             add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
 
+        printer.CloseElement();
+    }
+*/
+
+
+    void from_XML(const XMLDocument& document) override
+    {
+        const XMLElement* element = document.FirstChildElement("Flatten");
+        if(!element)
+            throw runtime_error("Flatten element is nullptr.\n");
+
+        const Index input_height = read_xml_index(element, "InputHeight");
+        const Index input_width = read_xml_index(element, "InputWidth");
+
+        if constexpr (Rank >= 4)
+        {
+            const Index input_channels = read_xml_index(element, "InputChannels");
+            set({input_height, input_width, input_channels});
+        }
+        else
+            set({input_height, input_width});
+    }
+
+    void to_XML(XMLPrinter& printer) const override
+    {
+        printer.OpenElement("Flatten");
+        add_xml_element(printer, "Rank", to_string(Rank));
+        add_xml_element(printer, "InputHeight", to_string(get_input_height()));
+        add_xml_element(printer, "InputWidth", to_string(get_input_width()));
+        if constexpr (Rank >= 4)
+            add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
         printer.CloseElement();
     }
 

@@ -2168,6 +2168,79 @@ void Dataset::print_top_input_target_variables_correlations() const
 }
 
 
+
+Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() const
+{
+    if(display) cout << "Calculating pearson inputs correlations..." << endl;
+
+    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const Index input_variables_number = input_variable_indices.size();
+
+    Tensor<Correlation, 2> correlations_pearson(input_variables_number, input_variables_number);
+
+    // Diagonal
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        const MatrixR input_i = get_variable_data(input_variable_indices[i]);
+        if(is_constant(input_i)) continue;
+        correlations_pearson(i, i).set_perfect();
+        correlations_pearson(i, i).method = Correlation::Method::Pearson;
+    }
+
+    // ── Pre-cargar todos los datos fuera del paralelo ──────────────────────
+    // Evita que get_variable_data() se llame concurrentemente (posible estado
+    // interno en Dataset) y además evita I/O duplicado.
+    vector<MatrixR> input_data(input_variables_number);
+    for(Index i = 0; i < input_variables_number; i++)
+        input_data[i] = get_variable_data(input_variable_indices[i]);
+
+    // ── Aplanar pares en un vector para poder usar parallel for ────────────
+    // parallel for necesita índice entero contiguo; los dos loops anidados
+    // con j = i+1 no lo permiten directamente sin race conditions en (j,i).
+    vector<pair<Index,Index>> pairs;
+    pairs.reserve(input_variables_number * (input_variables_number - 1) / 2);
+
+    for(Index i = 0; i < input_variables_number; i++)
+        for(Index j = i + 1; j < input_variables_number; j++)
+            pairs.emplace_back(i, j);
+
+    const Index total_pairs = static_cast<Index>(pairs.size());
+
+    // ── Bucle paralelo ─────────────────────────────────────────────────────
+    // schedule(dynamic,1): pares logísticos tardan 100x más que los lineales,
+    // dynamic equilibra la carga entre hilos automáticamente.
+    // No hay race condition: cada (i,j) escribe en celdas distintas del tensor.
+    // La simétrica (j,i) la escribe el mismo hilo que calcula (i,j).
+
+#pragma omp parallel for schedule(dynamic, 1) default(none) \
+    shared(correlations_pearson, input_data, pairs, total_pairs)
+        for(Index k = 0; k < total_pairs; k++)
+    {
+        const Index i = pairs[k].first;
+        const Index j = pairs[k].second;
+
+        const MatrixR& input_i = input_data[i];
+        const MatrixR& input_j = input_data[j];
+
+        if(is_constant(input_i) || is_constant(input_j)) continue;
+
+        // correlation() crea Dataset+NeuralNetwork localmente -> thread-safe
+        // siempre que esas clases no usen statics globales internamente.
+        // Si hay crashes, envolver en: #pragma omp critical { ... }
+        // y medir si el problema desaparece para aislar el fallo.
+        Correlation corr = correlation(input_i, input_j);
+
+        if(corr.r > type(1) - EPSILON)
+            corr.r = type(1);
+
+        // Escritura en celdas distintas -> no necesita critical
+        correlations_pearson(i, j) = corr;
+        correlations_pearson(j, i) = corr;
+    }
+
+    return correlations_pearson;
+}
+/*
 Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() const
 {
     if (display) cout << "Calculating pearson inputs correlations..." << endl;
@@ -2206,7 +2279,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() 
     }
 
     return correlations_pearson;
-}
+}*/
 
 
 Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations() const
@@ -2876,7 +2949,7 @@ void Dataset::save_data() const
     file.close();
 }
 
-
+/*
 void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name, ios::binary);
@@ -2902,10 +2975,35 @@ void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) co
 
     file.close();
 }
+*/
+
+
+void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) const
+{
+    ofstream file(binary_data_file_name, ios::binary);
+    if(!file.is_open())
+        throw runtime_error("Cannot open data binary file.");
+
+    streamsize size = sizeof(Index);
+    Index columns_number = data.cols();
+    Index rows_number = data.rows();
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    //Row-Major
+    size = sizeof(type);
+    const Index total_elements = columns_number * rows_number;
+    file.write(reinterpret_cast<const char*>(data.data()), total_elements * size);
+
+    file.close();
+}
 
 
 void Dataset::load_data_binary()
 {
+    if(data_path.empty())
+        throw runtime_error("Failed to open binary data file: dataset data_path is empty.");
+
     ifstream file(data_path, ios::binary);
 
     if(!file.is_open())
@@ -4113,15 +4211,31 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-    dataset->fill_inputs(sample_indices, input_indices, input_vector.data());
+    static bool debug_printed = false;
 
     if(!decoder_shape.empty())
         dataset->fill_decoder(sample_indices, decoder_indices, decoder_vector.data());
 
-    dataset->fill_targets(sample_indices, target_indices, target_vector.data());
+    if(!debug_printed)
+    {
+        const Index expected_input_size = sample_indices.size() * input_indices.size();
+        const Index expected_target_size = sample_indices.size() * target_indices.size();
+
+        if(static_cast<Index>(input_vector.size()) < expected_input_size)
+            throw runtime_error("input_vector is smaller than expected flat input copy.");
+
+        if(static_cast<Index>(target_vector.size()) < expected_target_size)
+            throw runtime_error("target_vector is smaller than expected target copy.");
+
+    }
+
+    dataset->fill_inputs(sample_indices, input_indices, input_vector.data(), false);
+
+
+    dataset->fill_targets(sample_indices, target_indices, target_vector.data(), false);
+
+
 }
-
-
 Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
 {
     set(new_samples_number, new_dataset);

@@ -210,11 +210,20 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
 
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
 
+    const Shape hidden_shape = { get_output_shape()[0] };
     add_layer(make_unique<Dense<2>>(get_output_shape(),
-                                   output_shape,
-                                   "Softmax",
-                                   false, // Batch normalization
-                                   "dense_2d_layer"));
+                                    hidden_shape,
+                                    "RectifiedLinear",
+                                    false,
+                                    "dense_2d_layer_1"));
+
+
+    add_layer(make_unique<Dense<2>>(get_output_shape(),
+                                    output_shape,
+                                    "Softmax",
+                                    false,
+                                    "classification_layer"));
+
 
     this->compile();
     this->set_parameters_random();

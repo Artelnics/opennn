@@ -351,11 +351,32 @@ public:
             throw runtime_error("Scaling element is nullptr.\n");
 
         const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
-        
+
         if constexpr (Rank == 2)
-            set({ neurons_number });
+        {
+            set({neurons_number});
+        }
         else
-            set(Shape(Rank - 1, neurons_number));
+        {
+            const string input_dimensions_string =
+                read_xml_string(scaling_layer_element, "InputDimensions");
+
+            const Shape input_dimensions = string_to_shape(input_dimensions_string);
+
+            if(input_dimensions.size() != Rank - 1)
+                throw runtime_error("Error: InputDimensions size does not match Scaling layer rank.\n");
+
+            const Index input_dimensions_product =
+                static_cast<Index>(accumulate(input_dimensions.begin(),
+                                              input_dimensions.end(),
+                                              size_t(1),
+                                              multiplies<size_t>()));
+
+            if(input_dimensions_product != neurons_number)
+                throw runtime_error("Error: NeuronsNumber does not match InputDimensions product.\n");
+
+            set(input_dimensions);
+        }
 
         const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
@@ -366,8 +387,13 @@ public:
                 throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
 
             const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-            if (descriptives_element && descriptives_element->GetText()) {
+            if(descriptives_element && descriptives_element->GetText())
+            {
                 const vector<string> tokens = get_tokens(descriptives_element->GetText(), " ");
+
+                if(tokens.size() < 4)
+                    throw runtime_error("Error: Descriptives must contain 4 values.\n");
+
                 descriptives[i].set(
                     type(stof(tokens[0])),
                     type(stof(tokens[1])),
@@ -387,6 +413,11 @@ public:
         printer.OpenElement(name.c_str());
 
         const Index outputs_number = get_outputs_number();
+
+        if constexpr (Rank > 2)
+        {
+            add_xml_element(printer, "InputDimensions", shape_to_string(input_shape));
+        }
 
         add_xml_element(printer, "NeuronsNumber", to_string(outputs_number));
 

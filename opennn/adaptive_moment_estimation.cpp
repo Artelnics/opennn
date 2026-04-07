@@ -111,7 +111,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type new_maximum_time)
     maximum_time = new_maximum_time;
 }
 
-
+/*
 TrainingResults AdaptiveMomentEstimation::train()
 {
     if(!loss || !loss->has_neural_network() || !loss->has_dataset())
@@ -377,6 +377,308 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     return results;
 }
+
+*/
+
+
+TrainingResults AdaptiveMomentEstimation::train()
+{
+    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+        return TrainingResults();
+
+    TrainingResults results(maximum_epochs + 1);
+
+    check();
+
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" ..." << endl;
+
+    // Dataset
+
+    Dataset* dataset = loss->get_dataset();
+
+    if(!dataset)
+        throw runtime_error("Dataset is null.");
+
+    const bool has_validation = dataset->has_validation();
+
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss);
+
+    const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
+    const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
+     const vector<Index> decoder_feature_indices = dataset->get_feature_indices("Decoder");
+
+    const vector<Index> training_sample_indices = dataset->get_sample_indices("Training");
+    const vector<Index> validation_sample_indices = dataset->get_sample_indices("Validation");
+
+    const Index training_samples_number = dataset->get_samples_number("Training");
+    const Index validation_samples_number = dataset->get_samples_number("Validation");
+
+    const Index training_batch_size = min(training_samples_number, batch_size);
+
+    const Index validation_batch_size = (validation_samples_number != 0)
+                                            ? min(validation_samples_number, batch_size)
+                                            : 0;
+
+    const Index training_batches_number = (training_batch_size != 0)
+                                              ? training_samples_number / training_batch_size
+                                              : 0;
+
+    const Index validation_batches_number = (validation_batch_size != 0)
+                                                ? validation_samples_number / validation_batch_size
+                                                : 0;
+
+    vector<vector<Index>> training_batches(training_batches_number);
+    vector<vector<Index>> validation_batches(validation_batches_number);
+
+    // Neural network
+
+    NeuralNetwork* neural_network = loss->get_neural_network();
+
+    if(!neural_network)
+        throw runtime_error("Neural network is null.");
+
+    set_names();
+    set_scaling();
+
+    Batch training_batch(training_batch_size, dataset);
+    unique_ptr<Batch> validation_batch;
+
+    ForwardPropagation training_forward_propagation(training_batch_size, neural_network);
+    unique_ptr<ForwardPropagation> validation_forward_propagation;
+
+    // Loss index
+
+    loss->set_normalization_coefficient();
+
+    BackPropagation training_back_propagation(training_batch_size, loss);
+    unique_ptr<BackPropagation> validation_back_propagation;
+
+    if (has_validation)
+    {
+        validation_batch = make_unique<Batch>(validation_batch_size, dataset);
+        validation_forward_propagation = make_unique<ForwardPropagation>(validation_batch_size, neural_network);
+        validation_back_propagation = make_unique<BackPropagation>(validation_batch_size, loss);
+    }
+
+    type training_error = type(0);
+    type training_accuracy = type(0);
+
+    type validation_error = type(0);
+    type validation_accuracy = type(0);
+
+    Index validation_failures = 0;
+
+    // Optimization algorithm
+
+    AdaptiveMomentEstimationData optimization_data(this);
+
+    bool stop_training = false;
+    bool is_training = true;
+
+    time_t beginning_time;
+    time(&beginning_time);
+
+    type elapsed_time = type(0);
+
+    bool shuffle = true;
+
+    if(neural_network->has("Recurrent"))
+        shuffle = false;
+
+
+    if(training_batch_size == 0)
+        throw runtime_error("training_batch_size is 0.");
+
+    if(training_batches_number == 0)
+        throw runtime_error("training_batches_number is 0.");
+
+    // Main loop
+    optimization_data.iteration = 1;
+
+
+    for(Index epoch = 0; epoch <= maximum_epochs; epoch++)
+    {
+        cout << "Epoch: " << epoch << endl;
+
+
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
+        training_batches = dataset->get_batches(training_sample_indices, training_batch_size, shuffle);
+
+
+        training_error = type(0);
+
+        if(is_classification_model) training_accuracy = type(0);
+
+        for(Index iteration = 0; iteration < training_batches_number; iteration++)
+        {
+            training_back_propagation.neural_network.gradient.setZero();
+
+
+            // Dataset
+
+            training_batch.fill(training_batches[iteration],
+                                input_feature_indices,
+                                decoder_feature_indices,
+                                target_feature_indices);
+
+
+            // Neural network
+
+            neural_network->forward_propagate(training_batch.get_inputs(),
+                                              training_forward_propagation,
+                                              is_training);
+
+
+            // Loss index
+
+            loss->back_propagate(training_batch,
+                                 training_forward_propagation,
+                                 training_back_propagation);
+
+
+            const Index params_size = neural_network->get_parameters().size();
+            const Index grad_size = training_back_propagation.neural_network.gradient.size();
+            const Index m_size = optimization_data.gradient_exponential_decay.size();
+            const Index v_size = optimization_data.square_gradient_exponential_decay.size();
+
+            if(params_size != grad_size || params_size != m_size || params_size != v_size)
+            {
+                throw runtime_error("Size mismatch between parameters/gradient/optimizer state.");
+            }
+
+            update_parameters(training_back_propagation, optimization_data);
+
+            training_error += training_back_propagation.error;
+
+            if(is_classification_model)
+                training_accuracy += training_back_propagation.accuracy(0);
+        }
+
+        // Loss
+
+        training_error /= type(training_batches_number);
+        if(is_classification_model)
+            training_accuracy /= type(training_batches_number);
+
+        results.training_error_history(epoch) = training_error;
+
+        if(has_validation)
+        {
+            validation_batches = dataset->get_batches(validation_sample_indices, validation_batch_size, shuffle);
+
+            validation_error = type(0);
+
+            if(is_classification_model)
+                validation_accuracy = type(0);
+
+            for(Index iteration = 0; iteration < validation_batches_number; iteration++)
+            {
+                // Dataset
+                validation_batch->fill(validation_batches[iteration],
+                                        input_feature_indices,
+                                        decoder_feature_indices,
+                                        target_feature_indices);
+
+
+                // Neural network
+                neural_network->forward_propagate(validation_batch->get_inputs(),
+                                                  *validation_forward_propagation,
+                                                  is_training);
+
+
+                // Loss
+                loss->calculate_error(*validation_batch,
+                                      *validation_forward_propagation,
+                                      *validation_back_propagation);
+
+
+                validation_error += validation_back_propagation->error;
+
+                if(is_classification_model)
+                    validation_accuracy += validation_back_propagation->accuracy(0);
+            }
+
+            validation_error /= type(validation_batches_number);
+            if(is_classification_model) validation_accuracy /= type(validation_batches_number);
+
+            results.validation_error_history(epoch) = validation_error;
+
+            if(epoch != 0 && results.validation_error_history(epoch) > results.validation_error_history(epoch-1))
+                validation_failures++;
+        }
+
+        // Elapsed time
+
+        elapsed_time = get_elapsed_time(beginning_time);
+
+        if(display && epoch%display_period == 0)
+        {
+            cout << "Training error: " << training_error << endl;
+            if(is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if(has_validation) cout << "Validation error: " << validation_error << endl;
+            if(has_validation && is_classification_model) cout << "Validation accuracy: " << validation_accuracy << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+        }
+
+        stop_training = true;
+
+        if(epoch == maximum_epochs)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
+        }
+        else if(elapsed_time >= maximum_time)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
+            results.stopping_condition = StoppingCondition::MaximumTime;
+        }
+        else if(results.training_error_history(epoch) < training_loss_goal)
+        {
+            results.stopping_condition  = StoppingCondition::LossGoal;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+        }
+        else if(training_accuracy >= training_accuracy_goal)
+        {
+            results.stopping_condition  = StoppingCondition::LossGoal;
+            if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
+        }
+        else if(validation_failures >= maximum_validation_failures)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << validation_failures << endl;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+        }
+        else
+        {
+            stop_training = false;
+        }
+
+        if(stop_training)
+        {
+            results.loss = training_back_propagation.loss_value;
+
+            results.validation_failures = validation_failures;
+
+            results.resize_training_error_history(epoch+1);
+
+            results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
+
+            results.elapsed_time = write_time(elapsed_time);
+
+            break;
+        }
+
+        if(epoch != 0 && epoch % save_period == 0)
+            neural_network->save(neural_network_file_name);
+    }
+
+    set_unscaling();
+
+    if(display) results.print();
+
+    return results;
+}
+
 
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const

@@ -1016,11 +1016,9 @@ public:
              << "Dropout rate: " << dropout_rate << endl;
     }
 
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* dense2d_layer_element = document.FirstChildElement(name.c_str());
-
         if(!dense2d_layer_element)
             throw runtime_error(name + " element is nullptr.\n");
 
@@ -1029,13 +1027,7 @@ public:
         const Index inputs_number = read_xml_index(dense2d_layer_element, "InputsNumber");
         const Index neurons_number = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
-        if constexpr (Rank == 3)
-        {
-            const Index input_sequence_length = read_xml_index(dense2d_layer_element, "InputSequenceLength");
-            set_input_shape({ input_sequence_length, inputs_number });
-        }
-        else
-            set_input_shape({ inputs_number });
+        set_input_shape({ inputs_number });
 
         set_output_shape({ neurons_number });
 
@@ -1043,26 +1035,27 @@ public:
 
         bool use_batch_normalization = false;
         const XMLElement* bn_element = dense2d_layer_element->FirstChildElement("BatchNormalization");
-
-        if (bn_element && bn_element->GetText())
+        if(bn_element && bn_element->GetText())
             use_batch_normalization = (string(bn_element->GetText()) == "true");
         set_batch_normalization(use_batch_normalization);
 
-        if (batch_normalization)
+        if(batch_normalization)
         {
             running_means.resize(neurons_number);
             running_standard_deviations.resize(neurons_number);
-
             string_to_vector(read_xml_string(dense2d_layer_element, "RunningMeans"), running_means);
             string_to_vector(read_xml_string(dense2d_layer_element, "RunningStandardDeviations"), running_standard_deviations);
         }
-    }
 
+        // DropoutRate — opcional para compatibilidad con .ndm antiguos
+        const XMLElement* dropout_element = dense2d_layer_element->FirstChildElement("DropoutRate");
+        if(dropout_element && dropout_element->GetText())
+            set_dropout_rate(stof(string(dropout_element->GetText())));
+    }
 
     void to_XML(XMLPrinter& printer) const override
     {
         printer.OpenElement(name.c_str());
-
         add_xml_element(printer, "Label", label);
         if constexpr (Rank == 3)
         {
@@ -1077,17 +1070,14 @@ public:
         }
         add_xml_element(printer, "Activation", activation_function);
         add_xml_element(printer, "BatchNormalization", batch_normalization ? "true" : "false");
-
-        if (batch_normalization)
+        if(batch_normalization)
         {
             add_xml_element(printer, "RunningMeans", vector_to_string(running_means));
             add_xml_element(printer, "RunningStandardDeviations", vector_to_string(running_standard_deviations));
         }
-
+        add_xml_element(printer, "DropoutRate", to_string(dropout_rate));
         printer.CloseElement();
     }
-
-
 #ifdef OPENNN_CUDA
 
 public:
