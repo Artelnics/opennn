@@ -832,39 +832,7 @@ void Dataset::set_variable_scalers(const vector<string>& new_scalers)
 }
 
 
-void Dataset::set_binary_variables()
-{
-    Index feature_index = 0;
-
-    const Index variables_number = get_variables_number();
-
-    for(Index variable_index = 0; variable_index < variables_number; variable_index++)
-    {
-        Variable& variable = variables[variable_index];
-
-        if (variable.type == VariableType::Numeric)
-        {
-            const VectorR data_column = data.col(feature_index);
-
-            if (is_binary(data_column))
-            {
-                variable.type = VariableType::Binary;
-                variable.categories = { "0","1" };
-            }
-
-            feature_index++;
-        }
-        else if (variable.type == VariableType::Categorical)
-            feature_index += variable.get_categories_number();
-        else if (variable.type == VariableType::DateTime
-                 || variable.type == VariableType::Constant
-                 || variable.type == VariableType::Binary)
-            feature_index++;
-    }
-}
-
-
-void Dataset::unuse_constant_variables()
+void Dataset::infer_variable_types_from_data()
 {
     Index feature_index = 0;
 
@@ -880,11 +848,12 @@ void Dataset::unuse_constant_variables()
 
             if (is_constant(data_column))
                 variable.set(variable.name, "None", VariableType::Constant);
+            else if (is_binary(data_column))
+            {
+                variable.type = VariableType::Binary;
+                variable.categories = { "0", "1" };
+            }
 
-            feature_index++;
-        }
-        else if (variable.type == VariableType::DateTime || variable.type == VariableType::Constant)
-        {
             feature_index++;
         }
         else if (variable.type == VariableType::Binary)
@@ -901,7 +870,23 @@ void Dataset::unuse_constant_variables()
 
             feature_index += variable.get_categories_number();
         }
+        else
+        {
+            feature_index++;
+        }
     }
+}
+
+
+void Dataset::set_binary_variables()
+{
+    infer_variable_types_from_data();
+}
+
+
+void Dataset::unuse_constant_variables()
+{
+    infer_variable_types_from_data();
 }
 
 
@@ -1022,28 +1007,13 @@ VectorR Dataset::get_sample_data(const Index sample_index, const vector<Index>& 
 
 MatrixR Dataset::get_sample_input_data(const Index sample_index) const
 {
-    const Index input_features_number = get_features_number("Input");
-
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-
-    MatrixR inputs(1, input_features_number);
-
-    for(Index i = 0; i < input_features_number; i++)
-        inputs(0, i) = data(sample_index, input_feature_indices[i]);
-
-    return inputs;
+    return get_data_from_indices({sample_index}, get_feature_indices("Input"));
 }
 
 
 MatrixR Dataset::get_sample_target_data(const Index sample_index) const
 {
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-
-    MatrixR sample_target_data(1, target_feature_indices.size());
-
-    fill_tensor_data(data, vector<Index>(sample_index), target_feature_indices, sample_target_data.data());
-
-    return sample_target_data;
+    return get_data_from_indices({sample_index}, get_feature_indices("Target"));
 }
 
 
@@ -1642,33 +1612,32 @@ vector<Descriptives> Dataset::calculate_feature_descriptives() const
 }
 
 
+vector<Index> Dataset::filter_used_samples_by_column(Index column_index, bool positive) const
+{
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+
+    vector<Index> filtered;
+    filtered.reserve(used_sample_indices.size());
+
+    for(const Index sample_index : used_sample_indices)
+    {
+        const bool match = positive
+            ? abs(data(sample_index, column_index) - type(1)) < EPSILON
+            : data(sample_index, column_index) < EPSILON;
+
+        if(match)
+            filtered.push_back(sample_index);
+    }
+
+    return filtered;
+}
+
+
 vector<Descriptives> Dataset::calculate_variable_descriptives_positive_samples() const
 {
     const Index target_index = get_feature_indices("Target")[0];
 
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-
-    const Index samples_number = used_sample_indices.size();
-
-    Index positive_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if (abs(data(used_sample_indices[i], target_index) - type(1)) < EPSILON)
-            positive_samples_number++;
-
-    vector<Index> positive_used_sample_indices(positive_samples_number);
-    Index positive_sample_index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        const Index sample_index = used_sample_indices[i];
-
-        if (abs(data(sample_index, target_index) - type(1)) < EPSILON)
-            positive_used_sample_indices[positive_sample_index++] = sample_index;
-    }
-
-    return descriptives(data, positive_used_sample_indices, input_feature_indices);
+    return descriptives(data, filter_used_samples_by_column(target_index, true), get_feature_indices("Input"));
 }
 
 
@@ -1676,60 +1645,13 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_negative_samples()
 {
     const Index target_index = get_feature_indices("Target")[0];
 
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-
-    const Index samples_number = used_sample_indices.size();
-
-    Index negative_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if (data(used_sample_indices[i], target_index) < EPSILON)
-            negative_samples_number++;
-
-    vector<Index> negative_used_sample_indices(negative_samples_number);
-    Index negative_sample_index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        const Index sample_index = used_sample_indices[i];
-
-        if (data(sample_index, target_index) < EPSILON)
-            negative_used_sample_indices[negative_sample_index++] = sample_index;
-    }
-
-    return descriptives(data, negative_used_sample_indices, input_feature_indices);
+    return descriptives(data, filter_used_samples_by_column(target_index, false), get_feature_indices("Input"));
 }
 
 
 vector<Descriptives> Dataset::calculate_variable_descriptives_categories(const Index class_index) const
 {
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-
-    const Index samples_number = used_sample_indices.size();
-
-    // Count used class samples
-
-    Index class_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if (abs(data(used_sample_indices[i], class_index) - type(1)) < EPSILON)
-            class_samples_number++;
-
-    vector<Index> class_used_sample_indices(class_samples_number, 0);
-
-    Index class_sample_index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        const Index sample_index = used_sample_indices[i];
-
-        if (abs(data(sample_index, class_index) - type(1)) < EPSILON)
-            class_used_sample_indices[class_sample_index++] = sample_index;
-    }
-
-    return descriptives(data, class_used_sample_indices, input_feature_indices);
+    return descriptives(data, filter_used_samples_by_column(class_index, true), get_feature_indices("Input"));
 }
 
 
@@ -1837,61 +1759,6 @@ bool Dataset::has_nan_row(const Index row_index) const
 }
 
 
-void Dataset::print_missing_values_information() const
-{
-    const Index missing_variables_number = count_variables_with_nan();
-    const Index samples_with_missing_values = count_rows_with_nan();
-
-    cout << "Missing values number: " << missing_values_number << " (" << missing_values_number * 100 / data.size() << "%)" << endl
-         << "Variables with missing values: " << missing_variables_number
-         << " (" << missing_variables_number * 100 / data.cols() << "%)" << endl
-         << "Samples with missing values: "
-         << samples_with_missing_values << " (" << samples_with_missing_values * 100 / data.rows() << "%)" << endl;
-}
-
-
-void Dataset::print_input_target_variables_correlations() const
-{
-    const Index inputs_number = get_features_number("Input");
-    const Index targets_number = get_variables_number("Target");
-
-    const vector<string> input_names = get_variable_names("Input");
-    const vector<string> targets_name = get_variable_names("Target");
-
-    const Tensor<Correlation, 2> correlations = calculate_input_target_variable_pearson_correlations();
-
-    for(Index j = 0; j < targets_number; j++)
-        for(Index i = 0; i < inputs_number; i++)
-            cout << targets_name[j] << " - " << input_names[i] << ": " << correlations(i, j).r << endl;
-}
-
-
-void Dataset::print_top_input_target_variables_correlations() const
-{
-    const Index inputs_number = get_variables_number("Input");
-    const Index targets_number = get_variables_number("Target");
-
-    const vector<string> input_names = get_feature_names("Input");
-    const vector<string> targets_name = get_feature_names("Target");
-
-    const MatrixR correlations = get_correlation_values(calculate_input_target_variable_pearson_correlations());
-
-    VectorR target_correlations(inputs_number);
-
-    Tensor<string, 2> top_correlations(inputs_number, 2);
-
-    map<type, string> top_correlation;
-
-    for(Index i = 0; i < inputs_number; i++)
-        for(Index j = 0; j < targets_number; j++)
-            top_correlation.insert(pair<type, string>(correlations(i, j), input_names[i] + " - " + targets_name[j]));
-
-    map<type, string>::iterator it;
-
-    for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
-}
-
 
 Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
@@ -1943,59 +1810,6 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() 
 Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations() const
 {
     return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
-}
-
-
-void Dataset::print_inputs_correlations() const
-{
-    const MatrixR input_correlations = get_correlation_values(calculate_input_variable_pearson_correlations());
-
-    cout << input_correlations << endl;
-}
-
-
-void Dataset::print_data_file_preview() const
-{
-    const Index size = data_file_preview.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        for(size_t j = 0; j < data_file_preview[i].size(); j++)
-            cout << data_file_preview[i][j] << " ";
-
-        cout << endl;
-    }
-}
-
-
-void Dataset::print_top_inputs_correlations() const
-{
-    const Index features_number = get_features_number("Input");
-
-    const vector<string> variables_name = get_feature_names("Input");
-
-    const MatrixR variables_correlations = get_correlation_values(calculate_input_variable_pearson_correlations());
-
-    const Index correlations_number = features_number * (features_number - 1) / 2;
-
-    Tensor<string, 2> top_correlations(correlations_number, 3);
-
-    map<type, string> top_correlation;
-
-    for(Index i = 0; i < features_number; i++)
-    {
-        for(Index j = i; j < features_number; j++)
-        {
-            if (i == j) continue;
-
-            top_correlation.insert(pair<type, string>(variables_correlations(i, j), variables_name[i] + " - " + variables_name[j]));
-        }
-    }
-
-    map<type, string> ::iterator it;
-
-    for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        if (display) cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
@@ -2338,40 +2152,6 @@ void Dataset::load(const filesystem::path& file_name)
 }
 
 
-
-
-void Dataset::print_data() const
-{
-    cout << data << endl;
-}
-
-
-void Dataset::print_data_preview() const
-{
-    if(!display) return;
-
-    const Index samples_number = get_samples_number();
-
-    const vector<pair<Index, string>> previews = {
-        {0, "First sample"},
-        {1, "Second sample"},
-        {samples_number - 1, "Last sample"}
-    };
-
-    for(const auto& [row, label] : previews)
-    {
-        if (row < 0 || row >= samples_number) continue;
-
-        cout << label << ": \n";
-
-        const VectorR sample = data.row(row);
-
-        for(int i = 0; i < sample.size(); i++)
-            cout << sample(i) << "  ";
-    }
-
-    cout << endl;
-}
 
 
 void Dataset::save_data() const
@@ -3174,8 +2954,7 @@ void Dataset::read_csv()
         }
     }
 
-    unuse_constant_variables();
-    set_binary_variables();
+    infer_variable_types_from_data();
     split_samples_random();
 }
 

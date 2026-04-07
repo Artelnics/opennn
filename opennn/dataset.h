@@ -203,6 +203,7 @@ public:
 
     void set_variable_scalers(const vector<string>&);
 
+    void infer_variable_types_from_data();
     void set_binary_variables();
     void unuse_constant_variables();
 
@@ -314,10 +315,6 @@ public:
 
     Tensor<Correlation, 2> calculate_input_variable_spearman_correlations() const;
 
-    void print_inputs_correlations() const;
-
-    void print_top_inputs_correlations() const;
-
     // Input-target correlations
 
     Tensor<Correlation, 2> calculate_input_target_variable_correlations(
@@ -327,10 +324,6 @@ public:
     Tensor<Correlation, 2> calculate_input_target_variable_spearman_correlations() const;
 
     VectorI calculate_correlations_rank() const;
-
-    void print_input_target_variables_correlations() const;
-
-    void print_top_input_target_variables_correlations() const;
 
     // Scaling2d
 
@@ -372,11 +365,6 @@ public:
 
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
-
-    void print_data() const;
-    void print_data_preview() const;
-
-    void print_data_file_preview() const;
 
     void save_data() const;
 
@@ -438,6 +426,7 @@ public:
 private:
 
     string get_sample_role(const Index i) const { return sample_roles[i]; }
+    vector<Index> filter_used_samples_by_column(Index, bool) const;
     void apply_scaler(Index, const string&, const Descriptives&, bool);
     void infer_column_types(const vector<vector<string>>&);
     void read_data_file_preview(const vector<vector<string>>&);
