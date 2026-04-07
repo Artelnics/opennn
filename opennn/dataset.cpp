@@ -38,34 +38,6 @@ Dataset::Dataset(const filesystem::path& data_path,
 }
 
 
-bool Dataset::get_display() const
-{
-    return display;
-}
-
-
-bool Dataset::is_empty() const
-{
-    return data.size() == 0;
-}
-
-Shape Dataset::get_input_shape() const
-{
-    return input_shape;
-}
-
-
-Shape Dataset::get_target_shape() const
-{
-    return target_shape;
-}
-
-
-bool Dataset::is_sample_used(const Index index) const
-{
-    return sample_roles[index] != "None";
-}
-
 
 VectorI Dataset::get_sample_role_numbers() const
 {
@@ -123,16 +95,6 @@ vector<Index> Dataset::get_used_sample_indices() const
 }
 
 
-string Dataset::get_sample_role(const Index index) const
-{
-    return sample_roles[index];
-}
-
-
-const vector<string>& Dataset::get_sample_roles() const
-{
-    return sample_roles;
-}
 
 
 vector<Index> Dataset::get_sample_roles_vector() const
@@ -253,9 +215,10 @@ void Dataset::set_sample_roles(const vector<Index>& indices, const string& sampl
 }
 
 
-void Dataset::split_samples_random(const type training_samples_ratio,
-                                   type validation_samples_ratio,
-                                   type testing_samples_ratio)
+void Dataset::split_samples(const type training_samples_ratio,
+                            type validation_samples_ratio,
+                            type testing_samples_ratio,
+                            bool shuffle)
 {
     const Index used_samples_number = get_used_samples_number();
 
@@ -265,12 +228,9 @@ void Dataset::split_samples_random(const type training_samples_ratio,
 
     const Index validation_samples_number = Index((validation_samples_ratio * used_samples_number) / total_ratio);
     const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
-
     const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
 
-    const Index sum_samples_number = training_samples_number + validation_samples_number + testing_samples_number;
-
-    if (sum_samples_number != used_samples_number)
+    if (training_samples_number + validation_samples_number + testing_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
     const Index samples_number = get_samples_number();
@@ -278,79 +238,48 @@ void Dataset::split_samples_random(const type training_samples_ratio,
     vector<Index> indices(samples_number);
     iota(indices.begin(), indices.end(), 0);
 
-    shuffle_vector(indices);
+    if(shuffle)
+        shuffle_vector(indices);
 
-    auto assign_sample_role = [this, &indices](string role, Index count, Index& i)
+    auto assign_role = [this, &indices](const string& role, Index count, Index& i)
     {
-        Index assigned_count = 0;
+        Index assigned = 0;
 
-        while (assigned_count < count)
+        while (assigned < count)
         {
-            const Index index = indices[i++];
+            const Index idx = indices[i++];
 
-            if (sample_roles[index] != "None")
+            if (sample_roles[idx] != "None")
             {
-                sample_roles[index] = role;
-                assigned_count++;
+                sample_roles[idx] = role;
+                assigned++;
             }
         }
     };
 
     Index index = 0;
 
-    assign_sample_role("Training", training_samples_number, index);
-    assign_sample_role("Validation", validation_samples_number, index);
-    assign_sample_role("Testing", testing_samples_number, index);
+    assign_role("Training", training_samples_number, index);
+    assign_role("Validation", validation_samples_number, index);
+    assign_role("Testing", testing_samples_number, index);
 }
 
 
-void Dataset::split_samples_sequential(const type training_samples_ratio,
-                                       type validation_samples_ratio,
-                                       type testing_samples_ratio)
+void Dataset::split_samples_random(const type training_ratio,
+                                   type validation_ratio,
+                                   type testing_ratio)
 {
-    const Index used_samples_number = get_used_samples_number();
-
-    if (used_samples_number == 0) return;
-
-    const type total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
-
-    const Index validation_samples_number = Index(validation_samples_ratio * type(used_samples_number) / type(total_ratio));
-    const Index testing_samples_number = Index(testing_samples_ratio * type(used_samples_number) / type(total_ratio));
-    const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
-
-    const Index sum_samples_number = training_samples_number + validation_samples_number + testing_samples_number;
-
-    if (sum_samples_number != used_samples_number)
-        throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
-
-    auto set_sample_roles = [this](string role, Index count, Index& i)
-    {
-        Index current_count = 0;
-
-        while (current_count < count)
-        {
-            if (sample_roles[i] != "None")
-            {
-                sample_roles[i] = role;
-                current_count++;
-            }
-
-            i++;
-        }
-    };
-
-    Index index = 0;
-
-    set_sample_roles("Training", training_samples_number, index);
-    set_sample_roles("Validation", validation_samples_number, index);
-    set_sample_roles("Testing", testing_samples_number, index);
+    split_samples(training_ratio, validation_ratio, testing_ratio, true);
 }
 
 
-void Dataset::set_variables(const vector<Variable>& new_variables)
+void Dataset::split_samples_sequential(const type training_ratio,
+                                       type validation_ratio,
+                                       type testing_ratio)
 {
-    variables = new_variables;
+    split_samples(training_ratio, validation_ratio, testing_ratio, false);
 }
+
 
 
 void Dataset::set_default_variable_roles()
@@ -550,19 +479,15 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 
     for(const Variable& variable : variables)
     {
+        const Index count = variable.is_categorical() ? variable.get_categories_number() : 1;
+
         if (variable.role.find(variable_role) == string::npos)
         {
-            variable.type == VariableType::Categorical
-                ? feature_index += variable.get_categories_number()
-                : feature_index++;
-
+            feature_index += count;
             continue;
         }
 
-        if (variable.type == VariableType::Categorical)
-            for(Index j = 0; j < variable.get_categories_number(); j++)
-                this_feature_indices[this_feature_index++] = feature_index++;
-        else
+        for(Index j = 0; j < count; j++)
             this_feature_indices[this_feature_index++] = feature_index++;
     }
 
@@ -621,11 +546,12 @@ vector<string> Dataset::get_feature_scalers(const string& variable_role) const
     Index index = 0;
 
     for(Index i = 0; i < input_variables_number; i++)
-        if (input_variables[i].type == VariableType::Categorical)
-            for(Index j = 0; j < input_variables[i].get_categories_number(); j++)
-                input_variable_scalers[index++] = input_variables[i].scaler;
-        else
+    {
+        const Index count = input_variables[i].is_categorical() ? input_variables[i].get_categories_number() : 1;
+
+        for(Index j = 0; j < count; j++)
             input_variable_scalers[index++] = input_variables[i].scaler;
+    }
 
     return input_variable_scalers;
 }
@@ -665,11 +591,6 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
 }
 
 
-VariableType Dataset::get_variable_type(const Index index) const
-{
-    return variables[index].type;
-}
-
 
 Index Dataset::get_variables_number(const string& variable_role) const
 {
@@ -691,11 +612,6 @@ Index Dataset::get_used_variables_number() const
                     });
 }
 
-
-const vector<Variable>& Dataset::get_variables() const
-{
-    return variables;
-}
 
 
 vector<Variable> Dataset::get_variables(const string& variable_role) const
@@ -746,20 +662,15 @@ vector<Index> Dataset::get_used_feature_indices() const
 
     for(const Variable& variable : variables)
     {
-        const Index categories_number = variable.get_categories_number();
+        const Index count = variable.is_categorical() ? variable.get_categories_number() : 1;
 
         if(variable.role == "None" || variable.role == "Time")
         {
-            feature_index += (variable.type == VariableType::Categorical)
-            ? variable.get_categories_number()
-            : 1;
+            feature_index += count;
             continue;
         }
 
-        if(variable.type == VariableType::Categorical)
-            for(Index j = 0; j < categories_number; j++)
-                used_feature_indices[used_feature_index++] = feature_index++;
-        else
+        for(Index j = 0; j < count; j++)
             used_feature_indices[used_feature_index++] = feature_index++;
     }
 
@@ -900,11 +811,6 @@ void Dataset::set_variable_roles(const string& variable_role)
 }
 
 
-void Dataset::set_variables_number(const Index new_variables_number)
-{
-    variables.resize(new_variables_number);
-}
-
 
 void Dataset::set_variable_scalers(const string& scalers)
 {
@@ -999,128 +905,71 @@ void Dataset::unuse_constant_variables()
 }
 
 
-const MatrixR& Dataset::get_data() const
-{
-    return data;
-}
 
-
-Dataset::MissingValuesMethod Dataset::get_missing_values_method() const
-{
-    return missing_values_method;
-}
+static const vector<pair<Dataset::MissingValuesMethod, string>> missing_values_method_map = {
+    {Dataset::MissingValuesMethod::Unuse,         "Unuse"},
+    {Dataset::MissingValuesMethod::Mean,          "Mean"},
+    {Dataset::MissingValuesMethod::Median,        "Median"},
+    {Dataset::MissingValuesMethod::Interpolation, "Interpolation"}
+};
 
 
 string Dataset::get_missing_values_method_string() const
 {
-    switch (missing_values_method)
-    {
-    case MissingValuesMethod::Mean:
-        return "Mean";
-    case MissingValuesMethod::Median:
-        return "Median";
-    case MissingValuesMethod::Unuse:
-        return "Unuse";
-    case MissingValuesMethod::Interpolation:
-        return "Interpolation";
-    default:
-        throw runtime_error("Unknown missing values method");
-    }
-}
+    for(const auto& [method, name] : missing_values_method_map)
+        if (method == missing_values_method) return name;
 
-
-const filesystem::path& Dataset::get_data_path() const
-{
-    return data_path;
+    throw runtime_error("Unknown missing values method");
 }
 
 
 
-vector<string> Dataset::get_sample_ids() const
-{
-    return sample_ids;
-}
-
-
-const Dataset::Separator& Dataset::get_separator() const
-{
-    return separator;
-}
+static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
+    {Dataset::Separator::Space,     " ",  "Space"},
+    {Dataset::Separator::Tab,       "\t", "Tab"},
+    {Dataset::Separator::Comma,     ",",  "Comma"},
+    {Dataset::Separator::Semicolon, ";",  "Semicolon"}
+};
 
 
 string Dataset::get_separator_string() const
 {
-    switch (separator)
-    {
-    case Separator::Space:
-        return " ";
-    case Separator::Tab:
-        return "\t";
-    case Separator::Comma:
-        return ",";
-    case Separator::Semicolon:
-        return ";";
-    default:
-        return string();
-    }
+    for(const auto& [sep, str, name] : separator_map)
+        if (sep == separator) return str;
+
+    return string();
 }
 
 
 string Dataset::get_separator_name() const
 {
-    switch (separator)
-    {
-    case Separator::Space:
-        return "Space";
-    case Separator::Tab:
-        return "Tab";
-    case Separator::Comma:
-        return "Comma";
-    case Separator::Semicolon:
-        return "Semicolon";
-    default:
-        return string();
-    }
+    for(const auto& [sep, str, name] : separator_map)
+        if (sep == separator) return name;
+
+    return string();
 }
 
 
-const Dataset::Codification& Dataset::get_codification() const
-{
-    return codification;
-}
+
+static const vector<pair<Dataset::Codification, string>> codification_map = {
+    {Dataset::Codification::UTF8,      "UTF-8"},
+    {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
+};
 
 
 const string Dataset::get_codification_string() const
 {
-    switch (codification)
-    {
-    case Codification::UTF8:
-        return "UTF-8";
-    case Codification::SHIFT_JIS:
-        return "SHIFT_JIS";
-    default:
-        return "UTF-8";
-    }
+    for(const auto& [cod, name] : codification_map)
+        if (cod == codification) return name;
+
+    return "UTF-8";
 }
 
-
-const string& Dataset::get_missing_values_label() const
-{
-    return missing_values_label;
-}
 
 
 MatrixR Dataset::get_data_samples(const string& sample_role) const
 {
-    const vector<Index> feature_indices = get_used_feature_indices();
-
-    const vector<Index> sample_indices = get_sample_indices(sample_role);
-
-    MatrixR this_data(sample_indices.size(), feature_indices.size());
-
-    fill_tensor_data(data, sample_indices, feature_indices, this_data.data());
-
-    return this_data;
+    return get_data_from_indices(get_sample_indices(sample_role), get_used_feature_indices());
 }
 
 
@@ -1131,27 +980,13 @@ MatrixR Dataset::get_feature_data(const string& variable_role) const
     vector<Index> indices(samples_number);
     iota(indices.begin(), indices.end(), 0);
 
-    const vector<Index> feature_indices = get_feature_indices(variable_role);
-
-    MatrixR this_data(indices.size(), feature_indices.size());
-
-    fill_tensor_data(data, indices, feature_indices, this_data.data());
-
-    return this_data;
+    return get_data_from_indices(indices, get_feature_indices(variable_role));
 }
 
 
 MatrixR Dataset::get_data(const string& sample_role, const string& variable_role) const
 {
-    const vector<Index> sample_indices = get_sample_indices(sample_role);
-
-    const vector<Index> feature_indices = get_feature_indices(variable_role);
-
-    MatrixR this_data(sample_indices.size(), feature_indices.size());
-
-    fill_tensor_data(data, sample_indices, feature_indices, this_data.data());
-
-    return this_data;
+    return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role));
 }
 
 
@@ -1334,11 +1169,6 @@ MatrixR Dataset::get_variable_data(const string& column_name) const
 }
 
 
-const vector<vector<string>>& Dataset::get_data_file_preview() const
-{
-    return data_file_preview;
-}
-
 
 void Dataset::set(const filesystem::path& new_data_path,
                   const string& new_separator,
@@ -1422,11 +1252,6 @@ void Dataset::set(const filesystem::path& file_name)
 }
 
 
-void Dataset::set_display(bool new_display)
-{
-    display = new_display;
-}
-
 
 void Dataset::set_default()
 {
@@ -1454,101 +1279,42 @@ void Dataset::set_data(const MatrixR& new_data)
 }
 
 
-void Dataset::set_data_path(const filesystem::path& new_data_path)
-{
-    data_path = new_data_path;
-}
-
-
-void Dataset::set_has_header(bool new_has_header)
-{
-    has_header = new_has_header;
-}
-
-
-void Dataset::set_has_ids(bool new_has_ids)
-{
-    has_sample_ids = new_has_ids;
-}
-
-
-void Dataset::set_separator(const Separator& new_separator)
-{
-    separator = new_separator;
-}
-
 
 void Dataset::set_separator_string(const string& new_separator_string)
 {
-    if (new_separator_string == " ")
-        separator = Separator::Space;
-    else if (new_separator_string == "\t")
-        separator = Separator::Tab;
-    else if (new_separator_string == ",")
-        separator = Separator::Comma;
-    else if (new_separator_string == ";")
-        separator = Separator::Semicolon;
-    else
-        throw runtime_error("Unknown separator: " + new_separator_string);
+    for(const auto& [sep, str, name] : separator_map)
+        if (str == new_separator_string) { separator = sep; return; }
+
+    throw runtime_error("Unknown separator: " + new_separator_string);
 }
 
 
 void Dataset::set_separator_name(const string& new_separator_name)
 {
-    if (new_separator_name == "Space")
-        separator = Separator::Space;
-    else if (new_separator_name == "Tab")
-        separator = Separator::Tab;
-    else if (new_separator_name == "Comma")
-        separator = Separator::Comma;
-    else if (new_separator_name == "Semicolon")
-        separator = Separator::Semicolon;
-    else
-        throw runtime_error("Unknown separator: " + new_separator_name + ".\n");
+    for(const auto& [sep, str, name] : separator_map)
+        if (name == new_separator_name) { separator = sep; return; }
+
+    throw runtime_error("Unknown separator: " + new_separator_name + ".\n");
 }
 
-
-void Dataset::set_codification(const Dataset::Codification& new_codification)
-{
-    codification = new_codification;
-}
 
 
 void Dataset::set_codification(const string& new_codification_string)
 {
-    if (new_codification_string == "UTF-8")
-        codification = Codification::UTF8;
-    else if (new_codification_string == "SHIFT_JIS")
-        codification = Codification::SHIFT_JIS;
-    else
-        throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
+    for(const auto& [cod, name] : codification_map)
+        if (name == new_codification_string) { codification = cod; return; }
+
+    throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
 }
 
-
-void Dataset::set_missing_values_label(const string& new_missing_values_label)
-{
-    missing_values_label = new_missing_values_label;
-}
-
-
-void Dataset::set_missing_values_method(const Dataset::MissingValuesMethod& new_missing_values_method)
-{
-    missing_values_method = new_missing_values_method;
-}
 
 
 void Dataset::set_missing_values_method(const string& new_missing_values_method)
 {
-    if (new_missing_values_method == "Unuse")
-        missing_values_method = MissingValuesMethod::Unuse;
-    else if (new_missing_values_method == "Mean")
-        missing_values_method = MissingValuesMethod::Mean;
-    else if (new_missing_values_method == "Median")
-        missing_values_method = MissingValuesMethod::Median;
-    else if (new_missing_values_method == "Interpolation")
-        missing_values_method = MissingValuesMethod::Interpolation;
-    else
-        throw runtime_error("Unknown method type.\n");
+    for(const auto& [method, name] : missing_values_method_map)
+        if (name == new_missing_values_method) { missing_values_method = method; return; }
+
+    throw runtime_error("Unknown method type.\n");
 }
 
 
@@ -1999,15 +1765,12 @@ VectorR Dataset::calculate_means(const string& sample_role,
 
 
 
-void Dataset::set_gmt(const Index new_gmt)
-{
-    gmt = new_gmt;
-}
 
-
-Tensor<Correlation, 2> Dataset::calculate_input_target_variable_pearson_correlations() const
+Tensor<Correlation, 2> Dataset::calculate_input_target_variable_correlations(
+    Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
+    const string& method_name) const
 {
-    if (display) cout << "Calculating pearson correlations..." << endl;
+    if (display) cout << "Calculating " << method_name << " correlations..." << endl;
 
     const Index input_variables_number = get_variables_number("Input");
     const Index target_variables_number = get_variables_number("Target");
@@ -2029,7 +1792,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_variable_pearson_correlat
         {
             const Index target_variable_index = target_variable_indices[j];
             const MatrixR target_variable_data = get_variable_data(target_variable_index, used_sample_indices);
-            correlations(i, j) = correlation(input_variable_data, target_variable_data);
+            correlations(i, j) = correlation_function(input_variable_data, target_variable_data);
         }
     }
 
@@ -2037,35 +1800,15 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_variable_pearson_correlat
 }
 
 
+Tensor<Correlation, 2> Dataset::calculate_input_target_variable_pearson_correlations() const
+{
+    return calculate_input_target_variable_correlations(correlation, "pearson");
+}
+
+
 Tensor<Correlation, 2> Dataset::calculate_input_target_variable_spearman_correlations() const
 {
-    if (display) cout << "Calculating spearman correlations..." << endl;
-
-    const Index input_variables_number = get_variables_number("Input");
-    const Index target_variables_number = get_variables_number("Target");
-
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const vector<Index> target_variable_indices = get_variable_indices("Target");
-
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-
-    Tensor<Correlation, 2> correlations(input_variables_number, target_variables_number);
-
-    #pragma omp parallel for schedule(dynamic)
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        const Index input_index = input_variable_indices[i];
-        const MatrixR input_variable_data = get_variable_data(input_index, used_sample_indices);
-
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            const Index target_index = target_variable_indices[j];
-            const MatrixR target_variable_data = get_variable_data(target_index, used_sample_indices);
-            correlations(i, j) = correlation_spearman(input_variable_data, target_variable_data);
-        }
-    }
-
-    return correlations;
+    return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
 }
 
 
@@ -2150,91 +1893,56 @@ void Dataset::print_top_input_target_variables_correlations() const
 }
 
 
-Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() const
+Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
+    Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
+    Correlation::Method method,
+    const string& method_name) const
 {
-    if (display) cout << "Calculating pearson inputs correlations..." << endl;
+    if (display) cout << "Calculating " << method_name << " inputs correlations..." << endl;
 
     const vector<Index> input_variable_indices = get_variable_indices("Input");
 
     const Index input_variables_number = input_variable_indices.size();
 
-    Tensor<Correlation, 2> correlations_pearson(input_variables_number, input_variables_number);
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        if (display) cout << "Correlation " << i + 1<< " of " << input_variables_number << endl;
-
-        const Index current_input_index_i = input_variable_indices[i];
-
-        const MatrixR input_i = get_variable_data(current_input_index_i);
-
-        if (is_constant(input_i)) continue;
-
-        correlations_pearson(i, i).set_perfect();
-        correlations_pearson(i, i).method = Correlation::Method::Pearson;
-
-        for(Index j = i + 1; j < input_variables_number; j++)
-        {
-            const Index current_input_index_j = input_variable_indices[j];
-
-            const MatrixR input_j = get_variable_data(current_input_index_j);
-            correlations_pearson(i, j) = correlation(input_i, input_j);
-
-            // ── DEBUG ──
-            cout << "[DATASET] i=" << i << " j=" << j
-                 << " r=" << correlations_pearson(i,j).r
-                 << " isnan=" << isnan(correlations_pearson(i,j).r) << endl;
-            // ──────────
-            if (correlations_pearson(i, j).r > type(1) - EPSILON)
-                correlations_pearson(i, j).r = type(1);
-
-            correlations_pearson(j, i) = correlations_pearson(i, j);
-        }
-    }
-
-    return correlations_pearson;
-}
-
-
-Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations() const
-{
-    if (display) cout << "Calculating spearman inputs correlations..." << endl;
-
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-
-    const Index input_variables_number = get_variables_number("Input");
-
-    Tensor<Correlation, 2> correlations_spearman(input_variables_number, input_variables_number);
+    Tensor<Correlation, 2> correlations(input_variables_number, input_variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
         if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << endl;
 
-        const Index input_variable_index_i = input_variable_indices[i];
-
-        const MatrixR input_i = get_variable_data(input_variable_index_i);
+        const MatrixR input_i = get_variable_data(input_variable_indices[i]);
 
         if (is_constant(input_i)) continue;
 
-        correlations_spearman(i, i).set_perfect();
-        correlations_spearman(i, i).method = Correlation::Method::Spearman;
+        correlations(i, i).set_perfect();
+        correlations(i, i).method = method;
 
         for(Index j = i + 1; j < input_variables_number; j++)
         {
-            const Index input_variable_index_j = input_variable_indices[j];
+            const MatrixR input_j = get_variable_data(input_variable_indices[j]);
 
-            const MatrixR input_j = get_variable_data(input_variable_index_j);
+            correlations(i, j) = correlation_function(input_i, input_j);
 
-            correlations_spearman(i, j) = correlation_spearman(input_i, input_j);
+            if (correlations(i, j).r > type(1) - EPSILON)
+                correlations(i, j).r = type(1);
 
-            if (correlations_spearman(i, j).r > type(1) - EPSILON)
-                correlations_spearman(i, j).r = type(1);
-
-            correlations_spearman(j, i) = correlations_spearman(i, j);
+            correlations(j, i) = correlations(i, j);
         }
     }
 
-    return correlations_spearman;
+    return correlations;
+}
+
+
+Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() const
+{
+    return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson");
+}
+
+
+Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations() const
+{
+    return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
 }
 
 
@@ -2312,33 +2020,37 @@ void Dataset::set_default_variable_scalers()
 }
 
 
+void Dataset::apply_scaler(Index feature_index, const string& scaler, const Descriptives& desc, bool unscale)
+{
+    if(scaler == "None")
+        return;
+    else if(scaler == "MinimumMaximum")
+        unscale ? unscale_minimum_maximum(data, feature_index, desc)
+                : scale_minimum_maximum(data, feature_index, desc);
+    else if(scaler == "MeanStandardDeviation")
+        unscale ? unscale_mean_standard_deviation(data, feature_index, desc)
+                : scale_mean_standard_deviation(data, feature_index, desc);
+    else if(scaler == "StandardDeviation")
+        unscale ? unscale_standard_deviation(data, feature_index, desc)
+                : scale_standard_deviation(data, feature_index, desc);
+    else if(scaler == "Logarithm")
+        unscale ? unscale_logarithmic(data, feature_index)
+                : scale_logarithmic(data, feature_index);
+    else if(unscale && scaler == "ImageMinMax")
+        unscale_image_minimum_maximum(data, feature_index);
+    else
+        throw runtime_error("Unknown scaler: " + scaler + "\n");
+}
+
+
 vector<Descriptives> Dataset::scale_data()
 {
     const Index features_number = get_features_number();
 
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
 
-    Index variable_index;
-
     for(Index i = 0; i < features_number; i++)
-    {
-        variable_index = get_variable_index(i);
-
-        const string& scaler = variables[variable_index].scaler;
-
-        if(scaler == "None")
-            continue;
-        else if(scaler == "MinimumMaximum")
-            scale_minimum_maximum(data, i, feature_descriptives[i]);
-        else if(scaler == "MeanStandardDeviation")
-            scale_mean_standard_deviation(data, i, feature_descriptives[i]);
-        else if(scaler == "StandardDeviation")
-            scale_standard_deviation(data, i, feature_descriptives[i]);
-        else if(scaler == "Logarithm")
-            scale_logarithmic(data, i);
-        else
-            throw runtime_error("Unknown scaler: " + scaler + "\n");
-    }
+        apply_scaler(i, variables[get_variable_index(i)].scaler, feature_descriptives[i], false);
 
     return feature_descriptives;
 }
@@ -2346,63 +2058,25 @@ vector<Descriptives> Dataset::scale_data()
 
 vector<Descriptives> Dataset::scale_features(const string& variable_role)
 {
-    const Index input_features_number = get_features_number(variable_role);
+    const vector<Index> feature_indices = get_feature_indices(variable_role);
+    const vector<string> scalers = get_feature_scalers(variable_role);
+    const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
 
-    const vector<Index> input_feature_indices = get_feature_indices(variable_role);
-    const vector<string> input_variable_scalers = get_feature_scalers(variable_role);
+    for(Index i = 0; i < static_cast<Index>(feature_indices.size()); i++)
+        apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], false);
 
-    const vector<Descriptives> input_variable_descriptives = calculate_feature_descriptives(variable_role);
-
-    for(Index i = 0; i < input_features_number; i++)
-    {
-        const string& scaler = input_variable_scalers[i];
-
-        if(scaler == "None")
-            continue;
-        else if(scaler == "MinimumMaximum")
-            scale_minimum_maximum(data, input_feature_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "MeanStandardDeviation")
-            scale_mean_standard_deviation(data, input_feature_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "StandardDeviation")
-            scale_standard_deviation(data, input_feature_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "Logarithm")
-            scale_logarithmic(data, input_feature_indices[i]);
-        else
-            throw runtime_error("Unknown scaling inputs method: " + scaler + "\n");
-    }
-
-    return input_variable_descriptives;
+    return feature_descriptives;
 }
 
 
 void Dataset::unscale_features(const string& variable_role,
-                                const vector<Descriptives>& input_variable_descriptives)
+                                const vector<Descriptives>& feature_descriptives)
 {
-    const Index features_number = get_features_number(variable_role);
+    const vector<Index> feature_indices = get_feature_indices(variable_role);
+    const vector<string> scalers = get_feature_scalers(variable_role);
 
-    const vector<Index> variables_indices = get_feature_indices(variable_role);
-
-    const vector<string> variables_scalers = get_feature_scalers(variable_role);
-
-    for(Index i = 0; i < features_number; i++)
-    {
-        const string& scaler = variables_scalers[i];
-
-        if(scaler == "None")
-            continue;
-        else if(scaler == "MinimumMaximum")
-            unscale_minimum_maximum(data, variables_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "MeanStandardDeviation")
-            unscale_mean_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "StandardDeviation")
-            unscale_standard_deviation(data, variables_indices[i], input_variable_descriptives[i]);
-        else if(scaler == "Logarithm")
-            unscale_logarithmic(data, variables_indices[i]);
-        else if(scaler == "ImageMinMax")
-            unscale_image_minimum_maximum(data, variables_indices[i]);
-        else
-            throw runtime_error("Unknown unscaling and unscaling method: " + scaler + "\n");
-    }
+    for(Index i = 0; i < static_cast<Index>(feature_indices.size()); i++)
+        apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 
 
@@ -2774,34 +2448,22 @@ void Dataset::print_data_preview() const
 
     const Index samples_number = get_samples_number();
 
-    if (samples_number > 0)
+    const vector<pair<Index, string>> previews = {
+        {0, "First sample"},
+        {1, "Second sample"},
+        {samples_number - 1, "Last sample"}
+    };
+
+    for(const auto& [row, label] : previews)
     {
-        const VectorR first_sample = data.row(0);
+        if (row < 0 || row >= samples_number) continue;
 
-        cout << "First sample: \n";
+        cout << label << ": \n";
 
-        for(int i = 0; i < first_sample.size(); i++)
-            cout << first_sample(i) << "  ";
-    }
+        const VectorR sample = data.row(row);
 
-    if (samples_number > 1)
-    {
-        const VectorR second_sample = data.row(1);
-
-        cout << "Second sample: \n";
-
-        for(int i = 0; i < second_sample.size(); i++)
-            cout << second_sample(i) << "  ";
-    }
-
-    if (samples_number > 2)
-    {
-        const VectorR last_sample = data.row(samples_number - 1);
-
-        cout << "Last sample: \n";
-
-        for(int i = 0; i < last_sample.size(); i++)
-            cout << last_sample(i) << "  ";
+        for(int i = 0; i < sample.size(); i++)
+            cout << sample(i) << "  ";
     }
 
     cout << endl;
@@ -2964,14 +2626,13 @@ VectorI Dataset::calculate_target_distribution() const
 }
 
 
-vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_parameter) const
+vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_parameter, bool replace_with_nan)
 {
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
 
     const Index variables_number = get_variables_number();
     const Index used_variables_number = get_used_variables_number();
-    const vector<Index> used_variables_indices = get_used_variables_indices();
 
     vector<vector<Index>> return_values(2);
 
@@ -2983,8 +2644,6 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
     Index feature_index = 0;
     Index used_feature_index = 0;
 
-    //#pragma omp parallel for
-
     for(Index i = 0; i < variables_number; i++)
     {
         const Variable& variable = variables[i];
@@ -2995,7 +2654,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
             feature_index += variable.get_categories_number();
             continue;
         }
-        else if (variable.role == "None") // Numeric, Binary or DateTime
+        else if (variable.role == "None")
         {
             feature_index++;
             continue;
@@ -3037,6 +2696,9 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
                     return_values[0][j] = 1;
 
                     variables_outliers++;
+
+                    if (replace_with_nan)
+                        data(sample_indices[Index(j)], feature_index) = numeric_limits<type>::quiet_NaN();
                 }
             }
 
@@ -3053,90 +2715,7 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
 
 vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleaning_parameter)
 {
-    const Index samples_number = get_used_samples_number();
-    const vector<Index> sample_indices = get_used_sample_indices();
-
-    const Index variables_number = get_variables_number();
-    const Index used_variables_number = get_used_variables_number();
-    const vector<Index> used_variables_indices = get_used_variables_indices();
-
-    vector<vector<Index>> return_values(2);
-
-    return_values[0].resize(samples_number, 0);
-    return_values[1].resize(used_variables_number, 0);
-
-    const vector<BoxPlot> box_plots = calculate_variables_box_plots();
-
-    Index feature_index = 0;
-    Index used_feature_index = 0;
-
-#pragma omp parallel for
-
-    for(Index i = 0; i < variables_number; i++)
-    {
-        const Variable& variable = variables[i];
-
-        if (variable.role == "None"
-        && variable.type == VariableType::Categorical)
-        {
-            feature_index += variable.get_categories_number();
-            continue;
-        }
-        else if (variable.role == "None") // Numeric, Binary or DateTime
-        {
-            feature_index++;
-            continue;
-        }
-
-        if (variable.type == VariableType::Categorical)
-        {
-            feature_index += variable.get_categories_number();
-            used_feature_index++;
-            continue;
-        }
-        else if (variable.type == VariableType::Binary
-              || variable.type == VariableType::DateTime)
-        {
-            feature_index++;
-            used_feature_index++;
-            continue;
-        }
-        else // Numeric
-        {
-            const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
-
-            if (interquartile_range < EPSILON)
-            {
-                feature_index++;
-                used_feature_index++;
-                continue;
-            }
-
-            Index variables_outliers = 0;
-
-            for(Index j = 0; j < samples_number; j++)
-            {
-                const VectorR sample = get_sample_data(sample_indices[Index(j)]);
-
-                if (sample[feature_index] < (box_plots[i].first_quartile - cleaning_parameter * interquartile_range)
-                || sample[feature_index] > (box_plots[i].third_quartile + cleaning_parameter * interquartile_range))
-                {
-                    return_values[0][Index(j)] = 1;
-
-                    variables_outliers++;
-
-                    data(sample_indices[Index(j)], feature_index) = numeric_limits<type>::quiet_NaN();
-                }
-            }
-
-            return_values[1][used_feature_index] = variables_outliers;
-
-            feature_index++;
-            used_feature_index++;
-        }
-    }
-
-    return return_values;
+    return calculate_Tukey_outliers(cleaning_parameter, true);
 }
 
 
@@ -3201,13 +2780,8 @@ void Dataset::impute_missing_values_unuse()
 }
 
 
-void Dataset::impute_missing_values_mean()
+void Dataset::impute_missing_values_statistic(const MissingValuesMethod& method)
 {
-
-
-
-
-
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
     const vector<Index> input_feature_indices = get_feature_indices("Input");
@@ -3216,51 +2790,9 @@ void Dataset::impute_missing_values_mean()
     if (used_sample_indices.empty() || used_feature_indices.empty())
         return;
 
-    const VectorR means = mean(data, used_sample_indices, used_feature_indices);
-
-    const Index samples_number = used_sample_indices.size();
-    const Index features_number = used_feature_indices.size();
-    const Index target_features_number = target_feature_indices.size();
-
-    Index current_variable;
-    Index current_sample;
-
-    for(Index j = 0; j < features_number - target_features_number; j++)
-    {
-        current_variable = input_feature_indices[j];
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            current_sample = used_sample_indices[i];
-
-            if (isnan(data(current_sample, current_variable)))
-                data(current_sample, current_variable) = means(j);
-        }
-    }
-
-    for(Index j = 0; j < target_features_number; j++)
-    {
-        current_variable = target_feature_indices[j];
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            current_sample = used_sample_indices[i];
-
-            if (isnan(data(current_sample, current_variable)))
-                set_sample_role(i, "None");
-        }
-    }
-}
-
-
-void Dataset::impute_missing_values_median()
-{
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> input_feature_indices = get_feature_indices("Input");
-    const vector<Index> target_feature_indices = get_feature_indices("Target");
-
-    const VectorR medians = median(data, used_sample_indices, used_feature_indices);
+    const VectorR replacements = (method == MissingValuesMethod::Mean)
+        ? mean(data, used_sample_indices, used_feature_indices)
+        : median(data, used_sample_indices, used_feature_indices);
 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
@@ -3275,7 +2807,7 @@ void Dataset::impute_missing_values_median()
             const Index current_sample = used_sample_indices[i];
 
             if (isnan(data(current_sample, current_variable)))
-                data(current_sample, current_variable) = medians(j);
+                data(current_sample, current_variable) = replacements(j);
         }
     }
 
@@ -3382,11 +2914,8 @@ void Dataset::scrub_missing_values()
         break;
 
     case MissingValuesMethod::Mean:
-        impute_missing_values_mean();
-        break;
-
     case MissingValuesMethod::Median:
-        impute_missing_values_median();
+        impute_missing_values_statistic(missing_values_method);
         break;
 
     case MissingValuesMethod::Interpolation:
@@ -3769,40 +3298,26 @@ void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 
 void Dataset::check_separators(const string& line) const
 {
-    if (line.find(',') == string::npos
-        && line.find(';') == string::npos
-        && line.find(' ') == string::npos
-        && line.find('\t') == string::npos) return;
-
     const string separator_string = get_separator_string();
+    const string separator_name = get_separator_name();
 
     if (line.find(separator_string) == string::npos)
-        throw runtime_error("Error: Separator '" + separator_string + "' not found in line " + line + ".\n");
+    {
+        bool has_any_separator = false;
 
-    if (separator == Separator::Space)
-    {
-        if (line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is space (' ').");
-        else if (line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is space (' ').");
+        for(const auto& [sep, str, name] : separator_map)
+            if (line.find(str) != string::npos) { has_any_separator = true; break; }
+
+        if (has_any_separator)
+            throw runtime_error("Error: Separator '" + separator_string + "' not found in line " + line + ".\n");
+
+        return;
     }
-    else if (separator == Separator::Tab)
-    {
-        if (line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is tab ('   ').");
-        else if (line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is tab ('   ').");
-    }
-    else if (separator == Separator::Comma)
-    {
-        if (line.find(";") != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is comma (',').");
-    }
-    else if (separator == Separator::Semicolon)
-    {
-        if (line.find(",") != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is semicolon (';').");
-    }
+
+    for(const auto& [sep, str, name] : separator_map)
+        if (sep != separator && line.find(str) != string::npos)
+            throw runtime_error("Error: Found " + name + " ('" + str + "') in data file "
+                                + data_path.string() + ", but separator is " + separator_name + " ('" + separator_string + "').");
 }
 
 
@@ -3883,15 +3398,7 @@ VectorI Dataset::count_nans_per_variable() const
 
 Index Dataset::count_variables_with_nan() const
 {
-    VectorI variables_with_nan = count_nans_per_variable();
-
-    Index missing_variables_number = 0;
-
-    for(Index i = 0; i < variables_with_nan.size(); i++)
-        if (variables_with_nan(i) > 0)
-            missing_variables_number++;
-
-    return missing_variables_number;
+    return (count_nans_per_variable().array() > 0).count();
 }
 
 
