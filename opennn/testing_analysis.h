@@ -145,8 +145,6 @@ public:
 
     // Confusion
 
-    MatrixI calculate_confusion_binary_classification(const MatrixR&, const MatrixR&, type) const;
-    MatrixI calculate_confusion_multiple_classification(const MatrixR&, const MatrixR&) const;
     vector<MatrixI> calculate_multilabel_confusion(const type) const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, type = 0.50) const;
     MatrixI calculate_confusion(const type = 0.50) const;
@@ -258,6 +256,8 @@ private:
                                                 bool target_positive, bool output_positive) const;
 
     MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;
+
+    Tensor<string, 2> classify_samples(const MatrixR&, const MatrixR&, const vector<string>&, bool match) const;
 
     static VectorR extract_probabilities(const Tensor<string, 2>&);
 

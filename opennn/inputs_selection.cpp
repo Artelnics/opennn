@@ -209,9 +209,22 @@ void InputsSelectionResults::print() const
 }
 
 
-string InputsSelection::write_time(const type time) const
+void InputsSelection::save(const filesystem::path& file_name) const
 {
-    return opennn::write_time(time);
+    ofstream file(file_name);
+
+    if(!file.is_open())
+        return;
+
+    XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
+}
+
+
+void InputsSelection::load(const filesystem::path& file_name)
+{
+    from_XML(load_xml_file(file_name));
 }
 
 }

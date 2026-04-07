@@ -233,7 +233,7 @@ TrainingResults QuasiNewtonMethod::train()
     // Optimization algorithm
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
 
     Index validation_failures = 0;
 
@@ -362,11 +362,6 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "QuasiNewtonMethod");
 
-    /*const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
-
-    if(!learning_rate_algorithm_element)
-        throw runtime_error("Learning rate algorithm element is nullptr.\n");*/
-
     set_minimum_loss_decrease(read_xml_type(root_element, "MinimumLossDecrease"));
     read_common_xml(root_element);
 }
@@ -440,6 +435,13 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
 
     const VectorR& training_direction = optimization_data.training_direction;
 
+    auto evaluate = [&](type lr) -> type {
+        potential_parameters = parameters + training_direction * lr;
+        neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
+        loss->calculate_error(batch, forward_propagation, back_propagation);
+        return back_propagation.error + loss->calculate_regularization(potential_parameters);
+    };
+
     // Left point
 
     triplet.A = { type(0), back_propagation.loss_value };
@@ -451,17 +453,8 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
     do
     {
         count++;
-
-        triplet.B.first = optimization_data.initial_learning_rate*type(count);
-
-        potential_parameters = parameters + training_direction * triplet.B.first;
-
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          potential_parameters, forward_propagation);
-
-        loss->calculate_error(batch, forward_propagation, back_propagation);
-
-        triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
+        triplet.B.first = optimization_data.initial_learning_rate * type(count);
+        triplet.B.second = evaluate(triplet.B.first);
 
     } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance && triplet.A.second != triplet.B.second);
 
@@ -470,16 +463,7 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
         triplet.U = triplet.B;
 
         triplet.B.first *= golden_ratio;
-
-        potential_parameters = parameters + training_direction*triplet.B.first;
-
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          potential_parameters,
-                                          forward_propagation);
-
-        loss->calculate_error(batch, forward_propagation, back_propagation);
-
-        triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
+        triplet.B.second = evaluate(triplet.B.first);
 
         while(triplet.U.second > triplet.B.second)
         {
@@ -487,45 +471,20 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
             triplet.U = triplet.B;
 
             triplet.B.first *= golden_ratio;
-
-            potential_parameters = parameters + training_direction*triplet.B.first;
-
-            neural_network->forward_propagate(batch.get_inputs(),
-                                              potential_parameters,
-                                              forward_propagation);
-
-            loss->calculate_error(batch, forward_propagation, back_propagation);
-
-            triplet.B.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
+            triplet.B.second = evaluate(triplet.B.first);
         }
     }
     else if(triplet.A.second < triplet.B.second)
     {
-        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
-
-        potential_parameters = parameters + training_direction*triplet.U.first;
-
-        neural_network->forward_propagate(batch.get_inputs(),
-                                          potential_parameters,
-                                          forward_propagation);
-
-        loss->calculate_error(batch, forward_propagation, back_propagation);
-
-        triplet.U.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
+        triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first) * type(0.382);
+        triplet.U.second = evaluate(triplet.U.first);
 
         while(triplet.A.second < triplet.U.second)
         {
             triplet.B = triplet.U;
 
-            triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
-
-            potential_parameters = parameters + training_direction*triplet.U.first;
-
-            neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-
-            loss->calculate_error(batch, forward_propagation, back_propagation);
-
-            triplet.U.second = back_propagation.error + loss->calculate_regularization(potential_parameters);
+            triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first) * type(0.382);
+            triplet.U.second = evaluate(triplet.U.first);
 
             if(triplet.U.first - triplet.A.first <= learning_rate_tolerance)
             {

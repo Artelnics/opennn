@@ -136,28 +136,14 @@ void Optimizer::from_XML(const XMLDocument& document)
 
 void Optimizer::save(const filesystem::path& file_name) const
 {
-    try
-    {
-        ofstream file(file_name);
+    ofstream file(file_name);
 
-        if (file.is_open())
-        {
-            XMLPrinter printer;
-            to_XML(printer);
+    if(!file.is_open())
+        return;
 
-            file << printer.CStr();
-
-            file.close();
-        }
-        else
-        {
-            throw runtime_error("Cannot open file: " + file_name.string());
-        }
-    }
-    catch (const exception& e)
-    {
-        cerr << e.what() << endl;
-    }
+    XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
 }
 
 
@@ -470,12 +456,6 @@ void TrainingResults::resize_training_error_history(const Index new_size)
 void TrainingResults::resize_validation_error_history(const Index new_size)
 {
     validation_error_history.conservativeResize(new_size);
-}
-
-
-string Optimizer::write_time(const type time) const
-{
-    return opennn::write_time(time);
 }
 
 

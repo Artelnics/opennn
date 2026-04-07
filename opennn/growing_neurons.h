@@ -32,9 +32,6 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    void save(const filesystem::path&) const;
-    void load(const filesystem::path&);
-
 private:
 
    Index neurons_increment = 0;

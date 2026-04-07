@@ -53,8 +53,6 @@ void check() const;
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 
-    string write_time(const type) const;
-
     string get_name() const
     {
         return name;
@@ -63,6 +61,9 @@ void check() const;
     virtual void from_XML(const XMLDocument&) = 0;
 
     virtual void to_XML(XMLPrinter&) const = 0;
+
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
     virtual void print(){}
 

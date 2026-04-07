@@ -45,8 +45,6 @@ public:
 
     bool get_display() const;
 
-    string write_time(const type) const;
-
     void set(Loss* = nullptr);
 
     virtual void set_loss(Loss*);

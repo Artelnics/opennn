@@ -67,10 +67,6 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    void save(const filesystem::path&) const;
-
-    void load(const filesystem::path&);
-
 private:
 
     void initialize_population();
@@ -103,12 +99,6 @@ private:
 
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number;
-
-    type mean_training_error;
-
-    type mean_validation_error;
-    
-    //MatrixB optimal_individuals_history;
 
     type mutation_rate;
 

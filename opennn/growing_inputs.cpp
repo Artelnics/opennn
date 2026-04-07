@@ -398,26 +398,6 @@ void GrowingInputs::from_XML(const XMLDocument& document)
 }
 
 
-void GrowingInputs::save(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    if(!file.is_open())
-        return;
-
-    XMLPrinter printer;
-    to_XML(printer);
-    file << printer.CStr();
-}
-
-
-void GrowingInputs::load(const filesystem::path& file_name)
-{
-    set_default();
-
-    from_XML(load_xml_file(file_name));
-}
-
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 
 }

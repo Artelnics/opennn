@@ -141,7 +141,7 @@ TrainingResults AdaptiveMomentEstimation::train()
     AdaptiveMomentEstimationData optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
 
     time_t beginning_time;
     time(&beginning_time);
@@ -463,7 +463,7 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     ADAMOptimizationDataCuda optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
     bool shuffle = true;
 
     if(neural_network->has("Recurrent")) shuffle = false;

@@ -190,7 +190,7 @@ TrainingResults StochasticGradientDescent::train()
     StochasticGradientDescentData optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
 
     time_t beginning_time;
     time(&beginning_time);
@@ -488,7 +488,7 @@ TrainingResults StochasticGradientDescent::train_cuda()
     SGDOptimizationDataCuda optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
     const bool shuffle = !neural_network->has("Recurrent");
 
     time_t beginning_time;

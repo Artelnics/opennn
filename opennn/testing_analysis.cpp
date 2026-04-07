@@ -409,16 +409,11 @@ MatrixR TestingAnalysis::calculate_binary_classification_errors() const
     const VectorR validation_errors = calculate_binary_classification_errors("Validation");
     const VectorR testing_errors = calculate_binary_classification_errors("Testing");
 
-    MatrixR errors(7, 3);
+    MatrixR errors(6, 3);
 
-    errors <<
-        training_errors(0), validation_errors(0), testing_errors(0),
-        training_errors(1), validation_errors(1), testing_errors(1),
-        training_errors(2), validation_errors(2), testing_errors(2),
-        training_errors(3), validation_errors(3), testing_errors(3),
-        training_errors(4), validation_errors(4), testing_errors(4),
-        training_errors(5), validation_errors(5), testing_errors(5),
-        training_errors(6), validation_errors(6), testing_errors(6);
+    errors.col(0) = training_errors;
+    errors.col(1) = validation_errors;
+    errors.col(2) = testing_errors;
 
     return errors;
 }
@@ -430,15 +425,11 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
     const VectorR validation_errors = calculate_multiple_classification_errors("Validation");
     const VectorR testing_errors = calculate_multiple_classification_errors("Testing");
 
-    MatrixR errors(6, 3);
+    MatrixR errors(5, 3);
 
-    errors <<
-        training_errors(0), validation_errors(0), testing_errors(0),
-        training_errors(1), validation_errors(1), testing_errors(1),
-        training_errors(2), validation_errors(2), testing_errors(2),
-        training_errors(3), validation_errors(3), testing_errors(3),
-        training_errors(4), validation_errors(4), testing_errors(4),
-        training_errors(5), validation_errors(5), testing_errors(5);
+    errors.col(0) = training_errors;
+    errors.col(1) = validation_errors;
+    errors.col(2) = testing_errors;
 
     return errors;
 }
@@ -582,74 +573,6 @@ type TestingAnalysis::calculate_determination(const VectorR& outputs, const Vect
 }
 
 
-MatrixI TestingAnalysis::calculate_confusion_binary_classification(const MatrixR& targets,
-                                                                   const MatrixR& outputs,
-                                                                   type decision_threshold) const
-{
-    const Index testing_samples_number = targets.rows();
-
-    MatrixI confusion(3, 3);
-
-    auto t_pos = targets.col(0).array() >= decision_threshold;
-    auto o_pos = outputs.col(0).array() >= decision_threshold;
-
-    const Index true_positive = (t_pos && o_pos).count();
-    const Index false_negative = (t_pos && !o_pos).count();
-    const Index false_positive = (!t_pos && o_pos).count();
-    const Index true_negative = (!t_pos && !o_pos).count();
-
-    confusion(0,0) = true_positive;
-    confusion(0,1) = false_negative;
-    confusion(1,0) = false_positive;
-    confusion(1,1) = true_negative;
-
-    confusion(0,2) = true_positive + false_negative;
-    confusion(1,2) = false_positive + true_negative;
-    confusion(2,0) = true_positive + false_positive;
-    confusion(2,1) = true_negative + false_negative;
-    confusion(2,2) = testing_samples_number;
-
-    const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
-
-    if(confusion_sum != testing_samples_number)
-        throw runtime_error("Number of elements in confusion matrix (" + to_string(confusion_sum) + ") "
-                            "must be equal to number of testing samples (" + to_string(testing_samples_number) + ").\n");
-
-    return confusion;
-}
-
-
-MatrixI TestingAnalysis::calculate_confusion_multiple_classification(const MatrixR& targets,
-                                                                     const MatrixR& outputs) const
-{
-    const Index samples_number = targets.rows();
-    const Index targets_number = targets.cols();
-
-    if(targets_number != outputs.cols())
-        throw runtime_error("Number of targets (" + to_string(targets_number) + ") "
-                            "must be equal to number of outputs (" + to_string(outputs.cols()) + ").\n");
-
-    MatrixI confusion(targets_number + 1, targets_number + 1);
-    confusion.setZero();
-    confusion(targets_number, targets_number) = samples_number;
-
-    Index target_index = 0;
-    Index output_index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        target_index = maximal_index(targets.row(i));
-        output_index = maximal_index(outputs.row(i));
-
-        confusion(target_index, output_index)++;
-        confusion(target_index, targets_number)++;
-        confusion(targets_number, output_index)++;
-    }
-
-    return confusion;
-}
-
-
 vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decision_threshold) const
 {
     check();
@@ -660,12 +583,7 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decis
     vector<MatrixI> confusion_matrices(static_cast<size_t>(outputs_number));
 
     for(Index j = 0; j < outputs_number; j++)
-    {
-        const MatrixR target_col = targets.col(j);
-        const MatrixR output_col = outputs.col(j);
-
-        confusion_matrices[static_cast<size_t>(j)] = calculate_confusion_binary_classification(target_col, output_col, decision_threshold);
-    }
+        confusion_matrices[static_cast<size_t>(j)] = calculate_confusion(targets.col(j), outputs.col(j), decision_threshold);
 
     return confusion_matrices;
 }
@@ -673,7 +591,7 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decis
 
 VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const MatrixI confusion = calculate_confusion_binary_classification(targets, outputs, type(0.5));
+    const MatrixI confusion = calculate_confusion(targets, outputs, type(0.5));
 
     VectorI positives_negatives_rate(2);
 
@@ -734,7 +652,7 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
         else
             return {};
 
-        const MatrixI batch_confusion = calculate_confusion(batch_outputs, batch_targets, decision_threshold);
+        const MatrixI batch_confusion = calculate_confusion(batch_targets, batch_outputs, decision_threshold);
         total_confusion_matrix += batch_confusion;
     }
 
@@ -745,18 +663,40 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
 }
 
 
-MatrixI TestingAnalysis::calculate_confusion(const MatrixR& outputs,
-                                             const MatrixR& targets,
+MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
+                                             const MatrixR& outputs,
                                              type decision_threshold) const
 {
-    const Index outputs_number = neural_network->get_outputs_number();
+    const Index samples = targets.rows();
+    const Index outputs_number = outputs.cols();
+    const Index num_classes = (outputs_number == 1) ? 2 : outputs_number;
 
-    if(outputs_number == 1)
-        return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
-    else
-        return calculate_confusion_multiple_classification(targets, outputs);
+    MatrixI confusion(num_classes + 1, num_classes + 1);
+    confusion.setZero();
 
-    return {};
+    for(Index i = 0; i < samples; i++)
+    {
+        Index target_class, output_class;
+
+        if(outputs_number == 1)
+        {
+            target_class = targets(i, 0) >= decision_threshold ? 0 : 1;
+            output_class = outputs(i, 0) >= decision_threshold ? 0 : 1;
+        }
+        else
+        {
+            target_class = maximal_index(targets.row(i));
+            output_class = maximal_index(outputs.row(i));
+        }
+
+        confusion(target_class, output_class)++;
+        confusion(target_class, num_classes)++;
+        confusion(num_classes, output_class)++;
+    }
+
+    confusion(num_classes, num_classes) = samples;
+
+    return confusion;
 }
 
 
@@ -1160,7 +1100,7 @@ VectorR TestingAnalysis::calculate_multiple_classification_precision() const
 
     VectorR multiple_classification_tests(2);
 
-    const MatrixI confusion_matrix = calculate_confusion_multiple_classification(targets, outputs);
+    const MatrixI confusion_matrix = calculate_confusion(targets, outputs);
 
     const type total_sum = static_cast<type>(confusion_matrix.sum());
 
@@ -1245,7 +1185,7 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 
     // Count instances per class
 
-    const MatrixI confusion = calculate_confusion_multiple_classification(targets, outputs);
+    const MatrixI confusion = calculate_confusion(targets, outputs);
 
     for(Index i = 0; i < targets_number; i++)
         for(Index j = 0; j < targets_number; j++)
@@ -1271,40 +1211,40 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
 }
 
 
+Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
+                                                    const MatrixR& outputs,
+                                                    const vector<string>& labels,
+                                                    bool match) const
+{
+    const Index samples_number = targets.rows();
+    const vector<string> target_names = dataset->get_feature_names("Target");
+
+    Tensor<string, 2> result(samples_number, 4);
+    Index count = 0;
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        const Index actual = maximal_index(targets.row(i));
+        const Index predicted = maximal_index(outputs.row(i));
+
+        if((actual == predicted) != match) continue;
+
+        result(count, 0) = labels[i];
+        result(count, 1) = target_names[actual];
+        result(count, 2) = target_names[predicted];
+        result(count, 3) = to_string(double(outputs(i, predicted)));
+        count++;
+    }
+
+    return result.slice(array_2(0, 0), array_2(count, 4));
+}
+
+
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const MatrixR& targets,
                                                                      const MatrixR& outputs,
                                                                      const vector<string>& labels) const
 {
-    const Index samples_number = targets.rows();
-
-    Tensor<string, 2> well_lassified_samples(samples_number, 4);
-
-    Index predicted_class;
-    Index actual_class;
-    Index number_of_well_classified = 0;
-    string class_name;
-
-    const vector<string> target_variables_names = dataset->get_feature_names("Target");
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        predicted_class = maximal_index(outputs.row(i));
-        actual_class = maximal_index(targets.row(i));
-
-        if(actual_class != predicted_class) continue;
-
-        well_lassified_samples(number_of_well_classified, 0) = labels[i];
-        class_name = target_variables_names[actual_class];
-        well_lassified_samples(number_of_well_classified, 1) = class_name;
-        class_name = target_variables_names[predicted_class];
-        well_lassified_samples(number_of_well_classified, 2) = class_name;
-        well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
-
-        number_of_well_classified++;
-    }
-
-    return well_lassified_samples.slice(array_2(0, 0),
-                                        array_2(number_of_well_classified, 4));
+    return classify_samples(targets, outputs, labels, true);
 }
 
 
@@ -1312,46 +1252,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const MatrixR
                                                                    const MatrixR& outputs,
                                                                    const vector<string>& labels) const
 {
-    const Index samples_number = targets.rows();
-
-    Index predicted_class;
-    Index actual_class;
-    string class_name;
-
-    const vector<string> target_variables_names = neural_network->get_output_feature_names();
-
-    Index count_misclassified = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        predicted_class = maximal_index(outputs.row(i));
-        actual_class = maximal_index(targets.row(i));
-
-        if(actual_class != predicted_class)
-            count_misclassified++;
-    }
-
-    Tensor<string, 2> misclassified_samples(count_misclassified, 4);
-
-    Index j = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        predicted_class = maximal_index(outputs.row(i));
-        actual_class = maximal_index(targets.row(i));
-
-        if(actual_class == predicted_class) continue;
-
-        misclassified_samples(j, 0) = labels[i];
-        class_name = target_variables_names[actual_class];
-        misclassified_samples(j, 1) = class_name;
-        class_name = target_variables_names[predicted_class];
-        misclassified_samples(j, 2) = class_name;
-        misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
-        j++;
-    }
-
-    return misclassified_samples;
+    return classify_samples(targets, outputs, labels, false);
 }
 
 
@@ -1941,7 +1842,7 @@ MatrixI TestingAnalysis::calculate_confusion_cuda(const type decision_threshold)
 
         const MatrixR batch_targets = dataset->get_data_from_indices(testing_batches[iteration], target_feature_indices);
         
-        MatrixI batch_confusion = calculate_confusion(batch_outputs, batch_targets, decision_threshold);
+        MatrixI batch_confusion = calculate_confusion(batch_targets, batch_outputs, decision_threshold);
         total_confusion_matrix += batch_confusion;
 
         empty_testing_queue.push(current_batch);
