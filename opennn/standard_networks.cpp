@@ -22,8 +22,6 @@
 #include "multihead_attention_layer.h"
 #include "string_utilities.h"
 
-//using namespace std;
-
 namespace opennn
 {
 

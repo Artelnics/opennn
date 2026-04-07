@@ -302,8 +302,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Loss
 
-    const XMLElement* loss_element = root_element->FirstChildElement("Loss");
-    if(!loss_element) throw runtime_error("Loss element is nullptr.\n");
+    const XMLElement* loss_element = require_xml_element(root_element, "Loss");
 
     // Loss method
 
@@ -323,8 +322,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Optimization algorithm
 
-    const XMLElement* optimization_algorithm_element = root_element->FirstChildElement("Optimizer");
-    if(!optimization_algorithm_element) throw runtime_error("Optimizer element is nullptr.\n");
+    const XMLElement* optimization_algorithm_element = require_xml_element(root_element, "Optimizer");
 
     // Optimization method
 

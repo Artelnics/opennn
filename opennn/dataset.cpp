@@ -2102,23 +2102,20 @@ void Dataset::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Dataset");
 
     printer.OpenElement("DataSource");
-    add_xml_element(printer, "FileType", "csv");
-
-    add_xml_element(printer, "Path", data_path.string());
-
-    add_xml_element(printer, "Separator", get_separator_name());
-    add_xml_element(printer, "HasHeader", to_string(has_header));
-    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
-    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "Codification", get_codification_string());
+    write_xml_properties(printer, {
+        {"FileType", "csv"},
+        {"Path", data_path.string()},
+        {"Separator", get_separator_name()},
+        {"HasHeader", to_string(has_header)},
+        {"HasSamplesId", to_string(has_sample_ids)},
+        {"MissingValuesLabel", missing_values_label},
+        {"Codification", get_codification_string()}
+    });
     printer.CloseElement();
 
     variables_to_XML(printer);
-
     samples_to_XML(printer);
-
     missing_values_to_XML(printer);
-
     preview_data_to_XML(printer);
 
     add_xml_element(printer, "Display", to_string(display));
@@ -2200,34 +2197,27 @@ void Dataset::variables_from_XML(const XMLElement *variables_element)
 
     set_variables_number(read_xml_index(variables_element, "VariablesNumber"));
 
-    const XMLElement* start_element = variables_element->FirstChildElement("VariablesNumber");
-
-    for(size_t i = 0; i < variables.size(); i++)
+    for_xml_items(variables_element, "Variable", variables.size(), [&](Index i, const XMLElement* el)
     {
         Variable& variable = variables[i];
-        const XMLElement* variable_element = start_element->NextSiblingElement("Variable");
-        start_element = variable_element;
 
-        if (variable_element->Attribute("Item") != to_string(i + 1))
-            throw runtime_error("Variable item number (" + to_string(i + 1) + ") does not match (" + variable_element->Attribute("Item") + ").\n");
-
-        variable.name = read_xml_string(variable_element, "Name");
-        variable.set_scaler(read_xml_string(variable_element, "Scaler"));
-        variable.set_role(read_xml_string(variable_element, "Role"));
-        variable.set_type(read_xml_string(variable_element, "Type"));
+        variable.name = read_xml_string(el, "Name");
+        variable.set_scaler(read_xml_string(el, "Scaler"));
+        variable.set_role(read_xml_string(el, "Role"));
+        variable.set_type(read_xml_string(el, "Type"));
 
         if (variable.type == VariableType::Categorical || variable.type == VariableType::Binary)
         {
-            const XMLElement* categories_element = variable_element->FirstChildElement("Categories");
+            const XMLElement* categories_element = el->FirstChildElement("Categories");
 
             if (categories_element)
-                variable.categories = get_tokens(read_xml_string(variable_element, "Categories"), ";");
+                variable.categories = get_tokens(read_xml_string(el, "Categories"), ";");
             else if (variable.type == VariableType::Binary)
                 variable.categories = { "0", "1" };
             else
                 throw runtime_error("Categorical Variable Element is nullptr: Categories");
         }
-    }
+    });
 }
 
 void Dataset::samples_from_XML(const XMLElement *samples_element)
@@ -2268,36 +2258,18 @@ void Dataset::missing_values_from_XML(const XMLElement *missing_values_element)
     {
         set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        const XMLElement* vars_element = missing_values_element->FirstChildElement("VariablesMissingValuesNumber");
-        if(!vars_element)
-            vars_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
-
-        if(!vars_element)
-            throw runtime_error("Element is nullptr: VariablesMissingValuesNumber/RawVariablesMissingValuesNumber");
-
-        const string variables_string = vars_element->GetText() ? string(vars_element->GetText()) : "";
+        const string variables_string = read_xml_string_fallback(missing_values_element,
+            {"VariablesMissingValuesNumber", "RawVariablesMissingValuesNumber"});
 
         const vector<string> tokens = get_tokens(variables_string, " ");
-        vector<Index> valid_numbers;
-        valid_numbers.reserve(tokens.size());
 
-        for(const string& token : tokens)
-            if(!token.empty())
-                valid_numbers.push_back(stoi(token));
+        variables_missing_values_number.resize(tokens.size());
+        for(size_t i = 0; i < tokens.size(); ++i)
+            if(!tokens[i].empty())
+                variables_missing_values_number(i) = stoi(tokens[i]);
 
-        variables_missing_values_number.resize(valid_numbers.size());
-        for(size_t i = 0; i < valid_numbers.size(); ++i)
-            variables_missing_values_number(i) = valid_numbers[i];
-
-        const XMLElement* rows_element = missing_values_element->FirstChildElement("SamplesMissingValuesNumber");
-        if(!rows_element)
-            rows_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
-
-        if(!rows_element)
-            throw runtime_error("Element is nullptr: SamplesMissingValuesNumber/RowsMissingValuesNumber");
-
-        const char* rows_text = rows_element->GetText();
-        rows_missing_values_number = rows_text ? static_cast<Index>(stoi(rows_text)) : 0;
+        rows_missing_values_number = stol(read_xml_string_fallback(missing_values_element,
+            {"SamplesMissingValuesNumber", "RowsMissingValuesNumber"}));
     }
 }
 void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
@@ -2305,70 +2277,39 @@ void Dataset::preview_data_from_XML(const XMLElement *preview_data_element)
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n ");
 
-    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const Index preview_size = read_xml_index(preview_data_element, "PreviewSize");
 
-    if(!preview_size_element)
-        throw runtime_error("Preview size element is nullptr.\n ");
-
-    Index preview_size = 0;
-    if (preview_size_element->GetText())
-        preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
-
-    const XMLElement* start_element = preview_size_element;
-
-    if(preview_size > 0){
+    if(preview_size > 0)
+    {
         data_file_preview.resize(preview_size);
 
-        for(Index i = 0; i < preview_size; ++i) {
-            const XMLElement* row_data = start_element->NextSiblingElement("Row");
-            start_element = row_data;
-
-            if (row_data->Attribute("Item") != to_string(i + 1))
-                throw runtime_error("Row item number (" + to_string(i + 1) + ") does not match (" + row_data->Attribute("Item") + ").\n");
-
-            if(row_data->GetText())
-                data_file_preview[i] = get_tokens(row_data->GetText(), ",");
-        }
+        for_xml_items(preview_data_element, "Row", preview_size, [&](Index i, const XMLElement* row)
+        {
+            if(row->GetText())
+                data_file_preview[i] = get_tokens(row->GetText(), ",");
+        });
     }
 }
 
 void Dataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* data_set_element = get_xml_root(data_set_document, "Dataset");
+    const XMLElement* root = get_xml_root(data_set_document, "Dataset");
 
-    // Data Source
-    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* src = require_xml_element(root, "DataSource");
 
-    if(!data_source_element)
-        throw runtime_error("Data source element is nullptr.\n");
+    set_data_path(read_xml_string(src, "Path"));
+    set_separator_name(read_xml_string(src, "Separator"));
+    set_has_header(read_xml_bool(src, "HasHeader"));
+    set_has_ids(read_xml_bool(src, "HasSamplesId"));
+    set_missing_values_label(read_xml_string(src, "MissingValuesLabel"));
+    set_codification(read_xml_string(src, "Codification"));
 
-    set_data_path(read_xml_string(data_source_element, "Path"));
-    set_separator_name(read_xml_string(data_source_element, "Separator"));
-    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
-    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
-    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
-    set_codification(read_xml_string(data_source_element, "Codification"));
+    variables_from_XML(require_xml_element(root, "Variables"));
+    samples_from_XML(require_xml_element(root, "Samples"));
+    missing_values_from_XML(require_xml_element(root, "MissingValues"));
+    preview_data_from_XML(require_xml_element(root, "PreviewData"));
 
-    // Variables
-    const XMLElement* variables_element = data_set_element->FirstChildElement("Variables");
-
-    variables_from_XML(variables_element);
-
-    // Samples
-    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
-
-    samples_from_XML(samples_element);
-
-
-    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
-
-    missing_values_from_XML(missing_values_element);
-
-    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
-
-    preview_data_from_XML(preview_data_element);
-
-    set_display(read_xml_bool(data_set_element, "Display"));
+    set_display(read_xml_bool(root, "Display"));
 
     input_shape = { get_features_number("Input") };
     target_shape = { get_features_number("Target") };

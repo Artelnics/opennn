@@ -494,12 +494,14 @@ void Convolutional::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Convolutional");
 
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "InputDimensions", shape_to_string(input_shape));
-    add_xml_element(printer, "KernelsNumber", to_string(get_kernels_number()));
-    add_xml_element(printer, "KernelsHeight", to_string(get_kernel_height()));
-    add_xml_element(printer, "KernelsWidth", to_string(get_kernel_width()));
-    add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"InputDimensions", shape_to_string(input_shape)},
+        {"KernelsNumber", to_string(get_kernels_number())},
+        {"KernelsHeight", to_string(get_kernel_height())},
+        {"KernelsWidth", to_string(get_kernel_width())},
+        {"KernelsChannels", to_string(get_kernel_channels())}
+    });
 /*
     add_xml_element(printer, "Activation", activation_function);
     add_xml_element(printer, "StrideDimensions", shape_to_string({ get_column_stride(), get_row_stride() }));

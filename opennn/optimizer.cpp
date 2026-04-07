@@ -456,11 +456,13 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
 
 void Optimizer::write_common_xml(XMLPrinter& printer) const
 {
-    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
-    add_xml_element(printer, "HardwareUse", hardware_use);
+    write_xml_properties(printer, {
+        {"LossGoal", to_string(training_loss_goal)},
+        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MaximumEpochsNumber", to_string(maximum_epochs)},
+        {"MaximumTime", to_string(maximum_time)},
+        {"HardwareUse", hardware_use}
+    });
 }
 
 

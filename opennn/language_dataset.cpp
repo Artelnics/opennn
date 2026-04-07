@@ -492,13 +492,15 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("DataSource");
 
-    add_xml_element(printer, "FileType", "csv");
-    add_xml_element(printer, "Path", data_path.string());
-    add_xml_element(printer, "Separator", get_separator_name());
-    add_xml_element(printer, "HasHeader", to_string(has_header));
-    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
-    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "Codification", get_codification_string());
+    write_xml_properties(printer, {
+        {"FileType", "csv"},
+        {"Path", data_path.string()},
+        {"Separator", get_separator_name()},
+        {"HasHeader", to_string(has_header)},
+        {"HasSamplesId", to_string(has_sample_ids)},
+        {"MissingValuesLabel", missing_values_label},
+        {"Codification", get_codification_string()}
+    });
     printer.CloseElement();
 
     variables_to_XML(printer);
@@ -511,13 +513,13 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
 
     const string separator_string = get_separator_string();
 
-    add_xml_element(printer, "InputVocabulary", vector_to_string(input_vocabulary, separator_string));
-    add_xml_element(printer, "TargetVocabulary", vector_to_string(target_vocabulary, separator_string));
-
-    add_xml_element(printer, "MaximumInputSequenceLength", to_string(maximum_input_sequence_length));
-    add_xml_element(printer, "MaximumTargetSequenceLength", to_string(maximum_target_sequence_length));
-
-    add_xml_element(printer, "Display", to_string(display));
+    write_xml_properties(printer, {
+        {"InputVocabulary", vector_to_string(input_vocabulary, separator_string)},
+        {"TargetVocabulary", vector_to_string(target_vocabulary, separator_string)},
+        {"MaximumInputSequenceLength", to_string(maximum_input_sequence_length)},
+        {"MaximumTargetSequenceLength", to_string(maximum_target_sequence_length)},
+        {"Display", to_string(display)}
+    });
 
     printer.CloseElement();
 }
@@ -527,10 +529,7 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = get_xml_root(data_set_document, "Dataset");
 
-    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-
-    if(!data_source_element)
-        throw runtime_error("Data file element is nullptr.\n");
+    const XMLElement* data_source_element = require_xml_element(data_set_element, "DataSource");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));

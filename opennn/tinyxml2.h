@@ -133,14 +133,37 @@ private:
     bool _openTag = false;
 };
 
-// OpenNN helper wrappers
+// OpenNN helper wrappers — writing
+
 void add_xml_element(XMLPrinter& printer, const std::string& name, const std::string& value);
 void add_xml_element_attribute(XMLPrinter& printer, const std::string& element_name, const std::string& element_value, const std::string& attribute_name, const std::string& attribute_value);
+
+void write_xml_properties(XMLPrinter& printer, std::initializer_list<std::pair<const char*, std::string>> props);
+
+// OpenNN helper wrappers — reading
 
 float read_xml_type(const XMLElement* root, const std::string& element_name);
 long  read_xml_index(const XMLElement* root, const std::string& element_name);
 bool  read_xml_bool(const XMLElement* root, const std::string& element_name);
 std::string read_xml_string(const XMLElement* root, const std::string& element_name);
+
+std::string read_xml_string_fallback(const XMLElement* root, std::initializer_list<std::string> names);
+
+const XMLElement* require_xml_element(const XMLElement* root, const std::string& element_name);
+
+template<typename Func>
+void for_xml_items(const XMLElement* parent, const char* tag, long count, Func func)
+{
+    const XMLElement* item = parent->FirstChildElement(tag);
+    for(long i = 0; i < count; i++)
+    {
+        if(!item)
+            throw std::runtime_error(std::string("Missing XML element: ") + tag + " item " + std::to_string(i + 1));
+
+        func(i, item);
+        item = item->NextSiblingElement(tag);
+    }
+}
 
 XMLDocument load_xml_file(const std::filesystem::path& file_name);
 const XMLElement* get_xml_root(const XMLDocument& document, const std::string& tag);

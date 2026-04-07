@@ -890,13 +890,10 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
         const Index inputs_number = read_xml_index(inputs_element, "InputsNumber");
         input_variables.resize(inputs_number);
 
-        const XMLElement* current_input = inputs_element->FirstChildElement("Input");
-        for(Index i = 0; i < inputs_number && current_input; ++i)
-        {
-            if(current_input->GetText())
-                input_variables[i].name = current_input->GetText();
-            current_input = current_input->NextSiblingElement("Input");
-        }
+        for_xml_items(inputs_element, "Input", inputs_number, [this](Index i, const XMLElement* el){
+            if(el->GetText())
+                input_variables[i].name = el->GetText();
+        });
     }
 
     // 2. Load Layers Topology
@@ -969,13 +966,10 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
         const Index outputs_number = read_xml_index(outputs_element, "OutputsNumber");
         output_variables.resize(outputs_number);
 
-        const XMLElement* current_output = outputs_element->FirstChildElement("Output");
-        for(Index i = 0; i < outputs_number && current_output; ++i)
-        {
-            if(current_output->GetText())
-                output_variables[i].name = current_output->GetText();
-            current_output = current_output->NextSiblingElement("Output");
-        }
+        for_xml_items(outputs_element, "Output", outputs_number, [this](Index i, const XMLElement* el){
+            if(el->GetText())
+                output_variables[i].name = el->GetText();
+        });
     }
 
     // 5. Global Settings

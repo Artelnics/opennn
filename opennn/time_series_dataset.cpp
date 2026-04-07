@@ -148,15 +148,17 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Dataset");
 
     printer.OpenElement("DataSource");
-    add_xml_element(printer, "FileType", "csv");
-    add_xml_element(printer, "Path", data_path.string());
-    add_xml_element(printer, "Separator", get_separator_name());
-    add_xml_element(printer, "HasHeader", to_string(has_header));
-    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
-    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
-    add_xml_element(printer, "LagsNumber", to_string(get_past_time_steps()));
-    add_xml_element(printer, "StepsAhead", to_string(get_future_time_steps()));
-    add_xml_element(printer, "Codification", get_codification_string());
+    write_xml_properties(printer, {
+        {"FileType", "csv"},
+        {"Path", data_path.string()},
+        {"Separator", get_separator_name()},
+        {"HasHeader", to_string(has_header)},
+        {"HasSamplesId", to_string(has_sample_ids)},
+        {"MissingValuesLabel", missing_values_label},
+        {"LagsNumber", to_string(get_past_time_steps())},
+        {"StepsAhead", to_string(get_future_time_steps())},
+        {"Codification", get_codification_string()}
+    });
     printer.CloseElement();
 
     variables_to_XML(printer);
@@ -179,13 +181,9 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 
     // Data file
 
-    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-    if(!data_source_element)
-        throw runtime_error("Data file element is nullptr.\n");
+    const XMLElement* data_source_element = require_xml_element(data_set_element, "DataSource");
 
-    const XMLElement* file_type_element = data_source_element->FirstChildElement("FileType");
-    if(!file_type_element)
-        throw runtime_error("File Type element is nullptr.\n");
+    const XMLElement* file_type_element = require_xml_element(data_source_element, "FileType");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));

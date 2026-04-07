@@ -257,22 +257,24 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("DataSource");
 
-    add_xml_element(printer, "FileType", "bmp");
-    add_xml_element(printer, "Path", data_path.string());
-    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
-    add_xml_element(printer, "Channels", to_string(get_channels_number()));
-    add_xml_element(printer, "Width", to_string(get_image_width()));
-    add_xml_element(printer, "Height", to_string(get_image_height()));
-    add_xml_element(printer, "Padding", to_string(get_image_padding()));
-    add_xml_element(printer, "RandomReflectionAxisX", to_string(get_random_reflection_axis_x()));
-    add_xml_element(printer, "RandomReflectionAxisY", to_string(get_random_reflection_axis_y()));
-    add_xml_element(printer, "RandomRotationMinimum", to_string(get_random_rotation_minimum()));
-    add_xml_element(printer, "RandomRotationMaximum", to_string(get_random_rotation_maximum()));
-    add_xml_element(printer, "RandomHorizontalTranslationMinimum", to_string(get_random_horizontal_translation_minimum()));
-    add_xml_element(printer, "RandomHorizontalTranslationMaximum", to_string(get_random_horizontal_translation_maximum()));
-    add_xml_element(printer, "RandomVerticalTranslationMinimum", to_string(get_random_vertical_translation_minimum()));
-    add_xml_element(printer, "RandomVerticalTranslationMaximum", to_string(get_random_vertical_translation_maximum()));
-    add_xml_element(printer, "Codification", get_codification_string());
+    write_xml_properties(printer, {
+        {"FileType", "bmp"},
+        {"Path", data_path.string()},
+        {"HasSamplesId", to_string(has_sample_ids)},
+        {"Channels", to_string(get_channels_number())},
+        {"Width", to_string(get_image_width())},
+        {"Height", to_string(get_image_height())},
+        {"Padding", to_string(get_image_padding())},
+        {"RandomReflectionAxisX", to_string(get_random_reflection_axis_x())},
+        {"RandomReflectionAxisY", to_string(get_random_reflection_axis_y())},
+        {"RandomRotationMinimum", to_string(get_random_rotation_minimum())},
+        {"RandomRotationMaximum", to_string(get_random_rotation_maximum())},
+        {"RandomHorizontalTranslationMinimum", to_string(get_random_horizontal_translation_minimum())},
+        {"RandomHorizontalTranslationMaximum", to_string(get_random_horizontal_translation_maximum())},
+        {"RandomVerticalTranslationMinimum", to_string(get_random_vertical_translation_minimum())},
+        {"RandomVerticalTranslationMaximum", to_string(get_random_vertical_translation_maximum())},
+        {"Codification", get_codification_string()}
+    });
 
     printer.CloseElement();
 
@@ -347,10 +349,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     // Data Source
 
-    const XMLElement* data_source_element = image_dataset_element->FirstChildElement("DataSource");
-
-    if(!data_source_element)
-        throw runtime_error("Element is nullptr: DataSource");
+    const XMLElement* data_source_element = require_xml_element(image_dataset_element, "DataSource");
 
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
@@ -372,17 +371,8 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     set_random_vertical_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMinimum").c_str())));
     set_random_vertical_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMaximum").c_str())));
 
-    // Variables
-
-    const XMLElement* variables_element = image_dataset_element->FirstChildElement("Variables");
-
-    variables_from_XML(variables_element);
-
-    // Samples
-
-    const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
-
-    samples_from_XML(samples_element);
+    variables_from_XML(require_xml_element(image_dataset_element, "Variables"));
+    samples_from_XML(require_xml_element(image_dataset_element, "Samples"));
 }
 
 
