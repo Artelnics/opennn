@@ -26,11 +26,7 @@ public:
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
-        /*
-    outputs.shape = prepend(batch_size, layer->get_output_shape());
-
-*/
-        return {};
+        return {Shape{batch_size}.append(get_output_shape())};
     }
 
     VectorR get_minimums() const;
@@ -49,6 +45,8 @@ public:
     void set_scalers(const string&);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
+
+    void calculate_coefficients();
 
     void print() const override;
 

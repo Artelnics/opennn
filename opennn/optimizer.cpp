@@ -295,6 +295,8 @@ void Optimizer::set_scaling()
 
     // Unscaling layer
 
+    if(!neural_network->has("Unscaling")) return;
+
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 

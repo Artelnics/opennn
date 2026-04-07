@@ -315,36 +315,13 @@ public:
         const TensorView& input = forward_propagation.views[layer][Input][0];
         const TensorView& output = forward_propagation.views[layer][Output][0];
 
-        const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+        TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-//        if (dropout_rate > type(0))
-//            dropout_gradient(incoming_gradients, dropout_mask, dropout_rate, incoming_gradients);
-
-        //output_gradient = activation_gradient(output, output_gradient)
-
-
-        if (batch_normalization)
-        {
-            const TensorView& normalized_inputs = forward_propagation.views[layer][NormalizedOutput][0];
-            const TensorView& standard_deviations = forward_propagation.views[layer][Output][1];
-
-            TensorView& gamma_gradients = back_propagation.gradient_views[layer][Gamma];
-            TensorView& beta_gradients = back_propagation.gradient_views[layer][Beta];
-/*
-            batch_normalization_backward(delta,
-                                         normalized_inputs,
-                                         standard_deviations,
-                                         parameters[Gamma],
-                                         gamma_gradients,
-                                         beta_gradients,
-                                         delta);
-*/
-        }
+        activation_gradient(output, delta, delta, activation_function);
 
         TensorView& bias_gradient = back_propagation.gradient_views[layer][Bias];
         TensorView& weight_gradient = back_propagation.gradient_views[layer][Weight];
 
-/*
         multiply(input, true, delta, false, weight_gradient);
         sum(delta, bias_gradient);
 
@@ -353,7 +330,6 @@ public:
             TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
             multiply(delta, false, parameters[Weight], true, input_gradient);
         }
- */
     }
 
 

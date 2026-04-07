@@ -9,6 +9,8 @@
 #include "registry.h"
 #include "string_utilities.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
+#include "neural_network.h"
 #include "unscaling_layer.h"
 
 namespace opennn
@@ -115,10 +117,15 @@ void Unscaling::set_output_shape(const Shape& new_output_shape)
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
     means.resize(new_neurons_number);
+    means.setZero();
     standard_deviations.resize(new_neurons_number);
+    standard_deviations.setOnes();
     minimums.resize(new_neurons_number);
+    minimums.setConstant(type(-1.0));
     maximums.resize(new_neurons_number);
-
+    maximums.setOnes();
+    multipliers.resize(new_neurons_number);
+    offsets.resize(new_neurons_number);
 
     scalers.resize(new_neurons_number, "MinimumMaximum");
 
@@ -127,6 +134,8 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     set_scalers("MinimumMaximum");
 
     set_min_max_range(type(-1), type(1));
+
+    calculate_coefficients();
 
     name = "Unscaling";
 
@@ -143,7 +152,23 @@ void Unscaling::set_min_max_range(const type min, const type max)
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
-//    descriptives = new_descriptives;
+    const Index n = new_descriptives.size();
+    means.resize(n);
+    standard_deviations.resize(n);
+    minimums.resize(n);
+    maximums.resize(n);
+    multipliers.resize(n);
+    offsets.resize(n);
+
+    for(Index i = 0; i < n; ++i)
+    {
+        means[i] = new_descriptives[i].mean;
+        standard_deviations[i] = new_descriptives[i].standard_deviation;
+        minimums[i] = new_descriptives[i].minimum;
+        maximums[i] = new_descriptives[i].maximum;
+    }
+
+    calculate_coefficients();
 }
 
 
@@ -160,42 +185,38 @@ void Unscaling::set_scalers(const string& new_scalers)
 }
 
 
-void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool)
+void Unscaling::calculate_coefficients()
 {
-/*
-    MatrixMap outputs = matrix_map(forward_propagation->outputs);
-
-    const Index outputs_number = get_outputs_number();
-
-    const MatrixMap inputs = matrix_map(forward_propagation->inputs[0]);
-
-    outputs = inputs;
-
-    for(Index i = 0; i < outputs_number; i++)
+    const Index n = scalers.size();
+    for(Index i = 0; i < n; ++i)
     {
-        const string& scaler = scalers[i];
-
-        const Descriptives& descriptive = descriptives[i];
-
-        if(abs(descriptives[i].standard_deviation) < EPSILON)
-            descriptives[i].standard_deviation = EPSILON;
-
-        if(scaler == "None")
-            continue;
-        else if(scaler == "MinimumMaximum")
-            unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
-        else if(scaler == "MeanStandardDeviation")
-            unscale_mean_standard_deviation(outputs, i, descriptive);
-        else if(scaler == "StandardDeviation")
-            unscale_standard_deviation(outputs, i, descriptive);
-        else if(scaler == "Logarithm")
-            unscale_logarithmic(outputs, i);
-        else if(scaler == "ImageMinMax")
-            unscale_image_minimum_maximum(outputs, i);
-        else
-            throw runtime_error("Unknown scaling method\n");
+        const string& method = scalers[i];
+        if(method == "MeanStandardDeviation") {
+            multipliers[i] = standard_deviations[i] + EPSILON;
+            offsets[i] = means[i];
+        }
+        else if(method == "MinimumMaximum") {
+            const type range = (maximums[i] - minimums[i]) + EPSILON;
+            multipliers[i] = range / (max_range - min_range);
+            offsets[i] = minimums[i] - min_range * multipliers[i];
+        }
+        else { // None
+            multipliers[i] = 1.0f;
+            offsets[i] = 0.0f;
+        }
     }
-*/
+}
+
+
+void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
+{
+    const TensorView& input = forward_propagation.views[layer][0][0];
+    TensorView& output = forward_propagation.views[layer][1][0];
+
+    // Data targets are scaled in-place by Optimizer::set_scaling(),
+    // so the unscaling layer just copies input to output.
+    // The unscaling coefficients are stored for serialization/expression only.
+    copy(input, output);
 }
 
 

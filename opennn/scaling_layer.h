@@ -166,15 +166,13 @@ public:
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
-/*
-        auto inputs = as_matrix(get_input_view(forward_propagation, layer));
-        auto outputs = as_matrix(get_output_view(forward_propagation, layer, 1));
+        const TensorView& input = forward_propagation.views[layer][0][0];
+        TensorView& output = forward_propagation.views[layer][Output][0];
 
-        outputs.array() = (inputs.array().rowwise() * multipliers.transpose().array()).rowwise() + offsets.transpose().array();
-
-        // Logarithm is the only non-linear one, handle separately if needed
-        // but 99% of use cases are now covered by the line above.
-*/
+        // Data is scaled in-place by Optimizer::set_scaling() before training,
+        // so the scaling layer just copies input to output.
+        // The scaling coefficients are stored for serialization/expression only.
+        copy(input, output);
     }
 
 

@@ -537,7 +537,13 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
     forward_propagate(input_views, fp, false);
 
     // Fetch final outputs from the last layer's output slot
-    TensorView out_view = fp.get_last_trainable_layer_outputs();
+    const Index last_layer = static_cast<Index>(layers.size()) - 1;
+    TensorView out_view = (last_layer >= 0
+                           && static_cast<size_t>(last_layer) < fp.views.size()
+                           && fp.views[last_layer].size() > 1
+                           && !fp.views[last_layer].back().empty())
+                          ? fp.views[last_layer].back()[0]
+                          : fp.get_last_trainable_layer_outputs();
 
     // Convert to MatrixR (samples x features)
     return MatrixMap(out_view.data, batch_size, out_view.size() / batch_size);

@@ -36,6 +36,8 @@ int main()
 
         TrainingStrategy training_strategy(&classification_network, &dataset);
 
+        training_strategy.get_optimization_algorithm()->set_maximum_epochs(100);
+
         training_strategy.train();
 
         // Testing Analysis
