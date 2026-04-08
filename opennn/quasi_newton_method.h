@@ -15,7 +15,6 @@ namespace opennn
 {
 
 struct QuasiNewtonMethodData;
-struct Triplet;
 
 class QuasiNewtonMethod final : public Optimizer
 {
@@ -30,11 +29,9 @@ public:
 
     // Stopping criteria
 
-    void set_minimum_loss_decrease(const type);
+    void set_minimum_loss_decrease(const type v) { minimum_loss_decrease = v; }
 
     // Training
-
-    void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
 
     void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&);
 
@@ -46,12 +43,9 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    type calculate_learning_rate(const Triplet&) const;
+private:
 
-    Triplet calculate_bracketing_triplet(const Batch&,
-                                         ForwardPropagation&,
-                                         BackPropagation&,
-                                         QuasiNewtonMethodData&);
+    void calculate_inverse_hessian(QuasiNewtonMethodData&) const;
 
     pair<type, type> calculate_directional_point(const Batch&,
                                                  ForwardPropagation&,
@@ -59,36 +53,12 @@ public:
                                                  QuasiNewtonMethodData&,
                                                  type);
 
-private:
-
     type first_learning_rate = type(0.01);
 
     // Stopping criteria
 
     type minimum_loss_decrease = EPSILON;
 
-    type learning_rate_tolerance;
-
-    type loss_tolerance;
-
-    const type golden_ratio = type(1.618);
-};
-
-struct Triplet
-{
-    Triplet() = default;
-
-    bool operator == (const Triplet& other_triplet) const;
-
-    type get_length() const;
-
-    string struct_to_string() const;
-
-    void print() const;
-
-    void check() const;
-
-    pair<type, type> A = {MAX, MAX}, U = {MAX, MAX}, B = {MAX, MAX};
 };
 
 struct QuasiNewtonMethodData final : public OptimizerData
@@ -122,9 +92,7 @@ struct QuasiNewtonMethodData final : public OptimizerData
 
     VectorR BFGS;
 
-    Index epoch = 0;
-
-    Tensor0 training_slope;
+    type training_slope = type(0);
 
     type learning_rate = type(0);
     type old_learning_rate = type(0);
