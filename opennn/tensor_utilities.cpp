@@ -96,16 +96,9 @@ Index count_greater_than(const vector<Index>& data, Index bound)
 
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
-    const Index indices_size = count_greater_than(data, bound);
-
-    vector<Index> indices(indices_size);
-
-    Index index = 0;
-
-    for(size_t i  = 0; i < data.size(); i++)
-        if(data[i] > bound)
-            indices[index++] = data[i];
-
+    vector<Index> indices;
+    copy_if(data.begin(), data.end(), back_inserter(indices),
+            [bound](Index value) { return value > bound; });
     return indices;
 }
 

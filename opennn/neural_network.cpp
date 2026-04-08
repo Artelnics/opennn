@@ -120,11 +120,11 @@ const vector<string> NeuralNetwork::get_output_feature_names() const
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
-    const vector<string> labels = get_layer_labels();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&label](const unique_ptr<Layer>& layer) { return layer->get_label() == label; });
 
-    for(Index i = 0; i < Index(labels.size()); i++)
-        if(labels[i] == label)
-            return layers[i];
+    if (it != layers.end())
+        return *it;
 
     throw runtime_error("Layer not found in neural network");
 }
@@ -137,11 +137,11 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     if(new_label == "input")
         return -2;
 
-    const Index layers_number = get_layers_number();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&new_label](const unique_ptr<Layer>& layer) { return layer->get_label() == new_label; });
 
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_label() == new_label)
-            return i;
+    if (it != layers.end())
+        return distance(layers.begin(), it);
 
     throw runtime_error("Layer not found: " + new_label);
 }
@@ -166,18 +166,17 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
 Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices, Index layer_index) const
 {
-    for(Index i = 0; i < Index(layer_inputs_indices.size()); i++)
-        if (layer_inputs_indices[i] == layer_index)
-            return i;
-
-    return -1;
+    auto it = find(layer_inputs_indices.begin(), layer_inputs_indices.end(), layer_index);
+    return (it != layer_inputs_indices.end()) ? distance(layer_inputs_indices.begin(), it) : -1;
 }
 
 Layer* NeuralNetwork::get_first(const string& name) const
 {
-    for(const unique_ptr<Layer>& layer : layers)
-        if(layer->get_name() == name)
-            return layer.get();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&name](const unique_ptr<Layer>& layer) { return layer->get_name() == name; });
+
+    if (it != layers.end())
+        return it->get();
 
     throw runtime_error("Layer not found in Neural Network: " + name);
 }
@@ -338,11 +337,11 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
-    const Index layers_number = get_layers_number();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_is_trainable())
-            return i;
+    if (it != layers.end())
+        return distance(layers.begin(), it);
 
     throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
 }

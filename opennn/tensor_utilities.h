@@ -485,25 +485,15 @@ inline bool is_contiguous(const vector<Index>& v)
 
 inline bool is_binary(const VectorR& tensor)
 {
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-        if (tensor(i) != type(0) && tensor(i) != type(1) && !isnan(tensor(i)))
-            return false;
-
-    return true;
+    return all_of(tensor.data(), tensor.data() + tensor.size(),
+                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
 }
 
 template <int Rank>
 bool is_binary(const TensorR<Rank>& tensor)
 {
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-        if (tensor(i) != type(0) && tensor(i) != type(1) && !isnan(tensor(i)))
-            return false;
-
-    return true;
+    return all_of(tensor.data(), tensor.data() + tensor.size(),
+                  [](type v) { return v == type(0) || v == type(1) || isnan(v); });
 }
 
 MatrixR append_rows(const MatrixR& , const MatrixR&);
@@ -514,8 +504,8 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
     vector<T> result;
     result.reserve(indices.size());
 
-    for(Index i : indices)
-        result.push_back(data[i]);
+    transform(indices.begin(), indices.end(), back_inserter(result),
+              [&data](Index i) { return data[i]; });
 
     return result;
 }
@@ -524,45 +514,35 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
 
 inline bool is_constant(const VectorR& tensor)
 {
-    const Index size = tensor.size();
+    const type* data = tensor.data();
+    const type* end = data + tensor.size();
 
-    Index first_non_nan_index = 0;
+    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
 
-    while (first_non_nan_index < size && isnan(tensor(first_non_nan_index)))
-        first_non_nan_index++;
-
-    if (first_non_nan_index == size)
+    if (first == end)
         return true;
 
-    const type first_not_nan_element = tensor(first_non_nan_index);
+    const type val = *first;
 
-    for(Index i = first_non_nan_index + 1; i < size; ++i)
-        if(!isnan(tensor(i)) && abs(first_not_nan_element - tensor(i)) > numeric_limits<float>::min())
-            return false;
-
-    return true;
+    return all_of(first + 1, end,
+                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
 }
 
 template <int Rank>
 bool is_constant(const TensorR<Rank>& tensor)
 {
-    const Index size = tensor.size();
+    const type* data = tensor.data();
+    const type* end = data + tensor.size();
 
-    Index first_non_nan_index = 0;
+    const type* first = find_if(data, end, [](type v) { return !isnan(v); });
 
-    while (first_non_nan_index < size && isnan(tensor(first_non_nan_index)))
-        first_non_nan_index++;
-
-    if (first_non_nan_index == size)
+    if (first == end)
         return true;
 
-    const type first_not_nan_element = tensor(first_non_nan_index);
+    const type val = *first;
 
-    for(Index i = first_non_nan_index + 1; i < size; ++i)
-        if(!isnan(tensor(i)) && abs(first_not_nan_element - tensor(i)) > numeric_limits<float>::min())
-            return false;
-
-    return true;
+    return all_of(first + 1, end,
+                  [val](type v) { return isnan(v) || abs(val - v) <= numeric_limits<float>::min(); });
 }
 
 template<int rank>

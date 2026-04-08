@@ -313,6 +313,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
         descendent(difference[i]) = true;
     
     const Index final_count = count(descendent.data(), descendent.data() + genes_number, true);
+
     if (final_count < minimum_inputs_number) 
     {
         vector<Index> never_true_indices;
@@ -322,7 +323,7 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
 
         shuffle_vector(never_true_indices);
 
-        Index genes_needed = minimum_inputs_number - final_count;
+        const Index genes_needed = minimum_inputs_number - final_count;
 
         for(Index i = 0; i < genes_needed && i < never_true_indices.size(); ++i)
             descendent(never_true_indices[i]) = true;
@@ -358,6 +359,8 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
+    if(mutation_rate == 0) return;
+
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
@@ -371,17 +374,13 @@ void GeneticAlgorithm::perform_mutation()
 
         for(Index j = 0; j < genes_number; ++j)
             if (random_uniform(0.0, 1.0) < mutation_rate)
-            {
-                if (individual(j))
-                    to_false_mutations.push_back(j);
-                else
-                    to_true_mutations.push_back(j);
-            }
+                (individual(j) ? to_false_mutations : to_true_mutations).push_back(j);
 
         shuffle_vector(to_true_mutations);
         shuffle_vector(to_false_mutations);
 
-        Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+        const Index swap_count = std::min(to_true_mutations.size(), to_false_mutations.size());
+
         for(Index k = 0; k < swap_count; ++k)
         {
             individual(to_true_mutations[k]) = true;
@@ -539,8 +538,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         perform_crossover();
 
-        if(mutation_rate != 0)
-            perform_mutation();
+        perform_mutation();
     }
 
     // Set dataset stuff
