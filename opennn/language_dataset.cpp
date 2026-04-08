@@ -77,6 +77,11 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     set_variable_scalers("None");
     set_default_variable_names();
     set_binary_variables();
+
+    // Restore roles after set_binary_variables, which may mark constant columns (e.g. START token) as "None"
+    for_each(variables.begin(),
+             variables.begin() + maximum_input_sequence_length,
+             [](Variable& variable) { variable.role = "Input"; });
 }
 
 const vector<string>& LanguageDataset::get_input_vocabulary() const
@@ -456,6 +461,17 @@ void LanguageDataset::read_csv()
     set_default_variable_names();
     split_samples_random();
     set_binary_variables();
+
+    // Restore input roles after set_binary_variables, which may mark
+    // constant columns (e.g. START token) as "None" and clear their categories
+    for(Index i = 0; i < maximum_input_sequence_length; i++)
+    {
+        variables[i].role = "Input";
+        variables[i].type = VariableType::Numeric;
+    }
+
+    if(!variables.empty())
+        variables[0].categories = input_vocabulary;
 
     cout << "Reading finished" << endl;
 }

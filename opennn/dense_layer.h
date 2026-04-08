@@ -293,7 +293,7 @@ public:
                 ? batch_normalization_training(output, gammas, betas, running_means, running_variances)
                 : batch_normalization_inference(output, gammas, betas, running_means, running_variances);
 */
-        activation(output, activation_function);
+        activation(output, {activation_function});
 
         if(is_training && dropout_rate > type(0))
             dropout(output, dropout_rate);

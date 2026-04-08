@@ -177,10 +177,23 @@ inline void cross_entropy_gradient(const TensorView& input,
 {
 #ifndef CUDA
     const Index n = input.shape[0];
+    const Index num_classes = input.shape.back();
+
     const auto y = input.as_vector().array().cwiseMax(EPSILON).cwiseMin(1.0f - EPSILON);
     const auto t = target.as_vector().array();
 
-    input_gradient.as_vector().array() = (y - t) / (static_cast<type>(n));
+    if(num_classes == 1)
+    {
+        // Binary: raw CE gradient (Dense will apply sigmoid derivative)
+        input_gradient.as_vector().array() =
+            (-t / (y + EPSILON) + (type(1) - t) / (type(1) - y + EPSILON))
+            / static_cast<type>(n);
+    }
+    else
+    {
+        // Multi-class: combined softmax+CE gradient (Dense passes through)
+        input_gradient.as_vector().array() = (y - t) / static_cast<type>(n);
+    }
 #else
     const float scale = 1.0f / static_cast<float>(input.shape[0]);
 

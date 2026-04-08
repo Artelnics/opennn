@@ -46,12 +46,12 @@ public:
         const Index embedding_dimension = get_embedding_dimension();
         const Index head_dimension = get_head_dimension();
 
-        return {{batch_size, query_sequence_length, embedding_dimension},                  // Outputs
-                {batch_size, heads_number, query_sequence_length, head_dimension},         // Query (split heads)
-                {batch_size, heads_number, source_sequence_length, head_dimension},        // Key (split heads)
+        return {{batch_size, heads_number, query_sequence_length, head_dimension},         // Query
+                {batch_size, heads_number, source_sequence_length, head_dimension},        // Key
                 {batch_size, heads_number, query_sequence_length, source_sequence_length}, // AttentionWeights
                 {batch_size, query_sequence_length, embedding_dimension},                  // ConcatenatedAttentionOutputs
-                {batch_size, heads_number, source_sequence_length, head_dimension}};       // Value (split heads)
+                {batch_size, heads_number, source_sequence_length, head_dimension},        // Value
+                {batch_size, query_sequence_length, embedding_dimension}};                 // Outputs (must be last)
     }
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
@@ -70,6 +70,13 @@ public:
                 {batch_size, h_num, q_len, head_dimension}, // Query Gradients
                 {batch_size, h_num, s_len, head_dimension}, // Key Gradients
                 {batch_size, h_num, s_len, head_dimension}};  // Value Gradients
+    }
+
+    void set_input_shape(const Shape& new_input_shape) override
+    {
+        input_shape = new_input_shape;
+        query_sequence_length = new_input_shape[0];
+        embedding_dimension = new_input_shape[1];
     }
 
     void set(const Index = 0,
@@ -98,9 +105,13 @@ private:
     Index query_sequence_length = 0;
     Index source_sequence_length = 0;
 
-    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases};
-    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value, Outputs};
-    enum Backward {InputGradient, OutputGradient};
+    enum Parameters {QueryWeights, QueryBiases, KeyWeights, KeyBiases, ValueWeights, ValueBiases,
+                     ProjectionWeights, ProjectionBiases};
+    enum Forward {Inputs, Query, Key, AttentionWeights, ConcatenatedAttentionOutputs, Value};
+    // Outputs is always the last forward slot (wiring convention) — access via .back()
+    enum Backward {OutputGradient, InputQueryGradient, InputSourceGradient,
+                   AttentionWeightGradient, ConcatenatedOutputGradient,
+                   QueryGradient, KeyGradient, ValueGradient};
 
     bool use_causal_mask = false;
 

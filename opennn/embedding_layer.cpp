@@ -8,8 +8,10 @@
 
 #include "registry.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "embedding_layer.h"
 #include "neural_network.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -37,24 +39,23 @@ void Embedding::set(const Index new_vocabulary_size,
                     Index new_sequence_length,
                     Index new_embedding_dimension,
                     const string& new_label)
-{   
-/*/
-    sequence_length = new_sequence_length;
+{
+    input_shape = {new_sequence_length};
+    vocabulary_size = new_vocabulary_size;
+    embedding_dimension = new_embedding_dimension;
     label = new_label;
 
-    positional_encoding.resize(sequence_length, new_embedding_dimension);
+    positional_encoding.resize(new_sequence_length, new_embedding_dimension);
     positional_encoding.setZero();
 
-    const type half_depth = type(new_embedding_dimension)/2;
+    const type half_depth = type(new_embedding_dimension) / 2;
 
-#pragma omp parallel for collapse(2)
-
-    for(Index i = 0; i < sequence_length; i++)
+    #pragma omp parallel for collapse(2)
+    for(Index i = 0; i < new_sequence_length; i++)
         for(Index j = 0; j < new_embedding_dimension; j++)
             positional_encoding(i, j) = (j < Index(half_depth))
-                ? sin(i / pow(10000, j / half_depth))
-                : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
-*/
+                ? sin(i / pow(type(10000), j / half_depth))
+                : cos(i / pow(type(10000), (j - Index(half_depth)) / half_depth));
 #ifdef CUDA
 
     weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
@@ -102,10 +103,11 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
     const Index batch_size = forward_propagation.batch_size;
     const Index total_tokens = batch_size * get_sequence_length();
 
-    MatrixMap outputs = matrix_map(forward_propagation.views[layer][Outputs][0]);
+    const TensorView& output_view = forward_propagation.views[layer][Outputs][0];
+    MatrixMap outputs(output_view.data, total_tokens, embedding_dimension);
     outputs.setZero();
 
-    const MatrixMap weights = matrix_map(parameters[Weights]);
+    const MatrixMap weights(parameters[Weights].data, vocabulary_size, embedding_dimension);
 
     const type* input_indices = forward_propagation.views[layer][Inputs][0].data;
 
@@ -180,46 +182,17 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 
 void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
-                               size_t index) const
+                               size_t layer) const
 {
-/*
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-*/
 #ifndef CUDA
-/*
 
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index batch_size = forward_propagation->inputs[0].shape[0];
-    const Index sequence_length = forward_propagation->inputs[0].shape[1];
-    const Index total_elements = batch_size * sequence_length;
+    const TensorView& input_indices = forward_propagation.views[layer][Inputs][0];
+    TensorView& output_gradient = back_propagation.backward_views[layer][0][0];
+    TensorView& weight_gradient = back_propagation.gradient_views[layer][Weights];
 
-    const type* input_indices = forward_propagation->inputs[0].data;
+    embedding_backward(input_indices, output_gradient, weight_gradient,
+                       embedding_dimension, scale_embedding);
 
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-
-    MatrixMap gradients_map(back_propagation->output_gradients[0].data, total_elements, embedding_dimension);
-
-    if(scale_embedding)
-        gradients_map *= sqrt(static_cast<type>(embedding_dimension));
-
-    EmbeddingBackPropagation* embedding_back_propagation = static_cast<EmbeddingBackPropagation*>(back_propagation.get());
-    MatrixMap weight_gradients = matrix_map(embedding_back_propagation->weight_gradients);
-    weight_gradients.setZero();
-
-    for(Index i = 0; i < total_elements; i++)
-    {
-        const Index vocabulary_index = static_cast<Index>(input_indices[i]);
-
-        if(vocabulary_index < 0 || vocabulary_index >= weight_gradients.rows())
-            continue;
-
-        weight_gradients.row(vocabulary_index).noalias() += gradients_map.row(i);
-    }
-
-    weight_gradients.row(0).setZero();
-*/
 #else
     const Index batch_size = forward_propagation->batch_size;
     const Index sequence_length = this->sequence_length;

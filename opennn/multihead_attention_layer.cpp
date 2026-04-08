@@ -96,6 +96,8 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     name = "MultiHeadAttention";
     query_sequence_length = new_query_sequence_length;
     source_sequence_length = new_source_sequence_length;
+    embedding_dimension = new_embedding_dimension;
+    input_shape = {new_query_sequence_length, new_embedding_dimension};
     heads_number = new_heads_number;
     label = new_label;
 
@@ -133,107 +135,29 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                                         ? query_input
                                         : forward_propagation.views[layer][Inputs][1];
 
-    const TensorView& query_weights = parameters[QueryWeights];
-    const TensorView& query_biases = parameters[QueryBiases];
     TensorView& query = forward_propagation.views[layer][Query][0];
-
-    projection(query_input, query_weights, query_biases, query);
-
-    const TensorView& key_weights = parameters[KeyWeights];
-    const TensorView& key_biases = parameters[KeyBiases];
     TensorView& key = forward_propagation.views[layer][Key][0];
-
-    projection(source_input, key_weights, key_biases, key);
-
-    const TensorView& value_weights = parameters[ValueWeights];
-    const TensorView& value_biases = parameters[KeyBiases];
     TensorView& value = forward_propagation.views[layer][Value][0];
+    TensorView& attention_weights_view = forward_propagation.views[layer][AttentionWeights][0];
+    TensorView& concatenated = forward_propagation.views[layer][ConcatenatedAttentionOutputs][0];
+    TensorView& output = forward_propagation.views[layer].back()[0];
 
-    projection(source_input, value_weights, value_biases, value);
+    projection(query_input, parameters[QueryWeights], parameters[QueryBiases], query);
+    projection(source_input, parameters[KeyWeights], parameters[KeyBiases], key);
+    projection(source_input, parameters[ValueWeights], parameters[ValueBiases], value);
 
-    TensorView& attention_weights = forward_propagation.views[layer][AttentionWeights][0];
+    multihead_attention_forward(
+        query, key, value,
+        attention_weights_view, concatenated, output,
+        parameters[ProjectionWeights], parameters[ProjectionBiases],
+        source_input,
+        forward_propagation.batch_size, heads_number,
+        query_sequence_length, source_sequence_length,
+        get_embedding_dimension(), get_head_dimension(),
+        get_scaling_factor(), use_causal_mask, causal_mask);
 
-    softmax(attention_weights);
 
-#ifndef CUDA
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index head_dimension = get_head_dimension();
-    const type scaling_factor = get_scaling_factor();
-    const Index batch_size = forward_propagation.batch_size;
-/*
-    Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
-
-    TensorMap3 outputs = tensor_map<3>(forward_propagation->outputs);
-
-    const Index total_heads = batch_size * heads_number;
-
-    type* query_data = query.data();
-    type* key_data = key.data();
-    type* att_weights_data = attention_weights.data();
-
-    #pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
-    {
-        const Index offset_q = i * query_sequence_length * head_dimension;
-        const Index offset_k = i * source_sequence_length * head_dimension;
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-
-        const MatrixMap q_mat(query_data + offset_q, query_sequence_length, head_dimension);
-        const MatrixMap k_mat(key_data + offset_k, source_sequence_length, head_dimension);
-        MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-
-        w_mat.noalias() = (q_mat * k_mat.transpose()) * scaling_factor;
-    }
-
-    apply_key_padding_mask(source_input, attention_weights);
-
-    if (use_causal_mask)
-        apply_causal_mask(attention_weights);
-
-    const Index total_rows_softmax = batch_size * heads_number * query_sequence_length;
-    MatrixMap attention_weights_map(attention_weights.data(), total_rows_softmax, source_sequence_length);
-
-    softmax(attention_weights_map);
-
-    type* value_data = value.data();
-    type* concat_data = concatenated_attention_outputs.data();
-
-    const int original_eigen_threads = Eigen::nbThreads();
-    Eigen::setNbThreads(1);
-
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-    {
-        for (Index h = 0; h < heads_number; ++h)
-        {
-            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
-            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
-
-            const MatrixMap w_mat(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-            const MatrixMap v_mat(value_data + offset_v, source_sequence_length, head_dimension);
-
-            type* out_ptr = concat_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
-
-            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
-            Eigen::Map<MatrixR, 0, StrideType> o_mat(out_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
-
-            o_mat.noalias() = w_mat * v_mat;
-        }
-    }
-
-    Eigen::setNbThreads(original_eigen_threads);
-
-    const MatrixMap projection_weights_map = matrix_map(projection_weights);
-    const VectorMap projection_biases_map = vector_map(projection_biases);
-
-    const Index total_rows = batch_size * query_sequence_length;
-
-    const MatrixMap concatenated_map(const_cast<type*>(concatenated_attention_outputs.data()), total_rows, embedding_dimension);
-    MatrixMap outputs_map(outputs.data(), total_rows, embedding_dimension);
-
-    outputs_map.noalias() = (concatenated_map * projection_weights_map).rowwise() + projection_biases_map.transpose();
-*/
-#else
+#ifdef CUDA
     const Index batch_size = forward->batch_size;
     const Index query_sequence_length = this->query_sequence_length;
     const Index source_sequence_length = this->source_sequence_length;
@@ -354,173 +278,43 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
                                         size_t layer) const
 {
-/*
-    if(back_propagation->output_gradients.size() > 1)
-        add_gradients(back_propagation->output_gradients);
-*/
     const TensorView& query_input = forward_propagation.views[layer][Inputs][0];
-
     const TensorView& source_input = (forward_propagation.views[layer][Inputs].size() == 1)
                                          ? query_input
                                          : forward_propagation.views[layer][Inputs][1];
+    const bool self_attention = (forward_propagation.views[layer][Inputs].size() == 1);
 
-    const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradient][0];
+    TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradient][0];
 
-    const TensorView& query = forward_propagation.views[layer][Query][0];
-    const TensorView& key = forward_propagation.views[layer][Query][0];
-    const TensorView& value = forward_propagation.views[layer][Query][0];
+    multihead_attention_backward(
+        query_input, source_input, output_gradient,
+        forward_propagation.views[layer][Query][0],
+        forward_propagation.views[layer][Key][0],
+        forward_propagation.views[layer][Value][0],
+        forward_propagation.views[layer][AttentionWeights][0],
+        forward_propagation.views[layer][ConcatenatedAttentionOutputs][0],
+        parameters[ProjectionWeights],
+        back_propagation.gradient_views[layer][ProjectionWeights],
+        back_propagation.gradient_views[layer][ProjectionBiases],
+        back_propagation.backward_views[layer][ConcatenatedOutputGradient][0],
+        back_propagation.backward_views[layer][AttentionWeightGradient][0],
+        back_propagation.backward_views[layer][QueryGradient][0],
+        back_propagation.backward_views[layer][KeyGradient][0],
+        back_propagation.backward_views[layer][ValueGradient][0],
+        back_propagation.gradient_views[layer][QueryWeights],
+        back_propagation.gradient_views[layer][QueryBiases],
+        back_propagation.gradient_views[layer][KeyWeights],
+        back_propagation.gradient_views[layer][KeyBiases],
+        back_propagation.gradient_views[layer][ValueWeights],
+        back_propagation.gradient_views[layer][ValueBiases],
+        back_propagation.backward_views[layer][InputQueryGradient][0],
+        parameters[QueryWeights], parameters[KeyWeights], parameters[ValueWeights],
+        forward_propagation.batch_size, heads_number,
+        query_sequence_length, source_sequence_length,
+        get_embedding_dimension(), get_head_dimension(),
+        get_scaling_factor(), self_attention);
 
-#ifndef CUDA
-/*
-    const Tensor4& attention_weights = this_forward_propagation->attention_weights;
-    const Tensor3& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
-
-    // Back propagation
-
-    MatrixMap projection_weight_gradients = matrix_map(this_back_propagation->projection_weight_gradients);
-    VectorMap projection_bias_gradients = vector_map(this_back_propagation->projection_bias_gradients);
-    Tensor3& concatenated_attention_output_gradients = this_back_propagation->concatenated_attention_output_gradients;
-    Tensor4& attention_weight_gradients = this_back_propagation->attention_weight_gradients;
-    Tensor4& query_gradients = this_back_propagation->query_gradients;
-    Tensor4& key_gradients = this_back_propagation->key_gradients;
-    Tensor4& value_gradients = this_back_propagation->value_gradients;
-    MatrixMap query_weight_gradients = matrix_map(this_back_propagation->query_weight_gradients);
-    VectorMap query_bias_gradients = vector_map(this_back_propagation->query_bias_gradients);
-    MatrixMap key_weight_gradients = matrix_map(this_back_propagation->key_weight_gradients);
-    VectorMap key_bias_gradients = vector_map(this_back_propagation->key_bias_gradients);
-    MatrixMap value_weight_gradients = matrix_map(this_back_propagation->value_weight_gradients);
-    VectorMap value_bias_gradients = vector_map(this_back_propagation->value_bias_gradients);
-
-    TensorMap3 input_query_gradients = tensor_map<3>(back_propagation->input_gradients[0]);
-
-    const bool self_attention = (forward_propagation->inputs.size() == 1);
-
-    const Index batch_size = this_forward_propagation->batch_size;
-    const Index embedding_dimension = get_embedding_dimension();
-    const Index head_dimension = get_head_dimension();
-    const type scaling_factor = get_scaling_factor();
-
-    const Index total_rows = batch_size * query_sequence_length;
-    const Index total_heads = batch_size * heads_number;
-
-    const MatrixMap concatenated_map(const_cast<type*>(concatenated_attention_outputs.data()), total_rows, embedding_dimension);
-    const MatrixMap delta_Y_map(const_cast<type*>(delta_Y.data()), total_rows, embedding_dimension);
-
-    projection_weight_gradients.noalias() = concatenated_map.transpose() * delta_Y_map;
-
-    projection_bias_gradients.noalias() = delta_Y_map.colwise().sum();
-
-    MatrixMap concat_grad_map(concatenated_attention_output_gradients.data(), total_rows, embedding_dimension);
-    const MatrixMap proj_weights_map = matrix_map(projection_weights);
-
-    concat_grad_map.noalias() = delta_Y_map * proj_weights_map.transpose();
-
-    type* att_weights_data = const_cast<type*>(attention_weights.data());
-    type* v_data = const_cast<type*>(value.data());
-    type* v_grad_data = value_gradients.data();
-    type* att_weight_grad_data = attention_weight_gradients.data();
-    type* concat_grad_data = concatenated_attention_output_gradients.data();
-
-    const int original_eigen_threads = Eigen::nbThreads();
-    Eigen::setNbThreads(1);
-
-    #pragma omp parallel for collapse(2)
-    for (Index b = 0; b < batch_size; ++b)
-    {
-        for (Index h = 0; h < heads_number; ++h)
-        {
-            const Index offset_w = b * (heads_number * query_sequence_length * source_sequence_length) + h * (query_sequence_length * source_sequence_length);
-            const Index offset_v = b * (heads_number * source_sequence_length * head_dimension) + h * (source_sequence_length * head_dimension);
-
-            const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-            const MatrixMap V(v_data + offset_v, source_sequence_length, head_dimension);
-
-            MatrixMap dV(v_grad_data + offset_v, source_sequence_length, head_dimension);
-            MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
-
-            type* dO_ptr = concat_grad_data + b * (query_sequence_length * embedding_dimension) + h * head_dimension;
-
-            using StrideType = Eigen::OuterStride<Eigen::Dynamic>;
-            Eigen::Map<const MatrixR, 0, StrideType> dO(dO_ptr, query_sequence_length, head_dimension, StrideType(embedding_dimension));
-
-            dV.noalias() = W.transpose() * dO;
-            dW.noalias() = dO * V.transpose();
-        }
-    }
-    Eigen::setNbThreads(original_eigen_threads);
-
-#pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
-    {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const MatrixMap W(att_weights_data + offset_w, query_sequence_length, source_sequence_length);
-
-        // Remove 'const' so we can overwrite it
-        MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
-
-        VectorR dot_product = (W.array() * dW.array()).rowwise().sum();
-
-        // Overwrite dW in-place
-        dW.array() = W.array() * (dW.colwise() - dot_product).array();
-    }
-
-    type* q_data = const_cast<type*>(query.data());
-    type* k_data = const_cast<type*>(key.data());
-    type* q_grad_data = query_gradients.data();
-    type* k_grad_data = key_gradients.data();
-
-#pragma omp parallel for
-    for(Index i = 0; i < total_heads; ++i)
-    {
-        const Index offset_w = i * query_sequence_length * source_sequence_length;
-        const Index offset_q = i * query_sequence_length * head_dimension;
-        const Index offset_k = i * source_sequence_length * head_dimension;
-
-        // Use att_weight_grad_data (which now holds the softmax derivative)
-        const MatrixMap dW(att_weight_grad_data + offset_w, query_sequence_length, source_sequence_length);
-        const MatrixMap Q(q_data + offset_q, query_sequence_length, head_dimension);
-        const MatrixMap K(k_data + offset_k, source_sequence_length, head_dimension);
-
-        MatrixMap dQ(q_grad_data + offset_q, query_sequence_length, head_dimension);
-        MatrixMap dK(k_grad_data + offset_k, source_sequence_length, head_dimension);
-
-        dQ.noalias() = (dW * K) * scaling_factor;
-        dK.noalias() = (dW.transpose() * Q) * scaling_factor;
-    }
-
-    // Query Projection
-    calculate_projection_gradient(query_gradients, query_input, query_weights,
-                                  query_bias_gradients, query_weight_gradients,
-                                  input_query_gradients, batch_size, false);
-
-    if(self_attention)
-    {
-        // Key Projection
-        calculate_projection_gradient(key_gradients, source_input, key_weights,
-                                      key_bias_gradients, key_weight_gradients,
-                                      input_query_gradients, batch_size, true);
-
-        // Value Projection
-        calculate_projection_gradient(value_gradients, source_input, value_weights,
-                                      value_bias_gradients, value_weight_gradients,
-                                      input_query_gradients, batch_size, true);
-    }
-    else
-    {
-        TensorMap3 input_source_gradients = tensor_map<3>(back_propagation->input_gradients[1]);
-
-        // Key Projection
-        calculate_projection_gradient(key_gradients, source_input, key_weights,
-                                      key_bias_gradients, key_weight_gradients,
-                                      input_source_gradients, batch_size, false);
-
-        // Value Projection
-        calculate_projection_gradient(value_gradients, source_input, value_weights,
-                                      value_bias_gradients, value_weight_gradients,
-                                      input_source_gradients, batch_size, true);
-    }
-*/
-#else
+#ifdef CUDA
     back->ones.fill(1.0f);
 
     const Index batch_size = forward->batch_size;
