@@ -75,7 +75,7 @@ Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 type r_correlation_to_z_correlation(const type);
 type z_correlation_to_r_correlation(const type);
 
-VectorR confidence_interval_z_correlation(const type, Index);
+pair<type, type> confidence_interval_z_correlation(const type, Index);
 
 // Time series correlation
 

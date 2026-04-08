@@ -104,12 +104,8 @@ void unscale_minimum_maximum(MatrixMap matrix,
     if(max_range - min_range < EPSILON)
         throw runtime_error("The range values are not valid.");
 
-    #pragma omp parallel for
-    for(Index i = 0; i < matrix.rows(); i++)
-    {
-        const type normalized = (matrix(i, column_index) - min_range) / (max_range - min_range);
-        matrix(i,column_index) = normalized * (maximum - minimum) + minimum;
-    }
+    matrix.col(column_index).array() =
+        (matrix.col(column_index).array() - min_range) / (max_range - min_range) * (maximum - minimum) + minimum;
 }
 
 void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
@@ -119,16 +115,11 @@ void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const
 
     if(standard_deviation < EPSILON)
     {
-        #pragma omp parallel for
-        for(Index i = 0; i < matrix.rows(); i++)
-            matrix(i, column_index) = mean;
-
+        matrix.col(column_index).setConstant(mean);
         return;
     }
 
-    #pragma omp parallel for
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
+    matrix.col(column_index).array() = mean + matrix.col(column_index).array() * standard_deviation;
 }
 
 void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
@@ -137,26 +128,17 @@ void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Desc
             ? type(1)
             : column_descriptives.standard_deviation;
 
-    #pragma omp parallel for
-
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) = matrix(i, column_index) * slope;
+    matrix.col(column_index) *= slope;
 }
 
 void unscale_logarithmic(MatrixMap matrix, Index column_index)
 {
-    #pragma omp parallel for
-
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) = exp(matrix(i, column_index));
+    matrix.col(column_index).array() = matrix.col(column_index).array().exp();
 }
 
 void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
 {
-    #pragma omp parallel for
-
-    for(Index i = 0; i < matrix.rows(); i++)
-        matrix(i, column_index) *= type(255);
+    matrix.col(column_index) *= type(255);
 }
 
 void unscale_minimum_maximum(MatrixR& matrix,

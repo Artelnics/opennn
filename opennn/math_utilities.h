@@ -677,7 +677,7 @@ inline void convolution(const TensorView& input,
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        type* current_kernel_ptr = kernel.data + (kernel_index * single_kernel_size);
+        type* current_kernel_ptr = kernel.data + kernel_index * single_kernel_size;
         TensorMap3 kernel_weights(current_kernel_ptr, kernel_height, kernel_width, kernel_channels);
 
         outputs.chip(kernel_index, 3).device(get_device()) =

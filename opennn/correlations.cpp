@@ -104,12 +104,14 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
 
         if(!x_binary && !y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
-        else if(!x_binary && y_binary)
+
+        if(y_binary && !x_binary)
             return logistic_correlation_spearman(x_vector, y_vector);
-        else if(x_binary && !y_binary)
+
+        if(x_binary && !y_binary)
             return logistic_correlation_spearman(y_vector, x_vector);
-        else if(x_binary && y_binary)
-            return linear_correlation_spearman(x_vector, y_vector);
+
+        return linear_correlation_spearman(x_vector, y_vector);
     }
 
     if(x_columns == 1 && y_columns != 1)
@@ -188,11 +190,14 @@ Correlation linear_correlation(const VectorR& x,
     if(x_filter.size() == 0)
         return Correlation();
 
-    const double s_x = x_filter.cast<double>().sum();
-    const double s_y = y_filter.cast<double>().sum();
-    const double s_xx = x_filter.cast<double>().squaredNorm();
-    const double s_yy = y_filter.cast<double>().squaredNorm();
-    const double s_xy = x_filter.cast<double>().dot(y_filter.cast<double>());
+    const auto x_double = x_filter.cast<double>();
+    const auto y_double = y_filter.cast<double>();
+
+    const double s_x = x_double.sum();
+    const double s_y = y_double.sum();
+    const double s_xx = x_double.squaredNorm();
+    const double s_yy = y_double.squaredNorm();
+    const double s_xy = x_double.dot(y_double);
 
     const double denominator = sqrt((double(n) * s_xx - s_x * s_x) * (double(n) * s_yy - s_y * s_y));
 
@@ -207,10 +212,10 @@ Correlation linear_correlation(const VectorR& x,
 
     const type z_correlation = r_correlation_to_z_correlation(linear_correlation.r);
 
-    const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, n);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, n);
 
-    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(confidence_interval_z(0)), type(-1), type(1));
-    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(confidence_interval_z(1)), type(-1), type(1));
+    linear_correlation.lower_confidence = clamp(z_correlation_to_r_correlation(ci_lower), type(-1), type(1));
+    linear_correlation.upper_confidence = clamp(z_correlation_to_r_correlation(ci_upper), type(-1), type(1));
     linear_correlation.r = clamp(linear_correlation.r, type(-1), type(1));
 
     return linear_correlation;
@@ -228,16 +233,11 @@ type z_correlation_to_r_correlation (const type z_correlation)
     return tanh(z_correlation);
 }
 
-VectorR confidence_interval_z_correlation(const type z_correlation, Index n)
+pair<type, type> confidence_interval_z_correlation(const type z_correlation, Index n)
 {
-    VectorR confidence_interval(2);
+    const type margin = type(1.959964) * type(1/sqrt(n - 3));
 
-    const type z_standard_error = type(1.959964);
-
-    confidence_interval(0) = z_correlation - z_standard_error * type(1/sqrt(n - 3));
-    confidence_interval(1) = z_correlation + z_standard_error * type(1/sqrt(n - 3));
-
-    return confidence_interval;
+    return { z_correlation - margin, z_correlation + margin };
 }
 
 VectorR calculate_spearman_ranks(const VectorR& x)
@@ -353,10 +353,10 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     }
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-    const VectorR ci = confidence_interval_z_correlation(z_correlation, inputs.rows());
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, inputs.rows());
 
-    correlation.lower_confidence = z_correlation_to_r_correlation(ci(0));
-    correlation.upper_confidence = z_correlation_to_r_correlation(ci(1));
+    correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
+    correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
     const VectorR coefficients = neural_network.get_parameters();
     correlation.a = coefficients(0);
@@ -481,11 +481,10 @@ Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
-    const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, x_filter.size());
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, x_filter.size());
 
-    correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-    correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
+    correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
+    correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
     return correlation;
 }
@@ -580,11 +579,10 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
 
-    const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.rows());
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z_correlation, inputs.rows());
 
-    correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-    correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
+    correlation.lower_confidence = z_correlation_to_r_correlation(ci_lower);
+    correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
     correlation.form = Correlation::Form::Sigmoid;
 
@@ -641,10 +639,10 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     result.r = type(clamp(r_pb, -1.0, 1.0));
 
-    const type z  = r_correlation_to_z_correlation(result.r);
-    const VectorR ci = confidence_interval_z_correlation(z, n);
-    result.lower_confidence = z_correlation_to_r_correlation(ci(0));
-    result.upper_confidence = z_correlation_to_r_correlation(ci(1));
+    const type z = r_correlation_to_z_correlation(result.r);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
+    result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
+    result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
     return result;
 }
@@ -696,10 +694,10 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     result.r = type(clamp(sqrt(eta_sq), 0.0, 1.0));
 
-    const type z      = r_correlation_to_z_correlation(result.r);
-    const VectorR ci  = confidence_interval_z_correlation(z, n);
-    result.lower_confidence = z_correlation_to_r_correlation(ci(0));
-    result.upper_confidence = z_correlation_to_r_correlation(ci(1));
+    const type z = r_correlation_to_z_correlation(result.r);
+    const auto [ci_lower, ci_upper] = confidence_interval_z_correlation(z, n);
+    result.lower_confidence = z_correlation_to_r_correlation(ci_lower);
+    result.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 
     return result;
 }
