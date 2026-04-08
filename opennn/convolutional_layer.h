@@ -44,10 +44,10 @@ public:
 
     Index get_row_stride() const { return row_stride; }
 
-    Index get_kernel_height() const { return parameters[Weights].shape[1]; }
-    Index get_kernel_width() const { return parameters[Weights].shape[2]; }
-    Index get_kernel_channels() const { return parameters[Weights].shape[3]; }
-    Index get_kernels_number() const { return parameters[Weights].shape[0]; }
+    Index get_kernel_height() const { return kernel_height; }
+    Index get_kernel_width() const { return kernel_width; }
+    Index get_kernel_channels() const { return kernel_channels; }
+    Index get_kernels_number() const { return kernels_number; }
 
     Index get_padding_height() const;
     Index get_padding_width() const;
@@ -76,108 +76,7 @@ public:
         const Index input_channels = get_input_channels();
 
         return {{batch_size, input_height, input_width, input_channels},
-                 // Rotated Weights (Aux): {kernels, k_h, k_w, k_c}
                 {kernels_number, kernel_height, kernel_width, kernel_channels}};
-/*
-        rotated_weights.resize(kernels_number, kernel_height, kernel_width, kernel_channels);
-
-        input_gradients = {{nullptr, {batch_size, input_height, input_width, channels}}};
-
-        // Batch Normalization
-
-        if (batch_normalization)
-        {
-            gamma_gradients.shape = {kernels_number};
-            beta_gradients.shape = {kernels_number};
-        }
-
-    const Index input_height = convolutional_layer->get_input_height();
-    const Index input_width = convolutional_layer->get_input_width();
-    const Index channels = convolutional_layer->get_input_channels();
-
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
-
-    // Input Deltas
-
-    input_gradients = {TensorView({batch_size, input_height, input_width, channels})};
-
-    // Deltas
-
-    cudnnSetTensor4dDescriptor(gradients_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
-                               CUDNN_DATA_FLOAT,
-                               batch_size,
-                               kernels_number,
-                               output_height,
-                               output_width);
-
-    // Biases derivatives
-
-    bias_gradients.set_descriptor({ kernels_number });
-
-    // Weight derivatives
-
-    weight_gradients.set_descriptor({ kernels_number, kernel_height, kernel_width, channels });
-
-    // Workspace
-
-    int returned_algo_count;
-    cudnnConvolutionBwdDataAlgoPerf_t data_perf;
-    cudnnConvolutionBwdFilterAlgoPerf_t filter_perf;
-
-    CHECK_CUDNN(cudnnFindConvolutionBackwardDataAlgorithm(
-        get_cudnn_handle(),
-        convolutional_layer->get_kernel_descriptor(),
-        gradients_tensor_descriptor,
-        convolutional_layer->get_convolution_descriptor(),
-        input_gradients[0].get_descriptor(),
-        1, &returned_algo_count, &data_perf));
-
-    algo_data = data_perf.algo;
-
-    CHECK_CUDNN(cudnnFindConvolutionBackwardFilterAlgorithm(
-        get_cudnn_handle(),
-        input_gradients[0].get_descriptor(),
-        gradients_tensor_descriptor,
-        convolutional_layer->get_convolution_descriptor(),
-        convolutional_layer->get_kernel_descriptor(),
-        1, &returned_algo_count, &filter_perf));
-
-    algo_filter = filter_perf.algo;
-
-    cudnnGetConvolutionBackwardDataWorkspaceSize(get_cudnn_handle(),
-                                                 convolutional_layer->get_kernel_descriptor(),
-                                                 gradients_tensor_descriptor,
-                                                 convolutional_layer->get_convolution_descriptor(),
-                                                 input_gradients[0].get_descriptor(),
-                                                 algo_data,
-                                                 &workspace_size);
-
-    cudnnGetConvolutionBackwardFilterWorkspaceSize(get_cudnn_handle(),
-                                                   input_gradients[0].get_descriptor(),
-                                                   gradients_tensor_descriptor,
-                                                   convolutional_layer->get_convolution_descriptor(),
-                                                   convolutional_layer->get_kernel_descriptor(),
-                                                   algo_filter,
-                                                   &backward_filter_workspace_bytes);
-
-    // Workspace memory
-
-    CHECK_CUDA(cudaMalloc(&workspace, workspace_size));
-
-    CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes));
-
-    // Batch Normalization
-
-    if (convolutional_layer->get_batch_normalization())
-    {
-        beta_gradients.set_descriptor({ kernels_number });
-        gamma_gradients.set_descriptor({ kernels_number });
-    }
-
-*/
-        return {};
     }
 
     bool use_convolutions() const
@@ -261,7 +160,7 @@ private:
     Index kernel_channels = 0;
 
     enum Parameters {Biases, Weights, Gammas, Betas};
-    enum Forward {Inputs, PaddedInputs, Outputs, ActivationDerivatives};
+    enum Forward {Inputs, PaddedInputs};
     enum Backward {OutputGradients, InputGradients};
 
     // @todo Forward TensorCuda inverse_variance;

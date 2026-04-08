@@ -380,6 +380,9 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
 
     Dataset* dataset = loss->get_dataset();
+
+
+
     if(!dataset) throw runtime_error("Dataset is null.");
 
     const bool has_validation = dataset->has_validation();

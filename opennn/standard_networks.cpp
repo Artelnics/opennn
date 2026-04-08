@@ -29,7 +29,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.size();
+    const Index complexity_size = complexity_dimensions.rank;
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
@@ -65,7 +65,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
                                              const Shape& output_shape) : NeuralNetwork()
 {
-    const Index complexity_size = complexity_dimensions.size();
+    const Index complexity_size = complexity_dimensions.rank;
 
     add_layer(make_unique<Scaling<2>>(input_shape));
 
@@ -175,21 +175,21 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     scaling_layer->set_scalers("ImageMinMax");
     add_layer(std::move(scaling_layer));
 
-    const Index complexity_size = complexity_dimensions.size();
+    const Index complexity_size = complexity_dimensions.rank;
 
     for(Index i = 0; i < complexity_size; i++)
     {
         const Shape kernel_shape = { 3, 3, get_output_shape()[2], complexity_dimensions[i] };
         const Shape stride_shape = { 1, 1 };
-        
+
         add_layer(make_unique<Convolutional>(get_output_shape(),
                                              kernel_shape,
                                              "RectifiedLinear",
                                              stride_shape,
                                              "Same",
-                                             false, // Batch normalization
+                                             false,
                                              "convolutional_layer_" + to_string(i + 1)));
-        
+
         const Shape pool_dimensions = { 2, 2 };
         const Shape pooling_stride_shape = { 2, 2 };
         const Shape padding_dimensions = { 0, 0 };
@@ -200,7 +200,6 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                        padding_dimensions,
                                        "MaxPooling",
                                        "pooling_layer_" + to_string(i + 1)));
-
     }
 
     add_layer(make_unique<Flatten<4>>(get_output_shape()));
@@ -208,7 +207,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     add_layer(make_unique<Dense<2>>(get_output_shape(),
                                    output_shape,
                                    "Softmax",
-                                   false, // Batch normalization
+                                   false,
                                    "dense_2d_layer"));
 
     compile();

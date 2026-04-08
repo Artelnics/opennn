@@ -31,7 +31,7 @@ int main()
 
         LanguageDataset language_dataset("../data/emotion_analysis_tiny.txt");
 
-        language_dataset.print();
+        //language_dataset.print();
 
         cout << language_dataset.get_input_vocabulary();
 
@@ -48,7 +48,7 @@ int main()
                                                               {heads_number},
                                                               {targets_number});
 
-        text_classification_network.print();
+        //text_classification_network.print();
 
         // Training Strategy
 

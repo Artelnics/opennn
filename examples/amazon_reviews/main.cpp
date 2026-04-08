@@ -51,7 +51,7 @@ int main()
         adam->set_maximum_epochs(100);
         adam->set_display_period(10);
 
-        training_strategy.set_loss("CrossEntropyError2d");
+        training_strategy.set_loss("CrossEntropy");
 
         cout << "Training network..." << endl;
         training_strategy.train();

@@ -526,7 +526,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     if(loss->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss->get_name() == "CrossEntropyError2d")
+    else if(loss->get_name() == "CrossEntropy")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     else if(loss->get_name() == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");

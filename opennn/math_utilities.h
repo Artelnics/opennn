@@ -208,13 +208,27 @@ inline void average_pooling(const TensorView& input, TensorView& output, const P
 
 
 inline void padding(const TensorView& input, TensorView& output)
-{       
+{
 #ifndef CUDA
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
-/*
-    output_map.device(get_device()) = input_map.pad(input_map);
-*/
+
+    output_map.setZero();
+
+    const Index batch_size = input_map.dimension(0);
+    const Index input_height = input_map.dimension(1);
+    const Index input_width = input_map.dimension(2);
+    const Index channels = input_map.dimension(3);
+
+    const Index pad_height = (output_map.dimension(1) - input_height) / 2;
+    const Index pad_width = (output_map.dimension(2) - input_width) / 2;
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; ++b)
+        for(Index h = 0; h < input_height; ++h)
+            for(Index w = 0; w < input_width; ++w)
+                for(Index c = 0; c < channels; ++c)
+                    output_map(b, h + pad_height, w + pad_width, c) = input_map(b, h, w, c);
 #else
 
 #endif
@@ -589,6 +603,8 @@ inline void batch_normalization_training(
 }
 
 
+inline void softmax(TensorView& output);
+
 inline void activation(TensorView& output, ActivationFunction func)
 {
     if (output.empty() || func == ActivationFunction::Linear)
@@ -626,7 +642,7 @@ inline void activation(TensorView& output, ActivationFunction func)
 
     case ActivationFunction::Softmax:
     {
-//        softmax(output);
+        softmax(output);
         return;
     }
 
@@ -777,17 +793,18 @@ inline void convolution(const TensorView& input,
 #ifndef CUDA
 
     const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs = output.as_tensor<4>();
     const VectorMap biases = bias.as_vector();
 
     const Index batch_size = inputs.dimension(0);
-/*
-    const Index output_height = convolutions.dimension(1);
-    const Index output_width = convolutions.dimension(2);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width = outputs.dimension(2);
 
-    const Index kernels_number = get_kernels_number();
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index kernel_channels = get_kernel_channels();
+    // kernel shape: {kernels_number, kernel_height, kernel_width, kernel_channels}
+    const Index kernels_number = kernel.shape[0];
+    const Index kernel_height = kernel.shape[1];
+    const Index kernel_width = kernel.shape[2];
+    const Index kernel_channels = kernel.shape[3];
 
     const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
 
@@ -797,13 +814,12 @@ inline void convolution(const TensorView& input,
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        type* current_kernel_ptr = parameters[Weights].data + (kernel_index * single_kernel_size);
+        type* current_kernel_ptr = kernel.data + (kernel_index * single_kernel_size);
         TensorMap3 kernel_weights(current_kernel_ptr, kernel_height, kernel_width, kernel_channels);
 
-        convolutions.chip(kernel_index, 3).device(get_device()) =
+        outputs.chip(kernel_index, 3).device(get_device()) =
             inputs.convolve(kernel_weights, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
     }
-*/
 #else
     CHECK_CUDNN(cudnnConvolutionForward(get_cudnn_handle(),
                                         &one,
@@ -966,6 +982,260 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
                                &beta_one,
                                output_tensor.descriptor,
                                output_tensor.data));
+#endif
+}
+
+
+// --- Max Pooling Backward ---
+
+inline void max_pooling_backward(const TensorView& output_gradient,
+                                  const TensorView& maximal_indices,
+                                  TensorView& input_gradient,
+                                  const PoolingArguments& arguments)
+{
+#ifndef CUDA
+    const TensorMap4 out_grad = output_gradient.as_tensor<4>();
+    const TensorMap4 max_idx = maximal_indices.as_tensor<4>();
+    TensorMap4 in_grad = input_gradient.as_tensor<4>();
+
+    const Index batch_size = in_grad.dimension(0);
+    const Index input_height = in_grad.dimension(1);
+    const Index input_width = in_grad.dimension(2);
+    const Index channels = in_grad.dimension(3);
+
+    const Index output_height = out_grad.dimension(1);
+    const Index output_width = out_grad.dimension(2);
+
+    const Index pool_height = arguments.pool_dimensions[0];
+    const Index pool_width = arguments.pool_dimensions[1];
+    const Index row_stride = arguments.stride_shape[0];
+    const Index column_stride = arguments.stride_shape[1];
+    const Index padding_height = arguments.padding_shape[0];
+    const Index padding_width = arguments.padding_shape[1];
+
+    in_grad.setZero();
+
+    #pragma omp parallel for collapse(2)
+    for(Index b = 0; b < batch_size; ++b)
+        for(Index c = 0; c < channels; ++c)
+            for(Index oh = 0; oh < output_height; ++oh)
+                for(Index ow = 0; ow < output_width; ++ow)
+                {
+                    const Index idx = static_cast<Index>(max_idx(b, oh, ow, c));
+                    const Index ih = oh * row_stride + idx / pool_width - padding_height;
+                    const Index iw = ow * column_stride + idx % pool_width - padding_width;
+
+                    if(ih >= 0 && ih < input_height && iw >= 0 && iw < input_width)
+                        in_grad(b, ih, iw, c) += out_grad(b, oh, ow, c);
+                }
+#else
+    CHECK_CUDNN(cudnnPoolingBackward(get_cudnn_handle(),
+                                      arguments.pooling_descriptor,
+                                      &one,
+                                      output_gradient.get_descriptor(), output_gradient.data,
+                                      output_gradient.get_descriptor(), output_gradient.data,
+                                      input_gradient.get_descriptor(), input_gradient.data,
+                                      &zero,
+                                      input_gradient.get_descriptor(), input_gradient.data));
+#endif
+}
+
+
+// --- Average Pooling Backward ---
+
+inline void average_pooling_backward(const TensorView& output_gradient,
+                                      TensorView& input_gradient,
+                                      const PoolingArguments& arguments)
+{
+#ifndef CUDA
+    const TensorMap4 out_grad = output_gradient.as_tensor<4>();
+    TensorMap4 in_grad = input_gradient.as_tensor<4>();
+
+    const Index batch_size = in_grad.dimension(0);
+    const Index input_height = in_grad.dimension(1);
+    const Index input_width = in_grad.dimension(2);
+    const Index channels = in_grad.dimension(3);
+
+    const Index output_height = out_grad.dimension(1);
+    const Index output_width = out_grad.dimension(2);
+
+    const Index pool_height = arguments.pool_dimensions[0];
+    const Index pool_width = arguments.pool_dimensions[1];
+    const Index row_stride = arguments.stride_shape[0];
+    const Index column_stride = arguments.stride_shape[1];
+    const Index padding_height = arguments.padding_shape[0];
+    const Index padding_width = arguments.padding_shape[1];
+
+    const type inv_pool_size = type(1) / (pool_height * pool_width);
+
+    in_grad.setZero();
+
+    #pragma omp parallel for collapse(2)
+    for(Index b = 0; b < batch_size; ++b)
+        for(Index c = 0; c < channels; ++c)
+            for(Index oh = 0; oh < output_height; ++oh)
+                for(Index ow = 0; ow < output_width; ++ow)
+                {
+                    const type avg_grad = out_grad(b, oh, ow, c) * inv_pool_size;
+                    const Index ih_start = oh * row_stride - padding_height;
+                    const Index iw_start = ow * column_stride - padding_width;
+
+                    for(Index ph = 0; ph < pool_height; ++ph)
+                        for(Index pw = 0; pw < pool_width; ++pw)
+                        {
+                            const Index ih = ih_start + ph;
+                            const Index iw = iw_start + pw;
+
+                            if(ih >= 0 && ih < input_height && iw >= 0 && iw < input_width)
+                                in_grad(b, ih, iw, c) += avg_grad;
+                        }
+                }
+#else
+    CHECK_CUDNN(cudnnPoolingBackward(get_cudnn_handle(),
+                                      arguments.pooling_descriptor,
+                                      &one,
+                                      output_gradient.get_descriptor(), output_gradient.data,
+                                      output_gradient.get_descriptor(), output_gradient.data,
+                                      input_gradient.get_descriptor(), input_gradient.data,
+                                      &zero,
+                                      input_gradient.get_descriptor(), input_gradient.data));
+#endif
+}
+
+
+// --- Convolution Backward Weights ---
+
+inline void convolution_backward_weights(const TensorView& padded_input,
+                                          const TensorView& output_gradient,
+                                          TensorView& weight_gradient,
+                                          TensorView& bias_gradient)
+{
+#ifndef CUDA
+    const TensorMap4 inputs = padded_input.as_tensor<4>();
+    const TensorMap4 out_grad = output_gradient.as_tensor<4>();
+
+    const Index kernels_number = weight_gradient.shape[0];
+    const Index kernel_height = weight_gradient.shape[1];
+    const Index kernel_width = weight_gradient.shape[2];
+    const Index kernel_channels = weight_gradient.shape[3];
+    const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
+
+    // Weight gradients
+    const Eigen::array<Index, 3> conv_dims({0, 1, 2});
+
+    #pragma omp parallel for
+    for(Index ki = 0; ki < kernels_number; ki++)
+    {
+        const Tensor3 kernel_grads = out_grad.chip(ki, 3);
+
+        TensorMap4 kernel_weight_grads(weight_gradient.data + (ki * single_kernel_size),
+                                        1, kernel_height, kernel_width, kernel_channels);
+
+        kernel_weight_grads.device(get_device()) = inputs.convolve(kernel_grads, conv_dims);
+    }
+
+    // Bias gradients
+    sum(output_gradient, bias_gradient);
+
+#else
+    CHECK_CUDNN(cudnnConvolutionBackwardFilter(get_cudnn_handle(),
+                                                &one,
+                                                padded_input.get_descriptor(), padded_input.data,
+                                                output_gradient.get_descriptor(), output_gradient.data,
+                                                convolution_descriptor,
+                                                algo_filter,
+                                                backward_filter_workspace, backward_filter_workspace_bytes,
+                                                &zero,
+                                                kernel_descriptor,
+                                                weight_gradient.data));
+
+    CHECK_CUDNN(cudnnConvolutionBackwardBias(get_cudnn_handle(),
+                                              &one,
+                                              output_gradient.get_descriptor(), output_gradient.data,
+                                              &zero,
+                                              bias_gradient.get_descriptor(), bias_gradient.data));
+#endif
+}
+
+
+// --- Convolution Backward Data (input gradients) ---
+
+inline void convolution_backward_data(const TensorView& output_gradient,
+                                       const TensorView& weights,
+                                       TensorView& input_gradient,
+                                       TensorView& rotated_weights_buffer)
+{
+#ifndef CUDA
+    const TensorMap4 out_grad = output_gradient.as_tensor<4>();
+    TensorMap4 in_grad = input_gradient.as_tensor<4>();
+
+    const Index batch_size = in_grad.dimension(0);
+    const Index input_height = in_grad.dimension(1);
+    const Index input_width = in_grad.dimension(2);
+    const Index input_channels = in_grad.dimension(3);
+
+    const Index kernels_number = weights.shape[0];
+    const Index kernel_height = weights.shape[1];
+    const Index kernel_width = weights.shape[2];
+
+    in_grad.setZero();
+
+    // Rotate weights 180 degrees (flip height and width)
+    TensorMap4 rotated(rotated_weights_buffer.data, kernels_number, kernel_height, kernel_width, input_channels);
+    const TensorMap4 weights_map(weights.data, kernels_number, kernel_height, kernel_width, input_channels);
+    rotated.device(get_device()) = weights_map.reverse(Eigen::array<bool, 4>({false, true, true, false}));
+
+    // Padding for full convolution
+    const Index out_h = out_grad.dimension(1);
+    const Index out_w = out_grad.dimension(2);
+    const Index pad_h = (input_height + kernel_height - 1) - out_h;
+    const Index pad_w = (input_width + kernel_width - 1) - out_w;
+
+    const Eigen::array<pair<Index, Index>, 2> paddings =
+        {make_pair(pad_h / 2, pad_h - pad_h / 2), make_pair(pad_w / 2, pad_w - pad_w / 2)};
+
+    // Precompute rotated weight slices
+    vector<vector<Tensor2>> rotated_slices(kernels_number, vector<Tensor2>(input_channels));
+
+    for(Index ki = 0; ki < kernels_number; ++ki)
+    {
+        auto kernel_rotated = rotated.chip(ki, 0);
+        for(Index ci = 0; ci < input_channels; ++ci)
+            rotated_slices[ki][ci] = kernel_rotated.chip(ci, 2);
+    }
+
+    const Eigen::array<Index, 2> conv_dims_2d = {0, 1};
+
+    for(Index ki = 0; ki < kernels_number; ++ki)
+    {
+        auto kernel_grads = out_grad.chip(ki, 3);
+
+        #pragma omp parallel for
+        for(Index bi = 0; bi < batch_size; ++bi)
+        {
+            const Tensor2 padded_grads = kernel_grads.chip(bi, 0).pad(paddings);
+
+            for(Index ci = 0; ci < input_channels; ++ci)
+            {
+                const Tensor2 result = padded_grads.convolve(rotated_slices[ki][ci], conv_dims_2d);
+
+                for(Index h = 0; h < input_height; ++h)
+                    for(Index w = 0; w < input_width; ++w)
+                        in_grad(bi, h, w, ci) += result(h, w);
+            }
+        }
+    }
+
+#else
+    CHECK_CUDNN(cudnnConvolutionBackwardData(get_cudnn_handle(),
+                                              &one,
+                                              weights.get_descriptor(), weights.data,
+                                              output_gradient.get_descriptor(), output_gradient.data,
+                                              convolution_descriptor,
+                                              algo_data,
+                                              workspace, workspace_size,
+                                              &zero,
+                                              input_gradient.get_descriptor(), input_gradient.data));
 #endif
 }
 

@@ -45,20 +45,10 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
         ? padding(input, padded_input)
         : copy(input, padded_input);
 
+    TensorView& output = forward_propagation.views[layer].back()[0];
 
-    const TensorView& weights = parameters[Weights];
-    const TensorView& biases = parameters[Biases];
-    TensorView& output = forward_propagation.views[layer][Outputs][0];
+    convolution(padded_input, parameters[Weights], parameters[Biases], output);
 
-    convolution(padded_input, weights, biases, output);
-/*
-    if(batch_normalization)
-        is_training
-            ? batch_normalization_training(output, parameters[Gammas], parameters[Betas],
-                                         running_means, running_variances, momentum)
-            : batch_normalization_inference(output, parameters[Gammas], parameters[Betas],
-                                            running_means, running_variances);
-*/
     activation(output, activation_function);
 }
 
@@ -67,59 +57,22 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
                                    size_t layer) const
 {
-    const TensorView& inputs = forward_propagation.views[layer][Inputs][0];
+    const TensorView& output = forward_propagation.views[layer].back()[0];
+    TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-    TensorView output_gradients = back_propagation.backward_views[layer][OutputGradients][0];
+    activation_gradient(output, delta, delta, activation_function);
 
-    const TensorView& padded_inputs = forward_propagation.views[layer][PaddedInputs][0];
+    convolution_backward_weights(forward_propagation.views[layer][PaddedInputs][0],
+                                 delta,
+                                 back_propagation.gradient_views[layer][Weights],
+                                 back_propagation.gradient_views[layer][Biases]);
 
-    //TensorMap4 activation_derivatives = tensor_map<4>(forward_propagation.views[layer][ActivationDerivatives][0]);
-
-//    if (dropout_rate > type(0))
+    if(!is_first_layer)
     {
-        // dropout_gradient(incoming_gradients, dropout_mask, dropout_rate, incoming_gradients);
-    }
-
-//    calculate_activation_derivatives(output, activation_derivatives, activation_function);
-
-//    multiply_elementwise(incoming_gradients, activation_derivatives, delta);
-
-    if (batch_normalization)
-    {
-        const TensorView& padded_input = forward_propagation.views[layer][PaddedInputs][0];
-        const TensorView& batch_means = forward_propagation.views[layer][Outputs][1];
-        const TensorView& batch_variances = forward_propagation.views[layer][Outputs][2];
-
-        TensorView& gamma_gradients = back_propagation.gradient_views[layer][Gammas];
-        TensorView& beta_gradients = back_propagation.gradient_views[layer][Betas];
-/*
-        batch_normalization_backward(delta,
-                                     padded_input,
-                                     batch_means,
-                                     batch_variances,
-                                     parameters[Gammas],
-                                     gamma_gradients,
-                                     beta_gradients,
-                                     delta);
-*/
-    }
-
-
-    TensorView& weigth_gradients = back_propagation.gradient_views[layer][Weights];
-    TensorView& bias_gradients = back_propagation.gradient_views[layer][Biases];
-
-//    const TensorView& padded_input = forward_propagation.views[layer_index][PaddedInputs][0];
-
-//    convolution_backward_filter(padded_input, delta, weight_gradients);
-
-//    sum(delta, bias_gradients);
-
-    if (!is_first_layer)
-    {
-        TensorView& input_gradients = back_propagation.backward_views[layer][InputGradients][0];
-
-        // input_gradients = delta *convolve_flipped* weights
-        //convolution_backward_data(delta, parameters[Weights], input_gradients);
+        convolution_backward_data(delta,
+                                   parameters[Weights],
+                                   back_propagation.backward_views[layer][InputGradients][0],
+                                   back_propagation.backward_views[layer][InputGradients + 1][0]);
     }
 }
 
@@ -295,20 +248,7 @@ void Convolutional::set(const Shape& new_input_shape,
 
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
-    string normalized_activation_function = new_activation_function;
-/*
-    if(normalized_activation_function == "Logistic")
-        normalized_activation_function = "Sigmoid";
-
-    if(normalized_activation_function == "Sigmoid"
-        || normalized_activation_function == "HyperbolicTangent"
-        || normalized_activation_function == "Linear"
-        || normalized_activation_function == "RectifiedLinear"
-        || normalized_activation_function == "ScaledExponentialLinear")
-        activation_function = normalized_activation_function;
-    else
-        throw runtime_error("Unknown activation function: " + new_activation_function);
-*/
+    activation_function = string_to_activation(new_activation_function);
 }
 
 
@@ -509,20 +449,17 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 
     vector<Shape> shapes;
 
-    // Padded Inputs: {batch, h+2p, w+2p, channels}
+    // Padded Inputs
     shapes.push_back({ batch_size, input_height + 2*padding_height, input_width + 2*padding_width, input_channels});
-
-    // Outputs: {batch, out_h, out_w, kernels}
-    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
-
-    // Activation Derivatives: {batch, out_h, out_w, kernels}
-    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
     if (batch_normalization)
     {
         shapes.push_back({ kernels_number }); // Means
         shapes.push_back({ kernels_number }); // StandardDeviations
     }
+
+    // Outputs (must be last — wiring convention)
+    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
     return shapes;
 }

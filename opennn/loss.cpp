@@ -157,12 +157,8 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
 
     calculate_output_gradients(batch, forward_propagation, back_propagation);
 
-/*
-    back_propagation.neural_network.layers[last_trainable_layer_index]->output_gradients[0] = back_propagation.get_output_gradients();
-
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
-*/
 }
 
 

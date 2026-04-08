@@ -12,9 +12,18 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
+#include <vector>
 
 namespace opennn
 {
+
+using std::string;
+using std::unique_ptr;
+using std::vector;
+using std::function;
+using std::unordered_map;
+using std::runtime_error;
 
 template<typename T>
 class Registry

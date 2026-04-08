@@ -157,7 +157,7 @@ int main()
 
         TrainingStrategy training_strategy(&transformer, &language_dataset);
 
-        training_strategy.set_loss("CrossEntropyError3d");
+        training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
 
         auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(training_strategy.get_optimization_algorithm());

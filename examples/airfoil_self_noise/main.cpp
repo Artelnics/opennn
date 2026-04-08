@@ -27,7 +27,7 @@ int main()
     {
         cout << "Airfoil self noise" << endl;
 
-        const Index neurons_number = 3;
+        const Index neurons_number = 10;
         const type regularization_weight = 0.0001;
 
         // DataSet
@@ -53,11 +53,12 @@ int main()
         training_strategy.set_optimization_algorithm("StochasticGradientDescent");
 
         StochasticGradientDescent* sgd = (StochasticGradientDescent*)training_strategy.get_optimization_algorithm();
-        sgd->set_batch_size(32);
+        sgd->set_batch_size(64);
         sgd->set_initial_learning_rate(0.01);
         sgd->set_momentum(0.9);
         sgd->set_nesterov(true);
-        sgd->set_initial_decay(0.00001);
+        sgd->set_initial_decay(0.0);
+        sgd->set_maximum_epochs(1500);
 
 
         training_strategy.get_loss()->set_regularization("L1");

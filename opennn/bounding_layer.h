@@ -24,6 +24,11 @@ public:
 
     Shape get_output_shape() const override;
 
+    vector<Shape> get_forward_shapes(const Index batch_size) const override
+    {
+        return {Shape{batch_size}.append(get_output_shape())};
+    }
+
     const BoundingMethod& get_bounding_method() const;
 
     const VectorR& get_lower_bounds() const;
@@ -66,9 +71,9 @@ private:
 
     BoundingMethod bounding_method = BoundingMethod::Bounding;
 
-//    VectorR lower_bounds;
+    VectorR lower_bounds;
 
-//    VectorR upper_bounds;
+    VectorR upper_bounds;
 };
 
 }

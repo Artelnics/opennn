@@ -54,6 +54,11 @@ public:
         input_shape = new_input_shape;
     }
 
+    void set_input_shape(const Shape& new_input_shape) override
+    {
+        input_shape = new_input_shape;
+    }
+
 
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
@@ -63,11 +68,7 @@ public:
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-        input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};
-        */
-
-        return {};
+        return {Shape{batch_size}.append(input_shape)};
     }
 
     

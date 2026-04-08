@@ -46,7 +46,7 @@ int main()
 
         TrainingStrategy training_strategy(&image_classification_network, &image_dataset);
 
-        training_strategy.set_loss("CrossEntropyError2d");
+        training_strategy.set_loss("CrossEntropy");
         training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
         training_strategy.get_loss()->set_regularization("None");
 
