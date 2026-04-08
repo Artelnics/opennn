@@ -231,9 +231,11 @@ void Normalization3d::from_XML(const XMLDocument& document)
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3d");
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
-    add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"SequenceLength", to_string(get_sequence_length())},
+        {"EmbeddingDimension", to_string(get_embedding_dimension())}
+    });
     printer.CloseElement();
 }
 

@@ -820,13 +820,15 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiHeadAttention");
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "InputSize", to_string(get_query_sequence_length()));
-    add_xml_element(printer, "ContextSize", to_string(get_source_sequence_length()));
-    add_xml_element(printer, "Depth", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "HeadDimension", to_string(get_head_dimension()));
-    add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
-    add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"InputSize", to_string(get_query_sequence_length())},
+        {"ContextSize", to_string(get_source_sequence_length())},
+        {"Depth", to_string(get_embedding_dimension())},
+        {"HeadDimension", to_string(get_head_dimension())},
+        {"HeadsNumber", to_string(get_heads_number())},
+        {"CausalMask", to_string(use_causal_mask ? 1 : 0)}
+    });
     printer.CloseElement();
 }
 

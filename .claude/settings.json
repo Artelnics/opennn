@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"TrainingResults.*::train\\(\\)\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -n \"validation_failures >= maximum_validation_failures\\\\|ValidationFailures >= maximum_validation_failures\" /c/tests_delete/opennn/opennn/*.cpp)"
+    ]
+  }
+}

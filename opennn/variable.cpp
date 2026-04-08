@@ -87,10 +87,12 @@ void Variable::from_XML(const XMLDocument& document)
 
 void Variable::to_XML(XMLPrinter& printer) const
 {
-    add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "Scaler", scaler);
-    add_xml_element(printer, "Role", get_role());
-    add_xml_element(printer, "Type", get_type_string());
+    write_xml_properties(printer, {
+        {"Name", name},
+        {"Scaler", scaler},
+        {"Role", get_role()},
+        {"Type", get_type_string()}
+    });
 
     if (type == VariableType::Categorical || type == VariableType::Binary)
         add_xml_element(printer, "Categories", vector_to_string(categories, ";"));

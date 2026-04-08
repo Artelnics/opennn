@@ -174,7 +174,7 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
 TrainingResults QuasiNewtonMethod::train()
 {
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);

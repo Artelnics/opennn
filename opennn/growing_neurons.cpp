@@ -205,13 +205,15 @@ void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingNeurons");
 
-    add_xml_element(printer, "MinimumNeurons", to_string(minimum_neurons));
-    add_xml_element(printer, "MaximumNeurons", to_string(maximum_neurons));
-    add_xml_element(printer, "NeuronsIncrement", to_string(neurons_increment));
-    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
-    add_xml_element(printer, "SelectionErrorGoal", to_string(validation_error_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_xml_properties(printer, {
+        {"MinimumNeurons", to_string(minimum_neurons)},
+        {"MaximumNeurons", to_string(maximum_neurons)},
+        {"NeuronsIncrement", to_string(neurons_increment)},
+        {"TrialsNumber", to_string(trials_number)},
+        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MaximumTime", to_string(maximum_time)}
+    });
 
     printer.CloseElement();
 }

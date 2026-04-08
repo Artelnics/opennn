@@ -57,7 +57,7 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 
 void TrainingStrategy::set_default()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         return;
 
     // Forecasting
@@ -159,16 +159,16 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::train()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if(!has_dataset())
+    if(!get_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss->has_neural_network() || !loss->has_dataset())
+    if(!loss->get_neural_network() || !loss->get_dataset())
         throw runtime_error("Loss index is wrong.");
 
-    if(!optimizer->has_loss())
+    if(!optimizer->get_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if(neural_network->has("Recurrent"))
@@ -326,16 +326,16 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 
 TrainingResults TrainingStrategy::train_cuda()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if(!has_dataset())
+    if(!get_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss->has_neural_network() || !loss->has_dataset())
+    if(!loss->get_neural_network() || !loss->get_dataset())
         throw runtime_error("Loss is wrong.");
 
-    if(!optimizer->has_loss())
+    if(!optimizer->get_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if (neural_network->has("Recurrent"))

@@ -61,7 +61,7 @@ void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
-    if(!loss || !loss->get_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -370,7 +370,7 @@ void AdaptiveMomentEstimationData::print() const
 
 TrainingResults AdaptiveMomentEstimation::train_cuda()
 {
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);

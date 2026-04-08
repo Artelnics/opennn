@@ -47,7 +47,7 @@ void GrowingInputs::set_default()
     maximum_epochs = 1000;
     maximum_time = type(3600);
 
-    training_strategy && training_strategy->has_neural_network()
+    training_strategy && training_strategy->get_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_variables_number("Input")
         : maximum_inputs_number = 50;
 }
@@ -368,15 +368,17 @@ void GrowingInputs::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingInputs");
 
-    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
-    add_xml_element(printer, "SelectionErrorGoal", to_string(validation_error_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
-    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
-    add_xml_element(printer, "MinimumCorrelation", to_string(minimum_correlation));
-    add_xml_element(printer, "MaximumCorrelation", to_string(maximum_correlation));
-    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_xml_properties(printer, {
+        {"TrialsNumber", to_string(trials_number)},
+        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MinimumInputsNumber", to_string(minimum_inputs_number)},
+        {"MaximumInputsNumber", to_string(maximum_inputs_number)},
+        {"MinimumCorrelation", to_string(minimum_correlation)},
+        {"MaximumCorrelation", to_string(maximum_correlation)},
+        {"MaximumEpochsNumber", to_string(maximum_epochs)},
+        {"MaximumTime", to_string(maximum_time)}
+    });
 
     printer.CloseElement();  
 }

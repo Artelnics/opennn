@@ -28,15 +28,15 @@ void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
 
-    if(!training_strategy || !training_strategy->has_neural_network())
+    if(!training_strategy || !training_strategy->get_neural_network())
         return;
-
-    const Index individuals_number = 40;
 
     const Dataset* dataset = training_strategy->get_dataset();
 
     if(!dataset)
         throw runtime_error("Dataset is null");
+
+    const Index individuals_number = 40;
 
     original_input_variable_indices = dataset->get_variable_indices("Input");
     original_target_variable_indices = dataset->get_variable_indices("Target");
@@ -183,26 +183,14 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 void GeneticAlgorithm::evaluate_population()
 {
-    // Training strategy
-
     TrainingResults training_results;
 
-    // Loss index
-
     const Loss* loss = training_strategy->get_loss();
-
-    // Dataset
-
     Dataset* dataset = training_strategy->get_dataset();
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-
-    // Neural network
-
     NeuralNetwork* neural_network = loss->get_neural_network();
-
-    // Model selection
-
     const Index individuals_number = get_individuals_number();
+
+    training_strategy->get_optimization_algorithm()->set_display(false);
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -216,41 +204,9 @@ void GeneticAlgorithm::evaluate_population()
 
         const Index input_features_number = dataset->get_features_number("Input");
 
-        if(time_series_dataset)
-        {
-            const Index past_time_steps = time_series_dataset->get_past_time_steps();
-            neural_network->set_input_shape({ past_time_steps, input_features_number });
-            dataset->set_shape("Input", { past_time_steps, input_features_number });
-
-            vector<string> final_feature_names;
-            const vector<string> base_names = dataset->get_variable_names("Input");
-            const Index time_steps = time_series_dataset->get_past_time_steps();
-            final_feature_names.reserve(base_names.size() * time_steps);
-
-            for(const string& base_name : base_names)
-            {
-                for(Index j = 0; j < time_steps; j++)
-                {
-                    const string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
-                    final_feature_names.push_back(name);
-                }
-            }
-
-            neural_network->set_input_names(final_feature_names);
-        }
-        else
-        {
-            neural_network->set_input_shape({input_features_number});
-            dataset->set_shape("Input", { input_features_number });
-
-            neural_network->set_input_names(dataset->get_feature_names("Input"));
-        }
+        configure_inputs(neural_network, dataset, input_features_number);
 
         neural_network->set_parameters_random();
-
-        //Training
-
-        training_strategy->get_optimization_algorithm()->set_display(false);
 
         training_results = training_strategy->train();
 
@@ -261,8 +217,8 @@ void GeneticAlgorithm::evaluate_population()
         validation_errors(i) = training_results.get_validation_error();
 
         if(display)
-            cout << "Training error: " << training_results.get_training_error() << endl
-                 << "Validation error: " << training_results.get_validation_error() << endl
+            cout << "Training error: " << training_errors(i) << endl
+                 << "Validation error: " << validation_errors(i) << endl
                  << "Variables number: " << input_features_number << endl
                  << "Inputs number: " << dataset->get_variables_number("Input") << endl;
 
@@ -318,6 +274,7 @@ void GeneticAlgorithm::perform_selection()
 vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 {
     vector<Index> selection_indices;
+    selection_indices.reserve(selection.count());
 
     for(Index i = 0; i < selection.size(); i++)
         if(selection(i))
@@ -389,14 +346,13 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
 void GeneticAlgorithm::perform_crossover()
 {
     const Index individuals_number = get_individuals_number();
-    const Index genes_number = get_genes_number();
 
     const vector<Index> selected_individual_indices = get_selected_individual_indices();
 
     if (selected_individual_indices.empty())
         throw logic_error("Cannot perform crossover with zero selected parents.");
 
-    MatrixB new_population(individuals_number, genes_number);
+    MatrixB new_population(individuals_number, get_genes_number());
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -473,7 +429,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     const Loss* loss = training_strategy->get_loss();
 
     Dataset* dataset = loss->get_dataset();
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     // Validation algorithm
 
@@ -496,23 +451,13 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
-    // Optimization algorithm
-
     Index optimal_individual_index;
-
-    bool stop = false;
-
-    time_t beginning_time;
-
-    time_t current_time;
-
+    time_t beginning_time, current_time;
     type elapsed_time = type(0);
-
     vector<Index> optimal_inputs_variables_indices;
+    Index generation_selected = 0;
 
     time(&beginning_time);
-
-    Index generation_selected = 0;
 
     for(Index epoch = 0; epoch < maximum_epochs; epoch++)
     {
@@ -526,21 +471,17 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         optimal_individual_index = minimal_index(validation_errors);
 
-        // Store optimal training and selection error in the history
+        const type optimal_training_error = training_errors(optimal_individual_index);
+        const type optimal_validation_error = validation_errors(optimal_individual_index);
 
-        input_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
-
-        input_selection_results.validation_error_history(epoch) = validation_errors(optimal_individual_index);
-
-        // Store mean errors histories
-
+        input_selection_results.training_error_history(epoch) = optimal_training_error;
+        input_selection_results.validation_error_history(epoch) = optimal_validation_error;
         input_selection_results.mean_validation_error_history(epoch) = validation_errors.mean();
-
         input_selection_results.mean_training_error_history(epoch) = training_errors.mean();
 
         dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
 
-        if(validation_errors(optimal_individual_index) < input_selection_results.optimum_validation_error)
+        if(optimal_validation_error < input_selection_results.optimum_validation_error)
         {
             generation_selected = epoch;
 
@@ -556,10 +497,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
 
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);
-
-            input_selection_results.optimum_training_error = training_errors(optimal_individual_index);
-
-            input_selection_results.optimum_validation_error = validation_errors(optimal_individual_index);
+            input_selection_results.optimum_training_error = optimal_training_error;
+            input_selection_results.optimum_validation_error = optimal_validation_error;
         }
 
         time(&current_time);
@@ -571,8 +510,8 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
                  << "Generation mean selection error: " << input_selection_results.mean_validation_error_history(epoch) << endl
-                 << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl
-                 << "Generation minimum selection error: " << validation_errors(optimal_individual_index) << endl
+                 << "Generation minimum training error: " << optimal_training_error << endl
+                 << "Generation minimum selection error: " << optimal_validation_error << endl
                  << "Best ever training error: " << input_selection_results.optimum_training_error << endl
                  << "Best ever selection error: " << input_selection_results.optimum_validation_error << endl
                  << "Elapsed time: " << write_time(elapsed_time) << endl
@@ -580,26 +519,25 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         // Stopping criteria
 
-        stop = true;
+        bool stop = false;
 
         if (input_selection_results.optimum_validation_error <= validation_error_goal)
         {
             if (display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << input_selection_results.optimum_validation_error << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+            stop = true;
         }
         else if (elapsed_time >= maximum_time)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+            stop = true;
         }
         else if (epoch >= maximum_epochs - 1)
         {
             if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << endl;
             input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
-        }
-        else
-        {
-            stop = false;
+            stop = true;
         }
 
         if (stop)
@@ -633,36 +571,12 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Set neural network stuff
 
-    if(time_series_dataset)
-    {
-        if(time_variable_indices.size() == 1)
-            dataset->set_variable_role(time_variable_indices[0], "Time");
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
-        const Index past_time_steps = time_series_dataset->get_past_time_steps();
-        neural_network->set_input_shape({ past_time_steps, optimal_variables_number });
-        dataset->set_shape("Input", { past_time_steps, optimal_variables_number });
+    if(time_series_dataset && time_variable_indices.size() == 1)
+        dataset->set_variable_role(time_variable_indices[0], "Time");
 
-        vector<string> final_feature_names;
-        const vector<string> base_names = dataset->get_variable_names("Input");
-        const Index time_steps = time_series_dataset->get_past_time_steps();
-        final_feature_names.reserve(base_names.size() * time_steps);
-        for(const string& base_name : base_names)
-        {
-            for(Index j = 0; j < time_steps; j++)
-            {
-                string name = (base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j);
-                final_feature_names.push_back(name);
-            }
-        }
-        neural_network->set_input_names(final_feature_names);
-    }
-    else
-    {
-        neural_network->set_input_shape({optimal_variables_number});
-        dataset->set_shape("Input", { optimal_variables_number });
-
-        neural_network->set_input_names(dataset->get_feature_names("Input"));
-    }
+    configure_inputs(neural_network, dataset, optimal_variables_number);
 
     if(neural_network->has("Scaling2d"))
     {
@@ -689,6 +603,35 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 }
 
 
+void GeneticAlgorithm::configure_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
+{
+    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+
+    if(time_series_dataset)
+    {
+        const Index past_time_steps = time_series_dataset->get_past_time_steps();
+        neural_network->set_input_shape({ past_time_steps, input_features_number });
+        dataset->set_shape("Input", { past_time_steps, input_features_number });
+
+        vector<string> final_feature_names;
+        const vector<string> base_names = dataset->get_variable_names("Input");
+        final_feature_names.reserve(base_names.size() * past_time_steps);
+
+        for(const string& base_name : base_names)
+            for(Index j = 0; j < past_time_steps; j++)
+                final_feature_names.push_back((base_name.empty() ? "variable" : base_name) + "_lag" + to_string(j));
+
+        neural_network->set_input_names(final_feature_names);
+    }
+    else
+    {
+        neural_network->set_input_shape({input_features_number});
+        dataset->set_shape("Input", { input_features_number });
+        neural_network->set_input_names(dataset->get_feature_names("Input"));
+    }
+}
+
+
 vector<Index> GeneticAlgorithm::get_variable_indices(const VectorB& individual_variables)
 {
     vector<Index> indices;
@@ -709,14 +652,16 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GeneticAlgorithm");
 
-    add_xml_element(printer, "PopulationSize", to_string(get_individuals_number()));
-    add_xml_element(printer, "ElitismSize", to_string(elitism_size));
-    add_xml_element(printer, "MutationRate", to_string(mutation_rate));
-    add_xml_element(printer, "SelectionErrorGoal", to_string(validation_error_goal));
-    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
-    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
-    add_xml_element(printer, "MaximumGenerationsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_xml_properties(printer, {
+        {"PopulationSize", to_string(get_individuals_number())},
+        {"ElitismSize", to_string(elitism_size)},
+        {"MutationRate", to_string(mutation_rate)},
+        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"MinimumInputsNumber", to_string(minimum_inputs_number)},
+        {"MaximumInputsNumber", to_string(maximum_inputs_number)},
+        {"MaximumGenerationsNumber", to_string(maximum_epochs)},
+        {"MaximumTime", to_string(maximum_time)}
+    });
 
     printer.CloseElement();
 }
@@ -735,7 +680,6 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
     set_maximum_epochs(read_xml_index(root, "MaximumGenerationsNumber"));
     set_maximum_time(read_xml_type(root, "MaximumTime"));
 }
-
 
 REGISTER(InputsSelection, GeneticAlgorithm, "GeneticAlgorithm");
 

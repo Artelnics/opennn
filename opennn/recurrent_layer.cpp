@@ -330,10 +330,12 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
-    add_xml_element(printer, "Label", get_label());
-    add_xml_element(printer, "InputDimensions", shape_to_string(get_input_shape()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
-    add_xml_element(printer, "Activation", activation_function);
+    write_xml_properties(printer, {
+        {"Label", get_label()},
+        {"InputDimensions", shape_to_string(get_input_shape())},
+        {"NeuronsNumber", to_string(get_output_shape()[0])},
+        {"Activation", activation_function}
+    });
 
     printer.CloseElement();
 }

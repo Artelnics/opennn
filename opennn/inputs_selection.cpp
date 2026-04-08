@@ -37,7 +37,7 @@ void InputsSelection::check() const
 
     // Neural network
 
-    if(!loss->has_neural_network())
+    if(!loss->get_neural_network())
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
@@ -47,7 +47,7 @@ void InputsSelection::check() const
 
     // Dataset
 
-    if(!loss->has_dataset())
+    if(!loss->get_dataset())
         throw runtime_error("Pointer to dataset is nullptr.\n");
 
     const Dataset* dataset = loss->get_dataset();

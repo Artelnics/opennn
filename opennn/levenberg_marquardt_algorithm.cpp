@@ -521,7 +521,7 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
 /*
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     if(loss->get_name() == "MinkowskiError")

@@ -32,9 +32,6 @@ public:
     Loss* get_loss() const { return loss.get(); }
     Optimizer* get_optimization_algorithm() const { return optimizer.get(); }
 
-    bool has_neural_network() const { return neural_network; }
-    bool has_dataset() const { return dataset; }
-
     // Set
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);

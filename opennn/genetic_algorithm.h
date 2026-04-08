@@ -80,6 +80,7 @@ private:
     void perform_mutation();
     vector<Index> get_selected_individual_indices() const;
     vector<Index> get_variable_indices(const VectorB&);
+    void configure_inputs(NeuralNetwork*, Dataset*, Index);
 
     Tensor<VectorR, 1> parameters;
 

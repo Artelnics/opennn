@@ -54,10 +54,6 @@ public:
         return dataset;
     }
 
-    bool has_neural_network() const { return neural_network; }
-
-    bool has_dataset() const { return dataset; }
-
     const string& get_regularization_method() const { return regularization_method; }
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);

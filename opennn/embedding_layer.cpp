@@ -278,12 +278,14 @@ void Embedding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Embedding");
 
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
-    add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
-    add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "ScaleEmbedding", to_string(scale_embedding));
-    add_xml_element(printer, "AddPositionalEncoding", to_string(add_positional_encoding));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"VocabularySize", to_string(get_vocabulary_size())},
+        {"SequenceLength", to_string(get_sequence_length())},
+        {"EmbeddingSize", to_string(get_embedding_dimension())},
+        {"ScaleEmbedding", to_string(scale_embedding)},
+        {"AddPositionalEncoding", to_string(add_positional_encoding)}
+    });
 
     printer.CloseElement();
 }

@@ -682,9 +682,11 @@ type Loss::calculate_h(const type x)
 void Loss::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Loss");
-    add_xml_element(printer, "Method", get_name());
-    add_xml_element(printer, "Regularization", regularization_method);
-    add_xml_element(printer, "RegularizationWeight", to_string(regularization_weight));
+    write_xml_properties(printer, {
+        {"Method", get_name()},
+        {"Regularization", regularization_method},
+        {"RegularizationWeight", to_string(regularization_weight)}
+    });
 
     if (error == Error::NormalizedSquaredError)
         add_xml_element(printer, "NormalizationCoefficient", to_string(normalization_coefficient));
