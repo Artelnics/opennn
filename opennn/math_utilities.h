@@ -208,13 +208,27 @@ inline void average_pooling(const TensorView& input, TensorView& output, const P
 
 
 inline void padding(const TensorView& input, TensorView& output)
-{       
+{
 #ifndef CUDA
     const TensorMap4 input_map = input.as_tensor<4>();
     TensorMap4 output_map = output.as_tensor<4>();
-/*
-    output_map.device(get_device()) = input_map.pad(input_map);
-*/
+
+    output_map.setZero();
+
+    const Index batch_size = input_map.dimension(0);
+    const Index input_height = input_map.dimension(1);
+    const Index input_width = input_map.dimension(2);
+    const Index channels = input_map.dimension(3);
+
+    const Index pad_height = (output_map.dimension(1) - input_height) / 2;
+    const Index pad_width = (output_map.dimension(2) - input_width) / 2;
+
+    #pragma omp parallel for
+    for(Index b = 0; b < batch_size; ++b)
+        for(Index h = 0; h < input_height; ++h)
+            for(Index w = 0; w < input_width; ++w)
+                for(Index c = 0; c < channels; ++c)
+                    output_map(b, h + pad_height, w + pad_width, c) = input_map(b, h, w, c);
 #else
 
 #endif
@@ -589,6 +603,8 @@ inline void batch_normalization_training(
 }
 
 
+inline void softmax(TensorView& output);
+
 inline void activation(TensorView& output, ActivationFunction func)
 {
     if (output.empty() || func == ActivationFunction::Linear)
@@ -626,7 +642,7 @@ inline void activation(TensorView& output, ActivationFunction func)
 
     case ActivationFunction::Softmax:
     {
-        //softmax(output);
+        softmax(output);
         return;
     }
 
@@ -777,17 +793,18 @@ inline void convolution(const TensorView& input,
 #ifndef CUDA
 
     const TensorMap4 inputs = input.as_tensor<4>();
+    TensorMap4 outputs = output.as_tensor<4>();
     const VectorMap biases = bias.as_vector();
 
     const Index batch_size = inputs.dimension(0);
-/*
-    const Index output_height = convolutions.dimension(1);
-    const Index output_width = convolutions.dimension(2);
+    const Index output_height = outputs.dimension(1);
+    const Index output_width = outputs.dimension(2);
 
-    const Index kernels_number = get_kernels_number();
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index kernel_channels = get_kernel_channels();
+    // kernel shape: {kernels_number, kernel_height, kernel_width, kernel_channels}
+    const Index kernels_number = kernel.shape[0];
+    const Index kernel_height = kernel.shape[1];
+    const Index kernel_width = kernel.shape[2];
+    const Index kernel_channels = kernel.shape[3];
 
     const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
 
@@ -797,13 +814,12 @@ inline void convolution(const TensorView& input,
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        type* current_kernel_ptr = parameters[Weights].data + (kernel_index * single_kernel_size);
+        type* current_kernel_ptr = kernel.data + (kernel_index * single_kernel_size);
         TensorMap3 kernel_weights(current_kernel_ptr, kernel_height, kernel_width, kernel_channels);
 
-        convolutions.chip(kernel_index, 3).device(get_device()) =
+        outputs.chip(kernel_index, 3).device(get_device()) =
             inputs.convolve(kernel_weights, conv_dims).reshape(out_slice_shape) + biases(kernel_index);
     }
-*/
 #else
     CHECK_CUDNN(cudnnConvolutionForward(get_cudnn_handle(),
                                         &one,

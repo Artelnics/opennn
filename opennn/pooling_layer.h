@@ -36,10 +36,12 @@ public:
     {
         const Shape out_shape = get_output_shape(); // {out_h, out_w, channels}
 
-        vector<Shape> shapes = {Shape{batch_size}.append(out_shape)}; // Outputs
+        vector<Shape> shapes;
 
         if (pooling_method == "MaxPooling")
             shapes.push_back(Shape{batch_size}.append(out_shape)); // MaximalIndices
+
+        shapes.push_back(Shape{batch_size}.append(out_shape)); // Outputs (must be last for wiring)
 
         return shapes;
     }
@@ -96,7 +98,7 @@ private:
     void back_propagate_max_pooling(const Tensor4&, Tensor4&) const;
     void back_propagate_average_pooling(const Tensor4&, Tensor4&) const;
 
-    enum Forward {Inputs, Outputs, MaximalIndices};
+    enum Forward {Inputs, MaximalIndices, Outputs};
     enum Backward {OutputGradients, InputGradients};
 
     Index pool_height = 1;
