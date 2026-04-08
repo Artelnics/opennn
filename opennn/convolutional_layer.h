@@ -160,7 +160,7 @@ private:
     Index kernel_channels = 0;
 
     enum Parameters {Biases, Weights, Gammas, Betas};
-    enum Forward {Inputs, PaddedInputs, ActivationDerivatives};
+    enum Forward {Inputs, PaddedInputs};
     enum Backward {OutputGradients, InputGradients};
 
     // @todo Forward TensorCuda inverse_variance;

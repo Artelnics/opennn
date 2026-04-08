@@ -174,155 +174,24 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
                              size_t layer) const
 {
-    const TensorMap4 output_gradients = tensor_map<4>(back_propagation.backward_views[layer][OutputGradients][0]);
-    TensorMap4 input_gradients = tensor_map<4>(back_propagation.backward_views[layer][InputGradients][0]);
+    TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+    TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
+
+    PoolingArguments args;
+    args.pool_dimensions = {pool_height, pool_width};
+    args.stride_shape = {row_stride, column_stride};
+    args.padding_shape = {padding_height, padding_width};
 
     if(pooling_method == "MaxPooling")
     {
-        const TensorMap4 maximal_indices = tensor_map<4>(forward_propagation.views[layer][MaximalIndices][0]);
-
-        const Index batch_size = input_gradients.dimension(0);
-        const Index input_height = input_gradients.dimension(1);
-        const Index input_width = input_gradients.dimension(2);
-        const Index channels = input_gradients.dimension(3);
-
-        const Index output_height = output_gradients.dimension(1);
-        const Index output_width = output_gradients.dimension(2);
-
-        input_gradients.setZero();
-
-        #pragma omp parallel for collapse(2)
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for(Index channel_index = 0; channel_index < channels; ++channel_index)
-                for(Index output_row = 0; output_row < output_height; ++output_row)
-                    for(Index output_column = 0; output_column < output_width; ++output_column)
-                    {
-                        const Index max_index_flat = static_cast<Index>(
-                            maximal_indices(batch_index, output_row, output_column, channel_index));
-
-                        const Index pool_row = max_index_flat / pool_width;
-                        const Index pool_column = max_index_flat % pool_width;
-
-                        const Index input_row = output_row * row_stride + pool_row - padding_height;
-                        const Index input_column = output_column * column_stride + pool_column - padding_width;
-
-                        if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                            input_gradients(batch_index, input_row, input_column, channel_index) +=
-                                output_gradients(batch_index, output_row, output_column, channel_index);
-                    }
-
+        const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
+        max_pooling_backward(output_gradient, maximal_indices, input_gradient, args);
     }
     else if(pooling_method == "AveragePooling")
-    {
-        const Index batch_size = input_gradients.dimension(0);
-        const Index input_height = input_gradients.dimension(1);
-        const Index input_width = input_gradients.dimension(2);
-        const Index channels = input_gradients.dimension(3);
-
-        const Index output_height = output_gradients.dimension(1);
-        const Index output_width = output_gradients.dimension(2);
-
-        const type inv_pool_size = type(1) / (pool_height * pool_width);
-
-        input_gradients.setZero();
-
-        #pragma omp parallel for collapse(2)
-        for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-            for(Index channel_index = 0; channel_index < channels; ++channel_index)
-                for(Index output_row = 0; output_row < output_height; ++output_row)
-                    for(Index output_column = 0; output_column < output_width; ++output_column)
-                    {
-                        const type average_gradient = output_gradients(batch_index, output_row, output_column, channel_index) * inv_pool_size;
-
-                        const Index input_row_start = output_row * row_stride - padding_height;
-                        const Index input_column_start = output_column * column_stride - padding_width;
-
-                        for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                            for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
-                            {
-                                const Index input_row = input_row_start + pool_row;
-                                const Index input_column = input_column_start + pool_column;
-
-                                if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                                    input_gradients(batch_index, input_row, input_column, channel_index) += average_gradient;
-                            }
-                    }
-    }
+        average_pooling_backward(output_gradient, input_gradient, args);
 }
 
 
-void Pooling::back_propagate_max_pooling(const Tensor4& output_gradients,
-                                         Tensor4& input_gradients) const
-{
-/*
-    const Index batch_size = input_gradients.dimension(0);
-    const Index input_height = input_gradients.dimension(1);
-    const Index input_width = input_gradients.dimension(2);
-    const Index channels = input_gradients.dimension(3);
-
-    const Index output_height = output_gradients.dimension(1);
-    const Index output_width = output_gradients.dimension(2);
-
-    input_gradients.setZero();
-/*
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index channel_index = 0; channel_index < channels; ++channel_index)
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const Index max_index_flat = pooling_forward_propagation->maximal_indices(batch_index, output_row, output_column, channel_index);
-
-                    const Index pool_row = max_index_flat / pool_width;
-                    const Index pool_column = max_index_flat % pool_width;
-
-                    const Index input_row = output_row * row_stride + pool_row - padding_height;
-                    const Index input_column = output_column * column_stride + pool_column - padding_width;
-
-                    if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                        input_gradients(batch_index, input_row, input_column, channel_index) +=
-                            output_gradients(batch_index, output_row, output_column, channel_index);
-                }
-*/
-}
-
-
-void Pooling::back_propagate_average_pooling(const Tensor4& output_gradients, Tensor4& input_gradients) const
-{
-    const Index batch_size = input_gradients.dimension(0);
-    const Index input_height = input_gradients.dimension(1);
-    const Index input_width = input_gradients.dimension(2);
-    const Index channels = input_gradients.dimension(3);
-
-    const Index output_height = output_gradients.dimension(1);
-    const Index output_width = output_gradients.dimension(2);
-
-    const type inv_pool_size = type(1) / (pool_height * pool_width);
-
-    input_gradients.setZero();
-
-    #pragma omp parallel for collapse(2)
-    for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
-        for(Index channel_index = 0; channel_index < channels; ++channel_index)
-            for(Index output_row = 0; output_row < output_height; ++output_row)
-                for(Index output_column = 0; output_column < output_width; ++output_column)
-                {
-                    const type average_gradient = output_gradients(batch_index, output_row, output_column, channel_index) * inv_pool_size;
-
-                    const Index input_row_start = output_row * row_stride - padding_height;
-                    const Index input_column_start = output_column * column_stride - padding_width;
-
-                    for(Index pool_row = 0; pool_row < pool_height; ++pool_row)
-                        for(Index pool_column = 0; pool_column < pool_width; ++pool_column)
-                        {
-                            const Index input_row = input_row_start + pool_row;
-                            const Index input_column = input_column_start + pool_column;
-
-                            if(input_row >= 0 && input_row < input_height && input_column >= 0 && input_column < input_width)
-                                input_gradients(batch_index, input_row, input_column, channel_index) += average_gradient;
-                        }
-                }
-}
 
 
 void Pooling::to_XML(XMLPrinter& printer) const

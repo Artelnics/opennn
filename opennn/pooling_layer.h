@@ -95,9 +95,6 @@ public:
 
 private:
 
-    void back_propagate_max_pooling(const Tensor4&, Tensor4&) const;
-    void back_propagate_average_pooling(const Tensor4&, Tensor4&) const;
-
     enum Forward {Inputs, MaximalIndices, Outputs};
     enum Backward {OutputGradients, InputGradients};
 

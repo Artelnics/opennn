@@ -45,46 +45,11 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
         ? padding(input, padded_input)
         : copy(input, padded_input);
 
-    const TensorView& weights = parameters[Weights];
-    const TensorView& biases = parameters[Biases];
-    // Outputs is always the last forward slot (wiring convention)
     TensorView& output = forward_propagation.views[layer].back()[0];
 
-    convolution(padded_input, weights, biases, output);
+    convolution(padded_input, parameters[Weights], parameters[Biases], output);
 
     activation(output, activation_function);
-
-    if(is_training && activation_function != ActivationFunction::Softmax)
-    {
-        TensorView& activation_derivs = forward_propagation.views[layer][ActivationDerivatives][0];
-        TensorMap4 out_map = output.as_tensor<4>();
-        TensorMap4 deriv_map = activation_derivs.as_tensor<4>();
-
-        switch(activation_function)
-        {
-        case ActivationFunction::Linear:
-            deriv_map.setConstant(type(1));
-            break;
-        case ActivationFunction::Sigmoid:
-        case ActivationFunction::Logistic:
-            deriv_map.device(get_device()) = out_map * (type(1) - out_map);
-            break;
-        case ActivationFunction::HyperbolicTangent:
-            deriv_map.device(get_device()) = type(1) - out_map.square();
-            break;
-        case ActivationFunction::RectifiedLinear:
-            deriv_map.device(get_device()) = (out_map > type(0)).select(out_map.constant(type(1)), out_map.constant(type(0)));
-            break;
-        case ActivationFunction::ScaledExponentialLinear:
-            deriv_map.device(get_device()) = (out_map > type(0)).select(
-                out_map.constant(SELU_LAMBDA),
-                out_map + out_map.constant(SELU_ALPHA * SELU_LAMBDA));
-            break;
-        default:
-            deriv_map.setConstant(type(1));
-            break;
-        }
-    }
 }
 
 
@@ -92,102 +57,22 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
                                    size_t layer) const
 {
-    const Index batch_size_val = forward_propagation.views[layer][Inputs][0].shape[0];
-    const Index input_height_val = get_input_height();
-    const Index input_width_val = get_input_width();
-    const Index input_channels_val = get_input_channels();
+    const TensorView& output = forward_propagation.views[layer].back()[0];
+    TensorView& delta = back_propagation.backward_views[layer][OutputGradients][0];
 
-    TensorMap4 output_gradients = back_propagation.backward_views[layer][OutputGradients][0].as_tensor<4>();
+    activation_gradient(output, delta, delta, activation_function);
 
-    // Apply activation derivative
-    if(activation_function != ActivationFunction::Softmax)
-    {
-        const TensorMap4 activation_derivs = forward_propagation.views[layer][ActivationDerivatives][0].as_tensor<4>();
-        output_gradients.device(get_device()) = output_gradients * activation_derivs;
-    }
+    convolution_backward_weights(forward_propagation.views[layer][PaddedInputs][0],
+                                 delta,
+                                 back_propagation.gradient_views[layer][Weights],
+                                 back_propagation.gradient_views[layer][Biases]);
 
-    // Bias gradients: sum output_gradients over all dims except last (kernels)
-    VectorMap bias_grads = back_propagation.gradient_views[layer][Biases].as_vector();
-    const Index features = bias_grads.size();
-    const Index total_elements_to_sum = output_gradients.size() / features;
-    MatrixMap output_grads_mat(output_gradients.data(), total_elements_to_sum, features);
-    bias_grads.noalias() = output_grads_mat.colwise().sum();
-
-    // Weight gradients: for each kernel, convolve preprocessed_inputs with output_gradients chip
-    const TensorMap4 preprocessed_inputs = forward_propagation.views[layer][PaddedInputs][0].as_tensor<4>();
-
-    type* weight_gradients_data = back_propagation.gradient_views[layer][Weights].data;
-    const Index single_kernel_size = kernel_height * kernel_width * kernel_channels;
-
-    const Eigen::array<Index, 3> conv_dims({0, 1, 2});
-
-    #pragma omp parallel for
-    for(Index ki = 0; ki < kernels_number; ki++)
-    {
-        const Tensor3 kernel_conv_grads = output_gradients.chip(ki, 3);
-
-        TensorMap4 kernel_weight_grads(weight_gradients_data + (ki * single_kernel_size),
-                                        1, kernel_height, kernel_width, kernel_channels);
-
-        kernel_weight_grads.device(get_device()) =
-            preprocessed_inputs.convolve(kernel_conv_grads, conv_dims);
-    }
-
-    // Input gradients
     if(!is_first_layer)
     {
-        TensorMap4 input_gradients = back_propagation.backward_views[layer][InputGradients][0].as_tensor<4>();
-        input_gradients.setZero();
-
-        // Rotate weights 180 degrees (flip height and width dimensions)
-        TensorMap4 rotated_weights = back_propagation.backward_views[layer][InputGradients + 1][0].as_tensor<4>();
-        const TensorMap4 weights_map(parameters[Weights].data, kernels_number, kernel_height, kernel_width, kernel_channels);
-        rotated_weights.device(get_device()) = weights_map.reverse(Eigen::array<bool, 4>({false, true, true, false}));
-
-        // Calculate padding for backward pass
-        const Index out_h = output_gradients.dimension(1);
-        const Index out_w = output_gradients.dimension(2);
-        const Index pad_height_val = (input_height_val + kernel_height - 1) - out_h;
-        const Index pad_width_val = (input_width_val + kernel_width - 1) - out_w;
-        const Index pad_top = pad_height_val / 2;
-        const Index pad_bottom = pad_height_val - pad_top;
-        const Index pad_left = pad_width_val / 2;
-        const Index pad_right = pad_width_val - pad_left;
-
-        const Eigen::array<pair<Index, Index>, 2> paddings =
-            {make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right)};
-
-        // Precompute rotated weight slices
-        vector<vector<Tensor2>> precomputed_rotated_slices(kernels_number, vector<Tensor2>(input_channels_val));
-
-        for(Index ki = 0; ki < kernels_number; ++ki)
-        {
-            auto kernel_rotated = rotated_weights.chip(ki, 0);
-            for(Index ci = 0; ci < input_channels_val; ++ci)
-                precomputed_rotated_slices[ki][ci] = kernel_rotated.chip(ci, 2);
-        }
-
-        const Eigen::array<Index, 2> conv_dims_2d = {0, 1};
-
-        for(Index ki = 0; ki < kernels_number; ++ki)
-        {
-            auto kernel_conv_grads = output_gradients.chip(ki, 3);
-
-            #pragma omp parallel for
-            for(Index bi = 0; bi < batch_size_val; ++bi)
-            {
-                const Tensor2 padded_grads = kernel_conv_grads.chip(bi, 0).pad(paddings);
-
-                for(Index ci = 0; ci < input_channels_val; ++ci)
-                {
-                    const Tensor2 conv_result = padded_grads.convolve(precomputed_rotated_slices[ki][ci], conv_dims_2d);
-
-                    for(Index h = 0; h < input_height_val; ++h)
-                        for(Index w = 0; w < input_width_val; ++w)
-                            input_gradients(bi, h, w, ci) += conv_result(h, w);
-                }
-            }
-        }
+        convolution_backward_data(delta,
+                                   parameters[Weights],
+                                   back_propagation.backward_views[layer][InputGradients][0],
+                                   back_propagation.backward_views[layer][InputGradients + 1][0]);
     }
 }
 
@@ -564,11 +449,8 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 
     vector<Shape> shapes;
 
-    // Padded Inputs: {batch, h+2p, w+2p, channels}
+    // Padded Inputs
     shapes.push_back({ batch_size, input_height + 2*padding_height, input_width + 2*padding_width, input_channels});
-
-    // Activation Derivatives: {batch, out_h, out_w, kernels}
-    shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
     if (batch_normalization)
     {
@@ -576,7 +458,7 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
         shapes.push_back({ kernels_number }); // StandardDeviations
     }
 
-    // Outputs MUST be last (wiring convention: last forward shape = layer output)
+    // Outputs (must be last — wiring convention)
     shapes.push_back({ batch_size, output_height, output_width, kernels_number });
 
     return shapes;
