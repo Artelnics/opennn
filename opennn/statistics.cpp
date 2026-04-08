@@ -469,15 +469,9 @@ type variance(const VectorR& vector)
 
     if (count <= 1) return type(0);
 
-    double sum = 0.0;
-    double squared_sum = 0.0;
-
-    for (Index i = 0; i < count; ++i)
-    {
-        const double val = static_cast<double>(new_vector(i));
-        sum += val;
-        squared_sum += val * val;
-    }
+    const auto new_vector_d = new_vector.cast<double>();
+    const double sum = new_vector_d.sum();
+    const double squared_sum = new_vector_d.squaredNorm();
 
     return (squared_sum - (sum * sum) / count) / (count - 1);
 }

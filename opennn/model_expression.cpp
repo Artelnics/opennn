@@ -1048,7 +1048,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
         for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
-            const string key_word = found_mathematical_expressions[j];
+            const string& key_word = found_mathematical_expressions[j];
             const string new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }

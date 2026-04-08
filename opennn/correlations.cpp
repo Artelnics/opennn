@@ -752,19 +752,15 @@ Correlation point_biserial_correlation(const VectorR& continuous,
 
     const Index n = x_filter.size();
 
-    double sum_all = 0, sum_sq = 0;
-    double sum1 = 0, sum0 = 0;
-    Index  n1 = 0,   n0 = 0;
+    const auto x_dbl = x_filter.cast<double>();
+    const double sum_all = x_dbl.sum();
+    const double sum_sq = x_dbl.squaredNorm();
 
-    for(Index i = 0; i < n; i++)
-    {
-        const double xi = double(x_filter(i));
-        sum_all += xi;
-        sum_sq  += xi * xi;
-
-        if(y_filter(i) > type(0.5)) { sum1 += xi; n1++; }
-        else                        { sum0 += xi; n0++; }
-    }
+    const auto mask1 = (y_filter.array() > type(0.5));
+    const Index n1 = mask1.count();
+    const Index n0 = n - n1;
+    const double sum1 = mask1.select(x_dbl.array(), 0.0).sum();
+    const double sum0 = sum_all - sum1;
 
     if(n1 == 0 || n0 == 0)
     {
@@ -819,12 +815,7 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     const double grand_mean = x_filter.cast<double>().mean();
 
     // SS_total
-    double ss_total = 0;
-    for(Index i = 0; i < n; i++)
-    {
-        const double diff = double(x_filter(i)) - grand_mean;
-        ss_total += diff * diff;
-    }
+    const double ss_total = (x_filter.cast<double>().array() - grand_mean).square().sum();
 
     if(ss_total <= 0)
     {
@@ -837,17 +828,9 @@ Correlation eta_squared_correlation(const VectorR& continuous,
 
     for(Index cat = 0; cat < n_cats; cat++)
     {
-        double group_sum   = 0;
-        Index  group_count = 0;
-
-        for(Index i = 0; i < n; i++)
-        {
-            if(y_filter(i, cat) > type(0.5))
-            {
-                group_sum += double(x_filter(i));
-                group_count++;
-            }
-        }
+        const auto mask = (y_filter.col(cat).array() > type(0.5));
+        const double group_sum = mask.select(x_filter.cast<double>().array(), 0.0).sum();
+        const Index group_count = mask.count();
 
         if(group_count == 0) continue;
 
