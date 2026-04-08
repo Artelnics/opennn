@@ -84,46 +84,6 @@ LanguageDataset::LanguageDataset(const Index samples_number,
              [](Variable& variable) { variable.role = "Input"; });
 }
 
-const vector<string>& LanguageDataset::get_input_vocabulary() const
-{
-    return input_vocabulary;
-}
-
-const vector<string>& LanguageDataset::get_target_vocabulary() const
-{
-    return target_vocabulary;
-}
-
-Index LanguageDataset::get_input_vocabulary_size() const
-{
-    return input_vocabulary.size();
-}
-
-Index LanguageDataset::get_maximum_input_sequence_length() const
-{
-    return maximum_input_sequence_length;
-}
-
-Index LanguageDataset::get_maximum_target_sequence_length() const
-{
-    return maximum_target_sequence_length;
-}
-
-Index LanguageDataset::get_target_vocabulary_size() const
-{
-    return target_vocabulary.size();
-}
-
-void LanguageDataset::set_input_vocabulary(const vector<string>& new_input_vocabulary)
-{
-    input_vocabulary = new_input_vocabulary;
-}
-
-void LanguageDataset::set_target_vocabulary(const vector<string>& new_target_vocabulary)
-{
-    target_vocabulary = new_target_vocabulary;
-}
-
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
                                         vector<string>& vocabulary) const
 {

@@ -28,6 +28,9 @@ public:
 
     void set_default();
 
+    Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
+    Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
+
     void set_minimum_inputs_number(const Index n) { minimum_inputs_number = n; }
     void set_maximum_inputs_number(const Index);
 

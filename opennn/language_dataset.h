@@ -21,17 +21,17 @@ public:
     LanguageDataset(const filesystem::path& = "");
     LanguageDataset(const Index, Index, Index);
 
-    const vector<string>& get_input_vocabulary() const;
-    const vector<string>& get_target_vocabulary() const;
+    const vector<string>& get_input_vocabulary() const { return input_vocabulary; }
+    const vector<string>& get_target_vocabulary() const { return target_vocabulary; }
 
-    Index get_input_vocabulary_size() const;
-    Index get_target_vocabulary_size() const;
+    Index get_input_vocabulary_size() const { return input_vocabulary.size(); }
+    Index get_target_vocabulary_size() const { return target_vocabulary.size(); }
 
-    Index get_maximum_input_sequence_length() const;
-    Index get_maximum_target_sequence_length() const;
+    Index get_maximum_input_sequence_length() const { return maximum_input_sequence_length; }
+    Index get_maximum_target_sequence_length() const { return maximum_target_sequence_length; }
 
-    void set_input_vocabulary(const vector<string>&);
-    void set_target_vocabulary(const vector<string>&);
+    void set_input_vocabulary(const vector<string>& v) { input_vocabulary = v; }
+    void set_target_vocabulary(const vector<string>& v) { target_vocabulary = v; }
 
     void read_csv() override;
 

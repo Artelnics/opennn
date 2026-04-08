@@ -6,11 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#pragma once
+
 #include "pch.h"
 #include "tensor_utilities.h"
 #include "random_utilities.h"
-
-#pragma once
 
 namespace opennn
 {
@@ -24,19 +24,17 @@ enum class ActivationFunction{
     HyperbolicTangent,
     RectifiedLinear,
     ScaledExponentialLinear,
-    Softmax,
-    Logistic
+    Softmax
 };
 
 
 inline ActivationFunction string_to_activation(const string& name)
 {
-    if (name == "Sigmoid") return ActivationFunction::Sigmoid;
+    if (name == "Sigmoid" || name == "Logistic") return ActivationFunction::Sigmoid;
     if (name == "HyperbolicTangent") return ActivationFunction::HyperbolicTangent;
     if (name == "RectifiedLinear") return ActivationFunction::RectifiedLinear;
     if (name == "ScaledExponentialLinear") return ActivationFunction::ScaledExponentialLinear;
     if (name == "Softmax") return ActivationFunction::Softmax;
-    if (name == "Logistic") return ActivationFunction::Logistic;
     return ActivationFunction::Linear;
 }
 
@@ -75,7 +73,7 @@ struct PoolingArguments
 
 struct BatchNormalizationArguments
 {
-    type momentum;
+    type momentum = type(0.9);
 
 #ifdef CUDA
     cudnnBatchNormMode_t batch_normalization_mode = CUDNN_BATCHNORM_PER_ACTIVATION;
@@ -107,7 +105,7 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
         throw runtime_error("Addition Error: Tensor dimensions do not match.");
 
 #ifndef CUDA
-    output.as_vector().array() = input_1.as_vector().array() + input_2.as_vector().array();
+    output.as_vector() = input_1.as_vector() + input_2.as_vector();
 #else
     CHECK_CUDNN(cudnnOpTensor(get_cudnn_handle(),
                               get_operator_sum_descriptor(),
@@ -259,7 +257,6 @@ inline void activation(TensorView& output, ActivationArguments arguments)
         return;
 
     case ActivationFunction::Sigmoid:
-    case ActivationFunction::Logistic:
         arr = (1.0f + (-arr).exp()).inverse();
         return;
 
@@ -319,7 +316,6 @@ inline void activation_gradient(const TensorView& outputs,
         return;
 
     case ActivationFunction::Sigmoid:
-    case ActivationFunction::Logistic:
         dx = dy * (y * (1.0f - y));
         return;
 
@@ -860,6 +856,8 @@ inline void max_pooling(const TensorView& input,
     const Index padding_height = arguments.padding_shape[0];
     const Index padding_width = arguments.padding_shape[1];
 
+    TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
+
     #pragma omp parallel for collapse(2)
     for(Index batch_index = 0; batch_index < batch_size; ++batch_index)
         for(Index channel_index = 0; channel_index < channels; ++channel_index)
@@ -894,10 +892,7 @@ inline void max_pooling(const TensorView& input,
                         (maximum_value == -numeric_limits<type>::infinity()) ? type(0) : maximum_value;
 
                     if(is_training)
-                    {
-                        TensorMap4 maximal_indices_map = maximal_indices.as_tensor<4>();
                         maximal_indices_map(batch_index, output_row, output_column, channel_index) = maximum_index;
-                    }
                 }
 
 #else

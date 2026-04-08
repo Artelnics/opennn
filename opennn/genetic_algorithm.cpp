@@ -193,7 +193,7 @@ void GeneticAlgorithm::evaluate_population()
 
         training_results = training_strategy->train();
 
-        individual_parameters(i) = neural_network->get_individual_parameters();
+        individual_parameters(i) = neural_network->get_parameters();
 
         training_errors(i) = training_results.get_training_error();
         validation_errors(i) = training_results.get_validation_error();
@@ -454,7 +454,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             input_selection_results.optimal_inputs = population.row(optimal_individual_index);
 
-            best_input_indices = get_variable_indices(input_selection_results.optimal_inputs);
+            best_input_indices = get_true_indices(input_selection_results.optimal_inputs);
 
             dataset->set_variable_indices(best_input_indices, original_target_variable_indices);
 
@@ -525,7 +525,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Set dataset stuff
 
-    const vector<Index> optimal_variable_indices = get_variable_indices(input_selection_results.optimal_inputs);
+    const vector<Index> optimal_variable_indices = get_true_indices(input_selection_results.optimal_inputs);
 
     dataset->set_variable_indices(optimal_variable_indices, original_target_variable_indices);
 
@@ -557,7 +557,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         scaling_layer->set_scalers(input_variable_scalers);
     }
 
-    neural_network->set_individual_parameters(input_selection_results.optimal_parameters);
+    neural_network->set_parameters(input_selection_results.optimal_parameters);
 
     if(display)
     {

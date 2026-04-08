@@ -474,7 +474,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
         {
             const Index variable_index = target_variable_indices[count];
 
-            const VariableType target_variable_type = variables[variable_index].type;
+            const VariableType& target_variable_type = variables[variable_index].type;
 
             if(target_variable_type == VariableType::Numeric)
                 input_target_numeric_variables_number++;

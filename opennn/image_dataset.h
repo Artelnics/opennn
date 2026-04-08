@@ -13,6 +13,19 @@
 namespace opennn
 {
 
+struct AugmentationSettings
+{
+    bool enabled = false;
+    bool reflection_axis_x = false;
+    bool reflection_axis_y = false;
+    type rotation_minimum = type(0);
+    type rotation_maximum = type(0);
+    type horizontal_translation_minimum = type(0);
+    type horizontal_translation_maximum = type(0);
+    type vertical_translation_minimum = type(0);
+    type vertical_translation_maximum = type(0);
+};
+
 class ImageDataset : public Dataset
 {
 
@@ -23,33 +36,13 @@ public:
     ImageDataset(const filesystem::path&);
 
     Index get_channels_number() const;
-    Index get_image_size() const;
 
-    bool get_random_reflection_axis_x() const;
-    bool get_random_reflection_axis_y() const;
-    type get_random_rotation_minimum() const;
-    type get_random_rotation_maximum() const;
-    type get_random_horizontal_translation_minimum() const;
-    type get_random_horizontal_translation_maximum() const;
-    type get_random_vertical_translation_minimum() const;
-    type get_random_vertical_translation_maximum() const;
+    const AugmentationSettings& get_augmentation() const { return augmentation; }
+    void set_augmentation(const AugmentationSettings& a) { augmentation = a; }
 
     void set_data_random() override;
 
-    void set_channels_number(const int&);
-    void set_image_width(const int&);
-    void set_image_height(const int&);
-    void set_image_padding(const int&);
-
-    void set_augmentation(bool);
-    void set_random_reflection_axis_x(bool);
-    void set_random_reflection_axis_y(bool);
-    void set_random_rotation_minimum(const type);
-    void set_random_rotation_maximum(const type);
-    void set_random_horizontal_translation_minimum(const type);
-    void set_random_horizontal_translation_maximum(const type);
-    void set_random_vertical_translation_minimum(const type);
-    void set_random_vertical_translation_maximum(const type);
+    void set_image_padding(const int& p) { padding = p; }
 
     vector<Descriptives> scale_features(const string&) override;
     void unscale_features(const string&);
@@ -59,30 +52,13 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void fill_inputs(const vector<Index>&,
-                     const vector<Index>&,
-                     type*,
-                     bool = true) const override;
-
-    void perform_augmentation(type*) const;
+    void augment_inputs(type*, Index) const override;
 
 private:
 
-    Index get_image_width() const;
-    Index get_image_height() const;
-    Index get_image_padding() const;
-
     Index padding = 0;
 
-    bool augmentation = false;
-    bool random_reflection_axis_x = false;
-    bool random_reflection_axis_y = false;
-    type random_rotation_minimum = type(0);
-    type random_rotation_maximum = type(0);
-    type random_horizontal_translation_minimum = type(0);
-    type random_horizontal_translation_maximum = type(0);
-    type random_vertical_translation_minimum = type(0);
-    type random_vertical_translation_maximum = type(0);
+    AugmentationSettings augmentation;
 
     // Object detection
 

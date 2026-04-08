@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "tensor_utilities.h"
+#include "batch.h"
 #include "dataset.h"
 #include "loss.h"
 #include "error_utilities.h"

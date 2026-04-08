@@ -10,6 +10,7 @@
 #include "dataset.h"
 #include "neural_network.h"
 #include "loss.h"
+#include "batch.h"
 #include "stochastic_gradient_descent.h"
 
 namespace opennn
@@ -214,7 +215,8 @@ TrainingResults StochasticGradientDescent::train()
             training_batch.fill(training_batches[iteration],
                                 input_feature_indices,
                                 decoder_feature_indices,
-                                target_feature_indices);
+                                target_feature_indices,
+                                true);
 
             // Neural network
 

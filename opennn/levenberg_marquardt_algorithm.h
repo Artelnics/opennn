@@ -8,13 +8,15 @@
 
 #pragma once
 
-#include "dataset.h"
 #include "layer.h"
+#include "batch.h"
+#include "dense_layer.h"
 #include "optimizer.h"
 
 namespace opennn
 {
 
+class NeuralNetwork;
 struct ForwardPropagation;
 struct BackPropagationLM;
 struct LevenbergMarquardtAlgorithmData;
@@ -138,20 +140,25 @@ public:
    
 private:
 
-   VectorR calculate_numerical_gradient_lm();
+    VectorR calculate_numerical_gradient();
+    MatrixR calculate_numerical_jacobian();
+    MatrixR calculate_numerical_hessian();
+
+   void back_propagate(const Batch&, const ForwardPropagation&, BackPropagationLM&);
+
+   void calculate_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
+   void calculate_squared_errors(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
+   void calculate_error(const Batch&, const ForwardPropagation&, BackPropagationLM&) const;
 
    void compute_jacobian(const Batch& batch,
                          const ForwardPropagation& fp,
                          BackPropagationLM& bp_lm);
 
-   // Specific logic for Dense layers
-/*
    void insert_dense_jacobian(const Dense<2>* layer,
                               const ForwardPropagation& fp,
                               Index layer_index,
                               Index parameter_offset,
                               MatrixR& jacobian);
-*/
    type damping_parameter = type(0);
 
    type minimum_damping_parameter = type(0);
@@ -175,20 +182,7 @@ struct LevenbergMarquardtAlgorithmData final : public OptimizerData
 
     LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
 
-    // Neural network data
-
-    VectorR old_parameters;
-    VectorR parameter_differences;
-
     VectorR parameter_updates;
-
-    // Loss index data
-
-    //type old_loss = type(0);
-
-    // Optimization algorithm data
-
-    Index epoch = 0;
 };
 
 }

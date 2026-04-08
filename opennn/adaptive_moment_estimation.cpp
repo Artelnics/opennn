@@ -9,6 +9,7 @@
 #include "registry.h"
 #include "dataset.h"
 #include "loss.h"
+#include "batch.h"
 #include "adaptive_moment_estimation.h"
 
 namespace opennn
@@ -164,7 +165,8 @@ TrainingResults AdaptiveMomentEstimation::train()
             training_batch.fill(training_batches[iteration],
                                 input_feature_indices,
                                 decoder_feature_indices,
-                                target_feature_indices);
+                                target_feature_indices,
+                                true);
 
             // Neural network
 

@@ -115,10 +115,10 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     }
 
     if(x_columns == 1 && y_columns != 1)
-        return logistic_correlation(x.reshaped(x_rows, 1), y);
+        return logistic_correlation(VectorR(x.reshaped(x_rows, 1)), y);
 
     if(x_columns != 1 && y_columns == 1)
-        return logistic_correlation(x, y.reshaped(x_rows, 1));
+        return logistic_correlation(x, VectorR(y.reshaped(x_rows, 1)));
 
     if(x_columns != 1 && y_columns != 1)
         return logistic_correlation(x, y);

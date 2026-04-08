@@ -7,10 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "registry.h"
-#include "tensor_utilities.h"
 #include "dataset.h"
 #include "loss.h"
 #include "quasi_newton_method.h"
+#include "batch.h"
 
 namespace opennn
 {
@@ -211,7 +211,7 @@ TrainingResults QuasiNewtonMethod::train()
     // Batch
 
     Batch training_batch(training_samples_number, dataset);
-    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices);
+    training_batch.fill(training_sample_indices, input_feature_indices, {}, target_feature_indices, true);
 
     Batch validation_batch(validation_samples_number, dataset);
     validation_batch.fill(validation_sample_indices, input_feature_indices, {}, target_feature_indices);

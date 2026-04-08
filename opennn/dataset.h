@@ -94,7 +94,6 @@ public:
 
     vector<Index> get_feature_dimensions() const;
 
-
     Shape get_shape(const string&) const;
 
     vector<string> get_feature_scalers(const string&) const;
@@ -102,28 +101,17 @@ public:
     virtual vector<vector<Index>> get_batches(const vector<Index>&, Index, bool) const;
 
     const MatrixR& get_data() const { return data; }
-    MatrixR get_data_samples(const string&) const;
     MatrixR get_feature_data(const string&) const;
     MatrixR get_data(const string&, const string&) const;
     MatrixR get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
     VectorR get_sample_data(const Index) const;
-    VectorR get_sample_data(const Index, const vector<Index>&) const;
-    MatrixR get_sample_input_data(const Index) const;
-    MatrixR get_sample_target_data(const Index) const;
 
     MatrixR get_variable_data(const Index) const;
     MatrixR get_variable_data(const Index, const vector<Index>&) const;
-    //Tensor2 get_variable_data(const VectorI&) const;
     MatrixR get_variable_data(const string&) const;
 
-    string get_sample_category(const Index, Index) const;
-    VectorR get_sample(const Index) const;
-
     const vector<vector<string>>& get_data_file_preview() const { return data_file_preview; }
-
-    const vector<string>& get_positive_words() const { return positive_words; }
-    const vector<string>& get_negative_words() const { return negative_words; }
 
     // Members get
 
@@ -131,8 +119,6 @@ public:
     string get_missing_values_method_string() const;
 
     const filesystem::path& get_data_path() const { return data_path; }
-
-    vector<string> get_sample_ids() const { return sample_ids; }
 
     const Separator& get_separator() const { return separator; }
     string get_separator_string() const;
@@ -269,8 +255,6 @@ public:
 
     // Unusing
 
-    //VectorI unuse_repeated_samples();
-
     vector<string> unuse_uncorrelated_variables(const type = type(0.25));
     vector<string> unuse_collinear_variables(const type = type(0.95));
 
@@ -281,22 +265,12 @@ public:
     // Descriptives
 
     vector<Descriptives> calculate_feature_descriptives() const;
-    //vector<Descriptives> calculate_used_variable_descriptives() const;
 
     vector<Descriptives> calculate_variable_descriptives_positive_samples() const;
     vector<Descriptives> calculate_variable_descriptives_negative_samples() const;
     vector<Descriptives> calculate_variable_descriptives_categories(const Index) const;
 
     vector<Descriptives> calculate_feature_descriptives(const string&) const;
-
-    vector<Descriptives> calculate_testing_target_variable_descriptives() const;
-
-    //VectorR calculate_used_variables_minimums() const;
-
-    VectorR calculate_means(const string& , const string&) const;
-
-    Index calculate_used_negatives(const Index) const;
-    Index calculate_negatives(const Index, const string&) const;
 
     // Distribution
 
@@ -411,6 +385,8 @@ public:
                              type*,
                              bool = true) const;
 
+    virtual void augment_inputs(type*, Index) const {}
+
     virtual void fill_decoder(const vector<Index>&,
                               const vector<Index>&,
                               type*,
@@ -498,104 +474,7 @@ protected:
     void samples_from_XML(const XMLElement*);
     void missing_values_from_XML(const XMLElement*);
     void preview_data_from_XML(const XMLElement*);
-
 };
-
-struct Batch
-{
-    Batch(const Index = 0, const Dataset* = nullptr);
-
-    void set(const Index = 0, const Dataset* = nullptr);
-
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&);
-
-    vector<TensorView> get_inputs() const;
-
-    TensorView get_targets() const;
-
-    Index get_samples_number() const;
-
-    void print() const;
-
-    bool is_empty() const;
-
-    Index samples_number = 0;
-
-    const Dataset* dataset = nullptr;
-
-    Shape input_shape;
-    VectorR input_vector;
-
-    Shape decoder_shape;
-    VectorR decoder_vector;
-
-    Shape target_shape;
-    VectorR target_vector;
-};
-
-#ifdef CUDA
-
-struct BatchCuda
-{
-    BatchCuda(const Index = 0, Dataset* = nullptr);
-    ~BatchCuda();
-
-    void set(const Index, Dataset*);
-
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&);
-
-    void fill_host(const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&);
-
-    vector<TensorView> get_inputs_device() const;
-    TensorView get_targets_device() const;
-
-    Index get_samples_number() const;
-
-    MatrixR get_inputs_from_device() const;
-    MatrixR get_decoder_from_device() const;
-    MatrixR get_targets_from_device() const;
-
-    void copy_device(const Index);
-    void copy_device_async(const Index, cudaStream_t);
-
-    void print() const;
-
-    bool is_empty() const;
-
-    Index samples_number = 0;
-    Index num_input_features = 0;
-    Index num_decoder_features = 0;
-    Index num_target_features = 0;
-
-    Dataset* dataset = nullptr;
-
-    Shape input_shape;
-    Shape decoder_shape;
-    Shape target_shape;
-
-    float* inputs_host = nullptr;
-    float* decoder_host = nullptr;
-    float* targets_host = nullptr;
-
-    Index inputs_host_allocated_size = 0;
-    Index decoder_host_allocated_size = 0;
-    Index targets_host_allocated_size = 0;
-
-    TensorCuda inputs_device;
-    TensorCuda decoder_device;
-    TensorCuda targets_device;
-};
-
-#endif
 
 }
 

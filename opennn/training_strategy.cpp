@@ -10,9 +10,7 @@
 #include "loss.h"
 #include "optimizer.h"
 #include "training_strategy.h"
-#include "quasi_newton_method.h"
 #include "adaptive_moment_estimation.h"
-#include "dense_layer.h"
 
 namespace opennn
 {
@@ -33,15 +31,10 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
 void TrainingStrategy::set_loss(const string& new_loss)
 {
     loss = make_unique<Loss>(neural_network, dataset);
-
     loss->set_error(new_loss);
 
-    if(optimizer){
-        if(optimizer->get_name() == "QuasiNewtonMethod")
-            static_cast<QuasiNewtonMethod*>(optimizer.get())->set_loss(loss.get());
-        else
-            optimizer->set(loss.get());
-    }
+    if(optimizer)
+        optimizer->set(loss.get());
 }
 
 void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
@@ -71,30 +64,8 @@ void TrainingStrategy::set_default()
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
-        adaptive_moment_estimation->set_maximum_epochs(100);
-        adaptive_moment_estimation->set_display_period(10);
-
+        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
         return;
-    }
-
-    string output_activation = "Linear";
-
-    const Index layers_number = neural_network->get_layers_number();
-
-    for(Index i = layers_number - 1; i >= 0; i--)
-    {
-        const unique_ptr<Layer>& layer = neural_network->get_layer(i);
-
-        if(layer->get_name() == "Dense2d")
-        {
-            /*
-            const Dense<2>* dense_layer = static_cast<const Dense<2>*>(layer.get());
-            output_activation = dense_layer->get_activation_function();
-            break;
-*/
-        }
     }
 
     // Transformer
@@ -103,9 +74,7 @@ void TrainingStrategy::set_default()
     {
         set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
-        adam->set_learning_rate(0.0001);
+        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_learning_rate(0.0001);
         return;
     }
 
@@ -113,43 +82,16 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
     {
-        if(output_activation == "Softmax")
-            set_loss("CrossEntropy");
-        else
-            set_loss("WeightedSquaredError");
-
+        set_loss("WeightedSquaredError");
         set_optimization_algorithm("AdaptiveMomentEstimation");
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
-        adaptive_moment_estimation->set_maximum_epochs(100);
-        adaptive_moment_estimation->set_display_period(10);
-
+        static_cast<AdaptiveMomentEstimation*>(optimizer.get())->set_maximum_epochs(100);
         return;
     }
 
-    // Multiple classification
+    // Approximation (default)
 
-    if(output_activation == "Softmax")
-    {
-        set_loss("CrossEntropy");
-        set_optimization_algorithm("QuasiNewtonMethod");
-    }
-
-    // Binary classification
-
-    else if(output_activation == "Sigmoid")
-    {
-        set_loss("WeightedSquaredError");
-        set_optimization_algorithm("QuasiNewtonMethod");
-    }
-
-    // Approximation
-
-    else
-    {
-        set_loss("MeanSquaredError");
-        set_optimization_algorithm("QuasiNewtonMethod");
-    }
+    set_loss("MeanSquaredError");
+    set_optimization_algorithm("QuasiNewtonMethod");
 }
 
 TrainingResults TrainingStrategy::train()
@@ -174,8 +116,9 @@ TrainingResults TrainingStrategy::train()
 
 void TrainingStrategy::fix_forecasting()
 {
-    const Index past_time_steps = 0;
 /*
+    const Index past_time_steps = 0;
+
     if(neural_network->has("Recurrent"))
         past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();
     else
@@ -310,30 +253,6 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 
     from_XML(load_xml_file(file_name));
 }
-
-#ifdef CUDA
-
-TrainingResults TrainingStrategy::train_cuda()
-{
-    if(!get_neural_network())
-        throw runtime_error("Neural network is null.");
-
-    if(!get_dataset())
-        throw runtime_error("Dataset is null.");
-
-    if(!loss->get_neural_network() || !loss->get_dataset())
-        throw runtime_error("Loss is wrong.");
-
-    if(!optimizer->get_loss())
-        throw runtime_error("Optimization algorithm is wrong.");
-
-    if (neural_network->has("Recurrent"))
-        fix_forecasting();
-
-    return optimizer->train_cuda();
-}
-
-#endif
 
 }
 

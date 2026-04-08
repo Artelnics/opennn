@@ -135,9 +135,7 @@ Tensor3 load_image(const filesystem::path& path)
             if (channels == 1) // 8-bit (1 channel)
             {
                 for(Index x = 0; x < width; ++x)
-                {
                     img_data[row_start_idx + x] = static_cast<float>(palette[row_ptr[x]].red);
-                }
             }
             else // 8-bit RGB (3 channels)
             {
@@ -167,69 +165,69 @@ Tensor3 resize_image(const Tensor3& input_image,
 
     Tensor3 output_image(output_height, output_width, channels);
 
-    const float scale_y = static_cast<float>(input_height) / output_height;
-    const float scale_x = static_cast<float>(input_width) / output_width;
+    const type scale_y = static_cast<type>(input_height) / output_height;
+    const type scale_x = static_cast<type>(input_width) / output_width;
 
     vector<Index> x0(output_width), x1(output_width);
-    vector<float> x_weight(output_width);
+    vector<type> x_weight(output_width);
 
     for(Index x = 0; x < output_width; ++x)
     {
-        const float in_x = x * scale_x;
-        x0[x] = min<Index>(static_cast<Index>(in_x), input_width - 1); // in_x >= 0 => floor(in_x)
+        const type in_x = x * scale_x;
+        x0[x] = min<Index>(static_cast<Index>(in_x), input_width - 1);
         x1[x] = min<Index>(x0[x] + 1, input_width - 1);
-        x_weight[x] = in_x - static_cast<float>(x0[x]);
+        x_weight[x] = in_x - static_cast<type>(x0[x]);
     }
 
     #pragma omp parallel for collapse(2)
     for(Index y = 0; y < output_height; ++y)
         for(Index x = 0; x < output_width; ++x)
         {
-            const float in_y = y * scale_y;
-            const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1); // in_y >= 0 => floor(in_y)
+            const type in_y = y * scale_y;
+            const Index y0 = min<Index>(static_cast<Index>(in_y), input_height - 1);
             const Index y1 = min<Index>(y0 + 1, input_height - 1);
-            const float y_weight = in_y - static_cast<float>(y0);
+            const type y_weight = in_y - static_cast<type>(y0);
 
             const Index x0_value = x0[x];
             const Index x1_value = x1[x];
-            const float x_weight_value = x_weight[x];
+            const type x_weight_value = x_weight[x];
 
             for(Index c = 0; c < channels; ++c)
             {
-                const float top =
-                    (1.0f - x_weight_value) * input_image(y0, x0_value, c) +
-                    x_weight_value        * input_image(y0, x1_value, c);
+                const type top =
+                    (type(1) - x_weight_value) * input_image(y0, x0_value, c) +
+                    x_weight_value             * input_image(y0, x1_value, c);
 
-                const float bottom =
-                    (1.0f - x_weight_value) * input_image(y1, x0_value, c) +
-                    x_weight_value        * input_image(y1, x1_value, c);
+                const type bottom =
+                    (type(1) - x_weight_value) * input_image(y1, x0_value, c) +
+                    x_weight_value             * input_image(y1, x1_value, c);
 
                 output_image(y, x, c) =
-                    (1.0f - y_weight) * top + y_weight * bottom;
+                    (type(1) - y_weight) * top + y_weight * bottom;
             }
         }
 
     return output_image;
 }
 
-void reflect_image_x(Tensor3& image)
+void reflect_image_horizontal(Tensor3& image)
 {
     image.device(get_device()) = image.reverse(array<bool, 3>({false, true, false}));
 }
 
-void reflect_image_y(Tensor3& image)
+void reflect_image_vertical(Tensor3& image)
 {
     image.device(get_device()) = image.reverse(array<bool, 3>({true, false, false}));
 }
 
 void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 {
-    const Index width = input.dimension(0);
-    const Index height = input.dimension(1);
+    const Index height = input.dimension(0);
+    const Index width = input.dimension(1);
     const Index channels = input.dimension(2);
 
-    const type rotation_center_x = type(width) / type(2);
-    const type rotation_center_y = type(height) / type(2);
+    const type center_x = type(width) / type(2);
+    const type center_y = type(height) / type(2);
 
     const type angle_rad = -angle_degree * type(3.1415927) / type(180.0);
     const type cos_angle = cos(angle_rad);
@@ -237,17 +235,17 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 
     MatrixR rotation_matrix(3, 3);
 
-    rotation_matrix << cos_angle, -sin_angle, rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y,
-                       sin_angle, cos_angle, rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y,
+    rotation_matrix << cos_angle, -sin_angle, center_x - cos_angle * center_x + sin_angle * center_y,
+                       sin_angle, cos_angle, center_y - sin_angle * center_x - cos_angle * center_y,
                        type(0), type(0), type(1);
 
     using Vector3T = Matrix<type, 3, 1>;
 
     #pragma omp parallel for collapse(2)
 
-    for(Index x = 0; x < width; x++)
+    for(Index y = 0; y < height; y++)
     {
-        for(Index y = 0; y < height; y++)
+        for(Index x = 0; x < width; x++)
         {
             Vector3T coordinates;
             coordinates << static_cast<type>(x), static_cast<type>(y), 1.0f;
@@ -256,18 +254,19 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 
             if(transformed[0] >= 0 && transformed[0] < width
             && transformed[1] >= 0 && transformed[1] < height)
-                for(Index channel = 0; channel < channels; channel++)
-                    output(x, y, channel) = input(int(transformed[0]),
-                                                  int(transformed[1]),
-                                                  channel);
+                for(Index c = 0; c < channels; c++)
+                    output(y, x, c) = input(int(transformed[1]),
+                                            int(transformed[0]),
+                                            c);
             else
-                for(Index channel = 0; channel < channels; channel++)
-                    output(x, y, channel) = type(0);
+                for(Index c = 0; c < channels; c++)
+                    output(y, x, c) = type(0);
         }
     }
 }
 
-void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
+template<int Dim>
+void translate_image(const Tensor3& input, Tensor3& output, Index shift)
 {
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
@@ -275,49 +274,25 @@ void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
 
     output.setZero();
 
-    const Index height = input.dimension(0);
-    const Index width = input.dimension(1);
-    const Index channels = input.dimension(2);
+    const Index dim_size = input.dimension(Dim);
 
-    if (shift >= width) return;
+    if (abs(shift) >= dim_size) return;
 
-    const Index channel_size = height * width;
-    const Index remaining_width = width - shift;
+    const Index src_start = (shift >= 0) ? 0 : -shift;
+    const Index src_end = (shift >= 0) ? dim_size - shift : dim_size;
 
-    #pragma omp parallel for
-    for (Index c = 0; c < channels; ++c)
-    {
-        const type* input_channel = input.data() + (c * channel_size);
-        type* output_channel = output.data() + (c * channel_size) + (shift * height);
+    for(Index i = src_start; i < src_end; ++i)
+        output.template chip<Dim>(i + shift) = input.template chip<Dim>(i);
+}
 
-        MatrixMap output_block(output_channel, height, remaining_width);
-        const MatrixMap input_block(const_cast<type*>(input_channel), height, remaining_width);
-
-        output_block.noalias() = input_block;
-    }
+void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
+{
+    translate_image<1>(input, output, shift);
 }
 
 void translate_image_y(const Tensor3& input, Tensor3& output, Index shift)
 {
-    assert(input.dimension(0) == output.dimension(0));
-    assert(input.dimension(1) == output.dimension(1));
-    assert(input.dimension(2) == output.dimension(2));
-
-    output.setZero();
-
-    const Index height = input.dimension(0);
-
-    const Index limit_src_rows = height - shift;
-
-    if (limit_src_rows <= 0)
-        return;
-
-    for(Index r_src = 0; r_src < limit_src_rows; ++r_src)
-    {
-        const Index r_dest = r_src + shift;
-
-        output.template chip<0>(r_dest) = input.template chip<0>(r_src);
-    }
+    translate_image<0>(input, output, shift);
 }
 
 } 

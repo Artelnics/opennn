@@ -40,66 +40,6 @@ Index ImageDataset::get_channels_number() const
     return input_shape[2];
 }
 
-Index ImageDataset::get_image_width() const
-{
-    return input_shape[1];
-}
-
-Index ImageDataset::get_image_height() const
-{
-    return input_shape[0];
-}
-
-Index ImageDataset::get_image_size() const
-{
-    return input_shape[0] * input_shape[1] * input_shape[2];
-}
-
-Index ImageDataset::get_image_padding() const
-{
-    return padding;
-}
-
-bool ImageDataset::get_random_reflection_axis_x() const
-{
-    return random_reflection_axis_x;
-}
-
-bool ImageDataset::get_random_reflection_axis_y() const
-{
-    return random_reflection_axis_y;
-}
-
-type ImageDataset::get_random_rotation_minimum() const
-{
-    return random_rotation_minimum;
-}
-
-type ImageDataset::get_random_rotation_maximum() const
-{
-    return random_rotation_maximum;
-}
-
-type ImageDataset::get_random_horizontal_translation_minimum() const
-{
-    return random_horizontal_translation_minimum;
-}
-
-type ImageDataset::get_random_horizontal_translation_maximum() const
-{
-    return random_horizontal_translation_maximum;
-}
-
-type ImageDataset::get_random_vertical_translation_maximum() const
-{
-    return random_vertical_translation_maximum;
-}
-
-type ImageDataset::get_random_vertical_translation_minimum() const
-{
-    return random_vertical_translation_minimum;
-}
-
 void ImageDataset::set_data_random()
 {
     const Index height = input_shape[0];
@@ -112,114 +52,30 @@ void ImageDataset::set_data_random()
 
     data.setZero();
 
-    if (targets_number == 1)
-    {
-        const Index half_samples = samples_number / 2;
+    const Index images_per_category = samples_number / targets_number;
+    Index remainder = samples_number % targets_number;
 
-        for(Index i = 0; i < samples_number; i++)
+    VectorI images_number(targets_number);
+    for(Index i = 0; i < targets_number; i++)
+    {
+        images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+    }
+
+    Index current_sample = 0;
+
+    for(Index k = 0; k < targets_number; k++)
+    {
+        for(Index i = 0; i < images_number[k]; i++)
         {
             for(Index j = 0; j < inputs_number; j++)
-                data(i, j) = random_integer(0, 255);
+                data(current_sample, j) = random_integer(0, 255);
 
-            data(i, inputs_number) = (i < half_samples) ? 0 : 1;
+            data(current_sample, k + inputs_number) = 1;
+
+            current_sample++;
         }
     }
-    else
-    {
-        VectorI images_number(targets_number);
-        images_number.setZero();
-
-        const Index images_per_category = samples_number / targets_number;
-        Index remainder = samples_number % targets_number;
-
-        for(Index i = 0; i < targets_number; i++)
-        {
-            images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
-
-            if (remainder > 0)
-                remainder--;
-        }
-
-        Index current_sample = 0;
-
-        for(Index k = 0; k < targets_number; k++)
-        {
-            for(Index i = 0; i < images_number[k]; i++)
-            {
-                for(Index j = 0; j < inputs_number; j++)
-                    data(current_sample, j) = random_integer(0, 255);
-
-                data(current_sample, k + inputs_number) = 1;
-
-                current_sample++;
-            }
-        }
-    }
-}
-
-void ImageDataset::set_channels_number(const int& new_channels)
-{
-    input_shape[2] = new_channels;
-}
-
-void ImageDataset::set_image_width(const int& new_width)
-{
-    input_shape[1] = new_width;
-}
-
-void ImageDataset::set_image_height(const int& new_height)
-{
-    input_shape[0] = new_height;
-}
-
-void ImageDataset::set_image_padding(const int& new_padding)
-{
-    padding = new_padding;
-}
-
-void ImageDataset::set_augmentation(bool new_augmentation)
-{
-    augmentation = new_augmentation;
-}
-
-void ImageDataset::set_random_reflection_axis_x(bool new_random_reflection_axis_x)
-{
-    random_reflection_axis_x = new_random_reflection_axis_x;
-}
-
-void ImageDataset::set_random_reflection_axis_y(bool new_random_reflection_axis_y)
-{
-    random_reflection_axis_y = new_random_reflection_axis_y;
-}
-
-void ImageDataset::set_random_rotation_minimum(const type new_random_rotation_minimum)
-{
-    random_rotation_minimum = new_random_rotation_minimum;
-}
-
-void ImageDataset::set_random_rotation_maximum(const type new_random_rotation_maximum)
-{
-    random_rotation_maximum = new_random_rotation_maximum;
-}
-
-void ImageDataset::set_random_horizontal_translation_maximum(const type new_random_horizontal_translation_maximum)
-{
-    random_horizontal_translation_maximum = new_random_horizontal_translation_maximum;
-}
-
-void ImageDataset::set_random_horizontal_translation_minimum(const type new_random_horizontal_translation_minimum)
-{
-    random_horizontal_translation_minimum = new_random_horizontal_translation_minimum;
-}
-
-void ImageDataset::set_random_vertical_translation_minimum(const type new_random_vertical_translation_minimum)
-{
-    random_vertical_translation_minimum = new_random_vertical_translation_minimum;
-}
-
-void ImageDataset::set_random_vertical_translation_maximum(const type new_random_vertical_translation_maximum)
-{
-    random_vertical_translation_maximum = new_random_vertical_translation_maximum;
 }
 
 void ImageDataset::to_XML(XMLPrinter& printer) const
@@ -232,18 +88,18 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
         {"FileType", "bmp"},
         {"Path", data_path.string()},
         {"HasSamplesId", to_string(has_sample_ids)},
-        {"Channels", to_string(get_channels_number())},
-        {"Width", to_string(get_image_width())},
-        {"Height", to_string(get_image_height())},
-        {"Padding", to_string(get_image_padding())},
-        {"RandomReflectionAxisX", to_string(get_random_reflection_axis_x())},
-        {"RandomReflectionAxisY", to_string(get_random_reflection_axis_y())},
-        {"RandomRotationMinimum", to_string(get_random_rotation_minimum())},
-        {"RandomRotationMaximum", to_string(get_random_rotation_maximum())},
-        {"RandomHorizontalTranslationMinimum", to_string(get_random_horizontal_translation_minimum())},
-        {"RandomHorizontalTranslationMaximum", to_string(get_random_horizontal_translation_maximum())},
-        {"RandomVerticalTranslationMinimum", to_string(get_random_vertical_translation_minimum())},
-        {"RandomVerticalTranslationMaximum", to_string(get_random_vertical_translation_maximum())},
+        {"Channels", to_string(input_shape[2])},
+        {"Width", to_string(input_shape[1])},
+        {"Height", to_string(input_shape[0])},
+        {"Padding", to_string(padding)},
+        {"RandomReflectionAxisX", to_string(augmentation.reflection_axis_x)},
+        {"RandomReflectionAxisY", to_string(augmentation.reflection_axis_y)},
+        {"RandomRotationMinimum", to_string(augmentation.rotation_minimum)},
+        {"RandomRotationMaximum", to_string(augmentation.rotation_maximum)},
+        {"RandomHorizontalTranslationMinimum", to_string(augmentation.horizontal_translation_minimum)},
+        {"RandomHorizontalTranslationMaximum", to_string(augmentation.horizontal_translation_maximum)},
+        {"RandomVerticalTranslationMinimum", to_string(augmentation.vertical_translation_minimum)},
+        {"RandomVerticalTranslationMaximum", to_string(augmentation.vertical_translation_maximum)},
         {"Codification", get_codification_string()}
     });
 
@@ -258,51 +114,39 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-void ImageDataset::perform_augmentation(type* input_data) const
+void ImageDataset::augment_inputs(type* input_data, Index batch_size) const
 {
-    throw runtime_error("Image Augmentation is not yet implemented. Please check back in a future version.");
+    if(!augmentation.enabled) return;
 
-    const Shape input_shape = get_shape("Input");
-
-    const Index samples_number = input_shape[0];
-    const Index input_height = input_shape[0];
-    const Index input_width = input_shape[1];
+    const Index height = input_shape[0];
+    const Index width = input_shape[1];
     const Index channels = input_shape[2];
 
     TensorMap4 inputs(input_data,
-                      samples_number,
-                      input_height,
-                      input_width,
+                      batch_size,
+                      height,
+                      width,
                       channels);
 
-    for(Index batch_index = 0; batch_index < samples_number; batch_index++)
+    for(Index i = 0; i < batch_size; i++)
     {
-        Tensor3 image = inputs.chip(batch_index, 0);
+        Tensor3 image = inputs.chip(i, 0);
 
-        if(random_reflection_axis_x)
-            reflect_image_x(image);
+        if(augmentation.reflection_axis_x)
+            reflect_image_horizontal(image);
 
-        if(random_reflection_axis_y)
-            reflect_image_y(image);
+        if(augmentation.reflection_axis_y)
+            reflect_image_vertical(image);
 
-        if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-            rotate_image(image, image, random_uniform(random_rotation_minimum, random_rotation_maximum));
+        if(augmentation.rotation_minimum != 0 && augmentation.rotation_maximum != 0)
+            rotate_image(image, image, random_uniform(augmentation.rotation_minimum, augmentation.rotation_maximum));
 
-        if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-            translate_image_x(image, image, random_uniform(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
+        if(augmentation.horizontal_translation_minimum != 0 && augmentation.horizontal_translation_maximum != 0)
+            translate_image_x(image, image, Index(random_uniform(augmentation.horizontal_translation_minimum, augmentation.horizontal_translation_maximum)));
 
-        if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-            translate_image_y(image, image, random_uniform(random_vertical_translation_minimum, random_vertical_translation_maximum));
+        if(augmentation.vertical_translation_minimum != 0 && augmentation.vertical_translation_maximum != 0)
+            translate_image_y(image, image, Index(random_uniform(augmentation.vertical_translation_minimum, augmentation.vertical_translation_maximum)));
     }
-}
-
-void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
-{
-    fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
-
-    if (augmentation)
-        perform_augmentation(input_data);
-
 }
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
@@ -324,14 +168,14 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     set_codification(read_xml_string(data_source_element, "Codification"));
 
-    set_random_reflection_axis_x(read_xml_index(data_source_element, "RandomReflectionAxisX"));
-    set_random_reflection_axis_y(read_xml_index(data_source_element, "RandomReflectionAxisY"));
-    set_random_rotation_minimum(type(atof(read_xml_string(data_source_element, "RandomRotationMinimum").c_str())));
-    set_random_rotation_maximum(type(atof(read_xml_string(data_source_element, "RandomRotationMaximum").c_str())));
-    set_random_horizontal_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMinimum").c_str())));
-    set_random_horizontal_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomHorizontalTranslationMaximum").c_str())));
-    set_random_vertical_translation_minimum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMinimum").c_str())));
-    set_random_vertical_translation_maximum(type(atof(read_xml_string(data_source_element, "RandomVerticalTranslationMaximum").c_str())));
+    augmentation.reflection_axis_x = read_xml_index(data_source_element, "RandomReflectionAxisX");
+    augmentation.reflection_axis_y = read_xml_index(data_source_element, "RandomReflectionAxisY");
+    augmentation.rotation_minimum = read_xml_type(data_source_element, "RandomRotationMinimum");
+    augmentation.rotation_maximum = read_xml_type(data_source_element, "RandomRotationMaximum");
+    augmentation.horizontal_translation_minimum = read_xml_type(data_source_element, "RandomHorizontalTranslationMinimum");
+    augmentation.horizontal_translation_maximum = read_xml_type(data_source_element, "RandomHorizontalTranslationMaximum");
+    augmentation.vertical_translation_minimum = read_xml_type(data_source_element, "RandomVerticalTranslationMinimum");
+    augmentation.vertical_translation_maximum = read_xml_type(data_source_element, "RandomVerticalTranslationMaximum");
 
     variables_from_XML(require_xml_element(image_dataset_element, "Variables"));
     samples_from_XML(require_xml_element(image_dataset_element, "Samples"));
@@ -339,26 +183,14 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
-    const Index samples_number = get_samples_number();
-    const Index input_features_number = get_features_number("Input");
-
-    #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < input_features_number; j++)
-            data(i, j) /= type(255);
+    data.leftCols(get_features_number("Input")) /= type(255);
 
     return {};
 }
 
 void ImageDataset::unscale_features(const string&)
 {
-    const Index samples_number = get_samples_number();
-    const Index input_features_number = get_features_number("Input");
-
-    #pragma omp parallel for
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < input_features_number; j++)
-            data(i, j) *= type(255);
+    data.leftCols(get_features_number("Input")) *= type(255);
 }
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)
@@ -420,28 +252,20 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     set(samples_number, { height, width, channels }, { targets_number });
 
-    if (targets_number == 1)
-    {
-        variables[pixels_number].name = directory_path[0].filename().string() + "_" + directory_path[1].filename().string();
-        variables[pixels_number].role = "Target";
-        variables[pixels_number].type = VariableType::Binary;
-        variables[pixels_number].set_categories({directory_path[0].filename().string(), directory_path[1].filename().string()});
-        variables[pixels_number].scaler = "None";
-    }
-    else
-    {
-        variables.resize(pixels_number + 1); 
+    vector<string> categories(folders_number);
+    for(Index i = 0; i < folders_number; i++)
+        categories[i] = directory_path[i].filename().string();
 
-        vector<string> categories(targets_number);
-        for(Index i = 0; i < targets_number; i++)
-            categories[i] = directory_path[i].filename().string();
+    if(targets_number != folders_number)
+        variables.resize(pixels_number + 1);
 
-        variables[pixels_number].name = "Class";
-        variables[pixels_number].role = "Target";
-        variables[pixels_number].type = VariableType::Categorical;
-        variables[pixels_number].set_categories(categories);
-        variables[pixels_number].scaler = "None";
-    }
+    variables[pixels_number].name = (targets_number == 1)
+        ? categories[0] + "_" + categories[1]
+        : "Class";
+    variables[pixels_number].role = "Target";
+    variables[pixels_number].type = (targets_number == 1) ? VariableType::Binary : VariableType::Categorical;
+    variables[pixels_number].set_categories(categories);
+    variables[pixels_number].scaler = "None";
 
     Index progress_counter = 0;
 
@@ -462,14 +286,17 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
         copy(image.data(), image.data() + pixels_number, &data(i, 0));
 
-        if (targets_number == 1)
-            data(i, pixels_number) = (i >= images_number(0) && i < images_number(1)) ? 0 : 1;
-        else
-            for(Index k = 0; k < targets_number; k++)
-                if (i >= images_number(k) && i < images_number(k + 1))
-                    data(i, k + pixels_number) = 1;
+        for(Index k = 0; k < folders_number; k++)
+        {
+            if (i >= images_number(k) && i < images_number(k + 1))
+            {
+                if (targets_number == 1)
+                    data(i, pixels_number) = k;
                 else
-                    data(i, k + pixels_number) = 0; 
+                    data(i, k + pixels_number) = 1;
+                break;
+            }
+        }
 
         #pragma omp atomic
         progress_counter++;

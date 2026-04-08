@@ -45,10 +45,6 @@ public:
 
     TrainingResults train();
 
-#ifdef CUDA
-    TrainingResults train_cuda();
-#endif
-
     // Serialization
 
     void from_XML(const XMLDocument&);

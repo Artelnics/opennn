@@ -49,7 +49,7 @@ void Descriptives::print(const string& title) const
          << "Standard deviation: " << standard_deviation << endl;
 }
 
-BoxPlot::BoxPlot(const type new_minimum,
+BoxPlot::BoxPlot(type new_minimum,
                  type new_first_quartile,
                  type new_median,
                  type new_third_quartile,
@@ -62,7 +62,7 @@ BoxPlot::BoxPlot(const type new_minimum,
 {
 }
 
-void BoxPlot::set(const type new_minimum,
+void BoxPlot::set(type new_minimum,
                   type new_first_quartile,
                   type new_median,
                   type new_third_quartile,
@@ -530,9 +530,9 @@ VectorR quartiles(const VectorR& data)
     {
         const Index half_size = new_size / 2;
 
-        quartiles(0) = median(valid_data.head(half_size));
-        quartiles(1) = median(valid_data);
-        quartiles(2) = median(valid_data.tail(half_size));
+        quartiles(0) = median(VectorR(valid_data.head(half_size)));
+        quartiles(1) = median(VectorR(valid_data));
+        quartiles(2) = median(VectorR(valid_data.tail(half_size)));
     }
 
     return quartiles;
