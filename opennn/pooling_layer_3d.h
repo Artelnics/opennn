@@ -29,13 +29,17 @@ public:
         const Index features = input_shape[1];
 
         vector<Shape> shapes;
-        shapes.push_back({ batch_size, features }); // Outputs
 
         if (pooling_method == PoolingMethod::MaxPooling)
             shapes.push_back({ batch_size, features }); // MaximalIndices
 
+        shapes.push_back({ batch_size, features }); // Outputs (must be last — wiring convention)
+
         return shapes;
     }
+
+    enum Forward { Inputs, MaximalIndices, Outputs };
+    enum Backward { OutputGradients, InputGradients };
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {

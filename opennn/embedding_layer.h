@@ -22,7 +22,7 @@ public:
               Index = 0,
               const string& = "embedding_layer");
 
-    Index get_vocabulary_size() const { return parameters[Weights].shape[0]; }
+    Index get_vocabulary_size() const { return vocabulary_size; }
     Index get_sequence_length() const { return input_shape.empty() ? 0 : input_shape[0]; }
     Index get_embedding_dimension() const { return embedding_dimension; }
 
@@ -79,6 +79,7 @@ private:
     enum Parameters {Weights};
     enum Forward {Inputs, Outputs};
 
+    Index vocabulary_size = 0;
     Index embedding_dimension = 0;
 
     bool scale_embedding = false;

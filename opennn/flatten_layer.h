@@ -88,7 +88,7 @@ public:
         const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
         TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
-        opennn::copy(output_gradient, input_gradient);
+        copy(output_gradient, input_gradient);
     }
     
     // Serialization

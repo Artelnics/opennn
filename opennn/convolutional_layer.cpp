@@ -49,7 +49,7 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     convolution(padded_input, parameters[Weights], parameters[Biases], output);
 
-    activation(output, activation_function);
+    activation(output, {activation_function});
 }
 
 
@@ -68,12 +68,10 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                  back_propagation.gradient_views[layer][Biases]);
 
     if(!is_first_layer)
-    {
         convolution_backward_data(delta,
-                                   parameters[Weights],
-                                   back_propagation.backward_views[layer][InputGradients][0],
-                                   back_propagation.backward_views[layer][InputGradients + 1][0]);
-    }
+                                  parameters[Weights],
+                                  back_propagation.backward_views[layer][InputGradients][0],
+                                  back_propagation.backward_views[layer][InputGradients + 1][0]);
 }
 
 

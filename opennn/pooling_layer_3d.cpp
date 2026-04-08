@@ -8,7 +8,9 @@
 
 #include "registry.h"
 #include "tensor_utilities.h"
+#include "math_utilities.h"
 #include "pooling_layer_3d.h"
+#include "loss.h"
 
 namespace opennn
 {
@@ -51,164 +53,36 @@ void Pooling3d::set_pooling_method(const string& new_pooling_method)
 }
 
 
-void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t, bool is_training)
+void Pooling3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
-/*
-    const TensorMap3 inputs = tensor_map<3>(forward_propagation->inputs[0]);
-    MatrixMap outputs = matrix_map(forward_propagation->outputs);
-
-    auto* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
-
-    const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
-    const Index features = inputs.dimension(2);
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
+    TensorView& output = forward_propagation.views[layer].back()[0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
     {
-        MatrixI& maximal_indices = pooling_forward_propagation->maximal_indices;
-
-        #pragma omp parallel for
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            outputs.row(b).setConstant(-numeric_limits<type>::infinity());
-
-            for(Index s = 0; s < sequence_length; ++s)
-            {
-                for(Index f = 0; f < features; ++f)
-                {
-                    const type value = inputs(b, s, f);
-
-                    if(value > outputs(b, f))
-                    {
-                        outputs(b, f) = value;
-                        if(is_training) maximal_indices(b, f) = s;
-                    }
-                }
-            }
-        }
+        TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
+        max_pooling_3d_forward(input, output, maximal_indices, is_training);
     }
-    else // AveragePooling
-    {
-        #pragma omp parallel for
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            outputs.row(b).setZero();
-
-            Index valid_count = 0;
-
-            for(Index s = 0; s < sequence_length; ++s)
-            {
-                bool is_padding = true;
-
-                for(Index f = 0; f < features; ++f)
-                {
-                    if(inputs(b, s, f) != type(0))
-                    {
-                        is_padding = false;
-                        break;
-                    }
-                }
-
-                if(!is_padding)
-                {
-                    for(Index f = 0; f < features; ++f)
-                        outputs(b, f) += inputs(b, s, f);
-
-                    ++valid_count;
-                }
-            }
-
-            if(valid_count > 0)
-                outputs.row(b) /= static_cast<type>(valid_count);
-        }
-    }
-*/
+    else
+        average_pooling_3d_forward(input, output);
 }
 
 
 void Pooling3d::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
-                               size_t index) const
+                               size_t layer) const
 {
-/*
-    const TensorMap3 inputs = tensor_map<3>(forward_propagation->inputs[0]);
-    const MatrixMap delta = matrix_map(back_propagation->output_gradients[0]);
-
-    Pooling3dForwardPropagation* pooling_forward_propagation = static_cast<Pooling3dForwardPropagation*>(forward_propagation.get());
-    Pooling3dBackPropagation* pooling_back_propagation = static_cast<Pooling3dBackPropagation*>(back_propagation.get());
-
-    TensorMap3 input_derivatives = tensor_map<3>(pooling_back_propagation->input_gradients[0]);
-
-    input_derivatives.setZero();
-
-    const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
-    const Index features = inputs.dimension(2);
+    const TensorView& input = forward_propagation.views[layer][Inputs][0];
+    TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+    TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
     if(pooling_method == PoolingMethod::MaxPooling)
     {
-        const MatrixI& maximal_indices = pooling_forward_propagation->maximal_indices;
-
-        #pragma omp parallel for
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            for(Index f = 0; f < features; ++f)
-            {
-                const Index max_idx = maximal_indices(b, f);
-                input_derivatives(b, max_idx, f) = delta(b, f);
-            }
-        }
+        const TensorView& maximal_indices = forward_propagation.views[layer][MaximalIndices][0];
+        max_pooling_3d_backward(maximal_indices, output_gradient, input_gradient);
     }
-    else // AveragePooling
-    {
-        #pragma omp parallel for
-        for(Index b = 0; b < batch_size; ++b)
-        {
-            Index valid_count = 0;
-
-            for(Index s = 0; s < sequence_length; ++s)
-            {
-                bool is_padding = true;
-
-                for(Index f = 0; f < features; ++f)
-                {
-                    if(inputs(b, s, f) != type(0))
-                    {
-                        is_padding = false;
-                        break;
-                    }
-                }
-
-                if(!is_padding)
-                    ++valid_count;
-            }
-
-            if(valid_count == 0) continue;
-
-            const type inverse_valid_count = type(1.0) / static_cast<type>(valid_count);
-
-            for(Index s = 0; s < sequence_length; ++s)
-            {
-                bool is_padding = true;
-
-                for(Index f = 0; f < features; ++f)
-                {
-                    if(inputs(b, s, f) != type(0))
-                    {
-                        is_padding = false;
-                        break;
-                    }
-                }
-
-                if(!is_padding)
-                {
-                    for(Index f = 0; f < features; ++f)
-                        input_derivatives(b, s, f) = delta(b, f) * inverse_valid_count;
-                }
-            }
-        }
-    }
-*/
+    else
+        average_pooling_3d_backward(input, output_gradient, input_gradient);
 }
 
 

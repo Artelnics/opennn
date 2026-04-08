@@ -23,17 +23,18 @@ void Layer::set_parameters_random()
 
 void Layer::set_parameters_glorot()
 {
-/*
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const type limit = sqrt(6.0 / (inputs_number + outputs_number));
+    const type limit = (inputs_number + outputs_number > 0)
+        ? sqrt(6.0 / (inputs_number + outputs_number))
+        : type(0.05);
 
-    const vector<TensorView*> parameter_views = get_parameter_views();
-
-    for(const TensorView* view : parameter_views)
-        set_random_uniform(VectorMap(view->data, view->size()), -limit, limit);
-*/
+    for(auto& param : parameters)
+    {
+        if(param.empty()) continue;
+        set_random_uniform(VectorMap(param.data, param.size()), -limit, limit);
+    }
 }
 
 
