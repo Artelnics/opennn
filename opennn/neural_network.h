@@ -88,8 +88,6 @@ public:
 
     bool validate_name(const string&) const;
 
-    void reference_all_layers();
-
     // Get
 
     bool has(const string&) const;
@@ -136,8 +134,7 @@ public:
     void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);
 
-    //@simone @todo void set_input_names(const vector<string>&);
-    //se ci sono nuovinomi deve richiamare il cambio nome nelle variabili
+
 
     void set_input_shape(const Shape&);
 

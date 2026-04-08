@@ -12,11 +12,6 @@
 #include "scaling_layer.h"
 #include "dense_layer.h"
 #include "neural_network.h"
-#include "bounding_layer.h"
-#include "multihead_attention_layer.h"
-#include "recurrent_layer.h"
-#include "stochastic_gradient_descent.h"
-#include "adaptive_moment_estimation.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "standard_networks.h"
@@ -72,14 +67,13 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
                        });
         }
 
-        if(!x_binary && y_binary)
+        if(y_binary && !x_binary)
             return opennn::point_biserial_correlation(x_vector, y_vector);
 
         if(x_binary && !y_binary)
             return opennn::point_biserial_correlation(y_vector, x_vector);
 
-        if(x_binary && y_binary)
-            return opennn::linear_correlation(x_vector, y_vector);
+        return opennn::linear_correlation(x_vector, y_vector);
     }
 
     if(x_columns != 1 && y_columns == 1)
@@ -89,7 +83,7 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
         return eta_squared_correlation(x.reshaped(x_rows, 1), y);
 
     if(x_columns != 1 && y_columns != 1)
-        return logistic_correlation_matrix_matrix(x, y);
+        return logistic_correlation(x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 }
@@ -111,21 +105,21 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
         if(!x_binary && !y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
         else if(!x_binary && y_binary)
-            return logistic_correlation_vector_vector_spearman(x_vector, y_vector);
+            return logistic_correlation_spearman(x_vector, y_vector);
         else if(x_binary && !y_binary)
-            return logistic_correlation_vector_vector_spearman(y_vector, x_vector);
+            return logistic_correlation_spearman(y_vector, x_vector);
         else if(x_binary && y_binary)
             return linear_correlation_spearman(x_vector, y_vector);
     }
 
     if(x_columns == 1 && y_columns != 1)
-        return logistic_correlation_vector_matrix(x.reshaped(x_rows, 1), y);
+        return logistic_correlation(x.reshaped(x_rows, 1), y);
 
     if(x_columns != 1 && y_columns == 1)
-        return logistic_correlation_matrix_vector(x, y.reshaped(x_rows, 1));
+        return logistic_correlation(x, y.reshaped(x_rows, 1));
 
     if(x_columns != 1 && y_columns != 1)
-        return logistic_correlation_matrix_matrix(x, y);
+        return logistic_correlation(x, y);
 
     throw runtime_error("Correlations Exception: Unknown case.");
 }
@@ -142,18 +136,7 @@ VectorR cross_correlations(const VectorR& x,
     const Index this_size = x.size();
 
     for(Index i = 0; i < maximum_past_time_steps; i++)
-    {
-        VectorR column_x(this_size-i);
-        VectorR column_y(this_size-i);
-
-        for(Index j = 0; j < this_size - i; j++)
-        {
-            column_x(j) = x(j);
-            column_y(j) = y(j + i);
-        }
-
-        cross_correlation[i] = linear_correlation(column_x, column_y).r;
-    }
+        cross_correlation[i] = linear_correlation(x.head(this_size - i), y.segment(i, this_size - i)).r;
 
     return cross_correlation;
 }
@@ -162,13 +145,10 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation exponential_correlation;
 
-    for(Index i = 0; i < y.rows(); i++)
+    if((!y.array().isNaN() && y.array() <= 0.0f).any())
     {
-        if(!isnan(y(i)) && y(i) <= 0.0f)
-        {
-            exponential_correlation.r = static_cast<type>(NAN);
-            return exponential_correlation;
-        }
+        exponential_correlation.r = static_cast<type>(NAN);
+        return exponential_correlation;
     }
 
     exponential_correlation = linear_correlation(x, y.array().log().matrix());
@@ -240,9 +220,7 @@ type r_correlation_to_z_correlation(const type r_correlation)
 {
     const type r_clamped = clamp(r_correlation, type(-0.9999), type(0.9999));
 
-    const type result = type(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
-
-    return result;
+    return type(0.5 * log((1 + r_clamped) / (1 - r_clamped)));
 }
 
 type z_correlation_to_r_correlation (const type z_correlation)
@@ -310,14 +288,10 @@ Correlation logarithmic_correlation(const VectorR& x,
 {
     Correlation logarithmic_correlation;
 
-    for(Index i = 0; i < x.rows(); i++)
+    if((!x.array().isNaN() && x.array() <= type(0)).any())
     {
-        if(!isnan(x(i)) && x(i) <= type(0))
-        {
-            logarithmic_correlation.r = type(NAN);
-
-            return logarithmic_correlation;
-        }
+        logarithmic_correlation.r = type(NAN);
+        return logarithmic_correlation;
     }
 
     logarithmic_correlation = linear_correlation(x.array().log(), y);
@@ -327,115 +301,64 @@ Correlation logarithmic_correlation(const VectorR& x,
     return logarithmic_correlation;
 }
 
-Correlation logistic_correlation_vector_vector(const VectorR& x,
-                                               const VectorR& y)
+static Correlation fit_logistic_correlation(const VectorR& input, const VectorR& target, const string& scaler)
 {
     Correlation correlation;
+    correlation.form = Correlation::Form::Sigmoid;
 
-    const auto [x_filter, y_filter] = filter_missing_values(x,y);
+    MatrixR data(input.size(), 2);
+    data.col(0) = input;
+    data.col(1) = target;
 
-     cout<<"x_filter.size()"<<x_filter.size()<<endl;
-     cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
-     cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
-   //  cout<<"y_filter"<<y_filter<<endl;
-   //  cout<<"x_filter"<<x_filter<<endl;
-
-    cout<<"001"<<endl;
-
-    if (x_filter.size() < 2
-        || is_constant(x_filter)
-        || is_constant(y_filter))
-    {
-        cout<<"002"<<endl;
-       // cout<<"x_filter.size()"<<x_filter.size()<<endl;
-       // cout<<"is_constant(x_filter)"<<is_constant(x_filter)<<endl;
-       // cout<<"is_constant(y_filter)"<<is_constant(y_filter)<<endl;
-
-        correlation.r = type(NAN);
-        correlation.form = Correlation::Form::Sigmoid;
-        return correlation;
-    }
-    cout<<"003"<<endl;
-
-    MatrixR data(x_filter.size(), 2);
-    data.col(0) = x_filter;
-    data.col(1) = y_filter;
-
-    Dataset dataset(x_filter.size(), {1}, {1});
+    Dataset dataset(input.size(), {1}, {1});
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
-    dataset.set_variable_scalers("MeanStandardDeviation");
+    dataset.set_variable_scalers(scaler);
     dataset.set_shape("Input", {1});
     dataset.set_shape("Target", {1});
     dataset.set_display(false);
-    cout<<"005"<<endl;
 
     NeuralNetwork neural_network;
-    const Shape dim1 = { 1 };
-    const Shape dim2 = { 1 };
-    neural_network.add_layer(make_unique<Scaling<2>>(dim1));
-    neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
+    const Shape dim = { 1 };
+    neural_network.add_layer(make_unique<Scaling<2>>(dim));
+    neural_network.add_layer(make_unique<Dense<2>>(dim, dim, "Sigmoid"));
 
     Loss loss(&neural_network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&loss);
-    levenberg_marquardt_algorithm.set_display(false);
-    cout<<"007"<<endl;
+    LevenbergMarquardtAlgorithm lm(&loss);
+    lm.set_display(false);
 
     try
     {
-        levenberg_marquardt_algorithm.train();
+        lm.train();
     }
-    catch(const exception& e)
+    catch(const exception&)
     {
-        cout << "[LOGISTIC] train() excepcion capturada: " << e.what() << endl;
-        cout << "[LOGISTIC] devolviendo r=0 para este par" << endl;
         correlation.r = type(0);
-        correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    cout<<"008"<<endl;
 
-    cout<<"[POST-008-A] get_feature_data Input..."<<endl;
     const MatrixR inputs = dataset.get_feature_data("Input");
-
-    cout<<"[POST-008-B] get_feature_data Target..."<<endl;
     const MatrixR targets = dataset.get_feature_data("Target");
-
-    cout<<"[POST-008-C] calculate_outputs..."<<endl;
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
-    cout<<"[POST-008-D] outputs.rows="<<outputs.rows()<<" cols="<<outputs.cols()<<endl;
-    cout<<"[POST-008-D] outputs tiene NaN="<<outputs.hasNaN()<<endl;
-    cout<<"[POST-008-D] targets tiene NaN="<<targets.hasNaN()<<endl;
-
-    cout<<"[POST-008-E] linear_correlation..."<<endl;
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
-    cout<<"[POST-008-F] r = "<<correlation.r<<endl;
-    cout << "[LOGISTIC] correlation.r tras linear_correlation = " << correlation.r << endl;
 
-    if(isnan(correlation.r) || !isfinite(correlation.r))
+    if(!isfinite(correlation.r))
     {
-        cout << "[LOGISTIC] GUARD ACTIVADO -> r era NaN/Inf, devolviendo 0" << endl;
         correlation.r = type(0);
-        correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    cout << "[LOGISTIC] guard no activado, continuando..." << endl;
+
     const type z_correlation = r_correlation_to_z_correlation(correlation.r);
+    const VectorR ci = confidence_interval_z_correlation(z_correlation, inputs.rows());
 
-    const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, inputs.rows());
-
-    correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-    correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-
-    correlation.form = Correlation::Form::Sigmoid;
+    correlation.lower_confidence = z_correlation_to_r_correlation(ci(0));
+    correlation.upper_confidence = z_correlation_to_r_correlation(ci(1));
 
     const VectorR coefficients = neural_network.get_parameters();
-
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
@@ -450,91 +373,37 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     return correlation;
 }
 
-Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
-                                                        const VectorR& y)
+Correlation logistic_correlation(const VectorR& x, const VectorR& y)
 {
-    Correlation correlation;
-
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if(x_filter.size() == 0)
+    if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
     {
-        correlation.r = type(NAN);
-
-        correlation.form = Correlation::Form::Sigmoid;
-
-        return correlation;
+        Correlation c;
+        c.r = type(NAN);
+        c.form = Correlation::Form::Sigmoid;
+        return c;
     }
 
-    const VectorR x_rank = calculate_spearman_ranks(x_filter);
-
-    MatrixR data;
-    data << x_rank, y_filter;
-
-    Dataset dataset(x_filter.size(), {1}, {1});
-    dataset.set_data(data);
-    dataset.set_sample_roles("Training");
-    dataset.set_variable_scalers("MinimumMaximum");
-
-    NeuralNetwork neural_network;
-    const Shape dim1 = { 1 };
-    const Shape dim2 = { 1 };
-    neural_network.add_layer(make_unique<Scaling<2>>(dim1));
-    neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
-
-    Loss loss(&neural_network, &dataset);
-    loss.set_error("MeanSquaredError");
-    loss.set_regularization("None");
-
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&loss);
-    levenberg_marquardt_algorithm.set_display(false);
-
-    try
-    {
-        levenberg_marquardt_algorithm.train();
-    }
-    catch(const exception& e)
-    {
-        cout << "[LOGISTIC-SPEARMAN] train() excepcion: " << e.what() << endl;
-        correlation.r = type(0);
-        correlation.form = Correlation::Form::Sigmoid;
-        return correlation;
-    }
-    const MatrixR inputs = dataset.get_feature_data("Input");
-    const MatrixR targets = dataset.get_feature_data("Target");
-    const MatrixR outputs = neural_network.calculate_outputs(inputs);
-
-    // Sigmoid correlation
-
-    correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
-
-    const type z_correlation = r_correlation_to_z_correlation(correlation.r);
-
-    const VectorR confidence_interval_z = confidence_interval_z_correlation(z_correlation, x_rank.size());
-
-    correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
-
-    correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-
-    correlation.form = Correlation::Form::Sigmoid;
-
-    const VectorR& coefficients = neural_network.get_parameters();
-
-    correlation.a = coefficients(0);
-    correlation.b = coefficients(1);
-
-    if(correlation.b < type(0))
-    {
-        correlation.r *= type(-1);
-        const type old_lower = correlation.lower_confidence;
-        correlation.lower_confidence = -correlation.upper_confidence;
-        correlation.upper_confidence = -old_lower;
-    }
-
-    return correlation;
+    return fit_logistic_correlation(x_filter, y_filter, "MeanStandardDeviation");
 }
 
-Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& y)
+Correlation logistic_correlation_spearman(const VectorR& x, const VectorR& y)
+{
+    const auto [x_filter, y_filter] = filter_missing_values(x, y);
+
+    if(x_filter.size() < 2)
+    {
+        Correlation c;
+        c.r = type(NAN);
+        c.form = Correlation::Form::Sigmoid;
+        return c;
+    }
+
+    return fit_logistic_correlation(calculate_spearman_ranks(x_filter), y_filter, "MinimumMaximum");
+}
+
+Correlation logistic_correlation(const VectorR& x, const MatrixR& y)
 {
     Correlation correlation;
     correlation.form = Correlation::Form::Sigmoid;
@@ -573,18 +442,14 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     dataset.set_binary_variables();
     dataset.set_default_variable_scalers();
 
-    // Dataset.print();
-
     dataset.set_sample_roles("Training");
     dataset.set_shape("Input", {dataset.get_features_number("Input")});
     dataset.set_shape("Target", {dataset.get_features_number("Target")});
 
-    const Index input_features_number = dataset.    get_features_number("Input");
+    const Index input_features_number = dataset.get_features_number("Input");
     const Index target_features_number = dataset.get_features_number("Target");
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
-
-    Scaling<2> const* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
 
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
@@ -602,18 +467,14 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     {
         quasi_newton_method.train();
     }
-    catch(const exception& e)
+    catch(const exception&)
     {
-        cout << "[LOGISTIC-VEC-MAT] train() excepcion: " << e.what() << endl;
         correlation.r = type(0);
-        correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    // Sigmoid correlation
 
     const MatrixR inputs = dataset.get_feature_data("Input");
     const MatrixR targets = dataset.get_feature_data("Target");
-
     const MatrixR outputs = neural_network.calculate_outputs(inputs);
 
     correlation.r = linear_correlation(outputs.reshaped(), targets.reshaped()).r;
@@ -629,12 +490,12 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     return correlation;
 }
 
-Correlation logistic_correlation_matrix_vector(const MatrixR& y, const VectorR& x)
+Correlation logistic_correlation(const MatrixR& y, const VectorR& x)
 {
-    return logistic_correlation_vector_matrix(x, y);
+    return logistic_correlation(x, y);
 }
 
-Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& y)
+Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 {
     Correlation correlation;
     correlation.form = Correlation::Form::Sigmoid;
@@ -687,8 +548,6 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    Scaling<2> const* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
-
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
     dense_2d->set_activation_function("Softmax");
@@ -705,14 +564,11 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     {
         quasi_newton_method.train();
     }
-    catch(const exception& e)
+    catch(const exception&)
     {
-        cout << "[LOGISTIC-MAT-MAT] train() excepcion: " << e.what() << endl;
         correlation.r = type(0);
-        correlation.form = Correlation::Form::Sigmoid;
         return correlation;
     }
-    // Sigmoid correlation
 
     const MatrixR inputs = dataset.get_feature_data("Input");
 
@@ -811,10 +667,8 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     const Index n          = x_filter.size();
     const Index n_cats     = y_filter.cols();
 
-    // Media global
     const double grand_mean = x_filter.cast<double>().mean();
 
-    // SS_total
     const double ss_total = (x_filter.cast<double>().array() - grand_mean).square().sum();
 
     if(ss_total <= 0)
@@ -823,7 +677,6 @@ Correlation eta_squared_correlation(const VectorR& continuous,
         return result;
     }
 
-    // SS_between — suma de cuadrados entre grupos
     double ss_between = 0;
 
     for(Index cat = 0; cat < n_cats; cat++)
@@ -839,14 +692,10 @@ Correlation eta_squared_correlation(const VectorR& continuous,
         ss_between += double(group_count) * diff * diff;
     }
 
-    // eta² = SS_between / SS_total
     const double eta_sq = ss_between / ss_total;
 
-    // Convertimos a r equivalente: r = sqrt(eta²)
-    // con signo siempre positivo (magnitud de asociación)
     result.r = type(clamp(sqrt(eta_sq), 0.0, 1.0));
 
-    // Intervalo de confianza via Fisher z
     const type z      = r_correlation_to_z_correlation(result.r);
     const VectorR ci  = confidence_interval_z_correlation(z, n);
     result.lower_confidence = z_correlation_to_r_correlation(ci(0));
@@ -906,28 +755,6 @@ void Correlation::print() const
          << "r: " << r << endl
          << "Lower confidence: " << lower_confidence << endl
          << "Upper confidence: " << upper_confidence << endl;
-}
-
-void register_layers()
-{
-    const Bounding bounding_layer;//bounding_layer.print();
-    const MultiHeadAttention multi_head_attention; multi_head_attention.print();
-    const Recurrent recurrent_layer; // recurrent_layer.print();
-    const MultiHeadAttention multihead_layer;
-}
-
-void register_loss_indices()
-{
-    const Loss loss;//mean_squared_error.print();
-
-}
-
-void register_optimization_algorithms()
-{
-    const AdaptiveMomentEstimation adaptive_moment_estimation; //adaptive_moment_estimation.print();
-    const StochasticGradientDescent stochastic_gradient_descent; //stochastic_gradient_descent.print();
-    const QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
-    const LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
 }
 
 }

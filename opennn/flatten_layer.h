@@ -144,7 +144,6 @@ private:
     enum Backward {OutputGradients, InputGradients};
 };
 
-void reference_flatten_layer();
 }
 
 // OpenNN: Open Neural Networks Library.

@@ -75,16 +75,12 @@ vector<Index> Dataset::get_used_sample_indices() const
 {
     const Index samples_number = get_samples_number();
 
-    const Index used_samples_number = samples_number - get_samples_number("None");
-
-    assert(used_samples_number >= 0);
-    vector<Index> used_indices(used_samples_number);
-
-    Index index = 0;
+    vector<Index> used_indices;
+    used_indices.reserve(samples_number - get_samples_number("None"));
 
     for(Index i = 0; i < samples_number; i++)
         if (sample_roles[i] != "None")
-            used_indices[index++] = i;
+            used_indices.push_back(i);
 
     return used_indices;
 }
@@ -366,8 +362,8 @@ vector<VariableType> Dataset::get_variable_types(const vector<Index> indices) co
 {
     vector<VariableType> variable_types(indices.size());
 
-    for (Index i = 0; i < static_cast<Index>(indices.size()); i++)
-        variable_types[i] = get_variable_type(indices[i]);
+    transform(indices.begin(), indices.end(), variable_types.begin(),
+              [this](Index i) { return get_variable_type(i); });
 
     return variable_types;
 }
@@ -469,90 +465,66 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 
 vector<Index> Dataset::get_variable_indices(const string& variable_role) const
 {
-    const Index count = get_variables_number(variable_role);
+    vector<Index> indices;
+    indices.reserve(get_variables_number(variable_role));
 
-    vector<Index> indices(count);
-
-    const Index variables_number = get_variables_number();
-
-    Index index = 0;
-
-    for(Index i = 0; i < variables_number; i++)
+    for(size_t i = 0; i < variables.size(); i++)
         if (variables[i].role.find(variable_role) != string::npos)
-            indices[index++] = i;
+            indices.push_back(i);
 
     return indices;
 }
 
 vector<Index> Dataset::get_used_variables_indices() const
 {
-    const Index variables_number = get_variables_number();
+    vector<Index> used_indices;
+    used_indices.reserve(get_used_variables_number());
 
-    const Index used_variables_number = get_used_variables_number();
-
-    vector<Index> used_indices(used_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < variables_number; i++)
-        if (variables[i].role == "Input"
-            || variables[i].role == "Target"
-            || variables[i].role == "Time"
-            || variables[i].role == "InputTarget")
-            used_indices[index++] = i;
+    for(size_t i = 0; i < variables.size(); i++)
+        if (variables[i].is_used())
+            used_indices.push_back(i);
 
     return used_indices;
 }
 
 vector<string> Dataset::get_feature_scalers(const string& variable_role) const
 {
-    const Index input_variables_number = get_variables_number(variable_role);
-    const Index input_features_number = get_features_number(variable_role);
+    const vector<Variable> role_variables = get_variables(variable_role);
 
-    const vector<Variable> input_variables = get_variables(variable_role);
+    vector<string> scalers;
+    scalers.reserve(get_features_number(variable_role));
 
-    vector<string> input_variable_scalers(input_features_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < input_variables_number; i++)
+    for(const Variable& var : role_variables)
     {
-        const Index count = input_variables[i].is_categorical() ? input_variables[i].get_categories_number() : 1;
+        const Index count = var.is_categorical() ? var.get_categories_number() : 1;
 
         for(Index j = 0; j < count; j++)
-            input_variable_scalers[index++] = input_variables[i].scaler;
+            scalers.push_back(var.scaler);
     }
 
-    return input_variable_scalers;
+    return scalers;
 }
 
 vector<string> Dataset::get_variable_names() const
 {
-    const Index variables_number = get_variables_number();
+    vector<string> variable_names(variables.size());
 
-    vector<string> variable_names(variables_number);
-
-    for(Index i = 0; i < variables_number; i++)
-        variable_names[i] = variables[i].name;
+    transform(variables.begin(), variables.end(), variable_names.begin(),
+              [](const Variable& var) { return var.name; });
 
     return variable_names;
 }
 
 vector<string> Dataset::get_variable_names(const string& variable_role) const
 {
-    const Index count = get_variables_number(variable_role);
-
-    vector<string> names(count);
-
-    Index index = 0;
+    vector<string> names;
+    names.reserve(get_variables_number(variable_role));
 
     for(const Variable& variable : variables)
     {
-        if(!(variable.role == variable_role
-        || ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget")))
-            continue;
-
-        names[index++] = variable.name;
+        if(variable.role == variable_role
+        || ((variable_role == "Input" || variable_role == "Target") && variable.role == "InputTarget"))
+            names.push_back(variable.name);
     }
 
     return names;
@@ -579,14 +551,11 @@ Index Dataset::get_used_variables_number() const
 
 vector<Variable> Dataset::get_variables(const string& variable_role) const
 {
-    const Index count = get_variables_number(variable_role);
+    vector<Variable> this_variables;
+    this_variables.reserve(get_variables_number(variable_role));
 
-    vector<Variable> this_variables(count);
-    Index index = 0;
-
-    for(const Variable& variable : variables)
-        if (variable.role.find(variable_role) != string::npos)
-            this_variables[index++] = variable;
+    copy_if(variables.begin(), variables.end(), back_inserter(this_variables),
+            [&variable_role](const Variable& var) { return var.role.find(variable_role) != string::npos; });
 
     return this_variables;
 }
@@ -1746,7 +1715,7 @@ vector<Descriptives> Dataset::scale_features(const string& variable_role)
     const vector<string> scalers = get_feature_scalers(variable_role);
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives(variable_role);
 
-    for(Index i = 0; i < static_cast<Index>(feature_indices.size()); i++)
+    for(size_t i = 0; i < feature_indices.size(); i++)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], false);
 
     return feature_descriptives;
@@ -1758,7 +1727,7 @@ void Dataset::unscale_features(const string& variable_role,
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<string> scalers = get_feature_scalers(variable_role);
 
-    for(Index i = 0; i < static_cast<Index>(feature_indices.size()); i++)
+    for(size_t i = 0; i < feature_indices.size(); i++)
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 

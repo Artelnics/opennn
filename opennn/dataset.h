@@ -93,7 +93,7 @@ public:
     vector<Index> get_used_feature_indices() const;
 
     vector<Index> get_feature_dimensions() const;
-//@simone forse input e aoutput
+
 
     Shape get_shape(const string&) const;
 

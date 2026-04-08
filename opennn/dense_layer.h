@@ -431,8 +431,6 @@ public:
     bool use_combinations = true;
 };
 
-void reference_dense_layer();
-
 }
 
 // OpenNN: Open Neural Networks Library.

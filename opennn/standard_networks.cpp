@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "standard_networks.h"
+#include "registry.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
 #include "dense_layer.h"
@@ -892,7 +893,7 @@ void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabular
 
     input_vocabulary_map.clear();
 
-    for(Index i = 0; i < static_cast<Index>(input_vocabulary.size()); i++)
+    for(size_t i = 0; i < input_vocabulary.size(); i++)
         input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
@@ -902,7 +903,7 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
 
     output_inverse_vocabulary_map.clear();
 
-    for(Index i = 0; i < static_cast<Index>(output_vocabulary.size()); i++)
+    for(size_t i = 0; i < output_vocabulary.size(); i++)
         output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 

@@ -361,8 +361,6 @@ private:
     type max_range;
 };
 
-void reference_scaling_layer();
-
 }
 
 // OpenNN: Open Neural Networks Library.

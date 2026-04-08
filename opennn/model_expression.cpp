@@ -1003,7 +1003,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     if(ExpLinear) buffer << exponential_linear_javascript();
     if(SExpLinear) buffer << selu_javascript();
     if(Softmax) buffer << softmax_javascript();
-    if(buffer.str().find("HyperbolicTangent") == string::npos) buffer << hyperbolic_tangent_javascript(); // Asegurar que se incluye si se usa en la expresión
+    if(buffer.str().find("HyperbolicTangent") == string::npos) buffer << hyperbolic_tangent_javascript();
     buffer << "\n";
 
     buffer << "function neuralNetwork()" << endl

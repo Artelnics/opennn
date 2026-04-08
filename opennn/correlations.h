@@ -46,17 +46,17 @@ Correlation exponential_correlation(const VectorR&, const VectorR&);
 
 Correlation power_correlation(const VectorR&, const VectorR&);
 
-Correlation logistic_correlation_vector_vector(const VectorR&, const VectorR&);
+Correlation logistic_correlation(const VectorR&, const VectorR&);
 
-Correlation logistic_correlation_vector_matrix(const VectorR&, const MatrixR&);
+Correlation logistic_correlation(const VectorR&, const MatrixR&);
 
-Correlation logistic_correlation_matrix_vector(const MatrixR&, const VectorR&);
+Correlation logistic_correlation(const MatrixR&, const VectorR&);
 
-Correlation logistic_correlation_matrix_matrix(const MatrixR&, const MatrixR&);
+Correlation logistic_correlation(const MatrixR&, const MatrixR&);
 
-Correlation point_biserial_correlation(const VectorR& continuous, const VectorR& binary);
+Correlation point_biserial_correlation(const VectorR&, const VectorR&);
 
-Correlation eta_squared_correlation(const VectorR& continuous, const MatrixR& categorical);
+Correlation eta_squared_correlation(const VectorR&, const MatrixR&);
 
 Correlation correlation(const MatrixR&, const MatrixR&);
 
@@ -66,7 +66,7 @@ Correlation linear_correlation_spearman(const VectorR&, const VectorR&);
 
 VectorR calculate_spearman_ranks(const VectorR&);
 
-Correlation logistic_correlation_vector_vector_spearman(const VectorR&, const VectorR&);
+Correlation logistic_correlation_spearman(const VectorR&, const VectorR&);
 
 Correlation correlation_spearman(const MatrixR&, const MatrixR&);
 
@@ -84,8 +84,6 @@ VectorR autocorrelations(const VectorR&, Index  = 10);
 VectorR cross_correlations(const VectorR&, const VectorR&, Index);
 
 MatrixR get_correlation_values(const Tensor<Correlation, 2>&);
-
-void register_optimization_algorithms();
 
 }
 

@@ -80,14 +80,6 @@ bool NeuralNetwork::validate_name(const string& name) const
     return true;
 }
 
-void NeuralNetwork::reference_all_layers()
-{
-    reference_dense_layer();
-    reference_scaling_layer();
-    reference_flatten_layer();
-    reference_addition_layer();
-    // Add more template layers
-}
 
 bool NeuralNetwork::has(const string& name) const
 {
@@ -642,7 +634,7 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
     unordered_map<string, Index> vocabulary_map;
     vocabulary_map.reserve(vocabulary.size());
 
-    for(Index i = 0; i < static_cast<Index>(vocabulary.size()); ++i)
+    for(size_t i = 0; i < vocabulary.size(); ++i)
         vocabulary_map[vocabulary[i]] = i;
 
     MatrixR inputs(batch_size, sequence_length);
