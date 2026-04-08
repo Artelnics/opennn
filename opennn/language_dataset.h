@@ -41,8 +41,6 @@ public:
     void encode_decoder_target_sequence_to_sequence(const vector<vector<string>>&);
     void encode_target_classification(const vector<vector<string>>&);
 
-    void print() const override;
-
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 

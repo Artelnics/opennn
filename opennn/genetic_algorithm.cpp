@@ -24,66 +24,6 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
 }
 
 
-const MatrixB& GeneticAlgorithm::get_population() const
-{
-    return population;
-}
-
-
-const VectorR& GeneticAlgorithm::get_training_errors() const
-{
-    return training_errors;
-}
-
-
-const VectorR& GeneticAlgorithm::get_validation_errors() const
-{
-    return validation_errors;
-}
-
-
-const VectorR& GeneticAlgorithm::get_fitness() const
-{
-    return fitness;
-}
-
-
-const VectorB& GeneticAlgorithm::get_selection() const
-{
-    return selection;
-}
-
-
-Index GeneticAlgorithm::get_individuals_number() const
-{
-    return population.rows();
-}
-
-
-Index GeneticAlgorithm::get_genes_number() const
-{
-    return original_input_variable_indices.size();
-}
-
-
-Index GeneticAlgorithm::get_minimum_inputs_number() const 
-{ 
-    return minimum_inputs_number; 
-}
-
-
-Index GeneticAlgorithm::get_maximum_inputs_number() const
-{ 
-    return maximum_inputs_number; 
-}
-
-
-const string& GeneticAlgorithm::get_initialization_method() const
-{
-    return initialization_method;
-}
-
-
 void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
@@ -125,15 +65,9 @@ void GeneticAlgorithm::set_default()
 
     selection.resize(individuals_number);
 
-    elitism_size = Index(ceil(individuals_number / 4));
+    elitism_size = (individuals_number + 3) / 4;
 
     initialization_method = "Correlations";
-}
-
-
-void GeneticAlgorithm::set_minimum_inputs_number(const Index new_minimum_inputs_number)
-{
-    minimum_inputs_number = new_minimum_inputs_number;
 }
 
 
@@ -145,18 +79,6 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
     maximum_inputs_number = (inputs_number == 0)
         ? new_maximum_inputs_number
         : clamp(new_maximum_inputs_number, Index(1), inputs_number);
-}
-
-
-void GeneticAlgorithm::set_population(const MatrixB& new_population)
-{
-    population = new_population;
-}
-
-
-void GeneticAlgorithm::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
 }
 
 
@@ -176,36 +98,6 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
     selection.resize(new_individuals_number);
 
     elitism_size = min(elitism_size, new_individuals_number);
-}
-
-
-void GeneticAlgorithm::set_initialization_method(const string& new_initialization_method)
-{
-    initialization_method = new_initialization_method;
-}
-
-
-void GeneticAlgorithm::set_mutation_rate(const type new_mutation_rate)
-{
-    mutation_rate = clamp(new_mutation_rate, type(0), type(1));
-}
-
-
-void GeneticAlgorithm::set_elitism_size(const Index new_elitism_size)
-{
-    elitism_size = clamp<Index>(new_elitism_size, 0, get_individuals_number());
-}
-
-
-void GeneticAlgorithm::set_fitness(const VectorR& new_fitness)
-{
-    fitness = new_fitness;
-}
-
-
-void GeneticAlgorithm::set_selection(const VectorB& new_selection)
-{
-    selection = new_selection;
 }
 
 
@@ -276,7 +168,7 @@ void GeneticAlgorithm::initialize_population_correlations()
         {   
             const type arrow = random_uniform(0, correlations_sum);
 
-            const Index j = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+            const Index j = min(static_cast<Index>(upper_bound(begin, end, arrow) - begin), genes_number - 1);
 
             individual_genes(j) = true;
         }
@@ -377,14 +269,12 @@ void GeneticAlgorithm::evaluate_population()
         dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
     }
 
-    mean_training_error = training_errors.mean();
-    mean_validation_error = validation_errors.mean();
 }
 
 
 void GeneticAlgorithm::perform_fitness_assignment()
 {
-    fitness = calculate_rank_greater(validation_errors).cast<type>().array() + type(1.0);
+    fitness = calculate_rank_less(validation_errors).cast<type>().array() + type(1.0);
 }
 
 
@@ -400,7 +290,7 @@ void GeneticAlgorithm::perform_selection()
 
     if(elitism_size != 0)
         for(Index i = 0; i < individuals_number; i++)
-            selection(i) = (fitness(i) - 1 >= 0) && (fitness(i) > (individuals_number - elitism_size));
+            selection(i) = fitness(i) > type(individuals_number - elitism_size);
 
     VectorR fitness_cumsum(fitness.size());
     partial_sum(fitness.data(), fitness.data() + fitness.size(), fitness_cumsum.data());
@@ -408,34 +298,30 @@ void GeneticAlgorithm::perform_selection()
     const type* begin = fitness_cumsum.data();
     const type* end = begin + individuals_number;
 
-    while (get_selected_individuals_number() < individuals_to_be_selected)
+    Index selected_count = count(selection.data(), selection.data() + selection.size(), true);
+
+    while (selected_count < individuals_to_be_selected)
     {
         const type arrow = random_uniform(type(0), fitness_sum);
 
-        const Index i = static_cast<Index>(upper_bound(begin, end, arrow) - begin);
+        const Index i = min(static_cast<Index>(upper_bound(begin, end, arrow) - begin), individuals_number - 1);
 
-        selection(i) = true;
+        if(!selection(i))
+        {
+            selection(i) = true;
+            selected_count++;
+        }
     }
-}
-
-
-Index GeneticAlgorithm::get_selected_individuals_number() const
-{
-    return count(selection.data(), selection.data() + selection.size(), true);
 }
 
 
 vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 {
-    const Index selected_individuals_number = get_selected_individuals_number();
-
-    vector<Index> selection_indices(selected_individuals_number);
-
-    Index count = 0;
+    vector<Index> selection_indices;
 
     for(Index i = 0; i < selection.size(); i++)
         if(selection(i))
-            selection_indices[count++] = i;
+            selection_indices.push_back(i);
 
     return selection_indices;
 }
@@ -505,41 +391,23 @@ void GeneticAlgorithm::perform_crossover()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    MatrixB new_population(individuals_number, genes_number);
+    const vector<Index> selected_individual_indices = get_selected_individual_indices();
 
-    VectorB parent_1_genes;
-    VectorB parent_2_genes;
-
-    const Index selected_individuals_number = get_selected_individuals_number();
-
-    vector<Index> selected_individual_indices = get_selected_individual_indices();
-
-    if (selected_individuals_number == 0)
+    if (selected_individual_indices.empty())
         throw logic_error("Cannot perform crossover with zero selected parents.");
 
-    const vector<Index> parent_1_indices = selected_individual_indices;
-    vector<Index> parent_2_indices = selected_individual_indices;
-    shuffle_vector(parent_2_indices);
+    MatrixB new_population(individuals_number, genes_number);
 
-    Index descendent_index = 0;
-
-    while (descendent_index < individuals_number)
+    for(Index i = 0; i < individuals_number; i++)
     {
-        const Index parent_1_random_index = get_random_element(selected_individual_indices);
-        Index parent_2_random_index = get_random_element(selected_individual_indices);
+        const Index p1 = get_random_element(selected_individual_indices);
+        Index p2 = get_random_element(selected_individual_indices);
 
-        while (selected_individuals_number > 1 && parent_1_random_index == parent_2_random_index)
-            parent_2_random_index = get_random_element(selected_individual_indices);
+        while (selected_individual_indices.size() > 1 && p1 == p2)
+            p2 = get_random_element(selected_individual_indices);
 
-        const VectorB parent_1_genes = population.row(parent_1_random_index);
-        const VectorB parent_2_genes = population.row(parent_2_random_index);
-
-        new_population.row(descendent_index) = cross(parent_1_genes, parent_2_genes);
-        descendent_index++;
+        new_population.row(i) = cross(population.row(p1), population.row(p2));
     }
-
-    if(descendent_index != individuals_number)
-        throw logic_error("descendent_index != individuals_number");
 
     population = new_population;
 }
@@ -547,16 +415,6 @@ void GeneticAlgorithm::perform_crossover()
 
 void GeneticAlgorithm::perform_mutation()
 {
-    /*
-    const Index individuals_number = get_individuals_number();
-    const Index genes_number = get_genes_number();
-
-    for(Index i = 0; i < individuals_number; i++)
-        for(Index j = 0; j < genes_number; j++)
-            if(get_random_type(0, 1) < mutation_rate)
-                population(i,j) = !population(i,j);
-    */
-
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
@@ -642,8 +500,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     Index optimal_individual_index;
 
-    Index optimal_individual_training_index;
-
     bool stop = false;
 
     time_t beginning_time;
@@ -670,27 +526,23 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         optimal_individual_index = minimal_index(validation_errors);
 
-        optimal_individual_training_index = minimal_index(training_errors);
-
         // Store optimal training and selection error in the history
 
-        input_selection_results.training_error_history(epoch) = training_errors(optimal_individual_training_index);
+        input_selection_results.training_error_history(epoch) = training_errors(optimal_individual_index);
 
         input_selection_results.validation_error_history(epoch) = validation_errors(optimal_individual_index);
 
         // Store mean errors histories
 
-        input_selection_results.mean_validation_error_history(epoch) = mean_validation_error;
+        input_selection_results.mean_validation_error_history(epoch) = validation_errors.mean();
 
-        input_selection_results.mean_training_error_history(epoch)= mean_training_error;
+        input_selection_results.mean_training_error_history(epoch) = training_errors.mean();
+
+        dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
 
         if(validation_errors(optimal_individual_index) < input_selection_results.optimum_validation_error)
         {
             generation_selected = epoch;
-
-            dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
-
-            // Neural network
 
             input_selection_results.optimal_inputs = population.row(optimal_individual_index);
 
@@ -701,17 +553,13 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
             input_selection_results.optimal_input_variable_names
                 = dataset->get_variable_names("Input");
 
+            dataset->set_variable_indices(original_input_variable_indices, original_target_variable_indices);
+
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
-            // Loss index
-
-            input_selection_results.optimum_training_error = training_errors(optimal_individual_training_index);
+            input_selection_results.optimum_training_error = training_errors(optimal_individual_index);
 
             input_selection_results.optimum_validation_error = validation_errors(optimal_individual_index);
-        }
-        else
-        {
-            dataset->set_variable_indices(original_input_variable_indices,original_target_variable_indices);
         }
 
         time(&current_time);
@@ -723,7 +571,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
                  << "Generation mean selection error: " << input_selection_results.mean_validation_error_history(epoch) << endl
-                 << "Generation minimum training error: " << training_errors(optimal_individual_training_index) << endl
+                 << "Generation minimum training error: " << training_errors(optimal_individual_index) << endl
                  << "Generation minimum selection error: " << validation_errors(optimal_individual_index) << endl
                  << "Best ever training error: " << input_selection_results.optimum_training_error << endl
                  << "Best ever selection error: " << input_selection_results.optimum_validation_error << endl
@@ -767,7 +615,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
         perform_crossover();
 
-        if(mutation_rate!=0 && epoch > maximum_epochs*0.5 && epoch < maximum_epochs*0.8)
+        if(mutation_rate != 0)
             perform_mutation();
     }
 
@@ -831,9 +679,11 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     neural_network->set_parameters(input_selection_results.optimal_parameters);
 
-    if(display) input_selection_results.print();
-
-    cout << "Selected generation: " << generation_selected << endl;
+    if(display)
+    {
+        input_selection_results.print();
+        cout << "Selected generation: " << generation_selected << endl;
+    }
 
     return input_selection_results;
 }
@@ -884,49 +734,6 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
     set_maximum_inputs_number(read_xml_index(root, "MaximumInputsNumber"));
     set_maximum_epochs(read_xml_index(root, "MaximumGenerationsNumber"));
     set_maximum_time(read_xml_type(root, "MaximumTime"));
-}
-
-
-void GeneticAlgorithm::print() const
-{
-    cout << "Genetic algorithm" << endl
-         << "Individuals number: " << get_individuals_number() << endl
-         << "Genes number: " << get_genes_number() << endl;
-}
-
-
-void GeneticAlgorithm::save(const filesystem::path& file_name) const
-{
-    try
-    {
-        ofstream file(file_name);
-
-        if (file.is_open())
-        {
-            XMLPrinter printer;
-            to_XML(printer);
-
-            file << printer.CStr();
-
-            file.close();
-        }
-        else
-        {
-            throw runtime_error("Cannot open file: " + file_name.string());
-        }
-    }
-    catch (const exception& e)
-    {
-        cerr << e.what() << endl;
-    }
-}
-
-
-void GeneticAlgorithm::load(const filesystem::path& file_name)
-{
-    set_default();
-
-    from_XML(load_xml_file(file_name));
 }
 
 

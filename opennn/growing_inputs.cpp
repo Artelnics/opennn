@@ -315,7 +315,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_shape({ optimal_processed_variables_number });
     }
 
-    dataset->print();
+    //dataset->print();
 
     const vector<string> input_variable_scalers = dataset->get_feature_scalers("Input");
     const vector<Descriptives> input_variable_descriptives = dataset->calculate_feature_descriptives("Input");
@@ -397,26 +397,6 @@ void GrowingInputs::from_XML(const XMLDocument& document)
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
 }
 
-
-void GrowingInputs::save(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    if(!file.is_open())
-        return;
-
-    XMLPrinter printer;
-    to_XML(printer);
-    file << printer.CStr();
-}
-
-
-void GrowingInputs::load(const filesystem::path& file_name)
-{
-    set_default();
-
-    from_XML(load_xml_file(file_name));
-}
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 

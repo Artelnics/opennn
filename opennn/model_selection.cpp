@@ -21,30 +21,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 }
 
 
-TrainingStrategy* ModelSelection::get_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-bool ModelSelection::has_training_strategy() const
-{
-    return training_strategy;
-}
-
-
-NeuronSelection* ModelSelection::get_neurons_selection() const
-{
-    return neurons_selection.get();
-}
-
-
-InputsSelection* ModelSelection::get_inputs_selection() const
-{
-    return inputs_selection.get();
-}
-
-
 void ModelSelection::set_default()
 {
     set_neurons_selection("GrowingNeurons");
@@ -66,12 +42,6 @@ void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
     inputs_selection = Registry<InputsSelection>::instance().create(new_inputs_selection);
 
     inputs_selection->set(training_strategy);
-}
-
-
-void ModelSelection::set(TrainingStrategy* new_training_strategy)
-{
-    training_strategy = new_training_strategy;
 }
 
 
@@ -192,13 +162,6 @@ void ModelSelection::from_XML(const XMLDocument& document)
         inputs_selection->from_XML(inputs_method_document);
     }
     else throw runtime_error(inputs_method + " element is nullptr.\n");
-}
-
-
-void ModelSelection::print() const
-{
-    cout << get_neurons_selection() << endl;
-    cout << get_inputs_selection() << endl;
 }
 
 

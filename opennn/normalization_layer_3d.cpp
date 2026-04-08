@@ -21,18 +21,6 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
 }
 
 
-Index Normalization3d::get_sequence_length() const
-{
-    return sequence_length;
-}
-
-
-Index Normalization3d::get_embedding_dimension() const
-{
-    return parameters[Gammas].shape[0];
-}
-
-
 Shape Normalization3d::get_input_shape() const
 {
     return { sequence_length, get_embedding_dimension() };

@@ -608,7 +608,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     dense_2d->set_activation_function("Softmax");
 
     Loss loss(&neural_network, &dataset);
-    loss.set_error("CrossEntropyError");
+    loss.set_error("CrossEntropy");
     loss.set_regularization("None");
 
     QuasiNewtonMethod quasi_newton_method(&loss);

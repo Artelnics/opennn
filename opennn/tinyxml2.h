@@ -1,13 +1,13 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <fstream>
-//#include <algorithm>
+#include <iostream>
 
 namespace tinyxml2 {
 
@@ -167,5 +167,13 @@ void for_xml_items(const XMLElement* parent, const char* tag, long count, Func f
 
 XMLDocument load_xml_file(const std::filesystem::path& file_name);
 const XMLElement* get_xml_root(const XMLDocument& document, const std::string& tag);
+
+template<typename T>
+void print_xml(const T& object)
+{
+    XMLPrinter printer;
+    object.to_XML(printer);
+    std::cout << printer.CStr() << std::endl;
+}
 
 } // namespace

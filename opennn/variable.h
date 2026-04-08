@@ -36,14 +36,14 @@ struct Variable
     string scaler = "None";
 
     // Methods
-    const string& get_role() const;
+    const string& get_role() const { return role; }
     string get_type_string() const;
     Index get_categories_number() const;
 
-    void set_scaler(const string&);
-    void set_role(const string&);
+    void set_scaler(const string& s) { scaler = s; }
+    void set_role(const string& r) { role = r; }
     void set_type(const string&);
-    void set_categories(const vector<string>&);
+    void set_categories(const vector<string>& c) { categories = c; }
 
     void from_XML(const XMLDocument&);
     void to_XML(XMLPrinter&) const;
@@ -51,8 +51,6 @@ struct Variable
     bool is_binary() const { return type == VariableType::Binary; }
     bool is_categorical() const { return type == VariableType::Categorical; }
     bool is_used() const { return !(role == "None" || role == "Time"); }
-
-    void print() const;
 
     vector<string> get_names() const;
 

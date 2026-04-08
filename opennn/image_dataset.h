@@ -59,8 +59,6 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print() const override;
-
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      type*,

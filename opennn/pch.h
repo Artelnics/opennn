@@ -135,7 +135,6 @@ using TensorMap1 = TensorMap<Tensor<type, 1, Layout | AlignedMax>, AlignedMax>;
 using TensorMap2 = TensorMap<Tensor<type, 2, Layout | AlignedMax>, AlignedMax>;
 using TensorMap3 = TensorMap<Tensor<type, 3, Layout | AlignedMax>, AlignedMax>;
 using TensorMap4 = TensorMap<Tensor<type, 4, Layout | AlignedMax>, AlignedMax>;
-using TensorMap5 = TensorMap<Tensor<type, 5, Layout | AlignedMax>, AlignedMax>;
 
 template <int Rank>
 using TensorMapR = TensorMap<Tensor<type, Rank, Layout | AlignedMax>, AlignedMax>;

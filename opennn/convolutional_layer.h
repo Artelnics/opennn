@@ -27,9 +27,9 @@ public:
                   bool = false,                              // Batch Normalization)
                   const string& = "convolutional_layer");
 
-    bool get_batch_normalization() const;
+    bool get_batch_normalization() const { return batch_normalization; }
 
-    ActivationFunction get_activation_function() const;
+    ActivationFunction get_activation_function() const { return activation_function; }
 
     Shape get_output_shape() const override;
 
@@ -38,16 +38,16 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    string get_convolution_type() const;
+    string get_convolution_type() const { return convolution_type; }
 
-    Index get_column_stride() const;
+    Index get_column_stride() const { return column_stride; }
 
-    Index get_row_stride() const;
+    Index get_row_stride() const { return row_stride; }
 
-    Index get_kernel_height() const;
-    Index get_kernel_width() const;
-    Index get_kernel_channels() const;
-    Index get_kernels_number() const;
+    Index get_kernel_height() const { return kernel_height; }
+    Index get_kernel_width() const { return kernel_width; }
+    Index get_kernel_channels() const { return kernel_channels; }
+    Index get_kernels_number() const { return kernels_number; }
 
     Index get_padding_height() const;
     Index get_padding_width() const;
@@ -225,8 +225,6 @@ public:
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
-
-    void print() const override;
 
 #ifdef CUDA
 

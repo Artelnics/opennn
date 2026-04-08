@@ -26,8 +26,6 @@ public:
 
     // Set
 
-    void set_loss(Loss*) override;
-
     void set_default();
 
     // Stopping criteria
@@ -79,13 +77,11 @@ private:
 
 struct Triplet
 {
-    Triplet();
+    Triplet() = default;
 
     bool operator == (const Triplet& other_triplet) const;
 
     type get_length() const;
-
-//    pair<type, type> minimum() const;
 
     string struct_to_string() const;
 
@@ -93,7 +89,7 @@ struct Triplet
 
     void check() const;
 
-    pair<type, type> A, U, B;
+    pair<type, type> A = {MAX, MAX}, U = {MAX, MAX}, B = {MAX, MAX};
 };
 
 

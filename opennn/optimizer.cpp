@@ -24,94 +24,10 @@ Optimizer::Optimizer(Loss* new_loss)
 }
 
 
-Loss* Optimizer::get_loss() const
-{
-    return loss;
-}
-
-
-const string& Optimizer::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
-void Optimizer::set_hardware_use(const string& new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
-bool Optimizer::has_loss() const
-{
-    return loss;
-}
-
-
-bool Optimizer::get_display() const
-{
-    return display;
-}
-
-
-void Optimizer::set(Loss* new_loss)
-{
-    loss = new_loss;
-}
-
-
-void Optimizer::set_loss(Loss* new_loss)
-{
-    loss = new_loss;
-}
-
-
-void Optimizer::set_display(bool new_display)
-{
-    display = new_display;
-}
-
-
-void Optimizer::set_display_period(const Index new_display_period)
-{
-    display_period = new_display_period;
-}
-
-
-void Optimizer::set_maximum_epochs(const Index new_maximum_epochs)
-{
-    maximum_epochs = new_maximum_epochs;
-}
-
-
-void Optimizer::set_maximum_time(const type new_maximum_time)
-{
-    maximum_time = new_maximum_time;
-}
-
-
-void Optimizer::set_loss_goal(const type new_loss_goal)
-{
-    training_loss_goal = new_loss_goal;
-}
-
-
-void Optimizer::set_maximum_validation_failures(const Index new_maximum_validation_failures)
-{
-    maximum_validation_failures = new_maximum_validation_failures;
-}
-
-
 void Optimizer::check() const
 {
     if(!loss)
         throw runtime_error("loss is nullptr.\n");
-}
-
-
-const string& Optimizer::get_name() const
-{
-    return name;
 }
 
 
@@ -136,28 +52,14 @@ void Optimizer::from_XML(const XMLDocument& document)
 
 void Optimizer::save(const filesystem::path& file_name) const
 {
-    try
-    {
-        ofstream file(file_name);
+    ofstream file(file_name);
 
-        if (file.is_open())
-        {
-            XMLPrinter printer;
-            to_XML(printer);
+    if(!file.is_open())
+        return;
 
-            file << printer.CStr();
-
-            file.close();
-        }
-        else
-        {
-            throw runtime_error("Cannot open file: " + file_name.string());
-        }
-    }
-    catch (const exception& e)
-    {
-        cerr << e.what() << endl;
-    }
+    XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
 }
 
 
@@ -184,65 +86,6 @@ void Optimizer::set_names()
 
     NeuralNetwork* neural_network = loss->get_neural_network();
 
- /*@simone @todo maybe you can delete everything here
-  *
-    const Index input_features_number = dataset->get_features_number("Input");
-    const Index target_features_number = dataset->get_features_number("Target");
-
-    const vector<Variable> variables = dataset->get_variables();
-    const vector<Index> input_feature_indices = dataset->get_variable_indices("Input");
-    const vector<Index> target_feature_indices = dataset->get_variable_indices("Input");
-
-
-    vector<string> input_variable_names;
-    vector<string> target_variable_names;
-
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
-
-    for(Index i = 0; i < input_features_number; i++)
-    {
-        if(time_series_dataset)
-        {
-            const Index time_steps = time_series_dataset->get_past_time_steps();
-
-            if(input_names[i].empty())
-                for(Index j = 0; j < time_steps; j++)
-                    input_variable_names.push_back("variable_" + to_string(i + 1) + "_lag" + to_string(j));
-            else
-                for(Index j = 0; j < time_steps; j++)
-                    input_variable_names.push_back(input_names[i] + "_lag" + to_string(j));
-        }
-        else
-        {
-            if(input_names[i].empty())
-                input_variable_names.push_back("variable_" + to_string(i + 1));
-            else
-                input_variable_names.push_back(input_names[i]);
-        }
-    }
-
-    for(Index i = 0; i < target_features_number; i++)
-    {
-        string current_target_name;
-
-        if(target_names[i].empty())
-        {
-            auto input_iterator = find(input_feature_indices.begin(), input_feature_indices.end(), target_feature_indices[i]);
-
-            if(input_iterator == input_feature_indices.end())
-                current_target_name = "variable_" + to_string(input_features_number + i + 1);
-            else
-                current_target_name = "variable_" + to_string(int(*input_iterator) + 1);
-        }
-        else
-            current_target_name = target_names[i];
-
-        if(time_series_dataset)
-            current_target_name += "_ahead";
-
-        target_variable_names.push_back(current_target_name);
-    }
-*/
     neural_network->set_input_variables(input_variables);
     neural_network->set_output_variables(target_variables);
 }
@@ -300,24 +143,8 @@ void Optimizer::set_scaling()
     const vector<Index> input_feature_indices = dataset->get_feature_indices("Input");
     const vector<Index> target_feature_indices = dataset->get_feature_indices("Target");
 
-    bool has_pure_targets = false;
-    for(const Index t_idx : target_feature_indices)
-    {
-        bool is_input = false;
-        for(const Index i_idx : input_feature_indices)
-        {
-            if(t_idx == i_idx)
-            {
-                is_input = true;
-                break;
-            }
-        }
-        if(!is_input)
-        {
-            has_pure_targets = true;
-            break;
-        }
-    }
+    const bool has_pure_targets = any_of(target_feature_indices.begin(), target_feature_indices.end(),
+        [&](Index t) { return find(input_feature_indices.begin(), input_feature_indices.end(), t) == input_feature_indices.end(); });
 
     vector<Descriptives> target_variable_descriptives;
     vector<string> target_variable_scalers;
@@ -540,47 +367,13 @@ Index TrainingResults::get_epochs_number() const
 
 void TrainingResults::resize_training_error_history(const Index new_size)
 {
-    if(training_error_history.size() == 0)
-    {
-        training_error_history.resize(new_size);
-
-        return;
-    }
-
-    const VectorR old_training_error_history = training_error_history;
-
-    training_error_history.resize(new_size);
-
-    const Index copy_size = min(old_training_error_history.size(), new_size);
-
-    for(Index i = 0; i < copy_size; i++)
-        training_error_history(i) = old_training_error_history(i);
+    training_error_history.conservativeResize(new_size);
 }
 
 
 void TrainingResults::resize_validation_error_history(const Index new_size)
 {
-    if(validation_error_history.size() == 0)
-    {
-        validation_error_history.resize(new_size);
-        return;
-    }
-
-    const VectorR old_validation_error_history = validation_error_history;
-
-    validation_error_history.resize(new_size);
-
-    const Index minimum_size = min(new_size, old_validation_error_history.size());
-
-    for(Index i = 0; i < minimum_size; ++i)
-        validation_error_history(i) = old_validation_error_history(i);
-
-}
-
-
-string Optimizer::write_time(const type time) const
-{
-    return opennn::write_time(time);
+    validation_error_history.conservativeResize(new_size);
 }
 
 
@@ -653,11 +446,6 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
     override_results(4,1) = buffer.str();
 
     return override_results;
-}
-
-
-OptimizerData::OptimizerData()
-{
 }
 
 

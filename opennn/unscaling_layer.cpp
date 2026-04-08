@@ -39,17 +39,6 @@ Shape Unscaling::get_output_shape() const
 }
 
 
-VectorR Unscaling::get_minimums() const
-{
-    return minimums;
-}
-
-
-VectorR Unscaling::get_maximums() const
-{
-    return maximums;
-}
-
 
 
 string Unscaling::get_expression(const vector<string>& new_input_names,
@@ -223,16 +212,6 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
 void Unscaling::print() const
 {
     cout << "Unscaling layer" << endl;
-
-    const Index inputs_number = get_inputs_number();
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        cout << "Neuron " << i << endl
-             << "string " << scalers[i] << endl;
-
-        //descriptives[i].print();
-    }
 }
 
 

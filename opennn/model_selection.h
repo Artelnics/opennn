@@ -27,12 +27,12 @@ public:
 
     // Get
 
-    TrainingStrategy* get_training_strategy() const;
-    bool has_training_strategy() const;
+    TrainingStrategy* get_training_strategy() const { return training_strategy; }
+    bool has_training_strategy() const { return training_strategy; }
 
     // Set
 
-    void set(TrainingStrategy* = nullptr);
+    void set(TrainingStrategy* ts) { training_strategy = ts; }
 
     void set_default();
 
@@ -50,14 +50,13 @@ public:
 
     void to_XML(XMLPrinter&) const;
 
-    void print() const;
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
 private:
 
-    NeuronSelection* get_neurons_selection() const;
-    InputsSelection* get_inputs_selection() const;
+    NeuronSelection* get_neurons_selection() const { return neurons_selection.get(); }
+    InputsSelection* get_inputs_selection() const { return inputs_selection.get(); }
     void set_neurons_selection(const string&);
     void set_inputs_selection(const string&);
 

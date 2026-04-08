@@ -79,13 +79,13 @@ public:
 
     // Get
 
-    NeuralNetwork* get_neural_network() const;
-    Dataset* get_dataset() const;
+    NeuralNetwork* get_neural_network() const { return neural_network; }
+    Dataset* get_dataset() const { return dataset; }
 
     // Set
 
-    void set_neural_network(NeuralNetwork*);
-    void set_dataset(Dataset*);
+    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
+    void set_dataset(Dataset* ds) { dataset = ds; }
 
     // Checking
 
@@ -145,8 +145,6 @@ public:
 
     // Confusion
 
-    MatrixI calculate_confusion_binary_classification(const MatrixR&, const MatrixR&, type) const;
-    MatrixI calculate_confusion_multiple_classification(const MatrixR&, const MatrixR&) const;
     vector<MatrixI> calculate_multilabel_confusion(const type) const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, type = 0.50) const;
     MatrixI calculate_confusion(const type = 0.50) const;
@@ -217,14 +215,6 @@ public:
 
     void save_misclassified_samples_statistics(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
 
-    void save_well_classified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
-
-    void save_misclassified_samples_probability_histogram(const MatrixR&, const MatrixR&, const vector<string>&, const filesystem::path&) const;
-
-    void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
-
     // Forecasting
 
     vector<VectorR> calculate_error_autocorrelation(const Index = 10) const;
@@ -253,6 +243,19 @@ public:
 #endif
 
 private:
+
+    vector<Index> filter_classification_samples(const MatrixR&, const MatrixR&, const vector<Index>&, type,
+                                                bool target_positive, bool output_positive) const;
+
+    MatrixR calculate_cumulative_gain_impl(const MatrixR&, const MatrixR&, bool) const;
+
+    Tensor<string, 2> classify_samples(const MatrixR&, const MatrixR&, const vector<string>&, bool match) const;
+
+    static VectorR extract_probabilities(const Tensor<string, 2>&);
+
+    void save_classified_samples_csv(const Tensor<string, 2>&, const filesystem::path&) const;
+    void save_classified_samples_statistics_csv(const Tensor<string, 2>&, const filesystem::path&) const;
+    void save_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
     NeuralNetwork* neural_network = nullptr;
 

@@ -47,12 +47,12 @@ public:
     }
 
     Shape get_output_shape() const override;
-    PoolingMethod get_pooling_method() const;
+    PoolingMethod get_pooling_method() const { return pooling_method; }
     string write_pooling_method() const;
 
     void set(const Shape&, const PoolingMethod&, const string&);
-    void set_input_shape(const Shape&) override;
-    void set_pooling_method(const PoolingMethod&);
+    void set_input_shape(const Shape& s) override { input_shape = s; }
+    void set_pooling_method(const PoolingMethod& m) { pooling_method = m; }
     void set_pooling_method(const string&);
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
@@ -63,8 +63,6 @@ public:
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
-
-    void print() const override;
 
 private:
 

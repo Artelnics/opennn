@@ -11,6 +11,7 @@
 #include "optimizer.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
+#include "string_utilities.h"
 
 namespace opennn
 {
@@ -229,26 +230,6 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
-
-void GrowingNeurons::save(const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    if(!file.is_open())
-        return;
-
-    XMLPrinter printer;
-    to_XML(printer);
-    file << printer.CStr();
-}
-
-
-void GrowingNeurons::load(const filesystem::path& file_name)
-{
-    set_default();
-
-    from_XML(load_xml_file(file_name));
-}
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");
 

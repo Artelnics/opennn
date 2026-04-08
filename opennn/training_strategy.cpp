@@ -23,42 +23,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* n
 }
 
 
-Dataset* TrainingStrategy::get_dataset()
-{
-    return dataset;
-}
-
-
-NeuralNetwork* TrainingStrategy::get_neural_network() const
-{
-    return neural_network;
-}
-
-
-Loss* TrainingStrategy::get_loss() const
-{
-    return loss.get();
-}
-
-
-Optimizer* TrainingStrategy::get_optimization_algorithm() const
-{
-    return optimizer.get();
-}
-
-
-bool TrainingStrategy::has_neural_network() const
-{
-    return neural_network;
-}
-
-
-bool TrainingStrategy::has_dataset() const
-{
-    return dataset;
-}
-
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -91,18 +55,6 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 }
 
 
-void TrainingStrategy::set_dataset(Dataset* new_dataset)
-{
-    dataset = new_dataset;
-}
-
-
-void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
-{
-    neural_network = new_neural_network;
-}
-
-
 void TrainingStrategy::set_default()
 {
     if(!has_neural_network())
@@ -121,7 +73,7 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Convolutional"))
     {
-        set_loss("CrossEntropyError2d");
+        set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = dynamic_cast<AdaptiveMomentEstimation*>(get_optimization_algorithm());
@@ -153,7 +105,7 @@ void TrainingStrategy::set_default()
 
     if(neural_network->has("Dense3d"))
     {
-        set_loss("CrossEntropyError3d");
+        set_loss("CrossEntropy");
         set_optimization_algorithm("AdaptiveMomentEstimation");
 
         auto* adam = static_cast<AdaptiveMomentEstimation*>(optimizer.get());
@@ -166,7 +118,7 @@ void TrainingStrategy::set_default()
     if(neural_network->has("Embedding") || neural_network->has("MultiHeadAttention"))
     {
         if(output_activation == "Softmax")
-            set_loss("CrossEntropyError2d");
+            set_loss("CrossEntropy");
         else
             set_loss("WeightedSquaredError");
 
@@ -183,7 +135,7 @@ void TrainingStrategy::set_default()
 
     if(output_activation == "Softmax")
     {
-        set_loss("CrossEntropyError2d");
+        set_loss("CrossEntropy");
         set_optimization_algorithm("QuasiNewtonMethod");
     }
 
@@ -256,14 +208,6 @@ void TrainingStrategy::fix_forecasting()
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
         stochastic_gradient_descent.set_batch_size(constant*past_time_steps);
 */
-}
-
-
-void TrainingStrategy::print() const
-{
-    cout << "Training strategy object" << endl
-         << "Loss: " << loss->get_name() << endl
-         << "Optimization algorithm: " << optimizer->get_name() << endl;
 }
 
 

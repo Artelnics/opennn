@@ -22,56 +22,50 @@ public:
 
     //enum class InitializationMethod{Random,Correlations};
 
-    const MatrixB& get_population() const;
+    const MatrixB& get_population() const { return population; }
 
-    const VectorR& get_training_errors() const;
+    const VectorR& get_training_errors() const { return training_errors; }
 
-    const VectorR& get_validation_errors() const;
+    const VectorR& get_validation_errors() const { return validation_errors; }
 
-    const VectorR& get_fitness() const;
+    const VectorR& get_fitness() const { return fitness; }
 
-    const VectorB& get_selection() const;
+    const VectorB& get_selection() const { return selection; }
 
-    Index get_individuals_number() const;
+    Index get_individuals_number() const { return population.rows(); }
 
-    Index get_genes_number() const;
+    Index get_genes_number() const { return original_input_variable_indices.size(); }
 
-    Index get_minimum_inputs_number() const override;
-    Index get_maximum_inputs_number() const override;
+    Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
+    Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
 
-    const string& get_initialization_method() const;
+    const string& get_initialization_method() const { return initialization_method; }
 
     void set_default();
 
-    void set_minimum_inputs_number(const Index);
+    void set_minimum_inputs_number(const Index n) { minimum_inputs_number = n; }
     void set_maximum_inputs_number(const Index);
 
-    void set_population(const MatrixB&);
+    void set_population(const MatrixB& p) { population = p; }
 
     void set_individuals_number(const Index new_individuals_number = 4);
 
-    void set_initialization_method(const string&);
+    void set_initialization_method(const string& m) { initialization_method = m; }
 
-    void set_mutation_rate(const type);
+    void set_mutation_rate(const type r) { mutation_rate = clamp(r, type(0), type(1)); }
 
-    void set_elitism_size(const Index);
+    void set_elitism_size(const Index n) { elitism_size = clamp<Index>(n, 0, get_individuals_number()); }
 
-    void set_maximum_epochs(const Index);
+    void set_maximum_epochs(const Index n) { maximum_epochs = n; }
 
-    void set_fitness(const VectorR&); // Used in testing
-    void set_selection(const VectorB&); // Used in testing
+    void set_fitness(const VectorR& f) { fitness = f; }
+    void set_selection(const VectorB& s) { selection = s; }
 
     InputsSelectionResults perform_input_selection() override;
 
     void from_XML(const XMLDocument&) override;
 
     void to_XML(XMLPrinter&) const override;
-
-    void print() const override;
-    
-    void save(const filesystem::path&) const;
-
-    void load(const filesystem::path&);
 
 private:
 
@@ -84,7 +78,6 @@ private:
     VectorB cross(const VectorB&, const VectorB&);
     void perform_crossover();
     void perform_mutation();
-    Index get_selected_individuals_number() const;
     vector<Index> get_selected_individual_indices() const;
     vector<Index> get_variable_indices(const VectorB&);
 
@@ -105,12 +98,6 @@ private:
 
     Index minimum_inputs_number = 1;
     Index maximum_inputs_number;
-
-    type mean_training_error;
-
-    type mean_validation_error;
-    
-    //MatrixB optimal_individuals_history;
 
     type mutation_rate;
 

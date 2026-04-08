@@ -50,30 +50,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
 }
 
 
-Index MultiHeadAttention::get_query_sequence_length() const
-{
-    return query_sequence_length;
-}
-
-
-Index MultiHeadAttention::get_source_sequence_length() const
-{
-    return source_sequence_length;
-}
-
-
-Index MultiHeadAttention::get_embedding_dimension() const
-{
-    return input_shape.back();
-}
-
-
-Index MultiHeadAttention::get_heads_number() const
-{
-    return heads_number;
-}
-
-
 type MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
@@ -154,11 +130,6 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
     }
 }
 
-
-void MultiHeadAttention::set_dropout_rate(const type new_dropout_rate)
-{
-    dropout_rate = new_dropout_rate;
-}
 
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
@@ -843,22 +814,6 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
                         attention_weights(b, h, q, s) = -1e9f;
         }
     }
-}
-
-
-void MultiHeadAttention::print() const
-{
-    cout << "Multi-head attention layer" << endl
-         << "Label: " << label << endl
-         << "Type: MultiHeadAttention" << endl
-         << "Input shape: " << get_input_shape() << endl
-         << "Output shape: " << get_output_shape() << endl
-         << "Query sequence length: " << get_query_sequence_length() << endl
-         << "Source sequence length: " << get_source_sequence_length() << endl
-         << "Embedding dimension: " << get_embedding_dimension() << endl
-         << "Heads number: " << get_heads_number() << endl
-         << "Head dimension: " << get_head_dimension() << endl
-         << "Use causal mask: " << (use_causal_mask ? "True" : "False") << endl;
 }
 
 

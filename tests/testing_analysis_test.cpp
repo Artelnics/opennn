@@ -242,7 +242,7 @@ TEST(TestingAnalysis, Confusion)
         type(0), type(0), type(1);
 
     TestingAnalysis testing_analysis;
-    MatrixI confusion = testing_analysis.calculate_confusion_multiple_classification(actual, predicted);
+    MatrixI confusion = testing_analysis.calculate_confusion(actual, predicted);
 
     type sum = confusion.sum();
 

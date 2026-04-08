@@ -36,12 +36,6 @@ Convolutional::Convolutional(const Shape& new_input_shape,
 }
 
 
-bool Convolutional::get_batch_normalization() const
-{
-    return batch_normalization;
-}
-
-
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
@@ -130,12 +124,6 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
 }
 
 
-ActivationFunction Convolutional::get_activation_function() const
-{
-    return activation_function;
-}
-
-
 Index Convolutional::get_output_height() const
 {
     return (convolution_type == "Same")
@@ -155,48 +143,6 @@ Index Convolutional::get_output_width() const
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), get_kernels_number() };
-}
-
-
-string Convolutional::get_convolution_type() const
-{
-    return convolution_type;
-}
-
-
-Index Convolutional::get_column_stride() const
-{
-    return column_stride;
-}
-
-
-Index Convolutional::get_row_stride() const
-{
-    return row_stride;
-}
-
-
-Index Convolutional::get_kernel_height() const
-{
-    return parameters[Weights].shape[1];
-}
-
-
-Index Convolutional::get_kernel_width() const
-{
-    return parameters[Weights].shape[2];
-}
-
-
-Index Convolutional::get_kernel_channels() const
-{
-    return parameters[Weights].shape[3];
-}
-
-
-Index Convolutional::get_kernels_number() const
-{
-    return parameters[Weights].shape[0];
 }
 
 
@@ -244,10 +190,10 @@ void Convolutional::set(const Shape& new_input_shape,
                         bool new_batch_normalization,
                         const string& new_label)
 {
-    if(new_kernel_shape.size() != 4)
+    if(new_kernel_shape.rank != 4)
         throw runtime_error("Kernel shape must be 4");
 
-    if (new_stride_shape.size() != 2)
+    if (new_stride_shape.rank != 2)
         throw runtime_error("Stride shape must be 2");
 
     if (new_kernel_shape[0] > new_input_shape[0] || new_kernel_shape[1] > new_input_shape[1])
@@ -401,8 +347,8 @@ void Convolutional::set_column_stride(const Index new_stride_column)
 
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.size() != 3)
-        throw runtime_error("Input new_input_shape.size() must be 3");
+    if (new_input_shape.rank != 3)
+        throw runtime_error("Input new_input_shape.rank must be 3");
 
     input_shape = new_input_shape;
 }
@@ -472,21 +418,6 @@ Index Convolutional::get_input_width() const
 Index Convolutional::get_input_channels() const
 {
     return input_shape[2];
-}
-
-
-void Convolutional::print() const
-{
-
-    cout << "Convolutional layer" << endl
-         << "Input shape: " << input_shape << endl
-         << "Output shape: " << get_output_shape() << endl
-         << "Biases shape: " << parameters[Biases].shape << endl
-         << "Weights shape: " << parameters[Weights].shape << endl
-         << "biases:" << endl;
-    //cout << biases << endl;
-    cout << "Weights:" << endl;
-    //cout << weights << endl;
 }
 
 

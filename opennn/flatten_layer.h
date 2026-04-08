@@ -38,19 +38,24 @@ public:
 
     Shape get_output_shape() const override
     {
-        return { input_shape.count() };
+        return { input_shape.size() };
     }
 
 
     void set(const Shape& new_input_shape)
     {
-        if (new_input_shape.size() != Rank - 1)
+        if (new_input_shape.rank != Rank - 1)
             throw runtime_error("Error: Input shape size must match layer Rank in FlattenLayer::set().");
 
         name = "Flatten" + to_string(Rank) + "d";
 
         set_label("flatten_layer");
 
+        input_shape = new_input_shape;
+    }
+
+    void set_input_shape(const Shape& new_input_shape) override
+    {
         input_shape = new_input_shape;
     }
 
@@ -63,11 +68,7 @@ public:
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
-        /*
-        input_gradients = {{nullptr, Shape{batch_size}.append(flatten_layer->get_input_shape())}};
-        */
-
-        return {};
+        return {Shape{batch_size}.append(input_shape)};
     }
 
     
@@ -119,13 +120,6 @@ public:
             add_xml_element(printer, "InputChannels", to_string(get_input_channels()));
 
         printer.CloseElement();
-    }
-
-    void print() const override
-    {
-        cout << "Flatten layer" << endl
-             << "Input shape: " << input_shape << endl
-             << "Output shape: " << get_output_shape() << endl;
     }
 
 private:

@@ -36,7 +36,7 @@ vector<Shape> Recurrent::get_parameter_shapes() const
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
-    if(new_input_shape.size() != 2)
+    if(new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     input_shape = new_input_shape;
@@ -55,7 +55,7 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 
 void Recurrent::set_input_shape(const Shape& new_input_shape)
 {
-    if (new_input_shape.size() != 2)
+    if (new_input_shape.rank != 2)
         throw runtime_error("Input shape rank is not 2 for Recurrent (time_steps, inputs).");
 
     input_shape = new_input_shape;
@@ -312,20 +312,6 @@ string Recurrent::get_expression(const vector<string>& feature_names,
     }
 
     return buffer.str();
-}
-
-
-void Recurrent::print() const
-{
-
-    cout << "Recurrent layer" << endl
-         << "Time steps: " << get_input_shape()[0] << endl
-         << "Input shape: " << get_input_shape()[1] << endl
-         << "Output shape: " << get_output_shape()[0] << endl
-         << "Biases shape: " << biases.shape << endl
-         << "Input weights shape: " << input_weights.shape << endl
-         << "Recurrent weights shape: " << recurrent_weights.shape << endl
-         << "Total parameters: " << biases.size() + input_weights.size() + recurrent_weights.size() << endl;
 }
 
 

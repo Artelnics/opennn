@@ -51,7 +51,7 @@ int main()
         time_series_dataset.set_multi_target(false);
         time_series_dataset.set_past_time_steps(lags);
         time_series_dataset.set_future_time_steps(1);
-        time_series_dataset.print();
+        //time_series_dataset.print();
 
         // //time_series_dataset.scale_data();
 

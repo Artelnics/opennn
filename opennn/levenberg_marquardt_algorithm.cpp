@@ -477,6 +477,7 @@ MatrixR Loss::calculate_numerical_hessian()
 
     return H;
 */
+    return {};
 }
 
 /*
@@ -488,7 +489,7 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 {
     const Index batch_size = fp.batch_size;
     const Index num_neurons = layer->get_outputs_number();
-    const Index num_inputs = layer->get_input_shape().count();
+    const Index num_inputs = layer->get_input_shape().size();
 
     // Access activations from the forward propagation views
     // Slot 0 is usually Input, Slot 2 is usually Output (based on your Dense class)
@@ -525,7 +526,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     if(loss->get_name() == "MinkowskiError")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
-    else if(loss->get_name() == "CrossEntropyError2d")
+    else if(loss->get_name() == "CrossEntropy")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     else if(loss->get_name() == "WeightedSquaredError")
         throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
@@ -683,6 +684,7 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 
     return results;
 */
+    return {};
 }
 
 

@@ -27,10 +27,10 @@ public:
                        Index = 0,
                        const string& = string());
 
-    Index get_query_sequence_length() const;
-    Index get_source_sequence_length() const;
-    Index get_embedding_dimension() const;
-    Index get_heads_number() const;
+    Index get_query_sequence_length() const { return query_sequence_length; }
+    Index get_source_sequence_length() const { return source_sequence_length; }
+    Index get_embedding_dimension() const { return input_shape.back(); }
+    Index get_heads_number() const { return heads_number; }
     Index get_head_dimension() const;
 
     type get_scaling_factor() const;
@@ -79,13 +79,11 @@ public:
              bool = false,
              const string& = "multihead_attention_layer");
 
-    void set_dropout_rate(const type);
+    void set_dropout_rate(const type r) { dropout_rate = r; }
 
     void forward_propagate(ForwardPropagation&, size_t, bool) override;
 
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
-
-    void print() const override;
 
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;

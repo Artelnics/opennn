@@ -95,23 +95,17 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     VectorR& parameter_updates = optimization_data.parameter_updates;
     VectorR& last_parameter_updates = optimization_data.last_parameter_updates;
 
-    if (momentum <= type(0))
+    parameter_updates = gradient * (-learning_rate);
+
+    if (momentum > type(0))
     {
-        parameter_updates = gradient * (-learning_rate);
-        parameters += parameter_updates;
-    }
-    else if (momentum > type(0) && !nesterov)
-    {
-        parameter_updates = gradient*(-learning_rate) + momentum*last_parameter_updates;
+        parameter_updates += momentum * last_parameter_updates;
         last_parameter_updates = parameter_updates;
-        parameters += parameter_updates;
     }
-    else if (momentum > type(0) && nesterov)
-    {
-        parameter_updates = gradient*(-learning_rate) + momentum*last_parameter_updates;
-        last_parameter_updates = parameter_updates;
-        parameters += parameter_updates*momentum - gradient*learning_rate;
-    }
+
+    parameters += nesterov
+        ? parameter_updates * momentum - gradient * learning_rate
+        : parameter_updates;
 }
 
 
@@ -196,13 +190,13 @@ TrainingResults StochasticGradientDescent::train()
     StochasticGradientDescentData optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
+    constexpr bool is_training = true;
 
     time_t beginning_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
-    bool shuffle = !neural_network->has("Recurrent");
+    const bool shuffle = !neural_network->has("Recurrent");
 
     // Main loop
 
@@ -494,8 +488,8 @@ TrainingResults StochasticGradientDescent::train_cuda()
     SGDOptimizationDataCuda optimization_data(this);
 
     bool stop_training = false;
-    bool is_training = true;
-    bool shuffle = !neural_network->has("Recurrent");
+    constexpr bool is_training = true;
+    const bool shuffle = !neural_network->has("Recurrent");
 
     time_t beginning_time;
     time(&beginning_time);

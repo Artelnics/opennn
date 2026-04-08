@@ -54,20 +54,20 @@ public:
         return dataset;
     }
 
-    bool has_neural_network() const;
+    bool has_neural_network() const { return neural_network; }
 
-    bool has_dataset() const;
+    bool has_dataset() const { return dataset; }
 
-    const string& get_regularization_method() const;
+    const string& get_regularization_method() const { return regularization_method; }
 
     void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
-    void set_neural_network(NeuralNetwork*);
+    void set_neural_network(NeuralNetwork* nn) { neural_network = nn; }
 
-    virtual void set_dataset(Dataset*);
+    virtual void set_dataset(Dataset* ds) { dataset = ds; }
 
-    void set_regularization(const string&);
-    void set_regularization_weight(const type);
+    void set_regularization(const string& m) { regularization_method = m; }
+    void set_regularization_weight(const type w) { regularization_weight = w; }
 
     virtual void set_normalization_coefficient() {}
 
@@ -90,8 +90,6 @@ public:
 
     void add_regularization_gradient(VectorR&) const;
 
-    void add_regularization_to_gradients(BackPropagation&) const;
-
     void back_propagate(const Batch&,
                         ForwardPropagation&,
                         BackPropagation&) const;
@@ -109,7 +107,7 @@ public:
     void regularization_from_XML(const XMLDocument&);
     void write_regularization_XML(XMLPrinter&) const;
 
-    const string& get_name() const;
+    const string& get_name() const { return name; }
 
     // Numerical differentiation
 

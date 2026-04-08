@@ -29,8 +29,8 @@ public:
         return {Shape{batch_size}.append(get_output_shape())};
     }
 
-    VectorR get_minimums() const;
-    VectorR get_maximums() const;
+    const VectorR& get_minimums() const { return minimums; }
+    const VectorR& get_maximums() const { return maximums; }
 
     void set(const Index = 0, const string& = "unscaling_layer");
 
