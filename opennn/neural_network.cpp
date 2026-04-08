@@ -26,12 +26,10 @@ NeuralNetwork::NeuralNetwork()
     set_default();
 }
 
-
 NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 {
     load(file_name);
 }
-
 
 void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& input_indices)
 {
@@ -45,7 +43,6 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
         ? vector<Index>(1, old_layers_number )
         : input_indices);
 }
-
 
 void NeuralNetwork::compile()
 {
@@ -75,7 +72,6 @@ void NeuralNetwork::compile()
         pointer = layer->link_parameters(pointer);
 }
 
-
 bool NeuralNetwork::validate_name(const string& name) const
 {
     if(name == "Bounding")
@@ -83,7 +79,6 @@ bool NeuralNetwork::validate_name(const string& name) const
 
     return true;
 }
-
 
 void NeuralNetwork::reference_all_layers()
 {
@@ -94,14 +89,11 @@ void NeuralNetwork::reference_all_layers()
     // Add more template layers
 }
 
-
 bool NeuralNetwork::has(const string& name) const
 {
     return any_of(layers.begin(), layers.end(),
                   [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
 }
-
-
 
 static vector<string> get_feature_names_from(const vector<Variable>& vars)
 {
@@ -116,31 +108,26 @@ static vector<string> get_feature_names_from(const vector<Variable>& vars)
     return feature_names;
 }
 
-
 const vector<string> NeuralNetwork::get_input_feature_names() const
 {
     return get_feature_names_from(input_variables);
 }
-
 
 const vector<string> NeuralNetwork::get_output_feature_names() const
 {
     return get_feature_names_from(output_variables);
 }
 
-
-
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& label) const
 {
-    const vector<string> labels = get_layer_labels();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&label](const unique_ptr<Layer>& layer) { return layer->get_label() == label; });
 
-    for(Index i = 0; i < Index(labels.size()); i++)
-        if(labels[i] == label)
-            return layers[i];
+    if (it != layers.end())
+        return *it;
 
     throw runtime_error("Layer not found in neural network");
 }
-
 
 Index NeuralNetwork::get_layer_index(const string& new_label) const
 {
@@ -150,16 +137,14 @@ Index NeuralNetwork::get_layer_index(const string& new_label) const
     if(new_label == "input")
         return -2;
 
-    const Index layers_number = get_layers_number();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&new_label](const unique_ptr<Layer>& layer) { return layer->get_label() == new_label; });
 
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_label() == new_label)
-            return i;
+    if (it != layers.end())
+        return distance(layers.begin(), it);
 
     throw runtime_error("Layer not found: " + new_label);
 }
-
-
 
 vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 {
@@ -179,27 +164,22 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
     return layer_output_indices;
 }
 
-
 Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices, Index layer_index) const
 {
-    for(Index i = 0; i < Index(layer_inputs_indices.size()); i++)
-        if (layer_inputs_indices[i] == layer_index)
-            return i;
-
-    return -1;
+    auto it = find(layer_inputs_indices.begin(), layer_inputs_indices.end(), layer_index);
+    return (it != layer_inputs_indices.end()) ? distance(layer_inputs_indices.begin(), it) : -1;
 }
-
 
 Layer* NeuralNetwork::get_first(const string& name) const
 {
-    for(const unique_ptr<Layer>& layer : layers)
-        if(layer->get_name() == name)
-            return layer.get();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [&name](const unique_ptr<Layer>& layer) { return layer->get_name() == name; });
+
+    if (it != layers.end())
+        return it->get();
 
     throw runtime_error("Layer not found in Neural Network: " + name);
 }
-
-
 
 static void set_variable_names(vector<Variable>& vars, const vector<string>& new_names)
 {
@@ -220,18 +200,15 @@ static void set_variable_names(vector<Variable>& vars, const vector<string>& new
     }
 }
 
-
 void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
     set_variable_names(input_variables, new_input_names);
 }
 
-
 void NeuralNetwork::set_output_names(const vector<string>& new_output_names)
 {
     set_variable_names(output_variables, new_output_names);
 }
-
 
 void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
 {
@@ -252,7 +229,6 @@ void NeuralNetwork::set_input_shape(const Shape& new_input_shape)
     layers[get_first_trainable_layer_index()]->set_input_shape(new_input_shape);
 }
 
-
 void NeuralNetwork::set_default()
 {
     reference_all_layers();
@@ -265,9 +241,6 @@ void NeuralNetwork::set_default()
 
     output_variables.clear();
 }
-
-
-
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
                                              const vector<string>& new_layer_input_labels)
@@ -284,13 +257,11 @@ void NeuralNetwork::set_layer_input_indices(const string& layer_label,
     layer_input_indices[layer_index] = new_layer_input_indices;
 }
 
-
 void NeuralNetwork::set_layer_input_indices(const string& layer_label,
                                             const initializer_list<string>& new_layer_input_labels_list)
 {
     set_layer_input_indices(layer_label, vector<string>(new_layer_input_labels_list));
 }
-
 
 void NeuralNetwork::set_layer_input_indices(const string& layer_label, const string& new_layer_input_labels)
 {
@@ -298,7 +269,6 @@ void NeuralNetwork::set_layer_input_indices(const string& layer_label, const str
 
     layer_input_indices[layer_index] = {get_layer_index(new_layer_input_labels)};
 }
-
 
 Index NeuralNetwork::get_inputs_number() const
 {
@@ -316,14 +286,12 @@ Index NeuralNetwork::get_inputs_number() const
     return input_shape.size();
 }
 
-
 Index NeuralNetwork::get_outputs_number() const
 {
     if(layers.empty()) return 0;
 
     return layers.back()->get_output_shape().size();
 }
-
 
 Shape NeuralNetwork::get_input_shape() const
 {
@@ -333,7 +301,6 @@ Shape NeuralNetwork::get_input_shape() const
     return layers[0]->get_input_shape();
 }
 
-
 Shape NeuralNetwork::get_output_shape() const
 {
     if(layers.empty()) 
@@ -341,7 +308,6 @@ Shape NeuralNetwork::get_output_shape() const
 
     return layers[layers.size() - 1]->get_output_shape();
 }
-
 
 Index NeuralNetwork::get_parameters_number() const
 {
@@ -354,7 +320,6 @@ Index NeuralNetwork::get_parameters_number() const
 
     return parameters_number;
 }
-
 
 vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 {
@@ -370,19 +335,16 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
     return layer_parameter_numbers;
 }
 
-
-
 Index NeuralNetwork::get_first_trainable_layer_index() const
 {
-    const Index layers_number = get_layers_number();
+    auto it = find_if(layers.begin(), layers.end(),
+                      [](const unique_ptr<Layer>& layer) { return layer->get_is_trainable(); });
 
-    for(Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_is_trainable())
-            return i;
+    if (it != layers.end())
+        return distance(layers.begin(), it);
 
     throw runtime_error("The neural network has no trainable layers: get_first_trainable_layer_index.");
 }
-
 
 Index NeuralNetwork::get_last_trainable_layer_index() const
 {
@@ -395,13 +357,11 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     throw runtime_error("The neural network has no trainable layers: get_last_trainable_layer_index");
 }
 
-
 Index NeuralNetwork::get_layers_number(const string& name) const
 {
     return count_if(layers.begin(), layers.end(),
                     [&](const unique_ptr<Layer>& layer) {return layer->get_name() == name;});
 }
-
 
 void NeuralNetwork::set_parameters_random()
 {
@@ -411,7 +371,6 @@ void NeuralNetwork::set_parameters_random()
         layers[i]->set_parameters_random();
 }
 
-
 void NeuralNetwork::set_parameters_glorot()
 {
     const Index layers_number = get_layers_number();
@@ -420,7 +379,6 @@ void NeuralNetwork::set_parameters_glorot()
     for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_glorot();
 }
-
 
 Tensor3 NeuralNetwork::calculate_outputs(const Tensor3& inputs_1, const Tensor3& inputs_2)
 {
@@ -477,7 +435,6 @@ MatrixR NeuralNetwork::calculate_outputs(const Tensor4& inputs) {
     return calculate_outputs({TensorView(const_cast<type*>(inputs.data()), {inputs.dimension(0), inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)})});
 }
 
-
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       bool is_training) const
@@ -529,7 +486,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
         layers[i]->forward_propagate(forward_propagation, i, is_training);
 }
 
-
 void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
                                       const VectorR& new_parameters,
                                       ForwardPropagation& forward_propagation)
@@ -542,7 +498,6 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
 
     set_parameters(original_parameters);
 }
-
 
 string NeuralNetwork::get_expression() const
 {
@@ -595,7 +550,6 @@ string NeuralNetwork::get_expression() const
     return buffer.str();
 }
 
-
 MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
                                                     const VectorR& point,
                                                     type minimum,
@@ -620,7 +574,6 @@ MatrixR NeuralNetwork::calculate_directional_inputs(const Index direction,
 
     return directional_inputs;
 }
-
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
@@ -673,7 +626,6 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     return predicted_index;
 }
 
-
 MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_documents)
 {
     if(layers[0]->get_name() != "Embedding")
@@ -724,8 +676,6 @@ MatrixR NeuralNetwork::calculate_text_outputs(const Tensor<string, 1>& input_doc
 
     return outputs;
 }
-
-
 
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
@@ -786,7 +736,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-
     // Paramaters
 
     printer.OpenElement("Parameters");
@@ -798,7 +747,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
@@ -924,8 +872,6 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     }
 }
 
-
-
 void NeuralNetwork::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -937,7 +883,6 @@ void NeuralNetwork::save(const filesystem::path& file_name) const
     to_XML(printer);
     file << printer.CStr();
 }
-
 
 void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 {
@@ -951,14 +896,12 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     file.close();
 }
 
-
 void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
     from_XML(load_xml_file(file_name));
 }
-
 
 void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
@@ -978,7 +921,6 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
 //    set_parameters(new_parameters);
 }
-
 
 void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_name)
 {
@@ -1019,7 +961,6 @@ void NeuralNetwork::save_outputs(MatrixR& inputs, const filesystem::path& file_n
 
     file.close();
 }
-
 
 void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& file_name)
 {
@@ -1070,7 +1011,6 @@ void NeuralNetwork::save_outputs(Tensor3& inputs_3d, const filesystem::path& fil
     file.close();
 }
 
-
 vector<string> NeuralNetwork::get_layer_labels() const
 {
     const Index layers_number = get_layers_number();
@@ -1082,7 +1022,6 @@ vector<string> NeuralNetwork::get_layer_labels() const
 
     return layer_labels;
 }
-
 
 vector<string> NeuralNetwork::get_names_string() const
 {
@@ -1096,12 +1035,10 @@ vector<string> NeuralNetwork::get_names_string() const
     return names;
 }
 
-
 ForwardPropagation::ForwardPropagation(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
     set(new_batch_size, new_neural_network);
 }
-
 
 void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neural_network)
 {
@@ -1180,7 +1117,6 @@ void ForwardPropagation::set(const Index new_batch_size, NeuralNetwork* new_neur
     }
 }
 
-
 TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
@@ -1193,7 +1129,6 @@ TensorView ForwardPropagation::get_last_trainable_layer_outputs() const
 
     return views[last_trainable_layer_index].back()[0];
 }
-
 
 vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vector<TensorView>& batch_input_views,
                                                                      bool is_training) const
@@ -1212,7 +1147,6 @@ vector<vector<TensorView>> ForwardPropagation::get_layer_input_views(const vecto
     return {};
 }
 
-
 TensorView ForwardPropagation::get_outputs() const
 {
 /*
@@ -1220,7 +1154,6 @@ TensorView ForwardPropagation::get_outputs() const
 */
     return {};
 }
-
 
 void ForwardPropagation::print() const
 {

@@ -75,7 +75,6 @@ void check_cuda_status(T status, const char* file, int line, const char* msg)
                             " in " + file + ":" + to_string(line));
 }
 
-
 #define CHECK_CUDA(x) check_cuda_status(x, __FILE__, __LINE__, "CUDA")
 #define CHECK_CUBLAS(x) check_cuda_status(x, __FILE__, __LINE__, "CuBLAS")
 #define CHECK_CUDNN(x) check_cuda_status(x, __FILE__, __LINE__, "cuDNN")

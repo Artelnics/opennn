@@ -35,7 +35,6 @@ VectorR autocorrelations(const VectorR& x, Index past_time_steps)
     return autocorrelation;
 }
 
-
 Correlation correlation(const MatrixR& x, const MatrixR& y)
 {
     if(is_constant(x) || is_constant(y))
@@ -95,7 +94,6 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
     throw runtime_error("Correlations Exception: Unknown case.");
 }
 
-
 Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
 {
     const Index x_rows = x.rows();
@@ -132,7 +130,6 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     throw runtime_error("Correlations Exception: Unknown case.");
 }
 
-
 VectorR cross_correlations(const VectorR& x,
                            const VectorR& y,
                            Index maximum_past_time_steps)
@@ -161,7 +158,6 @@ VectorR cross_correlations(const VectorR& x,
     return cross_correlation;
 }
 
-
 Correlation exponential_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation exponential_correlation;
@@ -182,7 +178,6 @@ Correlation exponential_correlation(const VectorR& x, const VectorR& y)
     return exponential_correlation;
 }
 
-
 MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 {
     const Index rows_number = correlations.dimension(0);
@@ -196,7 +191,6 @@ MatrixR get_correlation_values(const Tensor<Correlation, 2>& correlations)
 
     return values;
 }
-
 
 Correlation linear_correlation(const VectorR& x,
                                const VectorR& y)
@@ -242,7 +236,6 @@ Correlation linear_correlation(const VectorR& x,
     return linear_correlation;
 }
 
-
 type r_correlation_to_z_correlation(const type r_correlation)
 {
     const type r_clamped = clamp(r_correlation, type(-0.9999), type(0.9999));
@@ -252,12 +245,10 @@ type r_correlation_to_z_correlation(const type r_correlation)
     return result;
 }
 
-
 type z_correlation_to_r_correlation (const type z_correlation)
 {
     return tanh(z_correlation);
 }
-
 
 VectorR confidence_interval_z_correlation(const type z_correlation, Index n)
 {
@@ -270,7 +261,6 @@ VectorR confidence_interval_z_correlation(const type z_correlation, Index n)
 
     return confidence_interval;
 }
-
 
 VectorR calculate_spearman_ranks(const VectorR& x)
 {
@@ -305,7 +295,6 @@ VectorR calculate_spearman_ranks(const VectorR& x)
     return ranks;
 }
 
-
 Correlation linear_correlation_spearman(const VectorR& x, const VectorR& y)
 {
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
@@ -315,7 +304,6 @@ Correlation linear_correlation_spearman(const VectorR& x, const VectorR& y)
 
     return linear_correlation(x_rank, y_rank);
 }
-
 
 Correlation logarithmic_correlation(const VectorR& x,
                                     const VectorR& y)
@@ -338,8 +326,6 @@ Correlation logarithmic_correlation(const VectorR& x,
 
     return logarithmic_correlation;
 }
-
-
 
 Correlation logistic_correlation_vector_vector(const VectorR& x,
                                                const VectorR& y)
@@ -370,7 +356,6 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
         return correlation;
     }
     cout<<"003"<<endl;
-
 
     MatrixR data(x_filter.size(), 2);
     data.col(0) = x_filter;
@@ -465,7 +450,6 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     return correlation;
 }
 
-
 Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
                                                         const VectorR& y)
 {
@@ -549,7 +533,6 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
 
     return correlation;
 }
-
 
 Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& y)
 {
@@ -646,12 +629,10 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
     return correlation;
 }
 
-
 Correlation logistic_correlation_matrix_vector(const MatrixR& y, const VectorR& x)
 {
     return logistic_correlation_vector_matrix(x, y);
 }
-
 
 Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& y)
 {
@@ -659,7 +640,6 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
     correlation.form = Correlation::Form::Sigmoid;
 
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
-
 
     if(x_filter.rows() == y_filter.rows() && x_filter.cols() == y_filter.cols())
         if((x_filter.array() == y_filter.array()).all())
@@ -892,10 +872,6 @@ Correlation eta_squared_correlation(const VectorR& continuous,
     return result;
 }
 
-
-
-
-
 Correlation power_correlation(const VectorR& x, const VectorR& y)
 {
     Correlation power_correlation;
@@ -914,7 +890,6 @@ Correlation power_correlation(const VectorR& x, const VectorR& y)
     return power_correlation;
 }
 
-
 void Correlation::set_perfect()
 {
     r = type(1);
@@ -925,7 +900,6 @@ void Correlation::set_perfect()
     lower_confidence = type(1);
     form = Correlation::Form::Linear;
 }
-
 
 string Correlation::write_type() const
 {
@@ -940,7 +914,6 @@ string Correlation::write_type() const
     }
 }
 
-
 void Correlation::print() const
 {
     cout << "Correlation" << endl
@@ -952,7 +925,6 @@ void Correlation::print() const
          << "Upper confidence: " << upper_confidence << endl;
 }
 
-
 void register_layers()
 {
     Bounding bounding_layer;//bounding_layer.print();
@@ -960,7 +932,6 @@ void register_layers()
     Recurrent recurrent_layer; // recurrent_layer.print();
     MultiHeadAttention multihead_layer;
 }
-
 
 void register_loss_indices()
 {

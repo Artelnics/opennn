@@ -50,7 +50,6 @@ public:
 
    // Serialization
 
-
    void from_XML(const XMLDocument&) override;
 
    void to_XML(XMLPrinter&) const override;
@@ -81,7 +80,6 @@ private:
 
 };
 
-
 struct AdaptiveMomentEstimationData final : public OptimizerData
 {
     AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
@@ -101,7 +99,6 @@ struct AdaptiveMomentEstimationData final : public OptimizerData
 
     Index learning_rate_iteration = 0;
 };
-
 
 #ifdef CUDA
 

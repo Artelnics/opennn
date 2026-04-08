@@ -22,7 +22,6 @@ GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
 void GrowingNeurons::set_default()
 {
     name = "GrowingNeurons";
@@ -35,13 +34,10 @@ void GrowingNeurons::set_default()
     maximum_time = type(3600);
 }
 
-
 void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
 {
     neurons_increment = new_neurons_increment;
 }
-
-
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
@@ -200,22 +196,22 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     return neuron_selection_results;
 }
 
-
 void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingNeurons");
 
-    add_xml_element(printer, "MinimumNeurons", to_string(minimum_neurons));
-    add_xml_element(printer, "MaximumNeurons", to_string(maximum_neurons));
-    add_xml_element(printer, "NeuronsIncrement", to_string(neurons_increment));
-    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
-    add_xml_element(printer, "SelectionErrorGoal", to_string(validation_error_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_xml_properties(printer, {
+        {"MinimumNeurons", to_string(minimum_neurons)},
+        {"MaximumNeurons", to_string(maximum_neurons)},
+        {"NeuronsIncrement", to_string(neurons_increment)},
+        {"TrialsNumber", to_string(trials_number)},
+        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MaximumTime", to_string(maximum_time)}
+    });
 
     printer.CloseElement();
 }
-
 
 void GrowingNeurons::from_XML(const XMLDocument& document)
 {
@@ -229,7 +225,6 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
-
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");
 

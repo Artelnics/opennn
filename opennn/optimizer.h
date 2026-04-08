@@ -41,8 +41,6 @@ public:
 
     void set_hardware_use(const string& new_hardware_use) { hardware_use = new_hardware_use; }
 
-    bool has_loss() const { return loss; }
-
     bool get_display() const { return display; }
 
     void set(Loss* new_loss) { loss = new_loss; }
@@ -118,7 +116,6 @@ public:
 
 };
 
-
 struct OptimizerData
 {
     OptimizerData() = default;
@@ -130,7 +127,6 @@ struct OptimizerData
     VectorR training_direction;
     type initial_learning_rate = type(0);
 };
-
 
 struct TrainingResults
 {

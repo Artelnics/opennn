@@ -21,7 +21,6 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(Loss* new_loss)
     set_default();
 }
 
-
 void LevenbergMarquardtAlgorithm::set_default()
 {
     name = "LevenbergMarquardt";
@@ -49,36 +48,30 @@ void LevenbergMarquardtAlgorithm::set_default()
     maximum_damping_parameter = type(1.0e6);
 }
 
-
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const type new_damping_parameter)
 {
     damping_parameter = clamp(new_damping_parameter, minimum_damping_parameter, maximum_damping_parameter);
 }
-
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const type new_damping_parameter_factor)
 {
     damping_parameter_factor = new_damping_parameter_factor;
 }
 
-
 void LevenbergMarquardtAlgorithm::set_minimum_damping_parameter(const type new_minimum_damping_parameter)
 {
     minimum_damping_parameter = new_minimum_damping_parameter;
 }
-
 
 void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type new_maximum_damping_parameter)
 {
     maximum_damping_parameter = new_maximum_damping_parameter;
 }
 
-
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type new_minimum_loss_decrease)
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
-
 
 void LevenbergMarquardtAlgorithm::check() const
 {
@@ -521,7 +514,7 @@ void LevenbergMarquardtAlgorithm::insert_dense_jacobian(const Dense<2>* layer,
 TrainingResults LevenbergMarquardtAlgorithm::train()
 {
 /*
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     if(loss->get_name() == "MinkowskiError")
@@ -624,7 +617,6 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
                                               validation_forward_propagation,
                                               is_training);
 
-
             loss->calculate_error(validation_batch, validation_forward_propagation, validation_back_propagation);
 
             results.validation_error_history(epoch) = validation_back_propagation.error;
@@ -686,7 +678,6 @@ TrainingResults LevenbergMarquardtAlgorithm::train()
 */
     return {};
 }
-
 
 void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     ForwardPropagation& forward_propagation,
@@ -785,7 +776,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 */
 }
 
-
 void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LevenbergMarquardt");
@@ -797,7 +787,6 @@ void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "LevenbergMarquardt");
@@ -807,12 +796,10 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
     read_common_xml(root_element);
 }
 
-
 LevenbergMarquardtAlgorithmData::LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm *new_Levenberg_Marquardt_method)
 {
     set(new_Levenberg_Marquardt_method);
 }
-
 
 void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method)
 {

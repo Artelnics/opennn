@@ -22,7 +22,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* n
     set(new_neural_network, new_dataset);
 }
 
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -30,7 +29,6 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
 
     set_default();
 }
-
 
 void TrainingStrategy::set_loss(const string& new_loss)
 {
@@ -46,7 +44,6 @@ void TrainingStrategy::set_loss(const string& new_loss)
     }
 }
 
-
 void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
 {
     optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
@@ -54,10 +51,9 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
     optimizer->set(loss.get());
 }
 
-
 void TrainingStrategy::set_default()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         return;
 
     // Forecasting
@@ -156,19 +152,18 @@ void TrainingStrategy::set_default()
     }
 }
 
-
 TrainingResults TrainingStrategy::train()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if(!has_dataset())
+    if(!get_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss->has_neural_network() || !loss->has_dataset())
+    if(!loss->get_neural_network() || !loss->get_dataset())
         throw runtime_error("Loss index is wrong.");
 
-    if(!optimizer->has_loss())
+    if(!optimizer->get_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if(neural_network->has("Recurrent"))
@@ -176,7 +171,6 @@ TrainingResults TrainingStrategy::train()
 
     return optimizer->train();
 }
-
 
 void TrainingStrategy::fix_forecasting()
 {
@@ -210,7 +204,6 @@ void TrainingStrategy::fix_forecasting()
 */
 }
 
-
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
 
@@ -238,7 +231,6 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
@@ -300,7 +292,6 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     optimizer->set_display(read_xml_bool(root_element, "Display"));
 }
 
-
 void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -313,7 +304,6 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     file << printer.CStr();
 }
 
-
 void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
@@ -321,21 +311,20 @@ void TrainingStrategy::load(const filesystem::path& file_name)
     from_XML(load_xml_file(file_name));
 }
 
-
 #ifdef CUDA
 
 TrainingResults TrainingStrategy::train_cuda()
 {
-    if(!has_neural_network())
+    if(!get_neural_network())
         throw runtime_error("Neural network is null.");
 
-    if(!has_dataset())
+    if(!get_dataset())
         throw runtime_error("Dataset is null.");
 
-    if(!loss->has_neural_network() || !loss->has_dataset())
+    if(!loss->get_neural_network() || !loss->get_dataset())
         throw runtime_error("Loss is wrong.");
 
-    if(!optimizer->has_loss())
+    if(!optimizer->get_loss())
         throw runtime_error("Optimization algorithm is wrong.");
 
     if (neural_network->has("Recurrent"))

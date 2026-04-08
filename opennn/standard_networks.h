@@ -23,7 +23,6 @@ public:
                          const Shape& output_shape);
 };
 
-
 class ClassificationNetwork : public NeuralNetwork
 {
 
@@ -33,7 +32,6 @@ public:
                           const Shape& complexity_dimensions,
                           const Shape& output_shape);
 };
-
 
 class ForecastingNetwork : public NeuralNetwork
 {
@@ -45,7 +43,6 @@ public:
                        const Shape& output_shape);
 };
 
-
 class AutoAssociationNetwork : public NeuralNetwork
 {
 
@@ -56,7 +53,6 @@ public:
                            const Shape& output_shape);
 };
 
-
 class ImageClassificationNetwork : public NeuralNetwork
 {
 
@@ -66,7 +62,6 @@ public:
                                const Shape& complexity_dimensions,
                                const Shape& output_shape);
 };
-
 
 class SimpleResNet : public NeuralNetwork
 {
@@ -79,7 +74,6 @@ public:
                  const Shape& output_shape);
 };
 
-
 class VGG16 final : public NeuralNetwork
 {
 public:
@@ -91,7 +85,6 @@ public:
     void set(const Shape& input_shape, const Shape& target_shape);
 
 };
-
 
 class TextClassificationNetwork : public NeuralNetwork
 {
@@ -107,7 +100,6 @@ private:
     vector<string> input_vocabulary;
     vector<string> output_vocabulary;
 };
-
 
 class Transformer final : public NeuralNetwork
 {

@@ -20,7 +20,6 @@ Bounding::Bounding(const Shape& output_shape, const string& new_name) : Layer()
     set(output_shape, new_name);
 }
 
-
 const Bounding::BoundingMethod& Bounding::get_bounding_method() const
 {
     return bounding_method;
@@ -31,25 +30,21 @@ Shape Bounding::get_output_shape() const
     return input_shape;
 }
 
-
 /*
 type Bounding::get_lower_bound(const Index i) const
 {
     return lower_bounds[i];
 }
 
-
 const VectorR& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
 }
 
-
 type Bounding::get_upper_bound(const Index i) const
 {
     return upper_bounds(i);
 }
-
 
 const VectorR& Bounding::get_upper_bounds() const
 {
@@ -70,12 +65,10 @@ void Bounding::set(const Shape& new_output_shape, const string& new_label)
     is_trainable = false;
 }
 
-
 void Bounding::set_bounding_method(const BoundingMethod& new_method)
 {
     bounding_method = new_method;
 }
-
 
 void Bounding::set_bounding_method(const string& new_method_string)
 {
@@ -87,11 +80,9 @@ void Bounding::set_bounding_method(const string& new_method_string)
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
 }
 
-
 void Bounding::set_input_shape(const Shape& new_input_shape)
 {
 }
-
 
 void Bounding::set_output_shape(const Shape& new_output_shape)
 {
@@ -112,12 +103,10 @@ void Bounding::set_lower_bound(const Index index, type new_lower_bound)
     lower_bounds[index] = new_lower_bound;
 }
 
-
 void Bounding::set_lower_bounds(const VectorR& new_lower_bounds)
 {
     lower_bounds = new_lower_bounds;
 }
-
 
 void Bounding::set_output_shape(const Shape& new_output_shape)
 {
@@ -128,12 +117,10 @@ void Bounding::set_output_shape(const Shape& new_output_shape)
     upper_bounds.setConstant(MAX);
 }
 
-
 void Bounding::set_upper_bounds(const VectorR& new_upper_bounds)
 {
     upper_bounds = new_upper_bounds;
 }
-
 
 void Bounding::set_upper_bound(const Index index, type new_upper_bound)
 {
@@ -164,8 +151,6 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
     }
 }
 
-
-
 string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
@@ -175,7 +160,6 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
                                             : new_output_names;
-
 
     if (bounding_method == BoundingMethod::NoBounding)
         return string();
@@ -192,7 +176,6 @@ string Bounding::get_expression(const vector<string>& new_input_names, const vec
 */
     return buffer.str();
 }
-
 
 void Bounding::to_XML(XMLPrinter& printer) const
 {
@@ -218,7 +201,6 @@ void Bounding::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void Bounding::from_XML(const XMLDocument& document)
 {

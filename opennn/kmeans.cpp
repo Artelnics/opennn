@@ -18,7 +18,6 @@ KMeans::KMeans(Index clusters,
 {
 }
 
-
 void KMeans::fit(const MatrixR& data)
 {
     const Index rows_number = data.rows();
@@ -66,7 +65,6 @@ void KMeans::fit(const MatrixR& data)
     }
 }
 
-
 VectorI KMeans::calculate_outputs(const MatrixR& data)
 {
     const Index rows_number = data.rows();
@@ -100,7 +98,6 @@ VectorI KMeans::calculate_outputs(const MatrixR& data)
 
     return predictions;
 }
-
 
 VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 {
@@ -136,7 +133,6 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 
     return sum_squared_error_values;
 }
-
 
 Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) const
 {
@@ -174,30 +170,25 @@ Index KMeans::find_optimal_clusters(const VectorR& sum_squared_error_values) con
     return optimal_clusters_number;
 }
 
-
 MatrixR KMeans::get_cluster_centers() const
 {
     return cluster_centers;
 }
-
 
 VectorI KMeans::get_cluster_labels() const
 {
     return rows_cluster_labels;
 }
 
-
 Index KMeans::get_clusters_number() const
 {
     return clusters_number;
 }
 
-
 void KMeans::set_cluster_number(const Index new_clusters_number)
 {
     clusters_number = new_clusters_number;
 }
-
 
 void KMeans::set_centers_random(const MatrixR& data)
 {

@@ -37,7 +37,6 @@ struct Descriptives
 
 };
 
-
 struct BoxPlot
 {
     BoxPlot(const type = type(NAN),
@@ -62,7 +61,6 @@ struct BoxPlot
 
     type maximum = type(NAN);
 };
-
 
 struct Histogram
 {

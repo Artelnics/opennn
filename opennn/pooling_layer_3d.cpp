@@ -44,7 +44,6 @@ void Pooling3d::set(const Shape& new_input_shape, const PoolingMethod& new_pooli
 }
 
 
-
 void Pooling3d::set_pooling_method(const string& new_pooling_method)
 {
     if (new_pooling_method == "MaxPooling") pooling_method = PoolingMethod::MaxPooling;

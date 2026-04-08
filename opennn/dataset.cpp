@@ -27,7 +27,6 @@ Dataset::Dataset(const Index new_samples_number,
     set(new_samples_number, new_input_shape, new_target_shape);
 }
 
-
 Dataset::Dataset(const filesystem::path& data_path,
                  const string& separator,
                  bool has_header,
@@ -36,8 +35,6 @@ Dataset::Dataset(const filesystem::path& data_path,
 {
     set(data_path, separator, has_header, has_sample_ids, data_codification);
 }
-
-
 
 VectorI Dataset::get_sample_role_numbers() const
 {
@@ -60,7 +57,6 @@ VectorI Dataset::get_sample_role_numbers() const
     return count;
 }
 
-
 vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 {
     const Index samples_number = get_samples_number();
@@ -74,7 +70,6 @@ vector<Index> Dataset::get_sample_indices(const string& sample_role) const
 
     return indices;
 }
-
 
 vector<Index> Dataset::get_used_sample_indices() const
 {
@@ -93,9 +88,6 @@ vector<Index> Dataset::get_used_sample_indices() const
 
     return used_indices;
 }
-
-
-
 
 vector<Index> Dataset::get_sample_roles_vector() const
 {
@@ -123,7 +115,6 @@ vector<Index> Dataset::get_sample_roles_vector() const
 
     return sample_roles_vector;
 }
-
 
 vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
                                            Index batch_size,
@@ -157,12 +148,10 @@ vector<vector<Index>> Dataset::get_batches(const vector<Index>& sample_indices,
     return batches;
 }
 
-
 Index Dataset::get_samples_number(const string& sample_role) const
 {
     return count(sample_roles.begin(), sample_roles.end(), sample_role);
 }
-
 
 Index Dataset::get_used_samples_number() const
 {
@@ -172,12 +161,10 @@ Index Dataset::get_used_samples_number() const
     return samples_number - unused_samples_number;
 }
 
-
 void Dataset::set_sample_roles(const string& sample_role)
 {
     fill(sample_roles.begin(), sample_roles.end(), sample_role);
 }
-
 
 void Dataset::set_sample_role(const Index index, const string& new_role)
 {
@@ -188,7 +175,6 @@ void Dataset::set_sample_role(const Index index, const string& new_role)
     else
         throw runtime_error("Unknown sample role: " + new_role + "\n");
 }
-
 
 void Dataset::set_sample_roles(const vector<string>& new_roles)
 {
@@ -207,13 +193,11 @@ void Dataset::set_sample_roles(const vector<string>& new_roles)
             throw runtime_error("Unknown sample role: " + new_roles[i] + ".\n");
 }
 
-
 void Dataset::set_sample_roles(const vector<Index>& indices, const string& sample_role)
 {
     for(const auto& i : indices)
         set_sample_role(i, sample_role);
 }
-
 
 void Dataset::split_samples(const type training_samples_ratio,
                             type validation_samples_ratio,
@@ -264,7 +248,6 @@ void Dataset::split_samples(const type training_samples_ratio,
     assign_role("Testing", testing_samples_number, index);
 }
 
-
 void Dataset::split_samples_random(const type training_ratio,
                                    type validation_ratio,
                                    type testing_ratio)
@@ -272,15 +255,12 @@ void Dataset::split_samples_random(const type training_ratio,
     split_samples(training_ratio, validation_ratio, testing_ratio, true);
 }
 
-
 void Dataset::split_samples_sequential(const type training_ratio,
                                        type validation_ratio,
                                        type testing_ratio)
 {
     split_samples(training_ratio, validation_ratio, testing_ratio, false);
 }
-
-
 
 void Dataset::set_default_variable_roles()
 {
@@ -313,7 +293,6 @@ void Dataset::set_default_variable_roles()
         }
     }
 }
-
 
 vector<Index> Dataset::get_feature_dimensions() const
 {
@@ -401,7 +380,6 @@ void Dataset::set_default_variable_names()
         variables[i].name = "variable_" + to_string(1 + i);
 }
 
-
 vector<string> Dataset::get_feature_names() const
 {
     vector<string> feature_names;
@@ -414,7 +392,6 @@ vector<string> Dataset::get_feature_names() const
     }
     return feature_names;
 }
-
 
 vector<string> Dataset::get_feature_names(const string& variable_role) const
 {
@@ -430,7 +407,6 @@ vector<string> Dataset::get_feature_names(const string& variable_role) const
     return feature_names;
 }
 
-
 Shape Dataset::get_shape(const string& variable_role) const
 {
     if (variable_role == "Input")
@@ -442,7 +418,6 @@ Shape Dataset::get_shape(const string& variable_role) const
     else
         throw invalid_argument("get_shape: Invalid variable role string: " + variable_role);
 }
-
 
 void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
 {
@@ -456,7 +431,6 @@ void Dataset::set_shape(const string& variable_role, const Shape& new_shape)
         throw invalid_argument("set_shape: Invalid variable role string: " + variable_role);
 }
 
-
 Index Dataset::get_used_features_number() const
 {
     const Index features_number = get_features_number();
@@ -467,7 +441,6 @@ Index Dataset::get_used_features_number() const
 
     return features_number - unused_variables_number - time_variables_number;
 }
-
 
 vector<Index> Dataset::get_feature_indices(const string& variable_role) const
 {
@@ -494,7 +467,6 @@ vector<Index> Dataset::get_feature_indices(const string& variable_role) const
     return this_feature_indices;
 }
 
-
 vector<Index> Dataset::get_variable_indices(const string& variable_role) const
 {
     const Index count = get_variables_number(variable_role);
@@ -511,7 +483,6 @@ vector<Index> Dataset::get_variable_indices(const string& variable_role) const
 
     return indices;
 }
-
 
 vector<Index> Dataset::get_used_variables_indices() const
 {
@@ -532,7 +503,6 @@ vector<Index> Dataset::get_used_variables_indices() const
 
     return used_indices;
 }
-
 
 vector<string> Dataset::get_feature_scalers(const string& variable_role) const
 {
@@ -556,7 +526,6 @@ vector<string> Dataset::get_feature_scalers(const string& variable_role) const
     return input_variable_scalers;
 }
 
-
 vector<string> Dataset::get_variable_names() const
 {
     const Index variables_number = get_variables_number();
@@ -568,7 +537,6 @@ vector<string> Dataset::get_variable_names() const
 
     return variable_names;
 }
-
 
 vector<string> Dataset::get_variable_names(const string& variable_role) const
 {
@@ -590,8 +558,6 @@ vector<string> Dataset::get_variable_names(const string& variable_role) const
     return names;
 }
 
-
-
 Index Dataset::get_variables_number(const string& variable_role) const
 {
     Index count = 0;
@@ -603,7 +569,6 @@ Index Dataset::get_variables_number(const string& variable_role) const
     return count;
 }
 
-
 Index Dataset::get_used_variables_number() const
 {
     return count_if(variables.begin(), variables.end(),
@@ -611,8 +576,6 @@ Index Dataset::get_used_variables_number() const
                           return var.is_used();
                     });
 }
-
-
 
 vector<Variable> Dataset::get_variables(const string& variable_role) const
 {
@@ -628,7 +591,6 @@ vector<Variable> Dataset::get_variables(const string& variable_role) const
     return this_variables;
 }
 
-
 Index Dataset::get_features_number() const
 {
     return accumulate(variables.begin(), variables.end(), 0,
@@ -636,7 +598,6 @@ Index Dataset::get_features_number() const
                       return sum + (var.type == VariableType::Categorical ? var.get_categories_number() : 1);
                       });
 }
-
 
 Index Dataset::get_features_number(const string& variable_role) const
 {
@@ -650,7 +611,6 @@ Index Dataset::get_features_number(const string& variable_role) const
 
     return count;
 }
-
 
 vector<Index> Dataset::get_used_feature_indices() const
 {
@@ -677,7 +637,6 @@ vector<Index> Dataset::get_used_feature_indices() const
     return used_feature_indices;
 }
 
-
 void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
 {
     const size_t new_variables_roles_size = new_variables_roles.size();
@@ -690,7 +649,6 @@ void Dataset::set_variable_roles(const vector<string>& new_variables_roles)
         variables[i].set_role(new_variables_roles[i]);
 }
 
-
 void Dataset::set_variables(const string& variable_role)
 {
     const Index variables_number = get_variables_number();
@@ -698,7 +656,6 @@ void Dataset::set_variables(const string& variable_role)
     for(Index i = 0; i < variables_number; i++)
         set_variable_role(i, variable_role);
 }
-
 
 void Dataset::set_variable_indices(const vector<Index>& input_variables,
                                        const vector<Index>& target_variables)
@@ -723,7 +680,6 @@ void Dataset::set_variable_indices(const vector<Index>& input_variables,
     set_shape("Target", {target_shape_num});
 }
 
-
 void Dataset::set_input_variables_unused()
 {
     const Index variables_number = get_variables_number();
@@ -732,7 +688,6 @@ void Dataset::set_input_variables_unused()
         if (variables[i].role == "Input")
             set_variable_role(i, "None");
 }
-
 
 void Dataset::set_variable_role(const Index index, const string& new_role)
 {
@@ -745,7 +700,6 @@ void Dataset::set_variable_role(const Index index, const string& new_role)
     variables[index].role = new_role;
 }
 
-
 void Dataset::set_variable_role(const string& name, const string& new_role)
 {
     const Index index = get_variable_index(name);
@@ -753,12 +707,10 @@ void Dataset::set_variable_role(const string& name, const string& new_role)
     set_variable_role(index, new_role);
 }
 
-
 void Dataset::set_variable_type(const Index index, const VariableType& new_type)
 {
     variables[index].type = new_type;
 }
-
 
 void Dataset::set_variable_type(const string& name, const VariableType& new_type)
 {
@@ -767,13 +719,11 @@ void Dataset::set_variable_type(const string& name, const VariableType& new_type
     set_variable_type(index, new_type);
 }
 
-
 void Dataset::set_variable_types(const VariableType& new_type)
 {
     for(auto& variable : variables)
         variable.type = new_type;
 }
-
 
 void Dataset::set_feature_names(const vector<string>& new_variables_names)
 {
@@ -786,7 +736,6 @@ void Dataset::set_feature_names(const vector<string>& new_variables_names)
         else
             variable.name = new_variables_names[index++];
 }
-
 
 void Dataset::set_variable_names(const vector<string>& new_names)
 {
@@ -801,7 +750,6 @@ void Dataset::set_variable_names(const vector<string>& new_names)
         variables[i].name = get_trimmed(new_names[i]);
 }
 
-
 void Dataset::set_variable_roles(const string& variable_role)
 {
     for(Variable& variable : variables)
@@ -810,14 +758,11 @@ void Dataset::set_variable_roles(const string& variable_role)
             : variable.set_role(variable_role);
 }
 
-
-
 void Dataset::set_variable_scalers(const string& scalers)
 {
     for(Variable& variable : variables)
         variable.scaler = scalers;
 }
-
 
 void Dataset::set_variable_scalers(const vector<string>& new_scalers)
 {
@@ -830,7 +775,6 @@ void Dataset::set_variable_scalers(const vector<string>& new_scalers)
     for(size_t i = 0; i < variables_number; i++)
         variables[i].scaler = new_scalers[i];
 }
-
 
 void Dataset::infer_variable_types_from_data()
 {
@@ -877,19 +821,15 @@ void Dataset::infer_variable_types_from_data()
     }
 }
 
-
 void Dataset::set_binary_variables()
 {
     infer_variable_types_from_data();
 }
 
-
 void Dataset::unuse_constant_variables()
 {
     infer_variable_types_from_data();
 }
-
-
 
 static const vector<pair<Dataset::MissingValuesMethod, string>> missing_values_method_map = {
     {Dataset::MissingValuesMethod::Unuse,         "Unuse"},
@@ -897,7 +837,6 @@ static const vector<pair<Dataset::MissingValuesMethod, string>> missing_values_m
     {Dataset::MissingValuesMethod::Median,        "Median"},
     {Dataset::MissingValuesMethod::Interpolation, "Interpolation"}
 };
-
 
 string Dataset::get_missing_values_method_string() const
 {
@@ -907,15 +846,12 @@ string Dataset::get_missing_values_method_string() const
     throw runtime_error("Unknown missing values method");
 }
 
-
-
 static const vector<tuple<Dataset::Separator, string, string>> separator_map = {
     {Dataset::Separator::Space,     " ",  "Space"},
     {Dataset::Separator::Tab,       "\t", "Tab"},
     {Dataset::Separator::Comma,     ",",  "Comma"},
     {Dataset::Separator::Semicolon, ";",  "Semicolon"}
 };
-
 
 string Dataset::get_separator_string() const
 {
@@ -925,7 +861,6 @@ string Dataset::get_separator_string() const
     return string();
 }
 
-
 string Dataset::get_separator_name() const
 {
     for(const auto& [sep, str, name] : separator_map)
@@ -934,13 +869,10 @@ string Dataset::get_separator_name() const
     return string();
 }
 
-
-
 static const vector<pair<Dataset::Codification, string>> codification_map = {
     {Dataset::Codification::UTF8,      "UTF-8"},
     {Dataset::Codification::SHIFT_JIS, "SHIFT_JIS"}
 };
-
 
 const string Dataset::get_codification_string() const
 {
@@ -950,13 +882,10 @@ const string Dataset::get_codification_string() const
     return "UTF-8";
 }
 
-
-
 MatrixR Dataset::get_data_samples(const string& sample_role) const
 {
     return get_data_from_indices(get_sample_indices(sample_role), get_used_feature_indices());
 }
-
 
 MatrixR Dataset::get_feature_data(const string& variable_role) const
 {
@@ -968,12 +897,10 @@ MatrixR Dataset::get_feature_data(const string& variable_role) const
     return get_data_from_indices(indices, get_feature_indices(variable_role));
 }
 
-
 MatrixR Dataset::get_data(const string& sample_role, const string& variable_role) const
 {
     return get_data_from_indices(get_sample_indices(sample_role), get_feature_indices(variable_role));
 }
-
 
 MatrixR Dataset::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& feature_indices) const
 {
@@ -984,12 +911,10 @@ MatrixR Dataset::get_data_from_indices(const vector<Index>& sample_indices, cons
     return this_data;
 }
 
-
 VectorR Dataset::get_sample_data(const Index index) const
 {
     return data.row(index);
 }
-
 
 VectorR Dataset::get_sample_data(const Index sample_index, const vector<Index>& feature_indices) const
 {
@@ -1004,18 +929,15 @@ VectorR Dataset::get_sample_data(const Index sample_index, const vector<Index>& 
     return row;
 }
 
-
 MatrixR Dataset::get_sample_input_data(const Index sample_index) const
 {
     return get_data_from_indices({sample_index}, get_feature_indices("Input"));
 }
 
-
 MatrixR Dataset::get_sample_target_data(const Index sample_index) const
 {
     return get_data_from_indices({sample_index}, get_feature_indices("Target"));
 }
-
 
 Index Dataset::get_variable_index(const string& variable_name) const
 {
@@ -1027,7 +949,6 @@ Index Dataset::get_variable_index(const string& variable_name) const
 
     throw runtime_error("Cannot find " + variable_name + "\n");
 }
-
 
 Index Dataset::get_variable_index(const Index feature_index) const
 {
@@ -1048,7 +969,6 @@ Index Dataset::get_variable_index(const Index feature_index) const
     throw runtime_error("Cannot find variable index: " + to_string(feature_index) + ".\n");
 }
 
-
 vector<vector<Index>> Dataset::get_feature_indices() const
 {
     const Index variables_number = get_variables_number();
@@ -1060,7 +980,6 @@ vector<vector<Index>> Dataset::get_feature_indices() const
 
     return indices;
 }
-
 
 vector<Index> Dataset::get_feature_indices(const Index variable_index) const
 {
@@ -1084,7 +1003,6 @@ vector<Index> Dataset::get_feature_indices(const Index variable_index) const
     return vector<Index>(1, index);
 }
 
-
 MatrixR Dataset::get_variable_data(const Index variable_index) const
 {
     Index variables_number = 1;
@@ -1098,7 +1016,6 @@ MatrixR Dataset::get_variable_data(const Index variable_index) const
     return data.block(0, start_column, rows_number, variables_number);
 }
 
-
 VectorR Dataset::get_sample(const Index sample_index) const
 {
     if (sample_index >= data.rows())
@@ -1106,7 +1023,6 @@ VectorR Dataset::get_sample(const Index sample_index) const
 
     return data.row(sample_index);
 }
-
 
 string Dataset::get_sample_category(const Index sample_index, Index column_index_start) const
 {
@@ -1120,7 +1036,6 @@ string Dataset::get_sample_category(const Index sample_index, Index column_index
     throw runtime_error("Sample does not have a valid one-hot encoded category.");
 }
 
-
 MatrixR Dataset::get_variable_data(const Index variable_index, const vector<Index>& row_indices) const
 {
     MatrixR variable_data(row_indices.size(), get_feature_indices(variable_index).size());
@@ -1130,15 +1045,12 @@ MatrixR Dataset::get_variable_data(const Index variable_index, const vector<Inde
     return variable_data;
 }
 
-
 MatrixR Dataset::get_variable_data(const string& column_name) const
 {
     const Index variable_index = get_variable_index(column_name);
 
     return get_variable_data(variable_index);
 }
-
-
 
 void Dataset::set(const filesystem::path& new_data_path,
                   const string& new_separator,
@@ -1169,7 +1081,6 @@ void Dataset::set(const filesystem::path& new_data_path,
     input_shape = { get_features_number("Input") };
     target_shape = { get_features_number("Target") };
 }
-
 
 void Dataset::set(const Index new_samples_number,
                   const Shape& new_input_shape,
@@ -1215,13 +1126,10 @@ void Dataset::set(const Index new_samples_number,
     split_samples_random();
 }
 
-
 void Dataset::set(const filesystem::path& file_name)
 {
     load(file_name);
 }
-
-
 
 void Dataset::set_default()
 {
@@ -1236,7 +1144,6 @@ void Dataset::set_default()
     set_default_variable_names();
 }
 
-
 void Dataset::set_data(const MatrixR& new_data)
 {
     if (new_data.rows() != get_samples_number())
@@ -1248,8 +1155,6 @@ void Dataset::set_data(const MatrixR& new_data)
     data = new_data;
 }
 
-
-
 void Dataset::set_separator_string(const string& new_separator_string)
 {
     for(const auto& [sep, str, name] : separator_map)
@@ -1257,7 +1162,6 @@ void Dataset::set_separator_string(const string& new_separator_string)
 
     throw runtime_error("Unknown separator: " + new_separator_string);
 }
-
 
 void Dataset::set_separator_name(const string& new_separator_name)
 {
@@ -1267,8 +1171,6 @@ void Dataset::set_separator_name(const string& new_separator_name)
     throw runtime_error("Unknown separator: " + new_separator_name + ".\n");
 }
 
-
-
 void Dataset::set_codification(const string& new_codification_string)
 {
     for(const auto& [cod, name] : codification_map)
@@ -1277,8 +1179,6 @@ void Dataset::set_codification(const string& new_codification_string)
     throw runtime_error("Unknown codification: " + new_codification_string + ".\n");
 }
 
-
-
 void Dataset::set_missing_values_method(const string& new_missing_values_method)
 {
     for(const auto& [method, name] : missing_values_method_map)
@@ -1286,7 +1186,6 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
 
     throw runtime_error("Unknown method type.\n");
 }
-
 
 vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlation)
 {
@@ -1335,7 +1234,6 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
 
     return unused_variables;
 }
-
 
 vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation)
 {
@@ -1405,7 +1303,6 @@ vector<string> Dataset::unuse_collinear_variables(const type maximum_correlation
 
     return unused_variables;
 }
-
 
 vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_number) const
 {
@@ -1501,7 +1398,6 @@ vector<Histogram> Dataset::calculate_variable_distributions(const Index bins_num
     return histograms;
 }
 
-
 vector<BoxPlot> Dataset::calculate_variables_box_plots() const
 {
     const Index variables_number = get_variables_number();
@@ -1537,7 +1433,6 @@ vector<BoxPlot> Dataset::calculate_variables_box_plots() const
     return box_plots;
 }
 
-
 Index Dataset::calculate_used_negatives(const Index target_index) const
 {
     Index negatives = 0;
@@ -1563,7 +1458,6 @@ Index Dataset::calculate_used_negatives(const Index target_index) const
 
     return negatives;
 }
-
 
 Index Dataset::calculate_negatives(const Index target_index, const string& sample_role) const
 {
@@ -1605,12 +1499,10 @@ Index Dataset::calculate_negatives(const Index target_index, const string& sampl
     return negatives;
 }
 
-
 vector<Descriptives> Dataset::calculate_feature_descriptives() const
 {
     return descriptives(data);
 }
-
 
 vector<Index> Dataset::filter_used_samples_by_column(Index column_index, bool positive) const
 {
@@ -1632,14 +1524,12 @@ vector<Index> Dataset::filter_used_samples_by_column(Index column_index, bool po
     return filtered;
 }
 
-
 vector<Descriptives> Dataset::calculate_variable_descriptives_positive_samples() const
 {
     const Index target_index = get_feature_indices("Target")[0];
 
     return descriptives(data, filter_used_samples_by_column(target_index, true), get_feature_indices("Input"));
 }
-
 
 vector<Descriptives> Dataset::calculate_variable_descriptives_negative_samples() const
 {
@@ -1648,12 +1538,10 @@ vector<Descriptives> Dataset::calculate_variable_descriptives_negative_samples()
     return descriptives(data, filter_used_samples_by_column(target_index, false), get_feature_indices("Input"));
 }
 
-
 vector<Descriptives> Dataset::calculate_variable_descriptives_categories(const Index class_index) const
 {
     return descriptives(data, filter_used_samples_by_column(class_index, true), get_feature_indices("Input"));
 }
-
 
 vector<Descriptives> Dataset::calculate_feature_descriptives(const string& variable_role) const
 {
@@ -1664,7 +1552,6 @@ vector<Descriptives> Dataset::calculate_feature_descriptives(const string& varia
     return descriptives(data, used_sample_indices, input_feature_indices);
 }
 
-
 vector<Descriptives> Dataset::calculate_testing_target_variable_descriptives() const
 {
     const vector<Index> testing_indices = get_sample_indices("Testing");
@@ -1673,7 +1560,6 @@ vector<Descriptives> Dataset::calculate_testing_target_variable_descriptives() c
 
     return descriptives(data, testing_indices, target_feature_indices);
 }
-
 
 VectorR Dataset::calculate_means(const string& sample_role,
                                  const string& variable_role) const
@@ -1684,9 +1570,6 @@ VectorR Dataset::calculate_means(const string& sample_role,
 
     return mean(data, sample_indices, feature_indices);
 }
-
-
-
 
 Tensor<Correlation, 2> Dataset::calculate_input_target_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
@@ -1721,18 +1604,15 @@ Tensor<Correlation, 2> Dataset::calculate_input_target_variable_correlations(
     return correlations;
 }
 
-
 Tensor<Correlation, 2> Dataset::calculate_input_target_variable_pearson_correlations() const
 {
     return calculate_input_target_variable_correlations(correlation, "pearson");
 }
 
-
 Tensor<Correlation, 2> Dataset::calculate_input_target_variable_spearman_correlations() const
 {
     return calculate_input_target_variable_correlations(correlation_spearman, "spearman");
 }
-
 
 bool Dataset::has_nan() const
 {
@@ -1746,7 +1626,6 @@ bool Dataset::has_nan() const
     return false;
 }
 
-
 bool Dataset::has_nan_row(const Index row_index) const
 {
     const Index features_number = get_features_number();
@@ -1757,8 +1636,6 @@ bool Dataset::has_nan_row(const Index row_index) const
 
     return false;
 }
-
-
 
 Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
@@ -1800,18 +1677,15 @@ Tensor<Correlation, 2> Dataset::calculate_input_variable_correlations(
     return correlations;
 }
 
-
 Tensor<Correlation, 2> Dataset::calculate_input_variable_pearson_correlations() const
 {
     return calculate_input_variable_correlations(correlation, Correlation::Method::Pearson, "pearson");
 }
 
-
 Tensor<Correlation, 2> Dataset::calculate_input_variable_spearman_correlations() const
 {
     return calculate_input_variable_correlations(correlation_spearman, Correlation::Method::Spearman, "spearman");
 }
-
 
 VectorI Dataset::calculate_correlations_rank() const
 {
@@ -1824,7 +1698,6 @@ VectorI Dataset::calculate_correlations_rank() const
     return calculate_rank_less(absolute_mean_correlations);
 }
 
-
 void Dataset::set_default_variable_scalers()
 {
     for(Variable& variable : variables)
@@ -1832,7 +1705,6 @@ void Dataset::set_default_variable_scalers()
                                   ? "MeanStandardDeviation"
                                   : "MinimumMaximum";
 }
-
 
 void Dataset::apply_scaler(Index feature_index, const string& scaler, const Descriptives& desc, bool unscale)
 {
@@ -1856,7 +1728,6 @@ void Dataset::apply_scaler(Index feature_index, const string& scaler, const Desc
         throw runtime_error("Unknown scaler: " + scaler + "\n");
 }
 
-
 vector<Descriptives> Dataset::scale_data()
 {
     const Index features_number = get_features_number();
@@ -1868,7 +1739,6 @@ vector<Descriptives> Dataset::scale_data()
 
     return feature_descriptives;
 }
-
 
 vector<Descriptives> Dataset::scale_features(const string& variable_role)
 {
@@ -1882,7 +1752,6 @@ vector<Descriptives> Dataset::scale_features(const string& variable_role)
     return feature_descriptives;
 }
 
-
 void Dataset::unscale_features(const string& variable_role,
                                 const vector<Descriptives>& feature_descriptives)
 {
@@ -1893,12 +1762,10 @@ void Dataset::unscale_features(const string& variable_role,
         apply_scaler(feature_indices[i], scalers[i], feature_descriptives[i], true);
 }
 
-
 void Dataset::set_data_constant(const type new_value)
 {
     data.setConstant(new_value);
 }
-
 
 void Dataset::set_data_random()
 {
@@ -1909,7 +1776,6 @@ void Dataset::set_data_integer(const Index vocabulary_size)
 {
     set_random_integer(data, 0, vocabulary_size - 1);
 }
-
 
 void Dataset::to_XML(XMLPrinter& printer) const
 {
@@ -1937,7 +1803,6 @@ void Dataset::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void Dataset::variables_to_XML(XMLPrinter &printer) const
 {
     printer.OpenElement("Variables");
@@ -1954,7 +1819,6 @@ void Dataset::variables_to_XML(XMLPrinter &printer) const
     printer.CloseElement();
 }
 
-
 void Dataset::samples_to_XML(XMLPrinter &printer) const
 {
     printer.OpenElement("Samples");
@@ -1969,7 +1833,6 @@ void Dataset::samples_to_XML(XMLPrinter &printer) const
     add_xml_element(printer, "SampleRoles", vector_to_string(get_sample_roles_vector()));
     printer.CloseElement();
 }
-
 
 void Dataset::missing_values_to_XML(XMLPrinter &printer) const
 {
@@ -2129,8 +1992,6 @@ void Dataset::from_XML(const XMLDocument& data_set_document)
     target_shape = { get_features_number("Target") };
 }
 
-
-
 void Dataset::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -2145,14 +2006,10 @@ void Dataset::save(const filesystem::path& file_name) const
     file << document.CStr();
 }
 
-
 void Dataset::load(const filesystem::path& file_name)
 {
     from_XML(load_xml_file(file_name));
 }
-
-
-
 
 void Dataset::save_data() const
 {
@@ -2202,7 +2059,6 @@ void Dataset::save_data() const
     file.close();
 }
 
-
 void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name, ios::binary);
@@ -2229,7 +2085,6 @@ void Dataset::save_data_binary(const filesystem::path& binary_data_file_name) co
     file.close();
 }
 
-
 void Dataset::load_data_binary()
 {
     ifstream file(data_path, ios::binary);
@@ -2255,7 +2110,6 @@ void Dataset::load_data_binary()
 
     file.close();
 }
-
 
 VectorI Dataset::calculate_target_distribution() const
 {
@@ -2308,7 +2162,6 @@ VectorI Dataset::calculate_target_distribution() const
 
     return class_distribution;
 }
-
 
 vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_parameter, bool replace_with_nan)
 {
@@ -2396,12 +2249,10 @@ vector<vector<Index>> Dataset::calculate_Tukey_outliers(const type cleaning_para
     return return_values;
 }
 
-
 vector<vector<Index>> Dataset::replace_Tukey_outliers_with_NaN(const type cleaning_parameter)
 {
     return calculate_Tukey_outliers(cleaning_parameter, true);
 }
-
 
 void Dataset::unuse_Tukey_outliers(const type cleaning_parameter)
 {
@@ -2411,7 +2262,6 @@ void Dataset::unuse_Tukey_outliers(const type cleaning_parameter)
 
     set_sample_roles(outliers_samples, "None");
 }
-
 
 void Dataset::set_data_rosenbrock()
 {
@@ -2438,7 +2288,6 @@ void Dataset::set_data_rosenbrock()
     }
 }
 
-
 void Dataset::set_data_binary_classification()
 {
     const Index samples_number = get_samples_number();
@@ -2451,7 +2300,6 @@ void Dataset::set_data_binary_classification()
         data(i, features_number - 1) = type(random_bool());
 }
 
-
 void Dataset::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
@@ -2462,7 +2310,6 @@ void Dataset::impute_missing_values_unuse()
         if (has_nan_row(i))
             set_sample_role(i, "None");
 }
-
 
 void Dataset::impute_missing_values_statistic(const MissingValuesMethod& method)
 {
@@ -2508,7 +2355,6 @@ void Dataset::impute_missing_values_statistic(const MissingValuesMethod& method)
         }
     }
 }
-
 
 void Dataset::impute_missing_values_interpolate()
 {
@@ -2588,7 +2434,6 @@ void Dataset::impute_missing_values_interpolate()
     }
 }
 
-
 void Dataset::scrub_missing_values()
 {
     switch (missing_values_method)
@@ -2610,14 +2455,12 @@ void Dataset::scrub_missing_values()
     missing_values_number = count_nan();
 }
 
-
 void Dataset::calculate_missing_values_statistics()
 {
     missing_values_number = count_nan();
     variables_missing_values_number = count_nans_per_variable();
     rows_missing_values_number = count_rows_with_nan();
 }
-
 
 void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
 {
@@ -2685,7 +2528,6 @@ void Dataset::infer_column_types(const vector<vector<string>>& sample_rows)
     }
 }
 
-
 DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
                                               const vector<vector<string>>& sample_rows,
                                               bool has_sample_ids,
@@ -2724,7 +2566,6 @@ DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
 
     return AUTO;
 }
-
 
 void Dataset::read_csv()
 {
@@ -2958,7 +2799,6 @@ void Dataset::read_csv()
     split_samples_random();
 }
 
-
 void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
 {
     if (all_rows.empty())
@@ -2977,7 +2817,6 @@ void Dataset::read_data_file_preview(const vector<vector<string>>& all_rows)
         while(data_file_preview.size() < num_first_rows_to_show +1)
             data_file_preview.push_back(vector<string>());
 }
-
 
 void Dataset::check_separators(const string& line) const
 {
@@ -3003,14 +2842,12 @@ void Dataset::check_separators(const string& line) const
                                 + data_path.string() + ", but separator is " + separator_name + " ('" + separator_string + "').");
 }
 
-
 void Dataset::fill_inputs(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
                           type* input_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
 }
-
 
 void Dataset::fill_decoder(const vector<Index>& sample_indices,
                            const vector<Index>& decoder_indices,
@@ -3019,7 +2856,6 @@ void Dataset::fill_decoder(const vector<Index>& sample_indices,
     fill_tensor_data(data, sample_indices, decoder_indices, decoder_data, parallelize);
 }
 
-
 void Dataset::fill_targets(const vector<Index>& sample_indices,
                            const vector<Index>& target_indices,
                            type* target_data, bool parallelize) const
@@ -3027,20 +2863,17 @@ void Dataset::fill_targets(const vector<Index>& sample_indices,
     fill_tensor_data(data, sample_indices, target_indices, target_data, parallelize);
 }
 
-
 bool Dataset::has_binary_variables() const
 {
     return any_of(variables.begin(), variables.end(),
                   [](const Variable& variable) { return variable.type == VariableType::Binary; });
 }
 
-
 bool Dataset::has_categorical_variables() const
 {
     return any_of(variables.begin(), variables.end(),
                   [](const Variable& variable) { return variable.type == VariableType::Categorical; });
 }
-
 
 bool Dataset::has_binary_or_categorical_variables() const
 {
@@ -3049,19 +2882,16 @@ bool Dataset::has_binary_or_categorical_variables() const
     });
 }
 
-
 bool Dataset::has_time_variable() const
 {
     return any_of(variables.begin(), variables.end(),
                   [](const Variable& variable) { return variable.role == "Time"; });
 }
 
-
 bool Dataset::has_validation() const
 {
     return get_samples_number("Validation") != 0;
 }
-
 
 bool Dataset::has_missing_values(const vector<string>& row) const
 {
@@ -3072,30 +2902,25 @@ bool Dataset::has_missing_values(const vector<string>& row) const
     return false;
 }
 
-
 VectorI Dataset::count_nans_per_variable() const
 {
     return data.array().isNaN().cast<Index>().colwise().sum();
 }
-
 
 Index Dataset::count_variables_with_nan() const
 {
     return (count_nans_per_variable().array() > 0).count();
 }
 
-
 Index Dataset::count_rows_with_nan() const
 {
     return data.array().isNaN().rowwise().any().count();
 }
 
-
 Index Dataset::count_nan() const
 {
     return data.array().isNaN().count();
 }
-
 
 vector<vector<Index>> Dataset::split_samples(const vector<Index>& sample_indices, Index new_batch_size) const
 {
@@ -3142,12 +2967,10 @@ void Batch::fill(const vector<Index>& sample_indices,
     dataset->fill_targets(sample_indices, target_indices, target_vector.data());
 }
 
-
 Batch::Batch(const Index new_samples_number, const Dataset* new_dataset)
 {
     set(new_samples_number, new_dataset);
 }
-
 
 void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
 {
@@ -3188,12 +3011,10 @@ void Batch::set(const Index new_samples_number, const Dataset* new_dataset)
     }
 }
 
-
 Index Batch::get_samples_number() const
 {
     return samples_number;
 }
-
 
 void Batch::print() const
 {
@@ -3233,12 +3054,10 @@ void Batch::print() const
                              target_shape[1]) << endl;
 }
 
-
 bool Batch::is_empty() const
 {
     return input_vector.size() == 0;
 }
-
 
 vector<TensorView> Batch::get_inputs() const
 {
@@ -3250,12 +3069,10 @@ vector<TensorView> Batch::get_inputs() const
     return input_views;
 }
 
-
 TensorView Batch::get_targets() const
 {
     return {const_cast<type*>(target_vector.data()) , target_shape};
 }
-
 
 #ifdef CUDA
     
@@ -3271,7 +3088,6 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
     copy_device(batch_size);
 }
 
-
 void BatchCuda::fill_host(const vector<Index>& sample_indices,
                           const vector<Index>& input_indices,
                           const vector<Index>& decoder_indices,
@@ -3285,13 +3101,10 @@ void BatchCuda::fill_host(const vector<Index>& sample_indices,
     dataset->fill_targets(sample_indices, target_indices, targets_host, false);
 }
 
-
-
 BatchCuda::BatchCuda(const Index new_samples_number, Dataset* new_dataset)
 {
     set(new_samples_number, new_dataset);
 }
-
 
 BatchCuda::~BatchCuda()
 {
@@ -3304,7 +3117,6 @@ BatchCuda::~BatchCuda()
     cudaFreeHost(targets_host);
     targets_host = nullptr;
 }
-
 
 void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
 {
@@ -3368,7 +3180,6 @@ void BatchCuda::set(const Index new_samples_number, Dataset* new_dataset)
     }
 }
 
-
 void BatchCuda::copy_device(const Index current_batch_size)
 {
     const Index input_size = current_batch_size * num_input_features;
@@ -3384,7 +3195,6 @@ void BatchCuda::copy_device(const Index current_batch_size)
 
     CHECK_CUDA(cudaMemcpy(targets_device.data, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice));
 }
-
 
 void BatchCuda::copy_device_async(const Index current_batch_size, cudaStream_t stream)
 {
@@ -3402,7 +3212,6 @@ void BatchCuda::copy_device_async(const Index current_batch_size, cudaStream_t s
     CHECK_CUDA(cudaMemcpyAsync(targets_device.data, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
-
 MatrixR BatchCuda::get_inputs_from_device() const
 {
     const Index inputs_number = dataset->get_variables_number("Input");
@@ -3413,7 +3222,6 @@ MatrixR BatchCuda::get_inputs_from_device() const
 
     return inputs;
 }
-
 
 MatrixR BatchCuda::get_decoder_from_device() const
 {
@@ -3426,7 +3234,6 @@ MatrixR BatchCuda::get_decoder_from_device() const
     return decoder;
 }
 
-
 MatrixR BatchCuda::get_targets_from_device() const
 {
     const Index targets_number = target_shape[1];
@@ -3438,7 +3245,6 @@ MatrixR BatchCuda::get_targets_from_device() const
     return targets;
 }
 
-
 vector<TensorView> BatchCuda::get_inputs_device() const
 {
     if(!decoder_shape.empty())
@@ -3447,24 +3253,20 @@ vector<TensorView> BatchCuda::get_inputs_device() const
     return { inputs_device.view() };
 }
 
-
 TensorView BatchCuda::get_targets_device() const
 {
     return { targets_device.view() };
 }
-
 
 Index BatchCuda::get_samples_number() const
 {
     return samples_number;
 }
 
-
 void BatchCuda::print() const
 {
     // @todo
 }
-
 
 bool BatchCuda::is_empty() const
 {

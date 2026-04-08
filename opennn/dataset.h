@@ -501,7 +501,6 @@ protected:
 
 };
 
-
 struct Batch
 {
     Batch(const Index = 0, const Dataset* = nullptr);
@@ -536,7 +535,6 @@ struct Batch
     Shape target_shape;
     VectorR target_vector;
 };
-
 
 #ifdef CUDA
 
@@ -596,7 +594,6 @@ struct BatchCuda
     TensorCuda decoder_device;
     TensorCuda targets_device;
 };
-
 
 #endif
 

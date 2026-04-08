@@ -24,9 +24,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
     dataset = new_dataset;
 }
 
-
-
-
 void TestingAnalysis::check() const
 {
     if(!neural_network)
@@ -36,14 +33,12 @@ void TestingAnalysis::check() const
         throw runtime_error("Dataset pointer is nullptr.\n");
 }
 
-
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     return linear_correlation(targets, outputs);
 }
-
 
 Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target, const MatrixR& output) const
 {
@@ -57,7 +52,6 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const MatrixR& target
     return linear_correlation;
 }
 
-
 void TestingAnalysis::print_linear_correlations() const
 {
     const Tensor<Correlation, 1> linear_correlations = linear_correlation();
@@ -69,7 +63,6 @@ void TestingAnalysis::print_linear_correlations() const
     for(Index i = 0; i < targets_number; i++)
         cout << targets_name[i] << " correlation: " << linear_correlations[i].r << endl;
 }
-
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
@@ -105,7 +98,6 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     return goodness_of_fit_results;
 }
 
-
 void TestingAnalysis::print_goodness_of_fit_analysis() const
 {
     const Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = perform_goodness_of_fit_analysis();
@@ -113,7 +105,6 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
     for(Index i = 0; i < goodness_of_fit_analysis.size(); i++)
         goodness_of_fit_analysis(i).print();
 }
-
 
 pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sample_role) const
 {
@@ -149,14 +140,12 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     return {target_data, output_data};
 }
 
-
 MatrixR TestingAnalysis::calculate_error() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     return targets - outputs;
 }
-
 
 Tensor3 TestingAnalysis::calculate_error_data() const
 {
@@ -199,7 +188,6 @@ Tensor3 TestingAnalysis::calculate_error_data() const
     return error_data;
 }
 
-
 MatrixR TestingAnalysis::calculate_percentage_error_data() const
 {
     check();
@@ -240,14 +228,12 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     return error_data;
 }
 
-
 vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() const
 {    
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     return calculate_absolute_errors_descriptives(targets, outputs);
 }
-
 
 vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(const MatrixR& targets,
                                                                              const MatrixR& outputs) const
@@ -257,14 +243,12 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(con
     return descriptives(difference);
 }
 
-
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     return calculate_percentage_errors_descriptives(targets, outputs);
 }
-
 
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const MatrixR& targets,
                                                                                const MatrixR& outputs) const
@@ -273,7 +257,6 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(c
 
     return descriptives(difference);
 }
-
 
 vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
@@ -305,7 +288,6 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
     return descriptives;
 }
 
-
 void TestingAnalysis::print_error_data_descriptives() const
 {
     const Index targets_number = dataset->get_features_number("Target");
@@ -327,7 +309,6 @@ void TestingAnalysis::print_error_data_descriptives() const
              << endl;
 }
 
-
 vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index bins_number) const
 {
     const MatrixR error_data = calculate_percentage_error_data();
@@ -341,7 +322,6 @@ vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index b
 
     return histograms;
 }
-
 
 Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples_number) const
 {
@@ -366,7 +346,6 @@ Tensor<VectorI, 1> TestingAnalysis::calculate_maximal_errors(const Index samples
     return maximal_errors;
 }
 
-
 MatrixR TestingAnalysis::calculate_errors() const
 {
     MatrixR errors(5, 3);
@@ -377,7 +356,6 @@ MatrixR TestingAnalysis::calculate_errors() const
 
     return errors;
 }
-
 
 MatrixR TestingAnalysis::calculate_binary_classification_errors() const
 {
@@ -394,7 +372,6 @@ MatrixR TestingAnalysis::calculate_binary_classification_errors() const
     return errors;
 }
 
-
 MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 {
     const VectorR training_errors = calculate_multiple_classification_errors("Training");
@@ -409,7 +386,6 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 
     return errors;
 }
-
 
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
@@ -439,14 +415,12 @@ VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
     return errors;
 }
 
-
 VectorR TestingAnalysis::calculate_errors(const string& sample_role) const
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
     return calculate_errors(targets, outputs);
 }
-
 
 VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sample_role) const
 {
@@ -476,7 +450,6 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
     return errors;
 }
 
-
 VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& sample_role) const
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
@@ -495,7 +468,6 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
 
     return errors;
 }
-
 
 type TestingAnalysis::calculate_masked_accuracy(const Tensor3& outputs, const MatrixR& targets) const
 {
@@ -526,7 +498,6 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor3& outputs, const Ma
     return 0;
 }
 
-
 type TestingAnalysis::calculate_determination(const VectorR& outputs, const VectorR& targets) const
 {
     const type targets_mean = targets.mean();
@@ -547,7 +518,6 @@ type TestingAnalysis::calculate_determination(const VectorR& outputs, const Vect
     return r * r;
 }
 
-
 vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decision_threshold) const
 {
     check();
@@ -563,7 +533,6 @@ vector<MatrixI> TestingAnalysis::calculate_multilabel_confusion(const type decis
     return confusion_matrices;
 }
 
-
 VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targets, const MatrixR& outputs) const
 {
     const MatrixI confusion = calculate_confusion(targets, outputs, type(0.5));
@@ -575,7 +544,6 @@ VectorI TestingAnalysis::calculate_positives_negatives_rate(const MatrixR& targe
 
     return positives_negatives_rate;
 }
-
 
 MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) const
 {
@@ -637,7 +605,6 @@ MatrixI TestingAnalysis::calculate_confusion(const type decision_threshold) cons
     return total_confusion_matrix;
 }
 
-
 MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
                                              const MatrixR& outputs,
                                              type decision_threshold) const
@@ -674,7 +641,6 @@ MatrixI TestingAnalysis::calculate_confusion(const MatrixR& targets,
     return confusion;
 }
 
-
 TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
@@ -687,7 +653,6 @@ TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 
     return roc_analysis;
 }
-
 
 MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const MatrixR& outputs) const
 {
@@ -764,7 +729,6 @@ MatrixR TestingAnalysis::calculate_roc_curve(const MatrixR& targets, const Matri
     return roc_curve;
 }
 
-
 type TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) const
 {
     type area_under_curve = type(0);
@@ -774,7 +738,6 @@ type TestingAnalysis::calculate_area_under_curve(const MatrixR& roc_curve) const
 
     return area_under_curve/ type(2);
 }
-
 
 type TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR& targets, const MatrixR& outputs) const
 {
@@ -803,7 +766,6 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const MatrixR&
     return confidence_limit;
 }
 
-
 type TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) const
 {
     const Index points_number = roc_curve.rows();
@@ -827,14 +789,12 @@ type TestingAnalysis::calculate_optimal_threshold(const MatrixR& roc_curve) cons
     return optimal_threshold;
 }
 
-
 MatrixR TestingAnalysis::perform_cumulative_gain_analysis() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     return calculate_cumulative_gain(targets, outputs);
 }
-
 
 MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, const MatrixR& outputs, bool positive) const
 {
@@ -886,18 +846,15 @@ MatrixR TestingAnalysis::calculate_cumulative_gain_impl(const MatrixR& targets, 
     return cumulative_gain;
 }
 
-
 MatrixR TestingAnalysis::calculate_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
 {
     return calculate_cumulative_gain_impl(targets, outputs, true);
 }
 
-
 MatrixR TestingAnalysis::calculate_negative_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
 {
     return calculate_cumulative_gain_impl(targets, outputs, false);
 }
-
 
 MatrixR TestingAnalysis::perform_lift_chart_analysis() const
 {
@@ -907,7 +864,6 @@ MatrixR TestingAnalysis::perform_lift_chart_analysis() const
 
     return calculate_lift_chart(cumulative_gain);
 }
-
 
 MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) const
 {
@@ -930,7 +886,6 @@ MatrixR TestingAnalysis::calculate_lift_chart(const MatrixR& cumulative_gain) co
     return lift_chart;
 }
 
-
 TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
@@ -944,7 +899,6 @@ TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Sm
 
     return Kolmogorov_Smirnov_results;
 }
-
 
 VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulative_gain,
                                                 const MatrixR& negative_cumulative_gain) const
@@ -972,7 +926,6 @@ VectorR TestingAnalysis::calculate_maximum_gain(const MatrixR& positive_cumulati
     return maximum_gain;
 }
 
-
 vector<Histogram> TestingAnalysis::calculate_output_histogram(const MatrixR& outputs,
                                                               Index bins_number) const
 {
@@ -983,7 +936,6 @@ vector<Histogram> TestingAnalysis::calculate_output_histogram(const MatrixR& out
 
     return output_histogram;
 }
-
 
 TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const type decision_threshold) const
 {
@@ -1000,7 +952,6 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     return binary_classification_rates;
 }
-
 
 vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targets,
                                                               const MatrixR& outputs,
@@ -1026,13 +977,11 @@ vector<Index> TestingAnalysis::filter_classification_samples(const MatrixR& targ
     return result;
 }
 
-
 vector<Index> TestingAnalysis::calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
                                                                const vector<Index>& testing_indices, type threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, true, true);
 }
-
 
 vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
                                                                 const vector<Index>& testing_indices, type threshold) const
@@ -1040,20 +989,17 @@ vector<Index> TestingAnalysis::calculate_false_positive_samples(const MatrixR& t
     return filter_classification_samples(targets, outputs, testing_indices, threshold, false, true);
 }
 
-
 vector<Index> TestingAnalysis::calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
                                                                 const vector<Index>& testing_indices, type threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, true, false);
 }
 
-
 vector<Index> TestingAnalysis::calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
                                                                const vector<Index>& testing_indices, type threshold) const
 {
     return filter_classification_samples(targets, outputs, testing_indices, threshold, false, false);
 }
-
 
 VectorR TestingAnalysis::calculate_multiple_classification_precision() const
 {
@@ -1073,7 +1019,6 @@ VectorR TestingAnalysis::calculate_multiple_classification_precision() const
 
     return multiple_classification_tests;
 }
-
 
 void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 {
@@ -1110,7 +1055,6 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
     file.close();
 }
 
-
 void TestingAnalysis::save_multiple_classification_tests(const filesystem::path& file_name) const
 {
     const VectorR multiple_classification_tests = calculate_multiple_classification_precision();
@@ -1123,7 +1067,6 @@ void TestingAnalysis::save_multiple_classification_tests(const filesystem::path&
     file.close();
 }
 
-
 Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates() const
 {
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
@@ -1132,7 +1075,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates() co
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 }
-
 
 Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(const MatrixR& targets,
                                                                                     const MatrixR& outputs,
@@ -1170,7 +1112,6 @@ Tensor<VectorI, 2> TestingAnalysis::calculate_multiple_classification_rates(cons
     return multiple_classification_rates;
 }
 
-
 Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
                                                     const MatrixR& outputs,
                                                     const vector<string>& labels,
@@ -1199,7 +1140,6 @@ Tensor<string, 2> TestingAnalysis::classify_samples(const MatrixR& targets,
     return result.slice(array_2(0, 0), array_2(count, 4));
 }
 
-
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const MatrixR& targets,
                                                                      const MatrixR& outputs,
                                                                      const vector<string>& labels) const
@@ -1207,14 +1147,12 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Matri
     return classify_samples(targets, outputs, labels, true);
 }
 
-
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const MatrixR& targets,
                                                                    const MatrixR& outputs,
                                                                    const vector<string>& labels) const
 {
     return classify_samples(targets, outputs, labels, false);
 }
-
 
 void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
@@ -1229,7 +1167,6 @@ void TestingAnalysis::save_classified_samples_csv(const Tensor<string, 2>& sampl
     file.close();
 }
 
-
 void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
     const VectorR probabilities = extract_probabilities(samples);
@@ -1243,13 +1180,11 @@ void TestingAnalysis::save_classified_samples_statistics_csv(const Tensor<string
          << standard_deviation(probabilities);
 }
 
-
 void TestingAnalysis::save_classified_samples_probability_histogram(const Tensor<string, 2>& samples, const filesystem::path& file_name) const
 {
     const Histogram h(extract_probabilities(samples));
     h.save(file_name);
 }
-
 
 VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
 {
@@ -1261,13 +1196,11 @@ VectorR TestingAnalysis::extract_probabilities(const Tensor<string, 2>& samples)
     return probabilities;
 }
 
-
 void TestingAnalysis::save_well_classified_samples(const MatrixR& targets, const MatrixR& outputs,
                                                    const vector<string>& labels, const filesystem::path& file_name) const
 {
     save_classified_samples_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
 }
-
 
 void TestingAnalysis::save_misclassified_samples(const MatrixR& targets, const MatrixR& outputs,
                                                  const vector<string>& labels, const filesystem::path& file_name) const
@@ -1275,20 +1208,17 @@ void TestingAnalysis::save_misclassified_samples(const MatrixR& targets, const M
     save_classified_samples_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
 }
 
-
 void TestingAnalysis::save_well_classified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
                                                               const vector<string>& labels, const filesystem::path& file_name) const
 {
     save_classified_samples_statistics_csv(calculate_well_classified_samples(targets, outputs, labels), file_name);
 }
 
-
 void TestingAnalysis::save_misclassified_samples_statistics(const MatrixR& targets, const MatrixR& outputs,
                                                             const vector<string>& labels, const filesystem::path& file_name) const
 {
     save_classified_samples_statistics_csv(calculate_misclassified_samples(targets, outputs, labels), file_name);
 }
-
 
 vector<VectorR> TestingAnalysis::calculate_error_autocorrelation(const Index maximum_past_time_steps) const
 {
@@ -1305,7 +1235,6 @@ vector<VectorR> TestingAnalysis::calculate_error_autocorrelation(const Index max
 
     return error_autocorrelations;
 }
-
 
 vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const Index past_time_steps) const
 {
@@ -1326,7 +1255,6 @@ vector<VectorR> TestingAnalysis::calculate_inputs_errors_cross_correlation(const
 
     return inputs_errors_cross_correlation;
 }
-
 
 pair<type, type> TestingAnalysis::test_transformer() const
 {
@@ -1404,7 +1332,6 @@ pair<type, type> TestingAnalysis::test_transformer() const
     return {};
 }
 
-
 string TestingAnalysis::test_transformer(const vector<string>& context_string, bool imported_vocabulary) const
 {
     cout<<"Testing transformer..."<<endl;
@@ -1415,7 +1342,6 @@ string TestingAnalysis::test_transformer(const vector<string>& context_string, b
 */
     return string();
 }
-
 
 VectorR TestingAnalysis::calculate_binary_classification_tests(const type decision_threshold) const
 {
@@ -1515,7 +1441,6 @@ VectorR TestingAnalysis::calculate_binary_classification_tests(const type decisi
     return binary_classification_test;
 }
 
-
 void TestingAnalysis::print_binary_classification_tests() const
 {
     const VectorR binary_classification_tests = calculate_binary_classification_tests();
@@ -1526,7 +1451,6 @@ void TestingAnalysis::print_binary_classification_tests() const
          << "Sensitivity             : " << binary_classification_tests[2] << endl
          << "Specificity             : " << binary_classification_tests[3] << endl;
 }
-
 
 MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
 {
@@ -1602,22 +1526,18 @@ MatrixR TestingAnalysis::calculate_multiple_classification_tests() const
     return multiple_classification_tests;
 }
 
-
 void TestingAnalysis::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TestingAnalysis");
 
-
     printer.CloseElement();
 }
-
 
 void TestingAnalysis::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "TestingAnalysis");
 
 }
-
 
 void TestingAnalysis::save(const filesystem::path& file_name) const
 {
@@ -1633,12 +1553,10 @@ void TestingAnalysis::save(const filesystem::path& file_name) const
     file << printer.CStr();
 }
 
-
 void TestingAnalysis::load(const filesystem::path& file_name)
 {
     from_XML(load_xml_file(file_name));
 }
-
 
 void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,
                                                  const VectorR& new_outputs,
@@ -1649,7 +1567,6 @@ void TestingAnalysis::GoodnessOfFitAnalysis::set(const VectorR& new_targets,
     determination = new_determination;
 }
 
-
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -1659,7 +1576,6 @@ void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_n
 
     file.close();
 }
-
 
 void TestingAnalysis::GoodnessOfFitAnalysis::print() const
 {
@@ -1672,7 +1588,6 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
     // cout << outputs << endl;
 }
 
-
 void TestingAnalysis::RocAnalysis::print() const
 {
     cout << "ROC Curve analysis" << endl;
@@ -1682,7 +1597,6 @@ void TestingAnalysis::RocAnalysis::print() const
     cout << "Confidence Limit: " << confidence_limit << endl;
     cout << "Optimal Threshold: " << optimal_threshold << endl;
 }
-
 
 #ifdef CUDA
 

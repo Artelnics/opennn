@@ -23,13 +23,11 @@ Optimizer::Optimizer(Loss* new_loss)
     set(new_loss);
 }
 
-
 void Optimizer::check() const
 {
     if(!loss)
         throw runtime_error("loss is nullptr.\n");
 }
-
 
 void Optimizer::to_XML(XMLPrinter& printer) const
 {
@@ -40,15 +38,12 @@ void Optimizer::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void Optimizer::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "Optimizer");
 
     set_display(read_xml_bool(root_element, "Display"));
 }
-
-
 
 void Optimizer::save(const filesystem::path& file_name) const
 {
@@ -62,12 +57,10 @@ void Optimizer::save(const filesystem::path& file_name) const
     file << printer.CStr();
 }
 
-
 void Optimizer::load(const filesystem::path& file_name)
 {
     from_XML(load_xml_file(file_name));
 }
-
 
 type Optimizer::get_elapsed_time(const time_t &beginning_time)
 {
@@ -75,7 +68,6 @@ type Optimizer::get_elapsed_time(const time_t &beginning_time)
     time(&current_time);
     return type(difftime(current_time, beginning_time));
 }
-
 
 void Optimizer::set_names()
 {
@@ -89,7 +81,6 @@ void Optimizer::set_names()
     neural_network->set_input_variables(input_variables);
     neural_network->set_output_variables(target_variables);
 }
-
 
 void Optimizer::set_scaling()
 {
@@ -187,7 +178,6 @@ void Optimizer::set_scaling()
     unscaling_layer->set_scalers(unscaling_layer_scalers);
 }
 
-
 void Optimizer::set_unscaling()
 {
     Dataset* dataset = loss->get_dataset();
@@ -247,7 +237,6 @@ void Optimizer::set_unscaling()
 */
 }
 
-
 bool Optimizer::check_stopping_condition(TrainingResults& results,
                                           const Index epoch,
                                           const type elapsed_time,
@@ -282,7 +271,6 @@ bool Optimizer::check_stopping_condition(TrainingResults& results,
     return true;
 }
 
-
 void Optimizer::write_common_xml(XMLPrinter& printer) const
 {
     write_xml_properties(printer, {
@@ -294,7 +282,6 @@ void Optimizer::write_common_xml(XMLPrinter& printer) const
     });
 }
 
-
 void Optimizer::read_common_xml(const XMLElement* root_element)
 {
     set_loss_goal(read_xml_type(root_element, "LossGoal"));
@@ -304,7 +291,6 @@ void Optimizer::read_common_xml(const XMLElement* root_element)
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
 }
 
-
 TrainingResults::TrainingResults(const Index epochs_number)
 {
     training_error_history.resize(1 + epochs_number);
@@ -313,7 +299,6 @@ TrainingResults::TrainingResults(const Index epochs_number)
     validation_error_history.resize(1 + epochs_number);
     validation_error_history.setConstant(type(-1.0));
 }
-
 
 string TrainingResults::write_stopping_condition() const
 {
@@ -342,14 +327,12 @@ string TrainingResults::write_stopping_condition() const
     }
 }
 
-
 type TrainingResults::get_training_error() const
 {
     const Index size = training_error_history.size();
 
     return training_error_history(size - 1);
 }
-
 
 type TrainingResults::get_validation_error() const
 {
@@ -358,24 +341,20 @@ type TrainingResults::get_validation_error() const
     return validation_error_history(size - 1);
 }
 
-
 Index TrainingResults::get_epochs_number() const
 {
     return training_error_history.size() - 1;
 }
-
 
 void TrainingResults::resize_training_error_history(const Index new_size)
 {
     training_error_history.conservativeResize(new_size);
 }
 
-
 void TrainingResults::resize_validation_error_history(const Index new_size)
 {
     validation_error_history.conservativeResize(new_size);
 }
-
 
 void TrainingResults::save(const filesystem::path& file_name) const
 {
@@ -391,7 +370,6 @@ void TrainingResults::save(const filesystem::path& file_name) const
     file.close();
 }
 
-
 void TrainingResults::print(const string &message) const
 {
     const Index epochs_number = training_error_history.size();
@@ -404,7 +382,6 @@ void TrainingResults::print(const string &message) const
         cout << "Validation error: " << validation_error_history(epochs_number - 1) << endl;
     cout << "Stopping condition: " << write_stopping_condition() << endl;
 }
-
 
 Tensor<string, 2> TrainingResults::write_override_results(const Index precision) const
 {
@@ -447,7 +424,6 @@ Tensor<string, 2> TrainingResults::write_override_results(const Index precision)
 
     return override_results;
 }
-
 
 void OptimizerData::print() const
 {

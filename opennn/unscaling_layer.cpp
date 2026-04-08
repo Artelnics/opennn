@@ -22,7 +22,6 @@ Unscaling::Unscaling(const Shape& new_input_shape, const string& label)
     set(new_input_shape[0], label);
 }
 
-
 Shape Unscaling::get_input_shape() const
 {
     const Index neurons_number = means.size();
@@ -30,16 +29,12 @@ Shape Unscaling::get_input_shape() const
     return {neurons_number};
 }
 
-
 Shape Unscaling::get_output_shape() const
 {
     const Index neurons_number = means.size();
 
     return { neurons_number };
 }
-
-
-
 
 string Unscaling::get_expression(const vector<string>& new_input_names,
                                  const vector<string>& new_output_names) const
@@ -88,7 +83,6 @@ string Unscaling::get_expression(const vector<string>& new_input_names,
     return expression;
 }
 
-
 void Unscaling::set_input_shape(const Shape& new_input_shape)
 {
     means.resize(new_input_shape[0]);
@@ -97,11 +91,9 @@ void Unscaling::set_input_shape(const Shape& new_input_shape)
     maximums.resize(new_input_shape[0]);
 }
 
-
 void Unscaling::set_output_shape(const Shape& new_output_shape)
 {
 }
-
 
 void Unscaling::set(const Index new_neurons_number, const string& new_label)
 {
@@ -131,13 +123,11 @@ void Unscaling::set(const Index new_neurons_number, const string& new_label)
     is_trainable = false;
 }
 
-
 void Unscaling::set_min_max_range(const type min, const type max)
 {
     min_range = min;
     max_range = max;
 }
-
 
 void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
@@ -160,19 +150,16 @@ void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
     calculate_coefficients();
 }
 
-
 void Unscaling::set_scalers(const vector<string>& new_scaler)
 {
     scalers = new_scaler;
 }
-
 
 void Unscaling::set_scalers(const string& new_scalers)
 {
     for(string& scaler : scalers)
         scaler = new_scalers;
 }
-
 
 void Unscaling::calculate_coefficients()
 {
@@ -196,7 +183,6 @@ void Unscaling::calculate_coefficients()
     }
 }
 
-
 void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
     const TensorView& input = forward_propagation.views[layer][0][0];
@@ -208,12 +194,10 @@ void Unscaling::forward_propagate(ForwardPropagation& forward_propagation, size_
     copy(input, output);
 }
 
-
 void Unscaling::print() const
 {
     cout << "Unscaling layer" << endl;
 }
-
 
 void Unscaling::to_XML(XMLPrinter& printer) const
 {
@@ -235,7 +219,6 @@ void Unscaling::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void Unscaling::from_XML(const XMLDocument& document)
 {

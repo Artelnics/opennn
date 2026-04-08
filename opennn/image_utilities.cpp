@@ -20,7 +20,6 @@ struct RGBQuad
     uint8_t reserved;
 };
 
-
 Tensor3 load_image(const filesystem::path& path)
 {
     const string image_path_str = path.string();
@@ -158,7 +157,6 @@ Tensor3 load_image(const filesystem::path& path)
     return image;
 }
 
-
 Tensor3 resize_image(const Tensor3& input_image,
                      Index output_height,
                      Index output_width)
@@ -214,18 +212,15 @@ Tensor3 resize_image(const Tensor3& input_image,
     return output_image;
 }
 
-
 void reflect_image_x(Tensor3& image)
 {
     image.device(get_device()) = image.reverse(array<bool, 3>({false, true, false}));
 }
 
-
 void reflect_image_y(Tensor3& image)
 {
     image.device(get_device()) = image.reverse(array<bool, 3>({true, false, false}));
 }
-
 
 void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
 {
@@ -245,7 +240,6 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
     rotation_matrix << cos_angle, -sin_angle, rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y,
                        sin_angle, cos_angle, rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y,
                        type(0), type(0), type(1);
-
 
     using Vector3T = Matrix<type, 3, 1>;
 
@@ -272,7 +266,6 @@ void rotate_image(const Tensor3& input, Tensor3& output, type angle_degree)
         }
     }
 }
-
 
 void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
 {
@@ -303,7 +296,6 @@ void translate_image_x(const Tensor3& input, Tensor3& output, Index shift)
         output_block.noalias() = input_block;
     }
 }
-
 
 void translate_image_y(const Tensor3& input, Tensor3& output, Index shift)
 {

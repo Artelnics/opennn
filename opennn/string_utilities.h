@@ -55,7 +55,6 @@ namespace opennn
 
     string write_time(type);
 
-
     string get_first_word(string&);
 
     void tokenize_whitespace(const vector<string>&, Tensor2&);

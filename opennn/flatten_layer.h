@@ -23,7 +23,6 @@ template<int Rank> struct FlattenBackPropagationCuda;
 
 #endif // CUDA
 
-
 template<int Rank>
 class Flatten final : public Layer
 {
@@ -35,12 +34,10 @@ public:
         set(new_input_shape);
     }
 
-
     Shape get_output_shape() const override
     {
         return { input_shape.size() };
     }
-
 
     void set(const Shape& new_input_shape)
     {
@@ -59,12 +56,10 @@ public:
         input_shape = new_input_shape;
     }
 
-
     vector<Shape> get_forward_shapes(const Index batch_size) const override
     {
         return {Shape{batch_size}.append(get_output_shape())}; // {batch, total_count}
     }
-
 
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
@@ -151,7 +146,6 @@ private:
 
 void reference_flatten_layer();
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

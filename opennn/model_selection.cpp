@@ -20,14 +20,12 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-
 void ModelSelection::set_default()
 {
     set_neurons_selection("GrowingNeurons");
 
     set_inputs_selection("GrowingInputs");
 }
-
 
 void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
 {
@@ -36,14 +34,12 @@ void ModelSelection::set_neurons_selection(const string& new_neurons_selection)
     neurons_selection->set(training_strategy);
 }
 
-
 void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
 {
     inputs_selection = Registry<InputsSelection>::instance().create(new_inputs_selection);
 
     inputs_selection->set(training_strategy);
 }
-
 
 void ModelSelection::check() const
 {
@@ -82,18 +78,15 @@ void ModelSelection::check() const
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
-
 NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 {
     return neurons_selection->perform_neurons_selection();
 }
 
-
 InputsSelectionResults ModelSelection::perform_input_selection()
 {
     return inputs_selection->perform_input_selection();
 }
-
 
 void ModelSelection::to_XML(XMLPrinter& printer) const
 {
@@ -117,7 +110,6 @@ void ModelSelection::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void ModelSelection::from_XML(const XMLDocument& document)
 {
@@ -164,7 +156,6 @@ void ModelSelection::from_XML(const XMLDocument& document)
     else throw runtime_error(inputs_method + " element is nullptr.\n");
 }
 
-
 void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -176,7 +167,6 @@ void ModelSelection::save(const filesystem::path& file_name) const
     to_XML(printer);
     file << printer.CStr();
 }
-
 
 void ModelSelection::load(const filesystem::path& file_name)
 {

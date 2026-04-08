@@ -60,7 +60,6 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
     //output_names.resize(outputs_number);
 }
 
-
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
                                              const Shape& output_shape) : NeuralNetwork()
@@ -92,7 +91,6 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
     //output_names.resize(outputs_number);
 }
 
-
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape) : NeuralNetwork()
@@ -120,7 +118,6 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
     const Index outputs_number = get_outputs_number();
     //output_names.resize(outputs_number);
 }
-
 
 AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
@@ -160,7 +157,6 @@ AutoAssociationNetwork::AutoAssociationNetwork(const Shape& input_shape,
     compile();
     set_parameters_random();
 }
-
 
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
@@ -228,7 +224,6 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
     const Index outputs_number = get_outputs_number();
     //output_names.resize(outputs_number);
 }
-
 
 SimpleResNet::SimpleResNet(const Shape& input_shape,
                            const vector<Index>& blocks_per_stage,
@@ -377,13 +372,11 @@ SimpleResNet::SimpleResNet(const Shape& input_shape,
     set_parameters_random();
 }
 
-
 VGG16::VGG16(const Shape& new_input_shape, const Shape& new_target_shape)
     : NeuralNetwork()
 {
     set(new_input_shape, new_target_shape);
 }
-
 
 void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
 {
@@ -559,13 +552,11 @@ void VGG16::set(const Shape& new_input_shape, const Shape& new_target_shape)
     set_parameters_random();
 }
 
-
 VGG16::VGG16(const filesystem::path& file_name)
     : NeuralNetwork(file_name)
 {
 
 }
-
 
 TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
@@ -601,7 +592,6 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     set_parameters_glorot();
 }
 
-
 Transformer::Transformer(const Index input_sequence_length,
                          Index decoder_sequence_length,
                          Index input_vocabulary_size,
@@ -620,7 +610,6 @@ Transformer::Transformer(const Index input_sequence_length,
         feed_forward_dimension,
         layers_number);
 }
-
 
 void Transformer::set(const Index input_sequence_length,
                       Index decoder_sequence_length,
@@ -893,11 +882,9 @@ void Transformer::set(const Index input_sequence_length,
     set_parameters_random();
 }
 
-
 void Transformer::set_dropout_rate(const type new_dropout_rate)
 {
 }
-
 
 void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
@@ -909,7 +896,6 @@ void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabular
         input_vocabulary_map[input_vocabulary[i]] = i;
 }
 
-
 void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabulary)
 {
     output_vocabulary = new_output_vocabulary;
@@ -920,18 +906,15 @@ void Transformer::set_output_vocabulary(const vector<string>& new_output_vocabul
         output_inverse_vocabulary_map[i] = output_vocabulary[i];
 }
 
-
 Index Transformer::get_input_sequence_length() const
 {
     return get_layer("encoder_embedding")->get_input_shape()[0];
 }
 
-
 Index Transformer::get_decoder_sequence_length() const
 {
     return get_layer("decoder_embedding")->get_input_shape()[0];
 }
-
 
 Index Transformer::get_embedding_dimension() const
 {
@@ -946,7 +929,6 @@ Index Transformer::get_heads_number() const
 
     return 0;
 }
-
 
 string Transformer::calculate_outputs(const string& source)
 {

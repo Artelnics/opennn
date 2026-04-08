@@ -139,7 +139,6 @@ public:
         return convolution_descriptor;
     }
 
-
 protected:
 
     // Activations

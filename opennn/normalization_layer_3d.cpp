@@ -20,25 +20,21 @@ Normalization3d::Normalization3d(const Shape& new_input_shape,
     set(new_input_shape[0], new_input_shape[1], new_name);
 }
 
-
 Shape Normalization3d::get_input_shape() const
 {
     return { sequence_length, get_embedding_dimension() };
 }
-
 
 Shape Normalization3d::get_output_shape() const
 {
     return { sequence_length, get_embedding_dimension() };
 }
 
-
 vector<Shape> Normalization3d::get_parameter_shapes() const
 {
     return {{embedding_dimension},
             {embedding_dimension}};
 }
-
 
 void Normalization3d::set(const Index new_sequence_length,
                           Index new_embedding_dimension,
@@ -50,7 +46,6 @@ void Normalization3d::set(const Index new_sequence_length,
     name = "Normalization3d";
 }
 
-
 void Normalization3d::set_parameters_random()
 {
     VectorMap(parameters[Gammas].data, parameters[Gammas].size()).setOnes();
@@ -58,12 +53,10 @@ void Normalization3d::set_parameters_random()
     VectorMap(parameters[Betas].data, parameters[Betas].size()).setZero();
 }
 
-
 void Normalization3d::set_parameters_glorot()
 {
     set_parameters_random();
 }
-
 
 void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
@@ -122,7 +115,6 @@ void Normalization3d::forward_propagate(ForwardPropagation& forward_propagation,
         );
 #endif
 }
-
 
 void Normalization3d::back_propagate(ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation,
@@ -227,16 +219,16 @@ void Normalization3d::from_XML(const XMLDocument& document)
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
-
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3d");
-    add_xml_element(printer, "Label", label);
-    add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
-    add_xml_element(printer, "EmbeddingDimension", to_string(get_embedding_dimension()));
+    write_xml_properties(printer, {
+        {"Label", label},
+        {"SequenceLength", to_string(get_sequence_length())},
+        {"EmbeddingDimension", to_string(get_embedding_dimension())}
+    });
     printer.CloseElement();
 }
-
 
 #ifdef CUDA
 
@@ -251,7 +243,6 @@ void Normalization3dForwardPropagationCuda::initialize()
     means_device.resize({batch_size * seq});
     inv_variances_device.resize({batch_size * seq});
 }
-
 
 void Normalization3dBackPropagationCuda::initialize()
 {

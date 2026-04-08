@@ -21,7 +21,6 @@ StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
     set_default();
 }
 
-
 void StochasticGradientDescent::set_default()
 {
     name = "StochasticGradientDescent";
@@ -44,43 +43,35 @@ void StochasticGradientDescent::set_default()
     display_period = 100;
 }
 
-
 void StochasticGradientDescent::set_batch_size(const Index new_batch_size)
 {
     batch_size = new_batch_size;
 }
-
 
 Index StochasticGradientDescent::get_samples_number() const
 {
     return batch_size;
 }
 
-
 void StochasticGradientDescent::set_initial_learning_rate(const type new_learning_rate)
 {
     initial_learning_rate = new_learning_rate;
 }
-
 
 void StochasticGradientDescent::set_initial_decay(const type new_decay)
 {
     initial_decay = new_decay;
 }
 
-
 void StochasticGradientDescent::set_momentum(const type new_momentum)
 {
     momentum = new_momentum;
 }
 
-
 void StochasticGradientDescent::set_nesterov(bool new_nesterov_momentum)
 {
     nesterov = new_nesterov_momentum;
 }
-
-
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
                                                   StochasticGradientDescentData& optimization_data,
@@ -108,10 +99,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         : parameter_updates;
 }
 
-
 TrainingResults StochasticGradientDescent::train()
 {
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs+1);
@@ -333,7 +323,6 @@ TrainingResults StochasticGradientDescent::train()
     return results;
 }
 
-
 void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("StochasticGradientDescent");
@@ -344,7 +333,6 @@ void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void StochasticGradientDescent::from_XML(const XMLDocument& document)
 {
@@ -358,12 +346,10 @@ void StochasticGradientDescent::from_XML(const XMLDocument& document)
     read_common_xml(root_element);
 }
 
-
 StochasticGradientDescentData::StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
 {
     set(new_stochastic_gradient_descent);
 }
-
 
 void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochastic_gradient_descent)
 {
@@ -382,12 +368,11 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
     last_parameter_updates.setZero();
 }
 
-
 #ifdef CUDA
 
 TrainingResults StochasticGradientDescent::train_cuda()
 {
-    if(!loss || !loss->has_neural_network() || !loss->has_dataset())
+    if(!loss || !loss->get_neural_network() || !loss->get_dataset())
         return TrainingResults();
 
     TrainingResults results(maximum_epochs + 1);
@@ -639,7 +624,6 @@ TrainingResults StochasticGradientDescent::train_cuda()
     return results;
 }
 
-
 void StochasticGradientDescent::update_parameters(BackPropagationCuda& back_propagation,
                                                   SGDOptimizationDataCuda& optimization_data,
                                                   type current_learning_rate) const
@@ -664,12 +648,10 @@ void StochasticGradientDescent::update_parameters(BackPropagationCuda& back_prop
         nesterov);
 }
 
-
 SGDOptimizationDataCuda::SGDOptimizationDataCuda(StochasticGradientDescent* new_stochastic_gradient_descent)
 {
     set(new_stochastic_gradient_descent);
 }
-
 
 void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_gradient_descent)
 {
@@ -683,7 +665,6 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 
     CHECK_CUDA(cudaMemset(velocity.data, 0, parameters_number * sizeof(float)));
 }
-
 
 void SGDOptimizationDataCuda::print() const
 {

@@ -46,7 +46,6 @@ public:
         return shapes;
     }
 
-
     vector<Shape> get_backward_shapes(Index batch_size) const override
     {
         return {{batch_size, get_input_height(), get_input_width(), get_channels_number()}};

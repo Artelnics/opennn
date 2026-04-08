@@ -24,18 +24,15 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
 Index GrowingInputs::get_minimum_inputs_number() const
 {
     return minimum_inputs_number;
 }
 
-
 Index GrowingInputs::get_maximum_inputs_number() const
 {
     return maximum_inputs_number;
 }
-
 
 void GrowingInputs::set_default()
 {
@@ -47,17 +44,15 @@ void GrowingInputs::set_default()
     maximum_epochs = 1000;
     maximum_time = type(3600);
 
-    training_strategy && training_strategy->has_neural_network()
+    training_strategy && training_strategy->get_neural_network()
         ? maximum_inputs_number = training_strategy->get_dataset()->get_variables_number("Input")
         : maximum_inputs_number = 50;
 }
-
 
 void GrowingInputs::set_minimum_inputs_number(const Index new_minimum_inputs_number)
 {
     minimum_inputs_number = new_minimum_inputs_number;
 }
-
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
@@ -68,19 +63,15 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : min(new_maximum_inputs_number, inputs_number);
 }
 
-
 void GrowingInputs::set_minimum_correlation(const type new_minimum_correlation)
 {
     minimum_correlation = new_minimum_correlation;
 }
 
-
 void GrowingInputs::set_maximum_correlation(const type new_maximum_correlation)
 {
     maximum_correlation = new_maximum_correlation;
 }
-
-
 
 InputsSelectionResults GrowingInputs::perform_input_selection()
 {
@@ -126,8 +117,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     VectorI correlations_rank_descending(input_variable_indices.size());
 
-    for(Index i = 0; i < correlations_rank_descending.size(); i++)
-        correlations_rank_descending(i) = input_variable_indices[correlation_indices[i]];
+    transform(correlation_indices.begin(), correlation_indices.end(),
+              correlations_rank_descending.data(),
+              [&input_variable_indices](Index idx) { return input_variable_indices[idx]; });
 
     dataset->set_input_variables_unused();
 
@@ -363,24 +355,24 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     return input_selection_results;
 }
 
-
 void GrowingInputs::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingInputs");
 
-    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
-    add_xml_element(printer, "SelectionErrorGoal", to_string(validation_error_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_validation_failures));
-    add_xml_element(printer, "MinimumInputsNumber", to_string(minimum_inputs_number));
-    add_xml_element(printer, "MaximumInputsNumber", to_string(maximum_inputs_number));
-    add_xml_element(printer, "MinimumCorrelation", to_string(minimum_correlation));
-    add_xml_element(printer, "MaximumCorrelation", to_string(maximum_correlation));
-    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs));
-    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
+    write_xml_properties(printer, {
+        {"TrialsNumber", to_string(trials_number)},
+        {"SelectionErrorGoal", to_string(validation_error_goal)},
+        {"MaximumSelectionFailures", to_string(maximum_validation_failures)},
+        {"MinimumInputsNumber", to_string(minimum_inputs_number)},
+        {"MaximumInputsNumber", to_string(maximum_inputs_number)},
+        {"MinimumCorrelation", to_string(minimum_correlation)},
+        {"MaximumCorrelation", to_string(maximum_correlation)},
+        {"MaximumEpochsNumber", to_string(maximum_epochs)},
+        {"MaximumTime", to_string(maximum_time)}
+    });
 
     printer.CloseElement();  
 }
-
 
 void GrowingInputs::from_XML(const XMLDocument& document)
 {
@@ -396,7 +388,6 @@ void GrowingInputs::from_XML(const XMLDocument& document)
     set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
 }
-
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 

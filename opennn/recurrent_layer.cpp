@@ -20,19 +20,15 @@ Recurrent::Recurrent(const Shape& new_input_shape,
     set(new_input_shape, new_output_shape);
 }
 
-
 Shape Recurrent::get_output_shape() const
 {
     return { biases.size() };
 }
 
-
 vector<Shape> Recurrent::get_parameter_shapes() const
 {
     return {biases.shape, input_weights.shape, recurrent_weights.shape};
 }
-
-
 
 void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
 {
@@ -52,7 +48,6 @@ void Recurrent::set(const Shape& new_input_shape, const Shape& new_output_shape)
     name = "Recurrent";
 }
 
-
 void Recurrent::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 2)
@@ -66,7 +61,6 @@ void Recurrent::set_input_shape(const Shape& new_input_shape)
     input_weights.shape = {inputs_number, outputs_number};
 }
 
-
 void Recurrent::set_output_shape(const Shape& new_output_shape)
 {
     const Index inputs_number = input_weights.shape[0];
@@ -76,7 +70,6 @@ void Recurrent::set_output_shape(const Shape& new_output_shape)
     input_weights.shape = {inputs_number, outputs_number};
     recurrent_weights.shape = {outputs_number, outputs_number};
 }
-
 
 void Recurrent::set_activation_function(const string& new_activation_function)
 {
@@ -94,7 +87,6 @@ void Recurrent::set_activation_function(const string& new_activation_function)
     else
         throw runtime_error("Unknown activation function: " + new_activation_function);
 }
-
 
 void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_t index, bool is_training)
 {
@@ -164,7 +156,6 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
         all_hidden_states.chip(t, 1) = current_hidden_tensor;
     }
 
-
     if(recurrent_forward_propagation->outputs.data != nullptr)
     {
         TensorMap2 outputs_map(recurrent_forward_propagation->outputs.data, batch_size, output_size);
@@ -176,7 +167,6 @@ void Recurrent::forward_propagate(ForwardPropagation& forward_propagation, size_
 */
 
 }
-
 
 void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
@@ -249,7 +239,6 @@ void Recurrent::back_propagate(ForwardPropagation& forward_propagation,
 */
 }
 
-
 string Recurrent::get_expression(const vector<string>& feature_names,
                                  const vector<string>& output_names) const
 {
@@ -314,7 +303,6 @@ string Recurrent::get_expression(const vector<string>& feature_names,
     return buffer.str();
 }
 
-
 void Recurrent::from_XML(const XMLDocument& document)
 {
     const XMLElement* recurrent_layer_element = get_xml_root(document, "Recurrent");
@@ -325,15 +313,16 @@ void Recurrent::from_XML(const XMLDocument& document)
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
 }
 
-
 void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
-    add_xml_element(printer, "Label", get_label());
-    add_xml_element(printer, "InputDimensions", shape_to_string(get_input_shape()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_output_shape()[0]));
-    add_xml_element(printer, "Activation", activation_function);
+    write_xml_properties(printer, {
+        {"Label", get_label()},
+        {"InputDimensions", shape_to_string(get_input_shape())},
+        {"NeuronsNumber", to_string(get_output_shape()[0])},
+        {"Activation", activation_function}
+    });
 
     printer.CloseElement();
 }

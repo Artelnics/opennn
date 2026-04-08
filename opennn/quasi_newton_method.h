@@ -74,7 +74,6 @@ private:
     const type golden_ratio = type(1.618);
 };
 
-
 struct Triplet
 {
     Triplet() = default;
@@ -91,7 +90,6 @@ struct Triplet
 
     pair<type, type> A = {MAX, MAX}, U = {MAX, MAX}, B = {MAX, MAX};
 };
-
 
 struct QuasiNewtonMethodData final : public OptimizerData
 {

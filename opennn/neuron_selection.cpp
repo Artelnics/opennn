@@ -20,14 +20,12 @@ NeuronSelection::NeuronSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-
 void NeuronSelection::set(TrainingStrategy* new_training_strategy)
 {
     training_strategy = new_training_strategy;
 
     set_default();
 }
-
 
 void NeuronSelection::set_default()
 {
@@ -47,13 +45,10 @@ void NeuronSelection::set_default()
     maximum_time = type(3600);
 }
 
-
 string NeuronSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }
-
-
 
 void NeuronSelection::check() const
 {
@@ -92,7 +87,6 @@ void NeuronSelection::check() const
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
-
 void NeuronSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -105,12 +99,10 @@ void NeuronSelection::save(const filesystem::path& file_name) const
     file << printer.CStr();
 }
 
-
 void NeuronSelection::load(const filesystem::path& file_name)
 {
     from_XML(load_xml_file(file_name));
 }
-
 
 NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
 {
@@ -126,7 +118,6 @@ NeuronsSelectionResults::NeuronsSelectionResults(const Index maximum_epochs)
     optimum_training_error = MAX;
     optimum_validation_error = MAX;
 }
-
 
 void NeuronsSelectionResults::resize_history(const Index new_size)
 {
@@ -149,7 +140,6 @@ void NeuronsSelectionResults::resize_history(const Index new_size)
         validation_error_history(i) = old_validation_error_history(i);
     }
 }
-
 
 string NeuronsSelectionResults::write_stopping_condition() const
 {
@@ -174,7 +164,6 @@ string NeuronsSelectionResults::write_stopping_condition() const
             return string();
     }
 }
-
 
 void NeuronsSelectionResults::print() const
 {

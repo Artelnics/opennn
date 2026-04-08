@@ -94,7 +94,6 @@ protected:
     string name;
 };
 
-
 struct InputsSelectionResults
 {
     InputsSelectionResults(const Index = 0);

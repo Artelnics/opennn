@@ -38,7 +38,6 @@ struct Correlation
     Form form = Form::Linear;
 };
 
-
 Correlation linear_correlation(const VectorR&, const VectorR&);
 
 Correlation logarithmic_correlation(const VectorR&, const VectorR&);
@@ -85,7 +84,6 @@ VectorR autocorrelations(const VectorR&, Index  = 10);
 VectorR cross_correlations(const VectorR&, const VectorR&, Index);
 
 MatrixR get_correlation_values(const Tensor<Correlation, 2>&);
-
 
 void register_optimization_algorithms();
 

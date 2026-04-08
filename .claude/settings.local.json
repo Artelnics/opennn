@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -l \"Optimizer\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -A 3 \"^[a-zA-Z_][a-zA-Z0-9_:]*::[a-zA-Z_][a-zA-Z0-9_]*\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -B 2 \"^--$\")",
+      "Bash(grep -n \"void\\\\s\\\\+[a-zA-Z_][a-zA-Z0-9_]*::set_default\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -n \"to_XML\\\\|from_XML\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -o \"void set_[a-zA-Z_][a-zA-Z0-9_]*\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -n \"calculate_error_gradient\\\\|calculate_error_hessian\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -h \"inline\\\\|template\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -n \"string_utilities\\\\|math_utilities\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -c \"if\\(!neural_network\\)\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(wc -l /c/tests_delete/opennn/opennn/cross_entropy_error*.cpp /c/tests_delete/opennn/opennn/normalized_squared_error.cpp /c/tests_delete/opennn/opennn/mean_squared_error.cpp /c/tests_delete/opennn/opennn/minkowski_error.cpp /c/tests_delete/opennn/opennn/weighted_squared_error.cpp)",
+      "Bash(grep -c \"from_XML\\\\|to_XML\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -v \":0$\")",
+      "Bash(grep -o \"get_activation_function\\\\|set_activation_function\\\\|activate\\\\|calculate_derivative\" /c/tests_delete/opennn/opennn/*.h)",
+      "Bash(grep -h \"throw runtime_error\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -h \"reference_.*_layer\\\\|linker fix\" /c/tests_delete/opennn/opennn/*.cpp)",
+      "Bash(grep -n \"Index maximum_epochs\" /c/tests_delete/opennn/opennn/*.h)"
+    ]
+  }
+}

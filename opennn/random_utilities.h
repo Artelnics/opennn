@@ -35,7 +35,6 @@ namespace opennn
 
     void shuffle_vector_blocks(vector<Index>&, size_t = 20);
 
-
     Index get_random_element(const vector<Index>&);
 }
 

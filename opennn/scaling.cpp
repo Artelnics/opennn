@@ -12,7 +12,6 @@
 namespace opennn
 {
 
-
 void scale_mean_standard_deviation(MatrixMap matrix,
                                    Index column_index,
                                    const Descriptives& column_descriptives)
@@ -22,7 +21,6 @@ void scale_mean_standard_deviation(MatrixMap matrix,
     else
         matrix.col(column_index).setZero();
 }
-
 
 void scale_standard_deviation(MatrixMap matrix,
                               Index column_index,
@@ -34,7 +32,6 @@ void scale_standard_deviation(MatrixMap matrix,
 
     matrix.col(column_index) *= slope;
 }
-
 
 void scale_minimum_maximum(MatrixMap matrix,
                            Index column_index,
@@ -54,7 +51,6 @@ void scale_minimum_maximum(MatrixMap matrix,
         (matrix.col(column_index).array() - column_descriptives.minimum) / range * (max_range - min_range) + min_range;
 }
 
-
 void scale_logarithmic(MatrixMap matrix, Index column_index)
 {
     auto col = matrix.col(column_index).array();
@@ -71,14 +67,12 @@ void scale_logarithmic(MatrixMap matrix, Index column_index)
     col = col.log();
 }
 
-
 void scale_mean_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
     // Create a Map view of the Tensor and call the implementation
     MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_mean_standard_deviation(map, column_index, column_descriptives);
 }
-
 
 void scale_minimum_maximum(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives, type min_range, type max_range)
 {
@@ -92,13 +86,11 @@ void scale_logarithmic(MatrixR& matrix, Index column_index)
     scale_logarithmic(map, column_index);
 }
 
-
 void scale_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
     MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
     scale_standard_deviation(map, column_index, column_descriptives);
 }
-
 
 void unscale_minimum_maximum(MatrixMap matrix,
                              Index column_index,
@@ -120,7 +112,6 @@ void unscale_minimum_maximum(MatrixMap matrix,
     }
 }
 
-
 void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const type mean = column_descriptives.mean;
@@ -140,7 +131,6 @@ void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
 }
 
-
 void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const type slope = abs(column_descriptives.standard_deviation) < EPSILON
@@ -153,7 +143,6 @@ void unscale_standard_deviation(MatrixMap matrix, Index column_index, const Desc
         matrix(i, column_index) = matrix(i, column_index) * slope;
 }
 
-
 void unscale_logarithmic(MatrixMap matrix, Index column_index)
 {
     #pragma omp parallel for
@@ -162,7 +151,6 @@ void unscale_logarithmic(MatrixMap matrix, Index column_index)
         matrix(i, column_index) = exp(matrix(i, column_index));
 }
 
-
 void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
 {
     #pragma omp parallel for
@@ -170,7 +158,6 @@ void unscale_image_minimum_maximum(MatrixMap matrix, Index column_index)
     for(Index i = 0; i < matrix.rows(); i++)
         matrix(i, column_index) *= type(255);
 }
-
 
 void unscale_minimum_maximum(MatrixR& matrix,
                              Index column_index,
@@ -182,24 +169,20 @@ void unscale_minimum_maximum(MatrixR& matrix,
     unscale_minimum_maximum(map, column_index, column_descriptives, min_range, max_range);
 }
 
-
 void unscale_mean_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
     unscale_mean_standard_deviation(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index, column_descriptives);
 }
-
 
 void unscale_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& descriptives)
 {
     unscale_standard_deviation(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index, descriptives);
 }
 
-
 void unscale_logarithmic(MatrixR& matrix, Index column_index)
 {
     unscale_logarithmic(MatrixMap(matrix.data(), matrix.rows(), matrix.cols()), column_index);
 }
-
 
 void unscale_image_minimum_maximum(MatrixR& matrix, Index column_index)
 {

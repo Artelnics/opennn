@@ -19,12 +19,10 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-
 string InputsSelection::write_stopping_condition(const TrainingResults& results) const
 {
     return results.write_stopping_condition();
 }
-
 
 void InputsSelection::check() const
 {
@@ -37,7 +35,7 @@ void InputsSelection::check() const
 
     // Neural network
 
-    if(!loss->has_neural_network())
+    if(!loss->get_neural_network())
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
     const NeuralNetwork* neural_network = loss->get_neural_network();
@@ -47,7 +45,7 @@ void InputsSelection::check() const
 
     // Dataset
 
-    if(!loss->has_dataset())
+    if(!loss->get_dataset())
         throw runtime_error("Pointer to dataset is nullptr.\n");
 
     const Dataset* dataset = loss->get_dataset();
@@ -58,18 +56,15 @@ void InputsSelection::check() const
         throw runtime_error("Number of selection samples is zero.\n");
 }
 
-
 InputsSelectionResults::InputsSelectionResults(const Index maximum_epochs)
 {
     set(maximum_epochs);
 }
 
-
 Index InputsSelectionResults::get_epochs_number() const
 {
     return training_error_history.size();
 }
-
 
 void InputsSelectionResults::set(const Index maximum_epochs)
 {
@@ -110,7 +105,6 @@ string InputsSelectionResults::write_stopping_condition() const
     }
 }
 
-
 void InputsSelectionResults::resize_history(const Index new_size)
 {
     const VectorR old_training_error_history(training_error_history);
@@ -133,7 +127,6 @@ void InputsSelectionResults::resize_history(const Index new_size)
     }
 }
 
-
 void InputsSelectionResults::print() const
 {
     cout << endl
@@ -148,7 +141,6 @@ void InputsSelectionResults::print() const
          << "Optimum selection error: " << optimum_validation_error << endl;
 }
 
-
 void InputsSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -160,7 +152,6 @@ void InputsSelection::save(const filesystem::path& file_name) const
     to_XML(printer);
     file << printer.CStr();
 }
-
 
 void InputsSelection::load(const filesystem::path& file_name)
 {
