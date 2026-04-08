@@ -174,7 +174,7 @@ TrainingResults TrainingStrategy::train()
 
 void TrainingStrategy::fix_forecasting()
 {
-    Index past_time_steps = 0;
+    Index const past_time_steps = 0;
 /*
     if(neural_network->has("Recurrent"))
         past_time_steps = static_cast<Recurrent*>(neural_network->get_first(Recurrent))->get_timesteps();

@@ -474,7 +474,7 @@ type variance(const VectorR& vector)
 
     for (Index i = 0; i < count; ++i)
     {
-        double val = static_cast<double>(new_vector(i));
+        double const val = static_cast<double>(new_vector(i));
         sum += val;
         squared_sum += val * val;
     }
@@ -548,7 +548,7 @@ type median(const VectorR& input_vector)
     {
         median_index = Index(new_size / 2);
 
-        type median = (sorted_vector[median_index - 1] + sorted_vector[median_index]) / type(2.0);
+        type const median = (sorted_vector[median_index - 1] + sorted_vector[median_index]) / type(2.0);
 
         return median;
     }
@@ -636,7 +636,7 @@ BoxPlot box_plot(const VectorR& vector)
     if(vector.size() == 0)
         return box_plot;
 
-    VectorR clean_vector = vector.array().isNaN().select(
+    VectorR const clean_vector = vector.array().isNaN().select(
         VectorR::Constant(vector.size(), numeric_limits<type>::quiet_NaN()), vector);
 
     // Filter NaNs
@@ -1317,7 +1317,7 @@ VectorR median(const MatrixR& matrix)
 
 type median(const MatrixR& matrix, Index column_index)
 {
-    type median = type(0);
+    type const median = type(0);
 
     vector<type> sorted_column;
 

@@ -78,7 +78,7 @@ void LevenbergMarquardtAlgorithm::check() const
     if(!loss)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
-    Dataset* dataset = loss->get_dataset();
+    Dataset const* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("The loss funcional has no dataset.");

@@ -1225,7 +1225,7 @@ vector<string> Dataset::unuse_uncorrelated_variables(const type minimum_correlat
     const Index new_input_variables_number = get_features_number("Input");
     const Index new_target_variables_number = get_features_number("Target");
 
-    if(TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(this))
+    if(TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(this))
         set_shape("Input", {time_series_dataset->get_past_time_steps(), new_input_variables_number});
     else
         set_shape("Input", {new_input_variables_number});
@@ -2553,8 +2553,8 @@ DateFormat Dataset::infer_dataset_date_format(const vector<Variable>& variables,
             smatch date_parts;
             if(regex_match(token, date_parts, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}).*)")))
             {
-                int part1 = stoi(date_parts[1].str());
-                int part2 = stoi(date_parts[2].str());
+                int const part1 = stoi(date_parts[1].str());
+                int const part2 = stoi(date_parts[2].str());
 
                 if(part1 > 12)
                     return DMY;
@@ -2759,7 +2759,7 @@ void Dataset::read_csv()
                 break;
             case VariableType::Categorical:
                 if(token.empty() || token == missing_values_label)
-                    for(Index cat_idx : feature_indices)
+                    for(Index const cat_idx : feature_indices)
                         data(sample_index, cat_idx) = NAN;
                 else
                 {

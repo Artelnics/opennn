@@ -95,7 +95,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     type previus_validation_error = MAX;
     type previus_training_error = MAX;
 
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+    TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
     const vector<Index> target_variable_indices = dataset->get_variable_indices("Target");
     const vector<Index> time_variable_indices = dataset->get_variable_indices("Time");
     const vector<string> variable_names = dataset->get_variable_names();

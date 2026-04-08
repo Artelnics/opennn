@@ -70,25 +70,25 @@ void scale_logarithmic(MatrixMap matrix, Index column_index)
 void scale_mean_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
     // Create a Map view of the Tensor and call the implementation
-    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
+    MatrixMap const map(matrix.data(), matrix.rows(), matrix.cols());
     scale_mean_standard_deviation(map, column_index, column_descriptives);
 }
 
 void scale_minimum_maximum(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives, type min_range, type max_range)
 {
-    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
+    MatrixMap const map(matrix.data(), matrix.rows(), matrix.cols());
     scale_minimum_maximum(map, column_index, column_descriptives, min_range, max_range);
 }
 
 void scale_logarithmic(MatrixR& matrix, Index column_index)
 {
-    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
+    MatrixMap const map(matrix.data(), matrix.rows(), matrix.cols());
     scale_logarithmic(map, column_index);
 }
 
 void scale_standard_deviation(MatrixR& matrix, Index column_index, const Descriptives& column_descriptives)
 {
-    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
+    MatrixMap const map(matrix.data(), matrix.rows(), matrix.cols());
     scale_standard_deviation(map, column_index, column_descriptives);
 }
 
@@ -107,7 +107,7 @@ void unscale_minimum_maximum(MatrixMap matrix,
     #pragma omp parallel for
     for(Index i = 0; i < matrix.rows(); i++)
     {
-        type normalized = (matrix(i, column_index) - min_range) / (max_range - min_range);
+        type const normalized = (matrix(i, column_index) - min_range) / (max_range - min_range);
         matrix(i,column_index) = normalized * (maximum - minimum) + minimum;
     }
 }
@@ -115,7 +115,7 @@ void unscale_minimum_maximum(MatrixMap matrix,
 void unscale_mean_standard_deviation(MatrixMap matrix, Index column_index, const Descriptives& column_descriptives)
 {
     const type mean = column_descriptives.mean;
-    type standard_deviation = column_descriptives.standard_deviation;
+    type const standard_deviation = column_descriptives.standard_deviation;
 
     if(standard_deviation < EPSILON)
     {
@@ -165,7 +165,7 @@ void unscale_minimum_maximum(MatrixR& matrix,
                              type min_range,
                              type max_range)
 {
-    MatrixMap map(matrix.data(), matrix.rows(), matrix.cols());
+    MatrixMap const map(matrix.data(), matrix.rows(), matrix.cols());
     unscale_minimum_maximum(map, column_index, column_descriptives, min_range, max_range);
 }
 

@@ -10,7 +10,7 @@ const XMLElement* XMLNode::FirstChildElement(const char* name) const {
 }
 
 const XMLElement* XMLNode::NextSiblingElement(const char* name) const {
-    XMLNode* p = _parent;
+    XMLNode const* p = _parent;
     if(!p) return nullptr;
     bool foundSelf = false;
     for(const auto& sibling : p->_children) {
@@ -27,7 +27,7 @@ const char* XMLElement::GetText() const {
 }
 
 int XMLDocument::Parse(const char* xml) {
-    std::string s = xml;
+    std::string const s = xml;
     // This is a dummy simplified parser logic
     // In a real scenario, you'd use a small regex or basic state machine
     // to populate the _children and _attributes.
@@ -37,7 +37,7 @@ int XMLDocument::Parse(const char* xml) {
 int XMLDocument::LoadFile(const char* filename) {
     std::ifstream f(filename);
     if(!f.is_open()) return 1;
-    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    std::string const content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     return Parse(content.c_str());
 }
 
@@ -97,7 +97,7 @@ long read_xml_index(const XMLElement* root, const std::string& element_name) {
 bool read_xml_bool(const XMLElement* root, const std::string& element_name) {
     const XMLElement* el = root->FirstChildElement(element_name.c_str());
     if (!el || !el->GetText()) return false;
-    std::string val = el->GetText();
+    std::string const val = el->GetText();
     return (val == "1" || val == "true");
 }
 

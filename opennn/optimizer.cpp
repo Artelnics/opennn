@@ -71,7 +71,7 @@ type Optimizer::get_elapsed_time(const time_t &beginning_time)
 
 void Optimizer::set_names()
 {
-    Dataset* dataset = loss->get_dataset();
+    Dataset const* dataset = loss->get_dataset();
 
     const vector<Variable> input_variables = dataset->get_variables("Input");
     const vector<Variable> target_variables = dataset->get_variables("Target");
@@ -85,7 +85,7 @@ void Optimizer::set_names()
 void Optimizer::set_scaling()
 {
     Dataset* dataset = loss->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    NeuralNetwork const* neural_network = loss->get_neural_network();
 
     // Scaling layer
 
@@ -151,7 +151,7 @@ void Optimizer::set_scaling()
 
     for(size_t i = 0; i < target_feature_indices.size(); ++i)
     {
-        Index target_index = target_feature_indices[i];
+        Index const target_index = target_feature_indices[i];
 
         auto it = find(input_feature_indices.begin(), input_feature_indices.end(), target_index);
 
@@ -180,8 +180,8 @@ void Optimizer::set_scaling()
 
 void Optimizer::set_unscaling()
 {
-    Dataset* dataset = loss->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Dataset const* dataset = loss->get_dataset();
+    NeuralNetwork const* neural_network = loss->get_neural_network();
 /*
     // Scaling layer
 

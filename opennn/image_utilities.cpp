@@ -28,7 +28,7 @@ Tensor3 load_image(const filesystem::path& path)
     if(!file)
         throw runtime_error("Cannot open BMP file: " + image_path_str);
 
-    streamsize size = file.tellg();
+    streamsize const size = file.tellg();
     if(size < 54) 
         throw runtime_error("File too small to be a BMP: " + image_path_str);
 

@@ -125,7 +125,7 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
 
-    TensorView parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
+    TensorView const parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
     type penalty = 0.0f;
 
     if (regularization_method == "L1")
@@ -185,7 +185,7 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
     const VectorR& params_vec = neural_network->get_parameters();
 
     // Wrap vectors in views for hardware-agnostic utilities
-    TensorView parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
+    TensorView const parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
     TensorView gradient(reinterpret_cast<type*>(gradient_vec.data()), { static_cast<Index>(gradient_vec.size()) });
 
     if (regularization_method == "L1")
@@ -248,7 +248,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     if(!loss) return;
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    NeuralNetwork const* neural_network = loss->get_neural_network();
     if(!neural_network) return;
 
     const Index layers_number = neural_network->get_layers_number();
@@ -352,7 +352,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         else
         {
             // Internal layers connect to their consumers
-            for(Index consumer_idx : layer_output_indices[i])
+            for(Index const consumer_idx : layer_output_indices[i])
             {
                 if(consumer_idx >= 0 && consumer_idx < layers_number)
                 {
@@ -380,14 +380,14 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
 vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {
-    NeuralNetwork* neural_network_ptr = loss->get_neural_network();
+    NeuralNetwork const* neural_network_ptr = loss->get_neural_network();
 
     const Index layers_number = neural_network_ptr->get_layers_number();
 
     const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
 
-    vector<TensorView> input_gradient_views;
+    vector<TensorView> const input_gradient_views;
 
     vector<vector<TensorView>> layer_gradient_views(layers_number);
 /*
@@ -617,15 +617,15 @@ MatrixR Loss::calculate_inverse_hessian()
     using MatrixType = Matrix<type, Dynamic, Dynamic, ColMajor>;
     Map<MatrixType> hessian_map(numerical_hessian.data(), parameters_number, parameters_number);
 
-    FullPivLU<MatrixType> hessian_decomposition(hessian_map);
+    FullPivLU<MatrixType> const hessian_decomposition(hessian_map);
 
     if(!hessian_decomposition.isInvertible())
     {
         MatrixType hessian_damped = hessian_map + MatrixType::Identity(parameters_number, parameters_number) * 1e-4;
 
-        FullPivLU<MatrixType> hessian_decomposition_damped(hessian_damped);
+        FullPivLU<MatrixType> const hessian_decomposition_damped(hessian_damped);
 
-        MatrixType hessian_map_inverse = hessian_decomposition_damped.inverse();
+        MatrixType const hessian_map_inverse = hessian_decomposition_damped.inverse();
 
         MatrixR hessian_inverse(parameters_number, parameters_number);
         Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
@@ -633,7 +633,7 @@ MatrixR Loss::calculate_inverse_hessian()
         return hessian_inverse;
     }
 
-    MatrixType hessian_map_inverse = hessian_decomposition.inverse();
+    MatrixType const hessian_map_inverse = hessian_decomposition.inverse();
     MatrixR hessian_inverse(parameters_number, parameters_number);
     Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
 

@@ -442,7 +442,7 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     if(correlation.b < type(0))
     {
         correlation.r *= type(-1);
-        type old_lower = correlation.lower_confidence;
+        type const old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
     }
@@ -477,8 +477,8 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     dataset.set_variable_scalers("MinimumMaximum");
 
     NeuralNetwork neural_network;
-    Shape dim1 = { 1 };
-    Shape dim2 = { 1 };
+    Shape const dim1 = { 1 };
+    Shape const dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
 
@@ -526,7 +526,7 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     if(correlation.b < type(0))
     {
         correlation.r *= type(-1);
-        type old_lower = correlation.lower_confidence;
+        type const old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
     }
@@ -584,7 +584,7 @@ Correlation logistic_correlation_vector_matrix(const VectorR& x, const MatrixR& 
 
     ClassificationNetwork neural_network({ input_features_number }, {1}, {target_features_number});
 
-    Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
+    Scaling<2> const* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
 
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
@@ -687,7 +687,7 @@ Correlation logistic_correlation_matrix_matrix(const MatrixR& x, const MatrixR& 
 
     ClassificationNetwork neural_network({input_features_number }, {}, {target_features_number});
 
-    Scaling<2>* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
+    Scaling<2> const* scaling_layer = static_cast<Scaling<2>*>(neural_network.get_first("Scaling2d"));
 
     Dense<2>* dense_2d = static_cast<Dense<2>*>(neural_network.get_first("Dense2d"));
 
@@ -927,24 +927,24 @@ void Correlation::print() const
 
 void register_layers()
 {
-    Bounding bounding_layer;//bounding_layer.print();
-    MultiHeadAttention multi_head_attention; multi_head_attention.print();
-    Recurrent recurrent_layer; // recurrent_layer.print();
-    MultiHeadAttention multihead_layer;
+    Bounding const bounding_layer;//bounding_layer.print();
+    MultiHeadAttention const multi_head_attention; multi_head_attention.print();
+    Recurrent const recurrent_layer; // recurrent_layer.print();
+    MultiHeadAttention const multihead_layer;
 }
 
 void register_loss_indices()
 {
-    Loss loss;//mean_squared_error.print();
+    Loss const loss;//mean_squared_error.print();
 
 }
 
 void register_optimization_algorithms()
 {
-    AdaptiveMomentEstimation adaptive_moment_estimation; //adaptive_moment_estimation.print();
-    StochasticGradientDescent stochastic_gradient_descent; //stochastic_gradient_descent.print();
-    QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
+    AdaptiveMomentEstimation const adaptive_moment_estimation; //adaptive_moment_estimation.print();
+    StochasticGradientDescent const stochastic_gradient_descent; //stochastic_gradient_descent.print();
+    QuasiNewtonMethod const quasi_newton_method; //quasi_newton_method.print();
+    LevenbergMarquardtAlgorithm const levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
 }
 
 }

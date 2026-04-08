@@ -288,10 +288,10 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
         else if (parent_1(i) != parent_2(i))
             difference.push_back(i);
 
-    for(Index idx : intersection)
+    for(Index const idx : intersection)
         descendent(idx) = true;
 
-    Index current_size = intersection.size();
+    Index const current_size = intersection.size();
 
     if (current_size > maximum_inputs_number) 
     {
@@ -555,7 +555,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Set neural network stuff
 
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+    TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     if(time_series_dataset && time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
@@ -588,7 +588,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
 void GeneticAlgorithm::configure_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
 {
-    TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+    TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     if(time_series_dataset)
     {
@@ -641,8 +641,7 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
         {"MinimumInputsNumber", to_string(minimum_inputs_number)},
         {"MaximumInputsNumber", to_string(maximum_inputs_number)},
         {"MaximumGenerationsNumber", to_string(maximum_epochs)},
-        {"MaximumTime", to_string(maximum_time)}
-    });
+        {"MaximumTime", to_string(maximum_time)}});
 
     printer.CloseElement();
 }
@@ -650,7 +649,6 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 void GeneticAlgorithm::from_XML(const XMLDocument& document)
 {
     const XMLElement* root = get_xml_root(document, "GeneticAlgorithm");
-
     set_individuals_number(read_xml_index(root, "PopulationSize"));
     set_mutation_rate(read_xml_type(root, "MutationRate"));
     set_elitism_size(read_xml_index(root, "ElitismSize"));

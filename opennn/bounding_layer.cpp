@@ -145,8 +145,8 @@ void Bounding::forward_propagate(ForwardPropagation& forward_propagation, size_t
         copy(input, output);
     else
     {
-        TensorView lb(lower_bounds.data(), {lower_bounds.size()});
-        TensorView ub(upper_bounds.data(), {upper_bounds.size()});
+        TensorView const lb(lower_bounds.data(), {lower_bounds.size()});
+        TensorView const ub(upper_bounds.data(), {upper_bounds.size()});
         bounding(input, lb, ub, output);
     }
 }
