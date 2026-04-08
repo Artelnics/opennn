@@ -165,7 +165,7 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
                              size_t layer) const
 {
-    TensorView const& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
+    const TensorView& output_gradient = back_propagation.backward_views[layer][OutputGradients][0];
     TensorView& input_gradient = back_propagation.backward_views[layer][InputGradients][0];
 
     PoolingArguments args;

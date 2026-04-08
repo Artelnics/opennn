@@ -442,7 +442,7 @@ Correlation logistic_correlation_vector_vector(const VectorR& x,
     if(correlation.b < type(0))
     {
         correlation.r *= type(-1);
-        type const old_lower = correlation.lower_confidence;
+        const type old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
     }
@@ -477,8 +477,8 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     dataset.set_variable_scalers("MinimumMaximum");
 
     NeuralNetwork neural_network;
-    Shape const dim1 = { 1 };
-    Shape const dim2 = { 1 };
+    const Shape dim1 = { 1 };
+    const Shape dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling<2>>(dim1));
     neural_network.add_layer(make_unique<Dense<2>>(dim1, dim2, "Sigmoid"));
 
@@ -526,7 +526,7 @@ Correlation logistic_correlation_vector_vector_spearman(const VectorR& x,
     if(correlation.b < type(0))
     {
         correlation.r *= type(-1);
-        type const old_lower = correlation.lower_confidence;
+        const type old_lower = correlation.lower_confidence;
         correlation.lower_confidence = -correlation.upper_confidence;
         correlation.upper_confidence = -old_lower;
     }
@@ -927,24 +927,24 @@ void Correlation::print() const
 
 void register_layers()
 {
-    Bounding const bounding_layer;//bounding_layer.print();
-    MultiHeadAttention const multi_head_attention; multi_head_attention.print();
-    Recurrent const recurrent_layer; // recurrent_layer.print();
-    MultiHeadAttention const multihead_layer;
+    const Bounding bounding_layer;//bounding_layer.print();
+    const MultiHeadAttention multi_head_attention; multi_head_attention.print();
+    const Recurrent recurrent_layer; // recurrent_layer.print();
+    const MultiHeadAttention multihead_layer;
 }
 
 void register_loss_indices()
 {
-    Loss const loss;//mean_squared_error.print();
+    const Loss loss;//mean_squared_error.print();
 
 }
 
 void register_optimization_algorithms()
 {
-    AdaptiveMomentEstimation const adaptive_moment_estimation; //adaptive_moment_estimation.print();
-    StochasticGradientDescent const stochastic_gradient_descent; //stochastic_gradient_descent.print();
-    QuasiNewtonMethod const quasi_newton_method; //quasi_newton_method.print();
-    LevenbergMarquardtAlgorithm const levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
+    const AdaptiveMomentEstimation adaptive_moment_estimation; //adaptive_moment_estimation.print();
+    const StochasticGradientDescent stochastic_gradient_descent; //stochastic_gradient_descent.print();
+    const QuasiNewtonMethod quasi_newton_method; //quasi_newton_method.print();
+    const LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm; //levenberg_marquardt_algorithm.print();
 }
 
 }

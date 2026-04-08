@@ -288,10 +288,10 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
         else if (parent_1(i) != parent_2(i))
             difference.push_back(i);
 
-    for(Index const idx : intersection)
+    for(const Index idx : intersection)
         descendent(idx) = true;
 
-    Index const current_size = intersection.size();
+    const Index current_size = intersection.size();
 
     if (current_size > maximum_inputs_number) 
     {
@@ -555,7 +555,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Set neural network stuff
 
-    TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     if(time_series_dataset && time_variable_indices.size() == 1)
         dataset->set_variable_role(time_variable_indices[0], "Time");
@@ -588,7 +588,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
 void GeneticAlgorithm::configure_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
 {
-    TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
+    const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
 
     if(time_series_dataset)
     {

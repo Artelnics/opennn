@@ -363,7 +363,7 @@ void ImageDataset::unscale_features(const string&)
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)
 {
-    chrono::high_resolution_clock::time_point const start_time = chrono::high_resolution_clock::now();
+    const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
     
     vector<filesystem::path> directory_path;
 
@@ -480,8 +480,8 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 
     if (display)
     {
-        chrono::high_resolution_clock::time_point const end_time = chrono::high_resolution_clock::now();
-        chrono::milliseconds const duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
+        const chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();
+        const chrono::milliseconds duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
 
         const long long total_milliseconds = duration.count();
         const long long minutes = total_milliseconds / 60000;

@@ -120,7 +120,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     MatrixR output_data;
     MatrixR target_data;
 
-    if (TimeSeriesDataset const* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset))
+    if (const TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset))
     {
         const Tensor3 input_data = time_series_dataset->get_data(sample_role, "Input");
         output_data = neural_network->calculate_outputs(input_data);
@@ -160,7 +160,7 @@ Tensor3 TestingAnalysis::calculate_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    Unscaling const* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -205,7 +205,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
-    Unscaling const* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
+    const Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first("Unscaling"));
 
     if(!unscaling_layer)
         throw runtime_error("Unscaling layer not found.\n");
@@ -390,8 +390,8 @@ MatrixR TestingAnalysis::calculate_multiple_classification_errors() const
 VectorR TestingAnalysis::calculate_errors(const MatrixR& targets,
                                           const MatrixR& outputs) const
 {
-    TensorView const outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    TensorView const targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
 
@@ -426,8 +426,8 @@ VectorR TestingAnalysis::calculate_binary_classification_errors(const string& sa
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    TensorView const outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    TensorView const targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(6);
 
@@ -454,8 +454,8 @@ VectorR TestingAnalysis::calculate_multiple_classification_errors(const string& 
 {
     const auto [targets, outputs] = get_targets_and_outputs(sample_role);
 
-    TensorView const outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
-    TensorView const targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
+    const TensorView outputs_view(const_cast<type*>(outputs.data()), {outputs.rows(), outputs.cols()});
+    const TensorView targets_view(const_cast<type*>(targets.data()), {targets.rows(), targets.cols()});
 
     VectorR errors(5);
 
@@ -1260,8 +1260,8 @@ pair<type, type> TestingAnalysis::test_transformer() const
 {
     cout << "Testing transformer..." << endl;
 
-    Transformer const* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset const* language_dataset = static_cast<LanguageDataset*>(dataset);
+    const Transformer* transformer = static_cast<Transformer*>(neural_network);
+    const LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
     const MatrixR context = language_dataset->get_data("Testing", "Input");
     const MatrixR input = language_dataset->get_data("Testing", "Decoder");

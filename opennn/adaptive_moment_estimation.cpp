@@ -64,7 +64,7 @@ TrainingResults AdaptiveMomentEstimation::train()
 
     // Dataset
 
-    Dataset const* dataset = loss->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Dataset is null.");
@@ -331,7 +331,7 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
-    Loss const* loss = new_adaptive_moment_estimation->get_loss();
+    const Loss* loss = new_adaptive_moment_estimation->get_loss();
     NeuralNetwork* neural_network = loss->get_neural_network();
 
     const Index parameters_number = neural_network->get_parameters().size();

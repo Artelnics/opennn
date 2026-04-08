@@ -153,7 +153,7 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
     vector<vector<Index>> layer_output_indices(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
-        for(Index const input_index : layer_input_indices[i])
+        for(const Index input_index : layer_input_indices[i])
             if (input_index >= 0)
                 layer_output_indices[input_index].push_back(i);
 
@@ -188,7 +188,7 @@ static void set_variable_names(vector<Variable>& vars, const vector<string>& new
     {
         if(vars[i].is_categorical())
         {
-            size_t const num_cats = vars[i].get_categories_number();
+            const size_t num_cats = vars[i].get_categories_number();
             vars[i].categories.assign(new_names.begin() + j, new_names.begin() + j + num_cats);
             j += num_cats;
         }
@@ -411,7 +411,7 @@ MatrixR NeuralNetwork::calculate_outputs(const vector<TensorView>& input_views)
 
     // Fetch final outputs from the last layer's output slot
     const Index last_layer = static_cast<Index>(layers.size()) - 1;
-    TensorView const out_view = (last_layer >= 0
+    const TensorView out_view = (last_layer >= 0
                            && static_cast<size_t>(last_layer) < fp.views.size()
                            && fp.views[last_layer].size() > 1
                            && !fp.views[last_layer].back().empty())
@@ -475,7 +475,7 @@ void NeuralNetwork::forward_propagate(const vector<TensorView>& input_view,
             }
             else if(is_training && current_input < first_layer_index)
             {
-                Index const input_view_index = (k < static_cast<Index>(input_view.size())) ? k : 0;
+                const Index input_view_index = (k < static_cast<Index>(input_view.size())) ? k : 0;
                 input_slot[k] = input_view[input_view_index];
             }
             // else: already wired in ForwardPropagation::set() to upstream output

@@ -778,7 +778,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
         {
             const string var_def = lines[i].substr(0, equal_pos);
 
-            size_t const first = var_def.find_first_not_of(" \t");
+            const size_t first = var_def.find_first_not_of(" \t");
             if(first == string::npos)
                 continue;
 
@@ -826,7 +826,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     {
         vector<Descriptives> inputs_descriptives;
         vector<string> descriptive_names;
-        bool const is_scaling_3d = false;
+        const bool is_scaling_3d = false;
 /*
         if(neural_network->has("Scaling2d"))
             inputs_descriptives = static_cast<Scaling<2>*>(neural_network->get_first("Scaling2d"))->get_descriptives();
@@ -852,7 +852,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
                 if(!descriptive_names.empty())
                 {
                     string root_name = input_names[i];
-                    size_t const lag_pos = root_name.rfind("_lag");
+                    const size_t lag_pos = root_name.rfind("_lag");
 
                     if(lag_pos != string::npos)
                         root_name = root_name.substr(0, lag_pos);
@@ -1035,7 +1035,7 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     buffer << endl;
 
     vector<string> found_mathematical_expressions = {"exp", "tanh", "max", "min"};
-    string const sufix = "Math.";
+    const string sufix = "Math.";
 
     for(size_t i = 0; i < lines.size(); i++)
     {
@@ -1048,8 +1048,8 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
 
         for(size_t j = 0; j < found_mathematical_expressions.size(); j++)
         {
-            string const key_word = found_mathematical_expressions[j];
-            string const new_word = sufix + key_word;
+            const string key_word = found_mathematical_expressions[j];
+            const string new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
 
@@ -1357,7 +1357,7 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
     if(s[0] == '$')
         out = s;
 
-    for(char const c : s)
+    for(const char c : s)
     {
         if (c == ' ') out += "_";
         else if (c == '.') out += "_dot_";
@@ -1420,8 +1420,8 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
     for(size_t i = 0; i < num_outputs; ++i)
     {
         string intermediate_var_line = tokens[tokens.size() - num_outputs + i];
-        string const intermediate_var_name = get_first_word(intermediate_var_line);
-        string const final_output_name = fix_output_names(outputs)[i];
+        const string intermediate_var_name = get_first_word(intermediate_var_line);
+        const string final_output_name = fix_output_names(outputs)[i];
 
         if(final_output_name != intermediate_var_name)
         {

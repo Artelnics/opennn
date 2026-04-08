@@ -286,7 +286,7 @@ void Convolutional::set_parameters_glorot()
     VectorMap biases = vector_map(parameters[Biases]);
     biases.setZero();
 
-    VectorMap const weights = vector_map(parameters[Weights]);
+    const VectorMap weights = vector_map(parameters[Weights]);
     set_random_uniform(weights, -limit, limit);
 
     if (batch_normalization)
@@ -304,7 +304,7 @@ void Convolutional::set_parameters_random()
     VectorMap biases = vector_map(parameters[Biases]);
     biases.setZero();
 
-    VectorMap const weights = vector_map(parameters[Weights]);
+    const VectorMap weights = vector_map(parameters[Weights]);
     set_random_uniform(weights);
 
     if (batch_normalization)

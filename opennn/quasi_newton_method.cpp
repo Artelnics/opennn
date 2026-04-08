@@ -179,7 +179,7 @@ TrainingResults QuasiNewtonMethod::train()
 
     // Dataset
 
-    Dataset const* dataset = loss->get_dataset();
+    const Dataset* dataset = loss->get_dataset();
 
     if(!dataset)
         throw runtime_error("Dataset is null.");

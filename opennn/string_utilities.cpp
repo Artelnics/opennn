@@ -67,7 +67,7 @@ vector<string> tokenize(const string& document)
     vector<string> tokens;
     string current_token;
 
-    for(char const c : document)
+    for(const char c : document)
     {
         if (isalnum(c))
         {
@@ -108,7 +108,7 @@ vector<string> get_tokens(const string& text, const string& separator)
 
     while (start <= text.length())
     {
-        size_t const end = text.find(separator, start);
+        const size_t end = text.find(separator, start);
 
         tokens.emplace_back((end == string_view::npos)
                                 ? text.substr(start)
@@ -195,7 +195,7 @@ bool is_numeric_string(const string& text)
     {
         size_t index;
         //[[maybe_unused]]
-        double const value = stod(text, &index);
+        const double value = stod(text, &index);
 
         return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
@@ -289,7 +289,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     // dd/mm/yyyy hh:mm:ss
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})((?: ([AP]M))?)?)")))
     {
-        int const part1 = stoi(matches[1].str()); int const part2 = stoi(matches[2].str());
+        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
 
         if(format == DMY || (format == AUTO && part1 > 12))
         {
@@ -327,7 +327,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     // dd/mm/yyyy hh:mm
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}) (\d{1,2}):(\d{1,2}))")))
     {
-        int const part1 = stoi(matches[1].str()); int const part2 = stoi(matches[2].str());
+        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
 
         if
             (format == DMY || (format == AUTO && part1 > 12))
@@ -355,7 +355,7 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     // dd/mm/yyyy
     else if((format == DMY || format == MDY || format == AUTO) && regex_match(date, matches, regex(R"((\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))")))
     {
-        int const part1 = stoi(matches[1].str()); int const part2 = stoi(matches[2].str());
+        const int part1 = stoi(matches[1].str()); const int part2 = stoi(matches[2].str());
         if (format == DMY || (format == AUTO && part1 > 12)) { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; }
         else if (format == MDY || (format == AUTO && part2 > 12)) { time_structure.tm_mon = part1 - 1; time_structure.tm_mday = part2; }
         else { time_structure.tm_mday = part1; time_structure.tm_mon = part2 - 1; } // Default
@@ -382,12 +382,12 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
     {
         // Verify that there are no letters or underscores before to_replace
 
-        bool const is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
+        const bool is_prefix_valid = (start_pos == 0) || (!isalnum(text[start_pos - 1]) && text[start_pos - 1] != '_');
 
         // Verify that there are no letters or underscores after to_replace
 
-        size_t const end_pos = start_pos + to_replace.length();
-        bool const is_suffix_valid = (end_pos == text.length()) || (!isalnum(text[end_pos]) && text[end_pos] != '_');
+        const size_t end_pos = start_pos + to_replace.length();
+        const bool is_suffix_valid = (end_pos == text.length()) || (!isalnum(text[end_pos]) && text[end_pos] != '_');
 
         if (is_prefix_valid && is_suffix_valid)
         {
@@ -399,7 +399,7 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
     }
 }
 
-void replace_all_appearances(string& text, string const& to_replace, string const& replace_with)
+void replace_all_appearances(string& text, const string& to_replace, const string& replace_with)
 {
     string buffer;
     size_t position = 0;
@@ -481,7 +481,7 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
-    regex const r("\"([^\"]*)\"");
+    const regex r("\"([^\"]*)\"");
     string result;
     string::const_iterator search_start(str.begin());
     smatch match;
@@ -543,7 +543,7 @@ string get_first_word(string& line)
 {
     string word;
 
-    for(char const& c : line)
+    for(const char& c : line)
         if(c != ' ' && c != '=')
             word += c;
         else

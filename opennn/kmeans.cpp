@@ -107,7 +107,7 @@ VectorR KMeans::elbow_method(const MatrixR& data, Index max_clusters)
 
     const Index rows_number = data.rows();
 
-    Index const original_clusters_number = clusters_number;
+    const Index original_clusters_number = clusters_number;
     type mean_squared_error;
 
     for(Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)

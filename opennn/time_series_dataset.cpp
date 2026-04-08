@@ -290,7 +290,7 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
                 if(isnan(prev_value)) prev_index--;
             }
 
-            Index const start_missing = i;
+            const Index start_missing = i;
             Index end_missing = i;
 
             while(end_missing < used_samples_number && isnan(data(used_sample_indices[end_missing], feature_index)))            
@@ -402,13 +402,13 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
 
 void TimeSeriesDataset::fill_gaps()
 {   
-    type const start_time = 50;
-    type const end_time = 100;
+    const type start_time = 50;
+    const type end_time = 100;
 
-    type const period = 2;
+    const type period = 2;
 
-    type const new_samples_number = (end_time - start_time)/period;
-    type const new_features_number = get_features_number();
+    const type new_samples_number = (end_time - start_time)/period;
+    const type new_features_number = get_features_number();
 
     Tensor2 new_data(new_samples_number,  new_features_number);
 
@@ -417,7 +417,7 @@ void TimeSeriesDataset::fill_gaps()
     type new_timestamp = 0;
 
     Index row_index = 0;
-    Index const column_index = 0;
+    const Index column_index = 0;
 
     for(Index i = 0; i < new_samples_number; i++)
     {
@@ -632,7 +632,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index pas
 
     map<Index, VectorR> ranked_series;
 
-    for(Index const global_idx : numeric_vars_indices)
+    for(const Index global_idx : numeric_vars_indices)
     {
         const MatrixR var_data = get_variable_data(global_idx);
         ranked_series[global_idx] = calculate_spearman_ranks(var_data.col(0));

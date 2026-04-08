@@ -125,7 +125,7 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
     if(regularization_method == "None" || regularization_weight == 0.0f) return 0.0f;
 
-    TensorView const parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
+    const TensorView parameters(const_cast<type*>(parameters_vec.data()), { static_cast<Index>(parameters_vec.size()) });
     type penalty = 0.0f;
 
     if (regularization_method == "L1")
@@ -185,7 +185,7 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
     const VectorR& params_vec = neural_network->get_parameters();
 
     // Wrap vectors in views for hardware-agnostic utilities
-    TensorView const parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
+    const TensorView parameters(const_cast<type*>(params_vec.data()), { static_cast<Index>(params_vec.size()) });
     TensorView gradient(reinterpret_cast<type*>(gradient_vec.data()), { static_cast<Index>(gradient_vec.size()) });
 
     if (regularization_method == "L1")
@@ -248,7 +248,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
     if(!loss) return;
 
-    NeuralNetwork const* neural_network = loss->get_neural_network();
+    const NeuralNetwork* neural_network = loss->get_neural_network();
     if(!neural_network) return;
 
     const Index layers_number = neural_network->get_layers_number();
@@ -352,7 +352,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
         else
         {
             // Internal layers connect to their consumers
-            for(Index const consumer_idx : layer_output_indices[i])
+            for(const Index consumer_idx : layer_output_indices[i])
             {
                 if(consumer_idx >= 0 && consumer_idx < layers_number)
                 {
@@ -380,7 +380,7 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 
 vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {
-    NeuralNetwork const* neural_network_ptr = loss->get_neural_network();
+    const NeuralNetwork* neural_network_ptr = loss->get_neural_network();
 
     const Index layers_number = neural_network_ptr->get_layers_number();
 
@@ -625,7 +625,7 @@ MatrixR Loss::calculate_inverse_hessian()
 
         FullPivLU<MatrixType> const hessian_decomposition_damped(hessian_damped);
 
-        MatrixType const hessian_map_inverse = hessian_decomposition_damped.inverse();
+        const MatrixType hessian_map_inverse = hessian_decomposition_damped.inverse();
 
         MatrixR hessian_inverse(parameters_number, parameters_number);
         Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
@@ -633,7 +633,7 @@ MatrixR Loss::calculate_inverse_hessian()
         return hessian_inverse;
     }
 
-    MatrixType const hessian_map_inverse = hessian_decomposition.inverse();
+    const MatrixType hessian_map_inverse = hessian_decomposition.inverse();
     MatrixR hessian_inverse(parameters_number, parameters_number);
     Map<MatrixType>(hessian_inverse.data(), parameters_number, parameters_number) = hessian_map_inverse;
 

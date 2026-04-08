@@ -281,7 +281,7 @@ string Recurrent::get_expression(const vector<string>& feature_names,
 
             for(Index i = 0; i < inputs_number; i++)
             {
-                Index const feature_index = (time_step * inputs_number) + i;
+                const Index feature_index = (time_step * inputs_number) + i;
 
                 if(feature_index < static_cast<Index>(final_feature_names.size()))
                     buffer << " + (" << final_feature_names[feature_index] << "*" << input_to_hidden_weights_map(i, j) << ")";
