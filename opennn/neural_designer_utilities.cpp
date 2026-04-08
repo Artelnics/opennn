@@ -13,7 +13,6 @@ void sort_string_vector(vector<string>& string_vector)
     sort(string_vector.begin(), string_vector.end(), compare_string_length);
 }
 
-
 vector<string> concatenate_string_vectors(const vector<string>& string_vector_1,
                                           const vector<string>& string_vector_2)
 {
@@ -25,7 +24,6 @@ vector<string> concatenate_string_vectors(const vector<string>& string_vector_1,
 
     return string_vector;
 }
-
 
 string formatNumber(type value, int precision)
 {
@@ -46,7 +44,6 @@ string formatNumber(type value, int precision)
 
     return str;
 }
-
 
 type round_to_precision(type x, const int& precision)
 {

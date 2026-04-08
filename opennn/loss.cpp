@@ -20,7 +20,6 @@ Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
     set(new_neural_network, new_dataset);
 }
 
-
 void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -30,7 +29,6 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
     set_error(Error::MeanSquaredError);
 
 }
-
 
 void Loss::back_propagate(const Batch& batch,
                           ForwardPropagation& forward_propagation,
@@ -115,8 +113,6 @@ void Loss::calculate_output_gradients(const Batch& batch, const ForwardPropagati
     }
 }
 
-
-
 void Loss::add_regularization(BackPropagation& back_propagation) const
 {
     if(regularization_method == "None") return;
@@ -124,8 +120,6 @@ void Loss::add_regularization(BackPropagation& back_propagation) const
     const VectorR& params_vec = neural_network->get_parameters();
     back_propagation.loss_value += calculate_regularization(params_vec);
 }
-
-
 
 type Loss::calculate_regularization(const VectorR& parameters_vec) const
 {
@@ -141,7 +135,6 @@ type Loss::calculate_regularization(const VectorR& parameters_vec) const
 
     return penalty;
 }
-
 
 void Loss::calculate_layers_error_gradient(const Batch& batch,
                                            ForwardPropagation& forward_propagation,
@@ -161,7 +154,6 @@ void Loss::calculate_layers_error_gradient(const Batch& batch,
         layers[i]->back_propagate(forward_propagation, back_propagation, i);
 }
 
-
 static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::MeanSquaredError,      "MeanSquaredError"},
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
@@ -170,7 +162,6 @@ static const vector<pair<Loss::Error, string>> error_map = {
     {Loss::Error::MinkowskiError,         "MinkowskiError"}
 };
 
-
 void Loss::set_error(const Error& new_error)
 {
     error = new_error;
@@ -178,7 +169,6 @@ void Loss::set_error(const Error& new_error)
     for(const auto& [e, n] : error_map)
         if (e == error) { name = n; return; }
 }
-
 
 void Loss::set_error(const string& new_name)
 {
@@ -203,9 +193,6 @@ void Loss::add_regularization_gradient(VectorR& gradient_vec) const
     else if (regularization_method == "L2")
         l2_regularization_gradient(parameters, regularization_weight, gradient);
 }
-
-
-
 
 void Loss::regularization_from_XML(const XMLDocument& document)
 {
@@ -232,7 +219,6 @@ void Loss::regularization_from_XML(const XMLDocument& document)
     }
 }
 
-
 void Loss::write_regularization_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("Regularization");
@@ -250,12 +236,10 @@ void Loss::write_regularization_XML(XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
 BackPropagation::BackPropagation(const Index new_batch_size, Loss* new_loss)
 {
     set(new_batch_size, new_loss);
 }
-
 
 void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
 {
@@ -394,7 +378,6 @@ void BackPropagation::set(const Index new_batch_size, Loss* new_loss)
     }
 }
 
-
 vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 {
     NeuralNetwork* neural_network_ptr = loss->get_neural_network();
@@ -435,12 +418,10 @@ vector<vector<TensorView>> BackPropagation::get_layer_gradients() const
 
 }
 
-
 TensorView BackPropagation::get_output_gradients() const
 {
     return {const_cast<type*>(output_gradients.data()), output_gradient_dimensions};
 }
-
 
 void BackPropagation::print() const
 {
@@ -454,7 +435,6 @@ void BackPropagation::print() const
     //<< "Gradient:" << endl
     //<< gradient << endl;
 }
-
 
 type Loss::calculate_numerical_error() const
 {  
@@ -480,7 +460,6 @@ type Loss::calculate_numerical_error() const
 
     return back_propagation.error;
 }
-
 
 VectorR Loss::calculate_gradient()
 {
@@ -509,7 +488,6 @@ VectorR Loss::calculate_gradient()
 
     return back_propagation.gradient;
 }
-
 
 VectorR Loss::calculate_numerical_gradient()
 {
@@ -576,7 +554,6 @@ VectorR Loss::calculate_numerical_gradient()
     return numerical_gradient;
 }
 
-
 VectorR Loss::calculate_numerical_input_gradients()
 {
     const Index samples_number = dataset->get_samples_number("Training");
@@ -632,7 +609,6 @@ VectorR Loss::calculate_numerical_input_gradients()
     return numerical_inputs_gradients;
 }
 
-
 MatrixR Loss::calculate_inverse_hessian()
 {
     MatrixR numerical_hessian = calculate_numerical_hessian();
@@ -664,7 +640,6 @@ MatrixR Loss::calculate_inverse_hessian()
     return hessian_inverse;
 }
 
-
 type Loss::calculate_h(const type x)
 {
     const Index precision_digits = 6;
@@ -673,7 +648,6 @@ type Loss::calculate_h(const type x)
 
     return sqrt(eta)*(type(1) + abs(x));
 }
-
 
 void Loss::to_XML(XMLPrinter& printer) const
 {

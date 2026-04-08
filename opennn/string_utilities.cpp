@@ -18,7 +18,6 @@ void prepare_line(string& line)
     erase(line, '"');
 }
 
-
 Index count_non_empty_lines(const filesystem::path& data_path)
 {
     ifstream file(data_path);
@@ -41,7 +40,6 @@ Index count_non_empty_lines(const filesystem::path& data_path)
     return count;
 }
 
-
 Index count_tokens(const string& text, const string& separator)
 {
     Index tokens_number = 0;
@@ -63,7 +61,6 @@ Index count_tokens(const string& text, const string& separator)
 
     return tokens_number + 1;
 }
-
 
 vector<string> tokenize(const string& document)
 {
@@ -102,7 +99,6 @@ vector<string> tokenize(const string& document)
     return tokens;
 }
 
-
 vector<string> get_tokens(const string& text, const string& separator)
 {
     vector<string> tokens;
@@ -127,7 +123,6 @@ vector<string> get_tokens(const string& text, const string& separator)
     return tokens;
 }
 
-
 vector<string_view> get_tokens_fast(string_view text, string_view separator)
 {
     vector<string_view> tokens;
@@ -151,7 +146,6 @@ vector<string_view> get_tokens_fast(string_view text, string_view separator)
     return tokens;
 }
 
-
 vector<string> convert_string_vector(const vector<vector<string>>& input_vector, const string& separator)
 {
     vector<string> vector_result;
@@ -174,7 +168,6 @@ vector<string> convert_string_vector(const vector<vector<string>>& input_vector,
     return vector_result;
 }
 
-
 VectorR to_type_vector(const string& text, const string& separator)
 {
     const vector<string> tokens = get_tokens(text, separator);
@@ -196,7 +189,6 @@ VectorR to_type_vector(const string& text, const string& separator)
     return type_vector;
 }
 
-
 bool is_numeric_string(const string& text)
 {
     try
@@ -212,7 +204,6 @@ bool is_numeric_string(const string& text)
         return false;
     }
 }
-
 
 bool is_date_time_string(const string& text)
 {
@@ -241,7 +232,6 @@ bool is_date_time_string(const string& text)
 
     return false;
 }
-
 
 time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format)
 {
@@ -384,7 +374,6 @@ time_t date_to_timestamp(const string& date, Index gmt, const DateFormat& format
     return -1;
 }
 
-
 void replace_all_word_appearances(string& text, const string& to_replace, const string& replace_with)
 {
     size_t start_pos = 0;
@@ -409,7 +398,6 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
             start_pos += 1;
     }
 }
-
 
 void replace_all_appearances(string& text, string const& to_replace, string const& replace_with)
 {
@@ -440,7 +428,6 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     text.swap(buffer);
 }
 
-
 void trim(string& text)
 {
     // Prefixing spaces
@@ -462,7 +449,6 @@ void trim(string& text)
     replace_substring_within_quotes(text, ";", "");
 }
 
-
 void replace_first_and_last_char_with_missing_label(string &str, char target_char, const string &first_missing_label, const string &last_missing_label)
 {
     if (str.empty()) return;
@@ -480,7 +466,6 @@ void replace_first_and_last_char_with_missing_label(string &str, char target_cha
     }    
 }
 
-
 void replace_double_char_with_label(string &str, const string &target_char, const string &missing_label)
 {
     const string target_pattern = target_char + target_char;
@@ -493,7 +478,6 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
         position += new_pattern.length();
     }
 }
-
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
@@ -523,12 +507,10 @@ void replace_substring_within_quotes(string &str, const string &target, const st
     str = result;
 }
 
-
 void erase(string& text, const char& character)
 {
     text.erase(remove(text.begin(), text.end(), character), text.end());
 }
-
 
 string get_trimmed(const string& text)
 {
@@ -539,13 +521,11 @@ string get_trimmed(const string& text)
     return (start < end) ? string(start, end) : string();
 }
 
-
 bool has_numbers(const vector<string>& string_list)
 {
     return any_of(string_list.begin(), string_list.end(),
                   [](const string& str) {return is_numeric_string(str);});
 }
-
 
 void replace(string& source, const string& find_what, const string& replace_with)
 {
@@ -559,7 +539,6 @@ void replace(string& source, const string& find_what, const string& replace_with
     }
 }
 
-
 string get_first_word(string& line)
 {
     string word;
@@ -572,7 +551,6 @@ string get_first_word(string& line)
 
     return word;
 }
-
 
 string write_time(type time)
 {
@@ -589,7 +567,6 @@ string write_time(type time)
 
     return elapsed_time.str();
 }
-
 
 void replace_substring_in_string (vector<string>& tokens, string& expression, const string& keyword)
 {
@@ -620,7 +597,6 @@ void replace_substring_in_string (vector<string>& tokens, string& expression, co
     }
 }
 
-
 void display_progress_bar(const int& completed, const int& total)
 {
     const int width = 100;
@@ -641,7 +617,6 @@ void display_progress_bar(const int& completed, const int& total)
 
     cout.flush();
 }
-
 
 void tokenize_whitespace(const vector<string>& context_tokens, Tensor2& context)
 {
@@ -673,7 +648,6 @@ void tokenize_whitespace(const vector<string>& context_tokens, Tensor2& context)
     }
 */
 }
-
 
 void tokenize_wordpiece(const vector<string>& context_tokens, Tensor2& context)
 {
@@ -776,7 +750,6 @@ void detokenize_whitespace(Tensor2& predictions, ostringstream& output_string)
 */
 }
 
-
 void detokenize_wordpiece(Tensor2& predictions, ostringstream& buffer)
 {
     /*
@@ -807,7 +780,6 @@ void detokenize_wordpiece(Tensor2& predictions, ostringstream& buffer)
     }
 */
 }
-
 
 }
 

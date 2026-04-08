@@ -20,7 +20,6 @@ void Layer::set_parameters_random()
     }
 }
 
-
 void Layer::set_parameters_glorot()
 {
 /*
@@ -36,18 +35,15 @@ void Layer::set_parameters_glorot()
 */
 }
 
-
 Index Layer::get_parameters_number() const
 {
     return get_size(get_parameter_shapes());
 }
 
-
 string Layer::get_expression(const vector<string>&, const vector<string>&) const
 {
     return string();
 }
-
 
 vector<string> Layer::get_default_feature_names() const
 {
@@ -61,7 +57,6 @@ vector<string> Layer::get_default_feature_names() const
     return input_names;
 }
 
-
 vector<string> Layer::get_default_output_names() const
 {
     const Index outputs_number = get_outputs_number();
@@ -73,7 +68,6 @@ vector<string> Layer::get_default_output_names() const
 
     return output_names;
 }
-
 
 type *Layer::link_parameters(type *pointer)
 {
@@ -93,7 +87,6 @@ type *Layer::link_parameters(type *pointer)
     return pointer;
 }
 
-
 void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
 {
     VectorMap output_gradients = output_gradient_views[0].as_vector();
@@ -102,18 +95,15 @@ void Layer::add_gradients(const vector<TensorView>& output_gradient_views) const
         output_gradients.noalias() += output_gradient_views[i].as_vector();
 }
 
-
 void Layer::forward_propagate(ForwardPropagation&, size_t, bool)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
 
-
 void Layer::set_input_shape(const Shape&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + name + ").\n");
 }
-
 
 void Layer::set_output_shape(const Shape&)
 {
@@ -136,7 +126,6 @@ void Layer::add_gradients(const vector<TensorViewCuda>& output_gradient_views) c
 
 #endif
 } 
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

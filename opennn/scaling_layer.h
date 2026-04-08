@@ -30,48 +30,40 @@ public:
         set(new_input_shape);
     }
 
-
     Shape get_output_shape() const override
     {
         return input_shape;
     }
-
 
     vector<Shape> get_forward_shapes(Index batch_size) const override
     {
         return {Shape{batch_size}.append(input_shape)}; // slot 1: Output
     }
 
-
     VectorR get_minimums() const
     {
         return minimums;
     }
-
 
     VectorR get_maximums() const
     {
         return maximums;
     }
 
-
     VectorR get_means() const
     {
         return means;
     }
-
 
     VectorR get_standard_deviations() const
     {
         return standard_deviations;
     }
 
-
     vector<string> get_scalers() const
     {
         return scalers;
     }
-
 
     void set(const Shape& new_input_shape = {})
     {
@@ -112,18 +104,15 @@ public:
         is_trainable = false;
     }
 
-
     void set_input_shape(const Shape& new_input_shape) override
     {
         set(new_input_shape);
     }
 
-
     void set_output_shape(const Shape& new_output_shape) override
     {
         set_input_shape(new_output_shape);
     }
-
 
     void set_descriptives(const vector<Descriptives>& desc)
     {
@@ -150,19 +139,16 @@ public:
         max_range = max;
     }
 
-
     void set_scalers(const vector<string>& new_scalers)
     {
         scalers = new_scalers;
     }
-
 
     void set_scalers(const string& new_scaler)
     {
         for(string& scaler : scalers)
             scaler = new_scaler;
     }
-
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
@@ -174,7 +160,6 @@ public:
         // The scaling coefficients are stored for serialization/expression only.
         copy(input, output);
     }
-
 
     string write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
@@ -190,7 +175,6 @@ public:
         return buffer.str();
     }
 
-
     string write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
         const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().size();
@@ -204,7 +188,6 @@ public:
 */
         return buffer.str();
     }
-
 
     string write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
@@ -220,7 +203,6 @@ public:
         return buffer.str();
     }
 
-
     string write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
     {
         const Index inputs_number = get_output_shape().empty() ? 0 : get_output_shape().size();
@@ -234,7 +216,6 @@ public:
 */
         return buffer.str();
     }
-
 
     string get_expression(const vector<string>& new_input_names = vector<string>(), const vector<string>& = vector<string>()) const override
     {
@@ -278,7 +259,6 @@ public:
         return expression;
     }
 
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* scaling_layer_element = get_xml_root(document, name);
@@ -315,7 +295,6 @@ public:
         }
 */
     }
-
 
     void to_XML(XMLPrinter& printer) const override
     {

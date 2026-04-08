@@ -116,7 +116,6 @@ public:
 
 };
 
-
 struct OptimizerData
 {
     OptimizerData() = default;
@@ -128,7 +127,6 @@ struct OptimizerData
     VectorR training_direction;
     type initial_learning_rate = type(0);
 };
-
 
 struct TrainingResults
 {

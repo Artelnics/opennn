@@ -35,7 +35,6 @@ Convolutional::Convolutional(const Shape& new_input_shape,
         new_name);
 }
 
-
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
     const TensorView& input = forward_propagation.views[layer][Inputs][0];
@@ -51,7 +50,6 @@ void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, s
 
     activation(output, activation_function);
 }
-
 
 void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation,
@@ -76,14 +74,12 @@ void Convolutional::back_propagate(ForwardPropagation& forward_propagation,
     }
 }
 
-
 Index Convolutional::get_output_height() const
 {
     return (convolution_type == "Same")
         ? (get_input_height() + get_row_stride() - 1) / get_row_stride()
         : (get_input_height() - get_kernel_height()) / get_row_stride() + 1;
 }
-
 
 Index Convolutional::get_output_width() const
 {
@@ -92,12 +88,10 @@ Index Convolutional::get_output_width() const
         : (get_input_width() - get_kernel_width()) / get_column_stride() + 1;
 }
 
-
 Shape Convolutional::get_output_shape() const
 {
     return { get_output_height(), get_output_width(), get_kernels_number() };
 }
-
 
 Index Convolutional::get_padding_height() const
 {
@@ -116,7 +110,6 @@ Index Convolutional::get_padding_height() const
     throw runtime_error("Unknown convolution type");
 }
 
-
 Index Convolutional::get_padding_width() const
 {
     if (convolution_type == "Valid")
@@ -133,7 +126,6 @@ Index Convolutional::get_padding_width() const
 
     throw runtime_error("Unknown convolution type");
 }
-
 
 void Convolutional::set(const Shape& new_input_shape,
                         const Shape& new_kernel_shape,
@@ -174,7 +166,6 @@ void Convolutional::set(const Shape& new_input_shape,
     set_activation_function(new_activation_function);
 
     set_convolution_type(new_convolution_type);
-
 
     batch_normalization = new_batch_normalization;
 
@@ -245,18 +236,15 @@ void Convolutional::set(const Shape& new_input_shape,
 #endif
 }
 
-
 void Convolutional::set_activation_function(const string& new_activation_function)
 {
     activation_function = string_to_activation(new_activation_function);
 }
 
-
 void Convolutional::set_batch_normalization(bool new_batch_normalization)
 {
     batch_normalization = new_batch_normalization;
 }
-
 
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
@@ -266,7 +254,6 @@ void Convolutional::set_convolution_type(const string& new_convolution_type)
     convolution_type = new_convolution_type;
 }
 
-
 void Convolutional::set_row_stride(const Index new_stride_row)
 {
     if(new_stride_row <= 0)
@@ -274,7 +261,6 @@ void Convolutional::set_row_stride(const Index new_stride_row)
 
     row_stride = new_stride_row;
 }
-
 
 void Convolutional::set_column_stride(const Index new_stride_column)
 {
@@ -284,7 +270,6 @@ void Convolutional::set_column_stride(const Index new_stride_column)
     column_stride = new_stride_column;
 }
 
-
 void Convolutional::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 3)
@@ -292,7 +277,6 @@ void Convolutional::set_input_shape(const Shape& new_input_shape)
 
     input_shape = new_input_shape;
 }
-
 
 void Convolutional::set_parameters_glorot()
 {
@@ -317,7 +301,6 @@ void Convolutional::set_parameters_glorot()
     }
 }
 
-
 void Convolutional::set_parameters_random()
 {
     VectorMap biases = vector_map(parameters[Biases]);
@@ -336,30 +319,25 @@ void Convolutional::set_parameters_random()
     }
 }
 
-
 pair<Index, Index> Convolutional::get_padding() const
 {
     return { get_padding_height(), get_padding_width() };
 }
-
 
 Index Convolutional::get_input_height() const
 {
     return input_shape[0];
 }
 
-
 Index Convolutional::get_input_width() const
 {
     return input_shape[1];
 }
 
-
 Index Convolutional::get_input_channels() const
 {
     return input_shape[2];
 }
-
 
 void Convolutional::to_XML(XMLPrinter& printer) const
 {
@@ -389,7 +367,6 @@ void Convolutional::to_XML(XMLPrinter& printer) const
 */
     printer.CloseElement();
 }
-
 
 void Convolutional::from_XML(const XMLDocument& document)
 {
@@ -434,7 +411,6 @@ void Convolutional::from_XML(const XMLDocument& document)
 */
 }
 
-
 vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 {    
     const Index input_height = get_input_height();
@@ -463,7 +439,6 @@ vector<Shape> Convolutional::get_forward_shapes(const Index batch_size) const
 
     return shapes;
 }
-
 
 #ifdef CUDA
 
@@ -534,7 +509,6 @@ void ConvolutionalForwardPropagationCuda::initialize()
     }
 }
 
-
 void ConvolutionalForwardPropagationCuda::print() const
 {
     const Shape output_shape = layer->get_output_shape();
@@ -553,12 +527,10 @@ void ConvolutionalForwardPropagationCuda::print() const
         cout << "Empty (nullptr)" << endl;
 }
 
-
 void ConvolutionalForwardPropagationCuda::free()
 {
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
 }
-
 
 void ConvolutionalBackPropagationCuda::initialize()
 {

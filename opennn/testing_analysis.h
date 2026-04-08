@@ -41,7 +41,6 @@ public:
         void print() const;
     };
 
-
     struct RocAnalysis
     {
         MatrixR roc_curve;
@@ -55,7 +54,6 @@ public:
         void print() const;
     };
 
-
     struct KolmogorovSmirnovResults
     {
         MatrixR positive_cumulative_gain;
@@ -64,7 +62,6 @@ public:
 
         VectorR maximum_gain;
     };
-
 
     struct BinaryClassificationRates
     {

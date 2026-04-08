@@ -32,7 +32,6 @@ void initialize_generator()
     is_initialized = true;
 }
 
-
 void set_seed(Index seed)
 {
     global_seed = seed;
@@ -40,12 +39,10 @@ void set_seed(Index seed)
     is_initialized = false;
 }
 
-
 long long get_seed()
 {
     return global_seed;
 }
-
 
 inline mt19937& get_generator()
 {
@@ -53,13 +50,11 @@ inline mt19937& get_generator()
     return generator;
 }
 
-
 type random_uniform(type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
     return distribution(get_generator());
 }
-
 
 type random_normal(type mean, type std_dev)
 {
@@ -67,20 +62,17 @@ type random_normal(type mean, type std_dev)
     return distribution(get_generator());
 }
 
-
 Index random_integer(Index min, Index max)
 {
     uniform_int_distribution<Index> distribution(min, max);
     return distribution(get_generator());
 }
 
-
 bool random_bool(type probability)
 {
     bernoulli_distribution distribution(probability);
     return distribution(get_generator());
 }
-
 
 void set_random_uniform(VectorR& tensor, type min, type max)
 {
@@ -91,7 +83,6 @@ void set_random_uniform(VectorR& tensor, type min, type max)
         tensor(i) = distribution(get_generator());
 }
 
-
 void set_random_uniform(MatrixR& tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
@@ -100,7 +91,6 @@ void set_random_uniform(MatrixR& tensor, type min, type max)
     for(Index i = 0; i < tensor.size(); ++i)
         tensor(i) = distribution(get_generator());
 }
-
 
 void set_random_uniform(VectorMap tensor, type min, type max)
 {
@@ -111,7 +101,6 @@ void set_random_uniform(VectorMap tensor, type min, type max)
         tensor(i) = distribution(get_generator());
 }
 
-
 void set_random_uniform(MatrixMap tensor, type min, type max)
 {
     uniform_real_distribution<type> distribution(min, max);
@@ -121,7 +110,6 @@ void set_random_uniform(MatrixMap tensor, type min, type max)
         tensor(i) = distribution(get_generator());
 }
 
-
 template<typename T>
 void shuffle_vector(vector<T>& vec)
 {
@@ -130,7 +118,6 @@ void shuffle_vector(vector<T>& vec)
 
 template void shuffle_vector<Index>(vector<Index>&);
 template void shuffle_vector<size_t>(vector<size_t>&);
-
 
 void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
 {
@@ -154,12 +141,10 @@ void shuffle_vector_blocks(vector<Index>& vec, size_t blocks_number)
     }
 }
 
-
 void shuffle(VectorB& v)
 {
     shuffle(v.data(), v.data() + v.size(), get_generator());
 }
-
 
 Index get_random_element(const vector<Index>&values)
 {
@@ -172,7 +157,6 @@ Index get_random_element(const vector<Index>&values)
 
     return values[random_index];
 }
-
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)
 {

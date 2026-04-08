@@ -32,7 +32,6 @@ Pooling::Pooling(const Shape& new_input_shape,
         new_name);
 }
 
-
 Shape Pooling::get_output_shape() const
 {
     const Index rows_number = get_output_height();
@@ -42,18 +41,15 @@ Shape Pooling::get_output_shape() const
     return { rows_number, columns_number, channels };
 }
 
-
 Index Pooling::get_output_height() const
 {
     return (get_input_height() - pool_height + 2 * padding_height) / row_stride + 1;
 }
 
-
 Index Pooling::get_output_width() const
 {
     return (get_input_width() - pool_width + 2 * padding_width) / column_stride + 1;
 }
-
 
 void Pooling::set(const Shape& new_input_shape,
                   const Shape& new_pool_dimensions,
@@ -116,7 +112,6 @@ void Pooling::set(const Shape& new_input_shape,
 
 }
 
-
 void Pooling::set_input_shape(const Shape& new_input_shape)
 {
     if (new_input_shape.rank != 3)
@@ -125,14 +120,12 @@ void Pooling::set_input_shape(const Shape& new_input_shape)
     input_shape = new_input_shape;
 }
 
-
 void Pooling::set_pool_size(const Index new_pool_rows_number,
                             Index new_pool_columns_number)
 {
     pool_height = new_pool_rows_number;
     pool_width = new_pool_columns_number;
 }
-
 
 void Pooling::set_pooling_method(const string& new_pooling_method)
 {
@@ -148,7 +141,6 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
         pooling_mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 #endif
 }
-
 
 void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training)
 {
@@ -168,7 +160,6 @@ void Pooling::forward_propagate(ForwardPropagation& forward_propagation, size_t 
     else if(pooling_method == "AveragePooling")
         average_pooling(input, output, args);
 }
-
 
 void Pooling::back_propagate(ForwardPropagation& forward_propagation,
                              BackPropagation& back_propagation,
@@ -191,9 +182,6 @@ void Pooling::back_propagate(ForwardPropagation& forward_propagation,
         average_pooling_backward(output_gradient, input_gradient, args);
 }
 
-
-
-
 void Pooling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Pooling");
@@ -213,7 +201,6 @@ void Pooling::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void Pooling::from_XML(const XMLDocument& document)
 {
     const XMLElement* pooling_layer_element = get_xml_root(document, "Pooling");
@@ -227,7 +214,6 @@ void Pooling::from_XML(const XMLDocument& document)
     set_padding_height(read_xml_index(pooling_layer_element, "PaddingHeight"));
     set_padding_width(read_xml_index(pooling_layer_element, "PaddingWidth"));
 }
-
 
 #ifdef CUDA
 
@@ -257,19 +243,16 @@ void PoolingForwardPropagationCuda::initialize()
     outputs.set_descriptor({ batch_size, output_height, output_width, channels });
 }
 
-
 vector<TensorView*> PoolingForwardPropagationCuda::get_workspace_views()
 {
     return { &outputs };
 }
-
 
 void PoolingForwardPropagationCuda::free()
 {
     cudnnDestroyTensorDescriptor(input_tensor_descriptor);
     input_tensor_descriptor = nullptr;
 }
-
 
 void PoolingBackPropagationCuda::initialize()
 {

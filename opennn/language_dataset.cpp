@@ -23,7 +23,6 @@ LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Datase
         read_csv();
 }
 
-
 LanguageDataset::LanguageDataset(const Index samples_number,
                                  Index input_sequence_length,
                                  Index input_vocabulary_size) : Dataset()
@@ -80,54 +79,45 @@ LanguageDataset::LanguageDataset(const Index samples_number,
     set_binary_variables();
 }
 
-
 const vector<string>& LanguageDataset::get_input_vocabulary() const
 {
     return input_vocabulary;
 }
-
 
 const vector<string>& LanguageDataset::get_target_vocabulary() const
 {
     return target_vocabulary;
 }
 
-
 Index LanguageDataset::get_input_vocabulary_size() const
 {
     return input_vocabulary.size();
 }
-
 
 Index LanguageDataset::get_maximum_input_sequence_length() const
 {
     return maximum_input_sequence_length;
 }
 
-
 Index LanguageDataset::get_maximum_target_sequence_length() const
 {
     return maximum_target_sequence_length;
 }
-
 
 Index LanguageDataset::get_target_vocabulary_size() const
 {
     return target_vocabulary.size();
 }
 
-
 void LanguageDataset::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
-
 void LanguageDataset::set_target_vocabulary(const vector<string>& new_target_vocabulary)
 {
     target_vocabulary = new_target_vocabulary;
 }
-
 
 void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens,
                                         vector<string>& vocabulary) const
@@ -163,7 +153,6 @@ void LanguageDataset::create_vocabulary(const vector<vector<string>>& document_t
     }
 }
 
-
 void LanguageDataset::encode_input(const vector<vector<string>>& input_document_tokens)
 {
     const unordered_map<string, Index> input_vocabulary_map = create_vocabulary_map(input_vocabulary);
@@ -193,7 +182,6 @@ void LanguageDataset::encode_input(const vector<vector<string>>& input_document_
             data(sample, 1 + input_tokens_number) = END_INDEX;
     }
 }
-
 
 void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<vector<string>>& target_document_tokens)
 {
@@ -239,7 +227,6 @@ void LanguageDataset::encode_decoder_target_sequence_to_sequence(const vector<ve
             data(sample, target_offset + target_tokens_number) = END_INDEX;
     }
 }
-
 
 void LanguageDataset::encode_target_classification(const vector<vector<string>>& target_document_tokens)
 {
@@ -318,7 +305,6 @@ void LanguageDataset::encode_target_classification(const vector<vector<string>>&
         }
     }
 }
-
 
 void LanguageDataset::read_csv()
 {
@@ -474,7 +460,6 @@ void LanguageDataset::read_csv()
     cout << "Reading finished" << endl;
 }
 
-
 unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector<string>& vocabulary)
 {
     unordered_map<string, Index> vocabulary_map;
@@ -484,7 +469,6 @@ unordered_map<string, Index> LanguageDataset::create_vocabulary_map(const vector
 
     return vocabulary_map;
 }
-
 
 void LanguageDataset::to_XML(XMLPrinter& printer) const
 {
@@ -523,7 +507,6 @@ void LanguageDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 {
@@ -634,7 +617,6 @@ void LanguageDataset::from_XML(const XMLDocument& data_set_document)
     else
         encode_target_classification(target_docs_tokens);
 }
-
 
 }
 

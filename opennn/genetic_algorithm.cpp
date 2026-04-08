@@ -23,7 +23,6 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
 void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
@@ -70,7 +69,6 @@ void GeneticAlgorithm::set_default()
     initialization_method = "Correlations";
 }
 
-
 void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
     const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
@@ -80,7 +78,6 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
         ? new_maximum_inputs_number
         : clamp(new_maximum_inputs_number, Index(1), inputs_number);
 }
-
 
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
 {
@@ -100,14 +97,12 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
     elitism_size = min(elitism_size, new_individuals_number);
 }
 
-
 void GeneticAlgorithm::initialize_population()
 {
     initialization_method == "Random"
         ? initialize_population_random()
         : initialize_population_correlations();
 }
-
 
 void GeneticAlgorithm::initialize_population_random()
 {
@@ -131,7 +126,6 @@ void GeneticAlgorithm::initialize_population_random()
         population.row(i) = individual_genes;
     }
 }
-
 
 void GeneticAlgorithm::initialize_population_correlations()
 {
@@ -180,7 +174,6 @@ void GeneticAlgorithm::initialize_population_correlations()
     }
 }
 
-
 void GeneticAlgorithm::evaluate_population()
 {
     TrainingResults training_results;
@@ -227,12 +220,10 @@ void GeneticAlgorithm::evaluate_population()
 
 }
 
-
 void GeneticAlgorithm::perform_fitness_assignment()
 {
     fitness = calculate_rank_less(validation_errors).cast<type>().array() + type(1.0);
 }
-
 
 void GeneticAlgorithm::perform_selection()
 {
@@ -270,7 +261,6 @@ void GeneticAlgorithm::perform_selection()
     }
 }
 
-
 vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 {
     vector<Index> selection_indices;
@@ -282,7 +272,6 @@ vector<Index> GeneticAlgorithm::get_selected_individual_indices() const
 
     return selection_indices;
 }
-
 
 VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2)
 {
@@ -342,7 +331,6 @@ VectorB GeneticAlgorithm::cross(const VectorB& parent_1, const VectorB& parent_2
     return descendent;
 }
 
-
 void GeneticAlgorithm::perform_crossover()
 {
     const Index individuals_number = get_individuals_number();
@@ -367,7 +355,6 @@ void GeneticAlgorithm::perform_crossover()
 
     population = new_population;
 }
-
 
 void GeneticAlgorithm::perform_mutation()
 {
@@ -422,7 +409,6 @@ void GeneticAlgorithm::perform_mutation()
         population.row(i) = individual;
     }
 }
-
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
@@ -602,7 +588,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
     return input_selection_results;
 }
 
-
 void GeneticAlgorithm::configure_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number)
 {
     TimeSeriesDataset* time_series_dataset = dynamic_cast<TimeSeriesDataset*>(dataset);
@@ -631,7 +616,6 @@ void GeneticAlgorithm::configure_inputs(NeuralNetwork* neural_network, Dataset* 
     }
 }
 
-
 vector<Index> GeneticAlgorithm::get_variable_indices(const VectorB& individual_variables)
 {
     vector<Index> indices;
@@ -646,7 +630,6 @@ vector<Index> GeneticAlgorithm::get_variable_indices(const VectorB& individual_v
 
     return indices;
 }
-
 
 void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 {
@@ -665,7 +648,6 @@ void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void GeneticAlgorithm::from_XML(const XMLDocument& document)
 {

@@ -22,7 +22,6 @@ GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
 void GrowingNeurons::set_default()
 {
     name = "GrowingNeurons";
@@ -35,13 +34,10 @@ void GrowingNeurons::set_default()
     maximum_time = type(3600);
 }
 
-
 void GrowingNeurons::set_neurons_increment(const Index new_neurons_increment)
 {
     neurons_increment = new_neurons_increment;
 }
-
-
 
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
@@ -200,7 +196,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     return neuron_selection_results;
 }
 
-
 void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingNeurons");
@@ -218,7 +213,6 @@ void GrowingNeurons::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void GrowingNeurons::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "GrowingNeurons");
@@ -231,7 +225,6 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
-
 
 REGISTER(NeuronSelection, GrowingNeurons, "GrowingNeurons");
 

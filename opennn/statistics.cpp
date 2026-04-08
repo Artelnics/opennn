@@ -23,7 +23,6 @@ Descriptives::Descriptives(const type new_minimum,
 {
 }
 
-
 VectorR Descriptives::to_tensor() const
 {
     VectorR descriptives_tensor(4);
@@ -31,7 +30,6 @@ VectorR Descriptives::to_tensor() const
 
     return descriptives_tensor;
 }
-
 
 void Descriptives::set(const type new_minimum, type new_maximum,
                        type new_mean, type new_standard_deviation)
@@ -42,7 +40,6 @@ void Descriptives::set(const type new_minimum, type new_maximum,
     standard_deviation = new_standard_deviation;
 }
 
-
 void Descriptives::print(const string& title) const
 {
     cout << title << endl
@@ -51,7 +48,6 @@ void Descriptives::print(const string& title) const
          << "Mean: " << mean << endl
          << "Standard deviation: " << standard_deviation << endl;
 }
-
 
 BoxPlot::BoxPlot(const type new_minimum,
                  type new_first_quartile,
@@ -66,7 +62,6 @@ BoxPlot::BoxPlot(const type new_minimum,
     maximum = new_maximum;
 }
 
-
 void BoxPlot::set(const type new_minimum,
                   type new_first_quartile,
                   type new_median,
@@ -79,7 +74,6 @@ void BoxPlot::set(const type new_minimum,
     third_quartile = new_third_quartile;
     maximum = new_maximum;
 }
-
 
 void Descriptives::save(const filesystem::path& file_name) const
 {
@@ -96,13 +90,11 @@ void Descriptives::save(const filesystem::path& file_name) const
     file.close();
 }
 
-
 Histogram::Histogram(const Index bins_number)
 {
     centers.resize(bins_number);
     frequencies.resize(bins_number);
 }
-
 
 Histogram::Histogram(const VectorR&new_centers,
                      const VectorR&new_frequencies)
@@ -110,7 +102,6 @@ Histogram::Histogram(const VectorR&new_centers,
     centers = new_centers;
     frequencies = new_frequencies;
 }
-
 
 Histogram::Histogram(const VectorR& new_frequencies,
                      const VectorR& new_centers,
@@ -122,7 +113,6 @@ Histogram::Histogram(const VectorR& new_frequencies,
     minimums = new_minimums;
     maximums = new_maximums;
 }
-
 
 Histogram::Histogram(const VectorR& data, Index bins_number)
 {
@@ -158,7 +148,6 @@ Histogram::Histogram(const VectorR& data, Index bins_number)
     frequencies = new_frequencies;
 }
 
-
 Histogram::Histogram(const VectorR& probability_data)
 {
     const size_t bins_number = 10;
@@ -192,30 +181,25 @@ Histogram::Histogram(const VectorR& probability_data)
     frequencies = new_frequencies;
 }
 
-
 Index Histogram::get_bins_number() const
 {
     return centers.size();
 }
-
 
 Index Histogram::count_empty_bins() const
 {
     return static_cast<Index>((frequencies.array() == 0.0f).count());
 }
 
-
 Index Histogram::calculate_minimum_frequency() const
 {
     return minimum(frequencies);
 }
 
-
 Index Histogram::calculate_maximum_frequency() const
 {
     return maximum(frequencies);
 }
-
 
 Index Histogram::calculate_most_populated_bin() const 
 {
@@ -227,7 +211,6 @@ Index Histogram::calculate_most_populated_bin() const
 
     return max_index;
 }
-
 
 VectorR Histogram::calculate_minimal_centers() const
 {
@@ -260,7 +243,6 @@ VectorR Histogram::calculate_minimal_centers() const
     return minimal_centers;
 }
 
-
 VectorR Histogram::calculate_maximal_centers() const
 {
     const Index maximum_frequency = calculate_maximum_frequency();
@@ -289,7 +271,6 @@ VectorR Histogram::calculate_maximal_centers() const
     return maximal_centers;
 }
 
-
 Index Histogram::calculate_bin(const type value) const
 {
     const Index bins_number = get_bins_number();
@@ -309,7 +290,6 @@ Index Histogram::calculate_bin(const type value) const
     return bins_number - 1; 
 }
 
-
 Index Histogram::calculate_frequency(const type value) const
 {
     const Index bins_number = get_bins_number();
@@ -322,7 +302,6 @@ Index Histogram::calculate_frequency(const type value) const
     
     return frequency;
 }
-
 
 void Histogram::save(const filesystem::path& histogram_file_name) const
 {
@@ -338,13 +317,11 @@ void Histogram::save(const filesystem::path& histogram_file_name) const
     histogram_file.close();
 }
 
-
 type minimum(const MatrixR& matrix)
 {
     if(matrix.size() == 0) return type(NAN);
     return matrix.minCoeff();
 }
-
 
 type maximum(const MatrixR& matrix)
 {
@@ -352,20 +329,17 @@ type maximum(const MatrixR& matrix)
     return matrix.maxCoeff();
 }
 
-
 type minimum(const VectorR& vector)
 {
     if(vector.size() == 0) return type(NAN);
     return vector.minCoeff();
 }
 
-
 type maximum(const VectorR& vector)
 {
     if(vector.size() == 0) return type(NAN);
     return vector.maxCoeff();
 }
-
 
 type minimum(const VectorR& data, const vector<Index>& indices)
 {
@@ -388,7 +362,6 @@ type minimum(const VectorR& data, const vector<Index>& indices)
     return minimum;
 }
 
-
 type maximum(const VectorR& data, const vector<Index>& indices)
 {
     const Index size = indices.size();
@@ -409,7 +382,6 @@ type maximum(const VectorR& data, const vector<Index>& indices)
 
     return maximum;
 }
-
 
 VectorR column_maximums(const MatrixR& matrix,
                         const vector<Index>& row_indices,
@@ -471,14 +443,12 @@ VectorR column_maximums(const MatrixR& matrix,
     return maximums;
 }
 
-
 type mean(const VectorR& v, Index begin, Index end)
 {
     if(end == begin) return NAN;
 
     return v.segment(begin, end - begin + 1).mean();
 }
-
 
 type mean(const VectorR& vector)
 {
@@ -490,7 +460,6 @@ type mean(const VectorR& vector)
 
     return is_finite.select(vector.array(), 0.0f).sum() / static_cast<type>(count);
 }
-
 
 type variance(const VectorR& vector)
 {
@@ -512,7 +481,6 @@ type variance(const VectorR& vector)
 
     return (squared_sum - (sum * sum) / count) / (count - 1);
 }
-
 
 type variance(const VectorR& vector, const VectorI& indices)
 {
@@ -546,14 +514,12 @@ type variance(const VectorR& vector, const VectorI& indices)
     return variance;
 }
 
-
 type standard_deviation(const VectorR& vector)
 {
     if(vector.size() == 0) return type(0);
 
     return sqrt(variance(vector));
 }
-
 
 type median(const VectorR& input_vector)
 {
@@ -593,7 +559,6 @@ type median(const VectorR& input_vector)
         return sorted_vector[median_index];
     }
 }
-
 
 VectorR quartiles(const VectorR& data)
 {
@@ -643,7 +608,6 @@ VectorR quartiles(const VectorR& data)
     return quartiles;
 }
 
-
 VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 {
     const Index indices_size = indices.size();
@@ -665,7 +629,6 @@ VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 
     return quartiles(valid_data);
 }
-
 
 BoxPlot box_plot(const VectorR& vector)
 {
@@ -694,7 +657,6 @@ BoxPlot box_plot(const VectorR& vector)
     return box_plot;
 }
 
-
 BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
@@ -712,7 +674,6 @@ BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 
     return box_plot;
 }
-
 
 Histogram histogram(const VectorR& new_vector, Index bins_number)
 {
@@ -826,7 +787,6 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     return histogram;
 }
 
-
 Histogram histogram_centered(const VectorR& vector, type center, Index bins_number)
 {
     const Index bin_center = (bins_number % 2 == 0) 
@@ -890,7 +850,6 @@ Histogram histogram_centered(const VectorR& vector, type center, Index bins_numb
     return histogram;
 }
 
-
 Histogram histogram(const VectorB& v)
 {
     VectorR minimums(2);
@@ -923,7 +882,6 @@ Histogram histogram(const VectorB& v)
     return histogram;
 }
 
-
 VectorI total_frequencies(const Tensor<Histogram, 1>& histograms)
 {
     const Index histograms_number = histograms.size();
@@ -935,7 +893,6 @@ VectorI total_frequencies(const Tensor<Histogram, 1>& histograms)
 
     return total_frequencies;
 }
-
 
 vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 {
@@ -951,7 +908,6 @@ vector<Histogram> histograms(const MatrixR& matrix, Index bins_number)
 
     return histograms;
 }
-
 
 Descriptives vector_descriptives(const VectorR& x)
 {
@@ -1001,7 +957,6 @@ Descriptives vector_descriptives(const VectorR& x)
     return my_descriptives;
 }
 
-
 vector<Descriptives> descriptives(const MatrixR& matrix)
 {
     const Index rows_number = matrix.rows();
@@ -1022,7 +977,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix)
 
     return descriptives;
 }
-
 
 vector<Descriptives> descriptives(const MatrixR& matrix,
                                   const vector<Index>& row_indices,
@@ -1109,7 +1063,6 @@ vector<Descriptives> descriptives(const MatrixR& matrix,
     return descriptives_results;
 }
 
-
 VectorR column_minimums(const MatrixR& matrix,
                         const vector<Index>& row_indices,
                         const vector<Index>& column_indices)
@@ -1170,7 +1123,6 @@ VectorR column_minimums(const MatrixR& matrix,
     return minimums;
 }
 
-
 VectorR column_maximums(const MatrixR& matrix, const vector<Index>& column_indices)
 {
     const Index rows_number = matrix.rows();
@@ -1202,7 +1154,6 @@ VectorR column_maximums(const MatrixR& matrix, const vector<Index>& column_indic
     return maximums;
 }
 
-
 type range(const VectorR& vector)
 {
     const type min = minimum(vector);
@@ -1210,7 +1161,6 @@ type range(const VectorR& vector)
 
     return abs(max - min);
 }
-
 
 VectorR mean(const MatrixR& matrix)
 {
@@ -1233,7 +1183,6 @@ VectorR mean(const MatrixR& matrix)
 
     return mean;
 }
-
 
 VectorR mean(const MatrixR& matrix, const VectorI& column_indices)
 {
@@ -1260,7 +1209,6 @@ VectorR mean(const MatrixR& matrix, const VectorI& column_indices)
 
     return mean;
 }
-
 
 VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
 {
@@ -1301,7 +1249,6 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
     return mean;
 }
 
-
 type mean(const MatrixR& matrix, Index column_index)
 {
     const Index rows_number = matrix.rows();
@@ -1330,7 +1277,6 @@ type mean(const MatrixR& matrix, Index column_index)
 
     return mean;
 }
-
 
 VectorR median(const MatrixR& matrix)
 {
@@ -1369,7 +1315,6 @@ VectorR median(const MatrixR& matrix)
     return medians;
 }
 
-
 type median(const MatrixR& matrix, Index column_index)
 {
     type median = type(0);
@@ -1404,7 +1349,6 @@ type median(const MatrixR& matrix, Index column_index)
 
     return median;
 }
-
 
 VectorR median(const MatrixR& matrix, const VectorI& column_indices)
 {
@@ -1441,7 +1385,6 @@ VectorR median(const MatrixR& matrix, const VectorI& column_indices)
 
     return medians;
 }
-
 
 VectorR median(const MatrixR& matrix,
                const vector<Index>& row_indices,
@@ -1484,7 +1427,6 @@ VectorR median(const MatrixR& matrix,
     return medians;
 }
 
-
 Index minimal_index(const VectorR& vector)
 {
     if(vector.size() == 0) return 0;
@@ -1495,7 +1437,6 @@ Index minimal_index(const VectorR& vector)
     return index;
 }
 
-
 Index maximal_index(const VectorR& vector)
 {
     if(vector.size() == 0) return 0;
@@ -1505,7 +1446,6 @@ Index maximal_index(const VectorR& vector)
 
     return index;
 }
-
 
 VectorI minimal_indices(const VectorR& data, Index k)
 {
@@ -1531,7 +1471,6 @@ VectorI minimal_indices(const VectorR& data, Index k)
     return Map<VectorI>(indices.data(), k);
 }
 
-
 VectorI maximal_indices(const VectorR& data, Index k)
 {
     vector<Index> indices(data.size());
@@ -1554,7 +1493,6 @@ VectorI maximal_indices(const VectorR& data, Index k)
     return Map<VectorI>(indices.data(), k);
 }
 
-
 VectorI minimal_indices(const MatrixR& matrix)
 {
     VectorI minimal_indices(2);
@@ -1568,7 +1506,6 @@ VectorI minimal_indices(const MatrixR& matrix)
     return minimal_indices;
 }
 
-
 VectorI maximal_indices(const MatrixR& matrix)
 {
     VectorI maximal_indices(2);
@@ -1581,7 +1518,6 @@ VectorI maximal_indices(const MatrixR& matrix)
 
     return maximal_indices;
 }
-
 
 }
 

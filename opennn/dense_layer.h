@@ -30,7 +30,6 @@ private:
 
     type momentum = type(0.9);
 
-
     type dropout_rate = type(0);
 
 #ifdef CUDA
@@ -87,7 +86,6 @@ public:
         set(new_input_shape, new_output_shape, new_activation_function, new_batch_normalization, new_label);
     }
 
-
     Dense(const Index input_sequence_length,
           Index embedding_dimension,
           Index feed_forward_dimension,
@@ -121,7 +119,6 @@ public:
     {
         return activation_function;
     }
-
 
     void set(const Shape& new_input_shape = {},
              const Shape& new_output_shape = {},
@@ -195,7 +192,6 @@ public:
         VectorMap(parameters[Beta].data, parameters[Beta].size()).setZero();
     }
 
-
     void set_input_shape(const Shape& new_input_shape) override
     {
         if (new_input_shape.rank != Rank - 1)
@@ -204,12 +200,10 @@ public:
         input_shape = new_input_shape;
     }
 
-
     void set_output_shape(const Shape& new_output_shape) override
     {
         neurons_number = new_output_shape.back();
     }
-
 
     void set_activation_function(const string& name)
     {
@@ -276,12 +270,10 @@ public:
         dropout_rate = new_dropout_rate;
     }
 
-
     void set_batch_normalization(bool new_batch_normalization)
     {
         batch_normalization = new_batch_normalization;
     }
-
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool is_training) override
     {
@@ -307,7 +299,6 @@ public:
             dropout(output, dropout_rate);
     }
 
-
     void back_propagate(ForwardPropagation& forward_propagation,
                         BackPropagation& back_propagation,
                         size_t layer) const override
@@ -331,7 +322,6 @@ public:
             multiply(delta, false, parameters[Weight], true, input_gradient);
         }
     }
-
 
     string get_expression(const vector<string>& new_input_names = vector<string>(),
                           const vector<string>& new_output_names = vector<string>()) const override
@@ -370,7 +360,6 @@ public:
         return buffer.str();
     }
 
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* dense2d_layer_element = get_xml_root(document, name);
@@ -408,7 +397,6 @@ public:
             string_to_vector(read_xml_string(dense2d_layer_element, "RunningStandardDeviations"), running_variances);
         }
     }
-
 
     void to_XML(XMLPrinter& printer) const override
     {

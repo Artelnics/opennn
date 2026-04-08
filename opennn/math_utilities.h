@@ -28,7 +28,6 @@ enum class ActivationFunction{
     Logistic
 };
 
-
 inline ActivationFunction string_to_activation(const string& name)
 {
     if (name == "Sigmoid") return ActivationFunction::Sigmoid;
@@ -82,7 +81,6 @@ struct BatchNormalizationArguments
     cudnnTensorDescriptor_t per_activation_descriptor = nullptr;
 #endif
 };
-
 
 inline void max_pooling(const TensorView& input,
                         TensorView& output,
@@ -161,7 +159,6 @@ inline void max_pooling(const TensorView& input,
 #endif
 }
 
-
 inline void average_pooling(const TensorView& input, TensorView& output, const PoolingArguments& arguments)
 {
 #ifndef CUDA
@@ -205,7 +202,6 @@ inline void average_pooling(const TensorView& input, TensorView& output, const P
 
 #endif
 }
-
 
 inline void padding(const TensorView& input, TensorView& output)
 {
@@ -266,7 +262,6 @@ inline void bounding(const TensorView& input,
 #endif
 }
 
-
 inline void copy(const TensorView& source, TensorView& destination)
 {
     if(source.size() != destination.size())
@@ -304,7 +299,6 @@ inline void addition(const TensorView& input_1, const TensorView& input_2, Tenso
 #endif
 }
 
-
 inline void projection(const TensorView& input,
                        const TensorView& weights,
                        const TensorView& biases,
@@ -314,7 +308,6 @@ inline void projection(const TensorView& input,
 
 //    addition(biases, output);
 }
-
 
 inline void projection_gradient(const Tensor4& d_head,
                                 const TensorMap3& input,
@@ -379,7 +372,6 @@ inline void projection_gradient(const Tensor4& d_head,
     }
 */
 }
-
 
 inline void batch_normalization(const TensorView& input, TensorView& output)
 {
@@ -451,7 +443,6 @@ inline void batch_normalization(const TensorView& input, TensorView& output)
             EPSILON));
 #endif
 }
-
 
 inline void batch_normalization_backward(
     const TensorView& input,
@@ -602,7 +593,6 @@ inline void batch_normalization_training(
 #endif
 }
 
-
 inline void softmax(TensorView& output);
 
 inline void activation(TensorView& output, ActivationFunction func)
@@ -667,8 +657,6 @@ inline void activation(TensorView& output, ActivationFunction func)
 
 #endif
 }
-
-
 
 inline void activation_gradient(const TensorView& outputs,
                                 const TensorView& output_gradient,
@@ -741,7 +729,6 @@ inline void activation_gradient(const TensorView& outputs,
 #endif
 }
 
-
 inline void dropout(TensorView& output, type dropout_rate)
 {
 #ifndef CUDA
@@ -763,7 +750,6 @@ inline void dropout(TensorView& output, type dropout_rate)
                                     dropout_reserve_space_size));
 #endif
 }
-
 
 inline void dropout_gradient(const TensorView& output_gradient,
                              const TensorView& mask, type dropout_rate,
@@ -848,7 +834,6 @@ inline void convolution(const TensorView& input,
 #endif
 }
 
-
 inline void convolution_activation(const TensorView& input,
                                    const TensorView& weight,
                                    const TensorView& bias,
@@ -881,7 +866,6 @@ inline void convolution_activation(const TensorView& input,
         outputs.data));
 #endif
 }
-
 
 inline void multiply(const TensorView& input_A, bool transpose_A,
                      const TensorView& input_B, bool transpose_B,
@@ -957,7 +941,6 @@ inline void multiply(const TensorView& input_A, bool transpose_A,
 #endif
 }
 
-
 inline void multiply_elementwise(const TensorView& A, const TensorView& B, TensorView& C)
 {
 #ifndef OPENNN_CUDA
@@ -984,7 +967,6 @@ inline void sum(const TensorView& A, TensorView& B, type alpha = 1.0f, type beta
                                output_tensor.data));
 #endif
 }
-
 
 // --- Max Pooling Backward ---
 
@@ -1039,7 +1021,6 @@ inline void max_pooling_backward(const TensorView& output_gradient,
                                       input_gradient.get_descriptor(), input_gradient.data));
 #endif
 }
-
 
 // --- Average Pooling Backward ---
 
@@ -1102,7 +1083,6 @@ inline void average_pooling_backward(const TensorView& output_gradient,
 #endif
 }
 
-
 // --- Convolution Backward Weights ---
 
 inline void convolution_backward_weights(const TensorView& padded_input,
@@ -1156,7 +1136,6 @@ inline void convolution_backward_weights(const TensorView& padded_input,
                                               bias_gradient.get_descriptor(), bias_gradient.data));
 #endif
 }
-
 
 // --- Convolution Backward Data (input gradients) ---
 
@@ -1238,7 +1217,6 @@ inline void convolution_backward_data(const TensorView& output_gradient,
                                               input_gradient.get_descriptor(), input_gradient.data));
 #endif
 }
-
 
 inline void softmax(TensorView& output)
 {

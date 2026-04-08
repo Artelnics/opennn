@@ -22,7 +22,6 @@ TimeSeriesDataset::TimeSeriesDataset(const Index new_samples_number,
 {
 }
 
-
 TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const string& separator,
                                      bool has_header,
@@ -46,30 +45,25 @@ TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
 
-
 Index TimeSeriesDataset::get_time_variable_index() const
 {
     return time_variable_index;
 }
-
 
 Index TimeSeriesDataset::get_past_time_steps() const
 {
     return past_time_steps;
 }
 
-
 Index TimeSeriesDataset::get_future_time_steps() const
 {
     return future_time_steps;
 }
 
-
 bool TimeSeriesDataset::get_multi_target() const
 {
     return multi_target;
 }
-
 
 Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& feature_role) const
 {
@@ -93,13 +87,11 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
     return data_3d;
 }
 
-
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
     past_time_steps = new_past_time_steps;
     input_shape = { past_time_steps, get_features_number("Input") };
 }
-
 
 void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
@@ -108,19 +100,15 @@ void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
         target_shape = { future_time_steps };
 }
 
-
 void TimeSeriesDataset::set_time_variable_index(const Index new_time_variable_index)
 {
     time_variable_index = new_time_variable_index;
 }
 
-
 void TimeSeriesDataset::set_multi_target(bool new_multi_target)
 {
     multi_target = new_multi_target;
 }
-
-
 
 void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 {
@@ -152,7 +140,6 @@ void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 {
@@ -203,7 +190,6 @@ void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
     target_shape = { get_features_number("Target") };
 }
 
-
 void TimeSeriesDataset::read_csv()
 {
     Dataset::read_csv();
@@ -238,7 +224,6 @@ void TimeSeriesDataset::read_csv()
 
     split_samples_sequential(type(0.6), type(0.2), type(0.2));
 }
-
 
 void TimeSeriesDataset::impute_missing_values_unuse()
 {
@@ -275,7 +260,6 @@ void TimeSeriesDataset::impute_missing_values_unuse()
     for(Index i = num_sequences; i < samples_number; ++i)
         set_sample_role(i, "None");
 }
-
 
 void TimeSeriesDataset::impute_missing_values_interpolate()
 {
@@ -343,7 +327,6 @@ void TimeSeriesDataset::impute_missing_values_interpolate()
     }
 }
 
-
 void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
                                     const vector<Index>& input_indices,
                                     type* input_data,
@@ -375,7 +358,6 @@ void TimeSeriesDataset::fill_inputs(const vector<Index>& sample_indices,
         }
     }
 }
-
 
 void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
                                            const vector<Index>& target_indices,
@@ -416,7 +398,6 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     }
 }
 
-
 // @todo Is this finished?.
 
 void TimeSeriesDataset::fill_gaps()
@@ -451,7 +432,6 @@ void TimeSeriesDataset::fill_gaps()
         }
     }
 }
-
 
 MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_steps) const
 {
@@ -533,7 +513,6 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index past_time_step
 
     return autocorrelations;
 }
-
 
 Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_steps) const
 {
@@ -632,7 +611,6 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index past_time_st
 
     return cross_correlations;
 }
-
 
 Tensor3 TimeSeriesDataset::calculate_cross_correlations_spearman(const Index past_time_steps) const
 {

@@ -64,7 +64,6 @@ public:
     }
 };
 
-
 struct Shape
 {
     static constexpr size_t MaxRank = 4;
@@ -152,7 +151,6 @@ struct Shape
             shape[rank++] = d;
     }
 
-
     Index size() const noexcept
     {
         if (rank == 0) return 0;
@@ -234,7 +232,6 @@ struct Shape
     }
 };
 
-
 struct TensorView
 {
     type* data = nullptr;
@@ -309,7 +306,6 @@ struct TensorView
 
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
-
 
 #ifdef CUDA
     float* device = nullptr;
@@ -403,13 +399,11 @@ struct TensorView
 
 };
 
-
 VectorR filter_missing_values(const VectorR& input);
 
 pair<VectorR, VectorR> filter_missing_values(const VectorR&, const VectorR&);
 pair<VectorR, MatrixR> filter_missing_values(const VectorR&, const MatrixR&);
 pair<MatrixR, MatrixR> filter_missing_values(const MatrixR&, const MatrixR&);
-
 
 void shuffle_rows(MatrixR& matrix);
 
@@ -440,10 +434,8 @@ inline Index get_size(const vector<vector<Shape>>& shapes)
     return total;
 }
 
-
 Index get_size(const vector<TensorView*>);
 Index get_size(vector<vector<TensorView*>>);
-
 
 template<typename T, size_t N>
 using array = Eigen::array<T, N>;
@@ -454,37 +446,31 @@ Eigen::array<IndexPair<Index>, 1> axes(const Index a, Index b)
     return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
 }
 
-
 template <typename Index>
 Eigen::array<IndexPair<Index>, 2> axes(const Index a1, Index b1, Index a2, Index b2)
 {
     return Eigen::array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2)});
 }
 
-
 inline Eigen::array<Index, 1> array_1(const Index a)
 {
     return Eigen::array<Index, 1>({a});
 }
-
 
 inline Eigen::array<Index, 2> array_2(const Index a, Index b)
 {
     return Eigen::array<Index, 2>({a, b});
 }
 
-
 inline Eigen::array<Index, 3> array_3(const Index a, Index b, Index c)
 {
     return Eigen::array<Index, 3>({a, b, c});
 }
 
-
 inline Eigen::array<Index, 4> array_4(const Index a, Index b, Index c, Index d)
 {
     return Eigen::array<Index, 4>({a, b, c, d});
 }
-
 
 inline bool is_contiguous(const vector<Index>& v)
 {
@@ -497,7 +483,6 @@ inline bool is_contiguous(const vector<Index>& v)
     return true;
 }
 
-
 inline bool is_binary(const VectorR& tensor)
 {
     const Index size = tensor.size();
@@ -508,7 +493,6 @@ inline bool is_binary(const VectorR& tensor)
 
     return true;
 }
-
 
 template <int Rank>
 bool is_binary(const TensorR<Rank>& tensor)
@@ -536,7 +520,6 @@ vector<T> gather_by_index(const vector<T>& data, const vector<Index>& indices)
     return result;
 }
 
-
 vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& minimums, const VectorR& maximums);
 
 inline bool is_constant(const VectorR& tensor)
@@ -559,7 +542,6 @@ inline bool is_constant(const VectorR& tensor)
 
     return true;
 }
-
 
 template <int Rank>
 bool is_constant(const TensorR<Rank>& tensor)
@@ -618,8 +600,6 @@ bool contains(const Eigen::MatrixBase<Derived>& vector, const T& value)
     return find(begin, end, value) != end;
 }
 
-
-
 bool contains(const vector<string>&, const string&);
 
 VectorR perform_Householder_QR_decomposition(const MatrixR&, const VectorR&);
@@ -656,7 +636,6 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
     return buffer.str();
 }
 
-
 inline string vector_to_string(const VectorI& x, const string& separator = " ")
 {
     ostringstream buffer;
@@ -667,7 +646,6 @@ inline string vector_to_string(const VectorI& x, const string& separator = " ")
     return buffer.str();
 }
 
-
 inline string vector_to_string(const VectorR& x, const string& separator = " ")
 {
     ostringstream buffer;
@@ -677,7 +655,6 @@ inline string vector_to_string(const VectorR& x, const string& separator = " ")
 
     return buffer.str();
 }
-
 
 template <typename T, size_t Rank>
 string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
@@ -690,7 +667,6 @@ string tensor_to_string(const TensorR<Rank>& x, const string& separator = " ")
     return buffer.str();
 }
 
-
 template <typename T, size_t Rank>
 void string_to_tensor(const string& input, TensorR<Rank>& x)
 {
@@ -701,7 +677,6 @@ void string_to_tensor(const string& input, TensorR<Rank>& x)
     while (stream >> value)
         x(i++) = value;
 }
-
 
 inline void string_to_vector(const string& input, VectorR& x)
 {
@@ -718,7 +693,6 @@ inline void string_to_vector(const string& input, VectorR& x)
         x(i) = buffer[i];
 }
 
-
 VectorMap vector_map(const MatrixR&, Index);
 
 MatrixMap matrix_map(const Tensor3&, Index);
@@ -733,7 +707,6 @@ inline VectorMap vector_map(const TensorView& tensor_view)
     return VectorMap(tensor_view.data, tensor_view.size());
 }
 
-
 inline MatrixMap matrix_map(const TensorView& tensor_view)
 {
     assert(tensor_view.data != nullptr);
@@ -741,7 +714,6 @@ inline MatrixMap matrix_map(const TensorView& tensor_view)
 
     return MatrixMap(tensor_view.data, tensor_view.shape[0], tensor_view.size() / tensor_view.shape[0]);
 }
-
 
 template <Index rank>
 TensorMapR<rank> tensor_map(const TensorView& tensor_view)
@@ -761,7 +733,6 @@ TensorMapR<rank> tensor_map(const TensorView& tensor_view)
     return TensorMapR<rank>(tensor_view.data, tensor_view.shape.get_eigen_dims<rank>());
 }
 
-
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& v)
 {
@@ -773,7 +744,6 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 
     return maximum_size;
 }
-
 
 template <typename T>
 ostream& operator << (ostream& os, const vector<T>& vec)
@@ -791,7 +761,6 @@ ostream& operator << (ostream& os, const vector<T>& vec)
     return os;
 }
 
-
 template<class T, int n>
 VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
 {
@@ -801,7 +770,6 @@ VectorI get_shape(const Tensor<T, n, AlignedMax>& tensor)
 
     return shape;
 }
-
 
 template <typename Type, int Rank>
 bool is_equal(const Tensor<Type, Rank, AlignedMax>& tensor,
@@ -855,7 +823,6 @@ inline bool is_equal(const VectorR& vector,
     return true;
 }
 
-
 template <int Rank>
 bool are_equal(const TensorR<Rank>& A,
                const TensorR<Rank>& B,
@@ -874,7 +841,6 @@ bool are_equal(const TensorR<Rank>& A,
     return true;
 }
 
-
 inline bool are_equal(const MatrixR& A,
                       const MatrixR& B,
                       type tolerance = type(1.0e-3))
@@ -892,7 +858,6 @@ inline bool are_equal(const MatrixR& A,
     return true;
 }
 
-
 inline bool are_equal(const VectorR& A,
                       const VectorR& B,
                       type tolerance = type(1.0e-3))
@@ -909,7 +874,6 @@ inline bool are_equal(const VectorR& A,
 
     return true;
 }
-
 
 class Device
 {
@@ -957,18 +921,15 @@ inline const float zero = 0.0f;
         return Device::instance().get_cublas_handle();
     }
 
-
     inline cudnnHandle_t get_cudnn_handle()
     {
         return Device::instance().get_cudnn_handle();
     }
 
-
     inline cudnnOpTensorDescriptor_t get_operator_sum_descriptor()
     {
         return Device::instance().get_operator_sum_descriptor();
     }
-
 
     inline cudnnOpTensorDescriptor_t get_operator_multiplication_descriptor()
     {
@@ -1097,7 +1058,6 @@ struct TensorCuda
         return TensorView(data, descriptor_handle);
     }
 };
-
 
 type* link(type*, const vector<TensorView*>&);
 void link(type*, const vector<vector<TensorView*>>&);

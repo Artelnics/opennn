@@ -86,8 +86,6 @@ inline void normalized_squared_error(const TensorView& input, const TensorView& 
 #endif
 }
 
-
-
 inline void weighted_squared_error(const TensorView& input,
                                    const TensorView& target,
                                    type pos_w,
@@ -152,7 +150,6 @@ inline void binary_cross_entropy(const TensorView& input, const TensorView& targ
 #endif
 }
 
-
 inline void categorical_cross_entropy(const TensorView& input,
                                       const TensorView& target,
                                       type& error,
@@ -195,7 +192,6 @@ inline void cross_entropy_gradient(const TensorView& input,
 #endif
 }
 
-
 inline void minkowski_error(const TensorView& input,
                             const TensorView& target,
                             type p,
@@ -219,7 +215,6 @@ inline void minkowski_error(const TensorView& input,
     error = sum_m / input.size();
 #endif
 }
-
 
 inline void normalized_squared_error_gradient(const TensorView& input, const TensorView& target, type coefficient, TensorView& input_gradient)
 {
@@ -246,7 +241,6 @@ inline void normalized_squared_error_gradient(const TensorView& input, const Ten
     CHECK_CUBLAS(cublasSscal(get_cublas_handle(), n, &scale, input_gradient.data, 1));
 #endif
 }
-
 
 inline void minkowski_error_gradient(const TensorView& input, const TensorView& target, type p, TensorView& input_gradient)
 {

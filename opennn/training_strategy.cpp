@@ -22,7 +22,6 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* n
     set(new_neural_network, new_dataset);
 }
 
-
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -30,7 +29,6 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_datas
 
     set_default();
 }
-
 
 void TrainingStrategy::set_loss(const string& new_loss)
 {
@@ -46,14 +44,12 @@ void TrainingStrategy::set_loss(const string& new_loss)
     }
 }
 
-
 void TrainingStrategy::set_optimization_algorithm(const string& new_optimization_algorithm)
 {
     optimizer = Registry<Optimizer>::instance().create(new_optimization_algorithm);
 
     optimizer->set(loss.get());
 }
-
 
 void TrainingStrategy::set_default()
 {
@@ -156,7 +152,6 @@ void TrainingStrategy::set_default()
     }
 }
 
-
 TrainingResults TrainingStrategy::train()
 {
     if(!get_neural_network())
@@ -176,7 +171,6 @@ TrainingResults TrainingStrategy::train()
 
     return optimizer->train();
 }
-
 
 void TrainingStrategy::fix_forecasting()
 {
@@ -210,7 +204,6 @@ void TrainingStrategy::fix_forecasting()
 */
 }
 
-
 void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
 
@@ -238,7 +231,6 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
 
 void TrainingStrategy::from_XML(const XMLDocument& document)
 {
@@ -300,7 +292,6 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     optimizer->set_display(read_xml_bool(root_element, "Display"));
 }
 
-
 void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
@@ -313,14 +304,12 @@ void TrainingStrategy::save(const filesystem::path& file_name) const
     file << printer.CStr();
 }
 
-
 void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
 
     from_XML(load_xml_file(file_name));
 }
-
 
 #ifdef CUDA
 

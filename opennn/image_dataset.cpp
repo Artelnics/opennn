@@ -28,7 +28,6 @@ ImageDataset::ImageDataset(const Index new_samples_number,
     set(new_samples_number, new_input_shape, new_target_shape);
 }
 
-
 ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
@@ -36,84 +35,70 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path) : Dataset()
     read_bmp();
 }
 
-
 Index ImageDataset::get_channels_number() const
 {
     return input_shape[2];
 }
-
 
 Index ImageDataset::get_image_width() const
 {
     return input_shape[1];
 }
 
-
 Index ImageDataset::get_image_height() const
 {
     return input_shape[0];
 }
-
 
 Index ImageDataset::get_image_size() const
 {
     return input_shape[0] * input_shape[1] * input_shape[2];
 }
 
-
 Index ImageDataset::get_image_padding() const
 {
     return padding;
 }
-
 
 bool ImageDataset::get_random_reflection_axis_x() const
 {
     return random_reflection_axis_x;
 }
 
-
 bool ImageDataset::get_random_reflection_axis_y() const
 {
     return random_reflection_axis_y;
 }
-
 
 type ImageDataset::get_random_rotation_minimum() const
 {
     return random_rotation_minimum;
 }
 
-
 type ImageDataset::get_random_rotation_maximum() const
 {
     return random_rotation_maximum;
 }
-
 
 type ImageDataset::get_random_horizontal_translation_minimum() const
 {
     return random_horizontal_translation_minimum;
 }
 
-
 type ImageDataset::get_random_horizontal_translation_maximum() const
 {
     return random_horizontal_translation_maximum;
 }
-
 
 type ImageDataset::get_random_vertical_translation_maximum() const
 {
     return random_vertical_translation_maximum;
 }
 
-
 type ImageDataset::get_random_vertical_translation_minimum() const
 {
     return random_vertical_translation_minimum;
 }
-
 
 void ImageDataset::set_data_random()
 {
@@ -172,84 +157,70 @@ void ImageDataset::set_data_random()
     }
 }
 
-
 void ImageDataset::set_channels_number(const int& new_channels)
 {
     input_shape[2] = new_channels;
 }
-
 
 void ImageDataset::set_image_width(const int& new_width)
 {
     input_shape[1] = new_width;
 }
 
-
 void ImageDataset::set_image_height(const int& new_height)
 {
     input_shape[0] = new_height;
 }
-
 
 void ImageDataset::set_image_padding(const int& new_padding)
 {
     padding = new_padding;
 }
 
-
 void ImageDataset::set_augmentation(bool new_augmentation)
 {
     augmentation = new_augmentation;
 }
-
 
 void ImageDataset::set_random_reflection_axis_x(bool new_random_reflection_axis_x)
 {
     random_reflection_axis_x = new_random_reflection_axis_x;
 }
 
-
 void ImageDataset::set_random_reflection_axis_y(bool new_random_reflection_axis_y)
 {
     random_reflection_axis_y = new_random_reflection_axis_y;
 }
-
 
 void ImageDataset::set_random_rotation_minimum(const type new_random_rotation_minimum)
 {
     random_rotation_minimum = new_random_rotation_minimum;
 }
 
-
 void ImageDataset::set_random_rotation_maximum(const type new_random_rotation_maximum)
 {
     random_rotation_maximum = new_random_rotation_maximum;
 }
-
 
 void ImageDataset::set_random_horizontal_translation_maximum(const type new_random_horizontal_translation_maximum)
 {
     random_horizontal_translation_maximum = new_random_horizontal_translation_maximum;
 }
 
-
 void ImageDataset::set_random_horizontal_translation_minimum(const type new_random_horizontal_translation_minimum)
 {
     random_horizontal_translation_minimum = new_random_horizontal_translation_minimum;
 }
-
 
 void ImageDataset::set_random_vertical_translation_minimum(const type new_random_vertical_translation_minimum)
 {
     random_vertical_translation_minimum = new_random_vertical_translation_minimum;
 }
 
-
 void ImageDataset::set_random_vertical_translation_maximum(const type new_random_vertical_translation_maximum)
 {
     random_vertical_translation_maximum = new_random_vertical_translation_maximum;
 }
-
 
 void ImageDataset::to_XML(XMLPrinter& printer) const
 {
@@ -286,8 +257,6 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 }
-
-
 
 void ImageDataset::perform_augmentation(type* input_data) const
 {
@@ -327,7 +296,6 @@ void ImageDataset::perform_augmentation(type* input_data) const
     }
 }
 
-
 void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices, type* input_data, bool parallelize) const
 {
     fill_tensor_data(data, sample_indices, input_indices, input_data, parallelize);
@@ -336,7 +304,6 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices, const vector
         perform_augmentation(input_data);
 
 }
-
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
@@ -370,7 +337,6 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     samples_from_XML(require_xml_element(image_dataset_element, "Samples"));
 }
 
-
 vector<Descriptives> ImageDataset::scale_features(const string&)
 {
     const Index samples_number = get_samples_number();
@@ -384,7 +350,6 @@ vector<Descriptives> ImageDataset::scale_features(const string&)
     return {};
 }
 
-
 void ImageDataset::unscale_features(const string&)
 {
     const Index samples_number = get_samples_number();
@@ -395,7 +360,6 @@ void ImageDataset::unscale_features(const string&)
         for(Index j = 0; j < input_features_number; j++)
             data(i, j) *= type(255);
 }
-
 
 void ImageDataset::read_bmp(const Shape& new_input_shape)
 {
@@ -534,7 +498,6 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
 }
 
 } // opennn namespace
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

@@ -30,7 +30,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_input_shape,
         new_name);
 }
 
-
 MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
                                        const Shape& new_source_dimensions,
                                        Index new_heads_number,
@@ -49,7 +48,6 @@ MultiHeadAttention::MultiHeadAttention(const Shape& new_query_dimensions,
         new_name);
 }
 
-
 type MultiHeadAttention::get_scaling_factor() const
 {
     const Index head_dimension = get_head_dimension();
@@ -59,7 +57,6 @@ type MultiHeadAttention::get_scaling_factor() const
         : type(1) / type(sqrt(head_dimension));
 }
 
-
 Index MultiHeadAttention::get_head_dimension() const
 {
     return (heads_number == 0)
@@ -67,18 +64,15 @@ Index MultiHeadAttention::get_head_dimension() const
         : Index(get_embedding_dimension() / heads_number);
 }
 
-
 Shape MultiHeadAttention::get_input_shape() const
 {
     return { query_sequence_length, get_embedding_dimension() };
 }
 
-
 Shape MultiHeadAttention::get_output_shape() const
 {
     return { query_sequence_length, get_embedding_dimension() };
 }
-
 
 vector<Shape> MultiHeadAttention::get_parameter_shapes() const
 {
@@ -91,7 +85,6 @@ vector<Shape> MultiHeadAttention::get_parameter_shapes() const
             {embedding_dimension, embedding_dimension},
             {embedding_dimension}};
 }
-
 
 void MultiHeadAttention::set(const Index new_query_sequence_length,
                              Index new_source_sequence_length,
@@ -129,8 +122,6 @@ void MultiHeadAttention::set(const Index new_query_sequence_length,
                 causal_mask(row, column) = (column > row) ? minus_inf : type(0);
     }
 }
-
-
 
 void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagation,
                                            size_t layer,
@@ -358,7 +349,6 @@ void MultiHeadAttention::forward_propagate(ForwardPropagation& forward_propagati
                            static_cast<int>(embedding_dimension), static_cast<int>(embedding_dimension));
 #endif
 }
-
 
 void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation,
@@ -766,7 +756,6 @@ void MultiHeadAttention::back_propagate(ForwardPropagation& forward_propagation,
 #endif
 }
 
-
 void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
 {
     const Index batch_size = attention_scores.dimension(0);
@@ -783,7 +772,6 @@ void MultiHeadAttention::apply_causal_mask(Tensor4& attention_scores) const
 
     scores.rowwise() += causal_mask_map.transpose();
 }
-
 
 void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
                                                 Tensor4& attention_weights) const
@@ -816,7 +804,6 @@ void MultiHeadAttention::apply_key_padding_mask(const TensorMap3& source_input,
     }
 }
 
-
 void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiHeadAttention");
@@ -831,7 +818,6 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
     });
     printer.CloseElement();
 }
-
 
 void MultiHeadAttention::from_XML(const XMLDocument& document)
 {
@@ -848,7 +834,6 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_use_causal_mask, new_label);
 }
-
 
 REGISTER(Layer, MultiHeadAttention, "MultiHeadAttention")
 }

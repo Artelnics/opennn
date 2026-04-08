@@ -20,7 +20,6 @@ struct StochasticGradientDescentData;
 struct SGDOptimizationDataCuda;
 #endif
 
-
 class StochasticGradientDescent final : public Optimizer
 {
 
@@ -42,7 +41,6 @@ public:
     void update_parameters(BackPropagation& , StochasticGradientDescentData&, type) const;
 
     TrainingResults train() override;
-
 
     void from_XML(const XMLDocument&) override;
 
@@ -72,7 +70,6 @@ public:
 
 };
 
-
 struct StochasticGradientDescentData final : public OptimizerData
 {
     StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
@@ -86,7 +83,6 @@ struct StochasticGradientDescentData final : public OptimizerData
     VectorR parameter_updates;
     VectorR last_parameter_updates;
 };
-
 
 #ifdef CUDA
 

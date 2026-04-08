@@ -97,8 +97,6 @@ struct BackPropagationLM
     //MatrixR regularization_hessian;
 };
 
-
-
 class LevenbergMarquardtAlgorithm final : public Optimizer
 {
 
@@ -167,7 +165,6 @@ private:
    type minimum_loss_decrease = type(0);
 
 };
-
 
 struct LevenbergMarquardtAlgorithmData final : public OptimizerData
 {

@@ -59,8 +59,6 @@ vector<Index> build_feasible_rows_mask(const MatrixR& outputs, const VectorR& mi
     return feasible_rows;
 }
 
-
-
 VectorI calculate_rank_greater(const VectorR& vector)
 {
     const Index size = vector.size();
@@ -74,7 +72,6 @@ VectorI calculate_rank_greater(const VectorR& vector)
 
     return rank;
 }
-
 
 VectorI calculate_rank_less(const VectorR& vector)
 {
@@ -90,14 +87,12 @@ VectorI calculate_rank_less(const VectorR& vector)
     return rank;
 }
 
-
 Index count_greater_than(const vector<Index>& data, Index bound)
 {
     return count_if(data.begin(), data.end(), [&](const Index value) {
         return value > bound;
     });
 }
-
 
 vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
 {
@@ -114,7 +109,6 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, Index bound)
     return indices;
 }
 
-
 vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, Index bound)
 {
     vector<Index> indices;
@@ -128,7 +122,6 @@ vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, In
 
     return indices;
 }
-
 
 VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
 {
@@ -154,12 +147,10 @@ VectorI get_nearest_points(const MatrixR& matrix,const VectorR& point, int n)
     return result;
 }
 
-
 VectorR perform_Householder_QR_decomposition(const MatrixR& A, const VectorR& b)
 {
     return A.colPivHouseholderQr().solve(b);
 }
-
 
 void fill_tensor_data(const MatrixR& matrix,
                       const vector<Index>& row_indices,
@@ -196,7 +187,6 @@ void fill_tensor_data(const MatrixR& matrix,
     }
 }
 
-
 string shape_to_string(const Shape& x, const string& separator)
 {
     const Index size = x.size();
@@ -211,7 +201,6 @@ string shape_to_string(const Shape& x, const string& separator)
 
     return buffer.str();
 }
-
 
 Shape string_to_shape(const string& x, const string& separator)
 {
@@ -239,18 +228,15 @@ Shape string_to_shape(const string& x, const string& separator)
     return result;
 }
 
-
 bool contains(const vector<string>& data, const string& value)
 {
     return find(data.begin(), data.end(), value) != data.end();
 }
 
-
 VectorMap vector_map(const MatrixR& tensor, Index index_1)
 {
     return VectorMap(const_cast<type*>(tensor.data()) + tensor.rows()*index_1, tensor.rows());
 }
-
 
 MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
 {
@@ -258,20 +244,17 @@ MatrixMap tensor_map(const Tensor3& tensor, Index index_2)
                                       tensor.dimension(0), tensor.dimension(1));
 }
 
-
 TensorMap3 tensor_map(const Tensor4& tensor, Index index_3)
 {
     return TensorMap3(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
                                       tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
 }
 
-
 MatrixMap tensor_map(const Tensor4& tensor, Index index_3, Index index_2)
 {
     return MatrixMap(const_cast<type*>(tensor.data()) + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
                                       tensor.dimension(0), tensor.dimension(1));
 }
-
 
 type* link(type *pointer, vector<TensorView*> views)
 {
@@ -291,13 +274,11 @@ type* link(type *pointer, vector<TensorView*> views)
     return pointer;
 }
 
-
 void link(type *pointer, vector<vector<TensorView*>> views)
 {
     for(size_t i = 0; i < views.size(); i++)
         pointer = link(pointer, views[i]);
 }
-
 
 Index get_size(const vector<TensorView*> views)
 {
@@ -314,7 +295,6 @@ Index get_size(const vector<TensorView*> views)
     return total_size;
 }
 
-
 Index get_size(vector<vector<TensorView*>> views)
 {
     Index total_size = 0;
@@ -324,8 +304,6 @@ Index get_size(vector<vector<TensorView*>> views)
 
     return total_size;
 }
-
-
 
 pair<VectorR, VectorR> filter_missing_values(const VectorR& x, const VectorR& y)
 {
@@ -357,7 +335,6 @@ pair<VectorR, VectorR> filter_missing_values(const VectorR& x, const VectorR& y)
     return {new_x, new_y};
 }
 
-
 pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
 {
     const Index rows_number = x.size();
@@ -382,7 +359,6 @@ pair<VectorR, MatrixR> filter_missing_values(const VectorR& x, const MatrixR& y)
 
     return {new_x, new_y};
 }
-
 
 pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
 {
@@ -419,7 +395,6 @@ pair<MatrixR, MatrixR> filter_missing_values(const MatrixR& x, const MatrixR& y)
     return {new_x, new_y};
 }
 
-
 void shuffle_rows(MatrixR& matrix)
 {
     const Index rows_number = matrix.rows();
@@ -453,13 +428,11 @@ type* link(type* pointer, const vector<TensorView*>& views)
     return pointer;
 }
 
-
 void link(type* pointer, const vector<vector<TensorView*>>& views)
 {
     for (size_t i = 0; i < views.size(); i++)
         pointer = link(pointer, views[i]);
 }
-
 
 Index get_size(const vector<TensorView*>& views)
 {
@@ -475,7 +448,6 @@ Index get_size(const vector<TensorView*>& views)
 
     return total_size;
 }
-
 
 Index get_size(const vector<vector<TensorView*>>& views)
 {
@@ -549,7 +521,6 @@ Tensor4 tensor4_from_device(const type* pointer, const size_t& new_batch_samples
     return matrix_4d;
 }
 
-
 #endif
 
 Device::Device()
@@ -582,7 +553,6 @@ Device::~Device()
 #endif
 }
 
-
 void Device::set_threads_number(int num_threads)
 {
     if (num_threads <= 0)
@@ -598,19 +568,16 @@ void Device::set_threads_number(int num_threads)
     omp_set_num_threads(num_threads);
 }
 
-
 Device& Device::instance()
 {
     static Device device;
     return device;
 }
 
-
 ThreadPoolDevice* Device::get_thread_pool_device()
 {
     return thread_pool_device.get();
 }
-
 
 VectorR filter_missing_values(const VectorR &input)
 {
@@ -627,7 +594,6 @@ VectorR filter_missing_values(const VectorR &input)
 
     return result;
 }
-
 
 #ifdef CUDA
 cublasHandle_t Device::get_cublas_handle() { return cublas_handle; }

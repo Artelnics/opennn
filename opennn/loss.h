@@ -144,7 +144,6 @@ protected:
     string name = "Loss";
 };
 
-
 struct BackPropagation
 {
     BackPropagation(const Index = 0, Loss* = nullptr);

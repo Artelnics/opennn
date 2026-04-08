@@ -32,7 +32,6 @@ public:
         return input_shape;
     }
 
-
     void set(const Shape& new_input_shape, const string& new_label)
     {
         if(!new_input_shape.empty() && new_input_shape.rank != Rank - 1)
@@ -49,7 +48,6 @@ public:
         else
             throw runtime_error("Addition layer not implemented for rank: " + Rank);
     }
-
 
     void forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool) override
     {
@@ -74,7 +72,6 @@ public:
         copy(output_gradient, input_gradient_1);
     }
 
-
     void from_XML(const XMLDocument& document) override
     {
         const XMLElement* element = document.FirstChildElement("Addition");
@@ -85,7 +82,6 @@ public:
 
         set(new_input_shape, new_label);
     }
-
 
     void to_XML(XMLPrinter& printer) const override
     {

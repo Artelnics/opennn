@@ -20,30 +20,25 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     set_default();
 }
 
-
 Index AdaptiveMomentEstimation::get_samples_number() const
 {
     return batch_size;
 }
-
 
 void AdaptiveMomentEstimation::set_batch_size(const Index new_batch_size)
 {
     batch_size = new_batch_size;
 }
 
-
 void AdaptiveMomentEstimation::set_beta_1(const type new_beta_1)
 {
     beta_1 = new_beta_1;
 }
 
-
 void AdaptiveMomentEstimation::set_beta_2(const type new_beta_2)
 {
     beta_2 = new_beta_2;
 }
-
 
 void AdaptiveMomentEstimation::set_default()
 {
@@ -51,13 +46,10 @@ void AdaptiveMomentEstimation::set_default()
     name = "AdaptiveMomentEstimation";
 }
 
-
 void AdaptiveMomentEstimation::set_learning_rate(const type new_learning_rate)
 {
     learning_rate = new_learning_rate;
 }
-
-
 
 TrainingResults AdaptiveMomentEstimation::train()
 {
@@ -286,7 +278,6 @@ TrainingResults AdaptiveMomentEstimation::train()
     return results;
 }
 
-
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
@@ -312,7 +303,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
                           ((square_gradient_exponential_decay.array() / bias_correction_2).sqrt() + EPSILON);
 }
 
-
 void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
@@ -323,7 +313,6 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
 {
 
@@ -333,12 +322,10 @@ void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
     read_common_xml(root_element);
 }
 
-
 AdaptiveMomentEstimationData::AdaptiveMomentEstimationData(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
     set(new_adaptive_moment_estimation);
 }
-
 
 void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
@@ -356,7 +343,6 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
     square_gradient_exponential_decay.setZero();
 }
 
-
 void AdaptiveMomentEstimationData::print() const
 {
     // cout << "Gradient exponential decay:" << endl
@@ -364,7 +350,6 @@ void AdaptiveMomentEstimationData::print() const
     //      << "Square gradient exponential decay:" << endl
     //      << square_gradient_exponential_decay << endl;
 }
-
 
 #ifdef CUDA
 
@@ -380,8 +365,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
 
     Dataset* dataset = loss->get_dataset();
-
-
 
     if(!dataset) throw runtime_error("Dataset is null.");
 
@@ -615,7 +598,6 @@ TrainingResults AdaptiveMomentEstimation::train_cuda()
     return results;
 }
 
-
 void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propagation,
                                                  ADAMOptimizationDataCuda& optimization_data) const
 {
@@ -646,12 +628,10 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagationCuda& back_propa
         bias_correction_2);
 }
 
-
 ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
     set(new_adaptive_moment_estimation);
 }
-
 
 void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
@@ -666,7 +646,6 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     CHECK_CUDA(cudaMemset(gradient_exponential_decay.data, 0, parameters_number * sizeof(float)));
     CHECK_CUDA(cudaMemset(square_gradient_exponential_decay.data, 0, parameters_number * sizeof(float)));
 }
-
 
 void ADAMOptimizationDataCuda::print() const
 {

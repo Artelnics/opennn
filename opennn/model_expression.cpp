@@ -42,7 +42,6 @@ string ModelExpression::write_comments_c() const
         "// Input names:";
 }
 
-
 string ModelExpression::write_logistic_c() const
 {
     return
@@ -52,7 +51,6 @@ string ModelExpression::write_logistic_c() const
         "}\n\n";
 }
 
-
 string ModelExpression::write_relu_c() const
 {
     return
@@ -61,7 +59,6 @@ string ModelExpression::write_relu_c() const
         "\treturn z;\n"
         "}\n\n";
 }
-
 
 string ModelExpression::write_exponential_linear_c() const
 {
@@ -77,7 +74,6 @@ string ModelExpression::write_exponential_linear_c() const
         "\treturn z;\n"
         "}\n\n";
 }
-
 
 string ModelExpression::write_selu_c() const
 {
@@ -95,7 +91,6 @@ string ModelExpression::write_selu_c() const
         "}\n\n";
 }
 
-
 string ModelExpression::write_softmax_c() const
 {
     return
@@ -103,7 +98,6 @@ string ModelExpression::write_softmax_c() const
         "\treturn expf(x);\n"
         "}\n\n";
 }
-
 
 string ModelExpression::get_expression_c(const vector<Variable>& variables) const
 {
@@ -291,7 +285,6 @@ string ModelExpression::get_expression_c(const vector<Variable>& variables) cons
     return buffer.str();
 }
 
-
 string ModelExpression::write_header_api() const
 {
     return
@@ -344,7 +337,6 @@ string ModelExpression::write_subheader_api() const{
         "<h4>\n"
         "<?php\n\n";
 }
-
 
 string ModelExpression::get_expression_api(const vector<Variable>& variables) const
 {
@@ -501,7 +493,6 @@ string ModelExpression::get_expression_api(const vector<Variable>& variables) co
     return buffer.str();
 }
 
-
 string ModelExpression::logistic_javascript() const
 {
     return
@@ -519,7 +510,6 @@ string ModelExpression::relu_javascript() const
         "\treturn z;\n"
         "}\n";
 }
-
 
 string ModelExpression::exponential_linear_javascript() const
 {
@@ -550,7 +540,6 @@ string ModelExpression::selu_javascript() const
         "}\n";
 }
 
-
 string ModelExpression::hyperbolic_tangent_javascript() const
 {
     return
@@ -559,7 +548,6 @@ string ModelExpression::hyperbolic_tangent_javascript() const
         "}\n";
 }
 
-
 string ModelExpression::softmax_javascript() const
 {
     return
@@ -567,7 +555,6 @@ string ModelExpression::softmax_javascript() const
         "\treturn Math.exp(x);\n"
         "}\n";
 }
-
 
 string ModelExpression::header_javascript() const
 {
@@ -733,7 +720,6 @@ string ModelExpression::subheader_javascript() const
         "<h4>INPUTS</h4>\n"
         "<table class=\"form-table\">\n";
 }
-
 
 string ModelExpression::get_expression_javascript(const vector<Variable>& variables) const
 {
@@ -1111,7 +1097,6 @@ string ModelExpression::get_expression_javascript(const vector<Variable>& variab
     return buffer.str();
 }
 
-
 string ModelExpression::write_header_python() const
 {
     return "\'\'\' \n"
@@ -1126,7 +1111,6 @@ string ModelExpression::write_header_python() const
            "Inputs Names: \n";
 }
 
-
 string ModelExpression::write_subheader_python() const
 {
     return "\nYou can predict with a batch of samples using calculate_batch_output method\t \n"
@@ -1140,7 +1124,6 @@ string ModelExpression::write_subheader_python() const
            "\toutputs = model.calculate_batch_output(input_batch.values)\n"
            "\'\'\' \n" ;
 }
-
 
 string ModelExpression::get_expression_python(const vector<Variable>& variables) const
 {
@@ -1367,7 +1350,6 @@ string ModelExpression::get_expression_python(const vector<Variable>& variables)
     return out;
 }
 
-
 string ModelExpression::replace_reserved_keywords(const string& s) const
 {
     string out;
@@ -1407,7 +1389,6 @@ string ModelExpression::replace_reserved_keywords(const string& s) const
 
     return out;
 }
-
 
 vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
                                                            const vector<string>& outputs,
@@ -1469,7 +1450,6 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
     return out;
 }
 
-
 vector<string> ModelExpression::fix_feature_names(const vector<string>& input_names) const
 {
     const Index inputs_number = input_names.size();
@@ -1484,7 +1464,6 @@ vector<string> ModelExpression::fix_feature_names(const vector<string>& input_na
     return fixes_feature_names;
 
 }
-
 
 vector<string> ModelExpression::fix_output_names(const vector<string>& output_names) const
 {
@@ -1502,7 +1481,6 @@ vector<string> ModelExpression::fix_output_names(const vector<string>& output_na
     return fixes_output_names;
 }
 
-
 void ModelExpression::save_python(const filesystem::path& file_name, const vector<Variable>& variables) const
 {
     ofstream file(file_name);
@@ -1512,7 +1490,6 @@ void ModelExpression::save_python(const filesystem::path& file_name, const vecto
 
     file << get_expression_python(variables);
 }
-
 
 void ModelExpression::save_c(const filesystem::path& file_name, const vector<Variable>& variables) const
 {
@@ -1524,7 +1501,6 @@ void ModelExpression::save_c(const filesystem::path& file_name, const vector<Var
     file << get_expression_c(variables);
 }
 
-
 void ModelExpression::save_javascript(const filesystem::path& file_name, const vector<Variable>& variables) const
 {
     ofstream file(file_name);
@@ -1535,14 +1511,12 @@ void ModelExpression::save_javascript(const filesystem::path& file_name, const v
     file << get_expression_javascript(variables);
 }
 
-
 void ModelExpression::save_api(const filesystem::path& file_name, const vector<Variable>& variables) const
 {
     ofstream file(file_name);
 
     if(!file.is_open())
         return;
-
 
     file << get_expression_api(variables);
 }

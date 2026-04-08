@@ -44,7 +44,6 @@ public:
         return {{ batch_size, time_steps, input_size}};
     }
 
-
     void set(const Shape& = {}, const Shape& = {});
 
     void set_input_shape(const Shape&) override;

@@ -21,7 +21,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(Loss* new_loss)
     set_default();
 }
 
-
 void QuasiNewtonMethod::set_default()
 {
     name = "QuasiNewtonMethod";
@@ -44,13 +43,10 @@ void QuasiNewtonMethod::set_default()
     display_period = 10;
 }
 
-
 void QuasiNewtonMethod::set_minimum_loss_decrease(const type new_minimum_loss_decrease)
 {
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
-
-
 
 void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
@@ -83,7 +79,6 @@ void QuasiNewtonMethod::calculate_inverse_hessian(QuasiNewtonMethodData& optimiz
 
     inverse_hessian.noalias() += (BFGS * BFGS.transpose()) * gradient_dot_hessian_dot_gradient;
 }
-
 
 void QuasiNewtonMethod::update_parameters(const Batch& batch,
                                           ForwardPropagation& forward_propagation,
@@ -170,7 +165,6 @@ void QuasiNewtonMethod::update_parameters(const Batch& batch,
 
     neural_network->set_parameters(parameters);
 }
-
 
 TrainingResults QuasiNewtonMethod::train()
 {
@@ -346,7 +340,6 @@ TrainingResults QuasiNewtonMethod::train()
     return results;
 }
 
-
 void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("QuasiNewtonMethod");
@@ -357,7 +350,6 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 }
 
-
 void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "QuasiNewtonMethod");
@@ -366,12 +358,10 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
     read_common_xml(root_element);
 }
 
-
 QuasiNewtonMethodData::QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method)
 {
     set(new_quasi_newton_method);
 }
-
 
 void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 {
@@ -410,7 +400,6 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
     old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
 }
 
-
 void QuasiNewtonMethodData::print() const
 {
     cout << "Training Direction:" << endl
@@ -418,7 +407,6 @@ void QuasiNewtonMethodData::print() const
          << "Learning rate:" << endl
          << learning_rate << endl;
 }
-
 
 Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
@@ -499,7 +487,6 @@ Triplet QuasiNewtonMethod::calculate_bracketing_triplet(const Batch& batch,
     return triplet;
 }
 
-
 type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
 {
     const type a = triplet.A.first;
@@ -518,7 +505,6 @@ type QuasiNewtonMethod::calculate_learning_rate(const Triplet& triplet) const
         ? u - type(0.5) * (numerator / denominator)
         : type(0);
 }
-
 
 pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     const Batch& batch,
@@ -556,18 +542,15 @@ pair<type, type> QuasiNewtonMethod::calculate_directional_point(
     return {0.0, current_loss};
 }
 
-
 bool Triplet::operator ==(const Triplet &other_triplet) const
 {
     return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
 }
 
-
 type Triplet::get_length() const
 {
     return abs(B.first - A.first);
 }
-
 
 // pair<type, type> Triplet::minimum() const
 // {
@@ -582,7 +565,6 @@ type Triplet::get_length() const
 //     else return B;
 // }
 
-
 string Triplet::struct_to_string() const
 {
     ostringstream buffer;
@@ -594,13 +576,11 @@ string Triplet::struct_to_string() const
     return buffer.str();
 }
 
-
 void Triplet::print() const
 {
     cout << struct_to_string()
          << "Length: " << get_length() << endl;
 }
-
 
 void Triplet::check() const
 {
@@ -616,7 +596,6 @@ void Triplet::check() const
     if (U.second >= B.second)
         throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
 }
-
 
 REGISTER(Optimizer, QuasiNewtonMethod, "QuasiNewtonMethod");
 

@@ -23,18 +23,15 @@ Embedding::Embedding(const Shape& new_input_shape,
     name = "Embedding";
 }
 
-
 Shape Embedding::get_output_shape() const
 {
     return {get_sequence_length(), embedding_dimension};
 }
 
-
 vector<Shape> Embedding::get_parameter_shapes() const
 {
     return {{get_vocabulary_size(), embedding_dimension}}; // weights
 }
-
 
 void Embedding::set(const Index new_vocabulary_size,
                     Index new_sequence_length,
@@ -67,8 +64,6 @@ void Embedding::set(const Index new_vocabulary_size,
 #endif
 }
 
-
-
 void Embedding::set_parameters_random()
 {
     if(parameters[Weights].empty()) return;
@@ -82,7 +77,6 @@ void Embedding::set_parameters_random()
 
     weights.row(0).setZero();
 }
-
 
 void Embedding::set_parameters_glorot()
 {
@@ -100,7 +94,6 @@ void Embedding::set_parameters_glorot()
 
     weights.row(0).setZero();
 }
-
 
 void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, bool)
 {
@@ -185,7 +178,6 @@ void Embedding::forward_propagate(ForwardPropagation& forward_propagation, size_
 #endif
 }
 
-
 void Embedding::back_propagate(ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation,
                                size_t index) const
@@ -257,7 +249,6 @@ void Embedding::back_propagate(ForwardPropagation& forward_propagation,
 #endif
 }
 
-
 void Embedding::from_XML(const XMLDocument& document)
 {
     const XMLElement* embedding_layer_element = get_xml_root(document, "Embedding");
@@ -272,7 +263,6 @@ void Embedding::from_XML(const XMLDocument& document)
     set_scale_embedding(read_xml_bool(embedding_layer_element, "ScaleEmbedding"));
     set_add_positional_encoding(read_xml_bool(embedding_layer_element, "AddPositionalEncoding"));
 }
-
 
 void Embedding::to_XML(XMLPrinter& printer) const
 {

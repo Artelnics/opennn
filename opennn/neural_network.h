@@ -39,7 +39,6 @@ struct ForwardPropagation
     vector<vector<vector<TensorView>>> views;
 };
 
-
 class NeuralNetwork
 {
 
@@ -84,7 +83,6 @@ public:
 
         return shapes;
     }
-
 
     void compile();
 
@@ -134,7 +132,6 @@ public:
 
     void set_input_variables(const vector<Variable>& v) { input_variables = v; }
     void set_output_variables(const vector<Variable>& v) { output_variables = v; }
-
 
     void set_input_names(const vector<string>&);
     void set_output_names(const vector<string>&);

@@ -21,7 +21,6 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Da
     set(new_neural_network, new_dataset);
 }
 
-
 void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 {
     neural_network = new_neural_network;
@@ -58,24 +57,20 @@ void ResponseOptimization::set_evaluations_number(const int new_evaluations_numb
     evaluations_number = new_evaluations_number;
 }
 
-
 void ResponseOptimization::set_iterations(const int new_max_iterations)
 {
     max_iterations = new_max_iterations;
 }
-
 
 void ResponseOptimization::set_zoom_factor(type new_zoom_factor)
 {
     zoom_factor = new_zoom_factor;
 }
 
-
 void ResponseOptimization::set_relative_tolerance(type new_relative_tolerance)
 {
     relative_tolerance = new_relative_tolerance;
 }
-
 
 void ResponseOptimization::Domain::set(const vector<Index>& feature_dimensions, const vector<Descriptives>& descriptives)
 {
@@ -107,7 +102,6 @@ void ResponseOptimization::Domain::set(const vector<Index>& feature_dimensions, 
     }
 }
 
-
 ResponseOptimization::Domain ResponseOptimization::get_original_domain(const string role) const
 {
     const vector<Index> feature_dimensions = dataset->get_feature_dimensions();
@@ -131,7 +125,6 @@ ResponseOptimization::Condition ResponseOptimization::get_condition(const Index 
 {
     return conditions[index];
 }
-
 
 ResponseOptimization::Objectives::Objectives(const ResponseOptimization& response_optimization)
 {
@@ -261,7 +254,6 @@ void ResponseOptimization::Domain::bound(const vector<Index>& feature_dimensions
     }
 }
 
-
 MatrixR ResponseOptimization::calculate_random_inputs(const Domain& input_domain) const
 {
     const Index inputs_features_number = input_domain.inferior_frontier.size();
@@ -373,7 +365,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::filter_feasible_points(const Matrix
     return {feasible_inputs, feasible_outputs};
 }
 
-
 MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
 {
     const Index objectives_number = objective_sources.cols();
@@ -388,7 +379,6 @@ MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const M
     return objective_matrix;
 }
 
-
 void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) const
 {
     const auto combined_scale = (objective_normalizer.row(0).array() * utopian_and_senses.row(1).array());
@@ -397,7 +387,6 @@ void ResponseOptimization::Objectives::normalize(MatrixR& objective_matrix) cons
     objective_matrix.array().rowwise() *= combined_scale;
     objective_matrix.array().rowwise() += combined_offset;
 }
-
 
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const MatrixR& feasible_inputs, const MatrixR& feasible_outputs, const Objectives& objectives) const
 {
@@ -422,7 +411,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_optimal_points(const Matr
 
     return {nearest_inputs, nearest_outputs};
 }
-
 
 MatrixR ResponseOptimization::assemble_results(const MatrixR& inputs, const MatrixR& outputs) const
 {
@@ -521,7 +509,6 @@ MatrixR ResponseOptimization::perform_single_objective_optimization(const Object
         : assemble_results(optimal_set.first, optimal_set.second);
 }
 
-
 pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inputs, const MatrixR& outputs, const MatrixR& objective_matrix) const
 {
     const Index rows_number = inputs.rows();
@@ -578,7 +565,6 @@ pair<MatrixR, MatrixR> ResponseOptimization::calculate_pareto(const MatrixR& inp
     return {pareto_inputs, pareto_outputs};
 }
 
-
 pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& inputs, const MatrixR& outputs, const Objectives& objectives) const
 {
     const Index points_number = inputs.rows();
@@ -622,7 +608,6 @@ pair<type, type> ResponseOptimization::calculate_quality_metrics(const MatrixR& 
 
     return {maximum_internal_gap, normalized_boundary_gap};
 }
-
 
 MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectives& objectives) const
 {
@@ -687,7 +672,6 @@ MatrixR ResponseOptimization::perform_multiobjective_optimization(const Objectiv
         }
 
         cout << "  - Aggregated local Pareto candidates: " << candidate_inputs.rows() << endl;
-
 
         if (candidate_inputs.rows() == 0)
             break;

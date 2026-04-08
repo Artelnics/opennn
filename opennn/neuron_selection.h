@@ -94,7 +94,6 @@ protected:
     string name;
 };
 
-
 struct NeuronsSelectionResults
 {
    NeuronsSelectionResults(const Index maximum_epochs = 0);

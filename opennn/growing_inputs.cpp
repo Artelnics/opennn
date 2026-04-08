@@ -24,18 +24,15 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
     set_default();
 }
 
-
 Index GrowingInputs::get_minimum_inputs_number() const
 {
     return minimum_inputs_number;
 }
 
-
 Index GrowingInputs::get_maximum_inputs_number() const
 {
     return maximum_inputs_number;
 }
-
 
 void GrowingInputs::set_default()
 {
@@ -52,12 +49,10 @@ void GrowingInputs::set_default()
         : maximum_inputs_number = 50;
 }
 
-
 void GrowingInputs::set_minimum_inputs_number(const Index new_minimum_inputs_number)
 {
     minimum_inputs_number = new_minimum_inputs_number;
 }
-
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
@@ -68,19 +63,15 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : min(new_maximum_inputs_number, inputs_number);
 }
 
-
 void GrowingInputs::set_minimum_correlation(const type new_minimum_correlation)
 {
     minimum_correlation = new_minimum_correlation;
 }
 
-
 void GrowingInputs::set_maximum_correlation(const type new_maximum_correlation)
 {
     maximum_correlation = new_maximum_correlation;
 }
-
-
 
 InputsSelectionResults GrowingInputs::perform_input_selection()
 {
@@ -363,7 +354,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     return input_selection_results;
 }
 
-
 void GrowingInputs::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingInputs");
@@ -383,7 +373,6 @@ void GrowingInputs::to_XML(XMLPrinter& printer) const
     printer.CloseElement();  
 }
 
-
 void GrowingInputs::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = get_xml_root(document, "GrowingInputs");
@@ -398,7 +387,6 @@ void GrowingInputs::from_XML(const XMLDocument& document)
     set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
     set_maximum_validation_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
 }
-
 
 REGISTER(InputsSelection, GrowingInputs, "GrowingInputs");
 
