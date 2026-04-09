@@ -695,7 +695,18 @@ void Loss::from_XML(const XMLDocument& document)
         minkowski_parameter = read_xml_type(root, "MinkowskiParameter");
 }
 
-} 
+
+
+
+MatrixR Loss::calculate_numerical_hessian()
+{
+    // @todo Stub - not yet refactored
+    const VectorR gradient = calculate_numerical_gradient();
+    const Index n = gradient.size();
+    return MatrixR::Zero(n, n);
+}
+
+}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

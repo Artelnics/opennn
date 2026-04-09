@@ -256,16 +256,24 @@ void ImageDataset::read_bmp(const Shape& new_input_shape)
     for(Index i = 0; i < folders_number; i++)
         categories[i] = directory_path[i].filename().string();
 
-    if(targets_number != folders_number)
+    if(targets_number == 1)
+    {
+        variables[pixels_number].name = categories[0] + "_" + categories[1];
+        variables[pixels_number].role = "Target";
+        variables[pixels_number].type = VariableType::Binary;
+        variables[pixels_number].set_categories(categories);
+        variables[pixels_number].scaler = "None";
+    }
+    else
+    {
         variables.resize(pixels_number + 1);
 
-    variables[pixels_number].name = (targets_number == 1)
-        ? categories[0] + "_" + categories[1]
-        : "Class";
-    variables[pixels_number].role = "Target";
-    variables[pixels_number].type = (targets_number == 1) ? VariableType::Binary : VariableType::Categorical;
-    variables[pixels_number].set_categories(categories);
-    variables[pixels_number].scaler = "None";
+        variables[pixels_number].name = "Class";
+        variables[pixels_number].role = "Target";
+        variables[pixels_number].type = VariableType::Categorical;
+        variables[pixels_number].set_categories(categories);
+        variables[pixels_number].scaler = "None";
+    }
 
     Index progress_counter = 0;
 

@@ -829,7 +829,26 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
 
 REGISTER(Optimizer, LevenbergMarquardtAlgorithm, "LevenbergMarquardt");
 
+// @todo Stub implementations for LM backpropagation (not yet refactored)
+
+BackPropagationLM::BackPropagationLM(const Index, Loss*) {}
+void BackPropagationLM::set(const Index, Loss*) {}
+void BackPropagationLM::print() const {}
+TensorView BackPropagationLM::get_output_gradients() const { return {}; }
+vector<vector<TensorView>> BackPropagationLM::get_layer_gradients() const { return {}; }
+
+vector<TensorView*> LayerBackPropagationLM::get_gradient_views() { return {}; }
+vector<TensorView*> LayerBackPropagationLM::get_workspace_views() { return {}; }
+vector<TensorView> LayerBackPropagationLM::get_input_gradients() const { return input_gradients; }
+
+NeuralNetworkBackPropagationLM::NeuralNetworkBackPropagationLM(NeuralNetwork*) {}
+void NeuralNetworkBackPropagationLM::set(const Index, NeuralNetwork*) {}
+const vector<unique_ptr<LayerBackPropagationLM>>& NeuralNetworkBackPropagationLM::get_layers() const { return layers; }
+NeuralNetwork* NeuralNetworkBackPropagationLM::get_neural_network() const { return neural_network; }
+void NeuralNetworkBackPropagationLM::print() {}
+
 }
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.

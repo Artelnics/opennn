@@ -551,7 +551,7 @@ Index count_NAN(const TensorR<rank>& x)
     return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
 }
 
-vector<Index> get_true_indices(const VectorB& v)
+inline vector<Index> get_true_indices(const VectorB& v)
 {
     vector<Index> indices;
     indices.reserve(v.size());
