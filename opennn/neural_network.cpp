@@ -813,7 +813,9 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
                 if(text)
                 {
                     Shape s = string_to_shape(text, " ");
-                    layer_input_indices[layer_idx] = vector<Index>(s.begin(), s.end());
+                    layer_input_indices[layer_idx].resize(s.rank);
+                    for(size_t k = 0; k < s.rank; k++)
+                        layer_input_indices[layer_idx][k] = s[k];
                 }
             }
             indices_element = indices_element->NextSiblingElement("LayerInputsIndices");
