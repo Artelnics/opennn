@@ -47,7 +47,7 @@ void Loss::back_propagate(const Batch& batch,
 
     add_regularization(back_propagation);
 
-    add_regularization_gradient(back_propagation.gradient);
+    add_regularization_gradient(back_propagation.gradient.vector);
 }
 
 void Loss::calculate_error(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
@@ -487,7 +487,7 @@ VectorR Loss::calculate_gradient()
 
     back_propagate(batch, forward_propagation, back_propagation);
 
-    return back_propagation.gradient;
+    return back_propagation.gradient.vector;
 }
 
 VectorR Loss::calculate_numerical_gradient()

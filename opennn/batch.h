@@ -41,76 +41,17 @@ struct Batch
 
     const Dataset* dataset = nullptr;
 
+    Memory input;
     Shape input_shape;
-    VectorR input_vector;
 
+    Memory decoder;
     Shape decoder_shape;
-    VectorR decoder_vector;
 
+    Memory target;
     Shape target_shape;
-    VectorR target_vector;
 };
 
-#ifdef CUDA
-
-struct BatchCuda
-{
-    BatchCuda(const Index = 0, Dataset* = nullptr);
-    ~BatchCuda();
-
-    void set(const Index, Dataset*);
-
-    void fill(const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&,
-              const vector<Index>&);
-
-    void fill_host(const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&,
-                   const vector<Index>&);
-
-    vector<TensorView> get_inputs_device() const;
-    TensorView get_targets_device() const;
-
-    Index get_samples_number() const;
-
-    MatrixR get_inputs_from_device() const;
-    MatrixR get_decoder_from_device() const;
-    MatrixR get_targets_from_device() const;
-
-    void copy_device(const Index);
-    void copy_device_async(const Index, cudaStream_t);
-
-    void print() const;
-
-    bool is_empty() const;
-
-    Index samples_number = 0;
-    Index num_input_features = 0;
-    Index num_decoder_features = 0;
-    Index num_target_features = 0;
-
-    Dataset* dataset = nullptr;
-
-    Shape input_shape;
-    Shape decoder_shape;
-    Shape target_shape;
-
-    float* inputs_host = nullptr;
-    float* decoder_host = nullptr;
-    float* targets_host = nullptr;
-
-    Index inputs_host_allocated_size = 0;
-    Index decoder_host_allocated_size = 0;
-    Index targets_host_allocated_size = 0;
-
-    TensorCuda inputs_device;
-    TensorCuda decoder_device;
-    TensorCuda targets_device;
-};
-
-#endif
+// @todo BatchCuda removed - unified Batch with Memory handles both CPU and CUDA
 
 }
 

@@ -35,7 +35,7 @@ struct ForwardPropagation
 
     NeuralNetwork* neural_network = nullptr;
 
-    VectorR data;
+    Memory data;
     vector<vector<vector<TensorView>>> views;
 };
 
@@ -94,7 +94,9 @@ public:
 
     bool is_empty() const { return layers.empty(); }
 
-    VectorR& get_parameters() { return parameters; }
+#ifndef CUDA
+    VectorR& get_parameters() { return parameters.vector; }
+#endif
 
     const vector<Variable>& get_input_variables() const { return input_variables; }
     const vector<string> get_input_feature_names() const;
@@ -162,7 +164,9 @@ public:
 
     vector<Index> get_layer_parameter_numbers() const;
 
-    void set_parameters(const VectorR& p) { parameters = p; }
+#ifndef CUDA
+    void set_parameters(const VectorR& p) { parameters.vector = p; }
+#endif
 
     // Parameters initialization
 
@@ -254,9 +258,11 @@ protected:
 
     vector<vector<Index>> layer_input_indices;
 
-    VectorR parameters;
+    Memory parameters;
     vector<vector<vector<TensorView>>> parameter_views;
 
+//    Memory states;
+//    vector<vector<vector<TensorView>>> state_views;
 };
 
 }

@@ -733,7 +733,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Parameters");
 
     if (parameters.size() > 0)
-        printer.PushText(vector_to_string(parameters, " ").c_str());
+        printer.PushText(vector_to_string(parameters.vector, " ").c_str());
 
     printer.CloseElement();
 
@@ -883,7 +883,7 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
 
-    file << parameters << endl;
+    file << parameters.vector << endl;
 
     file.close();
 }

@@ -232,12 +232,63 @@ struct Shape
     }
 };
 
+
+struct Memory
+{
+#ifndef CUDA
+    VectorR vector;
+
+    type* data() { return vector.data(); }
+    const type* data() const { return vector.data(); }
+    Index size() const { return vector.size(); }
+
+    void resize(Index n) { vector.resize(n); }
+    void setZero() { vector.setZero(); }
+
+#else
+    float* device_data = nullptr;
+    Index allocated_size = 0;
+
+    type* data() { return device_data; }
+    const type* data() const { return device_data; }
+    Index size() const { return allocated_size; }
+
+    void resize(Index n)
+    {
+        if(n == allocated_size) return;
+        if(device_data) cudaFree(device_data);
+        allocated_size = n;
+        if(n > 0) CHECK_CUDA(cudaMalloc(&device_data, n * sizeof(float)));
+    }
+
+    void setZero()
+    {
+        if(device_data && allocated_size > 0)
+            CHECK_CUDA(cudaMemset(device_data, 0, allocated_size * sizeof(float)));
+    }
+
+    ~Memory() { if(device_data) cudaFree(device_data); device_data = nullptr; allocated_size = 0; }
+    Memory() = default;
+    Memory(const Memory&) = delete;
+    Memory& operator=(const Memory&) = delete;
+    Memory(Memory&& other) noexcept : device_data(other.device_data), allocated_size(other.allocated_size)
+    { other.device_data = nullptr; other.allocated_size = 0; }
+    Memory& operator=(Memory&& other) noexcept
+    { if(this != &other) { if(device_data) cudaFree(device_data); device_data = other.device_data; allocated_size = other.allocated_size; other.device_data = nullptr; other.allocated_size = 0; } return *this; }
+#endif
+};
+
+
 struct TensorView
 {
-    type* data = nullptr;
-    Shape shape;
 
     TensorView() noexcept = default;
+
+    type* data = nullptr;
+
+#ifndef CUDA
+
+    Shape shape;
 
     TensorView(type* new_data, const Shape& new_shape) noexcept
     {
@@ -307,7 +358,8 @@ struct TensorView
         return TensorMapR<Rank>(data, shape.template get_eigen_dims<Rank>());
     }
 
-#ifdef CUDA
+#else 
+
     float* device = nullptr;
     cudnnTensorDescriptor_t descriptor = nullptr;
 
