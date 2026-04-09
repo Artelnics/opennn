@@ -1269,19 +1269,9 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     const Index testing_batch_size = input.rows() > 2000 ? 2000 : input.rows();
 
-    MatrixR testing_input(testing_batch_size, input.cols());
-
-    for(Index i = 0; i < testing_batch_size; i++)
-        testing_input.row(i) = input.row(i);
-
-    MatrixR testing_context(testing_batch_size, context.cols());
-    MatrixR testing_target(testing_batch_size, target.cols());
-
-    for(Index i = 0; i < testing_batch_size; i++)
-    {
-        testing_context.row(i) = context.row(i);
-        testing_target.row(i) = target.row(i);
-    }
+    MatrixR testing_input = input.topRows(testing_batch_size);
+    MatrixR testing_context = context.topRows(testing_batch_size);
+    MatrixR testing_target = target.topRows(testing_batch_size);
 
     //const Tensor3 outputs = transformer->calculate_outputs(testing_input, testing_context);
 

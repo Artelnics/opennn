@@ -211,7 +211,7 @@ void GeneticAlgorithm::evaluate_population()
 
 void GeneticAlgorithm::assign_fitness()
 {
-    fitness = calculate_rank_less(validation_errors).cast<type>().array() + type(1.0);
+    fitness = calculate_rank(validation_errors).cast<type>().array() + type(1.0);
 }
 
 void GeneticAlgorithm::perform_selection()

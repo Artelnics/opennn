@@ -60,7 +60,7 @@ void Embedding::set(const Index new_vocabulary_size,
 
     weights_device.set_descriptor({new_vocabulary_size, new_embedding_dimension});
 
-    positional_encoding_device.resize({sequence_length, new_embedding_dimension});
+    positional_encoding_device.resize({new_sequence_length, new_embedding_dimension});
 
 #endif
 }
